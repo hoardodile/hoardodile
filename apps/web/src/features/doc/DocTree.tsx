@@ -321,7 +321,7 @@ const TreeBranch = memo(function TreeBranch(props: TreeBranchProps) {
 				{...(drag?.enabled === true ? rowDnd.listeners : {})}
 				onClick={handleRowClick}
 				className={cn(
-					"group relative flex h-nav cursor-pointer items-center gap-2 rounded-lg pr-1 transition-colors duration-150",
+					"group relative flex h-nav cursor-pointer items-center gap-2 rounded-lg pr-1",
 					isActive
 						? "bg-muted font-medium text-foreground"
 						: "text-secondary-foreground hover:bg-muted",
@@ -417,7 +417,7 @@ const TreeBranch = memo(function TreeBranch(props: TreeBranchProps) {
 				)}
 				<div
 					className={cn(
-						"flex shrink-0 items-center transition-opacity",
+						"flex shrink-0 items-center",
 						// Always visible on touch / narrow screens (Notion style),
 						// collapses to a hover-revealed control on md+ pointers.
 						"opacity-100 md:opacity-0 md:group-hover:opacity-100 focus-within:opacity-100",
@@ -456,7 +456,7 @@ const TreeBranch = memo(function TreeBranch(props: TreeBranchProps) {
 									<Button
 										variant="ghost"
 										size="icon"
-										className="size-5 rounded-full text-muted-foreground/50 transition-colors hover:bg-transparent hover:text-foreground"
+										className="size-5 rounded-full text-muted-foreground/50 hover:bg-transparent hover:text-foreground"
 										aria-label={t("documents.moreActions")}
 										onClick={(e) => e.stopPropagation()}
 										data-testid={`documents-more-${branch.node.id}`}

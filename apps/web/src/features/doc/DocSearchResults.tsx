@@ -92,7 +92,7 @@ export function DocSearchResults(props: DocSearchResultsProps) {
 										params={{ id: row.id }}
 										onClick={() => props.onSelect?.()}
 										className={cn(
-											"relative flex h-8 items-center rounded-lg px-3 transition-colors duration-150",
+											"relative flex h-8 items-center rounded-lg px-3",
 											isActive
 												? "bg-muted text-foreground"
 												: "text-secondary-foreground hover:bg-muted",

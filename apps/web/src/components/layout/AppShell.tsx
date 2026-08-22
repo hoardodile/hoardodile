@@ -323,7 +323,7 @@ function SidebarContent(props: SidebarContentProps) {
 						type="button"
 						data-testid="sidebar-show-module"
 						onClick={props.onShowModule}
-						className="flex h-nav w-full items-center gap-3 rounded-lg px-3 text-ui font-medium text-secondary-foreground transition-colors duration-150 hover:bg-muted"
+						className="flex h-nav w-full items-center gap-3 rounded-lg px-3 text-ui font-medium text-secondary-foreground hover:bg-muted"
 					>
 						<UndoRightRound className="size-4 shrink-0" strokeWidth={1.6} />
 						<span className="truncate">
@@ -664,7 +664,7 @@ function DocNavRow(props: DocNavRowProps) {
 
 function navRowClassName(active: boolean) {
 	return cn(
-		"flex h-nav items-center gap-3 rounded-lg px-3 text-ui font-medium transition-colors duration-150",
+		"flex h-nav items-center gap-3 rounded-lg px-3 text-ui font-medium",
 		active
 			? "bg-muted text-foreground"
 			: "text-secondary-foreground hover:bg-muted",

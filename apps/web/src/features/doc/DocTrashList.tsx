@@ -131,7 +131,7 @@ function TrashRow(props: TrashRowProps) {
 	return (
 		<li
 			className={cn(
-				"group relative flex h-8 items-center gap-1 rounded-lg transition-colors duration-150",
+				"group relative flex h-8 items-center gap-1 rounded-lg",
 				isActive ? "bg-muted" : "hover:bg-muted",
 			)}
 			data-testid={`documents-trash-row-${node.id}`}
@@ -151,7 +151,7 @@ function TrashRow(props: TrashRowProps) {
 					params={{ id: node.id }}
 					onClick={() => props.onSelect?.()}
 					className={cn(
-						"relative flex h-full flex-1 items-center rounded-lg px-3 transition-colors duration-150",
+						"relative flex h-full flex-1 items-center rounded-lg px-3",
 						isActive ? "text-foreground" : "text-secondary-foreground",
 					)}
 					data-testid={`documents-trash-open-${node.id}`}
@@ -162,7 +162,7 @@ function TrashRow(props: TrashRowProps) {
 
 			<div
 				className={cn(
-					"flex shrink-0 items-center transition-opacity",
+					"flex shrink-0 items-center",
 					"opacity-100 md:opacity-0 md:group-hover:opacity-100 focus-within:opacity-100",
 				)}
 			>
@@ -172,7 +172,7 @@ function TrashRow(props: TrashRowProps) {
 							<Button
 								variant="ghost"
 								size="icon"
-								className="size-5 rounded-full text-muted-foreground/50 transition-colors hover:bg-transparent hover:text-foreground"
+								className="size-5 rounded-full text-muted-foreground/50 hover:bg-transparent hover:text-foreground"
 								aria-label={t("documents.moreActions")}
 								onClick={(e) => e.stopPropagation()}
 								data-testid={`documents-trash-more-${node.id}`}

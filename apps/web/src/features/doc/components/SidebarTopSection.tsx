@@ -113,7 +113,7 @@ export function SidebarTopSection(props: SidebarTopSectionProps) {
 					type="button"
 					onClick={sidebarMode?.showMainMenu}
 					data-testid="sidebar-show-main-menu"
-					className="flex h-nav w-full items-center gap-3 rounded-lg px-3 text-ui font-medium text-secondary-foreground transition-colors duration-150 hover:bg-muted"
+					className="flex h-nav w-full items-center gap-3 rounded-lg px-3 text-ui font-medium text-secondary-foreground hover:bg-muted"
 				>
 					<UndoLeftRound className="size-4 shrink-0" strokeWidth={1.6} />
 					<span className="truncate">{t("appShell.backToMainMenu")}</span>
@@ -258,7 +258,7 @@ function DocFilterButton(props: {
 			aria-label={t("documents.filter.title")}
 			data-testid="documents-filter-toggle"
 			className={cn(
-				"relative flex size-6 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors duration-150 hover:bg-accent hover:text-accent-foreground",
+				"relative flex size-6 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-accent-foreground",
 				active && "text-foreground",
 			)}
 		>
