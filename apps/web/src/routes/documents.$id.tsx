@@ -14,14 +14,15 @@ import type { CSSProperties } from "react"
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { docDetailPageQueryOptions } from "@/features/doc"
-import { DocCircle } from "@/features/doc/components/DocCircle"
 import { DocDetailHeader } from "@/features/doc/components/DocDetailHeader"
 import { DocDetailMeta } from "@/features/doc/components/DocDetailMeta"
 import type { HeadingInfo } from "@/features/doc/components/DocHeadingNav"
+import { DocNotFound } from "@/features/doc/components/DocNotFound"
 import {
 	DocSidePanel,
 	DocSidePanelSlot,
 } from "@/features/doc/components/DocSidePanel"
+import { DocSpin } from "@/features/doc/components/DocSpin"
 import {
 	DocCommitDialog,
 	DocDiscardDialog,
@@ -61,9 +62,12 @@ const DocEditorColumn = lazy(() =>
 
 export const Route = createFileRoute("/documents/$id")({
 	loader: async ({ context, params }) => {
-		await context.queryClient.ensureQueryData(
-			docDetailPageQueryOptions(params.id),
-		)
+		// A missing / hard-deleted document must not blow up the whole
+		// page: swallow the rejection so the component renders the
+		// friendly not-found state instead of the router's error boundary.
+		await context.queryClient
+			.ensureQueryData(docDetailPageQueryOptions(params.id))
+			.catch(() => undefined)
 	},
 	component: DocDetailRoute,
 })
@@ -260,39 +264,32 @@ function DocDetailRoute() {
 		setLastOpenedId,
 	])
 
+	// A stale "last opened" id (document hard-deleted, or the preference
+	// survived a storage reset) must not keep routing the nav entry back
+	// to a dead page: drop it, mirroring `useDocsHomeLastOpened` so the
+	// next click lands on the documents home.
+	useEffect(() => {
+		if (detailPageQuery.isLoading) return
+		if (node !== undefined) return
+		if (lastOpenedId !== "") setLastOpenedId("")
+	}, [detailPageQuery.isLoading, node, lastOpenedId, setLastOpenedId])
+
 	if (detailPageQuery.isLoading) {
 		return (
 			<div className="flex h-full min-h-[50svh] flex-col items-center justify-center gap-4 text-muted-foreground">
-				<DocCircle
-					variant="spin"
-					className="size-10 text-primary/70"
-					strokeWidth={6}
-				/>
+				<DocSpin className="size-10 text-primary/70" strokeWidth={6} />
 				<span className="doc-label">{t("common.loading")}</span>
 			</div>
 		)
 	}
 	if (node === undefined) {
-		return (
-			<div className="flex h-full min-h-[50svh] flex-col items-center justify-center gap-4 p-8 text-center text-muted-foreground">
-				<DocCircle
-					className="size-12 text-muted-foreground/40"
-					strokeWidth={5}
-				/>
-				<p className="text-sm">{t("common.unknownError")}</p>
-			</div>
-		)
+		return <DocNotFound />
 	}
 	if (node.kind !== "document" || draft === undefined) {
 		// Folder selected - render a lightweight placeholder so the
 		// layout still feels responsive while the user navigates the tree.
 		return (
-			<div className="flex h-full min-h-[50svh] flex-col items-center justify-center gap-5 p-8 text-center">
-				<DocCircle
-					variant="breathe"
-					className="size-16 text-muted-foreground/40"
-					strokeWidth={5}
-				/>
+			<div className="flex h-full min-h-[50svh] flex-col items-center justify-center p-8 text-center">
 				<div className="flex flex-col gap-1.5">
 					<p className="text-xl font-semibold tracking-wide">{node.title}</p>
 					<p className="text-sm text-muted-foreground">

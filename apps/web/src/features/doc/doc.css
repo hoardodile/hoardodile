@@ -400,19 +400,8 @@
 	animation-delay: 330ms;
 }
 
-.doc-circle-draw path {
-	stroke-dasharray: 1;
-	stroke-dashoffset: 1;
-	animation: doc-draw 1.5s cubic-bezier(0.4, 0, 0.2, 1) 0.15s forwards;
-}
-
 .doc-circle-spin {
 	animation: doc-spin 1.6s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
-	transform-origin: center;
-}
-
-.doc-circle-breathe {
-	animation: doc-breathe 7s ease-in-out infinite;
 	transform-origin: center;
 }
 
@@ -432,28 +421,9 @@
 	}
 }
 
-@keyframes doc-draw {
-	to {
-		stroke-dashoffset: 0;
-	}
-}
-
 @keyframes doc-spin {
 	to {
 		transform: rotate(360deg);
-	}
-}
-
-@keyframes doc-breathe {
-	0%,
-	100% {
-		transform: scale(1);
-		opacity: 0.8;
-	}
-
-	50% {
-		transform: scale(1.03);
-		opacity: 1;
 	}
 }
 
@@ -471,17 +441,11 @@
 
 @media (prefers-reduced-motion: reduce) {
 	.doc-reveal,
-	.doc-circle-breathe,
 	.doc-banner {
 		animation: none;
 	}
 
 	.doc-reveal {
 		opacity: 1;
-	}
-
-	.doc-circle-draw path {
-		animation: none;
-		stroke-dashoffset: 0;
 	}
 }

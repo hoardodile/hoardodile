@@ -734,6 +734,11 @@
 		"searchPlaceholder": "搜索文档（标题/内容）",
 		"loading": "文档加载中…",
 		"listEmpty": "暂无文档。",
+		"notFound": {
+			"title": "未找到文档",
+			"description": "这篇文档不存在，可能已被删除。",
+			"back": "返回文档页"
+		},
 		"untitled": "未命名",
 		"viewAll": "查看全部",
 		"filter": {

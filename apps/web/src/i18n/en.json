@@ -734,6 +734,11 @@
 		"searchPlaceholder": "Search title or content",
 		"loading": "Loading documents…",
 		"listEmpty": "No documents yet.",
+		"notFound": {
+			"title": "Document not found",
+			"description": "This document no longer exists — it may have been deleted.",
+			"back": "Back to documents"
+		},
 		"untitled": "Untitled",
 		"viewAll": "View all",
 		"filter": {

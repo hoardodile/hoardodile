@@ -46,7 +46,6 @@ import {
 	renameDocumentNodeMutation,
 	softDeleteDocumentMutation,
 } from "@/features/doc"
-import { DocCircle } from "@/features/doc/components/DocCircle"
 import { useDocTheme } from "@/features/doc/hooks/useDocPrefs"
 import { useToastMutation } from "@/hooks/useToastMutation"
 import {
@@ -179,13 +178,9 @@ export const DocTree = memo(function DocTree(props: DocTreeProps) {
 	if (tree.length === 0) {
 		return (
 			<div
-				className="doc-reveal mx-3 flex flex-col items-center justify-center gap-4 rounded-xl border border-dashed border-border/70 bg-card/40 px-6 py-14 text-center"
+				className="doc-reveal mx-3 flex flex-col items-center justify-center rounded-xl border border-dashed border-border/70 bg-card/40 px-6 py-14 text-center"
 				data-testid="documents-empty"
 			>
-				<DocCircle
-					className="size-12 text-muted-foreground/50"
-					strokeWidth={5}
-				/>
 				<p className="text-sm text-muted-foreground">
 					{t("documents.listEmpty")}
 				</p>
@@ -203,7 +198,7 @@ export const DocTree = memo(function DocTree(props: DocTreeProps) {
 		>
 			<DragContext.Provider value={dragAPI}>
 				<DndContext {...dragAPI.contextProps}>
-					<ul data-testid="documents-list">
+					<ul className="flex flex-col gap-1" data-testid="documents-list">
 						{tree.map((branch) => (
 							<Fragment key={branch.node.id}>
 								<TreeBranch
@@ -516,7 +511,7 @@ const TreeBranch = memo(function TreeBranch(props: TreeBranchProps) {
 				// responsive; the open/close animation is traded for
 				// render isolation.
 				<div className="grid grid-rows-[1fr]">
-					<ul className="min-h-0 overflow-hidden">
+					<ul className="flex min-h-0 flex-col gap-1 overflow-hidden">
 						{branch.children.map((child) => (
 							<TreeBranch
 								key={child.node.id}
