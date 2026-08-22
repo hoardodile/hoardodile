@@ -54,7 +54,7 @@ export function createDesktopWindow(
 	// window takes the production width plus the dock's typical width, so
 	// the app still renders at its designed size next to the panel instead
 	// of being squeezed into the leftover ~1040px.
-	const devToolsDockWidth = 440
+	const devToolsDockWidth = 600
 	const width =
 		options.kind === "wizard"
 			? 520
