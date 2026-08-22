@@ -52,7 +52,7 @@ const nodeDestDir = join(destRoot, "node")
 mkdirSync(nodeDestDir, { recursive: true })
 copyFile(process.execPath, join(nodeDestDir, "node.exe"))
 
-await import("./generate-icon.mjs")
 copyFile(join(desktopRoot, "resources", "icon.png"), join(destRoot, "icon.png"))
+copyFile(join(desktopRoot, "resources", "tray.png"), join(destRoot, "tray.png"))
 
 console.log(`staged extra-resources at ${destRoot}`)

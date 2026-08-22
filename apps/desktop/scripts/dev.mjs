@@ -19,8 +19,6 @@ console.log(
 	`[desktop] SPA HMR expects ${webDestUrl} — run \`pnpm dest\` in another terminal`,
 )
 
-await import("./generate-icon.mjs")
-
 const wizard = await createServer({
 	configFile: resolve(root, "vite.wizard.config.ts"),
 	server: {

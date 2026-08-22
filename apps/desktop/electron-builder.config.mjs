@@ -28,6 +28,7 @@ const config = {
 		{ from: "extra-resources/server", to: "server" },
 		{ from: "extra-resources/plugins", to: "plugins" },
 		{ from: "extra-resources/icon.png", to: "icon.png" },
+		{ from: "extra-resources/tray.png", to: "tray.png" },
 	],
 	asar: true,
 	npmRebuild: false,
@@ -35,7 +36,7 @@ const config = {
 	removePackageScripts: true,
 	electronLanguages: ["en-US", "zh-CN"],
 	win: {
-		icon: "resources/icon.png",
+		icon: "resources/icon.ico",
 		verifyUpdateCodeSignature: false,
 		target: [
 			{ target: "nsis", arch: ["x64"] },

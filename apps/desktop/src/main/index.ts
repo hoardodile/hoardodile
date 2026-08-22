@@ -34,7 +34,12 @@ import {
 	type SidecarHandle,
 	startSidecar,
 } from "./sidecar.ts"
-import { createAppTray, rebuildTrayMenu, trayIconPath } from "./tray.ts"
+import {
+	createAppTray,
+	rebuildTrayMenu,
+	trayIconPath,
+	windowIconPath,
+} from "./tray.ts"
 import { startUpdater, type UpdaterHandle } from "./updater.ts"
 import { isHttpReachable } from "./urls.ts"
 import { createDesktopWindow, preloadPath } from "./window.ts"
@@ -475,7 +480,7 @@ async function boot(): Promise<void> {
 		completeWizard: undefined,
 	}
 	activeRuntime = runtime
-	runtime.iconPath = trayIconPath(
+	runtime.iconPath = windowIconPath(
 		app.isPackaged ? process.resourcesPath : runtime.desktopRoot,
 	)
 
@@ -541,10 +546,14 @@ async function boot(): Promise<void> {
 		runtime.crashed = true
 	}
 
-	runtime.tray = createAppTray(runtime.iconPath, trayHandlers(runtime), {
-		crashed: runtime.crashed,
-		updateReady: runtime.updateReady,
-	})
+	runtime.tray = createAppTray(
+		trayIconPath(app.isPackaged ? process.resourcesPath : runtime.desktopRoot),
+		trayHandlers(runtime),
+		{
+			crashed: runtime.crashed,
+			updateReady: runtime.updateReady,
+		},
+	)
 
 	runtime.updater = startUpdater({
 		enabled: runtime.config.autoUpdate && !runtime.portable,

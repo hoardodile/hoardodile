@@ -72,10 +72,20 @@ export function rebuildTrayMenu(
 	)
 }
 
-export function trayIconPath(resourcesPath: string): string | undefined {
-	const packaged = join(resourcesPath, "icon.png")
+function iconPathIn(resourcesPath: string, file: string): string | undefined {
+	const packaged = join(resourcesPath, file)
 	if (existsSync(packaged)) return packaged
-	const dev = join(app.getAppPath(), "resources", "icon.png")
+	const dev = join(app.getAppPath(), "resources", file)
 	if (existsSync(dev)) return dev
 	return undefined
+}
+
+/** 512×512 window icon; also the exe/runtime icon in packaged layouts. */
+export function windowIconPath(resourcesPath: string): string | undefined {
+	return iconPathIn(resourcesPath, "icon.png")
+}
+
+/** 32×32 tray icon (Windows trays render 16–32 px; feeding 512 turns muddy). */
+export function trayIconPath(resourcesPath: string): string | undefined {
+	return iconPathIn(resourcesPath, "tray.png")
 }
