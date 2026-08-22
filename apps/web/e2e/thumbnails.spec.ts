@@ -13,7 +13,7 @@ const FILE_PLUGIN_ID = "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
 test.describe("thumbnails", () => {
 	test.setTimeout(60_000)
 
-	test("imageless resource shows the plugin-type tile, never an img", async ({
+	test("imageless resource shows the name tile, never an img", async ({
 		page,
 		request,
 	}) => {
@@ -35,11 +35,11 @@ test.describe("thumbnails", () => {
 		await expect(page.getByTestId(`resource-thumb-${id}`)).toBeAttached({
 			timeout: 20_000,
 		})
-		// The cover route 404s: the empty tile carries the owning plugin's
+		// The cover route 404s: the empty tile carries the resource's
 		// name and the img element is removed entirely.
 		const emptyTile = page.getByTestId(`resource-thumb-empty-${id}`)
 		await expect(emptyTile).toBeAttached({ timeout: 20_000 })
-		await expect(emptyTile).toContainText("File")
+		await expect(emptyTile).toContainText("notes")
 		await expect(
 			page.getByTestId(`resource-thumb-img-${id}`),
 		).not.toBeAttached()
