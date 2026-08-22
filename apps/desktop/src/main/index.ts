@@ -361,8 +361,8 @@ async function resolveAppUrl(runtime: Runtime): Promise<string | undefined> {
 			title: "hoardodile",
 			message: "The Vite SPA server is not running.",
 			detail:
-				`Desktop dest loads ${spaUrl} for HMR. ` +
-				"Start `pnpm dest` (Vite :5173) in another terminal, then Retry.",
+				`Desktop dev loads ${spaUrl} for HMR. ` +
+				"Start `pnpm desktop` (or set HOARDODILE_WEB_URL to the running SPA), then Retry.",
 			buttons: ["Retry", "Cancel"],
 			defaultId: 0,
 			cancelId: 1,
