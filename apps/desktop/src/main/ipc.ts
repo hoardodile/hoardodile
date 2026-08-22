@@ -16,6 +16,7 @@ import {
 } from "electron"
 import { IPC } from "../shared/ipc.ts"
 import type { DesktopConfig } from "./config.ts"
+import { setWindowAppRoutes } from "./window.ts"
 
 export type IpcHost = {
 	getConfig: () => DesktopConfig
@@ -45,6 +46,7 @@ export type IpcHost = {
 	updateStatus: () => DesktopUpdateState
 	checkUpdates: () => Promise<void>
 	quitAndInstall: () => Promise<void>
+	openExternal: (url: string) => void
 }
 
 export function registerIpc(host: IpcHost): void {
@@ -148,6 +150,23 @@ export function registerIpc(host: IpcHost): void {
 	ipcMain.handle(IPC.wizardDefaults, () => ({
 		libraryPath: host.defaultLibraryPath(),
 	}))
+	// The SPA routes non-app navigation here (ExternalLink). Only http(s)
+	// ever reaches the OS browser; the shell's own navigation policy is the
+	// backstop for anything that bypasses the renderer (JS navigation).
+	ipcMain.on(IPC.openExternal, (_event, url: unknown) => {
+		if (typeof url !== "string" || !isHttpUrl(url)) {
+			console.warn(`[desktop] ignored openExternal: ${String(url)}`)
+			return
+		}
+		host.openExternal(url)
+	})
+	// SPA route path patterns (from the TanStack route tree) the app-window
+	// navigation policy matches against; see window.ts.
+	ipcMain.on(IPC.appRoutes, (event, paths: unknown) => {
+		const win = windowFrom(event)
+		if (win === undefined) return
+		setWindowAppRoutes(win, parseAppRoutes(paths))
+	})
 }
 
 export function bindWindowMaximizeEvents(win: BrowserWindow): void {
@@ -180,6 +199,36 @@ function isValidPort(value: unknown): value is number {
 
 function isCloseAction(value: unknown): value is DesktopConfig["closeAction"] {
 	return value === "ask" || value === "tray" || value === "quit"
+}
+
+const MAX_APP_ROUTES = 200
+const MAX_ROUTE_LENGTH = 200
+
+function parseAppRoutes(value: unknown): string[] {
+	if (!Array.isArray(value)) return []
+	const routes: string[] = []
+	for (const entry of value) {
+		if (
+			typeof entry !== "string" ||
+			entry.length === 0 ||
+			entry.length > MAX_ROUTE_LENGTH ||
+			!entry.startsWith("/")
+		) {
+			continue
+		}
+		routes.push(entry)
+		if (routes.length >= MAX_APP_ROUTES) break
+	}
+	return routes
+}
+
+function isHttpUrl(url: string): boolean {
+	try {
+		const parsed = new URL(url)
+		return parsed.protocol === "http:" || parsed.protocol === "https:"
+	} catch {
+		return false
+	}
 }
 
 function isConfigPatch(

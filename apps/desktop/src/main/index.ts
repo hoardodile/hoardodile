@@ -16,6 +16,7 @@ import {
 	dialog,
 	Notification,
 	session,
+	shell,
 	type Tray,
 } from "electron"
 import { HIDDEN_SWITCH, IPC } from "../shared/ipc.ts"
@@ -788,6 +789,11 @@ async function boot(): Promise<void> {
 			runtime.quitting = true
 			await runtime.sidecar?.stop()
 			runtime.updater?.quitAndInstall()
+		},
+		openExternal: (url) => {
+			// Validation happened in the IPC handler; the shell never opens
+			// anything but http(s) from the renderer.
+			void shell.openExternal(url)
 		},
 	})
 

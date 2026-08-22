@@ -24,6 +24,7 @@ Server has no CLI flags; config from env vars validated in `apps/server/src/conf
 - Prefer type inference; use type guards / assertion functions / `satisfies` instead of `as`. Avoid arrow functions assigned to `let`/`const`.
 - React Compiler is enabled; plain-function component calls outside React render need `"use no memo"`.
 - Check `DESIGN.md` before designing or reshaping any UI.
+- Links outside the SPA must go through `ExternalLink` (`apps/web/src/components/common/ExternalLink.tsx` → `openExternalUrl`); bare `target="_blank"` anchors, literal external `href`s and stray `window.open` calls are blocked by `scripts/guard-external-links.mjs` (pre-commit). On desktop the shell additionally lets a same-origin navigation replace the app window only for SPA routes registered at boot (`registerAppRoutes`, patterns from `routeTree.gen.ts`); every other URL opens in the OS browser — see `apps/desktop/src/main/urls.ts`.
 - Never edit non-ASCII files (i18n JSON, docs) via PowerShell `Get-Content`/`Set-Content` string replacement — the ANSI round-trip corrupts UTF-8. Use the edit tool, or `[System.IO.File]::ReadAllText`/`WriteAllText` at most.
 
 ## Dependencies

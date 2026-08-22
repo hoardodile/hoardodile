@@ -1,5 +1,6 @@
 import { Link } from "@hoardodile/ui/icons/registry"
 import { useTranslation } from "react-i18next"
+import { ExternalLink } from "@/components/common/ExternalLink"
 import { TagChip } from "@/features/tags/TagChip"
 
 /** Prepend `https://` when the user pasted a scheme-less address. */
@@ -46,14 +47,9 @@ export function SourceChip(props: SourceChipProps) {
 			}
 			render={
 				href !== undefined ? (
-					<a
-						href={href}
-						target="_blank"
-						rel="noopener noreferrer"
-						data-testid="source-chip-link"
-					>
+					<ExternalLink href={href} data-testid="source-chip-link">
 						{label}
-					</a>
+					</ExternalLink>
 				) : undefined
 			}
 		>

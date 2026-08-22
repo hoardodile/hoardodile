@@ -5,8 +5,24 @@ import { CharChip } from "./CharChip"
 
 const openSpy = vi.spyOn(window, "open").mockImplementation(() => null)
 
+const { navigateMock, desktopMock } = vi.hoisted(() => ({
+	navigateMock: vi.fn(),
+	desktopMock: vi.fn(),
+}))
+
+vi.mock("@tanstack/react-router", () => ({
+	useNavigate: () => navigateMock,
+}))
+
+vi.mock("@/lib/desktop", () => ({
+	isHoardodileDesktop: () => desktopMock(),
+}))
+
 afterEach(() => {
 	openSpy.mockClear()
+	navigateMock.mockClear()
+	desktopMock.mockReset()
+	desktopMock.mockReturnValue(false)
 })
 
 const char = { name: "Aria", updatedAt: 0 }
@@ -47,6 +63,18 @@ describe("CharChip", () => {
 		render(<CharChip charId="c1" character={char} />)
 		await user.click(chipButtons()[0]!)
 		expect(openSpy).toHaveBeenCalledTimes(1)
+	})
+
+	test("the desktop shell navigates in-app instead of window.open", async () => {
+		desktopMock.mockReturnValue(true)
+		const user = userEvent.setup()
+		render(<CharChip charId="c1" character={char} />)
+		await user.click(chipButtons()[0]!)
+		expect(openSpy).not.toHaveBeenCalled()
+		expect(navigateMock).toHaveBeenCalledWith({
+			to: "/characters/$id",
+			params: { id: "c1" },
+		})
 	})
 
 	test("disableLink renders no button at all", () => {

@@ -9,6 +9,7 @@ import { createFileRoute } from "@tanstack/react-router"
 import { useMemo, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { z } from "zod"
+import { ExternalLink } from "@/components/common/ExternalLink"
 import {
 	DetailPanel,
 	DetailPanelTrigger,
@@ -320,10 +321,8 @@ function ResDetailRoute() {
 				) : null}
 				<span>{formatter.formatDateTime(resource.createdAt)}</span>
 				{resource.sourceUrl !== undefined ? (
-					<a
+					<ExternalLink
 						href={withScheme(resource.sourceUrl)}
-						target="_blank"
-						rel="noopener noreferrer"
 						className="inline-flex items-center gap-1 hover:underline"
 						data-testid="resource-detail-source"
 					>
@@ -331,7 +330,7 @@ function ResDetailRoute() {
 						{t("resources.detail.sourceFrom", {
 							name: resource.sourceName ?? t("resources.source.fallback"),
 						})}
-					</a>
+					</ExternalLink>
 				) : resource.sourceName !== undefined ? (
 					<span data-testid="resource-detail-source">
 						{t("resources.detail.sourceFrom", {

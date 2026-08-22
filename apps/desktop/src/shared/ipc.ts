@@ -30,4 +30,6 @@ export const IPC = {
 	shellCacheClear: "desktop:shell-cache:clear",
 	completeWizard: "desktop:wizard:complete",
 	wizardDefaults: "desktop:wizard:defaults",
+	openExternal: "desktop:shell:open-external",
+	appRoutes: "desktop:app:routes",
 } as const

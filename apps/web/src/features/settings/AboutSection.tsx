@@ -10,6 +10,7 @@ import { cn } from "@hoardodile/ui/lib/utils"
 import type { ReactNode } from "react"
 import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
+import { ExternalLink } from "@/components/common/ExternalLink"
 import { APP_REPOSITORY_URL, APP_VERSION } from "@/lib/appInfo"
 import { getDesktopBridge } from "@/lib/desktop"
 import { checkForUpdate, type UpdateCheckResult } from "./checkUpdates"
@@ -78,14 +79,12 @@ function BrowserAboutSection() {
 			{update.status === "outdated" ? (
 				<p className="mt-3 text-tiny" data-testid="me-about-outdated">
 					{t("me.about.outdated", { version: update.version })}{" "}
-					<a
+					<ExternalLink
 						href={update.url}
-						target="_blank"
-						rel="noreferrer"
 						className="text-primary underline-offset-4 hover:underline"
 					>
 						{t("me.about.viewRelease")}
-					</a>
+					</ExternalLink>
 				</p>
 			) : null}
 			{update.status === "error" ? (
@@ -114,14 +113,12 @@ function DesktopAboutSection(props: {
 			<AboutFrame>
 				<p className="mt-3 text-tiny text-muted-foreground">
 					{t("me.about.portableHint")}{" "}
-					<a
+					<ExternalLink
 						href={`${APP_REPOSITORY_URL}/releases`}
-						target="_blank"
-						rel="noreferrer"
 						className="text-primary underline-offset-4 hover:underline"
 					>
 						{t("me.about.viewRelease")}
-					</a>
+					</ExternalLink>
 				</p>
 			</AboutFrame>
 		)
@@ -214,15 +211,13 @@ function AboutFrame(props: {
 						<p className="mt-1.5 text-xs leading-5 text-muted-foreground">
 							{t("me.about.tagline")}
 						</p>
-						<a
+						<ExternalLink
 							href={APP_REPOSITORY_URL}
-							target="_blank"
-							rel="noreferrer"
 							className="mt-2 inline-flex items-center gap-1.5 text-xs text-secondary-foreground hover:text-foreground"
 						>
 							<Icon icon={Link} />
 							{APP_REPOSITORY_URL}
-						</a>
+						</ExternalLink>
 					</div>
 					{props.action}
 				</div>

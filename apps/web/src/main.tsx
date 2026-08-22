@@ -25,7 +25,8 @@ import { readInheritFont } from "@/features/plugin/iframe/use-iframe-slot"
 import { PluginListProvider } from "@/features/plugin/PluginListContext"
 import { PrefsSync } from "@/features/prefs"
 import { initPrefSyncQueue } from "@/features/prefs/prefSyncQueue"
-import { isHoardodileDesktop } from "@/lib/desktop"
+import { collectRoutePaths } from "@/lib/appRoutes"
+import { getDesktopBridge, isHoardodileDesktop } from "@/lib/desktop"
 import { collectFontCssPaths } from "@/lib/fonts"
 import {
 	createQueryClient,
@@ -98,6 +99,13 @@ const router = createRouter({
 	defaultPendingMinMs: 120,
 	defaultPendingComponent: RoutePendingFallback,
 })
+
+// Desktop shell navigation policy: register the SPA's real routes so the
+// main process only ever keeps same-origin navigations that target one of
+// them in the window; every other URL goes to the OS browser.
+if (isHoardodileDesktop()) {
+	getDesktopBridge()?.registerAppRoutes(collectRoutePaths(routeTree))
+}
 
 // Wire the router's navigation lifecycle into the mobile overlay
 // back-to-close hook so it can wait for navigation to resolve before

@@ -90,6 +90,21 @@ export type HoardodileDesktopBridge = {
 	/** The language the SPA last pushed, or undefined before the first push. */
 	getLanguage: () => Promise<string | undefined>
 	/**
+	 * Open a URL in the OS browser. Only http(s) is accepted by the shell;
+	 * anything else is dropped. The SPA routes all non-app navigation
+	 * (external links, non-SPA same-origin paths like `/LICENSE`) through
+	 * this instead of relying on `target="_blank"` anchors.
+	 */
+	openExternal: (url: string) => void
+	/**
+	 * Register the SPA's route path patterns (full paths from the TanStack
+	 * route tree, e.g. `"/characters/$id"`). The shell lets a same-origin
+	 * navigation replace the app window only when its pathname matches one
+	 * of these; every other URL goes to the OS browser. Sent once at app
+	 * boot; new routes take effect automatically.
+	 */
+	registerAppRoutes: (paths: readonly string[]) => void
+	/**
 	 * Execute a close decision from the renderer's confirm dialog: hide to
 	 * tray (window closes, app stays in the tray) or quit. When `remember`
 	 * is true the choice is persisted as the close action.

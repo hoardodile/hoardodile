@@ -583,6 +583,8 @@ function installDesktopBridge() {
 		async getWizardDefaults() {
 			return { libraryPath: "" }
 		},
+		openExternal() {},
+		registerAppRoutes() {},
 	}
 	window.hoardodileDesktop = bridge
 }

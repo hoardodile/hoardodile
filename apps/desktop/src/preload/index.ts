@@ -122,6 +122,17 @@ const bridge: HoardodileDesktopBridge = {
 	retryLoad() {
 		ipcRenderer.send(IPC.windowRetryLoad)
 	},
+	// Route all non-app navigation through the shell: the main process
+	// validates http(s) and hands the URL to the OS browser.
+	openExternal(url: string) {
+		ipcRenderer.send(IPC.openExternal, url)
+	},
+	// SPA route patterns (TanStack route tree full paths). The shell only
+	// lets a same-origin navigation replace the app window when its
+	// pathname matches one of these.
+	registerAppRoutes(paths: readonly string[]) {
+		ipcRenderer.send(IPC.appRoutes, paths)
+	},
 	async isMaximized() {
 		return (await invokeUnknown(IPC.windowIsMaximized)) === true
 	},

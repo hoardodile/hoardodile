@@ -1,7 +1,11 @@
 import { join } from "node:path"
 import { app, BrowserWindow, nativeTheme, shell } from "electron"
 import { SERVER_ERROR_MESSAGE } from "./error-page.ts"
-import { windowOpenDecision } from "./urls.ts"
+import {
+	appWindowDecision,
+	type WindowOpenDecision,
+	wizardWindowDecision,
+} from "./urls.ts"
 import { windowBackgroundColor } from "./window-background.ts"
 
 export type WindowKind = "wizard" | "app"
@@ -83,14 +87,30 @@ export function createDesktopWindow(
 	attachRendererDiagnostics(win)
 	bindNativeThemeBackground()
 
+	/**
+	 * App windows may keep the window only for registered SPA routes on the
+	 * app origin; wizard windows keep the historical loopback rule.
+	 */
+	function windowDecision(url: string): WindowOpenDecision {
+		if (options.kind === "app") {
+			return appWindowDecision(
+				url,
+				win.webContents.getURL(),
+				appRoutesByWindow.get(win) ?? [],
+			)
+		}
+		return wizardWindowDecision(url)
+	}
+
 	win.webContents.setWindowOpenHandler(({ url }) => {
-		applyWindowOpenDecision(win, url)
+		applyWindowOpenDecision(win, windowDecision(url), url)
 		return { action: "deny" }
 	})
 	win.webContents.on("will-navigate", (event, url) => {
-		if (windowOpenDecision(url) === "same-window") return
+		const decision = windowDecision(url)
+		if (decision === "same-window") return
 		event.preventDefault()
-		applyWindowOpenDecision(win, url)
+		applyWindowOpenDecision(win, decision, url)
 	})
 
 	win.once("ready-to-show", () => {
@@ -151,15 +171,37 @@ function loadWindow(win: BrowserWindow, options: CreateWindowOptions): void {
 	void win.loadURL(options.url)
 }
 
-function applyWindowOpenDecision(win: BrowserWindow, url: string): void {
-	const decision = windowOpenDecision(url)
+/**
+ * SPA route path patterns per app window, registered by the renderer via
+ * the `desktop:app:routes` IPC once the SPA boots. The app window must
+ * match one of these (on the app origin) before a navigation may replace
+ * it; every other URL goes to the OS browser. WeakMap: single app window,
+ * patterns die with it.
+ */
+const appRoutesByWindow = new WeakMap<BrowserWindow, readonly string[]>()
+
+export function setWindowAppRoutes(
+	win: BrowserWindow,
+	appRoutes: readonly string[],
+): void {
+	appRoutesByWindow.set(win, appRoutes)
+}
+
+function applyWindowOpenDecision(
+	win: BrowserWindow,
+	decision: WindowOpenDecision,
+	url: string,
+): void {
 	if (decision === "same-window") {
 		void win.loadURL(url)
 		return
 	}
 	if (decision === "external") {
+		console.warn(`[desktop] opening in OS browser: ${url}`)
 		void shell.openExternal(url)
+		return
 	}
+	console.warn(`[desktop] blocked navigation: ${url}`)
 }
 
 function attachRendererDiagnostics(win: BrowserWindow): void {

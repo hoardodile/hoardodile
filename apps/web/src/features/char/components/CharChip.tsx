@@ -1,9 +1,11 @@
 import type { Character } from "@hoardodile/schemas"
 import { cn } from "@hoardodile/ui/lib/utils"
+import { useNavigate } from "@tanstack/react-router"
 import type { CSSProperties, ReactNode } from "react"
 import { useTranslation } from "react-i18next"
 import { SpecialTagSurface } from "@/features/tags/SpecialTagSurface"
 import { resolveTagChipSurface } from "@/features/tags/tagSurface"
+import { isHoardodileDesktop } from "@/lib/desktop"
 import { CharThumb } from "./CharThumb"
 
 export type CharChipProps = {
@@ -97,6 +99,7 @@ export function CharChip(props: CharChipProps) {
 		testId,
 	} = props
 	const { t } = useTranslation()
+	const navigate = useNavigate()
 	// Pill anatomy: a 20px circular avatar (`size-5`), `text-xs` label.
 	const dim = "size-5"
 	const isViewOnly = onRemove === undefined
@@ -144,6 +147,13 @@ export function CharChip(props: CharChipProps) {
 	}
 
 	function openCharacterDetail() {
+		if (isHoardodileDesktop()) {
+			// The shell is single-window: navigate the SPA in place instead
+			// of reloading the whole app (window.open would be re-routed
+			// into a full page load).
+			void navigate({ to: "/characters/$id", params: { id: charId } })
+			return
+		}
 		window.open(`/characters/${charId}`, "_blank", "noopener,noreferrer")
 	}
 

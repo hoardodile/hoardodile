@@ -30,8 +30,10 @@ describe("SourceChip", () => {
 		)
 		const link = screen.getByTestId("source-chip-link")
 		expect(link).toHaveAttribute("href", "https://example.com/a")
-		expect(link).toHaveAttribute("target", "_blank")
 		expect(link).toHaveAttribute("rel", "noopener noreferrer")
+		// ExternalLink semantics: no target — clicks route through the
+		// shell's openExternal (desktop) or a new tab (browser).
+		expect(link).not.toHaveAttribute("target")
 		expect(link).toHaveClass("px-2")
 		expect(screen.getByText("ArtSite")).toBeInTheDocument()
 	})

@@ -3,6 +3,7 @@ import { Badge } from "@hoardodile/ui/components/badge"
 import { Button } from "@hoardodile/ui/components/button"
 import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
+import { ExternalLink } from "@/components/common/ExternalLink"
 import { SettingsSection } from "./SettingsSection"
 
 type LicensePackage = {
@@ -84,14 +85,12 @@ export function LicensesDialog(props: LicensesDialogProps) {
 				>
 					<div className="flex items-center gap-2">
 						<Badge variant="secondary">{data?.project.license}</Badge>
-						<a
+						<ExternalLink
 							href="/LICENSE"
-							target="_blank"
-							rel="noreferrer"
 							className="text-xs text-primary underline-offset-4 hover:underline"
 						>
 							{t("me.licenses.fullLicense")}
-						</a>
+						</ExternalLink>
 					</div>
 				</SettingsSection>
 
@@ -104,14 +103,12 @@ export function LicensesDialog(props: LicensesDialogProps) {
 										{font.family}
 									</span>
 									<span className="ml-2">
-										<a
+										<ExternalLink
 											href={font.licenseUrl}
-											target="_blank"
-											rel="noreferrer"
 											className="hover:underline"
 										>
 											{font.license}
-										</a>
+										</ExternalLink>
 									</span>
 									<span className="ml-2">— {font.attribution}</span>
 								</li>
@@ -150,14 +147,12 @@ export function LicensesDialog(props: LicensesDialogProps) {
 												className="text-xs text-muted-foreground"
 											>
 												{pkg.repository ? (
-													<a
+													<ExternalLink
 														href={pkg.repository}
-														target="_blank"
-														rel="noreferrer"
 														className="font-medium text-foreground hover:underline"
 													>
 														{pkg.name}
-													</a>
+													</ExternalLink>
 												) : (
 													<span className="font-medium text-foreground">
 														{pkg.name}

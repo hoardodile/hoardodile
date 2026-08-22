@@ -3,7 +3,26 @@
  */
 
 import { describe, expect, it } from "vitest"
-import { isHttpReachable, isLocalhostHttp, windowOpenDecision } from "./urls.ts"
+import {
+	appWindowDecision,
+	isHttpReachable,
+	isLocalhostHttp,
+	matchesAppRoute,
+	wizardWindowDecision,
+} from "./urls.ts"
+
+/** Stand-in for the route patterns the SPA registers at boot. */
+const ROUTES = [
+	"/",
+	"/login",
+	"/documents",
+	"/documents/$id",
+	"/characters/$id",
+	"/characters/new",
+	"/resources/$id",
+	"/settings/about",
+	"/settings/data",
+]
 
 describe("isLocalhostHttp", () => {
 	it("allows loopback http(s)", () => {
@@ -19,24 +38,146 @@ describe("isLocalhostHttp", () => {
 	})
 })
 
-describe("windowOpenDecision", () => {
-	it("keeps loopback in the existing window", () => {
-		expect(windowOpenDecision("http://127.0.0.1:3000/login")).toBe(
-			"same-window",
-		)
-		expect(windowOpenDecision("https://localhost/x")).toBe("same-window")
+describe("matchesAppRoute", () => {
+	it("matches literal and param segments", () => {
+		expect(matchesAppRoute("/characters/r-1", ROUTES)).toBe(true)
+		expect(matchesAppRoute("/characters/new", ROUTES)).toBe(true)
+		expect(matchesAppRoute("/settings/data", ROUTES)).toBe(true)
 	})
 
-	it("sends non-localhost http(s) to the OS browser", () => {
-		expect(windowOpenDecision("https://github.com/hoardodile/hoardodile")).toBe(
+	it("ignores trailing slashes", () => {
+		expect(matchesAppRoute("/characters/r-1/", ROUTES)).toBe(true)
+		expect(matchesAppRoute("/characters/", ["/characters"])).toBe(true)
+		expect(matchesAppRoute("/characters/r-1", ["/characters/$id/"])).toBe(true)
+	})
+
+	it("rejects non-route paths", () => {
+		expect(matchesAppRoute("/LICENSE", ROUTES)).toBe(false)
+		expect(matchesAppRoute("/api/plugins/gallery/index.html", ROUTES)).toBe(
+			false,
+		)
+		expect(matchesAppRoute("/sw.js", ROUTES)).toBe(false)
+		expect(matchesAppRoute("/characters/r-1/edit", ROUTES)).toBe(false)
+		expect(matchesAppRoute("/characters", ["/characters/$id"])).toBe(false)
+	})
+
+	it("decodes percent-encoded path segments", () => {
+		expect(matchesAppRoute("/characters/a%2Fb", ["/characters/$id"])).toBe(true)
+	})
+
+	it("handles the root separately from child paths", () => {
+		expect(matchesAppRoute("/", ["/", "/login"])).toBe(true)
+		expect(matchesAppRoute("/", ["/login"])).toBe(false)
+		expect(matchesAppRoute("/login", ["/"])).toBe(false)
+	})
+})
+
+describe("appWindowDecision", () => {
+	const APP_URL = "http://127.0.0.1:3000/"
+
+	it("keeps registered same-origin routes in the window", () => {
+		expect(
+			appWindowDecision(
+				"http://127.0.0.1:3000/characters/r-1",
+				APP_URL,
+				ROUTES,
+			),
+		).toBe("same-window")
+		expect(
+			appWindowDecision(
+				"http://127.0.0.1:3000/settings/data?tab=1",
+				APP_URL,
+				ROUTES,
+			),
+		).toBe("same-window")
+	})
+
+	it("treats localhost and 127.0.0.1 on the same port as one origin", () => {
+		expect(
+			appWindowDecision(
+				"http://localhost:3000/characters/r-1",
+				APP_URL,
+				ROUTES,
+			),
+		).toBe("same-window")
+	})
+
+	it("sends same-origin non-SPA paths to the OS browser", () => {
+		expect(
+			appWindowDecision("http://127.0.0.1:3000/LICENSE", APP_URL, ROUTES),
+		).toBe("external")
+		expect(
+			appWindowDecision(
+				"http://127.0.0.1:3000/api/plugins/gallery/index.html",
+				APP_URL,
+				ROUTES,
+			),
+		).toBe("external")
+		expect(
+			appWindowDecision("http://127.0.0.1:3000/sw.js", APP_URL, ROUTES),
+		).toBe("external")
+	})
+
+	it("sends other loopback ports or hosts to the OS browser", () => {
+		expect(appWindowDecision("http://127.0.0.1:8080/", APP_URL, ROUTES)).toBe(
 			"external",
 		)
-		expect(windowOpenDecision("http://example.com")).toBe("external")
+		expect(appWindowDecision("http://localhost:5173/", APP_URL, ROUTES)).toBe(
+			"external",
+		)
+	})
+
+	it("sends non-loopback http(s) to the OS browser", () => {
+		expect(
+			appWindowDecision(
+				"https://github.com/hoardodile/hoardodile",
+				APP_URL,
+				ROUTES,
+			),
+		).toBe("external")
+		expect(appWindowDecision("http://example.com", APP_URL, ROUTES)).toBe(
+			"external",
+		)
 	})
 
 	it("denies non-http schemes", () => {
-		expect(windowOpenDecision("file:///C:/tmp")).toBe("deny")
-		expect(windowOpenDecision("about:blank")).toBe("deny")
+		expect(appWindowDecision("file:///C:/tmp", APP_URL, ROUTES)).toBe("deny")
+		expect(appWindowDecision("about:blank", APP_URL, ROUTES)).toBe("deny")
+		expect(appWindowDecision("mailto:x@y.z", APP_URL, ROUTES)).toBe("deny")
+	})
+
+	it("allows only the app root before routes are registered", () => {
+		expect(appWindowDecision("http://127.0.0.1:3000/", APP_URL, [])).toBe(
+			"same-window",
+		)
+		expect(appWindowDecision("http://127.0.0.1:3000/login", APP_URL, [])).toBe(
+			"external",
+		)
+	})
+
+	it("never keeps a URL whose current frame is not the app", () => {
+		expect(
+			appWindowDecision("http://127.0.0.1:3000/login", "about:blank", ROUTES),
+		).toBe("external")
+	})
+})
+
+describe("wizardWindowDecision", () => {
+	it("keeps loopback in the existing window", () => {
+		expect(wizardWindowDecision("http://127.0.0.1:5174/")).toBe("same-window")
+		expect(wizardWindowDecision("https://localhost/x")).toBe("same-window")
+	})
+
+	it("sends non-localhost http(s) to the OS browser", () => {
+		expect(
+			wizardWindowDecision("https://github.com/hoardodile/hoardodile"),
+		).toBe("external")
+		expect(wizardWindowDecision("http://example.com")).toBe("external")
+	})
+
+	it("denies non-http schemes", () => {
+		expect(wizardWindowDecision("file:///C:/tmp")).toBe("deny")
+		expect(wizardWindowDecision("about:blank")).toBe("deny")
 	})
 })
 

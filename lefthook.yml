@@ -14,3 +14,5 @@ pre-commit:
       run: pnpm version:check
     - name: versioned-write-guard
       run: node scripts/guard-versions.mjs --staged
+    - name: external-link-guard
+      run: node scripts/guard-external-links.mjs --staged
