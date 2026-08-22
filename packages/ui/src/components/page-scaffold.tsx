@@ -30,7 +30,7 @@ type PageScaffoldProps = {
 
 function frameClassName(props: PageScaffoldProps) {
 	return cn(
-		"px-3 md:px-4 md:pt-4.5 lg:px-10",
+		"pb-4 px-3 md:px-4 md:pt-4.5 lg:px-10",
 		props.bottomPad !== false && "lg:pb-16",
 		props.className,
 	)
