@@ -11,7 +11,7 @@ import { defineConfig } from "vitest/config"
 
 const serverTarget = process.env.VITE_SERVER_URL ?? "http://127.0.0.1:3000"
 
-// Dev tooling defaults (web SPA, desktop wizard, API relay) are owned here
+// Dev tooling defaults (web SPA, desktop wizard) are owned here
 // so changing a port in one place never desyncs the rest.
 const devPorts: { spa: number } = JSON.parse(
 	readFileSync(

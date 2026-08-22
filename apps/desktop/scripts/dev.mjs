@@ -1,33 +1,31 @@
 #!/usr/bin/env node
 /**
- * One-command desktop dev loop: `pnpm desktop`.
+ * Desktop dev loop: `pnpm desktop` (run `pnpm dev` in another terminal).
+ *
+ * Desktop and web dev are independent: this script NEVER starts or owns the
+ * SPA. The SPA Vite is expected to run separately (`pnpm dev`, or
+ * `HOARDODILE_WEB_URL` on a custom port); this script waits for it and fails
+ * fast with a clear message when it is missing — no in-app Retry dialog, no
+ * side effects on the SPA server.
  *
  * Default ports come from `scripts/lib/dev-ports.json` (change them there,
- * not here): the SPA default, the wizard default, and the API relay.
- * - SPA: reuses an already-running hoardodile Vite (`pnpm dev` on the SPA
- *   port) when detected; otherwise starts an in-process Vite on the first
- *   free port at or above it. Owned servers bind 127.0.0.1 explicitly —
- *   Vite's default `localhost` binding may resolve to ::1 only and leave
- *   IPv4 unreachable.
+ * not here): the SPA default and the wizard default.
+ * - SPA: probed at the SPA default to confirm a hoardodile Vite is already
+ *   served (content-type `text/javascript`); anything else on that port
+ *   keeps the wait running until the timeout message.
  * - Wizard: in-process Vite on the first free port at or above the wizard
  *   default (the wizard config pins it with strictPort, which fails when
  *   occupied).
  * - Electron: spawned with HOARDODILE_WEB_URL / ELECTRON_WIZARD_URL /
  *   HOARDODILE_WORKSPACE; stopped as a process tree so the vite-node sidecar
  *   it spawned does not outlive a Ctrl+C.
- * - HOARDODILE_WEB_URL: explicit SPA to reuse; the script waits for it and
- *   fails fast with a clear message instead of the in-app Retry dialog.
- * - API relay: when the script owns the SPA it points the SPA's own
- *   proxy target (`VITE_SERVER_URL`, default 127.0.0.1:3000 where nothing
- *   listens in the desktop flow) at a live 503 responder. API calls from
- *   the desktop window reach the sidecar through main's dest proxy; this
- *   relay only prevents ECONNREFUSED noise from browser tabs and from
- *   requests that race the proxy install after the window opens.
+ * - API routing in the desktop window is main's dest proxy
+ *   (`apps/desktop/src/main/dest-api-proxy.ts`); the SPA's own `VITE_SERVER_URL`
+ *   proxy target is never touched here.
  */
 import { spawn } from "node:child_process"
 import { setDefaultResultOrder } from "node:dns"
 import { existsSync, readFileSync } from "node:fs"
-import { createServer as createHttpServer } from "node:http"
 import { createRequire } from "node:module"
 import { dirname, resolve } from "node:path"
 import { setTimeout as delay } from "node:timers/promises"
@@ -39,7 +37,6 @@ setDefaultResultOrder("ipv4first")
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..")
 const workspaceRoot = resolve(root, "../..")
-const webRoot = resolve(workspaceRoot, "apps", "web")
 const require = createRequire(import.meta.url)
 const electronExe = require("electron")
 const devPorts = JSON.parse(
@@ -58,7 +55,7 @@ const SPA_REUSE_URL = `http://localhost:${devPorts.spa}`
 
 async function main() {
 	ensurePluginDists()
-	const spa = await resolveSpa()
+	const spaUrl = await resolveSpaUrl()
 	const wizard = await startWizard()
 
 	await build({ configFile: resolve(root, "vite.main.config.ts") })
@@ -70,17 +67,14 @@ async function main() {
 		env: {
 			...process.env,
 			ELECTRON_WIZARD_URL: wizard.url,
-			HOARDODILE_WEB_URL: spa.url,
+			HOARDODILE_WEB_URL: spaUrl,
 			HOARDODILE_WORKSPACE: workspaceRoot,
 		},
 	})
 	console.log(
 		`[desktop] electron started (pid ${String(child.pid)}) — Ctrl+C stops everything`,
 	)
-	registerShutdown(child, [
-		wizard.server,
-		...(spa.owned ? [spa.server, spa.relay] : []),
-	])
+	registerShutdown(child, [wizard.server])
 }
 
 /**
@@ -115,7 +109,14 @@ function ensurePluginDists() {
 	}
 }
 
-async function resolveSpa() {
+/**
+ * Resolve the SPA URL to reuse. The SPA is started by its own process
+ * (`pnpm dev`) — the desktop never starts it. Explicit override via
+ * HOARDODILE_WEB_URL is reachability-checked only; the default is probed
+ * for a hoardodile SPA so a foreign server on the port fails with a clear
+ * message instead of loading garbage into the window.
+ */
+async function resolveSpaUrl() {
 	const explicit = process.env.HOARDODILE_WEB_URL
 	if (explicit !== undefined && explicit.length > 0) {
 		console.log(`[desktop] waiting for HOARDODILE_WEB_URL ${explicit}`)
@@ -124,57 +125,17 @@ async function resolveSpa() {
 			20_000,
 			`SPA at ${explicit} did not become reachable (is it running?)`,
 		)
-		return { url: explicit, owned: false, server: undefined, relay: undefined }
+		return explicit
 	}
-	if (await isHoardodileSpa(SPA_PROBE)) {
-		console.log(
-			`[desktop] reusing SPA at ${SPA_REUSE_URL} (started by \`pnpm dev\`)`,
-		)
-		return {
-			url: SPA_REUSE_URL,
-			owned: false,
-			server: undefined,
-			relay: undefined,
-		}
-	}
-	const relay = await startApiRelay()
-	// The desktop flow serves the SPA's API through main's dest proxy; the
-	// SPA's own proxy target only exists so requests land on a live server
-	// instead of an ECONNREFUSED 127.0.0.1:3000.
-	process.env.VITE_SERVER_URL = relay.url
-	const port = await getPort({ host: "127.0.0.1", port: devPorts.spa })
-	const url = `http://127.0.0.1:${port}`
-	const server = await createServer({
-		configFile: resolve(webRoot, "vite.config.ts"),
-		// The web config declares no `root`; without one Vite would serve the
-		// script's cwd (apps/desktop). Other fields merge from the config file.
-		root: webRoot,
-		server: { host: "127.0.0.1", port, strictPort: true },
-	})
-	await server.listen()
-	await waitForHttp(`${url}/`, 20_000, `SPA at ${url} did not start`)
-	console.log(`[desktop] started SPA at ${url} (api relay ${relay.url})`)
-	return { url, owned: true, server, relay }
-}
-
-async function startApiRelay() {
-	const port = await getPort({ host: "127.0.0.1", port: devPorts.relay })
-	const url = `http://127.0.0.1:${port}`
-	const server = createHttpServer((_req, res) => {
-		res.writeHead(503, { "content-type": "application/json" })
-		res.end(
-			JSON.stringify({
-				error:
-					"hoardodile API is served by the desktop window (sidecar proxy); browser tabs get no data",
-			}),
-		)
-	})
-	return new Promise((promiseResolve, promiseReject) => {
-		server.once("error", promiseReject)
-		server.listen(port, "127.0.0.1", () => {
-			promiseResolve({ url, server })
-		})
-	})
+	await waitFor(
+		() => isHoardodileSpa(SPA_PROBE),
+		20_000,
+		`hoardodile SPA not found at ${SPA_REUSE_URL} — start \`pnpm dev\` in another terminal (or set HOARDODILE_WEB_URL)`,
+	)
+	console.log(
+		`[desktop] reusing SPA at ${SPA_REUSE_URL} (started by \`pnpm dev\`)`,
+	)
+	return SPA_REUSE_URL
 }
 
 async function startWizard() {
@@ -235,14 +196,24 @@ function registerShutdown(child, servers) {
 }
 
 async function waitForHttp(url, timeoutMs, message) {
+	await waitFor(
+		async () => {
+			try {
+				const res = await fetch(url, { signal: AbortSignal.timeout(1_000) })
+				return res.ok
+			} catch {
+				return false
+			}
+		},
+		timeoutMs,
+		message,
+	)
+}
+
+async function waitFor(predicate, timeoutMs, message) {
 	const deadline = Date.now() + timeoutMs
 	while (Date.now() < deadline) {
-		try {
-			const res = await fetch(url, { signal: AbortSignal.timeout(1_000) })
-			if (res.ok) return
-		} catch {
-			// not listening yet
-		}
+		if (await predicate()) return
 		await delay(150)
 	}
 	throw new Error(message)
