@@ -170,9 +170,9 @@ describe("AppShell sidebar", () => {
 		expect(sidebar?.querySelector('a[href="/resources"]')).not.toBeNull()
 		expect(sidebar?.querySelector('a[href="/messages"]')).not.toBeNull()
 		expect(sidebar?.querySelector('a[href="/settings"]')).not.toBeNull()
-		// The storage strip is the shell's way to Settings → App.
+		// The storage strip is the shell's way to Settings → Data.
 		await waitFor(() => {
-			expect(container.querySelector('a[href="/settings/app"]')).not.toBeNull()
+			expect(container.querySelector('a[href="/settings/data"]')).not.toBeNull()
 		})
 	})
 
@@ -278,7 +278,7 @@ describe("AppShell module menu", () => {
 			sidebar.querySelector('[data-testid="global-search-input"]'),
 		).toBeNull()
 		expect(sidebar.querySelector('a[href="/settings"]')).toBeNull()
-		expect(sidebar.querySelector('a[href="/settings/app"]')).toBeNull()
+		expect(sidebar.querySelector('a[href="/settings/data"]')).toBeNull()
 		expect(sidebar.querySelector('a[href="/characters"]')).toBeNull()
 		const slot = sidebar.querySelector("[data-sidebar-slot]")
 		expect(slot).not.toBeNull()
@@ -403,7 +403,7 @@ describe("AppShell storage strip", () => {
 		await findByText("Gallery")
 		await findByText("Archived copies")
 
-		expect(container.querySelector('a[href="/settings/app"]')).not.toBeNull()
+		expect(container.querySelector('a[href="/settings/data"]')).not.toBeNull()
 		// Mock: used 512 B, free 512 B, total 1024 B — total is omitted.
 		expect(container.textContent).toContain("Used 512 B")
 		expect(container.textContent).toContain("512 B free")
@@ -509,6 +509,12 @@ function installDesktopBridge() {
 		},
 		async setLanEnabled() {},
 		async setLanPort() {},
+		async getShellCacheSize() {
+			return 0
+		},
+		async clearShellCache() {
+			return 0
+		},
 		async completeWizard() {},
 		async getWizardDefaults() {
 			return { libraryPath: "" }

@@ -38,6 +38,8 @@ export type IpcHost = {
 	lanInfo: () => LanInfo
 	setLanEnabled: (enabled: boolean) => Promise<void>
 	setLanPort: (port: number) => Promise<void>
+	shellCacheSize: () => Promise<number>
+	shellCacheClear: () => Promise<number>
 	completeWizard: (result: DesktopWizardResult) => void
 	defaultLibraryPath: () => string
 	updateStatus: () => DesktopUpdateState
@@ -137,6 +139,8 @@ export function registerIpc(host: IpcHost): void {
 		if (!isValidPort(port)) return
 		return host.setLanPort(port)
 	})
+	ipcMain.handle(IPC.shellCacheSize, () => host.shellCacheSize())
+	ipcMain.handle(IPC.shellCacheClear, () => host.shellCacheClear())
 	ipcMain.handle(IPC.completeWizard, (_event, result: unknown) => {
 		if (!isWizardResult(result)) return
 		host.completeWizard(result)

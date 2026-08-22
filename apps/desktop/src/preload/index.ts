@@ -210,6 +210,20 @@ const bridge: HoardodileDesktopBridge = {
 	async setLanPort(port) {
 		await invokeUnknown(IPC.setLanPort, port)
 	},
+	async getShellCacheSize() {
+		const raw = await invokeUnknown(IPC.shellCacheSize)
+		if (typeof raw !== "number" || !Number.isFinite(raw)) {
+			throw new Error("desktop shell cache size unavailable")
+		}
+		return raw
+	},
+	async clearShellCache() {
+		const raw = await invokeUnknown(IPC.shellCacheClear)
+		if (typeof raw !== "number" || !Number.isFinite(raw)) {
+			throw new Error("desktop shell cache clear failed")
+		}
+		return raw
+	},
 	async completeWizard(result: DesktopWizardResult) {
 		await invokeUnknown(IPC.completeWizard, result)
 	},

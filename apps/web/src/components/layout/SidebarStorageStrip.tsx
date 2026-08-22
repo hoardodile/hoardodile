@@ -12,7 +12,7 @@ import { formatBytes } from "@/lib/formatBytes"
  * segments, so the muted remainder can never read as free disk. Occupied
  * and remaining disk appear as text (no volume total). Then the top-4
  * owners as a dotted legend. Same anatomy as the Settings → Data
- * breakdown; opens Settings → App. Renders nothing until the overview
+ * breakdown; opens Settings → Data. Renders nothing until the overview
  * has loaded.
  */
 export function SidebarStorageStrip(props: {
@@ -34,7 +34,7 @@ export function SidebarStorageStrip(props: {
 		<>
 			<Separator size="seam" className="mt-2 mb-2" />
 			<Link
-				to="/settings/app"
+				to="/settings/data"
 				onClick={props.onNavigate}
 				className="group block w-full"
 			>

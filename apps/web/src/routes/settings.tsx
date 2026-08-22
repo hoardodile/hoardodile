@@ -1,16 +1,6 @@
-import type { IconType } from "@hoardodile/ui/components/icon"
 import { Icon } from "@hoardodile/ui/components/icon"
 import { PageScaffold } from "@hoardodile/ui/components/page-scaffold"
 import { SectionTabs } from "@hoardodile/ui/components/section-tabs"
-import {
-	Archive,
-	PlugCircle,
-	RefreshCircle,
-	ShieldCheck,
-	SliderHorizontal,
-	Star,
-	WindowFrame,
-} from "@hoardodile/ui/icons/registry"
 import { cn } from "@hoardodile/ui/lib/utils"
 import { useQuery } from "@tanstack/react-query"
 import {
@@ -20,101 +10,46 @@ import {
 	useLocation,
 } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
+import {
+	SETTINGS_TABS,
+	type SettingsTabKey,
+	visibleSettingsTabs,
+} from "@/features/settings/settingsTabs"
 import { syncSummaryQueryOptions } from "@/features/sync/api"
 import { requireAuth } from "@/lib/auth-guard"
+import { isHoardodileDesktop } from "@/lib/desktop"
 
 export const Route = createFileRoute("/settings")({
 	beforeLoad: requireAuth,
 	component: SettingsLayout,
 })
 
-type TabKey =
-	| "preferences"
-	| "app"
-	| "custom"
-	| "privacy"
-	| "archive"
-	| "plugins"
-	| "sync"
-
-type TabDef = {
-	readonly key: TabKey
-	readonly path:
-		| "/settings"
-		| "/settings/app"
-		| "/settings/custom"
-		| "/settings/privacy"
-		| "/settings/backups"
-		| "/settings/plugins"
-		| "/settings/sync"
-	readonly icon: IconType
-	readonly testId: string
-}
-
-const TABS: readonly TabDef[] = [
-	{
-		key: "preferences",
-		path: "/settings",
-		icon: SliderHorizontal,
-		testId: "me-tab-preferences",
-	},
-	{
-		key: "app",
-		path: "/settings/app",
-		icon: WindowFrame,
-		testId: "me-tab-app",
-	},
-	{
-		key: "custom",
-		path: "/settings/custom",
-		icon: Star,
-		testId: "me-tab-custom",
-	},
-	{
-		key: "privacy",
-		path: "/settings/privacy",
-		icon: ShieldCheck,
-		testId: "me-tab-privacy",
-	},
-	{
-		key: "archive",
-		path: "/settings/backups",
-		icon: Archive,
-		testId: "me-tab-archive",
-	},
-	{
-		key: "plugins",
-		path: "/settings/plugins",
-		icon: PlugCircle,
-		testId: "me-tab-plugins",
-	},
-	{
-		key: "sync",
-		path: "/settings/sync",
-		icon: RefreshCircle,
-		testId: "me-tab-sync",
-	},
-]
-
 /**
  * Settings layout — the in-page settings shell: a 208px icon nav column
  * (the sync row shows a red dot when a device is due) beside the content
  * column. The tab bar renders once and each tab owns its route, so
- * back/forward navigation and deep links work across sections.
+ * back/forward navigation and deep links work across sections. The
+ * desktop-only tab drops out of a normal browser tab.
  */
 function SettingsLayout() {
 	const { t } = useTranslation()
 	const { pathname } = useLocation()
 	const rawSuffix =
 		pathname.replace(/\/$/, "").split("/").pop() ?? "preferences"
-	const suffix = rawSuffix === "backups" ? "archive" : rawSuffix
-	const activeKey = TABS.some((tab) => tab.key === suffix)
-		? (suffix as TabKey)
+	const suffix =
+		rawSuffix === "backups"
+			? "archive"
+			: rawSuffix === "app"
+				? "data"
+				: rawSuffix
+	const activeKey = SETTINGS_TABS.some((tab) => tab.key === suffix)
+		? (suffix as SettingsTabKey)
 		: "preferences"
 
 	const syncSummaryQuery = useQuery(syncSummaryQueryOptions())
 	const syncDue =
 		(syncSummaryQuery.data?.devices ?? []).some((entry) => entry.due) === true
+	const tabs = visibleSettingsTabs(isHoardodileDesktop())
 
 	return (
 		<PageScaffold width="content">
@@ -126,7 +61,7 @@ function SettingsLayout() {
 				<SectionTabs
 					value={activeKey}
 					className="sidebar:hidden"
-					items={TABS.map((tab) => ({
+					items={tabs.map((tab) => ({
 						value: tab.key,
 						label: t(`me.tabs.${tab.key}`),
 						testId: tab.testId,
@@ -148,7 +83,7 @@ function SettingsLayout() {
 				    Sticky so it stays in view while the content column
 				    scrolls (self-start keeps the column from stretching). */}
 				<nav className="sticky top-4.5 z-20 hidden w-52 shrink-0 flex-col gap-1 self-start sidebar:flex">
-					{TABS.map((tab) => {
+					{tabs.map((tab) => {
 						const active = tab.key === activeKey
 						return (
 							<Link

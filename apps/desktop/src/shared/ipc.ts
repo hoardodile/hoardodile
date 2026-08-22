@@ -26,6 +26,8 @@ export const IPC = {
 	lanInfo: "desktop:lan:info",
 	setLanEnabled: "desktop:lan:set-enabled",
 	setLanPort: "desktop:lan:set-port",
+	shellCacheSize: "desktop:shell-cache:size",
+	shellCacheClear: "desktop:shell-cache:clear",
 	completeWizard: "desktop:wizard:complete",
 	wizardDefaults: "desktop:wizard:defaults",
 } as const

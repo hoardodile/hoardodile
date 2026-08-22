@@ -15,6 +15,7 @@ import {
 	clipboard,
 	dialog,
 	Notification,
+	session,
 	type Tray,
 } from "electron"
 import { HIDDEN_SWITCH, IPC } from "../shared/ipc.ts"
@@ -39,6 +40,11 @@ import {
 	type SidecarLayout,
 	workspaceLayout,
 } from "./paths.ts"
+import {
+	clearShellCache,
+	getShellCacheSize,
+	resolveUpdaterCacheDir,
+} from "./shell-cache.ts"
 import {
 	patchSidecarSharedFolder,
 	readSidecarAuthConfigured,
@@ -215,6 +221,23 @@ function lanInfo(runtime: Runtime): LanInfo {
 		preferredPort: runtime.config.portPreferred,
 		addresses: computeLanAddresses(),
 	}
+}
+
+/** electron-updater's download cache dir (`%LOCALAPPDATA%/<app>-updater`). */
+function updaterCacheDir(): string {
+	return resolveUpdaterCacheDir({
+		localAppData: process.env.LOCALAPPDATA,
+		appName: app.getName(),
+	})
+}
+
+/**
+ * The updater cache must keep its package while a download runs or an
+ * update sits ready to install (quitAndInstall reads it back).
+ */
+function updaterCacheClearable(runtime: Runtime): boolean {
+	const state = runtime.updater?.status() ?? { status: "idle" }
+	return state.status !== "downloading" && state.status !== "ready"
 }
 
 /**
@@ -743,6 +766,18 @@ async function boot(): Promise<void> {
 		lanInfo: () => lanInfo(runtime),
 		setLanEnabled: (enabled) => setLanEnabled(runtime, enabled),
 		setLanPort: (port) => setLanPort(runtime, port),
+		shellCacheSize: () =>
+			getShellCacheSize({
+				session: session.defaultSession,
+				updaterCacheDir: updaterCacheDir(),
+				canClearUpdaterCache: true,
+			}),
+		shellCacheClear: () =>
+			clearShellCache({
+				session: session.defaultSession,
+				updaterCacheDir: updaterCacheDir(),
+				canClearUpdaterCache: updaterCacheClearable(runtime),
+			}),
 		completeWizard(result) {
 			runtime.completeWizard?.(result)
 		},

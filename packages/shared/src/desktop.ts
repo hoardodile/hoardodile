@@ -116,6 +116,19 @@ export type HoardodileDesktopBridge = {
 	 * failure; a busy port falls back to a free one.
 	 */
 	setLanPort: (port: number) => Promise<void>
+	/**
+	 * Current size in bytes of the desktop shell's on-disk caches: the
+	 * Chromium session caches (HTTP, compiled code, GPU shaders) plus the
+	 * downloaded-update cache.
+	 */
+	getShellCacheSize: () => Promise<number>
+	/**
+	 * Clear the shell's on-disk caches and resolve with the bytes freed.
+	 * Never touches cookies, localStorage or IndexedDB — those are user
+	 * data. A downloaded update that is downloading or ready to install
+	 * keeps its installer in the updater cache.
+	 */
+	clearShellCache: () => Promise<number>
 	completeWizard: (result: DesktopWizardResult) => Promise<void>
 	getWizardDefaults: () => Promise<{
 		readonly libraryPath: string

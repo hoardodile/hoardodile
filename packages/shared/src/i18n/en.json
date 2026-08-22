@@ -166,7 +166,9 @@
 	"me": {
 		"tabs": {
 			"preferences": "Preferences",
-			"app": "App",
+			"data": "Data",
+			"about": "About",
+			"desktop": "Desktop",
 			"custom": "Custom",
 			"privacy": "Privacy",
 			"archive": "Archive",
@@ -364,7 +366,19 @@
 				"close": "Close"
 			},
 			"updateBanner": "Version {{version}} is ready to install.",
-			"updateBannerRestart": "Restart"
+			"updateBannerRestart": "Restart",
+			"shellCache": {
+				"title": "Shell cache",
+				"description": "On-disk caches of the app window itself — HTTP responses, compiled code and GPU shaders — plus any downloaded update. Clearing never touches cookies, your preferences or offline data, and the app re-fetches from the local server right away. A downloaded update that is ready to install stays untouched.",
+				"currentSize": "{{size}}",
+				"unavailable": "Unavailable",
+				"clear": "Clear cache",
+				"clearing": "Clearing...",
+				"confirmTitle": "Clear the shell cache?",
+				"confirmDescription": "The app window will fetch its files from the local server again on the next visit. Cookies, preferences and offline data are never touched. A downloaded update that is ready to install stays untouched.",
+				"toastCleared": "Shell cache cleared — {{bytes}} freed.",
+				"clearFailed": "Could not clear the shell cache."
+			}
 		},
 		"usage": {
 			"description": "Sessions behind Stats and the footprint log — clearing asks for a typed phrase.",

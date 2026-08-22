@@ -166,7 +166,9 @@
 	"me": {
 		"tabs": {
 			"preferences": "偏好",
-			"app": "应用",
+			"data": "数据",
+			"about": "关于",
+			"desktop": "桌面",
 			"custom": "自制",
 			"privacy": "隐私",
 			"archive": "归档",
@@ -364,7 +366,19 @@
 				"close": "关闭"
 			},
 			"updateBanner": "版本 {{version}} 已就绪，可以安装。",
-			"updateBannerRestart": "重启"
+			"updateBannerRestart": "重启",
+			"shellCache": {
+				"title": "Shell 缓存",
+				"description": "应用窗口自身的磁盘缓存——HTTP 响应、编译代码与 GPU 着色器——以及已下载的更新包。清理不会影响 cookies、你的偏好或离线数据，应用会立即从本地服务器重新获取。已就绪待安装的更新包会保留。",
+				"currentSize": "{{size}}",
+				"unavailable": "无法获取",
+				"clear": "清除缓存",
+				"clearing": "正在清除…",
+				"confirmTitle": "清除 Shell 缓存？",
+				"confirmDescription": "应用窗口将在下次访问时从本地服务器重新获取文件。cookies、偏好与离线数据不受影响。已就绪待安装的更新包会保留。",
+				"toastCleared": "Shell 缓存已清除，释放 {{bytes}}。",
+				"clearFailed": "清除 Shell 缓存失败。"
+			}
 		},
 		"usage": {
 			"description": "统计与足迹日志背后的会话数据——清空需要输入确认短语。",

@@ -68,6 +68,12 @@ function installBridge(
 		},
 		async setLanEnabled() {},
 		async setLanPort() {},
+		async getShellCacheSize() {
+			return 0
+		},
+		async clearShellCache() {
+			return 0
+		},
 		async completeWizard() {},
 		async getWizardDefaults() {
 			return { libraryPath: "" }
