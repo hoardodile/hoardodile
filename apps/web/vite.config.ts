@@ -8,6 +8,7 @@ import { visualizer } from "rollup-plugin-visualizer"
 import inspect from "vite-plugin-inspect"
 import { VitePWA } from "vite-plugin-pwa"
 import { defineConfig } from "vitest/config"
+import { cspMetaPlugin } from "../../scripts/lib/csp-meta.ts"
 
 const serverTarget = process.env.VITE_SERVER_URL ?? "http://127.0.0.1:3000"
 
@@ -40,6 +41,7 @@ const isTest = process.env.VITEST === "true"
 
 export default defineConfig({
 	plugins: [
+		cspMetaPlugin(),
 		!isTest &&
 			tanstackRouter({
 				target: "react",

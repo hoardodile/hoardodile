@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url"
 import tailwindcss from "@tailwindcss/vite"
 import react from "@vitejs/plugin-react"
 import { defineConfig, type Plugin } from "vite"
+import { cspMetaPlugin } from "../../scripts/lib/csp-meta.ts"
 
 const root = dirname(fileURLToPath(import.meta.url))
 const devPorts: { wizard: number } = JSON.parse(
@@ -30,7 +31,7 @@ function stripCrossorigin(): Plugin {
 export default defineConfig(({ command }) => ({
 	root: resolve(root, "src/wizard"),
 	base: command === "serve" ? "/" : "./",
-	plugins: [react(), tailwindcss(), stripCrossorigin()],
+	plugins: [cspMetaPlugin(), react(), tailwindcss(), stripCrossorigin()],
 	server: {
 		host: "127.0.0.1",
 		port: devPorts.wizard,
