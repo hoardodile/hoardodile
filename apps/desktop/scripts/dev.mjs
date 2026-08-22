@@ -1,24 +1,22 @@
 #!/usr/bin/env node
 /**
- * Desktop dev loop: `pnpm desktop` (run `pnpm dev` in another terminal).
+ * Desktop dev loop: `pnpm desktop` — independent of `pnpm dev`.
  *
- * Desktop and web dev are independent: this script NEVER starts or owns the
- * SPA. The SPA Vite is expected to run separately (`pnpm dev`, or
- * `HOARDODILE_WEB_URL` on a custom port); this script waits for it and fails
- * fast with a clear message when it is missing — no in-app Retry dialog, no
- * side effects on the SPA server.
+ * Desktop and web dev are separate: this script NEVER starts or owns the
+ * SPA, and does not wait for one or fail without it. It simply launches
+ * Electron against the SPA URL (`pnpm dev`'s default, or explicit
+ * `HOARDODILE_WEB_URL`); if nothing answers, the shell window shows its
+ * own Retry page until the SPA comes up (start `pnpm dev`, press Retry).
  *
  * Default ports come from `scripts/lib/dev-ports.json` (change them there,
  * not here): the SPA default and the wizard default.
- * - SPA: probed at the SPA default to confirm a hoardodile Vite is already
- *   served (content-type `text/javascript`); anything else on that port
- *   keeps the wait running until the timeout message.
  * - Wizard: in-process Vite on the first free port at or above the wizard
  *   default (the wizard config pins it with strictPort, which fails when
  *   occupied).
  * - Electron: spawned with HOARDODILE_WEB_URL / ELECTRON_WIZARD_URL /
  *   HOARDODILE_WORKSPACE; stopped as a process tree so the vite-node sidecar
- *   it spawned does not outlive a Ctrl+C.
+ *   it spawned does not outlive a Ctrl+C. The backend (Fastify sidecar) is
+ *   spawned by the shell itself — no external backend required.
  * - API routing in the desktop window is main's dest proxy
  *   (`apps/desktop/src/main/dest-api-proxy.ts`); the SPA's own `VITE_SERVER_URL`
  *   proxy target is never touched here.
@@ -47,15 +45,14 @@ const devPorts = JSON.parse(
 )
 
 /**
- * Vite dev serves app sources as transformed modules; only a hoardodile web
- * checkout has this file, and any other Vite SPA fallback answers `text/html`.
+ * Vite dev serves app sources as transformed modules; when the user reuses
+ * the default port the desktop window talks to whatever answers there.
  */
-const SPA_PROBE = `http://localhost:${devPorts.spa}/src/routeTree.gen.ts`
 const SPA_REUSE_URL = `http://localhost:${devPorts.spa}`
 
 async function main() {
 	ensurePluginDists()
-	const spaUrl = await resolveSpaUrl()
+	const spaUrl = resolveSpaUrl()
 	const wizard = await startWizard()
 
 	await build({ configFile: resolve(root, "vite.main.config.ts") })
@@ -110,31 +107,16 @@ function ensurePluginDists() {
 }
 
 /**
- * Resolve the SPA URL to reuse. The SPA is started by its own process
- * (`pnpm dev`) — the desktop never starts it. Explicit override via
- * HOARDODILE_WEB_URL is reachability-checked only; the default is probed
- * for a hoardodile SPA so a foreign server on the port fails with a clear
- * message instead of loading garbage into the window.
+ * The URL the desktop window loads in dev: `HOARDODILE_WEB_URL` when set,
+ * otherwise the SPA default. No probe, no wait, no failure — if nothing
+ * answers, the shell window shows its Retry page instead of blocking the
+ * launch (start `pnpm dev` later, press Retry inside the window).
  */
-async function resolveSpaUrl() {
+function resolveSpaUrl() {
 	const explicit = process.env.HOARDODILE_WEB_URL
 	if (explicit !== undefined && explicit.length > 0) {
-		console.log(`[desktop] waiting for HOARDODILE_WEB_URL ${explicit}`)
-		await waitForHttp(
-			explicit,
-			20_000,
-			`SPA at ${explicit} did not become reachable (is it running?)`,
-		)
 		return explicit
 	}
-	await waitFor(
-		() => isHoardodileSpa(SPA_PROBE),
-		20_000,
-		`hoardodile SPA not found at ${SPA_REUSE_URL} — start \`pnpm dev\` in another terminal (or set HOARDODILE_WEB_URL)`,
-	)
-	console.log(
-		`[desktop] reusing SPA at ${SPA_REUSE_URL} (started by \`pnpm dev\`)`,
-	)
 	return SPA_REUSE_URL
 }
 
@@ -154,15 +136,6 @@ async function startWizard() {
 	await waitForHttp(`${url}/`, 15_000, `wizard at ${url} did not start`)
 	console.log(`[desktop] wizard at ${url}/`)
 	return { url: `${url}/`, server }
-}
-
-async function isHoardodileSpa(url) {
-	try {
-		const res = await fetch(url, { signal: AbortSignal.timeout(2_000) })
-		return (res.headers.get("content-type") ?? "").startsWith("text/javascript")
-	} catch {
-		return false
-	}
 }
 
 function registerShutdown(child, servers) {
