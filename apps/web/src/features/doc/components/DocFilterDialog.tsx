@@ -53,9 +53,13 @@ export function DocFilterDialog(props: DocFilterDialogProps) {
 			size="lg"
 			footer={
 				<>
+					{/* Three-button footer (DESIGN.md — Overlays): the secondary
+					    function key (clear) sits at the left edge; cancel and
+					    the primary action (apply) stay right-aligned. */}
 					<Button
 						type="button"
 						variant="secondary"
+						className="mr-auto"
 						onClick={() => setDraft({ charIds: [], resIds: [] })}
 						data-testid="doc-filter-clear"
 					>

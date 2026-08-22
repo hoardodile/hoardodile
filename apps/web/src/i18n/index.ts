@@ -1,12 +1,13 @@
+import type { SupportedLanguage } from "@hoardodile/shared/i18n"
+import en from "@hoardodile/shared/i18n/en.json"
+import zh from "@hoardodile/shared/i18n/zh.json"
 import i18n from "i18next"
 import { initReactI18next } from "react-i18next"
 import { prefKeys } from "@/lib/keys"
 import { prefSync } from "@/lib/prefSync"
-import en from "./en.json"
-import zh from "./zh.json"
 
 export const SUPPORTED_LANGUAGES = ["en", "zh"] as const
-export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number]
+export type { SupportedLanguage }
 
 const storedLang = prefSync.get(prefKeys.language)
 const initialLang =

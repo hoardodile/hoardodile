@@ -1,5 +1,5 @@
 import { CaptionBar } from "@hoardodile/ui/components/caption-bar"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { CloseConfirmDialog } from "@/components/common/CloseConfirmDialog"
 import { getDesktopBridge } from "@/lib/desktop"
@@ -15,13 +15,20 @@ import { getDesktopBridge } from "@/lib/desktop"
  * process guard, which falls back to a native dialog in the same shape.
  */
 export function DesktopCaptionBar() {
-	const { t } = useTranslation()
+	const { t, i18n } = useTranslation()
 	const desktop = getDesktopBridge()
 	const [closeConfirmOpen, setCloseConfirmOpen] = useState(false)
 
 	if (desktop === undefined) return null
 	// Local binding so the closures below see the narrowed type.
 	const bridge = desktop
+
+	// The shell's static pages and native ask dialog render the user's
+	// language from the shared i18n catalogs; push the resolved language
+	// whenever it changes so they match the SPA.
+	useEffect(() => {
+		bridge.setLanguage(i18n.language)
+	}, [bridge, i18n.language])
 
 	function handleClose() {
 		void bridge.getConfig().then((config) => {

@@ -29,7 +29,20 @@ export function DesktopLibrarySection() {
 
 	useEffect(() => {
 		if (desktop === undefined) return
-		void desktop.getConfig().then(setConfig)
+		const bridge = desktop
+		// The close dialog can persist a different close action (its
+		// "remember my choice" checkbox) while the app runs; refresh on
+		// focus (same as LanSharingSection) so the dropdown always shows
+		// the actual persisted setting — re-selecting the stale value shown
+		// in a dropdown fires no change event, silently discarding the edit.
+		function refreshConfig() {
+			void bridge.getConfig().then(setConfig)
+		}
+		refreshConfig()
+		window.addEventListener("focus", refreshConfig)
+		return () => {
+			window.removeEventListener("focus", refreshConfig)
+		}
 	}, [desktop])
 
 	if (desktop === undefined || config === undefined) return null

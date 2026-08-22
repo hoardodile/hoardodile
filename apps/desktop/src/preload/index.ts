@@ -174,10 +174,23 @@ const bridge: HoardodileDesktopBridge = {
 		await invokeUnknown(IPC.setConfig, patch)
 	},
 	async setCloseAction(action) {
-		await invokeUnknown(IPC.setCloseAction, action)
+		// Fire-and-forget like the other window commands: the main side
+		// registers `ipcMain.on` for this channel, so `invoke` would fail
+		// with "No handler registered".
+		ipcRenderer.send(IPC.setCloseAction, action)
 	},
 	async closeWithAction(action, remember) {
 		await invokeUnknown(IPC.closeWithAction, { action, remember })
+	},
+	// Fire-and-forget like the other window commands: the SPA pushes its
+	// resolved language so shell pages and the native dialog can render
+	// localized copy from the shared catalogs.
+	setLanguage(language) {
+		ipcRenderer.send(IPC.setLanguage, language)
+	},
+	async getLanguage() {
+		const raw: unknown = await invokeUnknown(IPC.getLanguage)
+		return typeof raw === "string" ? raw : undefined
 	},
 	async changeLibraryFolder(libraryPath) {
 		await invokeUnknown(IPC.changeLibraryFolder, libraryPath)

@@ -44,3 +44,28 @@ export function wizardCopy(): WizardCopy {
 	}
 	return EN
 }
+
+export type ShellCopy = {
+	readonly serverUnreachable: string
+	readonly retry: string
+	readonly loadingLabel: string
+}
+
+const SHELL_EN: ShellCopy = {
+	serverUnreachable: "Server unreachable",
+	retry: "Retry",
+	loadingLabel: "Loading",
+}
+
+const SHELL_ZH: ShellCopy = {
+	serverUnreachable: "无法连接服务器",
+	retry: "重试",
+	loadingLabel: "加载中",
+}
+
+export function shellCopy(): ShellCopy {
+	if (typeof navigator !== "undefined" && navigator.language.startsWith("zh")) {
+		return SHELL_ZH
+	}
+	return SHELL_EN
+}

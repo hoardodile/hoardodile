@@ -4,6 +4,8 @@ import type {
 	DesktopWizardResult,
 	LanInfo,
 } from "@hoardodile/shared/desktop"
+import type { SupportedLanguage } from "@hoardodile/shared/i18n"
+import { isSupportedLanguage } from "@hoardodile/shared/i18n"
 import {
 	app,
 	BrowserWindow,
@@ -23,6 +25,8 @@ export type IpcHost = {
 	retryLoad: () => void
 	setCloseAction: (action: DesktopConfig["closeAction"]) => void
 	closeWithAction: (action: "tray" | "quit", remember: boolean) => Promise<void>
+	setLanguage: (language: SupportedLanguage) => void
+	getLanguage: () => Promise<SupportedLanguage | undefined>
 	patchConfig: (
 		patch: Partial<
 			Pick<DesktopConfig, "autoStart" | "startInTray" | "autoUpdate">
@@ -81,6 +85,11 @@ export function registerIpc(host: IpcHost): void {
 		if (action !== "tray" && action !== "quit") return
 		return host.closeWithAction(action, remember)
 	})
+	ipcMain.on(IPC.setLanguage, (_event, language: unknown) => {
+		if (typeof language !== "string" || !isSupportedLanguage(language)) return
+		host.setLanguage(language)
+	})
+	ipcMain.handle(IPC.getLanguage, () => host.getLanguage())
 	ipcMain.handle(IPC.getConfig, (): DesktopShellConfig => {
 		const config = host.getConfig()
 		return {

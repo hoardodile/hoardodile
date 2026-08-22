@@ -6,6 +6,9 @@ import type {
 	DesktopWizardResult,
 	LanInfo,
 } from "@hoardodile/shared/desktop"
+import type { SupportedLanguage } from "@hoardodile/shared/i18n"
+import en from "@hoardodile/shared/i18n/en.json"
+import zh from "@hoardodile/shared/i18n/zh.json"
 import {
 	app,
 	BrowserWindow,
@@ -22,12 +25,7 @@ import {
 	writeDesktopConfig,
 } from "./config.ts"
 import { bindDestApiProxy } from "./dest-api-proxy.ts"
-import {
-	DEV_SERVER_ERROR_MESSAGE,
-	SERVER_ERROR_MESSAGE,
-	windowErrorPageUrl,
-	windowLoadingPageUrl,
-} from "./error-page.ts"
+import { DEV_SERVER_ERROR_MESSAGE, SERVER_ERROR_MESSAGE } from "./error-page.ts"
 import {
 	applyLoginItem,
 	bindWindowMaximizeEvents,
@@ -55,7 +53,12 @@ import {
 } from "./tray.ts"
 import { startUpdater, type UpdaterHandle } from "./updater.ts"
 import { isHttpReachable } from "./urls.ts"
-import { createDesktopWindow, preloadPath } from "./window.ts"
+import {
+	createDesktopWindow,
+	loadShellPage,
+	preloadPath,
+	type ShellPageTarget,
+} from "./window.ts"
 
 const HEALTH_LOG_LIMIT = 200_000
 
@@ -74,6 +77,8 @@ type Runtime = {
 	crashed: boolean
 	updateReady: boolean
 	quitting: boolean
+	/** UI language pushed by the SPA; shell pages and the native ask dialog fall back to it (undefined until pushed). */
+	language: SupportedLanguage | undefined
 	iconPath: string | undefined
 	completeWizard: ((result: DesktopWizardResult) => void) | undefined
 }
@@ -308,10 +313,15 @@ async function applyLanChange(
 		// then the app (or the error page if it still fails).
 		if (process.env.HOARDODILE_WEB_URL === undefined) {
 			try {
-				await win.loadURL(windowLoadingPageUrl())
+				await loadShellPage(win, shellPageTarget(runtime), "loading")
 				await win.loadURL(handle.url)
 			} catch {
-				await win.loadURL(windowErrorPageUrl(SERVER_ERROR_MESSAGE))
+				await loadShellPage(
+					win,
+					shellPageTarget(runtime),
+					"error",
+					SERVER_ERROR_MESSAGE,
+				)
 			}
 		}
 	}
@@ -460,6 +470,7 @@ async function openAppWindow(runtime: Runtime): Promise<void> {
 		kind: "app",
 		url: url ?? "about:blank",
 		iconPath: runtime.iconPath,
+		shellPage: shellPageTarget(runtime),
 	})
 	bindWindowMaximizeEvents(win)
 	win.on("closed", () => {
@@ -468,9 +479,13 @@ async function openAppWindow(runtime: Runtime): Promise<void> {
 	// Close guard: the caption close button, Alt+F4 and the taskbar close
 	// all land here so the configured close action (ask / tray / quit) is
 	// applied consistently. The wizard window has no guard.
+	// `runtime.quitting` is the escape hatch: quitApp/relaunchApp/quitAndInstall
+	// stop the sidecar and call `app.quit()`, whose window-close pass must
+	// not be intercepted again — otherwise the guard re-enters quitApp and
+	// the app never quits (a tight loop, the window looks frozen).
 	let closeRequested = false
 	win.on("close", (event) => {
-		if (closeRequested || win.isDestroyed()) return
+		if (runtime.quitting || closeRequested || win.isDestroyed()) return
 		event.preventDefault()
 		void handleWindowCloseRequest(runtime, win, () => {
 			closeRequested = true
@@ -482,13 +497,31 @@ async function openAppWindow(runtime: Runtime): Promise<void> {
 		// Dev only: the Vite SPA is down. The in-window error page carries
 		// the Retry button, so the shell's old Retry dialog is gone — one
 		// mechanism for every load failure, dev or production.
-		await win.loadURL(windowErrorPageUrl(DEV_SERVER_ERROR_MESSAGE))
+		await loadShellPage(
+			win,
+			shellPageTarget(runtime),
+			"error",
+			DEV_SERVER_ERROR_MESSAGE,
+		)
 		return
 	}
 	// Spinner first, then the app: the window is never a blank white canvas
 	// while the page loads (ready-to-show fires on the loading page).
-	await win.loadURL(windowLoadingPageUrl())
+	await loadShellPage(win, shellPageTarget(runtime), "loading")
 	await win.loadURL(url)
+}
+
+/** Localized close-confirm copy for the native dialog; the SPA pushes the language via the bridge. */
+function closeDialogStrings(language: SupportedLanguage | undefined) {
+	const catalog = language === "zh" ? zh : en
+	return {
+		title: catalog.me.desktop.closeConfirm.title,
+		description: catalog.me.desktop.closeConfirm.description,
+		tray: catalog.me.desktop.closeConfirm.tray,
+		quit: catalog.me.desktop.closeConfirm.quit,
+		cancel: catalog.common.cancel,
+		remember: catalog.me.desktop.closeConfirm.remember,
+	}
 }
 
 /**
@@ -510,17 +543,16 @@ async function handleWindowCloseRequest(
 			await quitApp(runtime)
 			return
 		case "ask": {
+			const strings = closeDialogStrings(runtime.language)
 			const { response, checkboxChecked } = await dialog.showMessageBox(win, {
 				type: "question",
 				title: "hoardodile",
-				message: "Close the hoardodile window?",
-				detail:
-					"The app keeps running in the tray unless you quit it. " +
-					"Hide to tray or quit, or cancel to keep the window open.",
-				buttons: ["Hide to tray", "Quit", "Cancel"],
+				message: strings.title,
+				detail: strings.description,
+				buttons: [strings.tray, strings.quit, strings.cancel],
 				defaultId: 0,
 				cancelId: 2,
-				checkboxLabel: "Remember my choice",
+				checkboxLabel: strings.remember,
 			})
 			if (response === 2) return
 			if (checkboxChecked) {
@@ -551,7 +583,7 @@ async function retryAppWindow(runtime: Runtime): Promise<void> {
 		await openAppWindow(runtime)
 		return
 	}
-	await win.loadURL(windowLoadingPageUrl())
+	await loadShellPage(win, shellPageTarget(runtime), "loading")
 	let url: string | undefined
 	try {
 		url = await resolveAppUrl(runtime)
@@ -559,11 +591,21 @@ async function retryAppWindow(runtime: Runtime): Promise<void> {
 		// sidecar is undefined (e.g. it crashed while the window was
 		// still open) — surface the generic error page instead of failing
 		// silently.
-		await win.loadURL(windowErrorPageUrl(SERVER_ERROR_MESSAGE))
+		await loadShellPage(
+			win,
+			shellPageTarget(runtime),
+			"error",
+			SERVER_ERROR_MESSAGE,
+		)
 		return
 	}
 	if (url === undefined) {
-		await win.loadURL(windowErrorPageUrl(DEV_SERVER_ERROR_MESSAGE))
+		await loadShellPage(
+			win,
+			shellPageTarget(runtime),
+			"error",
+			DEV_SERVER_ERROR_MESSAGE,
+		)
 		return
 	}
 	try {
@@ -588,6 +630,11 @@ function wizardUrl(runtime: Runtime): { url: string; wizardFile: string } {
 		url: destUrl !== undefined && destUrl.length > 0 ? destUrl : "",
 		wizardFile: join(runtime.desktopRoot, "out", "wizard", "index.html"),
 	}
+}
+
+function shellPageTarget(runtime: Runtime): ShellPageTarget {
+	const target = wizardUrl(runtime)
+	return { url: target.url, file: target.wizardFile }
 }
 
 function runWizard(runtime: Runtime): Promise<DesktopWizardResult> {
@@ -641,6 +688,7 @@ async function boot(): Promise<void> {
 		crashed: false,
 		updateReady: false,
 		quitting: false,
+		language: undefined,
 		iconPath: undefined,
 		completeWizard: undefined,
 	}
@@ -675,6 +723,10 @@ async function boot(): Promise<void> {
 			// running under the tray with the session intact.
 			runtime.window?.destroy()
 		},
+		setLanguage(language) {
+			runtime.language = language
+		},
+		getLanguage: () => Promise.resolve(runtime.language),
 		patchConfig(patch) {
 			runtime.config = { ...runtime.config, ...patch }
 			persist(runtime)

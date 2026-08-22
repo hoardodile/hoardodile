@@ -82,6 +82,14 @@ export type HoardodileDesktopBridge = {
 	 */
 	setCloseAction: (action: DesktopCloseAction) => Promise<void>
 	/**
+	 * Push the app's UI language (as the SPA resolved it) so shell pages and
+	 * the native ask dialog render localized copy; `navigator.language` is
+	 * the shell-side fallback until the SPA has pushed once.
+	 */
+	setLanguage: (language: string) => void
+	/** The language the SPA last pushed, or undefined before the first push. */
+	getLanguage: () => Promise<string | undefined>
+	/**
 	 * Execute a close decision from the renderer's confirm dialog: hide to
 	 * tray (window closes, app stays in the tray) or quit. When `remember`
 	 * is true the choice is persisted as the close action.

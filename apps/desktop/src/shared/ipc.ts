@@ -18,6 +18,8 @@ export const IPC = {
 	configSync: "desktop:config:sync",
 	setCloseAction: "desktop:close-action:set",
 	closeWithAction: "desktop:close-action:with",
+	setLanguage: "desktop:config:set-language",
+	getLanguage: "desktop:config:get-language",
 	changeLibraryFolder: "desktop:library:change",
 	setSharedFolderRoot: "desktop:shared-folder:set",
 	setSharedFolderEnabled: "desktop:shared-folder:enabled",

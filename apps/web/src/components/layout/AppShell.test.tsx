@@ -497,6 +497,10 @@ function installDesktopBridge() {
 		async setConfig() {},
 		async setCloseAction() {},
 		async closeWithAction() {},
+		setLanguage() {},
+		async getLanguage() {
+			return "en"
+		},
 		async changeLibraryFolder() {},
 		async setSharedFolderRoot() {},
 		async setSharedFolderEnabled() {},

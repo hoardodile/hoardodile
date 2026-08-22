@@ -3,6 +3,7 @@ import "./index.css"
 import type { HoardodileDesktopBridge } from "@hoardodile/shared/desktop"
 import { StrictMode } from "react"
 import { createRoot } from "react-dom/client"
+import { ShellPages } from "./shell-pages.tsx"
 import { WizardApp } from "./WizardApp.tsx"
 
 const COLOR_SCHEME_QUERY = "(prefers-color-scheme: dark)"
@@ -28,8 +29,18 @@ declare global {
 const root = document.getElementById("root")
 if (root === null) throw new Error("#root element not found")
 
-createRoot(root).render(
-	<StrictMode>
+const params = new URLSearchParams(window.location.search)
+const mode = params.get("mode")
+const ui =
+	mode === "loading" || mode === "error" ? (
+		<ShellPages
+			mode={mode}
+			message={
+				mode === "error" ? (params.get("message") ?? undefined) : undefined
+			}
+		/>
+	) : (
 		<WizardApp />
-	</StrictMode>,
-)
+	)
+
+createRoot(root).render(<StrictMode>{ui}</StrictMode>)

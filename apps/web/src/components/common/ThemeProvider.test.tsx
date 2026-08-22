@@ -5,9 +5,9 @@
 import { readFileSync } from "node:fs"
 import { resolve } from "node:path"
 import { pluginThemePalettes } from "@hoardodile/sdk-web"
+import en from "@hoardodile/shared/i18n/en.json"
+import zh from "@hoardodile/shared/i18n/zh.json"
 import { describe, expect, it } from "vitest"
-import en from "@/i18n/en.json"
-import zh from "@/i18n/zh.json"
 
 // Guards the remaining manual steps of adding a palette: the CSS token
 // block in @hoardodile/ui and the i18n labels. Forgetting either turns
