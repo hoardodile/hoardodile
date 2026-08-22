@@ -42,7 +42,7 @@ import { registerPanelSlot, usePanelSlotClaimed } from "./panelSlot"
 import { SidebarStorageStrip } from "./SidebarStorageStrip"
 import { SidebarModeProvider } from "./sidebarMode"
 import { registerSidebarSlot, useSidebarSlotClaimed } from "./sidebarSlot"
-import { registerTopbarSlot } from "./topbarSlot"
+import { registerTopbarSlot, useTopbarSlotClaimed } from "./topbarSlot"
 
 type AppShellProps = {
 	readonly children: ReactNode
@@ -58,7 +58,6 @@ type AppShellProps = {
  * (canvas + panel), not over the sidebar; login keeps it full-width.
  */
 export function AppShell(props: AppShellProps) {
-	const { t } = useTranslation()
 	const routerState = useRouterState({
 		select: (state) => ({
 			pathname: state.location.pathname,
@@ -71,6 +70,7 @@ export function AppShell(props: AppShellProps) {
 	const isMobile = useBelowSidebar()
 	const belowPanel = useBelowPanel()
 	const panelClaimed = usePanelSlotClaimed()
+	const topbarClaimed = useTopbarSlotClaimed()
 	const [drawerOpen, setDrawerOpen] = useState(false)
 	const [moduleVisible, setModuleVisible] = useState(true)
 	const searchInputRef = useRef<HTMLInputElement>(null)
@@ -160,29 +160,39 @@ export function AppShell(props: AppShellProps) {
 				/>
 			</aside>
 			<div className="flex min-w-0 flex-1 flex-col">
-				<DesktopCaptionBar />
+				{/* Below the sidebar breakpoint the global sidebar toggle sits
+				    in the caption strip's leftmost slot (desktop only); the
+				    caption strip is absent in a browser tab. */}
+				<DesktopCaptionBar
+					leading={
+						isMobile ? (
+							<SidebarMenuButton caption onClick={() => setDrawerOpen(true)} />
+						) : undefined
+					}
+				/>
 				<DesktopUpdateBanner />
 				<div className="flex min-h-0 min-w-0 flex-1">
 					<div className="flex min-w-0 flex-1 flex-col">
-						<div className="flex h-12 shrink-0 items-center gap-1 px-2 sidebar:hidden">
-							<button
-								type="button"
-								aria-label={t("appShell.openMenu")}
-								data-testid="app-sidebar-open"
-								className="flex size-9 items-center justify-center rounded-lg text-secondary-foreground transition-colors duration-150 hover:bg-muted"
-								onClick={() => setDrawerOpen(true)}
-							>
-								<HamburgerMenu className="size-4" strokeWidth={1.6} />
-							</button>
-							{/* Route chrome (e.g. the document detail header) portals its
-							    compact mobile actions here instead of rendering a second
-							    bar below this one. */}
-							<div
-								ref={registerTopbarSlot}
-								data-topbar-slot=""
-								className="flex flex-1 items-center gap-1"
-							/>
-						</div>
+						{/* The top row hosts route chrome (e.g. the document
+						    detail header's compact actions). In the browser it
+						    always renders with the drawer hamburger; on desktop
+						    the hamburger lives in the caption strip, so the row
+						    exists only while a route claims it. */}
+						{(!isHoardodileDesktop() || topbarClaimed) && (
+							<div className="flex h-12 shrink-0 items-center gap-1 px-2 sidebar:hidden">
+								{!isHoardodileDesktop() && (
+									<SidebarMenuButton onClick={() => setDrawerOpen(true)} />
+								)}
+								{/* Route chrome (e.g. the document detail header)
+								    portals its compact mobile actions here instead
+								    of rendering a second bar below this one. */}
+								<div
+									ref={registerTopbarSlot}
+									data-topbar-slot=""
+									className="flex flex-1 items-center gap-1"
+								/>
+							</div>
+						)}
 						{/* The app's single always-on scrollbar lives here (formerly a
 						    global `body { overflow-y: scroll }` in index.html): it keeps
 						    the bar present so modal scroll-locking can't shift the layout
@@ -236,6 +246,34 @@ export function AppShell(props: AppShellProps) {
 
 type NavigationProgressProps = {
 	readonly visible: boolean
+}
+
+/**
+ * Global sidebar toggle: opens the drawer below the sidebar breakpoint.
+ * `caption: true` renders it as a caption-strip chrome button (full-height
+ * `h-nav` square, no rounding — matches back/forward/reload in the strip);
+ * the default is the top-row button.
+ */
+function SidebarMenuButton(props: {
+	readonly onClick: () => void
+	readonly caption?: boolean
+}) {
+	const { t } = useTranslation()
+	return (
+		<button
+			type="button"
+			aria-label={t("appShell.openMenu")}
+			data-testid="app-sidebar-open"
+			className={
+				props.caption === true
+					? "flex h-nav w-[46px] items-center justify-center text-secondary-foreground hover:bg-muted hover:text-foreground focus:outline-none focus-visible:outline-none focus-visible:ring-0"
+					: "flex size-9 items-center justify-center rounded-lg text-secondary-foreground transition-colors duration-150 hover:bg-muted"
+			}
+			onClick={props.onClick}
+		>
+			<HamburgerMenu className="size-4" strokeWidth={1.6} />
+		</button>
+	)
 }
 
 function NavigationProgress(props: NavigationProgressProps) {

@@ -1,3 +1,4 @@
+import { SIDEBAR_QUERY } from "@hoardodile/ui/viewport"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import {
 	createMemoryHistory,
@@ -7,6 +8,7 @@ import {
 	RouterProvider,
 } from "@tanstack/react-router"
 import { fireEvent, render, waitFor } from "@testing-library/react"
+import userEvent from "@testing-library/user-event"
 import { afterEach, beforeAll, describe, expect, it } from "vitest"
 import type { HoardodileDesktopBridge } from "@/lib/desktop"
 import { prefKeys } from "@/lib/keys"
@@ -427,8 +429,11 @@ describe("AppShell storage strip", () => {
 })
 
 describe("AppShell desktop caption", () => {
+	const defaultMatchMedia = window.matchMedia
+
 	afterEach(() => {
 		Reflect.deleteProperty(window, "hoardodileDesktop")
+		window.matchMedia = defaultMatchMedia
 	})
 
 	it("sits on the content column, spanning canvas and panel, not the sidebar", async () => {
@@ -449,7 +454,66 @@ describe("AppShell desktop caption", () => {
 		await findByTestId("desktop-caption-bar")
 		expect(queryByTestId("app-sidebar")).toBeNull()
 	})
+
+	it("hosts the global sidebar toggle leftmost in the strip below the sidebar breakpoint", async () => {
+		installDesktopBridge()
+		window.matchMedia = makeMatchMedia({ [SIDEBAR_QUERY]: true })
+		const { findByTestId } = renderAppShell("/")
+		const caption = await findByTestId("desktop-caption-bar")
+		const toggle = await findByTestId("app-sidebar-open")
+		const back = await findByTestId("desktop-caption-back")
+
+		expect(caption.contains(toggle)).toBe(true)
+		expect(
+			toggle.compareDocumentPosition(back) & Node.DOCUMENT_POSITION_FOLLOWING,
+		).toBeTruthy()
+	})
+
+	it("opens the drawer from the caption-strip toggle", async () => {
+		installDesktopBridge()
+		window.matchMedia = makeMatchMedia({ [SIDEBAR_QUERY]: true })
+		const user = userEvent.setup()
+		const { container, findByTestId } = renderAppShell("/")
+		const toggle = await findByTestId("app-sidebar-open")
+
+		// Only the hidden desktop sidebar (not the drawer) is mounted.
+		expect(container.querySelectorAll('img[src="/logo.png"]')).toHaveLength(1)
+		await user.click(toggle)
+		// The drawer instance mounts its own sidebar content.
+		expect(container.querySelectorAll('img[src="/logo.png"]')).toHaveLength(2)
+	})
+
+	it("renders no sidebar toggle at and above the sidebar breakpoint", async () => {
+		installDesktopBridge()
+		const { findByTestId, queryByTestId } = renderAppShell("/")
+		await findByTestId("desktop-caption-bar")
+		expect(queryByTestId("app-sidebar-open")).toBeNull()
+	})
+
+	it("keeps the drawer hamburger in the top row in a browser tab", async () => {
+		const { findByTestId } = renderAppShell("/")
+		const toggle = await findByTestId("app-sidebar-open")
+
+		expect(toggle.closest('[data-testid="desktop-caption-bar"]')).toBeNull()
+	})
 })
+
+/**
+ * matchMedia stub where each query matches per `matchesByQuery`, mirroring
+ * the default stub's shape so media-query hooks get a deterministic answer.
+ */
+function makeMatchMedia(matchesByQuery: Record<string, boolean>) {
+	return ((query: string) => ({
+		matches: matchesByQuery[query] === true,
+		media: query,
+		onchange: null,
+		addListener: () => undefined,
+		removeListener: () => undefined,
+		addEventListener: () => undefined,
+		removeEventListener: () => undefined,
+		dispatchEvent: () => false,
+	})) as typeof window.matchMedia
+}
 
 function installDesktopBridge() {
 	const bridge: HoardodileDesktopBridge = {

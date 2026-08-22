@@ -109,4 +109,25 @@ describe("CaptionBar", () => {
 		expect(screen.getByTestId("desktop-caption-forward")).toBeDisabled()
 		expect(screen.getByTestId("desktop-caption-reload")).toBeEnabled()
 	})
+
+	it("renders the leading slot leftmost, before the history buttons", () => {
+		render(
+			<CaptionBar
+				controls={fakeControls()}
+				history={fakeHistory()}
+				leading={
+					<button type="button" data-testid="desktop-caption-leading">
+						menu
+					</button>
+				}
+			/>,
+		)
+
+		const leading = screen.getByTestId("desktop-caption-leading")
+		const back = screen.getByTestId("desktop-caption-back")
+		expect(screen.getByTestId("desktop-caption-bar")).toContainElement(leading)
+		expect(
+			leading.compareDocumentPosition(back) & Node.DOCUMENT_POSITION_FOLLOWING,
+		).toBeTruthy()
+	})
 })

@@ -36,7 +36,10 @@ import { Link } from "@tanstack/react-router"
 import { memo } from "react"
 import { createPortal } from "react-dom"
 import { useTranslation } from "react-i18next"
-import { useTopbarSlot } from "@/components/layout/topbarSlot"
+import {
+	useClaimTopbarSlot,
+	useTopbarSlot,
+} from "@/components/layout/topbarSlot"
 import { useDocTheme } from "@/features/doc/hooks/useDocPrefs"
 import { useDateFormatter } from "@/features/settings/datePrefs.ts"
 import { ZOOM_DEFAULT_INDEX, ZOOM_STEPS } from "../prefs.ts"
@@ -98,6 +101,10 @@ export const DocDetailHeader = memo(function DocDetailHeader(
 ) {
 	const isMobile = useBelowSidebar()
 	const topbarSlot = useTopbarSlot()
+	// On desktop the shell's top row exists only while a route claims it
+	// (its hamburger moved into the caption strip); below the sidebar
+	// breakpoint this header is that route.
+	useClaimTopbarSlot()
 
 	if (isMobile) {
 		if (topbarSlot === null) return null

@@ -1,5 +1,5 @@
 import { CaptionBar } from "@hoardodile/ui/components/caption-bar"
-import { useEffect, useState } from "react"
+import { type ReactNode, useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { CloseConfirmDialog } from "@/components/common/CloseConfirmDialog"
 import { getDesktopBridge } from "@/lib/desktop"
@@ -14,7 +14,10 @@ import { getDesktopBridge } from "@/lib/desktop"
  * directly. OS-level closes (Alt+F4, taskbar) route through the main
  * process guard, which falls back to a native dialog in the same shape.
  */
-export function DesktopCaptionBar() {
+export function DesktopCaptionBar(props: {
+	/** Leftmost strip control (the shell's global sidebar toggle). */
+	readonly leading?: ReactNode
+}) {
 	const { t, i18n } = useTranslation()
 	const desktop = getDesktopBridge()
 	const [closeConfirmOpen, setCloseConfirmOpen] = useState(false)
@@ -49,6 +52,7 @@ export function DesktopCaptionBar() {
 		<>
 			<CaptionBar
 				controls={{ ...bridge, close: handleClose }}
+				leading={props.leading}
 				labels={{
 					minimize: t("me.desktop.caption.minimize"),
 					maximize: t("me.desktop.caption.maximize"),

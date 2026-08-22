@@ -3,7 +3,7 @@
 import { Icon } from "@hoardodile/ui/components/icon"
 import { Refresh } from "@hoardodile/ui/icons/registry"
 import { cn } from "@hoardodile/ui/lib/utils"
-import { useEffect, useState } from "react"
+import { type ReactNode, useEffect, useState } from "react"
 
 export type CaptionWindowControls = {
 	minimize: () => void
@@ -49,19 +49,26 @@ export type CaptionBarProps = {
 	readonly labels?: Partial<CaptionBarLabels>
 	/** Test seam; production uses the window history stack. */
 	readonly history?: CaptionHistoryControls
+	/**
+	 * Leftmost slot in the strip's no-drag group, before back / forward /
+	 * reload. Used by the SPA to host the global sidebar toggle below the
+	 * sidebar breakpoint; the wizard leaves it empty.
+	 */
+	readonly leading?: ReactNode
 	readonly className?: string
 }
 
 /**
- * Frameless-window caption strip (DESIGN.md: 38px `h-nav`). Back / forward
- * / reload on the left; drag region in the middle; Windows caption buttons
- * on the right. Shared by the first-run wizard and the SPA so the two
- * pages cannot drift.
+ * Frameless-window caption strip (DESIGN.md: 38px `h-nav`). An optional
+ * `leading` control, then back / forward / reload on the left; drag region
+ * in the middle; Windows caption buttons on the right. Shared by the
+ * first-run wizard and the SPA so the two pages cannot drift.
  */
 function CaptionBar({
 	controls,
 	labels,
 	history,
+	leading,
 	className,
 }: CaptionBarProps) {
 	const resolved = { ...DEFAULT_LABELS, ...labels }
@@ -112,6 +119,7 @@ function CaptionBar({
 			)}
 		>
 			<div className="flex shrink-0 [-webkit-app-region:no-drag]">
+				{leading}
 				<button
 					type="button"
 					title={resolved.back}
