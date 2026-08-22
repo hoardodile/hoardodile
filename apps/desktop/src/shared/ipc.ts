@@ -16,6 +16,8 @@ export const IPC = {
 	getConfig: "desktop:config:get",
 	setConfig: "desktop:config:set",
 	configSync: "desktop:config:sync",
+	setCloseAction: "desktop:close-action:set",
+	closeWithAction: "desktop:close-action:with",
 	changeLibraryFolder: "desktop:library:change",
 	setSharedFolderRoot: "desktop:shared-folder:set",
 	setSharedFolderEnabled: "desktop:shared-folder:enabled",

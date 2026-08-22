@@ -340,6 +340,20 @@
 				"title": "Automatic updates",
 				"description": "Download GitHub releases in the background. Restart is always confirmed."
 			},
+			"closeAction": {
+				"title": "When closing the window",
+				"description": "What the caption close button does — ask each time, hide to tray, or quit.",
+				"ask": "Ask me each time",
+				"tray": "Hide to tray",
+				"quit": "Quit the app"
+			},
+			"closeConfirm": {
+				"title": "Close hoardodile?",
+				"description": "The app keeps running in the tray unless you quit it.",
+				"tray": "Hide to tray",
+				"quit": "Quit the app",
+				"remember": "Remember my choice"
+			},
 			"caption": {
 				"back": "Back",
 				"forward": "Forward",

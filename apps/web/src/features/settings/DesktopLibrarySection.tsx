@@ -3,6 +3,7 @@ import type {
 	HoardodileDesktopBridge,
 } from "@hoardodile/shared/desktop"
 import { Button } from "@hoardodile/ui/components/button"
+import { DropdownSelect } from "@hoardodile/ui/components/dropdown-select"
 import { Icon } from "@hoardodile/ui/components/icon"
 import { Switch } from "@hoardodile/ui/components/switch"
 import { Folder, FolderOpen, Restart } from "@hoardodile/ui/icons/registry"
@@ -143,6 +144,41 @@ function DesktopLibraryForm(props: {
 							testId="desktop-auto-update"
 						/>
 					)}
+					<div className="flex flex-wrap items-center justify-between gap-3">
+						<div className="min-w-0">
+							<div className="text-ui font-semibold text-foreground">
+								{t("me.desktop.closeAction.title")}
+							</div>
+							<p className="mt-0.5 text-xs leading-5 text-muted-foreground">
+								{t("me.desktop.closeAction.description")}
+							</p>
+						</div>
+						<DropdownSelect
+							value={config.closeAction}
+							onValueChange={(value) => {
+								if (value === "ask" || value === "tray" || value === "quit") {
+									void desktop.setCloseAction(value)
+									onConfig({ ...config, closeAction: value })
+								}
+							}}
+							options={[
+								{
+									value: "ask",
+									label: t("me.desktop.closeAction.ask"),
+								},
+								{
+									value: "tray",
+									label: t("me.desktop.closeAction.tray"),
+								},
+								{
+									value: "quit",
+									label: t("me.desktop.closeAction.quit"),
+								},
+							]}
+							aria-label={t("me.desktop.closeAction.title")}
+							data-testid="desktop-close-action"
+						/>
+					</div>
 				</div>
 			</SettingsSection>
 			<SectionDivider />

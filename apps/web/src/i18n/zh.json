@@ -340,6 +340,20 @@
 				"title": "自动更新",
 				"description": "在后台下载 GitHub 发行版。重启前始终需要确认。"
 			},
+			"closeAction": {
+				"title": "关闭窗口时",
+				"description": "标题栏关闭按钮的行为——每次询问、最小化到托盘或退出应用。",
+				"ask": "每次询问",
+				"tray": "最小化到托盘",
+				"quit": "退出应用"
+			},
+			"closeConfirm": {
+				"title": "关闭 hoardodile？",
+				"description": "除非选择退出，应用会继续在托盘运行。",
+				"tray": "最小化到托盘",
+				"quit": "退出应用",
+				"remember": "记住我的选择"
+			},
 			"caption": {
 				"back": "后退",
 				"forward": "前进",

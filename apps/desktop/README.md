@@ -49,7 +49,7 @@ With `HOARDODILE_PACKAGED=1` the server skips workspace `.env` loading and the s
 
 ## Renderer bridge
 
-`contextIsolation`, `sandbox`, `nodeIntegration: false`; folder picks run in main via `dialog`. `window.hoardodileDesktop` exists only in the desktop renderer (wizard and SPA); browser tabs see `undefined`. The bridge exposes `isDesktop`, `platform: "desktop"`, minimize / toggleMaximize / close / isMaximized (+ maximize subscription), `updates` (status, check, progress, `quitAndInstall`), `pickLibraryFolder`, `relaunch`, `setSharedFolderRoot`, `setSharedFolderEnabled`. Caption `close` destroys the window; quit is tray-only. Non-localhost http(s) goes to `shell.openExternal`; localhost stays in the app window.
+`contextIsolation`, `sandbox`, `nodeIntegration: false`; folder picks run in main via `dialog`. `window.hoardodileDesktop` exists only in the desktop renderer (wizard and SPA); browser tabs see `undefined`. The bridge exposes `isDesktop`, `platform: "desktop"`, minimize / toggleMaximize / close / isMaximized (+ maximize subscription), `updates` (status, check, progress, `quitAndInstall`), `pickLibraryFolder`, `relaunch`, `setSharedFolderRoot`, `setSharedFolderEnabled`, `setCloseAction`. Caption close follows the persisted close action (`ask` / `tray` / `quit`, editable in Settings; the ask dialog remembers the choice); a caption or taskbar close on the app window routes through the same guard. Non-localhost http(s) goes to `shell.openExternal`; localhost stays in the app window.
 
 ## Caption bar
 

@@ -21,6 +21,8 @@ export type IpcHost = {
 	pickLibraryFolder: (parent?: BrowserWindow) => Promise<string | undefined>
 	relaunch: () => Promise<void>
 	retryLoad: () => void
+	setCloseAction: (action: DesktopConfig["closeAction"]) => void
+	closeWithAction: (action: "tray" | "quit", remember: boolean) => Promise<void>
 	patchConfig: (
 		patch: Partial<
 			Pick<DesktopConfig, "autoStart" | "startInTray" | "autoUpdate">
@@ -50,7 +52,10 @@ export function registerIpc(host: IpcHost): void {
 		else win.maximize()
 	})
 	ipcMain.on(IPC.windowClose, (event) => {
-		windowFrom(event)?.destroy()
+		// `close()` (not `destroy()`) so the app-window close guard in the
+		// shell can intercept with the configurable ask/tray/quit action;
+		// wizard windows have no guard and close as before.
+		windowFrom(event)?.close()
 	})
 	ipcMain.handle(IPC.windowIsMaximized, (event) => {
 		return windowFrom(event)?.isMaximized() === true
@@ -65,6 +70,17 @@ export function registerIpc(host: IpcHost): void {
 	ipcMain.on(IPC.windowRetryLoad, () => {
 		host.retryLoad()
 	})
+	ipcMain.on(IPC.setCloseAction, (_event, action: unknown) => {
+		if (!isCloseAction(action)) return
+		host.setCloseAction(action)
+	})
+	ipcMain.handle(IPC.closeWithAction, (_event, payload: unknown) => {
+		if (!isRecord(payload)) return
+		const action = payload.action
+		const remember = payload.remember === true
+		if (action !== "tray" && action !== "quit") return
+		return host.closeWithAction(action, remember)
+	})
 	ipcMain.handle(IPC.getConfig, (): DesktopShellConfig => {
 		const config = host.getConfig()
 		return {
@@ -75,6 +91,7 @@ export function registerIpc(host: IpcHost): void {
 			lanEnabled: config.lanEnabled,
 			autoStart: config.autoStart,
 			startInTray: config.startInTray,
+			closeAction: config.closeAction,
 			autoUpdate: config.autoUpdate,
 			portable: host.portable(),
 		}
@@ -146,6 +163,10 @@ function isValidPort(value: unknown): value is number {
 		value >= 1 &&
 		value <= 65535
 	)
+}
+
+function isCloseAction(value: unknown): value is DesktopConfig["closeAction"] {
+	return value === "ask" || value === "tray" || value === "quit"
 }
 
 function isConfigPatch(

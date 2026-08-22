@@ -12,6 +12,8 @@ export type DesktopUpdateState =
 	| { readonly status: "latest" }
 	| { readonly status: "error"; readonly message: string }
 
+export type DesktopCloseAction = "ask" | "tray" | "quit"
+
 export type DesktopShellConfig = {
 	readonly libraryPath: string
 	readonly sharedFolderRoot: string
@@ -20,6 +22,7 @@ export type DesktopShellConfig = {
 	readonly lanEnabled: boolean
 	readonly autoStart: boolean
 	readonly startInTray: boolean
+	readonly closeAction: DesktopCloseAction
 	readonly autoUpdate: boolean
 	readonly portable: boolean
 }
@@ -73,6 +76,17 @@ export type HoardodileDesktopBridge = {
 			Pick<DesktopShellConfig, "autoStart" | "startInTray" | "autoUpdate">
 		>,
 	) => Promise<void>
+	/**
+	 * Persist what closing the app window does: ask each time, hide to
+	 * tray, or quit. Takes effect immediately; no restart needed.
+	 */
+	setCloseAction: (action: DesktopCloseAction) => Promise<void>
+	/**
+	 * Execute a close decision from the renderer's confirm dialog: hide to
+	 * tray (window closes, app stays in the tray) or quit. When `remember`
+	 * is true the choice is persisted as the close action.
+	 */
+	closeWithAction: (action: "tray" | "quit", remember: boolean) => Promise<void>
 	changeLibraryFolder: (libraryPath: string) => Promise<void>
 	setSharedFolderRoot: (sharedFolderRoot: string) => Promise<void>
 	setSharedFolderEnabled: (enabled: boolean) => Promise<void>

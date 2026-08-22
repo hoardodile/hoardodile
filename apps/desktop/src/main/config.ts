@@ -4,6 +4,8 @@ import { z } from "zod"
 
 export const DEFAULT_PORT = 3000
 
+export type CloseAction = "ask" | "tray" | "quit"
+
 export type DesktopConfig = {
 	wizardComplete: boolean
 	libraryPath: string
@@ -15,6 +17,8 @@ export type DesktopConfig = {
 	lanEnabled: boolean
 	autoStart: boolean
 	startInTray: boolean
+	/** What closing the app window does: ask, hide to tray, or quit the app. */
+	closeAction: CloseAction
 	autoUpdate: boolean
 }
 
@@ -28,6 +32,7 @@ const storedConfigSchema = z.object({
 	lanEnabled: z.boolean(),
 	autoStart: z.boolean(),
 	startInTray: z.boolean(),
+	closeAction: z.enum(["ask", "tray", "quit"]),
 	autoUpdate: z.boolean(),
 })
 
@@ -45,6 +50,7 @@ export function defaultDesktopConfig(
 		lanEnabled: false,
 		autoStart: false,
 		startInTray: false,
+		closeAction: "ask",
 		autoUpdate: true,
 	}
 }
@@ -71,6 +77,7 @@ export function parseDesktopConfig(
 		lanEnabled: parsed.data.lanEnabled ?? defaults.lanEnabled,
 		autoStart: parsed.data.autoStart ?? defaults.autoStart,
 		startInTray: parsed.data.startInTray ?? defaults.startInTray,
+		closeAction: parsed.data.closeAction ?? defaults.closeAction,
 		autoUpdate: parsed.data.autoUpdate ?? defaults.autoUpdate,
 	}
 }

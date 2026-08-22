@@ -43,11 +43,14 @@ function installBridge(
 				lanEnabled: true,
 				autoStart: false,
 				startInTray: false,
+				closeAction: "ask",
 				autoUpdate: false,
 				portable: false,
 			}
 		},
 		async setConfig() {},
+		async setCloseAction() {},
+		async closeWithAction() {},
 		async changeLibraryFolder() {},
 		async setSharedFolderRoot() {},
 		async setSharedFolderEnabled() {},
@@ -101,6 +104,7 @@ describe("LanSharingSection", () => {
 					lanEnabled: false,
 					autoStart: false,
 					startInTray: false,
+					closeAction: "ask",
 					autoUpdate: false,
 					portable: false,
 				}

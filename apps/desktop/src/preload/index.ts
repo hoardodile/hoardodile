@@ -1,4 +1,5 @@
 import type {
+	DesktopCloseAction,
 	DesktopShellConfig,
 	DesktopUpdateState,
 	DesktopWizardResult,
@@ -67,6 +68,10 @@ function isValidPort(value: unknown): value is number {
 		value >= 1 &&
 		value <= 65535
 	)
+}
+
+function isCloseAction(value: unknown): value is DesktopCloseAction {
+	return value === "ask" || value === "tray" || value === "quit"
 }
 
 function parseLanInfo(value: unknown): LanInfo {
@@ -160,12 +165,19 @@ const bridge: HoardodileDesktopBridge = {
 			lanEnabled: raw.lanEnabled === true,
 			autoStart: raw.autoStart === true,
 			startInTray: raw.startInTray === true,
+			closeAction: isCloseAction(raw.closeAction) ? raw.closeAction : "ask",
 			autoUpdate: raw.autoUpdate === true,
 			portable: raw.portable === true,
 		} satisfies DesktopShellConfig
 	},
 	async setConfig(patch) {
 		await invokeUnknown(IPC.setConfig, patch)
+	},
+	async setCloseAction(action) {
+		await invokeUnknown(IPC.setCloseAction, action)
+	},
+	async closeWithAction(action, remember) {
+		await invokeUnknown(IPC.closeWithAction, { action, remember })
 	},
 	async changeLibraryFolder(libraryPath) {
 		await invokeUnknown(IPC.changeLibraryFolder, libraryPath)

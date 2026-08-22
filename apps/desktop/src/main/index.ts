@@ -465,6 +465,18 @@ async function openAppWindow(runtime: Runtime): Promise<void> {
 	win.on("closed", () => {
 		if (runtime.window === win) runtime.window = undefined
 	})
+	// Close guard: the caption close button, Alt+F4 and the taskbar close
+	// all land here so the configured close action (ask / tray / quit) is
+	// applied consistently. The wizard window has no guard.
+	let closeRequested = false
+	win.on("close", (event) => {
+		if (closeRequested || win.isDestroyed()) return
+		event.preventDefault()
+		void handleWindowCloseRequest(runtime, win, () => {
+			closeRequested = true
+			win.close()
+		})
+	})
 	runtime.window = win
 	if (url === undefined) {
 		// Dev only: the Vite SPA is down. The in-window error page carries
@@ -477,6 +489,54 @@ async function openAppWindow(runtime: Runtime): Promise<void> {
 	// while the page loads (ready-to-show fires on the loading page).
 	await win.loadURL(windowLoadingPageUrl())
 	await win.loadURL(url)
+}
+
+/**
+ * The app-window close guard. Applies the configured close action:
+ * hide to tray, quit the app, or ask each time. The ask dialog carries a
+ * "Remember my choice" checkbox that persists the selection — the same
+ * setting the app settings page exposes directly.
+ */
+async function handleWindowCloseRequest(
+	runtime: Runtime,
+	win: BrowserWindow,
+	finishClose: () => void,
+): Promise<void> {
+	switch (runtime.config.closeAction) {
+		case "tray":
+			finishClose()
+			return
+		case "quit":
+			await quitApp(runtime)
+			return
+		case "ask": {
+			const { response, checkboxChecked } = await dialog.showMessageBox(win, {
+				type: "question",
+				title: "hoardodile",
+				message: "Close the hoardodile window?",
+				detail:
+					"The app keeps running in the tray unless you quit it. " +
+					"Hide to tray or quit, or cancel to keep the window open.",
+				buttons: ["Hide to tray", "Quit", "Cancel"],
+				defaultId: 0,
+				cancelId: 2,
+				checkboxLabel: "Remember my choice",
+			})
+			if (response === 2) return
+			if (checkboxChecked) {
+				runtime.config = {
+					...runtime.config,
+					closeAction: response === 1 ? "quit" : "tray",
+				}
+				persist(runtime)
+			}
+			if (response === 1) {
+				await quitApp(runtime)
+			} else {
+				finishClose()
+			}
+		}
+	}
 }
 
 /**
@@ -596,6 +656,24 @@ async function boot(): Promise<void> {
 		relaunch: () => relaunchApp(runtime),
 		retryLoad: () => {
 			void retryAppWindow(runtime)
+		},
+		setCloseAction(action) {
+			runtime.config = { ...runtime.config, closeAction: action }
+			persist(runtime)
+		},
+		async closeWithAction(action, remember) {
+			if (remember && runtime.config.closeAction !== action) {
+				runtime.config = { ...runtime.config, closeAction: action }
+				persist(runtime)
+			}
+			if (action === "quit") {
+				await quitApp(runtime)
+				return
+			}
+			// Hide to tray: destroy is intentional — it skips the close
+			// guard (the renderer already decided) and the app keeps
+			// running under the tray with the session intact.
+			runtime.window?.destroy()
 		},
 		patchConfig(patch) {
 			runtime.config = { ...runtime.config, ...patch }
