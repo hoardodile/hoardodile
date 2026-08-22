@@ -42,6 +42,21 @@ function isLinkLocal(address: string): boolean {
 	return address.startsWith("169.254.")
 }
 
+/**
+ * The URL other devices should open, or `undefined` when sharing is off
+ * or there is no reachable address.
+ */
+export function lanUrlFor(
+	enabled: boolean,
+	port: number,
+	addresses: readonly LanAddress[],
+): string | undefined {
+	if (!enabled) return undefined
+	const primary = addresses[0]
+	if (primary === undefined) return undefined
+	return `http://${primary.address}:${port}/`
+}
+
 function privateScopeRank(address: string): number {
 	if (address.startsWith("192.168.")) return 0
 	if (address.startsWith("10.")) return 1

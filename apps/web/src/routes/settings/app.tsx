@@ -12,6 +12,7 @@ import { createFileRoute } from "@tanstack/react-router"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { AboutSection } from "@/features/settings/AboutSection"
+import { ConnectionsSection } from "@/features/settings/ConnectionsSection"
 import { DesktopLibrarySection } from "@/features/settings/DesktopLibrarySection"
 import { LanSharingSection } from "@/features/settings/LanSharingSection"
 import { LicensesDialog } from "@/features/settings/LicensesDialog"
@@ -94,6 +95,8 @@ function AppSettingsRoute() {
 			>
 				<StoragePanel />
 			</SettingsSection>
+			<SectionDivider />
+			<ConnectionsSection />
 			<SectionDivider />
 			<DesktopLibrarySection />
 			<LanSharingSection />

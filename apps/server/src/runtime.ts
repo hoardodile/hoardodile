@@ -8,6 +8,7 @@ import type { Env } from "src/config/env.ts"
 import { resolveAvailablePort } from "src/config/port.ts"
 import { hashPassword } from "src/domain/auth/password.ts"
 import { deleteAuthRow, getAuthRow, setAuthRow } from "src/domain/auth/repo.ts"
+import { assessPasswordStrength } from "src/domain/auth/strength.ts"
 import { openDb, schema } from "src/infra/db/connection.ts"
 import { resolveStorageContext } from "src/infra/storage/bootstrap.ts"
 import { type BuiltServer, buildServer } from "src/server.ts"
@@ -53,7 +54,11 @@ export async function writeAuthPassword(
 	}
 	const hash = await hashPassword(password)
 	withRuntimeDb(env, (dbHandles) => {
-		setAuthRow(dbHandles.db, { hash, updatedAt: Date.now() })
+		setAuthRow(dbHandles.db, {
+			hash,
+			updatedAt: Date.now(),
+			weakPassword: assessPasswordStrength(password) === "weak",
+		})
 	})
 }
 

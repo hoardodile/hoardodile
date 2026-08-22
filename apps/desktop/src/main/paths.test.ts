@@ -2,6 +2,7 @@
  * @vitest-environment node
  */
 
+import { existsSync } from "node:fs"
 import { join } from "node:path"
 import { describe, expect, it } from "vitest"
 import { packagedLayout, workspaceLayout } from "./paths.ts"
@@ -21,6 +22,7 @@ describe("packagedLayout", () => {
 		expect(layout.seedPluginPaths).toEqual([
 			join(resources, "plugins", "gallery"),
 		])
+		expect(layout.webRoot).toBeUndefined()
 	})
 })
 
@@ -48,5 +50,13 @@ describe("workspaceLayout", () => {
 		expect(layout.seedPluginPaths).toEqual([
 			join(workspaceRoot, "plugins", "gallery", "dist"),
 		])
+		// On this machine apps/web/dist exists only if the SPA has been
+		// built; the dev LAN flow needs it (or the sidecar 404s at `/`).
+		const distExists = existsSync(
+			join(workspaceRoot, "apps", "web", "dist", "index.html"),
+		)
+		expect(layout.webRoot).toBe(
+			distExists ? join(workspaceRoot, "apps", "web", "dist") : undefined,
+		)
 	})
 })

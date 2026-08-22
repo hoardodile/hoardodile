@@ -13,6 +13,7 @@ const layout: SidecarLayout = {
 	cwd: "C:/res/server",
 	builtinPath: "C:/res/plugins/file",
 	seedPluginPaths: ["C:/res/plugins/gallery"],
+	webRoot: undefined,
 }
 
 describe("buildSidecarEnv", () => {
@@ -78,5 +79,38 @@ describe("buildSidecarEnv", () => {
 			{ PATH: "C:/Windows/system32" },
 		)
 		expect(env.HOST).toBe("0.0.0.0")
+	})
+
+	it("injects APP_WEB_ROOT in dev so the sidecar serves the SPA", () => {
+		const env = buildSidecarEnv(
+			{
+				layout,
+				libraryPath: "C:/Users/me/Documents/hoardodile",
+				host: "127.0.0.1",
+				port: 3000,
+				sharedFolderRoot: "D:/imports",
+				sharedFolderEnabled: false,
+				shutdownToken: "secret-token",
+				webRoot: "C:/repo/apps/web/dist",
+			},
+			{ PATH: "C:/Windows/system32" },
+		)
+		expect(env.APP_WEB_ROOT).toBe("C:/repo/apps/web/dist")
+	})
+
+	it("omits APP_WEB_ROOT when there is no prebuilt SPA", () => {
+		const env = buildSidecarEnv(
+			{
+				layout,
+				libraryPath: "C:/Users/me/Documents/hoardodile",
+				host: "127.0.0.1",
+				port: 3000,
+				sharedFolderRoot: "D:/imports",
+				sharedFolderEnabled: false,
+				shutdownToken: "secret-token",
+			},
+			{ PATH: "C:/Windows/system32" },
+		)
+		expect(env.APP_WEB_ROOT).toBeUndefined()
 	})
 })

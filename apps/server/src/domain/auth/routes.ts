@@ -13,9 +13,12 @@ import {
 	cookieOptions,
 	writeSessionCookie,
 } from "./cookie.ts"
+import { classifyOrigin, describeDevice } from "./device.ts"
 import { hashPassword, verifyPassword } from "./password.ts"
-import { getAuthRow, setAuthRow } from "./repo.ts"
+import { getAuthRow, setAuthRow, setPasswordWeakness } from "./repo.ts"
 import type { SessionStore } from "./session.ts"
+import { recordSignIn } from "./signins.ts"
+import { assessPasswordStrength } from "./strength.ts"
 import { resolveSessionTtl } from "./ttl.ts"
 
 /**
@@ -137,6 +140,7 @@ export async function registerAuthRoutes(
 			setAuthRow(db, {
 				hash: await hashPassword(parsed.data.password),
 				updatedAt: Date.now(),
+				weakPassword: assessPasswordStrength(parsed.data.password) === "weak",
 			})
 			return { ok: true as const }
 		},
@@ -166,6 +170,28 @@ export async function registerAuthRoutes(
 			const sessionTtl = resolveSessionTtl(db, env)
 			const issued = await sessions.rotate(sessionTtl)
 			writeSessionCookie(reply, issued.sealed, env, sessionTtl)
+			// The cleartext password is in hand: refresh the strength
+			// assessment (the hash need not be rewritten) and log the
+			// sign-in so the owner can see where the library was accessed
+			// from without ever persisting the raw user agent. Both writes
+			// are skipped while viewing a past version (read-only clone).
+			if (!req.server.readOnly) {
+				setPasswordWeakness(
+					db,
+					assessPasswordStrength(parsed.data.password) === "weak",
+				)
+				recordSignIn(db, {
+					id: issued.session.id,
+					ip: req.ip,
+					origin: classifyOrigin(req.ip),
+					deviceLabel: describeDevice(
+						typeof req.headers["user-agent"] === "string"
+							? req.headers["user-agent"]
+							: undefined,
+					),
+					recordedAt: Date.now(),
+				})
+			}
 			return { authenticated: true, configured: true }
 		},
 	)
@@ -201,6 +227,7 @@ export async function registerAuthRoutes(
 			setAuthRow(db, {
 				hash: await hashPassword(newPassword),
 				updatedAt: Date.now(),
+				weakPassword: assessPasswordStrength(newPassword) === "weak",
 			})
 			return { ok: true as const }
 		},

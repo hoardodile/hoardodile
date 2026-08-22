@@ -90,6 +90,7 @@ function parseLanInfo(value: unknown): LanInfo {
 	return {
 		enabled: value.enabled === true,
 		port: isValidPort(value.port) ? value.port : 0,
+		preferredPort: isValidPort(value.preferredPort) ? value.preferredPort : 0,
 		addresses,
 	}
 }
@@ -112,6 +113,9 @@ const bridge: HoardodileDesktopBridge = {
 	},
 	close() {
 		ipcRenderer.send(IPC.windowClose)
+	},
+	retryLoad() {
+		ipcRenderer.send(IPC.windowRetryLoad)
 	},
 	async isMaximized() {
 		return (await invokeUnknown(IPC.windowIsMaximized)) === true

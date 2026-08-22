@@ -34,7 +34,7 @@ const DEFAULT_LABELS: CaptionBarLabels = {
 }
 
 const captionChromeButtonClassName =
-	"flex h-nav w-[46px] items-center justify-center text-secondary-foreground enabled:hover:bg-muted enabled:hover:text-foreground disabled:text-muted-foreground"
+	"flex h-nav w-[46px] items-center justify-center text-secondary-foreground enabled:hover:bg-muted enabled:hover:text-foreground disabled:text-muted-foreground focus:outline-none focus-visible:outline-none focus-visible:ring-0"
 
 export type CaptionHistoryControls = {
 	readonly canGoBack: boolean
@@ -80,6 +80,28 @@ function CaptionBar({
 			unsubscribe()
 		}
 	}, [controls])
+
+	// Chromium may restore focus to the last-focused caption button when
+	// the window or session comes back, leaving a stray focus ring on the
+	// chrome. Clear focus only when it sits on a caption button — never
+	// blur an input the user is typing into. Runs at mount (restored focus
+	// may already be present) and again on load (restored afterwards).
+	useEffect(() => {
+		function clearChromeFocus() {
+			const el = document.activeElement
+			if (
+				el instanceof HTMLElement &&
+				el.closest('[data-testid="desktop-caption-bar"]') !== null
+			) {
+				el.blur()
+			}
+		}
+		clearChromeFocus()
+		window.addEventListener("load", clearChromeFocus)
+		return () => {
+			window.removeEventListener("load", clearChromeFocus)
+		}
+	}, [])
 
 	return (
 		<div
@@ -132,10 +154,9 @@ function CaptionBar({
 			<div
 				data-testid="desktop-caption-drag"
 				className="min-w-0 flex-1 [-webkit-app-region:drag]"
-				onDoubleClick={() => {
-					controls.toggleMaximize()
-				}}
 			/>
+			{/* Double-click toggles maximize natively on Windows drag regions;
+			    a JS handler here would double-toggle (native + JS). */}
 			<div className="flex shrink-0 [-webkit-app-region:no-drag]">
 				<button
 					type="button"
@@ -243,6 +264,13 @@ function useWindowHistoryControls(): CaptionHistoryControls {
 		}
 	}, [])
 
+	// Plain browser reload. The app's own first frame (index.html splash)
+	// covers the pre-paint gap, so routing this through the desktop shell
+	// would only add unnecessary hops.
+	function reload() {
+		window.location.reload()
+	}
+
 	return {
 		canGoBack,
 		canGoForward,
@@ -252,9 +280,7 @@ function useWindowHistoryControls(): CaptionHistoryControls {
 		forward() {
 			window.history.forward()
 		},
-		reload() {
-			window.location.reload()
-		},
+		reload,
 	}
 }
 

@@ -291,6 +291,12 @@
 			"restartToUpdate": "Restart",
 			"portableHint": "Portable builds update by downloading a new zip from GitHub."
 		},
+		"connections": {
+			"title": "Recent connections",
+			"description": "Every sign-in with device, IP and time. Stored only on this device; rows older than 90 days are pruned.",
+			"empty": "No sign-ins yet.",
+			"loopback": "this device"
+		},
 		"desktop": {
 			"library": {
 				"title": "Library folder",
@@ -316,7 +322,11 @@
 				"copy": "Copy",
 				"copied": "Address copied",
 				"copyFailed": "Copy failed",
-				"qrHint": "Scan the code with a phone camera to open this app."
+				"primaryHint": "Open on a device on the same Wi-Fi.",
+				"portAdjustedTitle": "Port {{preferred}} is in use — the server is now listening on {{actual}}.",
+				"portAdjustedHint": "Open this address from other devices with the new port.",
+				"moreAddresses": "Other addresses ({{count}}) — virtual adapters and VPNs",
+				"noAddresses": "No reachable address found — check the network connection."
 			},
 			"autostart": {
 				"title": "Start with Windows",

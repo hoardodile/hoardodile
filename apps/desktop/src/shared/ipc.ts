@@ -6,6 +6,7 @@ export const IPC = {
 	windowClose: "desktop:window:close",
 	windowIsMaximized: "desktop:window:is-maximized",
 	windowMaximizedChanged: "desktop:window:maximized-changed",
+	windowRetryLoad: "desktop:window:retry-load",
 	updatesStatus: "desktop:updates:status",
 	updatesChanged: "desktop:updates:changed",
 	updatesCheck: "desktop:updates:check",

@@ -6,7 +6,14 @@ import type {
 	DesktopWizardResult,
 	LanInfo,
 } from "@hoardodile/shared/desktop"
-import { app, BrowserWindow, dialog, Notification, type Tray } from "electron"
+import {
+	app,
+	BrowserWindow,
+	clipboard,
+	dialog,
+	Notification,
+	type Tray,
+} from "electron"
 import { HIDDEN_SWITCH, IPC } from "../shared/ipc.ts"
 import {
 	configFilePath,
@@ -16,12 +23,18 @@ import {
 } from "./config.ts"
 import { bindDestApiProxy } from "./dest-api-proxy.ts"
 import {
+	DEV_SERVER_ERROR_MESSAGE,
+	SERVER_ERROR_MESSAGE,
+	windowErrorPageUrl,
+	windowLoadingPageUrl,
+} from "./error-page.ts"
+import {
 	applyLoginItem,
 	bindWindowMaximizeEvents,
 	pickDirectory,
 	registerIpc,
 } from "./ipc.ts"
-import { computeLanAddresses } from "./lan.ts"
+import { computeLanAddresses, lanUrlFor } from "./lan.ts"
 import {
 	findWorkspaceRoot,
 	packagedLayout,
@@ -116,6 +129,7 @@ function broadcastUpdate(runtime: Runtime, state: DesktopUpdateState): void {
 		rebuildTrayMenu(runtime.tray, trayHandlers(runtime), {
 			crashed: runtime.crashed,
 			updateReady: runtime.updateReady,
+			lanUrl: lanTrayUrl(runtime),
 		})
 	}
 }
@@ -133,6 +147,9 @@ function trayHandlers(runtime: Runtime) {
 		},
 		restartSidecar() {
 			void restartSidecar(runtime)
+		},
+		copyLanAddress() {
+			copyLanAddress(runtime)
 		},
 	}
 }
@@ -190,6 +207,7 @@ function lanInfo(runtime: Runtime): LanInfo {
 	return {
 		enabled: runtime.config.lanEnabled,
 		port: runtime.config.port,
+		preferredPort: runtime.config.portPreferred,
 		addresses: computeLanAddresses(),
 	}
 }
@@ -210,8 +228,8 @@ async function setLanEnabled(
 		throw new Error("sidecar is not running")
 	}
 	if (enabled) {
-		const configured = await readSidecarAuthConfigured(sidecar)
-		if (!configured) {
+		const state = await readSidecarAuthConfigured(sidecar)
+		if (!state.configured) {
 			dialog.showErrorBox(
 				"hoardodile",
 				"Set an admin password first before enabling local network access.",
@@ -220,25 +238,46 @@ async function setLanEnabled(
 				"refusing to enable LAN sharing without an admin password",
 			)
 		}
+		if (state.weakPassword) {
+			const { response } = await dialog.showMessageBox({
+				type: "warning",
+				title: "hoardodile",
+				message: "Your admin password is weak.",
+				detail:
+					"Anyone on your network who guesses it can access the " +
+					"whole library. Set a stronger password in Settings → " +
+					"Change password first, or enable sharing anyway.",
+				buttons: ["Enable sharing anyway", "Cancel"],
+				defaultId: 1,
+				cancelId: 1,
+			})
+			if (response !== 0) {
+				throw new Error(
+					"refusing to enable LAN sharing with a weak admin password",
+				)
+			}
+		}
 	}
 	await applyLanChange(runtime, { lanEnabled: enabled })
 }
 
 /**
  * Change the sidecar port (localhost and the LAN share use one port) and
- * restart in place.
+ * restart in place. The requested port is remembered separately so the
+ * UI can keep showing it even when a conflict fallback moved the actual
+ * listening port.
  */
 async function setLanPort(runtime: Runtime, port: number): Promise<void> {
-	if (port === runtime.config.port) return
+	if (port === runtime.config.portPreferred) return
 	if (runtime.sidecar === undefined) {
 		throw new Error("sidecar is not running")
 	}
-	await applyLanChange(runtime, { port })
+	await applyLanChange(runtime, { port, portPreferred: port })
 }
 
 async function applyLanChange(
 	runtime: Runtime,
-	patch: Partial<Pick<DesktopConfig, "lanEnabled" | "port">>,
+	patch: Partial<Pick<DesktopConfig, "lanEnabled" | "port" | "portPreferred">>,
 ): Promise<void> {
 	const previous = runtime.config
 	runtime.config = { ...runtime.config, ...patch }
@@ -265,9 +304,15 @@ async function applyLanChange(
 	if (win !== undefined && !win.isDestroyed()) {
 		// Dev loads the Vite URL directly and the proxy already rebinds
 		// to the new sidecar URL; production pages come from the sidecar
-		// and die with it, so reload from the fresh URL.
+		// and die with it, so reload from the fresh URL — spinner first,
+		// then the app (or the error page if it still fails).
 		if (process.env.HOARDODILE_WEB_URL === undefined) {
-			await win.loadURL(handle.url)
+			try {
+				await win.loadURL(windowLoadingPageUrl())
+				await win.loadURL(handle.url)
+			} catch {
+				await win.loadURL(windowErrorPageUrl(SERVER_ERROR_MESSAGE))
+			}
 		}
 	}
 }
@@ -277,7 +322,27 @@ function rebuildSidecarTray(runtime: Runtime): void {
 	rebuildTrayMenu(runtime.tray, trayHandlers(runtime), {
 		crashed: runtime.crashed,
 		updateReady: runtime.updateReady,
+		lanUrl: lanTrayUrl(runtime),
 	})
+}
+
+/** The URL the tray copies, using the actual listening port. */
+function lanTrayUrl(runtime: Runtime): string | undefined {
+	return lanUrlFor(
+		runtime.config.lanEnabled,
+		runtime.config.port,
+		computeLanAddresses(),
+	)
+}
+
+function copyLanAddress(runtime: Runtime): void {
+	const url = lanTrayUrl(runtime)
+	if (url === undefined) return
+	clipboard.writeText(url)
+	new Notification({
+		title: "hoardodile",
+		body: "LAN address copied to the clipboard.",
+	}).show()
 }
 
 async function relaunchApp(runtime: Runtime): Promise<void> {
@@ -303,6 +368,7 @@ async function restartSidecar(runtime: Runtime): Promise<void> {
 			rebuildTrayMenu(runtime.tray, trayHandlers(runtime), {
 				crashed: false,
 				updateReady: runtime.updateReady,
+				lanUrl: lanTrayUrl(runtime),
 			})
 		}
 	} catch (err) {
@@ -344,6 +410,7 @@ function onSidecarCrash(runtime: Runtime): void {
 		rebuildTrayMenu(runtime.tray, trayHandlers(runtime), {
 			crashed: true,
 			updateReady: runtime.updateReady,
+			lanUrl: lanTrayUrl(runtime),
 		})
 	}
 	new Notification({
@@ -352,22 +419,16 @@ function onSidecarCrash(runtime: Runtime): void {
 	}).show()
 }
 
+/**
+ * Resolve the URL the app window should load: the Vite dev server in
+ * dev, the sidecar otherwise. `undefined` (dev, Vite down) means the
+ * caller shows the in-window error page; the old modal Retry dialog is
+ * gone in favour of that page's Retry button.
+ */
 async function resolveAppUrl(runtime: Runtime): Promise<string | undefined> {
 	const spaUrl = process.env.HOARDODILE_WEB_URL
 	if (!app.isPackaged && spaUrl !== undefined && spaUrl.length > 0) {
 		if (await isHttpReachable(spaUrl)) return spaUrl
-		const { response } = await dialog.showMessageBox({
-			type: "warning",
-			title: "hoardodile",
-			message: "The Vite SPA server is not running.",
-			detail:
-				`Desktop dev loads ${spaUrl} for HMR. ` +
-				"Start `pnpm dev` in another terminal (or set HOARDODILE_WEB_URL to the running SPA), then Retry.",
-			buttons: ["Retry", "Cancel"],
-			defaultId: 0,
-			cancelId: 1,
-		})
-		if (response === 0) return resolveAppUrl(runtime)
 		return undefined
 	}
 	if (runtime.sidecar === undefined) {
@@ -394,11 +455,10 @@ async function openAppWindow(runtime: Runtime): Promise<void> {
 		return
 	}
 	const url = await resolveAppUrl(runtime)
-	if (url === undefined) return
 	const win = createDesktopWindow({
 		preloadPath: preloadPath(runtime.desktopRoot),
 		kind: "app",
-		url,
+		url: url ?? "about:blank",
 		iconPath: runtime.iconPath,
 	})
 	bindWindowMaximizeEvents(win)
@@ -406,6 +466,51 @@ async function openAppWindow(runtime: Runtime): Promise<void> {
 		if (runtime.window === win) runtime.window = undefined
 	})
 	runtime.window = win
+	if (url === undefined) {
+		// Dev only: the Vite SPA is down. The in-window error page carries
+		// the Retry button, so the shell's old Retry dialog is gone — one
+		// mechanism for every load failure, dev or production.
+		await win.loadURL(windowErrorPageUrl(DEV_SERVER_ERROR_MESSAGE))
+		return
+	}
+	// Spinner first, then the app: the window is never a blank white canvas
+	// while the page loads (ready-to-show fires on the loading page).
+	await win.loadURL(windowLoadingPageUrl())
+	await win.loadURL(url)
+}
+
+/**
+ * The error page's Retry button: show the loading page (its button already
+ * switched to a spinner), re-resolve the app URL (Vite in dev, the sidecar
+ * otherwise) and reload; on failure the window's own `did-fail-load` guard
+ * swaps in a fresh error page.
+ */
+async function retryAppWindow(runtime: Runtime): Promise<void> {
+	const win = runtime.window
+	if (win === undefined || win.isDestroyed()) {
+		await openAppWindow(runtime)
+		return
+	}
+	await win.loadURL(windowLoadingPageUrl())
+	let url: string | undefined
+	try {
+		url = await resolveAppUrl(runtime)
+	} catch {
+		// sidecar is undefined (e.g. it crashed while the window was
+		// still open) — surface the generic error page instead of failing
+		// silently.
+		await win.loadURL(windowErrorPageUrl(SERVER_ERROR_MESSAGE))
+		return
+	}
+	if (url === undefined) {
+		await win.loadURL(windowErrorPageUrl(DEV_SERVER_ERROR_MESSAGE))
+		return
+	}
+	try {
+		await win.loadURL(url)
+	} catch {
+		// did-fail-load guard already swapped in the error page
+	}
 }
 
 function focusWizardIfOpen(runtime: Runtime): boolean {
@@ -489,6 +594,9 @@ async function boot(): Promise<void> {
 		portable: () => runtime.portable,
 		pickLibraryFolder: (parent) => pickDirectory(parent),
 		relaunch: () => relaunchApp(runtime),
+		retryLoad: () => {
+			void retryAppWindow(runtime)
+		},
 		patchConfig(patch) {
 			runtime.config = { ...runtime.config, ...patch }
 			persist(runtime)

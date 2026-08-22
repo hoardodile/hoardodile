@@ -31,7 +31,10 @@ export type LanAddress = {
 
 export type LanInfo = {
 	readonly enabled: boolean
+	/** Actual listening port (may differ from `preferredPort` after a conflict fallback). */
 	readonly port: number
+	/** Port the user last requested; the settings UI edits this value. */
+	readonly preferredPort: number
 	readonly addresses: readonly LanAddress[]
 }
 
@@ -47,6 +50,12 @@ export type HoardodileDesktopBridge = {
 	minimize: () => void
 	toggleMaximize: () => void
 	close: () => void
+	/**
+	 * Re-attempt loading the app URL (Vite in dev, sidecar otherwise).
+	 * Used by the in-window error page's Retry button; the shell decides
+	 * the target and shows a fresh error page when it is still unreachable.
+	 */
+	retryLoad: () => void
 	isMaximized: () => Promise<boolean>
 	onMaximizedChange: (listener: (maximized: boolean) => void) => () => void
 	readonly updates: {

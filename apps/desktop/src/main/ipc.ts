@@ -20,6 +20,7 @@ export type IpcHost = {
 	portable: () => boolean
 	pickLibraryFolder: (parent?: BrowserWindow) => Promise<string | undefined>
 	relaunch: () => Promise<void>
+	retryLoad: () => void
 	patchConfig: (
 		patch: Partial<
 			Pick<DesktopConfig, "autoStart" | "startInTray" | "autoUpdate">
@@ -61,6 +62,9 @@ export function registerIpc(host: IpcHost): void {
 		host.pickLibraryFolder(windowFrom(event)),
 	)
 	ipcMain.handle(IPC.relaunch, () => host.relaunch())
+	ipcMain.on(IPC.windowRetryLoad, () => {
+		host.retryLoad()
+	})
 	ipcMain.handle(IPC.getConfig, (): DesktopShellConfig => {
 		const config = host.getConfig()
 		return {

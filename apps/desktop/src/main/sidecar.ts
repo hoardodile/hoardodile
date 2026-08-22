@@ -71,6 +71,7 @@ async function spawnSidecarOnce(
 		sharedFolderRoot: options.config.sharedFolderRoot,
 		sharedFolderEnabled: options.config.sharedFolderEnabled,
 		shutdownToken,
+		webRoot: options.layout.webRoot,
 	})
 	const child = spawn(options.layout.nodePath, [...options.layout.serverArgs], {
 		cwd: options.layout.cwd,
@@ -196,14 +197,21 @@ export async function patchSidecarSharedFolder(
 	}
 }
 
+export type SidecarAuthState = {
+	readonly configured: boolean
+	readonly weakPassword: boolean
+}
+
 /**
- * Whether the sidecar has an admin password configured. The shell calls
- * this before enabling local-network sharing: an unclaimed instance must
- * never become reachable from other devices.
+ * Whether the sidecar has an admin password configured and whether it
+ * fails the cheap strength check. The shell calls this before enabling
+ * local-network sharing: an unclaimed instance must never become
+ * reachable from other devices, and a weak password gets an explicit
+ * confirmation first.
  */
 export async function readSidecarAuthConfigured(
 	sidecar: SidecarHandle,
-): Promise<boolean> {
+): Promise<SidecarAuthState> {
 	const res = await fetch(`${sidecar.url}api/internal/auth-configured`, {
 		headers: { "x-shutdown-token": sidecar.shutdownToken },
 	})
@@ -213,7 +221,13 @@ export async function readSidecarAuthConfigured(
 		)
 	}
 	const body: unknown = await res.json()
-	return isRecord(body) && body.configured === true
+	if (!isRecord(body)) {
+		throw new Error("sidecar auth-configured check failed (bad payload)")
+	}
+	return {
+		configured: body.configured === true,
+		weakPassword: body.weakPassword === true,
+	}
 }
 
 function waitForExit(child: ChildProcess, timeoutMs: number): Promise<boolean> {

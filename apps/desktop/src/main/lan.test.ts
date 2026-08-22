@@ -3,7 +3,7 @@
  */
 
 import { describe, expect, it } from "vitest"
-import { computeLanAddresses } from "./lan.ts"
+import { computeLanAddresses, lanUrlFor } from "./lan.ts"
 
 function v4(address: string, internal = false) {
 	return { address, family: "IPv4" as const, internal }
@@ -44,5 +44,25 @@ describe("computeLanAddresses", () => {
 		expect(addresses).toEqual([
 			{ interfaceName: "Ethernet", address: "192.168.1.20" },
 		])
+	})
+})
+
+describe("lanUrlFor", () => {
+	const addresses = [{ interfaceName: "Ethernet", address: "192.168.1.20" }]
+
+	it("builds the primary URL when sharing is enabled", () => {
+		expect(lanUrlFor(true, 3000, addresses)).toBe("http://192.168.1.20:3000/")
+	})
+
+	it("returns undefined while sharing is off", () => {
+		expect(lanUrlFor(false, 3000, addresses)).toBeUndefined()
+	})
+
+	it("returns undefined without reachable addresses", () => {
+		expect(lanUrlFor(true, 3000, [])).toBeUndefined()
+	})
+
+	it("uses the actual listening port", () => {
+		expect(lanUrlFor(true, 4040, addresses)).toBe("http://192.168.1.20:4040/")
 	})
 })

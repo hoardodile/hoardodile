@@ -4,6 +4,7 @@
 // without the rest of the server tree.
 import "src/infra/fastify-augment.ts"
 import { authRouter } from "src/domain/auth/router.ts"
+import { listSignIns } from "src/domain/auth/signins.ts"
 import { buildBackupRouter } from "src/domain/backup/router.ts"
 import { buildCategoryRouter } from "src/domain/cat/router.ts"
 import { buildCharacterRouter } from "src/domain/char/router.ts"
@@ -27,7 +28,7 @@ import { buildTraceRouter } from "src/domain/trace/router.ts"
 import { buildTraitRouter } from "src/domain/trait/router.ts"
 import { buildUsageRouter } from "src/domain/usage/router.ts"
 import { buildVersionRouter } from "src/domain/version/router.ts"
-import { mergeRouters, router } from "./core.ts"
+import { authedProcedure, mergeRouters, router } from "./core.ts"
 import type { AppRouterServices, RouterServices } from "./services.ts"
 
 /**
@@ -100,6 +101,17 @@ export function buildDomainRouter(services: RouterServices) {
 				services.pluginPrefService,
 				services.cacheService,
 			),
+			access: router({
+				/**
+				 * Newest sign-in events (ip, origin, device label,
+				 * recordedAt). Rows are login events — sessions are
+				 * stateless cookies and every login rotates to a fresh
+				 * session id.
+				 */
+				connections: authedProcedure.query(({ ctx }) => ({
+					connections: listSignIns(ctx.req.server.db),
+				})),
+			}),
 		}),
 	)
 }

@@ -49,13 +49,38 @@ describe("CaptionBar", () => {
 		expect(screen.queryByText("hoardodile")).toBeNull()
 	})
 
-	it("toggles maximize on double-click of the drag region", async () => {
+	it("does not double-toggle on double-click of the drag region (native handles it)", async () => {
 		const user = userEvent.setup()
 		const controls = fakeControls()
 		render(<CaptionBar controls={controls} history={fakeHistory()} />)
 
 		await user.dblClick(screen.getByTestId("desktop-caption-drag"))
-		expect(controls.toggleMaximize).toHaveBeenCalledTimes(1)
+		expect(controls.toggleMaximize).not.toHaveBeenCalled()
+	})
+
+	it("keeps reload a plain browser reload (never routed through the desktop bridge)", async () => {
+		const user = userEvent.setup()
+		const retryLoad = vi.fn()
+		Reflect.set(window, "hoardodileDesktop", { retryLoad })
+		try {
+			render(<CaptionBar controls={fakeControls()} />)
+			await user.click(screen.getByTestId("desktop-caption-reload"))
+			expect(retryLoad).not.toHaveBeenCalled()
+		} finally {
+			Reflect.deleteProperty(window, "hoardodileDesktop")
+		}
+	})
+
+	it("blurs a caption button focused during load so no stray ring persists", async () => {
+		const { unmount } = render(
+			<CaptionBar controls={fakeControls()} history={fakeHistory()} />,
+		)
+		const back = screen.getByTestId("desktop-caption-back")
+		back.focus()
+		expect(document.activeElement).toBe(back)
+		window.dispatchEvent(new Event("load"))
+		expect(document.activeElement).not.toBe(back)
+		unmount()
 	})
 
 	it("invokes history controls from the navigation buttons", async () => {

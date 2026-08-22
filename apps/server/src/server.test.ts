@@ -1959,9 +1959,11 @@ describe("POST /api/internal/shared-folder", () => {
 
 describe("GET /api/internal/auth-configured", () => {
 	const token = "desktop-shutdown-secret"
+	const strongPassword = "correct-horse-battery"
 
 	async function bootstrapAuthConfigured(
 		withPassword: boolean,
+		password = strongPassword,
 	): Promise<BuiltServer> {
 		const env = loadEnv({
 			NODE_ENV: "test",
@@ -1971,10 +1973,15 @@ describe("GET /api/internal/auth-configured", () => {
 		const db = openDb(":memory:")
 		db.runMigrations()
 		if (withPassword) {
-			const passwordHash = await hashPassword("hunter2")
+			const passwordHash = await hashPassword(password)
 			db.db
 				.insert(schema.auth)
-				.values({ singleton: 1, passwordHash, updatedAt: Date.now() })
+				.values({
+					singleton: 1,
+					passwordHash,
+					updatedAt: Date.now(),
+					weakPassword: password.length < 8 || /^\d+$/.test(password) ? 1 : 0,
+				})
 				.run()
 		}
 		return buildServer({ env, dbHandles: db })
@@ -1991,7 +1998,25 @@ describe("GET /api/internal/auth-configured", () => {
 				headers: { "x-shutdown-token": token },
 			})
 			expect(res.statusCode).toBe(200)
-			expect(res.json()).toEqual({ configured: true })
+			expect(res.json()).toEqual({ configured: true, weakPassword: false })
+		} finally {
+			await built.close()
+			built.db.close()
+		}
+	})
+
+	test("valid token: weakPassword true for a short admin password", async () => {
+		const built = await bootstrapAuthConfigured(true, "1234")
+		await built.app.ready()
+		try {
+			const res = await built.app.inject({
+				method: "GET",
+				url: "/api/internal/auth-configured",
+				remoteAddress: "127.0.0.1",
+				headers: { "x-shutdown-token": token },
+			})
+			expect(res.statusCode).toBe(200)
+			expect(res.json()).toEqual({ configured: true, weakPassword: true })
 		} finally {
 			await built.close()
 			built.db.close()
@@ -2009,7 +2034,7 @@ describe("GET /api/internal/auth-configured", () => {
 				headers: { "x-shutdown-token": token },
 			})
 			expect(res.statusCode).toBe(200)
-			expect(res.json()).toEqual({ configured: false })
+			expect(res.json()).toEqual({ configured: false, weakPassword: false })
 		} finally {
 			await built.close()
 			built.db.close()
@@ -2081,6 +2106,148 @@ describe("desktop control routes reject non-loopback peers", () => {
 				headers: { "x-shutdown-token": token },
 			})
 			expect(res.statusCode).toBe(403)
+		} finally {
+			await built.close()
+			built.db.close()
+		}
+	})
+})
+
+describe("POST /auth/login records sign-ins and refreshes password weakness", () => {
+	const strongPassword = "correct-horse-battery"
+	const chromeUA =
+		"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+
+	async function bootstrapLogin(): Promise<BuiltServer> {
+		const env = loadEnv({
+			NODE_ENV: "test",
+			LOG_LEVEL: "silent",
+		} satisfies NodeJS.ProcessEnv)
+		const db = openDb(":memory:")
+		db.runMigrations()
+		const passwordHash = await hashPassword("hunter2")
+		db.db
+			.insert(schema.auth)
+			.values({ singleton: 1, passwordHash, updatedAt: Date.now() })
+			.run()
+		return buildServer({ env, dbHandles: db })
+	}
+
+	async function login(
+		built: BuiltServer,
+		opts: { remoteAddress: string; userAgent?: string },
+	): Promise<string> {
+		const res = await built.app.inject({
+			method: "POST",
+			url: "/auth/login",
+			remoteAddress: opts.remoteAddress,
+			headers:
+				opts.userAgent !== undefined ? { "user-agent": opts.userAgent } : {},
+			payload: { password: "hunter2" },
+		})
+		expect(res.statusCode).toBe(200)
+		const cookieLine = firstSetCookie(res.headers["set-cookie"])
+		const headerPart = cookieLine.split(";")[0]
+		assertString(headerPart)
+		return headerPart
+	}
+
+	test("records a LAN sign-in with the parsed device label", async () => {
+		const built = await bootstrapLogin()
+		await built.app.ready()
+		try {
+			await login(built, { remoteAddress: "192.168.1.50", userAgent: chromeUA })
+			const rows = built.db.db.select().from(schema.authSignIns).all()
+			expect(rows).toHaveLength(1)
+			expect(rows[0]?.ip).toBe("192.168.1.50")
+			expect(rows[0]?.origin).toBe("lan")
+			expect(rows[0]?.deviceLabel).toBe("Chrome on Windows")
+		} finally {
+			await built.close()
+			built.db.close()
+		}
+	})
+
+	test("records a loopback sign-in and re-evaluates weakness", async () => {
+		const built = await bootstrapLogin()
+		await built.app.ready()
+		try {
+			await login(built, { remoteAddress: "127.0.0.1" })
+			const rows = built.db.db.select().from(schema.authSignIns).all()
+			expect(rows[0]?.origin).toBe("loopback")
+			expect(rows[0]?.deviceLabel).toBe("Unknown device")
+			const authRow = built.db.db.select().from(schema.auth).get()
+			expect(authRow?.weakPassword).toBe(1) // "hunter2" is weak (7 chars)
+		} finally {
+			await built.close()
+			built.db.close()
+		}
+	})
+
+	test("changing to a strong password clears the weakness flag", async () => {
+		const built = await bootstrapLogin()
+		await built.app.ready()
+		try {
+			const cookie = await login(built, { remoteAddress: "127.0.0.1" })
+			const res = await built.app.inject({
+				method: "POST",
+				url: "/auth/password",
+				remoteAddress: "127.0.0.1",
+				headers: { cookie },
+				payload: { currentPassword: "hunter2", newPassword: strongPassword },
+			})
+			expect(res.statusCode).toBe(200)
+			const authRow = built.db.db.select().from(schema.auth).get()
+			expect(authRow?.weakPassword).toBe(0)
+		} finally {
+			await built.close()
+			built.db.close()
+		}
+	})
+
+	test("GET /trpc/access.connections returns the newest sign-ins", async () => {
+		const built = await bootstrapLogin()
+		await built.app.ready()
+		try {
+			const cookie = await login(built, {
+				remoteAddress: "192.168.1.50",
+				userAgent: chromeUA,
+			})
+			const res = await built.app.inject({
+				method: "GET",
+				url: "/trpc/access.connections",
+				remoteAddress: "127.0.0.1",
+				headers: { cookie },
+			})
+			expect(res.statusCode).toBe(200)
+			const body = res.json()
+			assertTrpcEnvelope<{
+				connections: readonly {
+					ip: string
+					origin: string
+					deviceLabel: string
+					recordedAt: number
+				}[]
+			}>(body)
+			expect(body.result.data.connections).toHaveLength(1)
+			expect(body.result.data.connections[0]?.ip).toBe("192.168.1.50")
+			expect(body.result.data.connections[0]?.origin).toBe("lan")
+		} finally {
+			await built.close()
+			built.db.close()
+		}
+	})
+
+	test("GET /trpc/access.connections is 401 without a session", async () => {
+		const built = await bootstrapLogin()
+		await built.app.ready()
+		try {
+			const res = await built.app.inject({
+				method: "GET",
+				url: "/trpc/access.connections",
+				remoteAddress: "127.0.0.1",
+			})
+			expect(res.statusCode).toBe(401)
 		} finally {
 			await built.close()
 			built.db.close()

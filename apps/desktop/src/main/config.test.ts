@@ -28,6 +28,7 @@ describe("parseDesktopConfig", () => {
 		expect(parsed.autoStart).toBe(false)
 		expect(parsed.startInTray).toBe(false)
 		expect(parsed.port).toBe(3000)
+		expect(parsed.portPreferred).toBe(3000)
 		expect(parsed.lanEnabled).toBe(false)
 		expect(parsed.sharedFolderRoot).toBe("C:/docs")
 		expect(parsed.sharedFolderEnabled).toBe(false)
@@ -40,6 +41,7 @@ describe("parseDesktopConfig", () => {
 				libraryPath: "D:/archive",
 				sharedFolderRoot: "E:/import",
 				port: 4123,
+				portPreferred: 3000,
 				lanEnabled: true,
 				autoStart: true,
 				startInTray: true,
@@ -51,6 +53,7 @@ describe("parseDesktopConfig", () => {
 		expect(parsed.libraryPath).toBe("D:/archive")
 		expect(parsed.sharedFolderRoot).toBe("E:/import")
 		expect(parsed.port).toBe(4123)
+		expect(parsed.portPreferred).toBe(3000)
 		expect(parsed.lanEnabled).toBe(true)
 		expect(parsed.autoStart).toBe(true)
 		expect(parsed.startInTray).toBe(true)
@@ -86,6 +89,7 @@ describe("writeDesktopConfig", () => {
 			sharedFolderRoot: "C:/docs",
 			sharedFolderEnabled: false,
 			port: 3000,
+			portPreferred: 3000,
 			lanEnabled: false,
 		})
 	})

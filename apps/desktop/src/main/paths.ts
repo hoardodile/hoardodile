@@ -8,6 +8,12 @@ export type SidecarLayout = {
 	readonly cwd: string
 	readonly builtinPath: string
 	readonly seedPluginPaths: readonly string[]
+	/**
+	 * Prebuilt SPA dir served at `/` in dev (`apps/web/dist`), or
+	 * `undefined` when it does not exist — the packaged server resolves
+	 * its own bundled `web/` tree instead.
+	 */
+	readonly webRoot: string | undefined
 }
 
 const SEED_PLUGIN_IDS = ["gallery"] as const
@@ -22,6 +28,7 @@ export function packagedLayout(resourcesPath: string): SidecarLayout {
 		cwd: serverDir,
 		builtinPath: join(pluginsDir, "file"),
 		seedPluginPaths: SEED_PLUGIN_IDS.map((id) => join(pluginsDir, id)),
+		webRoot: undefined,
 	}
 }
 
@@ -32,6 +39,7 @@ export function workspaceLayout(options: {
 }): SidecarLayout {
 	const { workspaceRoot, nodePath, viteNodeCli } = options
 	const serverRoot = join(workspaceRoot, "apps", "server")
+	const webDist = join(workspaceRoot, "apps", "web", "dist")
 	return {
 		packaged: false,
 		nodePath,
@@ -41,6 +49,7 @@ export function workspaceLayout(options: {
 		seedPluginPaths: SEED_PLUGIN_IDS.map((id) =>
 			join(workspaceRoot, "plugins", id, "dist"),
 		),
+		webRoot: existsSync(join(webDist, "index.html")) ? webDist : undefined,
 	}
 }
 

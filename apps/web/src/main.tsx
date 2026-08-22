@@ -141,3 +141,12 @@ createRoot(rootElement).render(
 		</ThemeProvider>
 	</StrictMode>,
 )
+
+// The index.html splash keeps the first frame from being an empty canvas
+// while React mounts; drop it right after the app's first paint so the
+// spinner hands over to app content with no blank frame in between.
+requestAnimationFrame(() => {
+	requestAnimationFrame(() => {
+		document.getElementById("app-splash")?.remove()
+	})
+})

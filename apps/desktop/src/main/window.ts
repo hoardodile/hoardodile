@@ -1,5 +1,6 @@
 import { join } from "node:path"
 import { app, BrowserWindow, nativeTheme, shell } from "electron"
+import { SERVER_ERROR_MESSAGE, windowErrorPageUrl } from "./error-page.ts"
 import { windowOpenDecision } from "./urls.ts"
 import { windowBackgroundColor } from "./window-background.ts"
 
@@ -86,6 +87,16 @@ function loadWindow(win: BrowserWindow, options: CreateWindowOptions): void {
 	if (options.kind === "wizard" && file !== undefined) {
 		void win.loadFile(file)
 		return
+	}
+	if (options.kind === "app") {
+		// A failed main-frame load would leave a blank window. Swap in the
+		// in-window error page (centered Retry button) instead; the button
+		// asks the shell to re-resolve the app URL via IPC.
+		win.webContents.on("did-fail-load", (_event, _code, desc, _url, isMain) => {
+			if (!isMain) return
+			console.error(`[desktop] app load failed: ${desc}`)
+			void win.loadURL(windowErrorPageUrl(SERVER_ERROR_MESSAGE))
+		})
 	}
 	void win.loadURL(options.url)
 }

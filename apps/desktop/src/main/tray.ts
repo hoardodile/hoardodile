@@ -13,11 +13,14 @@ export type TrayHandlers = {
 	changeLibrary: () => void
 	quit: () => void
 	restartSidecar: () => void
+	copyLanAddress: () => void
 }
 
 export type TrayFlags = {
 	readonly crashed: boolean
 	readonly updateReady: boolean
+	/** LAN share URL; `undefined` disables the copy menu item. */
+	readonly lanUrl?: string | undefined
 }
 
 export function createAppTray(
@@ -47,6 +50,11 @@ export function rebuildTrayMenu(
 		{
 			label: "Change library…",
 			click: () => handlers.changeLibrary(),
+		},
+		{
+			label: "Copy LAN address",
+			enabled: flags.lanUrl !== undefined,
+			click: () => handlers.copyLanAddress(),
 		},
 	]
 	if (flags.crashed) {

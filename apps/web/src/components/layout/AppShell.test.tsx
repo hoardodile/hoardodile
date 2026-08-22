@@ -458,6 +458,7 @@ function installDesktopBridge() {
 		minimize() {},
 		toggleMaximize() {},
 		close() {},
+		retryLoad() {},
 		async isMaximized() {
 			return false
 		},
@@ -497,7 +498,7 @@ function installDesktopBridge() {
 		async setSharedFolderRoot() {},
 		async setSharedFolderEnabled() {},
 		async getLanInfo() {
-			return { enabled: false, port: 3000, addresses: [] }
+			return { enabled: false, port: 3000, preferredPort: 3000, addresses: [] }
 		},
 		async setLanEnabled() {},
 		async setLanPort() {},

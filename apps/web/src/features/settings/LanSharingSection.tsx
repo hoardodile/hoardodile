@@ -8,7 +8,11 @@ import { Icon } from "@hoardodile/ui/components/icon"
 import { Input } from "@hoardodile/ui/components/input"
 import { Switch } from "@hoardodile/ui/components/switch"
 import { toast } from "@hoardodile/ui/components/toast"
-import { Copy, MonitorSmartphone } from "@hoardodile/ui/icons/registry"
+import {
+	Copy,
+	InfoCircle,
+	MonitorSmartphone,
+} from "@hoardodile/ui/icons/registry"
 import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import QRCode from "react-qr-code"
@@ -31,6 +35,21 @@ export function LanSharingSection() {
 		if (desktop === undefined) return
 		void desktop.getConfig().then(setConfig)
 		void desktop.getLanInfo().then(setLan)
+	}, [desktop])
+
+	// DHCP renewals move the address; re-read whenever the window regains
+	// focus so the shown list and QR stay accurate.
+	useEffect(() => {
+		if (desktop === undefined) return
+		const bridge = desktop
+		function refreshOnFocus() {
+			void bridge.getConfig().then(setConfig)
+			void bridge.getLanInfo().then(setLan)
+		}
+		window.addEventListener("focus", refreshOnFocus)
+		return () => {
+			window.removeEventListener("focus", refreshOnFocus)
+		}
 	}, [desktop])
 
 	if (desktop === undefined || config === undefined || lan === undefined) {
@@ -57,13 +76,14 @@ function LanSharingForm(props: {
 }) {
 	const { desktop, config, lan, onRefresh } = props
 	const { t } = useTranslation()
-	const [portInput, setPortInput] = useState(String(lan.port))
+	const [portInput, setPortInput] = useState(String(lan.preferredPort))
 	const [busy, setBusy] = useState(false)
 
 	const portValue = Number(portInput.trim())
-	const portDirty = portInput.trim() !== String(lan.port)
+	const portDirty = portInput.trim() !== String(lan.preferredPort)
 	const portValid =
 		Number.isInteger(portValue) && portValue >= 1 && portValue <= 65535
+	const portAdjusted = lan.port !== lan.preferredPort
 
 	async function refresh(): Promise<void> {
 		const [nextConfig, nextLan] = await Promise.all([
@@ -71,7 +91,7 @@ function LanSharingForm(props: {
 			desktop.getLanInfo(),
 		])
 		onRefresh(nextConfig, nextLan)
-		setPortInput(String(nextLan.port))
+		setPortInput(String(nextLan.preferredPort))
 	}
 
 	async function handleEnabled(enabled: boolean) {
@@ -114,10 +134,12 @@ function LanSharingForm(props: {
 
 	const urls = lan.addresses.map((entry) => ({
 		label: entry.address,
+		address: entry.address,
 		url: `http://${entry.address}:${lan.port}/`,
 		interfaceName: entry.interfaceName,
 	}))
-	const primaryUrl = urls[0]?.url
+	const primary = urls[0]
+	const others = urls.slice(1)
 
 	return (
 		<>
@@ -183,48 +205,107 @@ function LanSharingForm(props: {
 							</Button>
 						</div>
 					</div>
+					{portAdjusted ? (
+						<div
+							className="flex items-start gap-3 rounded-lg bg-muted px-3 py-2.5"
+							data-testid="desktop-lan-port-adjusted"
+						>
+							<Icon
+								icon={InfoCircle}
+								className="mt-0.5 shrink-0 text-muted-foreground"
+							/>
+							<div className="min-w-0">
+								<div className="text-ui font-semibold text-foreground">
+									{t("me.desktop.lan.portAdjustedTitle", {
+										preferred: lan.preferredPort,
+										actual: lan.port,
+									})}
+								</div>
+								<p className="mt-0.5 text-xs leading-5 text-muted-foreground">
+									{t("me.desktop.lan.portAdjustedHint")}
+								</p>
+							</div>
+						</div>
+					) : null}
 					{config.lanEnabled ? (
-						<ul className="flex flex-col gap-3">
-							{urls.map((entry) => (
-								<li
-									key={entry.url}
-									className="flex flex-wrap items-center justify-between gap-3"
-								>
-									<div className="min-w-0">
-										<div className="text-ui font-semibold text-foreground">
-											{entry.label}
-										</div>
-										<p className="truncate text-xs text-muted-foreground">
-											{entry.interfaceName}
-										</p>
-									</div>
-									<Button
-										variant="secondary"
-										className="shrink-0 [-webkit-app-region:no-drag]"
-										onClick={() => {
-											handleCopy(entry.url)
-										}}
-										data-testid={`desktop-lan-copy-${entry.url}`}
-									>
-										<Icon icon={Copy} />
-										{t("me.desktop.lan.copy")}
-									</Button>
-								</li>
-							))}
-							{primaryUrl !== undefined ? (
-								<li className="flex items-start gap-4">
+						<div className="flex flex-col gap-4">
+							{primary !== undefined ? (
+								<div className="flex items-start gap-4">
 									<div className="shrink-0 rounded-lg bg-white p-2.5">
-										<QRCode value={primaryUrl} size={120} />
+										<QRCode value={primary.url} size={120} />
 									</div>
-									<p
-										className="pt-2 text-xs leading-5 text-muted-foreground"
-										data-testid="desktop-lan-qr-hint"
+									<div className="min-w-0 flex-1">
+										<p className="text-xs leading-5 text-muted-foreground">
+											{t("me.desktop.lan.primaryHint")}
+										</p>
+										<div
+											className="mt-1 break-all text-ui font-semibold text-foreground"
+											data-testid="desktop-lan-primary-url"
+										>
+											{primary.url}
+										</div>
+										<Button
+											variant="secondary"
+											className="mt-2 [-webkit-app-region:no-drag]"
+											onClick={() => {
+												handleCopy(primary.url)
+											}}
+											data-testid="desktop-lan-copy-primary"
+										>
+											<Icon icon={Copy} />
+											{t("me.desktop.lan.copy")}
+										</Button>
+									</div>
+								</div>
+							) : (
+								<p
+									className="text-xs leading-5 text-muted-foreground"
+									data-testid="desktop-lan-no-addresses"
+								>
+									{t("me.desktop.lan.noAddresses")}
+								</p>
+							)}
+							{others.length > 0 ? (
+								<details className="group">
+									<summary
+										className="cursor-pointer select-none text-xs text-muted-foreground hover:text-secondary-foreground"
+										data-testid="desktop-lan-more-addresses"
 									>
-										{t("me.desktop.lan.qrHint")}
-									</p>
-								</li>
+										{t("me.desktop.lan.moreAddresses", {
+											count: others.length,
+										})}
+									</summary>
+									<ul className="mt-2 flex flex-col gap-2">
+										{others.map((entry) => (
+											<li
+												key={entry.url}
+												className="flex flex-wrap items-center justify-between gap-3"
+											>
+												<div className="min-w-0">
+													<div className="truncate text-ui text-foreground">
+														{entry.url}
+													</div>
+													<p className="truncate text-xs text-muted-foreground">
+														{entry.interfaceName}
+													</p>
+												</div>
+												<Button
+													variant="secondary"
+													className="shrink-0 [-webkit-app-region:no-drag]"
+													onClick={() => {
+														handleCopy(entry.url)
+													}}
+													data-testid={`desktop-lan-copy-${entry.address}`}
+												>
+													<Icon icon={Copy} />
+													{t("me.desktop.lan.copy")}
+												</Button>
+											</li>
+										))}
+									</ul>
+								</details>
 							) : null}
-						</ul>
+						</div>
 					) : null}
 				</div>
 			</SettingsSection>

@@ -291,6 +291,12 @@
 			"restartToUpdate": "重启",
 			"portableHint": "便携版请从 GitHub 下载新的压缩包来更新。"
 		},
+		"connections": {
+			"title": "最近连接",
+			"description": "每次登录的设备、IP 与时间。数据只保存在本机，超过 90 天自动清除。",
+			"empty": "还没有登录记录。",
+			"loopback": "本机"
+		},
 		"desktop": {
 			"library": {
 				"title": "内容库文件夹",
@@ -316,7 +322,11 @@
 				"copy": "复制",
 				"copied": "地址已复制",
 				"copyFailed": "复制失败",
-				"qrHint": "用手机相机扫描二维码即可打开本应用。"
+				"primaryHint": "用同一 Wi-Fi 的手机或电脑打开",
+				"portAdjustedTitle": "端口 {{preferred}} 被占用，服务器已在 {{actual}} 上运行。",
+				"portAdjustedHint": "从其他设备访问时请使用新端口。",
+				"moreAddresses": "其他地址（{{count}}）— 虚拟网卡、VPN 等",
+				"noAddresses": "没有找到可访问的地址，请检查网络连接。"
 			},
 			"autostart": {
 				"title": "开机启动",

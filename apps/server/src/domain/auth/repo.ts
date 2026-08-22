@@ -4,11 +4,13 @@ import { schema } from "src/infra/db/connection.ts"
 
 /**
  * The single-user auth row as stored in the `auth` table. The singleton
- * row (primary key 1) holds the argon2id hash of the admin password.
+ * row (primary key 1) holds the argon2id hash of the admin password plus
+ * the last strength assessment.
  */
 export type StoredAuthRow = {
 	readonly hash: string
 	readonly updatedAt: number
+	readonly weakPassword: boolean
 }
 
 /**
@@ -20,12 +22,17 @@ export function getAuthRow(db: SqliteDb): StoredAuthRow | undefined {
 		.select({
 			hash: schema.auth.passwordHash,
 			updatedAt: schema.auth.updatedAt,
+			weakPassword: schema.auth.weakPassword,
 		})
 		.from(schema.auth)
 		.where(eq(schema.auth.singleton, 1))
 		.get()
 	if (row === undefined) return undefined
-	return { hash: row.hash, updatedAt: row.updatedAt }
+	return {
+		hash: row.hash,
+		updatedAt: row.updatedAt,
+		weakPassword: row.weakPassword === 1,
+	}
 }
 
 /**
@@ -34,11 +41,31 @@ export function getAuthRow(db: SqliteDb): StoredAuthRow | undefined {
  */
 export function setAuthRow(db: SqliteDb, row: StoredAuthRow): void {
 	db.insert(schema.auth)
-		.values({ singleton: 1, passwordHash: row.hash, updatedAt: row.updatedAt })
+		.values({
+			singleton: 1,
+			passwordHash: row.hash,
+			updatedAt: row.updatedAt,
+			weakPassword: row.weakPassword ? 1 : 0,
+		})
 		.onConflictDoUpdate({
 			target: schema.auth.singleton,
-			set: { passwordHash: row.hash, updatedAt: row.updatedAt },
+			set: {
+				passwordHash: row.hash,
+				updatedAt: row.updatedAt,
+				weakPassword: row.weakPassword ? 1 : 0,
+			},
 		})
+		.run()
+}
+
+/**
+ * Update only the strength assessment. Used after a successful login,
+ * which re-evaluates the (cleartext) password without re-hashing it.
+ */
+export function setPasswordWeakness(db: SqliteDb, weak: boolean): void {
+	db.update(schema.auth)
+		.set({ weakPassword: weak ? 1 : 0 })
+		.where(eq(schema.auth.singleton, 1))
 		.run()
 }
 

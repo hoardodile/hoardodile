@@ -10,6 +10,8 @@ export type DesktopConfig = {
 	sharedFolderRoot: string
 	sharedFolderEnabled: boolean
 	port: number
+	/** Port the user last requested; `port` follows it unless a conflict fallback kicked in. */
+	portPreferred: number
 	lanEnabled: boolean
 	autoStart: boolean
 	startInTray: boolean
@@ -22,6 +24,7 @@ const storedConfigSchema = z.object({
 	sharedFolderRoot: z.string().min(1),
 	sharedFolderEnabled: z.boolean(),
 	port: z.number().int().min(1).max(65535),
+	portPreferred: z.number().int().min(1).max(65535),
 	lanEnabled: z.boolean(),
 	autoStart: z.boolean(),
 	startInTray: z.boolean(),
@@ -38,6 +41,7 @@ export function defaultDesktopConfig(
 		sharedFolderRoot,
 		sharedFolderEnabled: false,
 		port: DEFAULT_PORT,
+		portPreferred: DEFAULT_PORT,
 		lanEnabled: false,
 		autoStart: false,
 		startInTray: false,
@@ -63,6 +67,7 @@ export function parseDesktopConfig(
 		sharedFolderEnabled:
 			parsed.data.sharedFolderEnabled ?? defaults.sharedFolderEnabled,
 		port: parsed.data.port ?? defaults.port,
+		portPreferred: parsed.data.portPreferred ?? defaults.portPreferred,
 		lanEnabled: parsed.data.lanEnabled ?? defaults.lanEnabled,
 		autoStart: parsed.data.autoStart ?? defaults.autoStart,
 		startInTray: parsed.data.startInTray ?? defaults.startInTray,

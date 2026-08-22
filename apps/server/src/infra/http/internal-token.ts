@@ -1,5 +1,6 @@
 import { timingSafeEqual } from "node:crypto"
 import type { FastifyInstance, FastifyRequest } from "fastify"
+import { isLoopbackIp } from "src/domain/auth/device.ts"
 import "src/infra/fastify-augment.ts"
 
 /**
@@ -12,10 +13,7 @@ import "src/infra/fastify-augment.ts"
 export function isLoopbackRequest(request: {
 	readonly socket: { readonly remoteAddress?: string | undefined }
 }): boolean {
-	const remote = request.socket.remoteAddress
-	return (
-		remote === "127.0.0.1" || remote === "::1" || remote === "::ffff:127.0.0.1"
-	)
+	return isLoopbackIp(request.socket.remoteAddress)
 }
 
 /**

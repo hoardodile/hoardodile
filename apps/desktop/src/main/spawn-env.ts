@@ -28,8 +28,9 @@ export type SidecarEnvOptions = {
 	readonly sharedFolderRoot: string
 	readonly sharedFolderEnabled: boolean
 	readonly shutdownToken: string
+	/** Prebuilt SPA dir to serve at `/` in dev; packaged resolves its own bundle. */
+	readonly webRoot?: string | undefined
 }
-
 export function createShutdownToken(): string {
 	return randomBytes(32).toString("hex")
 }
@@ -50,6 +51,7 @@ export function buildSidecarEnv(
 		sharedFolderRoot,
 		sharedFolderEnabled,
 		shutdownToken,
+		webRoot,
 	} = options
 	const env: NodeJS.ProcessEnv = {}
 	for (const key of WINDOWS_ENV_KEYS) {
@@ -60,6 +62,7 @@ export function buildSidecarEnv(
 	env.HOST = host
 	env.PORT = String(port)
 	env.STORAGE_ROOT = libraryPath
+	if (webRoot !== undefined) env.APP_WEB_ROOT = webRoot
 	env.BUILTIN_PATH = layout.builtinPath
 	env.SEED_PLUGIN_PATHS = layout.seedPluginPaths.join(",")
 	env.DISABLE_DEV_PLUGINS = "true"

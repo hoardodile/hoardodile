@@ -277,6 +277,7 @@ export async function fillDemoLibrary(
 			setAuthRow(rt.db.db, {
 				hash: await hashPassword("demo"),
 				updatedAt: Date.now(),
+				weakPassword: true,
 			})
 		}
 		log("seed: already seeded")
@@ -292,6 +293,7 @@ export async function fillDemoLibrary(
 	setAuthRow(rt.db.db, {
 		hash: await hashPassword("demo"),
 		updatedAt: Date.now(),
+		weakPassword: true,
 	})
 
 	log("seed: downloading media")
