@@ -1,4 +1,4 @@
-﻿import { readFileSync } from "node:fs"
+import { readFileSync } from "node:fs"
 import path from "node:path"
 import babel from "@rolldown/plugin-babel"
 import tailwindcss from "@tailwindcss/vite"
@@ -10,6 +10,15 @@ import { VitePWA } from "vite-plugin-pwa"
 import { defineConfig } from "vitest/config"
 
 const serverTarget = process.env.VITE_SERVER_URL ?? "http://127.0.0.1:3000"
+
+// Dev tooling defaults (web SPA, desktop wizard, API relay) are owned here
+// so changing a port in one place never desyncs the rest.
+const devPorts: { spa: number } = JSON.parse(
+	readFileSync(
+		new URL("../../scripts/lib/dev-ports.json", import.meta.url),
+		"utf8",
+	),
+)
 
 // The unified app version lives in the root package.json; bake it into the
 // bundle as __APP_VERSION__ (see src/lib/appInfo.ts).
@@ -79,7 +88,7 @@ export default defineConfig({
 		},
 	},
 	server: {
-		port: 5173,
+		port: devPorts.spa,
 		strictPort: false,
 		proxy: Object.fromEntries(
 			proxyPaths.map((p) => [

@@ -15,6 +15,10 @@ try {
 	// no .env present
 }
 
+const devPorts = JSON.parse(
+	readFileSync(new URL("./lib/dev-ports.json", import.meta.url), "utf8"),
+)
+
 /**
  * Resolve a DEV_PLUGINS entry to a plugin directory (absolute, or
  * relative to the workspace root). The directory must contain a
@@ -75,7 +79,9 @@ function buildServices(selectedPlugins) {
 	// /health and /api to the backend (apps/web/vite.config.ts). Workspace
 	// packages resolve to source through their `development` export
 	// condition, so package edits hot-reload too — no builds in the loop.
-	const serverPort = process.env.PORT ?? "3000"
+	// Mirror of the server default (apps/server/src/config/env.ts); the
+	// single source for dev tooling is scripts/lib/dev-ports.json.
+	const serverPort = process.env.PORT ?? String(devPorts.api)
 	const bindHost = process.env.HOST
 	const hostFlag =
 		bindHost !== undefined &&

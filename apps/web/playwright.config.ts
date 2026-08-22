@@ -1,8 +1,14 @@
-import { existsSync, mkdirSync, rmSync } from "node:fs"
+import { existsSync, mkdirSync, readFileSync, rmSync } from "node:fs"
 import { dirname, resolve } from "node:path"
 import { defineConfig, devices } from "@playwright/test"
 
-const webPort = Number(process.env.WEB_PORT ?? 5173)
+const devPorts: { spa: number } = JSON.parse(
+	readFileSync(
+		new URL("../../scripts/lib/dev-ports.json", import.meta.url),
+		"utf8",
+	),
+)
+const webPort = Number(process.env.WEB_PORT ?? devPorts.spa)
 const serverPort = Number(process.env.SERVER_PORT ?? 3001)
 const serverHost = "127.0.0.1"
 // Ephemeral file per test run; wiped before the server boots so the web

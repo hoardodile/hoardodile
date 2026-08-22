@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs"
 import { dirname, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 import tailwindcss from "@tailwindcss/vite"
@@ -5,6 +6,12 @@ import react from "@vitejs/plugin-react"
 import { defineConfig, type Plugin } from "vite"
 
 const root = dirname(fileURLToPath(import.meta.url))
+const devPorts: { wizard: number } = JSON.parse(
+	readFileSync(
+		new URL("../../scripts/lib/dev-ports.json", import.meta.url),
+		"utf8",
+	),
+)
 
 /**
  * Vite tags module scripts/styles with `crossorigin`. `loadFile` / `file://`
@@ -26,9 +33,9 @@ export default defineConfig(({ command }) => ({
 	plugins: [react(), tailwindcss(), stripCrossorigin()],
 	server: {
 		host: "127.0.0.1",
-		port: 5174,
+		port: devPorts.wizard,
 		strictPort: true,
-		origin: "http://127.0.0.1:5174",
+		origin: `http://127.0.0.1:${devPorts.wizard}`,
 	},
 	build: {
 		outDir: resolve(root, "out/wizard"),
