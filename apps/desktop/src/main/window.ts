@@ -1,10 +1,41 @@
 import { join } from "node:path"
 import { app, BrowserWindow, nativeTheme, shell } from "electron"
-import { SERVER_ERROR_MESSAGE, windowErrorPageUrl } from "./error-page.ts"
+import { SERVER_ERROR_MESSAGE } from "./error-page.ts"
 import { windowOpenDecision } from "./urls.ts"
 import { windowBackgroundColor } from "./window-background.ts"
 
 export type WindowKind = "wizard" | "app"
+
+export type ShellPageTarget = {
+	/** Dev wizard-server URL (ELECTRON_WIZARD_URL); empty loads the built file. */
+	readonly url: string
+	readonly file: string
+}
+
+/**
+ * Load a shell page (loading spinner / error + retry) from the wizard
+ * bundle: the dev wizard server when ELECTRON_WIZARD_URL points at one
+ * (mode + message ride the query), the built `out/wizard` via loadFile
+ * otherwise. `message` carries the error copy for the error mode.
+ */
+export async function loadShellPage(
+	win: BrowserWindow,
+	target: ShellPageTarget,
+	mode: "loading" | "error",
+	message?: string,
+): Promise<void> {
+	const query: Record<string, string> = { mode }
+	if (message !== undefined) query.message = message
+	if (target.url.length > 0) {
+		const url = new URL(target.url)
+		for (const [key, value] of Object.entries(query)) {
+			url.searchParams.set(key, value)
+		}
+		await win.loadURL(url.toString())
+		return
+	}
+	await win.loadFile(target.file, { query })
+}
 
 export type CreateWindowOptions = {
 	readonly preloadPath: string
@@ -12,14 +43,26 @@ export type CreateWindowOptions = {
 	readonly url: string
 	readonly wizardFile?: string
 	readonly iconPath?: string
+	/** App windows: the in-window loading/error fallback target. */
+	readonly shellPage?: ShellPageTarget
 }
 
 export function createDesktopWindow(
 	options: CreateWindowOptions,
 ): BrowserWindow {
+	// Dev mode docks DevTools on the right (see ready-to-show below): the
+	// window takes the production width plus the dock's typical width, so
+	// the app still renders at its designed size next to the panel instead
+	// of being squeezed into the leftover ~1040px.
+	const devToolsDockWidth = 440
+	const width =
+		options.kind === "wizard"
+			? 520
+			: 1440 + (app.isPackaged ? 0 : devToolsDockWidth)
+	const height = options.kind === "wizard" ? 640 : 1080
 	const win = new BrowserWindow({
-		width: options.kind === "wizard" ? 520 : 1440,
-		height: options.kind === "wizard" ? 640 : 1080,
+		width,
+		height,
 		minWidth: options.kind === "wizard" ? 440 : 800,
 		minHeight: options.kind === "wizard" ? 520 : 560,
 		show: false,
@@ -95,7 +138,14 @@ function loadWindow(win: BrowserWindow, options: CreateWindowOptions): void {
 		win.webContents.on("did-fail-load", (_event, _code, desc, _url, isMain) => {
 			if (!isMain) return
 			console.error(`[desktop] app load failed: ${desc}`)
-			void win.loadURL(windowErrorPageUrl(SERVER_ERROR_MESSAGE))
+			if (options.shellPage !== undefined) {
+				void loadShellPage(
+					win,
+					options.shellPage,
+					"error",
+					SERVER_ERROR_MESSAGE,
+				)
+			}
 		})
 	}
 	void win.loadURL(options.url)

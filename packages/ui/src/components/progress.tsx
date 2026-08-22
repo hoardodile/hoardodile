@@ -11,10 +11,15 @@ function Progress({
   ...props
 }: ProgressPrimitive.Root.Props) {
   return (
+    // `relative` makes the root the containing block for loose children
+    // (e.g. `sr-only` labels for screen readers): without it they anchor
+    // to the nearest positioned ancestor instead — typically the app
+    // shell, outside the page's scroll clip — and stack a second,
+    // viewport-level scrollbar on long pages (Settings → App).
     <ProgressPrimitive.Root
       value={value}
       data-slot="progress"
-      className={cn("flex flex-wrap gap-3", className)}
+      className={cn("relative flex flex-wrap gap-3", className)}
       {...props}
     >
       {children}
