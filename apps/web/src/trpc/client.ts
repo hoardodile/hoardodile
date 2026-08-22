@@ -5,12 +5,22 @@ import { createTRPCOptionsProxy } from "@trpc/tanstack-react-query"
 import { detectPlatform } from "@/features/usage/detectPlatform"
 import { credentialedFetch } from "@/lib/http"
 
+/** Cap every tRPC round trip; the UI must never wait forever (skeletons). */
+const TRPC_TIMEOUT_MS = 15_000
+
 export function createTrpcClient() {
 	return createTRPCClient<AppRouter>({
 		links: [
 			httpBatchLink({
 				url: "/trpc",
-				fetch: credentialedFetch,
+				// A hung request (e.g. the dev desktop proxy whose underlying
+				// fetch was torn down by a rapid reload) must surface as an
+				// error instead of leaving the UI on eternal skeletons.
+				fetch: (input, init) =>
+					credentialedFetch(input, {
+						...init,
+						signal: init?.signal ?? AbortSignal.timeout(TRPC_TIMEOUT_MS),
+					}),
 				// Tag every request with the client's platform so the server
 				// can attribute recorded footprints to this device.
 				headers: () => ({ "x-platform": detectPlatform() }),

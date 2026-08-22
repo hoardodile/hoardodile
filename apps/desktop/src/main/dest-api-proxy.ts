@@ -2,6 +2,14 @@ import { net, session } from "electron"
 
 const API_PREFIXES = ["/trpc", "/auth", "/api", "/health"] as const
 
+/**
+ * Cap proxied fetches: a hung forward (e.g. a request whose page died
+ * mid-navigation) must surface as a failure, not leave the renderer's
+ * untimed-out fetch waiting forever. 15s is far beyond a healthy sidecar
+ * round-trip.
+ */
+const PROXY_TIMEOUT_MS = 15_000
+
 export type DestApiProxy = {
 	setSidecarOrigin: (sidecarOrigin: string) => void
 }
@@ -106,8 +114,14 @@ function parseUrl(value: string): URL | undefined {
 	}
 }
 
+/**
+ * Forward a renderer API call to the sidecar with a hard timeout so a
+ * hung forward surfaces as a failure instead of the renderer's
+ * untimed-out fetch waiting forever.
+ */
 function forwardToSidecar(request: Request, target: string): Promise<Response> {
 	return net.fetch(new Request(target, request), {
 		bypassCustomProtocolHandlers: true,
+		signal: AbortSignal.timeout(PROXY_TIMEOUT_MS),
 	})
 }

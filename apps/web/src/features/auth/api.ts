@@ -20,7 +20,12 @@ const authStatusResponse = authStatus.extend({
 })
 
 export async function fetchAuthStatus() {
-	const body = await jsonFetch(apiPaths.auth.status(), { method: "GET" })
+	const body = await jsonFetch(apiPaths.auth.status(), {
+		method: "GET",
+		// The auth-status probe gates the whole route tree; never let a
+		// hung connection leave the app on skeletons forever.
+		signal: AbortSignal.timeout(AUTH_STATUS_TIMEOUT_MS),
+	})
 	return authStatusResponse.parse(body)
 }
 
@@ -91,6 +96,7 @@ export const authKeys = {
 }
 
 const AUTH_STATUS_STALE_MS = 30_000
+const AUTH_STATUS_TIMEOUT_MS = 15_000
 
 export function authStatusQueryOptions() {
 	return queryOptions({
