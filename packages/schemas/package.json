@@ -1,0 +1,42 @@
+{
+	"name": "@hoardodile/schemas",
+	"version": "0.0.0",
+	"private": true,
+	"license": "GPL-3.0-only",
+	"type": "module",
+	"exports": {
+		".": "./src/index.ts",
+		"./auth": "./src/auth.ts",
+		"./backup": "./src/backup.ts",
+		"./cat": "./src/cat.ts",
+		"./char": "./src/char.ts",
+		"./col": "./src/col.ts",
+		"./comment": "./src/comment.ts",
+		"./danmaku": "./src/danmaku.ts",
+		"./doc": "./src/doc.ts",
+		"./entity-meta": "./src/entity-meta.ts",
+		"./image-meta": "./src/image-meta.ts",
+		"./page": "./src/page.ts",
+		"./primitives": "./src/primitives.ts",
+		"./res": "./src/res.ts",
+		"./res-anchor": "./src/res-anchor.ts",
+		"./search": "./src/search.ts",
+		"./tag": "./src/tag.ts",
+		"./timezone": "./src/timezone.ts",
+		"./trait": "./src/trait.ts",
+		"./usage": "./src/usage.ts"
+	},
+	"scripts": {
+		"build": "tsc --noEmit",
+		"lint": "tsc --noEmit",
+		"test": "vitest run --maxWorkers=2"
+	},
+	"devDependencies": {
+		"typescript": "catalog:",
+		"vitest": "catalog:"
+	},
+	"dependencies": {
+		"@hoardodile/sdk-types": "workspace:*",
+		"zod": "catalog:"
+	}
+}

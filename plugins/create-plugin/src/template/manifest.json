@@ -1,0 +1,22 @@
+{
+	"id": "6bc0c75e-5fca-4525-84f1-cfdd98661630",
+	"name": "Template",
+	"description": "Template plugin — copy this directory to start your own plugin",
+	"version": "0.0.0",
+	"permissions": {
+		"sourceMeta": true,
+		"searchMeta": false,
+		"danmaku": false,
+		"message": false
+	},
+	"i18n": {
+		"name": {
+			"en": "Template",
+			"zh": "模板"
+		},
+		"description": {
+			"en": "Template plugin — copy this directory to start your own plugin",
+			"zh": "模板插件——复制此目录作为你自己插件的起点"
+		}
+	}
+}

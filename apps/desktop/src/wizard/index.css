@@ -1,0 +1,14 @@
+@import "@hoardodile/ui/theme.css";
+
+@source "./**/*.{ts,tsx}";
+
+@layer base {
+	html,
+	body,
+	#root {
+		height: 100%;
+	}
+	body {
+		@apply bg-background text-foreground overflow-hidden;
+	}
+}

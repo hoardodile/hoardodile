@@ -1,0 +1,61 @@
+{
+	"name": "@hoardodile/cli",
+	"version": "0.0.0",
+	"license": "MIT",
+	"description": "hoardodile developer CLI: build, run, benchmark and develop content plugins.",
+	"keywords": [
+		"hoardodile",
+		"plugin",
+		"cli",
+		"build",
+		"bench"
+	],
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/hoardodile/hoardodile.git",
+		"directory": "packages/cli"
+	},
+	"type": "module",
+	"bin": {
+		"hoardodile": "./bin/hoardodile.mjs"
+	},
+	"exports": {
+		".": {
+			"types": "./dist/main.d.ts",
+			"default": "./dist/main.js"
+		}
+	},
+	"files": [
+		"dist",
+		"bin"
+	],
+	"sideEffects": false,
+	"engines": {
+		"node": ">=24"
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"scripts": {
+		"prepack": "pnpm build",
+		"build": "tsup",
+		"lint": "tsc --noEmit",
+		"test": "vitest run"
+	},
+	"dependencies": {
+		"@hoardodile/host": "workspace:*",
+		"@hoardodile/sdk-types": "workspace:*",
+		"@rolldown/plugin-babel": "catalog:",
+		"@tailwindcss/vite": "catalog:",
+		"@vitejs/plugin-react": "catalog:",
+		"babel-plugin-react-compiler": "catalog:",
+		"citty": "^0.2.2",
+		"vite": "catalog:"
+	},
+	"devDependencies": {
+		"@types/node": "catalog:",
+		"tsup": "catalog:",
+		"typescript": "5.9.3",
+		"vitest": "catalog:"
+	}
+}

@@ -1,0 +1,9 @@
+{
+	"extends": "../../tsconfig.json",
+	"compilerOptions": {
+		"lib": ["ESNext"],
+		"types": ["node"]
+	},
+	"include": ["src/**/*.ts", "scripts/**/*.mjs"],
+	"exclude": ["src/template"]
+}

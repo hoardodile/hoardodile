@@ -1,0 +1,85 @@
+{
+	"schema": 1,
+	"kind": "archive-7z",
+	"timestamp": "2026-08-12T17:25:10.501Z",
+	"config": {
+		"files": 500,
+		"time": 600,
+		"seed": 42
+	},
+	"machine": {
+		"platform": "win32",
+		"arch": "x64",
+		"cpus": 16,
+		"cpuModel": "13th Gen Intel(R) Core(TM) i5-13400F",
+		"node": "v24.18.0"
+	},
+	"caveats": [
+		"Each pair compares the same corpus zip (STORED 8KB entries, yazl-built). list.yauzl is the production nested listing; list.sevenZip.cold spawns a fresh 7-Zip per call (the ~20ms Windows spawn floor dominates).",
+		"extract.yauzl is the no-binary fallback shape (yauzl streams per entry); extract.sevenZip.cold is the production path (one `7z x` over the whole archive).",
+		"readHead.64KB.yauzl opens one entry stream and reads a 64KB window (the thumbnail/source-view path); readHead.64KB.sevenZip.cold decompresses the whole entry to stdout because 7-Zip has no byte-range access.",
+		"pack.yazl streams STORED zip entries without a staging file (the export path); pack.sevenZip.cold writes `7z a -mx=0` output to disk.",
+		"7-Zip tasks are registered only when the bundled binary exists; runs without the binary simply lack them.",
+		"Tinybench runs each task as a hot loop until the --time budget; cold spawns dominate the 7-Zip medians, syscall/page-cache effects are amortized for the JS tasks.",
+		"Only same-window paired runs are comparable — the machine shows bimodal load (up to 4x swings)."
+	],
+	"memoryPeakMb": 232.6,
+	"metrics": [
+		{
+			"name": "list.yauzl",
+			"unit": "ms",
+			"median": 1685.397100000002,
+			"min": 193.13850000000002,
+			"max": 18595.0209
+		},
+		{
+			"name": "extract.yauzl",
+			"unit": "ms",
+			"median": 4046.39439999999,
+			"min": 1970.3631999999998,
+			"max": 5510.392800000001
+		},
+		{
+			"name": "readHead.64KB.yauzl",
+			"unit": "ms",
+			"median": 7.788199999995413,
+			"min": 1.8482999999978347,
+			"max": 34.92880000000878
+		},
+		{
+			"name": "pack.yazl",
+			"unit": "ms",
+			"median": 1666.639599999995,
+			"min": 977.355899999995,
+			"max": 2121.4648000000016
+		},
+		{
+			"name": "list.sevenZip.cold",
+			"unit": "ms",
+			"median": 28.173199999990175,
+			"min": 22.763200000001234,
+			"max": 38.87109999998938
+		},
+		{
+			"name": "extract.sevenZip.cold",
+			"unit": "ms",
+			"median": 280.3741000000009,
+			"min": 264.18559999999707,
+			"max": 309.6232000000018
+		},
+		{
+			"name": "readHead.64KB.sevenZip.cold",
+			"unit": "ms",
+			"median": 26.86590000000433,
+			"min": 23.970000000001164,
+			"max": 34.1021999999939
+		},
+		{
+			"name": "pack.sevenZip.cold",
+			"unit": "ms",
+			"median": 53.10689999999886,
+			"min": 48.87459999999555,
+			"max": 61.435899999996764
+		}
+	]
+}

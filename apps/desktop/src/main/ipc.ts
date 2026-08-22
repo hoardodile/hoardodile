@@ -1,0 +1,164 @@
+import type {
+	DesktopShellConfig,
+	DesktopUpdateState,
+	DesktopWizardResult,
+} from "@hoardodile/shared/desktop"
+import {
+	app,
+	BrowserWindow,
+	dialog,
+	type IpcMainEvent,
+	type IpcMainInvokeEvent,
+	ipcMain,
+} from "electron"
+import { IPC } from "../shared/ipc.ts"
+import type { DesktopConfig } from "./config.ts"
+
+export type IpcHost = {
+	getConfig: () => DesktopConfig
+	portable: () => boolean
+	pickLibraryFolder: (parent?: BrowserWindow) => Promise<string | undefined>
+	relaunch: () => Promise<void>
+	patchConfig: (
+		patch: Partial<
+			Pick<DesktopConfig, "autoStart" | "startInTray" | "autoUpdate">
+		>,
+	) => void
+	changeLibraryFolder: (libraryPath: string) => Promise<void>
+	setSharedFolderRoot: (sharedFolderRoot: string) => Promise<void>
+	setSharedFolderEnabled: (enabled: boolean) => Promise<void>
+	completeWizard: (result: DesktopWizardResult) => void
+	defaultLibraryPath: () => string
+	updateStatus: () => DesktopUpdateState
+	checkUpdates: () => Promise<void>
+	quitAndInstall: () => Promise<void>
+}
+
+export function registerIpc(host: IpcHost): void {
+	ipcMain.on(IPC.windowMinimize, (event) => {
+		windowFrom(event)?.minimize()
+	})
+	ipcMain.on(IPC.windowToggleMaximize, (event) => {
+		const win = windowFrom(event)
+		if (win === undefined) return
+		if (win.isMaximized()) win.unmaximize()
+		else win.maximize()
+	})
+	ipcMain.on(IPC.windowClose, (event) => {
+		windowFrom(event)?.destroy()
+	})
+	ipcMain.handle(IPC.windowIsMaximized, (event) => {
+		return windowFrom(event)?.isMaximized() === true
+	})
+	ipcMain.handle(IPC.updatesStatus, () => host.updateStatus())
+	ipcMain.handle(IPC.updatesCheck, () => host.checkUpdates())
+	ipcMain.handle(IPC.updatesQuitAndInstall, () => host.quitAndInstall())
+	ipcMain.handle(IPC.pickLibraryFolder, (event) =>
+		host.pickLibraryFolder(windowFrom(event)),
+	)
+	ipcMain.handle(IPC.relaunch, () => host.relaunch())
+	ipcMain.handle(IPC.getConfig, (): DesktopShellConfig => {
+		const config = host.getConfig()
+		return {
+			libraryPath: config.libraryPath,
+			sharedFolderRoot: config.sharedFolderRoot,
+			sharedFolderEnabled: config.sharedFolderEnabled,
+			autoStart: config.autoStart,
+			startInTray: config.startInTray,
+			autoUpdate: config.autoUpdate,
+			portable: host.portable(),
+		}
+	})
+	ipcMain.on(IPC.configSync, (event) => {
+		event.returnValue = { portable: host.portable() }
+	})
+	ipcMain.handle(IPC.setConfig, (_event, patch: unknown) => {
+		if (!isConfigPatch(patch)) return
+		host.patchConfig(patch)
+	})
+	ipcMain.handle(IPC.changeLibraryFolder, (_event, libraryPath: unknown) => {
+		if (typeof libraryPath !== "string" || libraryPath.length === 0) return
+		return host.changeLibraryFolder(libraryPath)
+	})
+	ipcMain.handle(
+		IPC.setSharedFolderRoot,
+		(_event, sharedFolderRoot: unknown) => {
+			if (typeof sharedFolderRoot !== "string" || sharedFolderRoot.length === 0)
+				return
+			return host.setSharedFolderRoot(sharedFolderRoot)
+		},
+	)
+	ipcMain.handle(IPC.setSharedFolderEnabled, (_event, enabled: unknown) => {
+		if (typeof enabled !== "boolean") return
+		return host.setSharedFolderEnabled(enabled)
+	})
+	ipcMain.handle(IPC.completeWizard, (_event, result: unknown) => {
+		if (!isWizardResult(result)) return
+		host.completeWizard(result)
+	})
+	ipcMain.handle(IPC.wizardDefaults, () => ({
+		libraryPath: host.defaultLibraryPath(),
+	}))
+}
+
+export function bindWindowMaximizeEvents(win: BrowserWindow): void {
+	function send(): void {
+		if (win.isDestroyed()) return
+		win.webContents.send(IPC.windowMaximizedChanged, win.isMaximized())
+	}
+	win.on("maximize", send)
+	win.on("unmaximize", send)
+}
+
+function windowFrom(
+	event: IpcMainInvokeEvent | IpcMainEvent,
+): BrowserWindow | undefined {
+	return BrowserWindow.fromWebContents(event.sender) ?? undefined
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+	return typeof value === "object" && value !== null && !Array.isArray(value)
+}
+
+function isConfigPatch(
+	value: unknown,
+): value is Partial<
+	Pick<DesktopConfig, "autoStart" | "startInTray" | "autoUpdate">
+> {
+	if (!isRecord(value)) return false
+	for (const key of ["autoStart", "startInTray", "autoUpdate"] as const) {
+		if (key in value && typeof value[key] !== "boolean") return false
+	}
+	return true
+}
+
+function isWizardResult(value: unknown): value is DesktopWizardResult {
+	if (!isRecord(value)) return false
+	return (
+		typeof value.libraryPath === "string" &&
+		value.libraryPath.length > 0 &&
+		typeof value.autoStart === "boolean" &&
+		typeof value.startInTray === "boolean"
+	)
+}
+
+export async function pickDirectory(
+	parent: BrowserWindow | undefined,
+): Promise<string | undefined> {
+	const result = parent
+		? await dialog.showOpenDialog(parent, {
+				properties: ["openDirectory", "createDirectory"],
+			})
+		: await dialog.showOpenDialog({
+				properties: ["openDirectory", "createDirectory"],
+			})
+	if (result.canceled) return undefined
+	return result.filePaths[0]
+}
+
+export function applyLoginItem(config: DesktopConfig): void {
+	app.setLoginItemSettings({
+		openAtLogin: config.autoStart,
+		args: config.startInTray ? ["--hidden"] : [],
+	})
+}

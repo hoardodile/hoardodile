@@ -1,0 +1,93 @@
+{
+	"name": "@hoardodile/sdk-types",
+	"version": "0.0.0",
+	"license": "MIT",
+	"description": "Plugin manifest contract, shared types and constants for hoardodile content plugins.",
+	"keywords": [
+		"hoardodile",
+		"plugin",
+		"sdk",
+		"types",
+		"manifest",
+		"constants"
+	],
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/hoardodile/hoardodile.git",
+		"directory": "plugins/sdk-types"
+	},
+	"type": "module",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"development": "./src/index.ts",
+			"default": "./dist/index.js"
+		},
+		"./image-variant": {
+			"types": "./dist/image-variant.d.ts",
+			"development": "./src/image-variant.ts",
+			"default": "./dist/image-variant.js"
+		},
+		"./media-exts": {
+			"types": "./dist/media-exts.d.ts",
+			"development": "./src/media-exts.ts",
+			"default": "./dist/media-exts.js"
+		},
+		"./plugin": {
+			"types": "./dist/plugin.d.ts",
+			"development": "./src/plugin.ts",
+			"default": "./dist/plugin.js"
+		},
+		"./resource": {
+			"types": "./dist/resource.d.ts",
+			"development": "./src/resource.ts",
+			"default": "./dist/resource.js"
+		},
+		"./result": {
+			"types": "./dist/result.d.ts",
+			"development": "./src/result.ts",
+			"default": "./dist/result.js"
+		},
+		"./schema": {
+			"types": "./dist/schema.d.ts",
+			"development": "./src/schema.ts",
+			"default": "./dist/schema.js"
+		},
+		"./template": {
+			"types": "./dist/template.d.ts",
+			"development": "./src/template.ts",
+			"default": "./dist/template.js"
+		},
+		"./text-limits": {
+			"types": "./dist/text-limits.d.ts",
+			"development": "./src/text-limits.ts",
+			"default": "./dist/text-limits.js"
+		}
+	},
+	"files": [
+		"dist",
+		"src"
+	],
+	"sideEffects": false,
+	"engines": {
+		"node": ">=24"
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"scripts": {
+		"prepack": "pnpm build",
+		"build": "tsup",
+		"lint": "tsc --noEmit",
+		"test": "vitest run --maxWorkers=2"
+	},
+	"peerDependencies": {
+		"zod": "catalog:"
+	},
+	"devDependencies": {
+		"tsup": "catalog:",
+		"typescript": "5.9.3",
+		"vitest": "catalog:",
+		"zod": "catalog:"
+	}
+}

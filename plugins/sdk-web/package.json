@@ -1,0 +1,51 @@
+{
+	"name": "@hoardodile/sdk-web",
+	"version": "0.0.0",
+	"license": "MIT",
+	"description": "Pure-browser iframe runtime for hoardodile content plugins.",
+	"keywords": [
+		"hoardodile",
+		"plugin",
+		"sdk",
+		"browser",
+		"iframe"
+	],
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/hoardodile/hoardodile.git",
+		"directory": "plugins/sdk-web"
+	},
+	"type": "module",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"development": "./src/index.ts",
+			"default": "./dist/index.js"
+		}
+	},
+	"files": [
+		"dist",
+		"src"
+	],
+	"sideEffects": false,
+	"engines": {
+		"node": ">=24"
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"scripts": {
+		"prepack": "pnpm build",
+		"build": "tsup",
+		"lint": "tsc --noEmit",
+		"test": "vitest run --maxWorkers=2"
+	},
+	"dependencies": {
+		"@hoardodile/sdk-types": "workspace:*"
+	},
+	"devDependencies": {
+		"tsup": "catalog:",
+		"typescript": "5.9.3",
+		"vitest": "catalog:"
+	}
+}

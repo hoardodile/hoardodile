@@ -1,0 +1,34 @@
+{
+	"name": "@hoardodile/plugin-template",
+	"version": "0.0.0",
+	"private": true,
+	"license": "MIT",
+	"type": "module",
+	"scripts": {
+		"dev": "hoardodile plugin dev",
+		"build": "hoardodile plugin build",
+		"watch": "hoardodile plugin build --watch",
+		"detect:smoke": "hoardodile plugin run detect testdata --plugin-dir dist",
+		"lint": "tsc --noEmit",
+		"test": "vitest run"
+	},
+	"dependencies": {
+		"@hoardodile/sdk-react": "workspace:*",
+		"@hoardodile/sdk-server": "workspace:*",
+		"@hoardodile/sdk-types": "workspace:*",
+		"react": "catalog:",
+		"react-dom": "catalog:"
+	},
+	"devDependencies": {
+		"@hoardodile/cli": "workspace:*",
+		"@hoardodile/host": "workspace:*",
+		"@hoardodile/workbench": "workspace:*",
+		"@types/node": "catalog:",
+		"@types/react": "catalog:",
+		"@types/react-dom": "catalog:",
+		"jsdom": "catalog:",
+		"typescript": "catalog:",
+		"vite": "catalog:",
+		"vitest": "catalog:"
+	}
+}

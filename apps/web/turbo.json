@@ -1,0 +1,34 @@
+{
+	"extends": ["//"],
+	"tasks": {
+		"build": {
+			"dependsOn": [
+				"@hoardodile/sdk-web#build",
+				"@hoardodile/schemas#build",
+				"@hoardodile/shared#build",
+				"@hoardodile/ui#build"
+			],
+			"inputs": [
+				"$TURBO_DEFAULT$",
+				"$TURBO_ROOT$/pnpm-lock.yaml",
+				"$TURBO_ROOT$/LICENSE",
+				"$TURBO_ROOT$/scripts/generate-licenses.mjs"
+			],
+			"outputs": ["dist/**"]
+		},
+		"test": {
+			// Unit tests transform src/ through Vite; they do not read
+			// apps/web/dist. List dist-exporting workspace deps explicitly:
+			// `^build` would also pull @hoardodile/server (a web
+			// devDependency), whose build embeds this SPA.
+			"dependsOn": [
+				"@hoardodile/host-web#build",
+				"@hoardodile/sdk-types#build",
+				"@hoardodile/sdk-web#build",
+				"@hoardodile/schemas#build",
+				"@hoardodile/shared#build",
+				"@hoardodile/ui#build"
+			]
+		}
+	}
+}

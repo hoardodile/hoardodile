@@ -1,0 +1,40 @@
+{
+	"extends": ["//"],
+	"tasks": {
+		"build": {
+			"dependsOn": [
+				"^build",
+				"@hoardodile/web#build",
+				"@hoardodile/plugin-file#build"
+			],
+			"outputs": ["dist/**"]
+		},
+		"test": {
+			// Tests import src/ via Vite and stub SPA roots in temp dirs;
+			// skip this package's production bundle (which embeds web dist).
+			"dependsOn": ["^build"],
+			"env": [
+				"APP_WEB_ROOT",
+				"BUILTIN_PATH",
+				"SEED_PLUGIN_PATHS",
+				"DATABASE_URL",
+				"DEV_PLUGIN_PATHS",
+				"DEV_PLUGINS",
+				"DISABLE_DEV_PLUGINS",
+				"FFMPEG_PATH",
+				"FFPROBE_PATH",
+				"FORCE_HTTPS",
+				"HOST",
+				"LOG_LEVEL",
+				"SHARED_FOLDER_ROOT",
+				"MAX_ARCHIVE_EXTRACTED_BYTES",
+				"MAX_UPLOAD_BYTES",
+				"PORT",
+				"SESSION_COOKIE_NAME",
+				"SESSION_SECURE_COOKIE",
+				"SESSION_TTL_SECONDS",
+				"STORAGE_ROOT"
+			]
+		}
+	}
+}

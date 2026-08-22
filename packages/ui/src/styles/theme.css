@@ -1,0 +1,796 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+/* Same shape as `dark`, so it stacks (`desktop-shell:sidebar:`,
+   `desktop-shell:md:`). Electron app minWidth is 800px, so `max-md:`
+   never matches in the shell. */
+@custom-variant desktop-shell (&:is(html.desktop-shell *));
+
+@theme inline {
+	/* Type scale (DESIGN.md — Typography) — layout constants. */
+	--text-tiny: 0.6875rem;
+	--text-tiny--line-height: 1rem;
+	--text-ui: 0.8125rem;
+	--text-ui--line-height: 1.25rem;
+	--text-doc: 1.1875rem;
+	--text-doc--line-height: 1.9;
+	--text-doc-title: 3rem;
+	--text-doc-title--line-height: 1.15;
+	--text-doc-heading: 1.75rem;
+	--text-doc-heading--line-height: 1.3;
+	--text-quote: 1.125rem;
+	--text-quote--line-height: 1.65;
+	--tracking-label: 0.1em;
+	--font-heading: var(--font-sans);
+	/* Doc serif — the documents feature's reading serif; per-slot overrides
+	   (user font prefs) live in the app's CSS variables. */
+	--font-doc: Georgia, "Times New Roman", serif;
+	/* UI stack (-apple-system … Arial) plus CJK fallbacks. */
+	--font-sans:
+		-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
+		Arial, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+	--color-sidebar-ring: var(--sidebar-ring);
+	--color-sidebar-border: var(--sidebar-border);
+	--color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+	--color-sidebar-accent: var(--sidebar-accent);
+	--color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+	--color-sidebar-primary: var(--sidebar-primary);
+	--color-sidebar-foreground: var(--sidebar-foreground);
+	--color-sidebar: var(--sidebar);
+	--color-ring: var(--ring);
+	--color-input: var(--input);
+	--color-border: var(--border);
+	--color-border-strong: var(--border-strong);
+	--color-destructive: var(--destructive);
+	--color-accent-foreground: var(--accent-foreground);
+	--color-accent: var(--accent);
+	--color-muted-foreground: var(--muted-foreground);
+	--color-muted: var(--muted);
+	--color-secondary-foreground: var(--secondary-foreground);
+	--color-secondary: var(--secondary);
+	--color-primary-foreground: var(--primary-foreground);
+	--color-primary: var(--primary);
+	--color-popover-foreground: var(--popover-foreground);
+	--color-popover: var(--popover);
+	--color-card-foreground: var(--card-foreground);
+	--color-card: var(--card);
+	--color-foreground: var(--foreground);
+	--color-background: var(--background);
+	/* Chart ink — data ink follows the palette hue (--icon-tone), falling
+	   back to plain foreground ink in mono, which defines no hue. Same
+	   fallback chain as the duotone icon second tone (`--color-icon-tone`). */
+	--color-chart: var(--icon-tone, var(--foreground));
+	--color-icon-tone: var(--icon-tone, var(--foreground));
+	--radius: 0.625rem;
+	--radius-sm: calc(var(--radius) * 0.6);
+	--radius-md: calc(var(--radius) * 0.8);
+	--radius-lg: var(--radius);
+	--radius-xl: calc(var(--radius) * 1.2);
+	--radius-2xl: calc(var(--radius) * 1.8);
+	--radius-3xl: calc(var(--radius) * 2.2);
+	--radius-4xl: calc(var(--radius) * 2.6);
+	--shadow-card: 0 1px 3px rgb(0 0 0 / 0.04);
+	/* Dialog float — the one shadow deeper than `card`: dialogs hover on a
+	   taller surface (scrim + blur below), so the drop has two steps. */
+	--shadow-dialog:
+		0 1px 2px rgb(0 0 0 / 0.04), 0 24px 48px -16px rgb(0 0 0 / 0.16);
+
+	/* Content widths (DESIGN.md — Layout) — `--container-*` powers
+	   max-w-reading / max-w-medium / max-w-content. */
+	--container-reading: 680px;
+	--container-medium: 800px;
+	--container-content: 1200px;
+
+	/* Control heights (DESIGN.md — Layout) — the three interactive
+	   families; spacing theme keys also power the height and size
+	   utilities. */
+	--spacing-chip: 1.75rem;
+	--spacing-control: 2rem;
+	--spacing-nav: 2.375rem;
+
+	/* Chrome widths (DESIGN.md — Layout) — `--spacing-*` keys power
+	   the width utilities: sidebar 264 fixed left rail, panel 320
+	   contextual right panel (also the 1fr+panel grid columns). */
+	--spacing-sidebar: 16.5rem;
+	--spacing-panel: 20rem;
+
+	/* Motion (DESIGN.md) — four durations, three easings. Faster than
+	   the mainstream OS defaults; chrome lives in 1–3, media gets 4.
+	   `--ease-*` keys also (re)define the matching ease utilities. */
+	--duration-1: 100ms;
+	--duration-2: 160ms;
+	--duration-3: 240ms;
+	--duration-4: 320ms;
+	--ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+	--ease-in: cubic-bezier(0.7, 0, 0.84, 0);
+	--ease-standard: cubic-bezier(0.2, 0, 0, 1);
+
+	/* Loading shimmer (skeletons) — a quiet opacity pulse. */
+	--animate-skel: skel 1.6s ease-in-out infinite;
+	@keyframes skel {
+		0%,
+		100% {
+			opacity: 1;
+		}
+		50% {
+			opacity: 0.55;
+		}
+	}
+
+	/* Completion confirmation (DESIGN.md — upload ritual): a quiet
+	   pop, opacity + scale only, no bounce. */
+	--animate-pop: pop 240ms cubic-bezier(0.16, 1, 0.3, 1);
+	@keyframes pop {
+		from {
+			opacity: 0;
+			transform: scale(0.8);
+		}
+	}
+
+	/* Breakpoints are declared explicitly so the JS mobile detection and
+	   Tailwind responsive prefixes stay in sync. viewport.ts must match:
+	   `MOBILE_BREAKPOINT_PX` ↔ `--breakpoint-md`, `SIDEBAR_BREAKPOINT_PX`
+	   ↔ `--breakpoint-sidebar`, `PANEL_BREAKPOINT_PX` ↔ `--breakpoint-panel`. */
+	--breakpoint-sm: 40rem;
+	--breakpoint-md: 48rem;
+	--breakpoint-lg: 64rem;
+	--breakpoint-xl: 80rem;
+	--breakpoint-2xl: 96rem;
+	--breakpoint-sidebar: 1150px;
+	--breakpoint-panel: 1440px;
+}
+
+/* ── Mono (default palette) ─────────────────────────────
+   Pure black-and-white typography palette: no hue anywhere,
+   surfaces stepped only in lightness. Primary is ink black in
+   light mode and paper white in dark mode. This is the default
+   palette: it lives in `:root` / `.dark` with no class, and the
+   `.theme-mono` block further down mirrors it so a local scope
+   can explicitly opt back in. */
+
+:root {
+	--background: #fbfbfb;
+	--foreground: #101010;
+	--card: #ffffff;
+	--card-foreground: #101010;
+	--popover: #ffffff;
+	--popover-foreground: #101010;
+	--primary: #101010;
+	--primary-foreground: #ffffff;
+	--secondary: #f1f0f1;
+	--secondary-foreground: #4a4a48;
+	--muted: #f1f0f1;
+	--muted-foreground: #9a9a96;
+	--accent: #e7e7e9;
+	--accent-foreground: #101010;
+	--destructive: oklch(0.577 0.245 27.325);
+	--destructive-foreground: oklch(1 0 0);
+	--border: #eaeaeb;
+	--border-strong: #d6d6d8;
+	--input: #eaeaeb;
+	--ring: oklch(0.4 0 0);
+	--sidebar: #fbfbfb;
+	--sidebar-foreground: #101010;
+	--sidebar-primary: #101010;
+	--sidebar-primary-foreground: #ffffff;
+	--sidebar-accent: #f1f0f1;
+	--sidebar-accent-foreground: #101010;
+	--sidebar-border: #eaeaeb;
+	--sidebar-ring: oklch(0.4 0 0);
+	--shadow-color: oklch(0 0 0);
+}
+
+.dark {
+	--background: oklch(0.12 0 0);
+	--foreground: oklch(0.96 0 0);
+	--card: oklch(0.16 0 0);
+	--card-foreground: oklch(0.96 0 0);
+	--popover: oklch(0.18 0 0);
+	--popover-foreground: oklch(0.96 0 0);
+	--primary: oklch(0.95 0 0);
+	--primary-foreground: oklch(0.13 0 0);
+	--secondary: oklch(0.18 0 0);
+	--secondary-foreground: oklch(0.95 0 0);
+	--muted: oklch(0.18 0 0);
+	--muted-foreground: oklch(0.65 0 0);
+	--accent: oklch(0.22 0 0);
+	--accent-foreground: oklch(0.96 0 0);
+	--destructive: oklch(0.704 0.191 22.216);
+	--destructive-foreground: oklch(0.96 0 0);
+	--border: oklch(0.24 0 0);
+	--border-strong: oklch(0.28 0 0);
+	--input: oklch(0.28 0 0);
+	--ring: oklch(0.7 0 0);
+	--sidebar: oklch(0.08 0 0);
+	--sidebar-foreground: oklch(0.96 0 0);
+	--sidebar-primary: oklch(0.95 0 0);
+	--sidebar-primary-foreground: oklch(0.13 0 0);
+	--sidebar-accent: oklch(0.18 0 0);
+	--sidebar-accent-foreground: oklch(0.96 0 0);
+	--sidebar-border: oklch(0.24 0 0);
+	--sidebar-ring: oklch(0.7 0 0);
+	--shadow-color: oklch(0 0 0);
+}
+
+/* ── Sage ─────────────────────────────────────────────────
+   Quiet sage-green journal palette. Light values anchor on the settings swatches (canvas #f5f6f0,
+   ink #212920, accent #5f6d5b); fills are tonal steps of the canvas —
+   cards and the sidebar sit slightly deeper than the content area.
+   Primary is the accent hue one step deeper, so actions read sage
+   instead of ink. Dark flips to warm cream ink on green-black, with a
+   light-sage primary.
+   ─────────────────────────────────────────────────────────────────── */
+
+.theme-sage {
+	--background: #f5f6f0;
+	--foreground: #212920;
+	--card: #eef0ea;
+	--card-foreground: #212920;
+	--popover: #eef0ea;
+	--popover-foreground: #212920;
+	--primary: #525f4c;
+	--primary-foreground: #f2f4ec;
+	--secondary: #e7eae1;
+	--secondary-foreground: #55604f;
+	--muted: #e7eae1;
+	--muted-foreground: #8a9083;
+	--accent: #dee2d6;
+	--accent-foreground: #212920;
+	--destructive: oklch(0.55 0.18 28);
+	--destructive-foreground: #fbfbf8;
+	--border: #e0e4d9;
+	--border-strong: #cdd3c1;
+	--input: #e0e4d9;
+	--ring: #525f4c;
+	--sidebar: #e7eae1;
+	--sidebar-foreground: #212920;
+	--sidebar-primary: #525f4c;
+	--sidebar-primary-foreground: #f2f4ec;
+	--sidebar-accent: #dee2d6;
+	--sidebar-accent-foreground: #212920;
+	--sidebar-border: #e0e4d9;
+	--sidebar-ring: #525f4c;
+	--icon-tone: #5f6d5b;
+}
+
+html.dark.theme-sage,
+.dark .theme-sage {
+	--background: #0a100e;
+	--foreground: #d8cfbf;
+	--card: #101a15;
+	--card-foreground: #d8cfbf;
+	--popover: #152019;
+	--popover-foreground: #d8cfbf;
+	--primary: #a8bd96;
+	--primary-foreground: #101a15;
+	--secondary: #152019;
+	--secondary-foreground: #a9a79b;
+	--muted: #152019;
+	--muted-foreground: #7d7e74;
+	--accent: #1b2a20;
+	--accent-foreground: #ddd7c8;
+	--destructive: oklch(0.63 0.155 25);
+	--destructive-foreground: #e4e9e0;
+	--border: #1d2a22;
+	--border-strong: #28392d;
+	--input: #1d2a22;
+	--ring: #a8bd96;
+	--sidebar: #070d0b;
+	--sidebar-foreground: #d8cfbf;
+	--sidebar-primary: #a8bd96;
+	--sidebar-primary-foreground: #101a15;
+	--sidebar-accent: #1b2a20;
+	--sidebar-accent-foreground: #ddd7c8;
+	--sidebar-border: #1d2a22;
+	--sidebar-ring: #a8bd96;
+	--icon-tone: #75855a;
+}
+
+/* ── Parchment ───────────────────────────────────────────────
+   Straw-paper reader palette — the documents area's default. Light values anchor on the settings
+   swatches (canvas #d9c7a3, ink #302202, accent #966500); cards sit
+   deeper than the canvas, like panels on paper. Primary is the bronze
+   accent deepened for contrast. Dark is the reader's night mode —
+   gray surfaces, a light-bronze primary, the accent shifts to red.
+   ─────────────────────────────────────────────────────────────────── */
+
+.theme-parchment {
+	--background: #d9c7a3;
+	--foreground: #302202;
+	--card: #ccb991;
+	--card-foreground: #302202;
+	--popover: #ccb991;
+	--popover-foreground: #302202;
+	--primary: #7d5600;
+	--primary-foreground: #f3e8ce;
+	--secondary: #c0ac87;
+	--secondary-foreground: #6a5a39;
+	--muted: #c0ac87;
+	--muted-foreground: #9e8c63;
+	--accent: #bfa87a;
+	--accent-foreground: #302202;
+	--destructive: oklch(0.577 0.245 27.325);
+	--destructive-foreground: oklch(1 0 0);
+	--border: #b7a175;
+	--border-strong: #a38c5c;
+	--input: #b7a175;
+	--ring: #7d5600;
+	--sidebar: #c0ac87;
+	--sidebar-foreground: #302202;
+	--sidebar-primary: #7d5600;
+	--sidebar-primary-foreground: #f3e8ce;
+	--sidebar-accent: #bfa87a;
+	--sidebar-accent-foreground: #302202;
+	--sidebar-border: #b7a175;
+	--sidebar-ring: #7d5600;
+	--icon-tone: #966500;
+}
+
+html.dark.theme-parchment,
+.dark .theme-parchment {
+	--background: #181818;
+	--foreground: #b8b8b8;
+	--card: #262626;
+	--card-foreground: #b8b8b8;
+	--popover: #2e2e2e;
+	--popover-foreground: #b8b8b8;
+	--primary: #d9a856;
+	--primary-foreground: #302202;
+	--secondary: #2e2e2e;
+	--secondary-foreground: #969696;
+	--muted: #2e2e2e;
+	--muted-foreground: #717171;
+	--accent: #3d2a2b;
+	--accent-foreground: #b8b8b8;
+	--destructive: oklch(0.704 0.191 22.216);
+	--destructive-foreground: oklch(0.96 0 0);
+	--border: #333333;
+	--border-strong: #454545;
+	--input: #333333;
+	--ring: #d9a856;
+	--sidebar: #101010;
+	--sidebar-foreground: #b8b8b8;
+	--sidebar-primary: #d9a856;
+	--sidebar-primary-foreground: #302202;
+	--sidebar-accent: #3d2a2b;
+	--sidebar-accent-foreground: #b8b8b8;
+	--sidebar-border: #333333;
+	--sidebar-ring: #d9a856;
+	--icon-tone: #966500;
+}
+
+/* ── Azure ──────────────────────────────────────────────────
+   Cool paper-white surfaces with a sky-blue accent. Light values anchor
+   on the settings swatches
+   (canvas #fbfbfc, ink #161718, accent #02aeee); fills lean cool.
+   Primary is the sky blue deepened enough to carry white text; dark
+   mode runs the accent blue itself with dark ink.
+   ─────────────────────────────────────────────────────────────────── */
+
+.theme-azure {
+	--background: #fbfbfc;
+	--foreground: #161718;
+	--card: #ffffff;
+	--card-foreground: #161718;
+	--popover: #ffffff;
+	--popover-foreground: #161718;
+	--primary: #0277bd;
+	--primary-foreground: #ffffff;
+	--secondary: #f0f1f6;
+	--secondary-foreground: #5e6267;
+	--muted: #f0f1f6;
+	--muted-foreground: #95979a;
+	--accent: #e3f4fb;
+	--accent-foreground: #161718;
+	--destructive: oklch(0.577 0.245 27.325);
+	--destructive-foreground: oklch(1 0 0);
+	--border: #e4e5e7;
+	--border-strong: #d0d2d8;
+	--input: #e4e5e7;
+	--ring: #0277bd;
+	--sidebar: #f0f1f6;
+	--sidebar-foreground: #161718;
+	--sidebar-primary: #0277bd;
+	--sidebar-primary-foreground: #ffffff;
+	--sidebar-accent: #e3f4fb;
+	--sidebar-accent-foreground: #161718;
+	--sidebar-border: #e4e5e7;
+	--sidebar-ring: #0277bd;
+	--icon-tone: #02aeee;
+}
+
+html.dark.theme-azure,
+.dark .theme-azure {
+	--background: #191a1c;
+	--foreground: #d7d4d0;
+	--card: #202224;
+	--card-foreground: #d7d4d0;
+	--popover: #292b2d;
+	--popover-foreground: #d7d4d0;
+	--primary: #02aeee;
+	--primary-foreground: #0d1f26;
+	--secondary: #292b2d;
+	--secondary-foreground: #a7a097;
+	--muted: #292b2d;
+	--muted-foreground: #8a857d;
+	--accent: #1d2c38;
+	--accent-foreground: #d7d4d0;
+	--destructive: oklch(0.704 0.191 22.216);
+	--destructive-foreground: oklch(0.96 0 0);
+	--border: #2c2f32;
+	--border-strong: #3a3e42;
+	--input: #2c2f32;
+	--ring: #02aeee;
+	--sidebar: #121316;
+	--sidebar-foreground: #d7d4d0;
+	--sidebar-primary: #02aeee;
+	--sidebar-primary-foreground: #0d1f26;
+	--sidebar-accent: #1d2c38;
+	--sidebar-accent-foreground: #d7d4d0;
+	--sidebar-border: #2c2f32;
+	--sidebar-ring: #02aeee;
+	--icon-tone: #008dc0;
+}
+
+/* ── Hoardodile ─────────────────────────────────────────────
+   The logo palette on mono's bones: the light canvas is mono's neutral #fbfbfb (matching the settings
+   swatch; the croc-belly tint survives only as the ink on primary),
+   with identity carried by the outline-olive icon tone #758a23 and a
+   soft croc-lime selection tint (body #bcd03b; the hat-band gold
+   #dcc06f stays in the artwork). Primary is the olive deepened for text
+   contrast. Dark mode is olive-black, flipping primary to the raw logo
+   lime and the icon tone with it.
+   ─────────────────────────────────────────────────────────────────── */
+
+.theme-hoardodile {
+	--background: #fbfbfb;
+	--foreground: #272822;
+	--card: #ffffff;
+	--card-foreground: #272822;
+	--popover: #ffffff;
+	--popover-foreground: #272822;
+	--primary: #5f721f;
+	--primary-foreground: #f8f8f2;
+	--secondary: #edede3;
+	--secondary-foreground: #5c5d50;
+	--muted: #edede3;
+	--muted-foreground: #93917e;
+	--accent: #e9f4ce;
+	--accent-foreground: #272822;
+	--destructive: oklch(0.577 0.245 27.325);
+	--destructive-foreground: oklch(1 0 0);
+	--border: #e3e3d4;
+	--border-strong: #cfcfba;
+	--input: #e3e3d4;
+	--ring: #5f721f;
+	--sidebar: #edede3;
+	--sidebar-foreground: #272822;
+	--sidebar-primary: #5f721f;
+	--sidebar-primary-foreground: #f8f8f2;
+	--sidebar-accent: #e9f4ce;
+	--sidebar-accent-foreground: #272822;
+	--sidebar-border: #e3e3d4;
+	--sidebar-ring: #5f721f;
+	--icon-tone: #758a23;
+}
+
+html.dark.theme-hoardodile,
+.dark .theme-hoardodile {
+	--background: #272822;
+	--foreground: #f8f8f2;
+	--card: #2f3028;
+	--card-foreground: #f8f8f2;
+	--popover: #34352c;
+	--popover-foreground: #f8f8f2;
+	--primary: #bcd03b;
+	--primary-foreground: #272822;
+	--secondary: #34352c;
+	--secondary-foreground: #bcbfb0;
+	--muted: #34352c;
+	--muted-foreground: #75715e;
+	--accent: #49483e;
+	--accent-foreground: #f8f8f2;
+	--destructive: oklch(0.704 0.191 22.216);
+	--destructive-foreground: oklch(0.96 0 0);
+	--border: #3a3b32;
+	--border-strong: #4c4d41;
+	--input: #3a3b32;
+	--ring: #bcd03b;
+	--sidebar: #1f201b;
+	--sidebar-foreground: #f8f8f2;
+	--sidebar-primary: #bcd03b;
+	--sidebar-primary-foreground: #272822;
+	--sidebar-accent: #49483e;
+	--sidebar-accent-foreground: #f8f8f2;
+	--sidebar-border: #3a3b32;
+	--sidebar-ring: #bcd03b;
+	--icon-tone: #bcd03b;
+}
+
+/* ── Mono palette class ───────────────────────────────────────
+   Mirrors :root / .dark so a local scope can explicitly opt back
+   into the mono palette even when the global theme uses another
+   palette.
+   ─────────────────────────────────────────────────────────────── */
+
+.theme-mono {
+	--background: #fbfbfb;
+	--foreground: #101010;
+	--card: #ffffff;
+	--card-foreground: #101010;
+	--popover: #ffffff;
+	--popover-foreground: #101010;
+	--primary: #101010;
+	--primary-foreground: #ffffff;
+	--secondary: #f1f0f1;
+	--secondary-foreground: #4a4a48;
+	--muted: #f1f0f1;
+	--muted-foreground: #9a9a96;
+	--accent: #e7e7e9;
+	--accent-foreground: #101010;
+	--destructive: oklch(0.577 0.245 27.325);
+	--destructive-foreground: oklch(1 0 0);
+	--border: #eaeaeb;
+	--border-strong: #d6d6d8;
+	--input: #eaeaeb;
+	--ring: oklch(0.4 0 0);
+	--sidebar: #fbfbfb;
+	--sidebar-foreground: #101010;
+	--sidebar-primary: #101010;
+	--sidebar-primary-foreground: #ffffff;
+	--sidebar-accent: #f1f0f1;
+	--sidebar-accent-foreground: #101010;
+	--sidebar-border: #eaeaeb;
+	--sidebar-ring: oklch(0.4 0 0);
+	--shadow-color: oklch(0 0 0);
+}
+
+html.dark.theme-mono,
+.dark .theme-mono {
+	--background: oklch(0.12 0 0);
+	--foreground: oklch(0.96 0 0);
+	--card: oklch(0.16 0 0);
+	--card-foreground: oklch(0.96 0 0);
+	--popover: oklch(0.18 0 0);
+	--popover-foreground: oklch(0.96 0 0);
+	--primary: oklch(0.95 0 0);
+	--primary-foreground: oklch(0.13 0 0);
+	--secondary: oklch(0.18 0 0);
+	--secondary-foreground: oklch(0.95 0 0);
+	--muted: oklch(0.18 0 0);
+	--muted-foreground: oklch(0.65 0 0);
+	--accent: oklch(0.22 0 0);
+	--accent-foreground: oklch(0.96 0 0);
+	--destructive: oklch(0.704 0.191 22.216);
+	--destructive-foreground: oklch(0.96 0 0);
+	--border: oklch(0.24 0 0);
+	--border-strong: oklch(0.28 0 0);
+	--input: oklch(0.28 0 0);
+	--ring: oklch(0.7 0 0);
+	--sidebar: oklch(0.08 0 0);
+	--sidebar-foreground: oklch(0.96 0 0);
+	--sidebar-primary: oklch(0.95 0 0);
+	--sidebar-primary-foreground: oklch(0.13 0 0);
+	--sidebar-accent: oklch(0.18 0 0);
+	--sidebar-accent-foreground: oklch(0.96 0 0);
+	--sidebar-border: oklch(0.24 0 0);
+	--sidebar-ring: oklch(0.7 0 0);
+}
+
+@layer base {
+	* {
+		@apply border-border;
+
+		/* Thin, quiet scrollbar everywhere (previously doc.css scoped).
+		   Chromium styling goes through the ::-webkit-scrollbar pseudos
+		   below; the standard `scrollbar-width`/`scrollbar-color` props
+		   must NOT be set here — since Chrome 121 they disable all
+		   ::-webkit-scrollbar styling on the element, which resurrects
+		   the classic Windows scrollbar with arrow buttons. They are
+		   applied to Firefox only via the @supports block further down. */
+		&::-webkit-scrollbar {
+			width: 10px;
+			height: 10px;
+		}
+
+		&::-webkit-scrollbar-track {
+			background: transparent;
+		}
+
+		&::-webkit-scrollbar-thumb {
+			background: color-mix(in oklab, var(--muted-foreground) 28%, transparent);
+			border-radius: 8px;
+			border: 3px solid transparent;
+			background-clip: padding-box;
+		}
+
+		&::-webkit-scrollbar-thumb:hover {
+			background: color-mix(in oklab, var(--muted-foreground) 45%, transparent);
+			background-clip: padding-box;
+		}
+	}
+
+	/* Element-scoped selectors above never match the Chromium viewport
+	   scrollbar (it lives outside any element's scope), so the same styling
+	   is repeated on bare pseudo-element selectors — without them the
+	   viewport bar keeps the classic look with arrow buttons. */
+	::-webkit-scrollbar {
+		width: 10px;
+		height: 10px;
+	}
+
+	::-webkit-scrollbar-track {
+		background: transparent;
+	}
+
+	::-webkit-scrollbar-thumb {
+		background: color-mix(in oklab, var(--muted-foreground) 28%, transparent);
+		border-radius: 8px;
+		border: 3px solid transparent;
+		background-clip: padding-box;
+	}
+
+	::-webkit-scrollbar-thumb:hover {
+		background: color-mix(in oklab, var(--muted-foreground) 45%, transparent);
+		background-clip: padding-box;
+	}
+
+	::-webkit-scrollbar-button {
+		display: none;
+	}
+
+	/* Firefox-only: the standard props are the only styling Firefox
+	   understands, and on `*` they inherit to the root viewport bar.
+	   Chromium must not receive them (see the note on `*` above). */
+	@supports not selector(::-webkit-scrollbar) {
+		* {
+			scrollbar-width: thin;
+			scrollbar-color: color-mix(
+					in oklab,
+					var(--muted-foreground) 28%,
+					transparent
+				)
+				transparent;
+		}
+	}
+
+	body {
+		@apply text-foreground;
+	}
+
+	html {
+		@apply font-sans;
+	}
+
+	/* CJK glyphs are denser than Latin — tiny text reads at 12px instead
+	   of the 11px base so stroke detail survives (DESIGN.md —
+	   Typography). The 12px rule out-ranks the `.text-tiny` utility. */
+	html:lang(zh) .text-tiny {
+		font-size: 0.75rem;
+	}
+
+	/* Buttons start clean: UA chrome (appearance, border, background,
+	   padding, centered text) is fully reset so component classes own the
+	   look. The pointer cursor is the base behavior; disabled flips to
+	   the default arrow. */
+	button {
+		appearance: none;
+		border: 0;
+		background: transparent;
+		padding: 0;
+		color: inherit;
+		font: inherit;
+		text-align: inherit;
+		border-radius: 0;
+		cursor: pointer;
+	}
+
+	button:disabled {
+		cursor: default;
+	}
+}
+
+/* Hide scrollbars while keeping overflow scrollable — carousel strips,
+   tab bars, and command palettes rely on it (tabs.tsx, combobox.tsx,
+   command.tsx, sidebar.tsx, the overview marquee). */
+@utility no-scrollbar {
+	scrollbar-width: none;
+	&::-webkit-scrollbar {
+		display: none;
+	}
+}
+
+/* Strip scrollbar — the rail's chip clouds and settings lists: a 4px
+   quiet thumb instead of the 10px base bar (DESIGN.md —
+   Scrollbars). Chromium goes through the pseudos; Firefox gets the
+   standard props via the @supports block (see the `*` note above). */
+@utility strip-scroll {
+	&::-webkit-scrollbar {
+		width: 4px;
+		height: 4px;
+	}
+	&::-webkit-scrollbar-track {
+		background: transparent;
+	}
+	&::-webkit-scrollbar-thumb {
+		background: var(--border-strong);
+		border-radius: 2px;
+	}
+	&::-webkit-scrollbar-button {
+		display: none;
+	}
+	@supports not selector(::-webkit-scrollbar) {
+		scrollbar-width: thin;
+		scrollbar-color: var(--border-strong) transparent;
+	}
+}
+
+/* Duotone icons pick up the palette hue (DESIGN.md — Iconography):
+   solar v2 BoldDuotone renders its second tone via the
+   `--solar-secondary-color` CSS variable (falling back to currentColor) —
+   recolor just that tone per theme by pinning the variable to the palette
+   hue on the wrapper's `hd-icon` hook. Mono themes define no --icon-tone,
+   so the variable is invalid and the accent falls back to plain ink; the
+   Bold (selected) and Linear (monochrome) weights are untouched. */
+:root {
+	/* solar v2 sizes icons as `1em` × `var(--solar-size, 24px)` — pin the
+	   default to 1em so icon-less sizing matches v1 (class-based tiers rule
+	   everywhere the design system has an opinion). */
+	--solar-size: 1em;
+}
+
+.hd-icon {
+	--solar-secondary-color: var(--icon-tone);
+}
+
+/* Grayscale icon mode (Settings → Icons): BoldDuotone keeps its two-tone
+   structure, but the second tone never takes the palette hue — it falls
+   back to plain ink, whose built-in half opacity reads as gray. Black and
+   gray in both light and dark, no extra tokens needed. */
+[data-icon-style="grayscale"] .hd-icon {
+	--solar-secondary-color: currentColor;
+}
+
+/* Consumers resolve this file from dist/styles/, so the glob must cover the
+   tsup ESM outputs in dist/ (plain string literals — class names survive).
+   `.tsx` is kept for setups that compile the source tree directly. The
+   scan-contract test pins this against the built artifacts. */
+@source "../**/*.{js,ts,tsx}";
+
+/* ── Override tw-animate-css keyframes to remove filter:blur which forces
+     extra compositor work on mobile WebKit even when blur(0) ── */
+@keyframes enter {
+	from {
+		opacity: var(--tw-enter-opacity, 1);
+		transform: translate3d(
+				var(--tw-enter-translate-x, 0),
+				var(--tw-enter-translate-y, 0),
+				0
+			)
+			scale3d(
+				var(--tw-enter-scale, 1),
+				var(--tw-enter-scale, 1),
+				var(--tw-enter-scale, 1)
+			)
+			rotate(var(--tw-enter-rotate, 0));
+	}
+}
+
+@keyframes exit {
+	to {
+		opacity: var(--tw-exit-opacity, 1);
+		transform: translate3d(
+				var(--tw-exit-translate-x, 0),
+				var(--tw-exit-translate-y, 0),
+				0
+			)
+			scale3d(
+				var(--tw-exit-scale, 1),
+				var(--tw-exit-scale, 1),
+				var(--tw-exit-scale, 1)
+			)
+			rotate(var(--tw-exit-rotate, 0));
+	}
+}

@@ -1,0 +1,487 @@
+/* ────────────────────────────────────────────────────────────────────
+   Document decorative layer for the knowledge base (documents area).
+
+   "Parchment": straw paper, ink text, a single bronze
+   accent. Scoped under `.doc` so the rest of the app keeps the
+   stock theme; portaled overlays owned by the documents feature
+   re-apply `.doc` on their content element.
+
+   The actual shadcn color tokens live in @hoardodile/ui/theme.css as the
+   `.theme-parchment` palette; this file only provides the layout,
+   component and motion flourishes that consume those variables.
+   ──────────────────────────────────────────────────────────────────── */
+
+/* ── Atmosphere (layout root only): flat warm paper, no texture ──── */
+
+[data-doc-layout].doc {
+	background-color: var(--background);
+	color: var(--foreground);
+}
+
+/* Document page UI font (sidebar, headers, etc.) — the body slot of the
+   page font pair. */
+[data-doc-layout] {
+	font-family: var(--font-doc-ui-body, var(--font-app, var(--font-sans)));
+}
+
+/* Document editor: zoom only affects body text. Cards and chips */
+/* opt out so embedded media keeps its own typography. Edit mode */
+/* keeps the compact 16px / 1.75 geometry; reading mode (route */
+/* `data-reading="true"`) bumps it to the long-form 19px / 1.9. */
+/* Edit mode consumes the editor font pair, reading mode the page */
+/* (UI) font pair; headings fall back to the body slot of each. */
+[data-doc-zoom-root] .ProseMirror {
+	color: var(--foreground);
+	line-height: 1.75;
+	font-size: calc(var(--doc-zoom, 1) * 1rem);
+	font-family: var(--font-doc-editor-body, var(--font-app, var(--font-sans)));
+	overflow-wrap: break-word;
+}
+
+[data-doc-zoom-root] .ProseMirror :is(h1, h2, h3, h4, h5, h6) {
+	font-family: var(--font-doc-editor-body, var(--font-app, var(--font-sans)));
+}
+
+/* Reading geometry. The font bump only applies from md up: below md
+   the mobile base unit (1.55rem, see the media query further down) is
+   already larger than the 19px reading size. */
+[data-reading="true"] [data-doc-zoom-root] .ProseMirror {
+	line-height: 1.9;
+	font-family: var(--font-doc-ui-body, var(--font-app, var(--font-sans)));
+}
+
+[data-reading="true"]
+	[data-doc-zoom-root]
+	.ProseMirror
+	:is(h1, h2, h3, h4, h5, h6) {
+	font-family: var(
+		--font-doc-ui-heading,
+		var(--font-doc-ui-body, var(--font-app, var(--font-sans)))
+	);
+}
+
+/* Page title (reading-view h1, preview h1, edit-mode title input) sits
+   outside the zoom root but inside the layout root, so the UI font
+   variables injected on `[data-doc-layout]` inherit down to it. */
+[data-doc-reading-view] h1,
+[data-doc-layout] [data-testid="document-title"],
+[data-doc-layout] [data-testid="document-title-readonly"] {
+	font-family: var(
+		--font-doc-ui-heading,
+		var(--font-doc-ui-body, var(--font-app, var(--font-sans)))
+	);
+}
+
+@media (width >= 48rem) {
+	[data-reading="true"] [data-doc-zoom-root] .ProseMirror {
+		font-size: calc(var(--doc-zoom, 1) * 1.1875rem);
+	}
+}
+
+/* BlockNote renders each block as a flex item with an .bn-inline-content
+   wrapper. Give both explicit break opportunities and a zero min-width so
+   long unbroken strings (e.g. a run of digits) wrap instead of forcing the
+   whole page to overflow. */
+[data-doc-zoom-root] .bn-block-content,
+[data-doc-zoom-root] .bn-inline-content {
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+
+[data-doc-zoom-root] .bn-editor {
+	background-color: transparent;
+}
+
+[data-doc-zoom-root] {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+}
+
+[data-doc-zoom-root] .bn-container {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+}
+
+[data-doc-zoom-root] .bn-editor {
+	flex: 1;
+}
+
+/* On mobile viewports (< md / 768 px) the default 16px body text is
+   uncomfortably small for long-form reading; bump the base unit so every
+   zoom step stays proportional. Matches @hoardodile/ui/viewport. */
+@media (width < 48rem) {
+	[data-doc-zoom-root] .ProseMirror {
+		font-size: calc(var(--doc-zoom, 1) * 1.55rem);
+	}
+}
+
+[data-doc-zoom-root] [data-character-chip],
+[data-doc-zoom-root] [data-resource-card] {
+	font-size: calc(var(--doc-zoom, 1) * 1rem);
+	line-height: 1.4;
+	text-indent: 0;
+}
+
+[data-doc-zoom-root] [data-character-chip] .text-sm,
+[data-doc-zoom-root] [data-resource-card] .text-sm {
+	font-size: 0.825em;
+}
+
+/* Scale the CharChip avatar along with the document zoom so the
+   inline character mention stays visually proportional. */
+[data-doc-zoom-root] [data-character-chip] .size-7 {
+	width: calc(var(--doc-zoom, 1) * 1.75rem);
+	height: calc(var(--doc-zoom, 1) * 1.75rem);
+}
+
+[data-doc-zoom-root] [data-character-chip] .size-8 {
+	width: calc(var(--doc-zoom, 1) * 2rem);
+	height: calc(var(--doc-zoom, 1) * 2rem);
+}
+
+/* Decorative leading bar on every paragraph block (edit mode only;
+   hidden in reading mode via route `data-reading`). Drawn as a
+   background-image gradient instead of a pseudo-element so we don't
+   collide with BlockNote's own ::before / ::after usage (placeholder
+   text, list markers). The vertical inset (4px top/bottom) makes
+   consecutive paragraph bars visually distinct. */
+[data-reading="false"]
+	[data-doc-zoom-root]
+	.bn-block-content[data-content-type="paragraph"] {
+	padding-left: 0.75rem;
+	background-image: linear-gradient(
+		to bottom,
+		transparent 0,
+		transparent 4px,
+		color-mix(in srgb, var(--muted-foreground) 25%, transparent) 4px,
+		color-mix(in srgb, var(--muted-foreground) 25%, transparent)
+			calc(100% - 4px),
+		transparent calc(100% - 4px)
+	);
+	background-size: 3px 100%;
+	background-repeat: no-repeat;
+	background-position: 0 0;
+}
+
+/* Empty paragraphs: hide the bar (looks odd next to a single-line gap)
+   and clear the first-line indent so the placeholder text is not
+   pushed off-axis and forced to wrap as a vertical column. */
+[data-reading="false"]
+	[data-doc-zoom-root]
+	.bn-block-content[data-content-type="paragraph"]:has(
+		.ProseMirror-trailingBreak:only-child
+	) {
+	background-image: none;
+}
+
+[data-reading="false"]
+	[data-doc-zoom-root][data-doc-indent="true"]
+	.bn-block-content[data-content-type="paragraph"]:has(
+		.ProseMirror-trailingBreak:only-child
+	) {
+	text-indent: 0;
+}
+
+/* The editor's intrinsic horizontal padding is stripped in every mode
+   so the text sits flush with the title and meta above it; the route
+   container provides the horizontal breathing room itself. */
+[data-doc-zoom-root] .bn-editor {
+	padding-inline: 0;
+}
+
+/* Hide the BlockNote side menu (drag handle / add-block button) at
+   every breakpoint: with the editor padding stripped (above) the
+   handles would overlap the text column. */
+[data-doc-zoom-root] .bn-side-menu {
+	display: none !important;
+}
+
+/* Optional first-line indent for paragraph blocks. */
+[data-doc-zoom-root][data-doc-indent="true"]
+.bn-block-content[data-content-type="paragraph"] {
+	text-indent: 2em;
+}
+
+/* Per-paragraph opt-out (paragraph block prop `indent === false`). */
+[data-doc-zoom-root][data-doc-indent="true"]
+.bn-block-content[data-content-type="paragraph"][data-indent="false"] {
+	text-indent: 0;
+}
+
+/* Mobile (< md / 768 px): scale down headings so they stay readable
+   without overwhelming the narrow viewport. H1 ≈ 1.7× base, each
+   subsequent level steps down. */
+@media (width < 48rem) {
+	[data-doc-zoom-root] .ProseMirror h1 {
+		font-size: calc(var(--doc-zoom, 1) * 2.38rem);
+	}
+
+	[data-doc-zoom-root] .ProseMirror h2 {
+		font-size: calc(var(--doc-zoom, 1) * 2rem);
+	}
+
+	[data-doc-zoom-root] .ProseMirror h3 {
+		font-size: calc(var(--doc-zoom, 1) * 1.75rem);
+	}
+
+	[data-doc-zoom-root] .ProseMirror h4 {
+		font-size: calc(var(--doc-zoom, 1) * 1.56rem);
+	}
+
+	[data-doc-zoom-root] .ProseMirror h5 {
+		font-size: calc(var(--doc-zoom, 1) * 1.47rem);
+	}
+
+	[data-doc-zoom-root] .ProseMirror h6 {
+		font-size: calc(var(--doc-zoom, 1) * 1.4rem);
+	}
+}
+
+[data-doc-zoom-root] a {
+	color: inherit !important;
+	text-decoration: none !important;
+}
+
+/* BlockNote suggestion menus (/, @, #) and AI combobox */
+.bn-suggestion-menu .bn-suggestion-menu-item[aria-selected="true"],
+#ai-suggestion-menu .bn-suggestion-menu-item[aria-selected="true"] {
+	background-color: var(--color-muted);
+	color: var(--foreground);
+}
+
+/* ── Component classes ───────────────────────────────────────────── */
+
+@layer components {
+	/* Small-caps micro-annotation. */
+	.doc-label {
+		font-size: 0.6875rem;
+		font-weight: 500;
+		letter-spacing: 0.14em;
+		text-transform: uppercase;
+		color: var(--muted-foreground);
+	}
+
+	/* Plain hairline divider. */
+	.doc-divider {
+		display: block;
+		height: 1px;
+		width: 8rem;
+		background: var(--border);
+	}
+
+	/* Flat hairline panel. */
+	.doc-sheet {
+		background: var(--card);
+		border: 1px solid var(--border);
+	}
+
+	/* Flat toolbar chrome with a hairline bottom edge (in-editor static
+	   toolbar; the detail header sits on the transparent canvas). */
+	.doc-toolbar {
+		background: var(--background);
+		border-bottom: 1px solid var(--border);
+	}
+}
+
+/* ── Editor content ──────────────────────────────────────────────── */
+
+/* Reading geometry, scoped to reading mode (route
+   `data-reading="true"`): 32px paragraph gaps, 28px section headings,
+   quote with a 3px strong left bar. Edit mode keeps BlockNote's
+   compact defaults; zoom scales type via --doc-zoom, gaps stay fixed. */
+.doc
+	[data-reading="true"]
+	[data-doc-zoom-root]
+	.bn-block-content[data-content-type="paragraph"] {
+	margin-bottom: 2rem;
+}
+
+.doc [data-reading="true"] [data-doc-zoom-root] .ProseMirror h2 {
+	margin: 3rem 0 1rem;
+	font-size: calc(var(--doc-zoom, 1) * 1.75rem);
+	font-weight: 700;
+	line-height: 1.3;
+}
+
+.doc [data-reading="true"] [data-doc-zoom-root] .ProseMirror blockquote {
+	border-left: 3px solid var(--border-strong);
+	padding-left: 1.5rem;
+	font-size: calc(var(--doc-zoom, 1) * 1.125rem);
+	line-height: 1.65;
+}
+
+.doc [data-reading="true"] [data-doc-zoom-root] .ProseMirror blockquote cite {
+	display: block;
+	margin-top: 1.5rem;
+	font-style: normal;
+	font-size: 0.75rem;
+	color: var(--muted-foreground);
+}
+
+/* Edit-mode quote: a quiet primary-tinted panel with a 2px bar. */
+.doc [data-reading="false"] [data-doc-zoom-root] .ProseMirror blockquote {
+	border-left: 2px solid color-mix(in oklab, var(--primary) 60%, transparent);
+	background: color-mix(in oklab, var(--primary) 6%, transparent);
+	border-radius: 0 0.5rem 0.5rem 0;
+	padding: 0.35em 1em;
+	color: color-mix(in oklab, var(--foreground) 88%, var(--primary));
+}
+
+.doc [data-doc-zoom-root] .ProseMirror code:not(pre code) {
+	font-family: "LXGW WenKai Mono", ui-monospace, Consolas, monospace;
+	color: var(--primary);
+	background: color-mix(in oklab, var(--primary) 10%, transparent);
+	border-radius: 0.3em;
+	padding: 0.08em 0.35em;
+	font-size: 0.92em;
+}
+
+.doc [data-doc-zoom-root] .ProseMirror ::selection {
+	background: color-mix(in oklab, var(--primary) 30%, transparent);
+}
+
+/* BlockNote renders placeholders as ::after on empty block content. */
+.doc
+	[data-doc-zoom-root]
+	.bn-block-content:has(.ProseMirror-trailingBreak:only-child)::after {
+	color: color-mix(in oklab, var(--muted-foreground) 72%, transparent);
+}
+
+/* ── Version diff highlights ─────────────────────────────────────── */
+
+.doc [data-doc-diff="true"] .ProseMirror ins {
+	background: oklch(0.92 0.08 145);
+	color: oklch(0.25 0.08 145);
+	text-decoration: none;
+	border-bottom: 2px solid oklch(0.65 0.12 145);
+	padding: 0.05em 0.2em;
+	border-radius: 0.2em;
+}
+
+.doc [data-doc-diff="true"] .ProseMirror del {
+	background: oklch(0.94 0.04 25);
+	color: oklch(0.4 0.1 25);
+	text-decoration: line-through;
+	text-decoration-color: oklch(0.65 0.15 25);
+	padding: 0.05em 0.2em;
+	border-radius: 0.2em;
+}
+
+.dark .doc [data-doc-diff="true"] .ProseMirror ins {
+	background: oklch(0.28 0.09 150);
+	color: oklch(0.92 0.06 150);
+	border-bottom-color: oklch(0.6 0.12 150);
+}
+
+.dark .doc [data-doc-diff="true"] .ProseMirror del {
+	background: oklch(0.3 0.06 25);
+	color: oklch(0.92 0.05 25);
+	text-decoration-color: oklch(0.7 0.12 25);
+}
+
+/* ── Motion ──────────────────────────────────────────────────────── */
+
+.doc-reveal {
+	opacity: 0;
+	animation: doc-fade-up 0.65s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.doc-reveal-2 {
+	animation-delay: 110ms;
+}
+
+.doc-reveal-3 {
+	animation-delay: 220ms;
+}
+
+.doc-reveal-4 {
+	animation-delay: 330ms;
+}
+
+.doc-circle-draw path {
+	stroke-dasharray: 1;
+	stroke-dashoffset: 1;
+	animation: doc-draw 1.5s cubic-bezier(0.4, 0, 0.2, 1) 0.15s forwards;
+}
+
+.doc-circle-spin {
+	animation: doc-spin 1.6s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+	transform-origin: center;
+}
+
+.doc-circle-breathe {
+	animation: doc-breathe 7s ease-in-out infinite;
+	transform-origin: center;
+}
+
+.doc-banner {
+	animation: doc-banner-in 0.16s var(--ease-out) both;
+}
+
+@keyframes doc-fade-up {
+	from {
+		opacity: 0;
+		transform: translateY(14px);
+	}
+
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+
+@keyframes doc-draw {
+	to {
+		stroke-dashoffset: 0;
+	}
+}
+
+@keyframes doc-spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+@keyframes doc-breathe {
+	0%,
+	100% {
+		transform: scale(1);
+		opacity: 0.8;
+	}
+
+	50% {
+		transform: scale(1.03);
+		opacity: 1;
+	}
+}
+
+@keyframes doc-banner-in {
+	from {
+		opacity: 0;
+		transform: translateY(-4px);
+	}
+
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.doc-reveal,
+	.doc-circle-breathe,
+	.doc-banner {
+		animation: none;
+	}
+
+	.doc-reveal {
+		opacity: 1;
+	}
+
+	.doc-circle-draw path {
+		animation: none;
+		stroke-dashoffset: 0;
+	}
+}

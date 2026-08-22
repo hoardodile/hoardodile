@@ -1,0 +1,84 @@
+{
+	"$schema": "https://biomejs.dev/schemas/2.5.6/schema.json",
+	"vcs": {
+		"enabled": true,
+		"clientKind": "git",
+		"useIgnoreFile": true
+	},
+	"css": {
+		"parser": {
+			"tailwindDirectives": true
+		}
+	},
+	"files": {
+		"ignoreUnknown": true,
+		"includes": [
+			"**",
+			"!**/vendor",
+			"!**/routeTree.gen.ts",
+			"!**/coverage",
+			"!**/dist",
+			"!**/out",
+			"!apps/desktop/extra-resources",
+			"!apps/desktop/release",
+			"!.next",
+			"!.vscode",
+			"!.agents",
+			"!local",
+			"!.turbo",
+			"!.kilo",
+			"!app/web/public",
+			"!packages/ui/src/components"
+		]
+	},
+	"formatter": {
+		"enabled": true,
+		"indentStyle": "tab"
+	},
+	"linter": {
+		"enabled": true,
+		"rules": {
+			"preset": "recommended",
+			"a11y": {
+				"noSvgWithoutTitle": "off",
+				"noStaticElementInteractions": "off"
+			},
+			"style": {
+				"noNonNullAssertion": "off"
+			},
+			"suspicious": {
+				"noArrayIndexKey": "off",
+				"noUnknownAtRules": "off",
+				"noExplicitAny": "off",
+				"noUndeclaredEnvVars": "off"
+			},
+			"security": {
+				"noDangerouslySetInnerHtml": "off"
+			},
+			"correctness": {
+				"noSelfAssign": "off",
+				"useExhaustiveDependencies": "off"
+			},
+			"performance": {
+				"noImgElement": "off"
+			},
+			"complexity": {
+				"noImportantStyles": "off"
+			}
+		}
+	},
+	"javascript": {
+		"formatter": {
+			"quoteStyle": "double",
+			"semicolons": "asNeeded"
+		}
+	},
+	"assist": {
+		"enabled": true,
+		"actions": {
+			"source": {
+				"organizeImports": "on"
+			}
+		}
+	}
+}

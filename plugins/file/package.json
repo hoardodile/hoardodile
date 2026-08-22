@@ -1,0 +1,41 @@
+{
+	"name": "@hoardodile/plugin-file",
+	"version": "0.0.0",
+	"private": true,
+	"license": "MIT",
+	"type": "module",
+	"exports": {
+		".": "./src/index.ts",
+		"./main": "./src/main.ts"
+	},
+	"scripts": {
+		"build": "hoardodile plugin build",
+		"watch": "hoardodile plugin build --watch",
+		"lint": "tsc --noEmit",
+		"test": "vitest run"
+	},
+	"dependencies": {
+		"@hoardodile/sdk-react": "workspace:*",
+		"@hoardodile/sdk-server": "workspace:*",
+		"@hoardodile/sdk-types": "workspace:*",
+		"@hoardodile/sdk-web": "workspace:*",
+		"@hoardodile/ui": "workspace:*",
+		"@headless-tree/core": "^1.7.0",
+		"@headless-tree/react": "^1.7.0",
+		"@solar-icons/react": "catalog:",
+		"react": "catalog:"
+	},
+	"devDependencies": {
+		"@hoardodile/cli": "workspace:*",
+		"@tailwindcss/vite": "catalog:",
+		"@testing-library/jest-dom": "catalog:",
+		"@testing-library/react": "catalog:",
+		"@types/react": "catalog:",
+		"@vitejs/plugin-react": "catalog:",
+		"jsdom": "catalog:",
+		"tailwindcss": "catalog:",
+		"typescript": "catalog:",
+		"vite": "catalog:",
+		"vitest": "catalog:"
+	}
+}

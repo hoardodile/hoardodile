@@ -1,0 +1,97 @@
+{
+	"name": "hoardodile",
+	"version": "0.0.0",
+	"private": true,
+	"description": "A modern digital hoarding tool for self-hosted archivists",
+	"author": "wooloo26",
+	"license": "GPL-3.0-only",
+	"type": "module",
+	"engines": {
+		"node": ">=24"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/hoardodile/hoardodile.git"
+	},
+	"homepage": "https://github.com/hoardodile/hoardodile",
+	"bugs": "https://github.com/hoardodile/hoardodile/issues",
+	"keywords": [
+		"self-hosted",
+		"archive",
+		"privacy"
+	],
+	"scripts": {
+		"dev": "node scripts/dev.mjs",
+		"start": "pnpm -F @hoardodile/server start",
+		"desktop": "pnpm -F @hoardodile/desktop dev",
+		"desktop:package": "pnpm build && pnpm -F @hoardodile/desktop package",
+		"desktop:release": "pnpm build && pnpm -F @hoardodile/desktop package:publish",
+		"build": "turbo run build",
+		"build:pkgs": "turbo run build --filter=!./apps/*",
+		"test": "pnpm exec turbo run test --concurrency=2",
+		"lint": "biome check . && turbo run lint",
+		"format": "biome check --write",
+		"lint-staged": "lint-staged --max-arg-length=6000",
+		"db:generate": "pnpm -F @hoardodile/server db:generate",
+		"sdks:pack": "node scripts/pack-sdks.mjs",
+		"smoke:published": "node scripts/smoke-published.mjs",
+		"agent:wt": "node scripts/agent-wt.mjs",
+		"agent:rm": "node scripts/agent-rm.mjs",
+		"deps:update": "pnpm up -L && pnpm -r up -L",
+		"licenses:check": "node scripts/generate-licenses.mjs --check",
+		"licenses:generate": "node scripts/generate-licenses.mjs",
+		"version:check": "node scripts/check-version-sync.mjs",
+		"release": "release-it",
+		"postinstall": "lefthook install",
+		"seed": "pnpm -F @hoardodile/server seed",
+		"seed:screenshots": "node scripts/seed-screenshots.mjs"
+	},
+	"lint-staged": {
+		"*.{js,ts,cjs,mjs,d.cts,d.mts,jsx,tsx,json,jsonc}": [
+			"biome check --write --no-errors-on-unmatched",
+			"biome format --write --no-errors-on-unmatched"
+		]
+	},
+	"release-it": {
+		"git": {
+			"commitMessage": "chore(release): v${version}",
+			"tagName": "v${version}",
+			"requireBranch": "main"
+		},
+		"github": {
+			"release": true,
+			"releaseName": "v${version}"
+		},
+		"npm": {
+			"publish": false
+		},
+		"plugins": {
+			"@release-it/conventional-changelog": {
+				"preset": {
+					"name": "conventionalcommits"
+				},
+				"infile": "CHANGELOG.md"
+			}
+		},
+		"hooks": {
+			"after:bump": "node scripts/sync-version.mjs"
+		}
+	},
+	"devDependencies": {
+		"@biomejs/biome": "2.5.6",
+		"@release-it/conventional-changelog": "^12.0.0",
+		"@tailwindcss/vite": "catalog:",
+		"@vitejs/plugin-react": "catalog:",
+		"lefthook": "^2.1.10",
+		"license-checker-rseidelsohn": "^5.0.1",
+		"lint-staged": "^17.3.0",
+		"npm-run-all2": "^9.0.3",
+		"release-it": "^21.0.1",
+		"turbo": "^2.10.8",
+		"typescript": "catalog:",
+		"vite": "catalog:",
+		"vite-node": "catalog:",
+		"vitest": "catalog:"
+	},
+	"packageManager": "pnpm@11.10.0"
+}

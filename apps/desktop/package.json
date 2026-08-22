@@ -1,0 +1,45 @@
+{
+	"name": "@hoardodile/desktop",
+	"version": "0.0.0",
+	"private": true,
+	"license": "GPL-3.0-only",
+	"description": "Windows Electron shell around the hoardodile Fastify sidecar.",
+	"author": "wooloo26",
+	"type": "module",
+	"main": "./out/main/index.js",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/hoardodile/hoardodile.git",
+		"directory": "apps/desktop"
+	},
+	"scripts": {
+		"dev": "node scripts/dev.mjs",
+		"build": "node scripts/build.mjs",
+		"package": "pnpm build && node scripts/stage-resources.mjs && electron-builder --config electron-builder.config.mjs --win --x64 --publish never",
+		"package:publish": "pnpm build && node scripts/stage-resources.mjs && electron-builder --config electron-builder.config.mjs --win --x64 --publish always",
+		"lint": "tsc --noEmit",
+		"test": "vitest run --maxWorkers=2"
+	},
+	"dependencies": {
+		"@hoardodile/shared": "workspace:*",
+		"@hoardodile/ui": "workspace:*",
+		"electron-updater": "^6.6.4",
+		"get-port": "^7.2.0",
+		"zod": "catalog:",
+		"react": "catalog:",
+		"react-dom": "catalog:"
+	},
+	"devDependencies": {
+		"@tailwindcss/vite": "catalog:",
+		"@types/node": "catalog:",
+		"@types/react": "catalog:",
+		"@types/react-dom": "catalog:",
+		"@vitejs/plugin-react": "catalog:",
+		"electron": "^38.2.0",
+		"electron-builder": "^26.0.12",
+		"tailwindcss": "catalog:",
+		"typescript": "catalog:",
+		"vite": "catalog:",
+		"vitest": "catalog:"
+	}
+}

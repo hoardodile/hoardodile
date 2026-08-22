@@ -1,0 +1,122 @@
+{
+	"schema": 1,
+	"kind": "io-range",
+	"timestamp": "2026-08-12T09:27:01.485Z",
+	"config": {
+		"mib": 128,
+		"files": 100,
+		"pages": 100,
+		"time": 600,
+		"seed": 42
+	},
+	"machine": {
+		"platform": "win32",
+		"arch": "x64",
+		"cpus": 16,
+		"cpuModel": "13th Gen Intel(R) Core(TM) i5-13400F",
+		"node": "v24.18.0"
+	},
+	"caveats": [
+		"range.discard.* drains the full file from position 0 and discards the prefix (the historical sliceStream serving path) — its median grows with the requested offset; range.window.* reads only the 1MiB window via createReadStream(start,end). The ratio at 90pct is the seek regression the windowed path removes.",
+		"open.statThenStream resolves the path twice (stat + open); open.handleFstat opens once and fstats the handle.",
+		"bulk.upfrontOpens creates every read stream before any byte is written (first-byte latency); bulk.sizesFirst stats all files first and opens lazily at write time.",
+		"listEntries.memoHit is the stat-signature guard that replaced the full walk + natural sort (listEntries.walk).",
+		"virtual.range.64KB reads the first 1MiB of an inner deflate page through the nested container (CD cached).",
+		"Tinybench runs each task as a hot loop until the --time budget; hot loops amortize syscall/page-cache effects, so this measures per-call CPU cost, not disk latency.",
+		"Only same-window paired runs are comparable — the machine shows bimodal load (up to 4x swings)."
+	],
+	"memoryPeakMb": 324.2,
+	"metrics": [
+		{
+			"name": "range.discard.10pct",
+			"unit": "ms",
+			"median": 122.51159999999982,
+			"min": 115.80200000000013,
+			"max": 140.61250000000018
+		},
+		{
+			"name": "range.window.10pct",
+			"unit": "ms",
+			"median": 0.7348999999999251,
+			"min": 0.4171999999998661,
+			"max": 10.859500000000025
+		},
+		{
+			"name": "range.discard.50pct",
+			"unit": "ms",
+			"median": 111.98440000000028,
+			"min": 97.53510000000006,
+			"max": 121.55970000000025
+		},
+		{
+			"name": "range.window.50pct",
+			"unit": "ms",
+			"median": 0.7405000000007931,
+			"min": 0.44679999999971187,
+			"max": 15.130799999999908
+		},
+		{
+			"name": "range.discard.90pct",
+			"unit": "ms",
+			"median": 114.84450000000015,
+			"min": 97.47200000000066,
+			"max": 130.41809999999987
+		},
+		{
+			"name": "range.window.90pct",
+			"unit": "ms",
+			"median": 0.7979000000004817,
+			"min": 0.4960000000000946,
+			"max": 10.55659999999989
+		},
+		{
+			"name": "open.statThenStream",
+			"unit": "ms",
+			"median": 0.020000000000436557,
+			"min": 0.010299999999915599,
+			"max": 1.625
+		},
+		{
+			"name": "open.handleFstat",
+			"unit": "ms",
+			"median": 0.07080000000041764,
+			"min": 0.05190000000038708,
+			"max": 5.283599999999751
+		},
+		{
+			"name": "bulk.upfrontOpens",
+			"unit": "ms",
+			"median": 1.5406000000002678,
+			"min": 1.4346000000005006,
+			"max": 7.941600000000108
+		},
+		{
+			"name": "bulk.sizesFirst",
+			"unit": "ms",
+			"median": 1.5324000000000524,
+			"min": 1.3001000000003842,
+			"max": 3.2286999999996624
+		},
+		{
+			"name": "listEntries.memoHit",
+			"unit": "ms",
+			"median": 0.02230000000054133,
+			"min": 0.014400000000023283,
+			"max": 0.8793000000005122
+		},
+		{
+			"name": "listEntries.walk",
+			"unit": "ms",
+			"median": 0.5018000000000029,
+			"min": 0.39279999999962456,
+			"max": 13.748400000000402
+		},
+		{
+			"name": "virtual.range.64KB",
+			"unit": "ms",
+			"median": 0.2831000000005588,
+			"min": 0.18630000000121072,
+			"max": 19.80040000000008
+		}
+	]
+}

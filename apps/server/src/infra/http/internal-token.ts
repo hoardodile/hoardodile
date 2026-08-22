@@ -1,0 +1,43 @@
+import { timingSafeEqual } from "node:crypto"
+import type { FastifyInstance, FastifyRequest } from "fastify"
+import "src/infra/fastify-augment.ts"
+
+/**
+ * Accept a sidecar control request when `HOARDODILE_SHUTDOWN_TOKEN` is
+ * set and matches the `x-shutdown-token` header or JSON `token` body.
+ * Unset token (self-host) always fails.
+ */
+export function authorizeSidecarToken(
+	app: FastifyInstance,
+	request: FastifyRequest,
+): boolean {
+	const expected = app.env.HOARDODILE_SHUTDOWN_TOKEN
+	const provided = readProvidedToken(request)
+	return (
+		expected !== undefined &&
+		provided !== undefined &&
+		tokensEqual(expected, provided)
+	)
+}
+
+function readProvidedToken(request: FastifyRequest): string | undefined {
+	const header = request.headers["x-shutdown-token"]
+	if (typeof header === "string" && header.length > 0) return header
+	const body = request.body
+	if (isRecord(body)) {
+		const token = body.token
+		if (typeof token === "string" && token.length > 0) return token
+	}
+	return undefined
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+	return typeof value === "object" && value !== null && !Array.isArray(value)
+}
+
+function tokensEqual(expected: string, provided: string): boolean {
+	const a = Buffer.from(expected)
+	const b = Buffer.from(provided)
+	if (a.length !== b.length) return false
+	return timingSafeEqual(a, b)
+}

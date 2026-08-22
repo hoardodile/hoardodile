@@ -1,0 +1,156 @@
+import type { Server } from "node:http"
+import type { ImageVariantQuery } from "@hoardodile/sdk-types/image-variant"
+
+/**
+ * Server-side hook results captured against the selected resource. The
+ * workbench pushes these into the plugin iframe context so it renders
+ * exactly like the app does. Produced by `hoardodile plugin dev`; the
+ * workbench itself never runs a sandbox.
+ */
+export type WorkbenchHookSnapshot = {
+	readonly pluginId: string
+	readonly detect: {
+		readonly ok: boolean
+		readonly reasons?: readonly string[]
+	}
+	readonly sourceMeta: unknown
+	readonly searchMeta: unknown
+	readonly coverLocal: string | undefined
+	readonly files: readonly unknown[] | undefined
+	readonly fileStats: {
+		readonly count?: number
+		readonly sizeBytes?: number
+	}
+	readonly imageHashes?: readonly unknown[]
+	readonly errors: Readonly<Record<string, string>>
+	readonly capturedAt: number
+}
+
+/** A resource the workbench can open, as shown in the picker. */
+export type WorkbenchResource = {
+	readonly id: string
+	readonly name: string
+	/** Plugin that owns the resource in the source library, when known. */
+	readonly contentPluginId?: string
+	readonly fileVersion?: number
+}
+
+/**
+ * The plugin-visible slice of a resource's stored state. Used to seed
+ * the offline mock host so comments, danmaku, preferences and the
+ * per-resource cache are the ones the plugin would really see. Writes
+ * never leave the mock.
+ */
+export type WorkbenchResourceState = {
+	readonly name?: string
+	readonly messages?: readonly unknown[]
+	readonly danmaku?: readonly unknown[]
+	readonly prefs?: Readonly<Record<string, string>>
+	readonly cache?: Readonly<Record<string, string>>
+}
+
+/** Bytes (or a cached path) plus the content type to serve them as. */
+export type WorkbenchRendered = {
+	readonly contentType: string
+	readonly bytes?: Uint8Array
+	readonly path?: string
+}
+
+/** Read-only file access for the selected resource. */
+export type WorkbenchFileProvider = {
+	readonly list: (
+		resId: string,
+	) => Promise<readonly string[]> | readonly string[]
+	readonly stat: (
+		resId: string,
+		path: string,
+	) =>
+		| Promise<{ readonly sizeBytes: number } | undefined>
+		| { readonly sizeBytes: number }
+		| undefined
+	readonly read: (
+		resId: string,
+		path: string,
+	) => Promise<Uint8Array | undefined> | Uint8Array | undefined
+}
+
+/**
+ * Everything the workbench page can ask for. Each is optional: without
+ * a `preview` provider `?size=preview` (and the generic variant
+ * parameters) falls back to the original bytes, without `frame` the
+ * seek-preview route stays unmounted.
+ */
+export type WorkbenchProviders = {
+	readonly resources: () =>
+		| Promise<readonly WorkbenchResource[]>
+		| readonly WorkbenchResource[]
+	readonly files?: WorkbenchFileProvider
+	readonly snapshot?: (
+		resId: string,
+	) =>
+		| Promise<WorkbenchHookSnapshot | undefined>
+		| WorkbenchHookSnapshot
+		| undefined
+	readonly state?: (
+		resId: string,
+	) =>
+		| Promise<WorkbenchResourceState | undefined>
+		| WorkbenchResourceState
+		| undefined
+	readonly preview?: (
+		resId: string,
+		path: string,
+		/**
+		 * The file route's raw variant query (`size`, `fmt`, `fit`,
+		 * `area`, `q`) — parsed and validated by the provider, so the
+		 * workbench mount itself stays dependency-free.
+		 */
+		variant?: ImageVariantQuery,
+	) => Promise<WorkbenchRendered | undefined>
+	readonly frame?: (
+		resId: string,
+		path: string,
+		timeMs: number,
+	) => Promise<WorkbenchRendered | undefined>
+}
+
+/** Options for {@link serveWorkbench}. */
+export type ServeWorkbenchOptions = {
+	/** Built plugin dist dir mounted at `/plugin` (manifest + index.html). */
+	readonly pluginDir?: string
+	/**
+	 * Data root exposed as a single resource. Shorthand for the
+	 * directory providers; ignored when `providers` is given.
+	 */
+	readonly dataDir?: string
+	/** Real data sources. `hoardodile plugin dev` supplies these. */
+	readonly providers?: WorkbenchProviders
+	/**
+	 * Latest hook snapshot. Called per request so a watch-driven
+	 * recapture is picked up without restarting. Merged into
+	 * `providers` when both are given.
+	 */
+	readonly snapshot?: (
+		resId: string,
+	) =>
+		| Promise<WorkbenchHookSnapshot | undefined>
+		| WorkbenchHookSnapshot
+		| undefined
+	/** Port to listen on. Defaults to 5199. */
+	readonly port?: number
+	/** Bind host. Defaults to 127.0.0.1. */
+	readonly host?: string
+}
+
+/**
+ * Serve the published workbench SPA with the plugin bundle and the
+ * resource data mounted read-only. Resolves once the server is
+ * listening.
+ */
+export function serveWorkbench(opts: ServeWorkbenchOptions): Promise<Server>
+
+/** Providers over one plain directory, standing in for a single resource. */
+export function createDirectoryProviders(
+	dataDir: string,
+	resId?: string,
+): WorkbenchProviders

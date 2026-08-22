@@ -1,0 +1,55 @@
+{
+	"name": "@hoardodile/create-plugin",
+	"version": "0.0.0",
+	"license": "MIT",
+	"description": "Scaffold a hoardodile content plugin.",
+	"keywords": [
+		"hoardodile",
+		"plugin",
+		"scaffold",
+		"cli"
+	],
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/hoardodile/hoardodile.git",
+		"directory": "plugins/create-plugin"
+	},
+	"type": "module",
+	"bin": {
+		"create-hoardodile-plugin": "./dist/index.js"
+	},
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.js"
+		}
+	},
+	"files": [
+		"dist"
+	],
+	"sideEffects": false,
+	"engines": {
+		"node": ">=24"
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"scripts": {
+		"prepack": "pnpm build",
+		"build": "node scripts/sync-template.mjs && tsup && node scripts/copy-template.mjs",
+		"lint": "tsc --noEmit",
+		"test": "vitest run",
+		"template:check": "node scripts/sync-template.mjs --check"
+	},
+	"dependencies": {
+		"@clack/prompts": "^1.7.0",
+		"@hoardodile/sdk-types": "workspace:*",
+		"zod": "catalog:"
+	},
+	"devDependencies": {
+		"@types/node": "catalog:",
+		"tsup": "catalog:",
+		"typescript": "5.9.3",
+		"vitest": "catalog:"
+	}
+}

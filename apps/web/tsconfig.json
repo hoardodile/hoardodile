@@ -1,0 +1,16 @@
+{
+	"extends": "../../tsconfig.web.json",
+	"compilerOptions": {
+		"paths": {
+			"@/*": ["./src/*"],
+			"src/*": ["../server/src/*"]
+		}
+	},
+	"include": [
+		"src/**/*.ts",
+		"src/**/*.tsx",
+		"vite.config.ts",
+		"playwright.config.ts",
+		"e2e/**/*.ts"
+	]
+}

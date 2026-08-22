@@ -1,0 +1,2010 @@
+{
+	"common": {
+		"back": "返回",
+		"cancel": "取消",
+		"close": "关闭",
+		"save": "保存",
+		"saving": "保存中...",
+		"loading": "加载中...",
+		"remove": "移除",
+		"removeAria": "移除",
+		"edit": "编辑",
+		"delete": "删除",
+		"rename": "重命名",
+		"confirm": "确定",
+		"expand": "展开",
+		"collapse": "折叠",
+		"working": "处理中...",
+		"prev": "上一页",
+		"next": "下一页",
+		"first": "首页",
+		"last": "末页",
+		"jumpToPage": "页",
+		"go": "跳转",
+		"goTo": "跳至",
+		"unknownError": "未知错误",
+		"error": "错误",
+		"loadFailed": "加载失败",
+		"show": "显示",
+		"hide": "隐藏",
+		"selected": "已选",
+		"available": "可选",
+		"allSelected": "全部选中",
+		"tags": "标签",
+		"filterCategory": "筛选{{name}}…",
+		"requestFailed": "请求失败",
+		"saved": "已保存",
+		"saveFailed": "保存失败",
+		"confirmByTypingPrompt": "请输入“<name>{{name}}</name>”以确认",
+		"searchIncludeIntro": "搜索简介",
+		"underline": "下划线",
+		"colorPicker": {
+			"clear": "清除颜色",
+			"customColor": "自定义颜色",
+			"customSwatch": "选取自定义颜色",
+			"addPreset": "添加到我的预设",
+			"removePresetAria": "移除预设 {{color}}"
+		}
+	},
+	"entityMeta": {
+		"nameLabel": "名称",
+		"namePlaceholder": "例如：harbor",
+		"introLabel": "简介",
+		"introPlaceholder": "简短描述…",
+		"colorLabel": "颜色",
+		"colorPlaceholder": "可选 CSS 颜色，留空使用默认",
+		"pinned": "置顶"
+	},
+	"language": {
+		"label": "语言",
+		"description": "界面语言 — 内容保留原有文字。",
+		"english": "English",
+		"chinese": "中文"
+	},
+	"icons": {
+		"description": "Solar 图标 — 双色跟随主题，灰度保持双色墨色，线性保持单色。",
+		"style": {
+			"duotone": "双色",
+			"grayscale": "灰度",
+			"linear": "细线"
+		}
+	},
+	"theme": {
+		"description": "一套色板，以及是否跟随日光。",
+		"modeLabel": "模式",
+		"paletteLabel": "主题",
+		"mode": {
+			"light": "浅色",
+			"dark": "深色",
+			"system": "系统"
+		},
+		"palette": {
+			"mono": "纯黑白",
+			"sage": "鼠尾草",
+			"parchment": "羊皮纸",
+			"azure": "天青",
+			"hoardodile": "Hoardodile"
+		}
+	},
+	"font": {
+		"label": "字体",
+		"description": "界面与列表 — 文档保持其阅读音色。",
+		"inherit": "继承主字体",
+		"inheritedHint": "当前继承全局字体设置",
+		"addCustom": "按名称添加字体，回车确认…",
+		"selected": "回退顺序 — 拖拽调整"
+	},
+	"dateTime": {
+		"description": "日期如何呈现 — 现在：{{preview}}。",
+		"formatLabel": "格式",
+		"timeZoneLabel": "时区",
+		"format": {
+			"ymdDash": "2024-06-12 14:30:00",
+			"ymdSlash": "2024/06/12 14:30:00",
+			"dmySlash": "12/06/2024 14:30:00",
+			"mdySlash": "06/12/2024 14:30:00"
+		},
+		"timeZone": {
+			"auto": "跟随系统",
+			"noMatches": "没有匹配的时区"
+		}
+	},
+	"appShell": {
+		"primaryNav": "主导航",
+		"secondaryNav": "辅助导航",
+		"openMenu": "打开菜单",
+		"backToMainMenu": "返回主菜单",
+		"backToDocumentsMenu": "返回文档菜单",
+		"nav": {
+			"overview": "总览",
+			"resources": "资源",
+			"characters": "角色",
+			"documents": "文档",
+			"messages": "留言",
+			"me": "设置",
+			"help": "帮助"
+		},
+		"syncDueBadge": "有同步提醒待处理",
+		"syncStatus": {
+			"synced": "已同步",
+			"due": "同步到期",
+			"syncedTitle": "已是最新 — {{count}} 台设备",
+			"dueTitle": "{{count}} 台设备有同步提醒待处理",
+			"noDevicesTitle": "未配置同步设备"
+		}
+	},
+	"search": {
+		"placeholder": "搜索角色、资源、文档、留言…",
+		"placeholderShort": "搜索",
+		"liveSearch": "实时搜索",
+		"sectionTitles": {
+			"characters": "角色",
+			"resources": "资源",
+			"documents": "文档",
+			"messages": "留言"
+		},
+		"sectionCount": "({{count}})",
+		"viewAll": "查看全部 ({{count}})",
+		"empty": {
+			"title": "未找到结果",
+			"description": "换个关键词试试"
+		},
+		"resultLabels": {
+			"document": "文档",
+			"folder": "文件夹"
+		},
+		"imageSearch": {
+			"button": "以图搜图",
+			"uploadFailed": "图片搜索失败",
+			"title": "以图搜图结果",
+			"empty": "图库中未找到相似图片",
+			"clear": "清除图片搜索",
+			"queryAlt": "查询图片",
+			"similarity": "相似度 {{percent}}%"
+		}
+	},
+	"me": {
+		"tabs": {
+			"preferences": "偏好",
+			"app": "应用",
+			"custom": "自制",
+			"privacy": "隐私",
+			"archive": "归档",
+			"plugins": "插件",
+			"sync": "同步"
+		},
+		"section": {
+			"language": "语言",
+			"icons": "图标",
+			"theme": "主题",
+			"font": "字体",
+			"dateTime": "日期与时间",
+			"tagRules": "标签规则",
+			"rebuild": "重建",
+			"trash": "回收站",
+			"usage": "使用足迹",
+			"trace": "操作足迹",
+			"privacy": "隐私与安全"
+		},
+		"custom": {
+			"tab": {
+				"tags": "标签",
+				"traits": "特征",
+				"relationships": "关系",
+				"collections": "资源组合"
+			},
+			"blurb": {
+				"tags": "分类组织标签；为所有内容设置标签。",
+				"traits": "角色携带的、可搜索的类型化事实。",
+				"relationships": "角色之间的动词。",
+				"collections": "精心挑选、固定在侧栏的架子。"
+			},
+			"unused": "未使用",
+			"reorder": "排序",
+			"add": "添加",
+			"more": "更多",
+			"filterTagsIn": "筛选 {{category}} 中的标签",
+			"tagsOf": "{{total}} 个标签中的 {{shown}} 个",
+			"unusedCount": "{{count}} 个未使用",
+			"newCategory": "新建分类",
+			"moveTag": "移动标签",
+			"moveTagDescription": "标签将离开当前分类——新分类中不能有同名标签。",
+			"moveTagOut": "移出 {{category}}",
+			"rulesTravel": "同级与父级规则会随标签一起移动。",
+			"entity": {
+				"tag": "标签",
+				"category": "分类",
+				"trait": "特征",
+				"relation": "关系",
+				"collection": "组合"
+			},
+			"link": "关联"
+		},
+		"account": {
+			"title": "账户",
+			"description": "单用户实例 — 账户守护大门。"
+		},
+		"privacy": {
+			"signOutSection": {
+				"title": "自动登出",
+				"description": "标签页隐藏超过设定时长后自动登出并回到登录页——这是防止预览缩略图的唯一彻底办法。"
+			},
+			"autoLogout": {
+				"title": "离开时自动登出",
+				"description": "标签页会监听可见性；超过时长后回到页面即落在登录页。"
+			},
+			"delayLabel": "离开多久后登出",
+			"delay": {
+				"immediately": "立即",
+				"minutes": "{{count}} 分钟",
+				"minutes_plural": "{{count}} 分钟"
+			},
+			"idleTimeout": {
+				"label": "会话闲置超时",
+				"description": "在服务端生效，因此同样覆盖关闭的标签页与其他浏览器。",
+				"hours": "{{count}} 小时",
+				"hours_plural": "{{count}} 小时",
+				"days": "{{count}} 天",
+				"days_plural": "{{count}} 天"
+			}
+		},
+		"password": {
+			"title": "密码",
+			"description": "登录此实例所用的管理员密码。",
+			"changeButton": "修改密码",
+			"dialogTitle": "修改密码",
+			"currentPassword": "当前密码",
+			"newPassword": "新密码",
+			"confirm": "确认新密码",
+			"newPasswordPlaceholder": "至少 10 个字符",
+			"confirmPlaceholder": "再输入一次",
+			"changed": "密码已修改。",
+			"errorIncorrect": "当前密码不正确。",
+			"errorGeneric": "无法修改密码，请检查服务后重试。",
+			"mismatch": "两次输入的密码不一致。"
+		},
+		"licenses": {
+			"title": "许可证",
+			"description": "应用及内置素材的开源致谢。",
+			"viewButton": "许可证",
+			"projectLicense": "项目许可证",
+			"projectLicenseDescription": "本应用以 GNU 通用公共许可证第三版（GPL-3.0）发布。",
+			"fullLicense": "完整许可证",
+			"dependencies": "开源依赖",
+			"fonts": "字体",
+			"packageCount": "{{count}} 个包",
+			"noPackages": "无依赖包"
+		},
+		"about": {
+			"title": "关于",
+			"description": "你运行的是什么，以及它从何而来。",
+			"tagline": "隐私优先的自托管个人媒体与文档归档应用。",
+			"repository": "GitHub 仓库",
+			"checkUpdate": "检查更新",
+			"checking": "正在检查...",
+			"latest": "已是最新版本。",
+			"outdated": "发现新版本 {{version}}。",
+			"viewRelease": "查看发布页",
+			"updateError": "检查更新失败，请稍后重试。",
+			"downloading": "正在下载… {{percent}}%",
+			"updateReady": "版本 {{version}} 已就绪，可以安装。",
+			"restartToUpdate": "重启",
+			"portableHint": "便携版请从 GitHub 下载新的压缩包来更新。"
+		},
+		"desktop": {
+			"library": {
+				"title": "内容库文件夹",
+				"description": "应用存放归档的位置。更换文件夹会重新启动；不会复制或移动文件。",
+				"change": "更换文件夹",
+				"confirmTitle": "切换内容库文件夹？",
+				"confirmDescription": "应用将针对你选择的文件夹重新启动。空文件夹是新内容库。含有 app.sqlite 的文件夹就是该内容库。不会复制或移动任何文件。"
+			},
+			"sharedFolder": {
+				"title": "共享文件夹",
+				"description": "导入时「浏览共享文件夹」的起点。",
+				"enable": "启用共享文件夹导入",
+				"enableDescription": "开启后，导入页的「浏览共享文件夹」会从这个文件夹开始。"
+			},
+			"autostart": {
+				"title": "开机启动",
+				"description": "登录 Windows 时打开 hoardodile。"
+			},
+			"startInTray": {
+				"title": "启动到托盘",
+				"description": "在托盘中选择打开之前不显示窗口。"
+			},
+			"autoUpdate": {
+				"title": "自动更新",
+				"description": "在后台下载 GitHub 发行版。重启前始终需要确认。"
+			},
+			"caption": {
+				"back": "后退",
+				"forward": "前进",
+				"reload": "刷新",
+				"minimize": "最小化",
+				"maximize": "最大化",
+				"restore": "还原",
+				"close": "关闭"
+			},
+			"updateBanner": "版本 {{version}} 已就绪，可以安装。",
+			"updateBannerRestart": "重启"
+		},
+		"usage": {
+			"description": "统计与足迹日志背后的会话数据——清空需要输入确认短语。",
+			"rowTitle": "使用会话",
+			"rowDescription": "统计页背后的数据。",
+			"clearAll": "全部移除",
+			"confirmTitle": "清空所有使用记录？",
+			"confirmDescription": "将永久删除全部使用记录，统计页与总览推荐会重置。此操作无法撤销。",
+			"confirmPhrase": "清空所有使用记录",
+			"confirmLabel": "确认清空",
+			"clearing": "清空中...",
+			"toastSuccess": "已清空所有使用记录",
+			"toastFailed": "清空使用记录失败"
+		},
+		"trace": {
+			"description": "追加式操作日志——导入、导出、删除、恢复与表态。",
+			"rowTitle": "足迹日志",
+			"clearAll": "全部移除",
+			"confirmTitle": "清空足迹？",
+			"confirmDescription": "将永久删除全部操作记录（导入、导出、删除、恢复与表态），不可恢复。翻阅时长属于统计数据，不受影响。",
+			"confirmPhrase": "清空足迹",
+			"confirmLabel": "确认清空",
+			"clearing": "清空中...",
+			"toastSuccess": "已清空足迹",
+			"toastFailed": "清空足迹失败"
+		},
+		"trash": {
+			"description": "待处理的包——每一个都能回来。",
+			"view": "查看回收站 ({{count}})",
+			"loading": "加载回收站…",
+			"download": "下载"
+		},
+		"systemPrefs": {
+			"title": "系统默认值",
+			"description": "隐藏的主机行为开关——恢复为出厂默认值。插件设置不受影响，仍在其对应的插件页中管理。",
+			"restore": "恢复",
+			"resetSuccess": "所有系统设置已重置",
+			"confirmTitle": "重置全部系统设置？",
+			"confirmDescription": "这将删除所有系统偏好，包括主题、语言、字体和日期格式。页面将使用默认值重新加载。此操作无法撤销。"
+		},
+		"systemCache": {
+			"title": "浏览器缓存",
+			"description": "浏览器侧的本地数据——Service Worker 缓存、localStorage 与 IndexedDB（离线使用队列、文档草稿）。不会触碰服务器，随后页面将重新加载。",
+			"clear": "全部清空",
+			"clearing": "清空中...",
+			"resetting": "浏览器缓存已清空，正在重新加载...",
+			"confirmTitle": "清空浏览器缓存？",
+			"confirmDescription": "这将删除所有浏览器侧本地数据，包括主题与语言偏好、离线使用记录和已保存的文档草稿，然后重新加载页面。此操作无法撤销。"
+		}
+	},
+	"plugin": {
+		"loading": "预览加载中...",
+		"previewFailed": "插件加载失败",
+		"previewFallback": "插件 {{name}} 缺失或不可用，已用内置文件插件预览",
+		"previewFallbackManage": "管理插件",
+		"previewFallbackUnknown": "未知插件"
+	},
+	"plugins": {
+		"pageHint": "从 .zip 包安装，或重新扫描插件文件夹以拾取新到的插件。",
+		"uploadZip": "上传 .zip",
+		"uploadPluginSuccess": "插件已安装",
+		"uploading": "安装中...",
+		"rescan": "重新扫描插件",
+		"rescanSuccess": "插件已重新扫描",
+		"more": "更多",
+		"enableToggle": "启用或禁用插件",
+		"dragToReorder": "拖拽调整顺序",
+		"dev": "开发",
+		"missing": "缺失",
+		"missingSource": "来源缺失",
+		"installed": "已安装",
+		"installedDescription": "顺序决定谁优先认领内容 — 拖拽可调整优先级。",
+		"filterPlaceholder": "筛选插件",
+		"countInstalled": "已安装 {{count}} 个",
+		"listView": "列表视图",
+		"gridView": "网格视图",
+		"searchCategories": "搜索分类",
+		"fileTitle": "文件",
+		"fileDescription": "未知文件类型的内置兜底查看器 — 不可移除或排序。",
+		"alwaysOn": "始终开启",
+		"defaultsTitle": "插件默认设置",
+		"defaultsDescription": "所有插件的设置将恢复默认 — 内容和安装不受影响。",
+		"restore": "恢复默认",
+		"cachesTitle": "插件缓存",
+		"cachesDescription": "所有插件的缩略图和解析元数据 — 按需重建。",
+		"clearAll": "全部清空",
+		"pin": "置顶",
+		"color": "颜色",
+		"appearance": "外观",
+		"appearanceTitle": "外观：{{name}}",
+		"appearanceDescription": "选择颜色，并决定是否将该插件置顶显示在资源卡片上。",
+		"reset": "重置",
+		"clear": "清空",
+		"resetPluginPref": "重置设置",
+		"resetPluginPrefConfirmTitle": "重置 {{name}} 的设置？",
+		"resetPluginPrefConfirmDescription": "这将删除此插件的所有已保存设置。插件将在重启后使用默认值。此操作无法撤销。",
+		"resetPluginPrefSuccess": "{{name}} 的设置已重置",
+		"clearPluginCache": "清空缓存",
+		"clearPluginCacheConfirmTitle": "清空 {{name}} 的缓存？",
+		"clearPluginCacheConfirmDescription": "这将删除此插件的所有缓存数据（如阅读进度）。此操作无法撤销。",
+		"clearPluginCacheSuccess": "{{name}} 的缓存已清空",
+		"uninstall": "卸载",
+		"uninstallConfirmTitle": "卸载插件 {{name}}？",
+		"uninstallConfirmDescription": "有 {{count}} 个资源正在使用该插件。卸载后这些资源将改用内置文件插件预览；重新安装该插件可自动恢复。此操作无法撤销。",
+		"uninstallConfirmNoUsage": "没有资源正在使用该插件。卸载后如需恢复，重新安装即可。此操作无法撤销。",
+		"uninstallSuccess": "已卸载 {{name}}",
+		"resetAllPluginPrefSuccess": "所有插件设置已重置",
+		"resetAllPluginPrefConfirmTitle": "重置全部插件设置？",
+		"resetAllPluginPrefConfirmDescription": "这将删除所有插件的已保存设置。所有插件将在重启后使用默认值。此操作无法撤销。",
+		"clearAllPluginCacheSuccess": "所有插件缓存已清空",
+		"clearAllPluginCacheConfirmTitle": "清空全部插件缓存？",
+		"clearAllPluginCacheConfirmDescription": "这将删除所有插件的缓存数据，包括阅读进度。此操作无法撤销。",
+		"installConfirmTitle": "安装这个插件？",
+		"install": "安装",
+		"installConfirmRisk": "插件的服务端代码以与本应用相同的权限运行：可以读取和修改你的全部数据，也可以访问网络。上方声明的权限仅是宿主功能开关，并不代表沙箱限制。请只安装来源可信的插件。",
+		"uploadInvalidPlugin": "不是有效的插件包（缺失或非法的 manifest.json）。",
+		"permissions": {
+			"sourceMeta": "来源元数据",
+			"searchMeta": "搜索元数据",
+			"danmaku": "弹幕",
+			"message": "留言",
+			"imageHashes": "图片哈希"
+		}
+	},
+	"overview": {
+		"usageHistory": {
+			"title": "使用记录"
+		},
+		"memories": {
+			"title": "回忆 · 今日",
+			"yearsAgo_one": "去年今天",
+			"yearsAgo_other": "{{count}}年前的今天"
+		},
+		"activity": {
+			"title": "最近活动",
+			"updated": "更新于 {{time}}"
+		},
+		"stats": {
+			"resources": "资源",
+			"characters": "角色",
+			"documents": "文档",
+			"messages": "留言"
+		},
+		"sections": {
+			"recentResources": "最近更新",
+			"recentViewed": "最近看过",
+			"recentCharacters": "最近角色",
+			"recentDocuments": "最近文档",
+			"recentMessages": "最近留言"
+		},
+		"empty": {
+			"resources": "暂无资源。",
+			"recentViewed": "暂无查看记录。",
+			"characters": "暂无角色。",
+			"documents": "暂无文档。",
+			"messages": "暂无留言。"
+		},
+		"todayUsage": {
+			"label": "今日查看时长",
+			"sameAsYesterday": "与昨日相同",
+			"moreThanYesterday": "比昨日多 {{duration}}",
+			"lessThanYesterday": "比昨日少 {{duration}}"
+		},
+		"footprints": {
+			"aria": "足迹",
+			"title": "足迹",
+			"description": "你的每一次操作",
+			"emptyPrompt": "还没有足迹，先导入或上传一个资源吧。",
+			"uploadResource": "上传资源",
+			"importFolder": "导入文件夹"
+		},
+		"viewAll": "查看全部",
+		"recentViewed": {
+			"description": "你的查看历史",
+			"unknownTime": "时间未知",
+			"emptyPrompt": "还没有浏览记录，先去逛逛吧。",
+			"browseResources": "浏览资源",
+			"uploadResource": "上传首个资源"
+		},
+		"pinned": {
+			"charactersTitle": "角色置顶",
+			"resourcesTitle": "资源置顶",
+			"charactersEmpty": "暂无匹配角色",
+			"resourcesEmpty": "暂无匹配资源",
+			"add": "添加",
+			"maxReached": "最多可置顶 {{max}} 个",
+			"dragToReorder": "拖拽排序",
+			"settings": {
+				"title": "固定的{{section}}",
+				"description": "概览固定哪些分区 — 拖拽排序，在右侧编辑。",
+				"editTitle": "编辑分区",
+				"editDescription": "分区在概览上的显示效果。",
+				"titleLabel": "标题",
+				"titlePlaceholder": "留空则使用默认标题",
+				"showWhenEmpty": "为空时显示",
+				"sizeLabel": "数量",
+				"sectionsCount": "{{count}} 个分区",
+				"save": "保存分区",
+				"done": "完成",
+				"delete": "删除",
+				"deleteConfirmTitle": "删除置顶",
+				"deleteConfirmDescription": "确定要删除“{{title}}”吗？删除后将无法恢复。",
+				"saveSuccess": "置顶设置已保存",
+				"deleteSuccess": "置顶已删除",
+				"toggleEnabledAria": "启用或禁用 {{title}}",
+				"noItems": "暂无置顶内容",
+				"noItemsHint": "点击「添加」将当前筛选保存到总览。",
+				"noItemsWithFiltersHint": "当前列表页已有筛选条件，点击上方按钮即可保存为置顶视图。",
+				"noSelection": "未选择置顶项",
+				"noSelectionHint": "在左侧列表中选择一项，或点击「添加」创建新视图。",
+				"preview": "预览",
+				"previewTitle": "预览筛选结果",
+				"item": {
+					"refresh": {
+						"label": "自动刷新",
+						"description": "该置顶视图每隔多久重新随机抽取一批内容。",
+						"always": "始终刷新",
+						"never": "永不刷新",
+						"every60s": "每分钟",
+						"every1800s": "每 30 分钟",
+						"every3600s": "每 1 小时",
+						"every21600s": "每 6 小时",
+						"every43200s": "每 12 小时",
+						"midnight": "次日 0 点"
+					}
+				}
+			},
+			"refreshSectionAria": "刷新{{title}}"
+		},
+		"sort": {
+			"created": "创建时间",
+			"updated": "更新时间"
+		},
+		"rebuildDescription": "从零重建所有资源的元数据与缩略图，或清空本机全部可重建数据（本地缓存 + 已记录的元数据）。",
+		"signOut": "退出登录",
+		"signingOut": "退出中...",
+		"precache": "预缓存",
+		"precaching": "预缓存中...",
+		"caching": "预热浏览器缓存...",
+		"refreshCache": "刷新缓存",
+		"clearCache": "清空全部",
+		"clearing": "清空中...",
+		"progressLine": "{{done}} / {{total}} ({{percent}}%) - {{stage}}",
+		"cachedSummary": "已预缓存 {{count}} 项",
+		"precacheFailed": "预缓存失败：{{error}}",
+		"precacheStageLoading": "正在重建元数据并生成缩略图...",
+		"precacheDefaultError": "预缓存失败",
+		"precacheInProgress": "预缓存正在进行中",
+		"abortPrecache": "中断",
+		"precacheAborted": "预缓存已中断",
+		"toastClearLocked": "{{count}} 个可重建数据文件被占用，无法删除。请重启服务器以彻底清除。",
+		"clearCacheSuccess": "已清空可重建数据",
+		"toastClearFailed": "清空可重建数据失败",
+		"toastPrecacheSuccess": "已预缓存 {{count}} 项",
+		"toastPrecachePartial": "预缓存完成，{{failed}} 项失败"
+	},
+	"login": {
+		"brand": "Hoardodile",
+		"title": "登录",
+		"description": "请输入此实例的密码。",
+		"demoDescription": "这是演示库，密码是 {{password}}。",
+		"password": "密码",
+		"submit": "登录",
+		"submitting": "登录中...",
+		"formAria": "登录",
+		"errorIncorrect": "密码错误。",
+		"errorGeneric": "无法登录，请检查服务后重试。",
+		"setupTitle": "设置密码",
+		"setupDescription": "此实例尚未设置密码。请立即设置 —— 先到先得，第一个设置的人将成为主机所有者。",
+		"setupPassword": "新密码",
+		"setupConfirm": "确认密码",
+		"setupSubmit": "设置密码",
+		"setupSubmitting": "设置中...",
+		"setupMismatch": "两次输入的密码不一致。",
+		"setupFormAria": "设置密码"
+	},
+	"dataHistory": {
+		"title": "数据历史",
+		"description": "管理你的数据快照。备份用于迁移或灾难恢复；归档会把最新版本冻结为只读快照，归档内的数据不会再被修改。",
+		"status": {
+			"currentWritable": "可写 — v{{version}}",
+			"viewingArchive": "正在查看归档 — v{{version}}"
+		},
+		"chip": {
+			"latest": "最新",
+			"readOnly": "只读",
+			"auto": "自动"
+		},
+		"archive": {
+			"title": "v{{version}}",
+			"tagCurrent": "最新版本（可写）",
+			"tagActive": "正在查看",
+			"tagReadOnly": "历史归档",
+			"tagCurrentShort": "最新",
+			"tagActiveShort": "查看中",
+			"nameLabel": "名称",
+			"namePlaceholder": "例如：v1 里程碑",
+			"noteLabel": "备注",
+			"notePlaceholder": "例如：迁移前冻结、数据定型前…",
+			"switchHint": "切换后将以只读模式查看该版本。如需继续编辑，请返回最新版本。",
+			"activeHint": "这是正在查看的版本。"
+		},
+		"backup": {
+			"typeLabel": "数据库备份",
+			"autoTypeLabel": "每日自动快照",
+			"autoBadge": "自动",
+			"autoDeleteHint": "此自动快照按短滚动窗口保留、会被自动替换。你也可以现在就删除它以释放空间。",
+			"nameLabel": "名称",
+			"nameEmpty": "无",
+			"restoreHint": "还原前需要输入备份名称确认——当前库会先归档，不会静默丢失任何数据。",
+			"deleteHint": "此备份文件将被永久删除，无法恢复。",
+			"archivedHint": "此备份属于已归档版本，数据已冻结，不可还原或删除。"
+		},
+		"action": {
+			"backupNow": "立即备份",
+			"backingUp": "备份中…",
+			"archiveNow": "立即归档",
+			"archiving": "归档中…",
+			"restore": "还原",
+			"restoring": "还原中…",
+			"delete": "删除",
+			"deleting": "删除中…",
+			"switchToVersion": "切换查看此版本",
+			"switching": "切换中…",
+			"download": "下载"
+		},
+		"reloading": "重新加载中…",
+		"autoSnapshot": {
+			"enabled": "自动快照：每日一次 · 保留 {{keep}} 天",
+			"disabled": "自动快照已关闭",
+			"last": "最近一次 {{time}}"
+		},
+		"detail": {
+			"selectPrompt": "在时间轴中选择一个备份或归档，查看详情与可执行的操作。",
+			"size": "大小",
+			"versionNumber": "版本号",
+			"createdAt": "创建时间",
+			"note": "备注",
+			"contents": "内容",
+			"contentsValue": "{{resources}} 个资源 · {{characters}} 个角色 · {{documents}} 个文档",
+			"backupOnVersion": "基于 v{{version}} 的备份",
+			"archiveVersion": "归档 v{{version}}"
+		},
+		"note": {
+			"empty": "点击添加备注…",
+			"placeholder": "给这个快照写一句说明…"
+		},
+		"confirm": {
+			"archiveTitle": "归档最新版本",
+			"archiveDescription": "最新版本的数据库与所有资源/角色/文档将归档，归档内的数据不会再被修改；系统会新建一个可写版本继续工作。",
+			"archivePhrase": "归档",
+			"archiveAutoHint": "当前版本的自动快照会随归档冻结；新版本会立即生成一份新的快照。",
+			"restoreTitle": "还原此备份",
+			"restoreDescription": "当前库会先归档，不会静默丢失任何数据。可通过还原该归档版本撤销本次还原。",
+			"restorePhrase": "还原备份",
+			"autoPhrase": "自动",
+			"deleteBackupTitle": "永久删除备份",
+			"deleteBackupDescription": "此备份文件将被永久删除，无法恢复。",
+			"deleteBackupPhrase": "删除备份",
+			"switchTitle": "切换到该归档版本",
+			"switchDescription": "切换后服务将以只读模式启动，只能查看历史数据。要恢复编辑，请返回最新可写版本。"
+		},
+		"empty": {
+			"title": "还没有数据历史",
+			"description": "建议你立即创建一次备份，以防数据丢失。"
+		},
+		"toast": {
+			"backupCreated": "备份完成",
+			"backupFailed": "备份失败",
+			"archiveFailed": "归档失败",
+			"backupDeleted": "备份已删除",
+			"deleteFailed": "删除失败",
+			"restoreFailed": "还原失败",
+			"switchFailed": "切换失败",
+			"metaSaved": "已保存",
+			"metaSaveFailed": "保存失败"
+		}
+	},
+	"documents": {
+		"title": "文档",
+		"index": {
+			"description": "{{folders}} 个文件夹中的 {{count}} 篇文档 — 你写的一切都在这里。",
+			"updated": "更新于 {{time}}"
+		},
+		"create": "新建",
+		"backToStart": "返回起始页",
+		"new": "文档",
+		"newFolder": "文件夹",
+		"defaultNewTitle": "未命名文档",
+		"defaultNewFolderTitle": "未命名文件夹",
+		"searchPlaceholder": "搜索文档（标题/内容）",
+		"loading": "文档加载中…",
+		"listEmpty": "暂无文档。",
+		"untitled": "未命名",
+		"viewAll": "查看全部",
+		"filter": {
+			"title": "按角色和资源筛选",
+			"dialogTitle": "筛选文档",
+			"apply": "应用",
+			"clear": "清空"
+		},
+		"placeholder": "开始撰写…",
+		"editorPlaceholder": "查看命令 '/'",
+		"saveDraft": "保存草稿",
+		"discardDraft": "放弃草稿",
+		"commit": "提交版本",
+		"commitDialog": {
+			"title": "提交版本",
+			"description": "将当前草稿保存为不可变的版本，请填写一条描述本次变更的提交信息。",
+			"messageLabel": "提交信息",
+			"messagePlaceholder": "本次版本变更了什么？",
+			"submit": "提交",
+			"committing": "提交中…"
+		},
+		"discardDialog": {
+			"title": "放弃当前草稿？",
+			"description": "未保存的修改将被最近一次已提交的版本覆盖，此操作无法撤销。",
+			"confirm": "放弃草稿",
+			"discarding": "正在放弃…"
+		},
+		"leaveDialog": {
+			"confirm": "当前文档有未保存的修改，确定要离开吗？"
+		},
+		"moreActions": "更多操作",
+		"zoom": {
+			"label": "文本缩放",
+			"smaller": "缩小",
+			"larger": "放大",
+			"reset": "重置缩放"
+		},
+		"appearanceSettings": {
+			"title": "外观设置",
+			"description": "调整文档的外观：主题、阅读宽度与字体。",
+			"theme": "文档主题",
+			"inherit": "继承网页主题",
+			"readingWidth": "阅读宽度",
+			"readingWidthDescription": "文档页居中阅读列的宽度。",
+			"editorFont": "编辑器字体",
+			"editorFontDescription": "文档编辑器内的正文字体。",
+			"uiFont": "页面字体",
+			"uiFontDescription": "文档页标题、侧边栏等区域的字体。",
+			"body": "正文",
+			"headings": "标题"
+		},
+		"readOnly": {
+			"enable": "预览模式",
+			"disable": "退出预览模式"
+		},
+		"reading": {
+			"enter": "阅读模式",
+			"exit": "退出阅读模式"
+		},
+		"diff": {
+			"show": "历史对比",
+			"exit": "退出对比",
+			"compareWith": "对比版本",
+			"selectVersion": "选择版本"
+		},
+		"conflict": {
+			"title": "检测到远程修改",
+			"description": "你的修改已保留在编辑器中。请对比两份内容，选择保留哪一份。",
+			"keepCurrent": "保持当前内容",
+			"discardCurrent": "放弃当前内容",
+			"viewDiff": "对比",
+			"diffLabel": "离线内容 vs 远程草稿",
+			"updatedHint": "服务端更新于 {{remote}} · 本地编辑于 {{local}}",
+			"discardConfirm": {
+				"title": "放弃当前编辑？",
+				"description": "未同步到服务端的更改将丢失。也可以先对比两份内容的差异。",
+				"confirm": "放弃当前编辑"
+			}
+		},
+		"indent": {
+			"enable": "启用首行缩进"
+		},
+		"toast": {
+			"createFailed": "创建失败",
+			"renameFailed": "重命名失败",
+			"saveFailed": "保存草稿失败",
+			"saved": "已保存",
+			"commitFailed": "提交版本失败",
+			"committed": "已提交版本",
+			"movedToTrash": "已移入回收站",
+			"restored": "已还原",
+			"restoreFailed": "还原失败",
+			"deleteFailed": "删除失败",
+			"deletedForever": "已永久删除",
+			"moveFailed": "移动失败",
+			"contentTooLarge": "内容超出最大字数限制",
+			"versionLoadFailed": "版本内容加载失败",
+			"savedLocally": "已保存到本机",
+			"resolveConflictFirst": "请先处理离线冲突再提交"
+		},
+		"welcome": {
+			"title": "文档",
+			"subtitle": "在左侧创建文档或文件夹，文档可以无限嵌套子节点。"
+		},
+		"folderHint": "这是文件夹，请在其中选择文档进行编辑。",
+		"headings": "目录",
+		"noHeadings": "本文档暂无标题。",
+		"untitledHeading": "无标题",
+		"detailMeta": {
+			"chars": "{{count}} 字"
+		},
+		"notes": {
+			"tab": "笔记",
+			"empty": "暂无笔记。"
+		},
+		"statusBar": {
+			"charCount": "{{count}} / {{max}} 字",
+			"offline": "离线 · 更改未保存"
+		},
+		"autosave": {
+			"enable": "开启自动保存"
+		},
+		"editMode": {
+			"label": "调整顺序",
+			"toggle": "切换调整顺序模式",
+			"hint": "开启后可拖拽调整文档树顺序"
+		},
+		"expandAll": "全部展开",
+		"collapseAll": "全部闭合",
+		"slash": {
+			"charactersGroup": "角色",
+			"resourcesGroup": "资源",
+			"insertCharacter": "插入角色…",
+			"insertResource": "插入资源…"
+		},
+		"search": {
+			"empty": "未匹配到任何文档"
+		},
+		"trash": {
+			"open": "回收站",
+			"empty": "回收站为空。",
+			"restore": "还原",
+			"hardDelete": "永久删除",
+			"hardDeleteTitle": "永久删除？",
+			"hardDeleteDescription": "此操作会永久删除该项目，无法撤销。",
+			"hardDeleteConfirm": "永久删除",
+			"hardDeleting": "正在删除…"
+		},
+		"softDeleteDialog": {
+			"title": "移入回收站？",
+			"description": "该项目将从文档树中移除，可在回收站中还原。",
+			"folderWarning": "此文件夹下所有文档都会一并移入回收站。",
+			"confirm": "移入回收站"
+		},
+		"toolbar": {
+			"bold": "加粗",
+			"italic": "斜体",
+			"strike": "删除线",
+			"code": "行内代码",
+			"h1": "一级标题",
+			"h2": "二级标题",
+			"h3": "三级标题",
+			"bulletList": "无序列表",
+			"orderedList": "有序列表",
+			"blockquote": "引用",
+			"noFirstLineIndent": "取消本段首行缩进",
+			"link": "链接",
+			"linkPrompt": "输入链接地址（留空可移除）",
+			"alignLeft": "左对齐",
+			"alignCenter": "居中对齐",
+			"alignRight": "右对齐",
+			"textColor": "字体颜色",
+			"tagChip": "标签样式",
+			"undo": "撤销",
+			"redo": "重做"
+		}
+	},
+	"characters": {
+		"title": "角色",
+		"searchPlaceholder": "搜索角色…",
+		"filters": "筛选",
+		"sortLabel": "排序",
+		"orderLabel": "方向",
+		"search": {
+			"sectionOptions": "选项",
+			"sectionTags": "标签",
+			"sectionTraits": "特征",
+			"sectionRelations": "关系",
+			"clearAll": "清空全部",
+			"apply": "搜索",
+			"itemCount_one": "{{count}} 个角色",
+			"itemCount_other": "共 {{count}} 个角色"
+		},
+		"new": "新建",
+		"listEmpty": "暂无角色。",
+		"trashEmpty": "回收站中暂无角色。",
+		"filter": {
+			"trash": "回收站"
+		},
+		"traitFilter": {
+			"add": "添加",
+			"empty": "请先在设置中定义特征。",
+			"opContains": "包含",
+			"opEmpty": "为空",
+			"opNotEmpty": "非空",
+			"opDateAfter": "晚于",
+			"opDateOnOrAfter": "不早于",
+			"opDateBefore": "早于",
+			"opDateOnOrBefore": "不晚于",
+			"opDateOn": "等于",
+			"opDateMonthDayOn": "月日等于",
+			"opDateMonthDayToday": "今日月日"
+		},
+		"viewSelected": "仅看已选",
+		"viewSelectedTooMany": "选中项超过 {{max}} 个，无法使用仅看已选",
+		"sort": {
+			"created": "创建时间",
+			"updated": "更新时间",
+			"random": "随机",
+			"latest": "最新",
+			"earliest": "最早"
+		},
+		"bulk": {
+			"select": "选择",
+			"done": "完成",
+			"toolbarCount": "已选 {{count}} 项",
+			"editTags": "编辑标签",
+			"clearSelection": "清空",
+			"moveToTrash": "回收站",
+			"confirmSoft": "将 {{count}} 个角色移入回收站？",
+			"softDeleteDescription": "选中的角色将被移入回收站，之后可从回收站恢复。",
+			"toastAllOk": "已处理 {{count}} 个角色。",
+			"toastAllFailed": "未处理任何项（{{count}} 个失败）。",
+			"toastPartial": "成功 {{ok}} 个，失败 {{failed}} 个。"
+		},
+		"actionsAria": "{{name}} 的操作",
+		"toast": {
+			"movedToTrash": "已移入回收站",
+			"deleteFailed": "删除失败",
+			"restored": "已还原",
+			"restoreFailed": "还原失败",
+			"deletedForever": "已永久删除",
+			"createSuccess": "已创建",
+			"createFailed": "创建失败"
+		},
+		"create": {
+			"title": "新建角色",
+			"description": "有名字就能开始 — 其他都可以稍后补。",
+			"basicInfo": "基本信息",
+			"basicDescription": "用简单的话介绍这个人。",
+			"name": "名称",
+			"intro": "简介",
+			"namePlaceholder": "未命名角色",
+			"nameHint": "名称必填 — 填写后才能创建。",
+			"introPlaceholder": "写几句话 — 他们是谁、想要什么。",
+			"links": "关联",
+			"linksDescription": "用标签和特征把角色编入内容库。",
+			"tags": "标签",
+			"traits": "特征",
+			"appearance": "外观",
+			"appearanceDescription": "头像与立绘 — 裁切到合适。",
+			"avatar": "头像",
+			"fullbody": "立绘",
+			"submit": "创建",
+			"submitting": "创建中..."
+		},
+		"preview": {
+			"aria": "预览：{{name}}"
+		},
+		"detail": {
+			"loadError": "无法加载该角色。",
+			"noIntro": "暂无简介",
+			"relationships": "关系",
+			"recent": "最近资源",
+			"viewAllResources": "查看全部",
+			"fullbody": "立绘",
+			"traits": "特征",
+			"tags": "标签",
+			"tabsAria": "角色板块",
+			"documentsTitle": "关联文档",
+			"openSidebar": "打开侧边栏"
+		},
+		"editDialog": {
+			"aria": "编辑角色",
+			"name": "名称",
+			"intro": "简介"
+		},
+		"editHub": {
+			"title": "编辑 - {{name}}"
+		},
+		"tagsDialog": {
+			"title": "修改标签 - {{name}}"
+		},
+		"actions": {
+			"uploadResource": "上传资源",
+			"editTags": "标签",
+			"editTraits": "特征",
+			"editRelations": "关系",
+			"editBasic": "基本信息",
+			"editAvatar": "头像",
+			"editFullbody": "立绘",
+			"openMessages": "留言",
+			"restore": "还原",
+			"hardDelete": "永久删除",
+			"softDelete": "移入回收站"
+		},
+		"hardDelete": {
+			"title": "永久删除？",
+			"description": "此操作会永久删除该角色并将其文件夹移入本地回收站。",
+			"confirm": "永久删除",
+			"deleting": "删除中..."
+		},
+		"chips": {
+			"linkCharacters": "关联角色"
+		},
+		"picker": {
+			"selectedEmpty": "尚未选择任何角色。",
+			"loadFailed": "加载失败"
+		},
+		"selectorDialog": {
+			"title": "选择角色",
+			"confirm": "确定",
+			"confirmCount": "确定 ({{count}})",
+			"notSelectable": "该角色不可选"
+		},
+		"charactership": {
+			"empty": "尚无关系。请在上方选择关系类型添加。",
+			"pickerTitle": "选择角色",
+			"deleteEdge": "删除",
+			"deleteConfirmTitle": "删除关系",
+			"deleteConfirmDescription": "确定要删除这条角色关系吗？删除后将无法恢复。",
+			"pickCharacter": "选择角色",
+			"enterName": "输入名称",
+			"pickEndpoint": "选择关系端",
+			"namePlaceholder": "名称",
+			"noTypesHint": "尚无关系类型。",
+			"noTypesLink": "前往自制页添加",
+			"incompleteDraft": "请完成所有新增关系后再保存",
+			"toast": {
+				"deleteSuccess": "已删除关系",
+				"deleteFailed": "删除失败",
+				"addSuccess": "已添加关系",
+				"saveFailed": "保存失败"
+			}
+		}
+	},
+	"collections": {
+		"entityLabel": "组合",
+		"usageLabel": "资源",
+		"chip": {
+			"openLabel": "打开 {{name}} 组合"
+		},
+		"popover": {
+			"empty": "该组合中暂无资源"
+		},
+		"picker": {
+			"quickCreate": "添加",
+			"searchPlaceholder": "搜索组合"
+		},
+		"editDialog": {
+			"title": "{{name}} 的组合"
+		},
+		"panel": {
+			"empty": "暂无组合",
+			"addDialogTitle": "添加组合",
+			"editDialogTitle": "编辑组合",
+			"filterPlaceholder": "筛选资源组合",
+			"reorderMode": "排序",
+			"reorderModeAria": "开启后可拖拽调整组合顺序"
+		}
+	},
+	"usage": {
+		"title": "使用统计",
+		"description": "各平台的查看时长 — 总计、每日节奏，以及时间花在了哪里。",
+		"history": {
+			"title": "使用记录",
+			"description": "你最近使用过的内容，新在前",
+			"empty": "暂无使用记录。",
+			"loading": "加载中…",
+			"loadError": "使用记录加载失败。",
+			"today": "今天",
+			"yesterday": "昨天",
+			"unknownTime": "时间未知",
+			"totalLabel": "共 {{count}} 条",
+			"tabs": {
+				"all": "全部",
+				"resources": "资源",
+				"characters": "角色",
+				"documents": "文档"
+			}
+		},
+		"stats": {
+			"totalTime": "总查看时长",
+			"avgPerDay": "日均时长",
+			"mostActiveDay": "最活跃的一天",
+			"mostActiveDayFormat": "M月D日",
+			"entries": "共 {{count}} 条",
+			"shareSectionTitle": "占比排行",
+			"shareTitle": "时长",
+			"shareDescription": "按所选周期内的查看时长排序。",
+			"viewShareTitle": "次数",
+			"viewShareDescription": "按所选周期内的打开次数排序。",
+			"periodComparison": "周期对比",
+			"filtersTitle": "筛选",
+			"trendDescription": "每日分钟数",
+			"todayHourlyDescription": "每小时分钟数 · 本地时间",
+			"todayHourly": "24 小时分布",
+			"hourlyAverage": "每日节奏",
+			"hourlyAverageDescription": "每小时日均 · 本地时间",
+			"topEntities": "今日实体榜",
+			"topEntitiesDescription": "今日观看最多的实体",
+			"trend": "使用趋势",
+			"platformFilter": "平台",
+			"platformAll": "全部平台",
+			"platformWebMobile": "网页移动端",
+			"platformWebPc": "网页 PC 端",
+			"platformDesktop": "桌面应用",
+			"currentPlatform": {
+				"title": "当前平台",
+				"web-mobile": "移动端",
+				"web-pc": "PC 端",
+				"desktop": "桌面应用"
+			},
+			"platformPill": {
+				"web-mobile": "Web · 移动端",
+				"web-pc": "Web · PC",
+				"desktop": "桌面应用"
+			},
+			"exposureMode": "时长统计",
+			"exposureDirect": "直接",
+			"exposureAssociated": "关联",
+			"exposureTotal": "合计",
+			"exposureTime": {
+				"direct": "直接时间",
+				"associated": "关联时间",
+				"total": "总时间"
+			},
+			"exposureModeNote": "上方总计、趋势与占比百分比仅统计直接打开的会话。下方排行列表使用所选模式。"
+		},
+		"insight": {
+			"moreThanPeriod": "比{{period}}多 {{duration}}",
+			"lessThanPeriod": "比{{period}}少 {{duration}}",
+			"sameAsPeriod": "与{{period}}相同",
+			"comparison": {
+				"yesterday": "昨天",
+				"lastWeek": "上周",
+				"prior7Days": "前 7 天",
+				"lastMonth": "上月",
+				"lastYear": "去年"
+			}
+		},
+		"entityExposure": {
+			"totalTime": "累计查看 {{duration}}",
+			"views": "查看 {{count}} 次",
+			"lastViewed": "最近打开 {{time}}"
+		},
+		"leaderboard": {
+			"entityAll": "全部",
+			"entityResources": "资源",
+			"entityCharacters": "角色",
+			"entityDocuments": "文档",
+			"entityPlugins": "内容插件",
+			"empty": "该周期暂无使用记录。",
+			"viewsShort": "查看 {{count}} 次",
+			"associatedSessionsShort": "关联 {{count}} 次",
+			"rankLabel": "第 {{rank}} 名"
+		},
+		"periods": {
+			"today": "今日",
+			"last7days": "近 7 天",
+			"thisWeek": "本周",
+			"thisMonth": "本月",
+			"thisYear": "本年",
+			"all": "全部"
+		}
+	},
+	"trace": {
+		"title": "足迹",
+		"description": "追加式操作日志 — 导入、导出、删除、还原与投票。行内保留实体名称，硬删除后仍可追溯。",
+		"timelineTitle": "时间线",
+		"filterAll": "全部",
+		"filters": {
+			"import": "导入",
+			"export": "导出",
+			"softDelete": "删除",
+			"restore": "恢复",
+			"hardDelete": "彻底删除",
+			"dislikeAdd": "不喜欢",
+			"dislikeCancel": "撤销表态",
+			"messageCreate": "留言",
+			"messageSoftDelete": "删留言",
+			"messageRestore": "恢复留言",
+			"messageHardDelete": "彻底删除留言",
+			"messageVoteAdd": "表态",
+			"messageVoteCancel": "撤销表态",
+			"messageVoteSwap": "改投",
+			"documentCreate": "建文档",
+			"documentCommit": "更新文档",
+			"documentSoftDelete": "删文档",
+			"documentRestore": "恢复文档",
+			"documentHardDelete": "彻底删除文档",
+			"characterCreate": "建角色",
+			"characterSoftDelete": "删角色",
+			"characterRestore": "恢复角色",
+			"characterHardDelete": "彻底删除角色",
+			"group": {
+				"resource": "资源",
+				"messages": "留言",
+				"document": "文档",
+				"character": "角色"
+			}
+		},
+		"actions": {
+			"import": "导入了 {{name}}",
+			"export": "导出了 {{name}}",
+			"softDelete": "将 {{name}} 移入回收站",
+			"restore": "恢复了 {{name}}",
+			"hardDelete": "彻底删除了 {{name}}",
+			"dislikeAdd": "对 {{name}} 点了不喜欢",
+			"dislikeCancel": "撤销了对 {{name}} 的不喜欢",
+			"messageCreate": "留言了「{{name}}」",
+			"messageSoftDelete": "删除了留言「{{name}}」",
+			"messageRestore": "恢复了留言「{{name}}」",
+			"messageHardDelete": "彻底删除了留言「{{name}}」",
+			"messageVoteAddLike": "赞了留言「{{name}}」",
+			"messageVoteAddDislike": "踩了留言「{{name}}」",
+			"messageVoteCancelLike": "撤销了对留言「{{name}}」的赞",
+			"messageVoteCancelDislike": "撤销了对留言「{{name}}」的踩",
+			"messageVoteSwapLike": "把留言「{{name}}」改投为赞",
+			"messageVoteSwapDislike": "把留言「{{name}}」改投为踩",
+			"documentCreate": "创建了文档「{{name}}」",
+			"documentCommit": "更新了文档「{{name}}」",
+			"documentSoftDelete": "将文档「{{name}}」移入回收站",
+			"documentRestore": "恢复了文档「{{name}}」",
+			"documentHardDelete": "彻底删除了文档「{{name}}」",
+			"characterCreate": "创建了角色「{{name}}」",
+			"characterSoftDelete": "将角色「{{name}}」移入回收站",
+			"characterRestore": "恢复了角色「{{name}}」",
+			"characterHardDelete": "彻底删除了角色「{{name}}」"
+		},
+		"meta": {
+			"bulk": "批量",
+			"source": "来源：{{name}}",
+			"fileCount": "{{count}} 个文件"
+		},
+		"overview": {
+			"title": "周期概览",
+			"today": "今日",
+			"last7days": "近 7 天",
+			"thisMonth": "本月",
+			"thisYear": "本年",
+			"actions": {
+				"today": "今日操作",
+				"last7days": "本周操作",
+				"thisMonth": "本月操作",
+				"thisYear": "今年操作"
+			},
+			"busiestKind": "最活跃类型",
+			"restores": "还原次数",
+			"weekTotal": "本周合计",
+			"avgPerDay": "日均",
+			"moreThanPrev": "比上一周期多 {{count}} 次",
+			"lessThanPrev": "比上一周期少 {{count}} 次",
+			"sameAsPrev": "与上一周期持平"
+		},
+		"today": "今天",
+		"yesterday": "昨天",
+		"loading": "加载足迹中...",
+		"loadError": "加载足迹失败",
+		"empty": "还没有足迹。导入、导出、删除或表态后，这里会逐条记录。",
+		"count": "{{count}} 条足迹"
+	},
+	"resources": {
+		"title": "资源",
+		"upload": "上传",
+		"import": {
+			"action": "导入",
+			"title": "导入",
+			"description": "一次导入整个文件夹——每个顶层条目都会成为一个资源。"
+		},
+		"source": {
+			"fallback": "来源链接",
+			"aria": "打开来源：{{name}}"
+		},
+		"new": {
+			"title": "上传",
+			"description": "先放入文件 — 元数据可以稍后补。",
+			"files": "文件",
+			"filesDescription": "拖入的文件立即暂存 — 可自由排序，无需重新上传。",
+			"filesCount": "个文件",
+			"basicInfo": "基本信息",
+			"basicDescription": "一句话说明这些文件是什么。",
+			"links": "关联",
+			"linksDescription": "这个资源所属的标签、角色和组合。",
+			"coverDescription": "可选 — 默认取第一个文件。",
+			"folder": {
+				"sourceShared": "浏览共享文件夹",
+				"sourceZip": "选择压缩包",
+				"browseTitle": "浏览目录",
+				"browseDescription": "选择要扫描的目录。",
+				"previewTitle": "扫描结果",
+				"previewDescription": "确认要导入的项目。",
+				"resultTitle": "导入结果",
+				"scanHere": "扫描",
+				"noSubdirs": "无子目录",
+				"uploading": "上传中...",
+				"extracting": "解压中...",
+				"scanning": "扫描中...",
+				"sharedRoot": "共享根目录",
+				"zipRoot": "压缩包根目录",
+				"name": "名称",
+				"type": "类型",
+				"plugin": "插件",
+				"confirmImport": "导入",
+				"importing": "导入中...",
+				"importDone": "完成",
+				"resultScanned": "扫描",
+				"resultImported": "已导入",
+				"resultFailed": "失败",
+				"sourceSharedDescription": "从服务器的共享导入根目录中挑选一个文件夹。",
+				"sourceSharedDisabled": "未配置共享文件夹导入。",
+				"sourceZipDescription": "上传 .zip — 在服务器端解压后扫描。",
+				"importingDescription": "正在从所选目录创建资源，请稍候。",
+				"stepSource": "来源",
+				"stepBrowse": "浏览",
+				"stepPreview": "预览",
+				"stepImport": "导入",
+				"stepDone": "完成",
+				"stepsAria": "导入步骤",
+				"emptyTitle": "此目录为空",
+				"emptyDescription": "这里没有可导入的文件或目录。",
+				"previewCount": "共 {{count}} 项待导入",
+				"howTitle": "工作原理",
+				"howScan": "扫描",
+				"howScanMeta": "每个顶层条目都会被找到并统计大小",
+				"howPreview": "预览",
+				"howPreviewMeta": "写入前会逐条检测内容类型",
+				"howImport": "导入",
+				"howImportMeta": "逐条显示进度，结束时汇总"
+			},
+			"name": "名称",
+			"intro": "简介",
+			"plugin": "插件",
+			"contentType": "内容类型",
+			"sourceName": "来源名称",
+			"sourceUrl": "来源链接",
+			"sourceHint": "建议至少填写一个，方便日后找到出处。",
+			"sourceNamePlaceholder": "如：某网站或平台",
+			"sourceUrlPlaceholder": "如：https://...",
+			"introPlaceholder": "这组文件是关于什么的。",
+			"tags": "标签",
+			"characters": "角色",
+			"cover": "封面",
+			"collections": "组合",
+			"namePlaceholder": "名称",
+			"useFilenameAsName": "用文件名作为名称",
+			"oneFilePerResource": "每个文件一个资源 — 每个资源仅包含一个文件。",
+			"createdCount": "已创建 {{count}} 个资源",
+			"duplicatesFound": "此资源有 {{count}} 张图片与已有资源重复：{{names}}",
+			"duplicateFileNames_one": "本批次有 {{count}} 个文件重名，将自动重命名（如 name-1.png）",
+			"duplicateFileNames_other": "本批次有 {{count}} 个文件重名，将自动重命名（如 name-1.png）",
+			"submit": "创建",
+			"uploading": "上传中...",
+			"errors": {
+				"pickAtLeastOne": "请至少选择一个文件",
+				"uploadFailed": "上传失败",
+				"stagingFailed_one": "有 {{count}} 个文件上传失败，请移除后重试",
+				"stagingFailed_other": "有 {{count}} 个文件上传失败，请移除后重试",
+				"attachCollectionsFailed": "资源已创建，但加入组合失败",
+				"batchPartialHint": "若中途失败，可能已有部分资源创建成功，请到列表中查看。"
+			},
+			"created": "已创建",
+			"autoDetect": "自动探测"
+		},
+		"search": {
+			"placeholder": "搜索资源…",
+			"empty": "暂无资源。",
+			"trashEmpty": "回收站为空。",
+			"filters": "筛选",
+			"sectionOptions": "选项",
+			"sectionTags": "标签",
+			"sectionCharacters": "角色",
+			"sectionPlugins": "插件",
+			"sectionSource": "来源",
+			"sectionCollections": "组合",
+			"clearAll": "清空全部",
+			"apply": "搜索",
+			"viewGrid": "网格视图",
+			"viewMasonry": "瀑布流视图",
+			"sourceLabel": "来源",
+			"sourceAll": "全部来源",
+			"sortLabel": "排序",
+			"orderLabel": "方向",
+			"sortCreated": "创建时间",
+			"sortUpdated": "更新时间",
+			"sortDisliked": "不喜欢次数",
+			"orderLatest": "最新",
+			"orderEarliest": "最早",
+			"orderMost": "最多",
+			"orderLeast": "最少",
+			"noCharacters": "无角色",
+			"dislikedOnly": "仅看已不喜欢",
+			"trash": "回收站",
+			"random": "随机",
+			"pageSizeLabel": "每页",
+			"itemCount_one": "{{count}} 个资源",
+			"itemCount_other": "共 {{count}} 个资源"
+		},
+		"bulk": {
+			"select": "选择",
+			"done": "完成",
+			"toolbarCount": "已选 {{count}} 项",
+			"selectCurrentPage": "全选",
+			"invertCurrentPage": "反选",
+			"clearSelection": "清空",
+			"download": "下载",
+			"downloadFailed": "下载失败。",
+			"downloadRejected": "无法生成压缩包（所选为空或无效）。",
+			"downloadTooMany": "一次最多下载 {{max}} 个资源。",
+			"editTags": "编辑标签",
+			"moveToTrash": "回收站",
+			"deleteForever": "永久删除",
+			"confirmSoft": "将 {{count}} 个资源移入回收站？",
+			"softDeleteDescription": "选中的资源将被移入回收站，之后可从回收站恢复。",
+			"hardDeleteTitle": "永久删除所选？",
+			"hardDeleteDescription": "将永久删除所选资源并将其文件夹移入本地回收站，此操作不可撤销。",
+			"hardDeleteConfirm": "永久删除",
+			"hardDeleteDeleting": "删除中...",
+			"toastAllOk": "已处理 {{count}} 个资源。",
+			"toastAllFailed": "未处理任何项（{{count}} 个失败）。",
+			"toastPartial": "成功 {{ok}} 个，失败 {{failed}} 个。"
+		},
+		"actions": {
+			"editBasic": "基本信息",
+			"editCharacters": "关联角色",
+			"editTags": "标签",
+			"editCollections": "组合",
+			"editCover": "封面",
+			"download": "下载",
+			"openMessages": "留言",
+			"extend": "继承",
+			"dislike": "不喜欢",
+			"dislikeCancellable": "可撤销",
+			"restore": "还原",
+			"hardDelete": "永久删除",
+			"softDelete": "移入回收站",
+			"actionsAria": "{{name}} 的操作"
+		},
+		"hardDelete": {
+			"title": "永久删除？",
+			"description": "此操作会永久删除该资源并将其文件夹移入本地回收站。",
+			"confirm": "永久删除",
+			"deleting": "删除中..."
+		},
+		"toast": {
+			"movedToTrash": "已移入回收站",
+			"deleteFailed": "删除失败",
+			"restored": "已还原",
+			"restoreFailed": "还原失败",
+			"deletedForever": "已永久删除",
+			"disliked": "已标记不喜欢",
+			"dislikeRemoved": "已取消不喜欢",
+			"dislikeFailed": "更新失败"
+		},
+		"preview": {
+			"aria": "预览：{{name}}",
+			"closePreview": "关闭预览",
+			"enterFullscreen": "进入全屏",
+			"exitFullscreen": "退出全屏"
+		},
+		"detail": {
+			"docSearchTitle": "关联文档",
+			"notFound": "未找到该资源",
+			"fileCount_one": "{{count}} 个文件",
+			"fileCount_other": "{{count}} 个文件",
+			"sourceFrom": "来自 {{name}}",
+			"openSidebar": "打开侧边栏",
+			"fullscreen": "全屏",
+			"anniversary_one": "入库 {{count}} 年了",
+			"anniversary_other": "入库 {{count}} 年了",
+			"sidebar": {
+				"tagsHeading": "标签",
+				"colEmpty": "该组合下暂无其它资源。",
+				"noTags": "暂无标签",
+				"relatedByTagsHeading": "相关推荐",
+				"similarImagesHeading": "相似图片",
+				"duplicateImagesHeading": "重复图片",
+				"similarWithinHeading": "本资源内相似图片",
+				"imageMatchCount_one": "{{count}} 个匹配文件",
+				"imageMatchCount_other": "{{count}} 个匹配文件",
+				"duplicateCount_one": "{{count}} 个重复文件",
+				"duplicateCount_other": "{{count}} 个重复文件",
+				"intraSimilarCount_one": "{{count}} 个相似文件",
+				"intraSimilarCount_other": "{{count}} 个相似文件",
+				"matchSimilarity": "{{name}} · 相似度 {{percent}}%",
+				"similarity": "相似度 {{percent}}%"
+			}
+		},
+		"editDialog": {
+			"aria": "编辑资源基本信息",
+			"plugin": "插件",
+			"contentTypeMissing": "缺少: {{names}}",
+			"name": "名称",
+			"intro": "简介",
+			"sourceName": "来源名称",
+			"sourceUrl": "来源地址",
+			"sourceHint": "建议至少填写一个，方便日后找到出处。",
+			"namePlaceholder": "例如：Harbor at Dusk",
+			"introPlaceholder": "这组资源是关于什么的。",
+			"sourceNamePlaceholder": "例如：某网站或平台",
+			"sourceUrlPlaceholder": "例如：https://...",
+			"saveChanges": "保存更改",
+			"toast": {
+				"contentTypeFailed": "无法更改内容类型"
+			}
+		},
+		"editHub": {
+			"title": "编辑 - {{name}}"
+		},
+		"tagsDialog": {
+			"title": "修改标签 - {{name}}"
+		},
+		"selectorDialog": {
+			"title": "选择资源"
+		},
+		"viewSelected": "仅看已选",
+		"viewSelectedTooMany": "选中项超过 {{max}} 个，无法使用仅看已选",
+		"picker": {
+			"selectedEmpty": "暂无已选资源。",
+			"loadFailed": "加载资源失败。"
+		},
+		"selectAria": "选择 {{name}}",
+		"toggleSelectAria": "切换选择 {{name}}",
+		"video": {
+			"previewAria": "预览 {{name}}",
+			"playAria": "播放 {{name}}",
+			"stopAria": "停止 {{name}}"
+		},
+		"audio": {
+			"playAria": "播放 {{name}}",
+			"pauseAria": "暂停 {{name}}",
+			"seekAria": "拖动 {{name}} 的播放进度"
+		},
+		"editPanel": {
+			"nameRequired": "请填写名称"
+		}
+	},
+	"relationshipTypes": {
+		"panel": {
+			"empty": "尚无关系。请点击添加。",
+			"addDialogTitle": "添加关系",
+			"editDialogTitle": "编辑关系",
+			"filterPlaceholder": "筛选关系类型",
+			"linkCount_one": "{{count}} 条关系",
+			"linkCount_other": "{{count}} 条关系",
+			"reorderMode": "排序",
+			"reorderModeAria": "开启后可拖拽调整关系顺序",
+			"tabDefinition": "定义",
+			"tabDetails": "详情"
+		},
+		"preview": {
+			"characterA": "角色 A",
+			"characterB": "角色 B",
+			"aCallsB": "A 是 B 的",
+			"bCallsA": "B 是 A 的",
+			"labelPlaceholder": "如：朋友"
+		},
+		"kind": {
+			"directed": {
+				"label": "有向",
+				"iconLabel": "单向",
+				"hint": "单向关系，仅 A→B 方向生效，如单恋"
+			},
+			"symmetric": {
+				"label": "对称",
+				"iconLabel": "对等",
+				"hint": "双方对等关系，如朋友、配偶"
+			},
+			"hierarchical": {
+				"label": "层级",
+				"iconLabel": "上下级",
+				"hint": "A 在上、B 在下，方向 A→B，如师父与徒弟"
+			}
+		},
+		"delete": {
+			"kindLabel": "关系",
+			"usageLabel": "条关系"
+		},
+		"toast": {
+			"created": "已创建关系",
+			"createFailed": "创建关系失败"
+		}
+	},
+	"traits": {
+		"panel": {
+			"empty": "尚无特征定义。请点击添加。",
+			"addDialogTitle": "添加特征",
+			"editDialogTitle": "编辑特征",
+			"filterPlaceholder": "筛选特征",
+			"reorderMode": "排序",
+			"reorderModeAria": "开启后可拖拽调整特征顺序",
+			"toast": {
+				"added": "已添加特征"
+			}
+		},
+		"kind": {
+			"text": "文本",
+			"multitext": "多行文本",
+			"number": "数字",
+			"weight": "体重",
+			"height": "身高",
+			"date": "日期"
+		},
+		"delete": {
+			"kindLabel": "特征",
+			"usageLabel": "角色"
+		},
+		"values": {
+			"noDefinitions": "尚无特征定义。请前往 设置 / 特征 添加。",
+			"inputPlaceholder": "请输入",
+			"remove": "移除",
+			"allSet": "所有特征均已设置。",
+			"emptyError": "以下特征为空，不能保存：{{names}}",
+			"parseError": "「{{name}}」的值无效：{{value}}",
+			"date": {
+				"prefixPlaceholder": "纪元 / 历法",
+				"after": "后",
+				"before": "前",
+				"year": "年",
+				"month": "月",
+				"day": "日"
+			}
+		}
+	},
+	"categories": {
+		"panel": {
+			"empty": "暂无分类或标签。",
+			"kindTabsAria": "分类类型",
+			"kindTab": {
+				"common": "通用",
+				"resource": "资源",
+				"character": "角色"
+			},
+			"dependencyMessage": "该标签已被{{parts}}使用，无法直接删除。",
+			"dependencyResources": "资源 {{count}} 处",
+			"dependencyCharacters": "角色 {{count}} 处",
+			"tagCharacterCount": "角色 {{count}}",
+			"tagResourceCount": "资源 {{count}}",
+			"copyTagName": "复制到剪贴板",
+			"toast": {
+				"added": "已添加",
+				"addFailed": "添加失败",
+				"copied": "已复制到剪贴板",
+				"copyFailed": "复制失败",
+				"moved": "标签已移动"
+			},
+			"mergeTagMenu": "合并到…",
+			"specialStyle": {
+				"silver": "银",
+				"gold": "金",
+				"rainbow": "彩虹",
+				"oilslick": "油膜",
+				"kintsugi": "金缮"
+			}
+		},
+		"delete": {
+			"kindLabelCategory": "分类",
+			"kindLabelTag": "标签",
+			"usageLabelTags": "标签"
+		},
+		"form": {
+			"createCategory": "创建分类",
+			"creating": "创建中...",
+			"addTag": "创建标签"
+		},
+		"dialog": {
+			"addCategoryTitle": "新建分类",
+			"addTagTitle": "新建标签",
+			"editCategoryTitle": "编辑分类",
+			"editTagTitle": "编辑标签"
+		}
+	},
+	"tags": {
+		"picker": {
+			"noCategories": "暂无分类。",
+			"selectedHeader": "选中：",
+			"tagsHeader": "标签：",
+			"empty": "该分类下暂无标签。",
+			"emptyAll": "暂无标签定义。",
+			"searchPlaceholder": "搜索标签…",
+			"noMatches": "无匹配标签"
+		},
+		"bulk": {
+			"nonCommonHint": "有 {{count}} 个标签未被全部选中项共享。你可以添加任意标签；只有公共标签可以被移除。"
+		},
+		"toast": {
+			"attachFailed": "添加标签失败",
+			"detachFailed": "移除标签失败"
+		},
+		"filterMode": {
+			"and": "全部",
+			"or": "任一",
+			"not": "非",
+			"nor": "均非"
+		},
+		"merge": {
+			"title": "合并标签",
+			"description": "重复标签的引用与关系将移动到目标标签。",
+			"targetPlaceholder": "选择目标标签",
+			"confirm": "确认合并",
+			"confirming": "合并中...",
+			"preview": "将移动 {{resources}} 个资源、{{characters}} 个角色的引用，以及 {{siblingRules}} 条同义词关系、{{parentRules}} 条上下级关系。",
+			"collision": "该分类已有同名标签「{{name}}」，可以合并。",
+			"offer": "与同名标签合并",
+			"toast": {
+				"success": "已合并：{{resources}} 个资源、{{characters}} 个角色、{{siblingRules}} 条同义词关系、{{parentRules}} 条上下级关系"
+			}
+		},
+		"rules": {
+			"description": "别名：多个标签在所有地方都渲染为一个显示标签（例如「猫」&「猫咪」→「猫」）。父级：打上子标签的条目也会带上父标签（例如「橘猫」→「猫」）。角色也能参与：把角色关联到标签后，关联了该角色的作品会像打了这个标签一样——搜索可以命中，卡片上以「虚拟」弱化显示。",
+			"displayLabel": "显示标签",
+			"badPlaceholder": "同义词",
+			"goodPlaceholder": "显示标签",
+			"addAlias": "添加别名",
+			"alias": "别名",
+			"addAliasDescription": "选择同义词，以及它显示成的标签。",
+			"aliasesTitle": "别名",
+			"groupCount_one": "{{count}} 组",
+			"groupCount_other": "{{count}} 组",
+			"setDisplay": "设为显示标签",
+			"remove": "移除",
+			"pickCharacter": "角色…",
+			"pickTag": "标签…",
+			"tagPickTitle": "选择标签",
+			"characterLinkHint": "角色链接：角色以该标签显示——关联了该角色的作品会弱化显示此标签（标记为「虚拟」），搜索该标签时也能命中。",
+			"empty": "暂无同义词组。",
+			"displaysAs": "显示为 {{name}}",
+			"groupCounts": "资源 {{resources}} · 角色 {{characters}}",
+			"parentsTitle": "父级",
+			"ruleCount_one": "{{count}} 条",
+			"ruleCount_other": "{{count}} 条",
+			"child": "子标签",
+			"childPlaceholder": "子标签",
+			"parentPlaceholder": "父标签",
+			"addRule": "添加规则",
+			"addRuleDescription": "选择子标签，以及它所属的父标签。",
+			"endpointTag": "标签",
+			"endpointCharacter": "角色",
+			"parentsEmpty": "暂无上下级规则。",
+			"noMatch": "没有匹配的规则",
+			"searchPlaceholder": "筛选规则…",
+			"toast": {
+				"pairAdded": "已添加同义词",
+				"pairRemoved": "已移除同义词",
+				"displaySet": "已设置显示标签",
+				"parentAdded": "已添加上下级规则",
+				"parentRemoved": "已移除上下级规则"
+			}
+		},
+		"errors": {
+			"nameExists": "该分类已有同名标签。",
+			"siblingCycle": "该组合会形成循环，无法添加。",
+			"siblingKindIsolation": "通用标签只能与一种类型的标签组成同义词组（资源与角色标签不能互相组合）。",
+			"parentSelf": "标签不能设为自身的父标签。",
+			"parentCycle": "该上下级关系会形成循环，无法添加。",
+			"parentKindIsolation": "上下级链只能组合通用与一种类型的标签（资源与角色标签不能互相链接）。",
+			"characterMissing": "该角色已不存在，请选择现存的角色。",
+			"mergeKindMismatch": "不能合并不同类型的标签（资源与角色标签不能合并）。",
+			"mergeCreatesCycle": "合并后会形成循环，请先调整相关规则。"
+		},
+		"virtual": {
+			"label": "虚拟"
+		}
+	},
+	"imageCrop": {
+		"pickHint": "点击或拖入",
+		"reselect": "重新上传",
+		"showPreview": "显示预览",
+		"previewLabel": "预览",
+		"previewAlt": "预览图片",
+		"saveFailed": "保存失败"
+	},
+	"imageEdit": {
+		"confirmDeleteTitle": "移除图片？",
+		"confirmDeleteDescription": "这将移除当前图片，此操作无法撤销。"
+	},
+	"deleteEntity": {
+		"dialogConfirmTitle": "删除「{{name}}」？",
+		"dialogConfirmDescription": "将永久删除该{{kind}}，此操作无法撤销。",
+		"defaultLabel": "删除",
+		"defaultNoun": "处",
+		"confirm": "确认删除",
+		"deleting": "删除中...",
+		"forceTitle": "无法删除{{kind}}",
+		"usageMessage": "该{{kind}}已被 {{count}} 个{{usage}}使用，无法直接删除。",
+		"toast": {
+			"deleteSuccess": "已删除{{kind}}",
+			"deleteFailed": "删除失败",
+			"forceDeleteSuccess": "已强制删除{{kind}}",
+			"forceDeleteFailed": "强制删除失败",
+			"nameMismatch": "名称不一致"
+		},
+		"forceConfirm": "强制删除",
+		"forceDeleting": "删除中..."
+	},
+	"upload": {
+		"addFiles": "添加文件",
+		"clearAll": "清空",
+		"totalCount": "总共 {{count}} 个文件",
+		"removeFile": "移除文件",
+		"failed": "上传失败",
+		"duplicateName": "重名",
+		"duplicateNameTitle": "本批次中有同名文件，上传时会自动重命名"
+	},
+	"messages": {
+		"title": "留言",
+		"empty": "还没有留言",
+		"threadCount_one": "{{count}} 个主题",
+		"threadCount_other": "{{count}} 个主题",
+		"replyCount_one": "{{count}} 条回复",
+		"replyCount_other": "{{count}} 条回复",
+		"floor": "#{{n}}",
+		"replyNumber": "#{{n}}",
+		"composerPlaceholder": "写下你的留言…",
+		"replyPlaceholder": "写下你的回复…",
+		"submit": "发布",
+		"submitting": "发布中...",
+		"reply": "回复",
+		"actions": "留言操作",
+		"trash": "回收站",
+		"emptyTrash": "回收站是空的",
+		"deleted": "已删除",
+		"delete": "删除",
+		"deleteConfirmTitle": "删除这条留言？",
+		"deleteConfirmDescription": "留言将移入回收站，可从回收站恢复。",
+		"restore": "恢复",
+		"hardDelete": "永久删除",
+		"hardDeleteConfirmTitle": "永久删除？",
+		"hardDeleteConfirmDescription": "此操作不可撤销。硬删除顶层留言会一并删除其全部回复。",
+		"viewReplies": "查看回复 ({{count}})",
+		"collapseReplies": "收起回复",
+		"sortBy": "排序",
+		"sort": {
+			"newest": "最晚",
+			"oldest": "最早",
+			"mostLikes": "赞最多",
+			"leastLikes": "赞最少"
+		},
+		"searchPlaceholder": "搜索留言…",
+		"totalLabel": "共 {{count}} 条留言",
+		"clearFilter": "清除筛选",
+		"charsRemaining": "还可输入 {{count}} 字",
+		"linkCharactersAdd": "关联角色",
+		"linkResources": "关联资源",
+		"linkResourcesAdd": "关联资源",
+		"toast": {
+			"posted": "已发布",
+			"postFailed": "发布失败",
+			"deleted": "已移入回收站",
+			"restored": "已恢复",
+			"hardDeleted": "已永久删除",
+			"voteFailed": "投票失败"
+		}
+	},
+	"storage": {
+		"sectionTitle": "存储",
+		"sectionDescription": "hoardodile 归档占用的磁盘空间，按类别拆分展示。",
+		"volumeTotal": "磁盘总容量",
+		"volumeFree": "剩余",
+		"volumeUsed": "已使用",
+		"sidebarUsed": "已占 {{size}}",
+		"sidebarFree": "剩余 {{size}}",
+		"volumeUnavailable": "无法读取卷信息",
+		"usedByHoardodile": "hoardodile 占用：",
+		"category": {
+			"database": "数据库",
+			"resources": "资源",
+			"archived": "归档副本",
+			"cache": "缓存",
+			"trash": "回收站",
+			"backups": "备份",
+			"other": "其他",
+			"unattributedResources": "其他资源"
+		},
+		"otherHint": "日志、已安装的插件、会话密钥及其他未在上方列出的本机状态。",
+		"unattributedCount": "{{count}} 个资源未统计体积",
+		"unattributedHint": "这些资源尚未记录体积（含封面等杂项，按磁盘扫描估算）。运行预缓存后，将按插件归入上方明细。",
+		"archivedHint": "归档版本中冻结的资源、角色与文档副本。此数字按磁盘扫描统计，包含所有历史副本；与上方按元数据统计的当前版本资源口径不同。",
+		"backupsHint": "手动备份与每日自动快照。",
+		"cacheHint": "按资源存储的封面、缩略图、预览、解压缓存与 files-cache.json。",
+		"lowSpaceBanner": "磁盘空间不足，自动快照已暂停。释放一些空间后可自动恢复。",
+		"clearCache": "清理",
+		"clearCacheTitle": "清理缓存",
+		"clearCacheDescription": "缩略图、预览与解压缓存将被清空。它们会在需要时重新生成——此操作只释放空间。",
+		"pluginCount": "{{count}} 个资源",
+		"legend": {
+			"resources": "资源",
+			"hostData": "主机数据",
+			"archivedVersions": "归档版本",
+			"cache": "缓存",
+			"latest": "最新"
+		}
+	},
+	"sync": {
+		"pageHint": "每台设备：记录实体数量、内容大小与存储体积 · 保留最近两次快照",
+		"status": {
+			"allUpToDate": "所有设备已是最新",
+			"dueCount_one": "{{total}} 台中 {{count}} 台待同步",
+			"dueCount_other": "{{total}} 台中 {{count}} 台待同步"
+		},
+		"tip": {
+			"oneWay": "建议单向同步：一个主仓库，其余为从，避免同步冲突。"
+		},
+		"config": {
+			"remindLabel": "超过多久提醒同步",
+			"remindDescription": "超过间隔时间未同步快照时，仪表盘会提醒。",
+			"remindDays_one": "{{count}} 天",
+			"remindDays_other": "{{count}} 天"
+		},
+		"devices": {
+			"addTitle": "添加设备",
+			"addAutoRecord": "添加后会自动同步一次当前状态。",
+			"namePlaceholder": "设备名称",
+			"notesPlaceholder": "备注（可选）",
+			"nameHint": "例如：笔记本",
+			"notesHint": "例如：USB 4TB",
+			"add": "添加设备",
+			"addPending": "添加中...",
+			"empty": "还没有设备——添加一个开始同步。",
+			"loading": "加载中...",
+			"neverSynced": "从未同步",
+			"lastSyncedAgo_one": "上次同步 {{date}}（{{count}} 天前）",
+			"lastSyncedAgo_other": "上次同步 {{date}}（{{count}} 天前）",
+			"justNow": "刚刚",
+			"minutesAgo_one": "{{count}} 分钟前",
+			"minutesAgo_other": "{{count}} 分钟前",
+			"hoursAgo_one": "{{count}} 小时前",
+			"hoursAgo_other": "{{count}} 小时前",
+			"upToDate": "已是最新",
+			"overdue_one": "已逾期 · {{count}} 天",
+			"overdue_other": "已逾期 · {{count}} 天",
+			"neverBadge": "从未同步",
+			"record": "同步",
+			"recordNow": "立即同步",
+			"deleteTitle": "删除 {{name}}？",
+			"deleteDescription": "该设备及其全部同步记录将被删除。",
+			"delete": "删除",
+			"deletePending": "删除中...",
+			"editTitle": "编辑设备",
+			"edit": "编辑",
+			"save": "保存",
+			"editPending": "保存中..."
+		},
+		"fields": {
+			"resources": "资源",
+			"characters": "角色",
+			"documents": "文档",
+			"messages": "留言",
+			"tags": "标签",
+			"trash": "回收站",
+			"contentSize": "内容大小",
+			"storage": "存储体积",
+			"firstRecord": "首次同步"
+		},
+		"toast": {
+			"deviceAdded": "已添加设备并同步",
+			"deviceAddFailed": "添加设备失败",
+			"deviceUpdated": "已更新设备",
+			"deviceUpdateFailed": "更新设备失败",
+			"deviceDeleted": "已删除设备",
+			"deviceDeleteFailed": "删除设备失败",
+			"recorded": "已同步",
+			"recordFailed": "同步失败"
+		},
+		"banner": {
+			"noDevicesTitle": "未配置同步设备",
+			"noDevicesDescription": "至少添加一个设备才能追踪同步。",
+			"configureLink": "去配置",
+			"neverSyncedTitle": "{{name}} 从未同步过",
+			"neverSyncedDescription": "该设备还没有任何同步记录。",
+			"overdueTitle_one": "{{name}} 上次同步在 {{count}} 天前",
+			"overdueTitle_other": "{{name}} 上次同步在 {{count}} 天前",
+			"overdueDescription": "已超过你设定的 {{count}} 天提醒间隔。",
+			"recordLink": "去同步"
+		}
+	}
+}

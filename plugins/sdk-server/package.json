@@ -1,0 +1,55 @@
+{
+	"name": "@hoardodile/sdk-server",
+	"version": "0.0.0",
+	"license": "MIT",
+	"description": "Authoring SDK for hoardodile content plugins: definePlugin, detectors and helpers.",
+	"keywords": [
+		"hoardodile",
+		"plugin",
+		"sdk"
+	],
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/hoardodile/hoardodile.git",
+		"directory": "plugins/sdk-server"
+	},
+	"type": "module",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"development": "./src/index.ts",
+			"default": "./dist/index.js"
+		},
+		"./helpers": {
+			"types": "./dist/helpers.d.ts",
+			"development": "./src/helpers.ts",
+			"default": "./dist/helpers.js"
+		}
+	},
+	"files": [
+		"dist",
+		"src"
+	],
+	"sideEffects": false,
+	"engines": {
+		"node": ">=24"
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"scripts": {
+		"prepack": "pnpm build",
+		"build": "tsup",
+		"lint": "tsc --noEmit",
+		"test": "vitest run --maxWorkers=2"
+	},
+	"dependencies": {
+		"@hoardodile/sdk-types": "workspace:*"
+	},
+	"devDependencies": {
+		"@types/node": "catalog:",
+		"tsup": "catalog:",
+		"typescript": "5.9.3",
+		"vitest": "catalog:"
+	}
+}

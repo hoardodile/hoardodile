@@ -1,0 +1,104 @@
+{
+	"name": "@hoardodile/host",
+	"version": "0.0.0",
+	"license": "MIT",
+	"description": "hoardodile plugin runtime host: sandbox, hook strategy, ResourceAPI, containers and the test runner.",
+	"keywords": [
+		"hoardodile",
+		"plugin",
+		"host",
+		"sandbox",
+		"self-hosted"
+	],
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/hoardodile/hoardodile.git",
+		"directory": "plugins/host"
+	},
+	"type": "module",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"development": "./src/index.ts",
+			"default": "./dist/index.js"
+		},
+		"./contract": {
+			"types": "./dist/contract/index.d.ts",
+			"development": "./src/contract/index.ts",
+			"default": "./dist/contract/index.js"
+		},
+		"./probe": {
+			"types": "./dist/probe/index.d.ts",
+			"development": "./src/probe/index.ts",
+			"default": "./dist/probe/index.js"
+		},
+		"./render": {
+			"types": "./dist/render/index.d.ts",
+			"development": "./src/render/index.ts",
+			"default": "./dist/render/index.js"
+		},
+		"./hoard": {
+			"types": "./dist/hoard/index.d.ts",
+			"development": "./src/hoard/index.ts",
+			"default": "./dist/hoard/index.js"
+		},
+		"./media": {
+			"types": "./dist/media/index.d.ts",
+			"development": "./src/media/index.ts",
+			"default": "./dist/media/index.js"
+		},
+		"./worker-entry": {
+			"default": "./dist/chunks/worker-entry.mjs"
+		}
+	},
+	"files": [
+		"dist",
+		"src"
+	],
+	"sideEffects": false,
+	"engines": {
+		"node": ">=24"
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"scripts": {
+		"prepack": "pnpm build",
+		"build": "tsup && node scripts/postbuild.mjs",
+		"lint": "tsc --noEmit",
+		"test": "vitest run"
+	},
+	"dependencies": {
+		"@hoardodile/sdk-types": "workspace:*",
+		"execa": "^10.0.0",
+		"file-type": "^22.0.1",
+		"yauzl": "^3.4.0",
+		"yazl": "^3.3.1"
+	},
+	"optionalDependencies": {
+		"@derhuerst/ffprobe-static": "^5.3.0",
+		"@hoardodile/7z-bin": "^1.1.0",
+		"ffmpeg-static": "catalog:"
+	},
+	"peerDependencies": {
+		"sharp": "^0.35.3",
+		"vitest": "catalog:"
+	},
+	"peerDependenciesMeta": {
+		"sharp": {
+			"optional": true
+		},
+		"vitest": {
+			"optional": true
+		}
+	},
+	"devDependencies": {
+		"@types/node": "catalog:",
+		"@types/yauzl": "^3.4.0",
+		"@types/yazl": "^3.3.1",
+		"sharp": "^0.35.3",
+		"tsup": "catalog:",
+		"typescript": "5.9.3",
+		"vitest": "catalog:"
+	}
+}

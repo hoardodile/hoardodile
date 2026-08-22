@@ -1,0 +1,327 @@
+{
+	"schema": 1,
+	"kind": "plugin",
+	"timestamp": "2026-08-12T09:26:26.502Z",
+	"config": {
+		"files": 100,
+		"plugins": "real",
+		"churn": 0,
+		"repeat": 3,
+		"seed": 42,
+		"workerLoadMs": {
+			"seed": 0,
+			"discover": 3,
+			"activate": 24
+		}
+	},
+	"machine": {
+		"platform": "win32",
+		"arch": "x64",
+		"cpus": 16,
+		"cpuModel": "13th Gen Intel(R) Core(TM) i5-13400F",
+		"node": "v24.18.0"
+	},
+	"caveats": [
+		"Only same-window paired runs are comparable — the machine shows bimodal load (up to 4x swings).",
+		"Phases run sequentially (concurrency 1) so per-item means isolate RPC cost; production serves listFiles via the files-cache sidecar, so listFiles.warm with the sidecar wiped measures the RPC path, not the steady-state cache read.",
+		"Each listFiles hook call = 1 worker round-trip; the file plugin's listFiles calls statFiles once per PLUGIN_STAT_CONCURRENCY=8 chunk (13 round-trips for 100 files instead of 100). Step/hook sums exceed phase wall time under that fan-out.",
+		"Real mode seeds against the builtin file plugin (detect matches first); a --plugin dev plugin's detector wins when present.",
+		"Each tier is seeded once; uploads happen fresh in every rep; reps share host-side caches (zip CD cache, probe cache) — rep 1 is the cold rep.",
+		"churn (real mode only): N loader rescans raced against concurrent meta rebuilds; churn.errorLines counts console lines tagged [plugin-*] (every hook failure is swallowed by the facade and logged) — 0 on a healthy sandbox, so any lifecycle regression trips the gate when --churn is compared explicitly."
+	],
+	"memoryPeakMb": 336.7,
+	"tiers": [
+		{
+			"tier": 10,
+			"corpus": {
+				"resources": 10,
+				"files": 100,
+				"bytes": 819200,
+				"seedMs": 32.47990000000004
+			},
+			"reps": [
+				{
+					"upload": {
+						"wallMs": 440.00430000000006,
+						"items": 10,
+						"succeeded": 10,
+						"failed": 0,
+						"errors": [],
+						"stepMs": {
+							"stage": 57.86209999999983,
+							"create": 381.76129999999944,
+							"detect": 2.084499999999707
+						},
+						"perItemMs": {
+							"mean": 43.97169000000006,
+							"p95": 68.75929999999994,
+							"min": 35.17250000000013,
+							"max": 68.75929999999994
+						},
+						"itemsPerSec": 22.727050622005283,
+						"memoryPeakMb": 325.1
+					},
+					"meta": {
+						"wallMs": 25.458599999999933,
+						"items": 10,
+						"succeeded": 10,
+						"failed": 0,
+						"errors": [],
+						"stepMs": {
+							"rebuildAllMeta": 25.057199999999966
+						},
+						"perItemMs": {
+							"mean": 2.5124999999999544,
+							"p95": 5.891100000000051,
+							"min": 1.9717000000000553,
+							"max": 5.891100000000051
+						},
+						"itemsPerSec": 392.79457629249157,
+						"memoryPeakMb": 325.7
+					},
+					"listFilesCold": {
+						"wallMs": 226.36620000000016,
+						"items": 10,
+						"succeeded": 10,
+						"failed": 0,
+						"errors": [],
+						"stepMs": {
+							"listFiles": 226.09750000000076
+						},
+						"perItemMs": {
+							"mean": 22.61896000000006,
+							"p95": 42.19270000000006,
+							"min": 19.027500000000146,
+							"max": 42.19270000000006
+						},
+						"itemsPerSec": 44.1762065184643,
+						"memoryPeakMb": 328
+					},
+					"listFilesWarm": {
+						"wallMs": 31.33770000000004,
+						"items": 10,
+						"succeeded": 10,
+						"failed": 0,
+						"errors": [],
+						"stepMs": {
+							"listFiles": 31.110299999999825
+						},
+						"perItemMs": {
+							"mean": 3.1182800000000044,
+							"p95": 3.9846999999999753,
+							"min": 2.6974999999997635,
+							"max": 3.9846999999999753
+						},
+						"itemsPerSec": 319.1044652287816,
+						"memoryPeakMb": 328.4
+					},
+					"uploadDetectMs": 2.084499999999707
+				},
+				{
+					"upload": {
+						"wallMs": 362.1071000000002,
+						"items": 10,
+						"succeeded": 10,
+						"failed": 0,
+						"errors": [],
+						"stepMs": {
+							"stage": 47.13610000000017,
+							"create": 314.72649999999976,
+							"detect": 1.290799999999308
+						},
+						"perItemMs": {
+							"mean": 36.19182000000001,
+							"p95": 41.29899999999998,
+							"min": 33.59069999999974,
+							"max": 41.29899999999998
+						},
+						"itemsPerSec": 27.616138982085676,
+						"memoryPeakMb": 332.1
+					},
+					"meta": {
+						"wallMs": 20.78319999999985,
+						"items": 10,
+						"succeeded": 10,
+						"failed": 0,
+						"errors": [],
+						"stepMs": {
+							"rebuildAllMeta": 20.638700000000426
+						},
+						"perItemMs": {
+							"mean": 2.0658300000000054,
+							"p95": 3.203899999999976,
+							"min": 1.776600000000144,
+							"max": 3.203899999999976
+						},
+						"itemsPerSec": 481.1578582701447,
+						"memoryPeakMb": 332.3
+					},
+					"listFilesCold": {
+						"wallMs": 183.1496000000002,
+						"items": 10,
+						"succeeded": 10,
+						"failed": 0,
+						"errors": [],
+						"stepMs": {
+							"listFiles": 182.91900000000032
+						},
+						"perItemMs": {
+							"mean": 18.295470000000115,
+							"p95": 24.747499999999945,
+							"min": 15.272200000000339,
+							"max": 24.747499999999945
+						},
+						"itemsPerSec": 54.600173846953474,
+						"memoryPeakMb": 333.5
+					},
+					"listFilesWarm": {
+						"wallMs": 28.6561999999999,
+						"items": 10,
+						"succeeded": 10,
+						"failed": 0,
+						"errors": [],
+						"stepMs": {
+							"listFiles": 28.482899999999972
+						},
+						"perItemMs": {
+							"mean": 2.851689999999917,
+							"p95": 3.8728000000000975,
+							"min": 2.432299999999941,
+							"max": 3.8728000000000975
+						},
+						"itemsPerSec": 348.9646219666263,
+						"memoryPeakMb": 329.7
+					},
+					"uploadDetectMs": 1.290799999999308
+				},
+				{
+					"upload": {
+						"wallMs": 344.82190000000037,
+						"items": 10,
+						"succeeded": 10,
+						"failed": 0,
+						"errors": [],
+						"stepMs": {
+							"stage": 49.74279999999999,
+							"create": 294.8559,
+							"detect": 1.1783000000000357
+						},
+						"perItemMs": {
+							"mean": 34.464419999999976,
+							"p95": 39.990499999999884,
+							"min": 30.758600000000115,
+							"max": 39.990499999999884
+						},
+						"itemsPerSec": 29.00047821788578,
+						"memoryPeakMb": 336.7
+					},
+					"meta": {
+						"wallMs": 20.039299999999912,
+						"items": 10,
+						"succeeded": 10,
+						"failed": 0,
+						"errors": [],
+						"stepMs": {
+							"rebuildAllMeta": 19.901899999999387
+						},
+						"perItemMs": {
+							"mean": 1.992090000000053,
+							"p95": 2.387500000000273,
+							"min": 1.8121000000001004,
+							"max": 2.387500000000273
+						},
+						"itemsPerSec": 499.0194268262885,
+						"memoryPeakMb": 336.7
+					},
+					"listFilesCold": {
+						"wallMs": 194.9393,
+						"items": 10,
+						"succeeded": 10,
+						"failed": 0,
+						"errors": [],
+						"stepMs": {
+							"listFiles": 194.71799999999985
+						},
+						"perItemMs": {
+							"mean": 19.475800000000028,
+							"p95": 21.042699999999968,
+							"min": 18.251800000000003,
+							"max": 21.042699999999968
+						},
+						"itemsPerSec": 51.298019434767646,
+						"memoryPeakMb": 335.9
+					},
+					"listFilesWarm": {
+						"wallMs": 30.07089999999971,
+						"items": 10,
+						"succeeded": 10,
+						"failed": 0,
+						"errors": [],
+						"stepMs": {
+							"listFiles": 29.902600000001257
+						},
+						"perItemMs": {
+							"mean": 2.993309999999974,
+							"p95": 3.7878999999998086,
+							"min": 2.6575000000002547,
+							"max": 3.7878999999998086
+						},
+						"itemsPerSec": 332.5474129474042,
+						"memoryPeakMb": 332.6
+					},
+					"uploadDetectMs": 1.1783000000000357
+				}
+			],
+			"summary": {
+				"upload": {
+					"wallMs": {
+						"median": 362.1071000000002,
+						"min": 344.82190000000037,
+						"max": 440.00430000000006
+					},
+					"perItemMeanMs": {
+						"median": 36.19182000000001,
+						"min": 34.464419999999976,
+						"max": 43.97169000000006
+					}
+				},
+				"meta": {
+					"wallMs": {
+						"median": 20.78319999999985,
+						"min": 20.039299999999912,
+						"max": 25.458599999999933
+					},
+					"perItemMeanMs": {
+						"median": 2.0658300000000054,
+						"min": 1.992090000000053,
+						"max": 2.5124999999999544
+					}
+				},
+				"listFilesCold": {
+					"wallMs": {
+						"median": 194.9393,
+						"min": 183.1496000000002,
+						"max": 226.36620000000016
+					},
+					"perItemMeanMs": {
+						"median": 19.475800000000028,
+						"min": 18.295470000000115,
+						"max": 22.61896000000006
+					}
+				},
+				"listFilesWarm": {
+					"wallMs": {
+						"median": 30.07089999999971,
+						"min": 28.6561999999999,
+						"max": 31.33770000000004
+					},
+					"perItemMeanMs": {
+						"median": 2.993309999999974,
+						"min": 2.851689999999917,
+						"max": 3.1182800000000044
+					}
+				}
+			}
+		}
+	]
+}

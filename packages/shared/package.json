@@ -1,0 +1,33 @@
+{
+	"name": "@hoardodile/shared",
+	"version": "0.0.0",
+	"private": true,
+	"license": "GPL-3.0-only",
+	"type": "module",
+	"exports": {
+		".": "./src/index.ts",
+		"./pagination": "./src/pagination.ts",
+		"./errors": "./src/errors.ts",
+		"./immer": "./src/immer.ts",
+		"./dayjs": "./src/dayjs.ts",
+		"./usage-period": "./src/usage-period.ts",
+		"./desktop": "./src/desktop.ts"
+	},
+	"scripts": {
+		"dev": "tsc --noEmit --watch --preserveWatchOutput",
+		"build": "tsc --noEmit",
+		"lint": "tsc --noEmit",
+		"test": "vitest run --maxWorkers=2"
+	},
+	"devDependencies": {
+		"@hoardodile/sdk-types": "workspace:*",
+		"typescript": "catalog:",
+		"vitest": "catalog:"
+	},
+	"dependencies": {
+		"@hoardodile/schemas": "workspace:*",
+		"dayjs": "^1.11.21",
+		"immer": "^11.1.15",
+		"zod": "catalog:"
+	}
+}

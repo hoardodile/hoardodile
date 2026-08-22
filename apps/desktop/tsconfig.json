@@ -1,0 +1,15 @@
+{
+	"extends": "../../tsconfig.web.json",
+	"compilerOptions": {
+		"types": ["node", "vite/client", "vitest/globals"],
+		"lib": ["ESNext", "DOM", "DOM.Iterable"]
+	},
+	"include": [
+		"src/**/*.ts",
+		"src/**/*.tsx",
+		"vite.main.config.ts",
+		"vite.preload.config.ts",
+		"vite.wizard.config.ts",
+		"vitest.config.ts"
+	]
+}

@@ -1,0 +1,98 @@
+{
+	"schema": 1,
+	"kind": "io-micro",
+	"timestamp": "2026-08-12T17:25:37.458Z",
+	"config": {
+		"files": 100,
+		"time": 600,
+		"seed": 42
+	},
+	"machine": {
+		"platform": "win32",
+		"arch": "x64",
+		"cpus": 16,
+		"cpuModel": "13th Gen Intel(R) Core(TM) i5-13400F",
+		"node": "v24.18.0"
+	},
+	"caveats": [
+		"dirListing.entries measures a readdir withFileTypes over the bare-file resource folder (the production listing path); readFileWindow.64KB drains a 64KB createReadStream window (the production byte-range path).",
+		"zipEntries.parse measures the yauzl CD listing on a nested archive — the entry point for reading inside uploaded zip/tar files; sevenZip.list.cold is the whole-archive 7-Zip listing (one cold process spawn per call, ~20ms on Windows) and only exists when the bundled binary is present.",
+		"probeCache.hit/miss exercise the promise-valued LRU (miss includes the compute + store); paths.resource includes the assertSafeSegment path authority checks.",
+		"probe.image.* feed real >16MB and >32MB noise images. stream.41MB is the no-readRange fallback (libvips full-reads non-seekable input, so it is the upper bound); slice.17MB/slice.41MB are the production header-slice path — a 256KB header slice probed as a buffer. A regression that drops the slice path (or reintroduces whole-entry buffering) shows up as a 20-100x median jump on the slice tasks.",
+		"Tinybench runs each task as a hot loop until the --time budget; hot loops amortize syscall/page-cache effects, so this measures per-call CPU cost, not disk latency.",
+		"Only same-window paired runs are comparable — the machine shows bimodal load (up to 4x swings)."
+	],
+	"memoryPeakMb": 518.2,
+	"metrics": [
+		{
+			"name": "dirListing.entries",
+			"unit": "ms",
+			"median": 0.07799999999997453,
+			"min": 0.06539999999995416,
+			"max": 7.930100000000039
+		},
+		{
+			"name": "readFileWindow.64KB",
+			"unit": "ms",
+			"median": 7.522199999999884,
+			"min": 2.6781999999998334,
+			"max": 24.179599999999937
+		},
+		{
+			"name": "zipEntries.parse",
+			"unit": "ms",
+			"median": 1572.4628000000012,
+			"min": 643.5728999999992,
+			"max": 2106.896700000001
+		},
+		{
+			"name": "sevenZip.list.cold",
+			"unit": "ms",
+			"median": 27.968800000002375,
+			"min": 24.58309999999983,
+			"max": 33.82420000000275
+		},
+		{
+			"name": "probe.image.stream.41MB",
+			"unit": "ms",
+			"median": 22.473699999998644,
+			"min": 9.847999999998137,
+			"max": 35.26670000000013
+		},
+		{
+			"name": "probe.image.slice.17MB",
+			"unit": "ms",
+			"median": 1.1273999999975786,
+			"min": 0.27559999999721185,
+			"max": 12.008099999999104
+		},
+		{
+			"name": "probe.image.slice.41MB",
+			"unit": "ms",
+			"median": 1.3135999999976775,
+			"min": 0.2793999999994412,
+			"max": 8.500899999999092
+		},
+		{
+			"name": "probeCache.hit",
+			"unit": "ms",
+			"median": 0.00029999999969732016,
+			"min": 0.00019999999858555384,
+			"max": 9.465400000000955
+		},
+		{
+			"name": "probeCache.miss",
+			"unit": "ms",
+			"median": 0.00029999999969732016,
+			"min": 0.00019999999858555384,
+			"max": 42.48159999999916
+		},
+		{
+			"name": "paths.resource",
+			"unit": "ms",
+			"median": 0.003399999997782288,
+			"min": 0.002899999999499414,
+			"max": 10.456200000000536
+		}
+	]
+}

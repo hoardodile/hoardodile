@@ -1,0 +1,125 @@
+{
+	"schema": 1,
+	"kind": "db",
+	"timestamp": "2026-08-12T09:26:38.651Z",
+	"config": {
+		"rows": 5000,
+		"time": 600,
+		"seed": 42
+	},
+	"machine": {
+		"platform": "win32",
+		"arch": "x64",
+		"cpus": 16,
+		"cpuModel": "13th Gen Intel(R) Core(TM) i5-13400F",
+		"node": "v24.18.0"
+	},
+	"caveats": [
+		"Tinybench runs each task as a hot loop until the --time budget; this amortizes per-iteration overhead and measures steady-state per-request cost (Drizzle SQL build + cached prepare + execute + hydrate).",
+		"listPage.nameQuery uses a LIKE '%bench res 1%' filter; listPage.facet exercises the json_extract(searchMeta) EXISTS subquery; listPage.random the seeded hash() ordering.",
+		"rawSql.preppedGet is the raw better-sqlite3 floor (prepared once inside the loop, cached prepare); the delta to the Drizzle tasks is the query-builder overhead.",
+		"Corpus: `--rows` resources with ~15% facet rows, ~30% with a tag, ~20% with a character; 50 tags (10 pinned) and 30 characters seed the listCardPage batch joins.",
+		"Only same-window paired runs are comparable — the machine shows bimodal load (up to 4x swings)."
+	],
+	"memoryPeakMb": 945.2,
+	"metrics": [
+		{
+			"name": "findById",
+			"unit": "ms",
+			"median": 0.24639999999999418,
+			"min": 0.21309999999994034,
+			"max": 3.923000000000229
+		},
+		{
+			"name": "findCardById",
+			"unit": "ms",
+			"median": 0.597700000000259,
+			"min": 0.5037999999999556,
+			"max": 2.2779999999997926
+		},
+		{
+			"name": "listPage",
+			"unit": "ms",
+			"median": 2.5820999999996275,
+			"min": 2.26050000000032,
+			"max": 5.2578999999996086
+		},
+		{
+			"name": "listPage.countOnly",
+			"unit": "ms",
+			"median": 0.11230000000068685,
+			"min": 0.09360000000015134,
+			"max": 1.130500000000211
+		},
+		{
+			"name": "listPage.pageOnly",
+			"unit": "ms",
+			"median": 0.38550000000032014,
+			"min": 0.3352000000004409,
+			"max": 1.4291000000002896
+		},
+		{
+			"name": "listPage.metaBatch",
+			"unit": "ms",
+			"median": 0.5065999999997075,
+			"min": 0.440799999999399,
+			"max": 5.9539999999997235
+		},
+		{
+			"name": "listPage.hydrateTags",
+			"unit": "ms",
+			"median": 0.34290000000055443,
+			"min": 0.29320000000006985,
+			"max": 1.3070000000006985
+		},
+		{
+			"name": "listPage.nameQuery",
+			"unit": "ms",
+			"median": 4.613199999999779,
+			"min": 4.1327000000001135,
+			"max": 6.763799999999719
+		},
+		{
+			"name": "listPage.facet",
+			"unit": "ms",
+			"median": 5.057099999999991,
+			"min": 4.283500000001368,
+			"max": 8.313599999999497
+		},
+		{
+			"name": "listPage.random",
+			"unit": "ms",
+			"median": 5.142900000000736,
+			"min": 4.513199999999415,
+			"max": 6.154999999998836
+		},
+		{
+			"name": "listCardPage",
+			"unit": "ms",
+			"median": 15.204200000000128,
+			"min": 13.914699999999357,
+			"max": 19.11499999999978
+		},
+		{
+			"name": "rowToResource.200rows",
+			"unit": "ms",
+			"median": 0.5905000000002474,
+			"min": 0.5522999999993772,
+			"max": 1.9209000000009837
+		},
+		{
+			"name": "rowToResourceCard.200rows",
+			"unit": "ms",
+			"median": 0.6380000000008295,
+			"min": 0.5640000000003056,
+			"max": 4.621399999999994
+		},
+		{
+			"name": "rawSql.preppedGet",
+			"unit": "ms",
+			"median": 0.21390000000064902,
+			"min": 0.12449999999989814,
+			"max": 1.8495999999995547
+		}
+	]
+}

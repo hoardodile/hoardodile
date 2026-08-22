@@ -1,0 +1,192 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { fireEvent, render, screen } from "@testing-library/react"
+import { describe, expect, it, vi } from "vitest"
+import { pluginKeys } from "@/features/plugin/pluginApi"
+import { AUDIO_TILE_HEIGHT } from "./ResAudioPlayer"
+import type { ResMediaThumbResource } from "./ResMediaThumb"
+import { ResMediaThumb } from "./ResMediaThumb"
+
+const PLUGIN_ID = "11111111-1111-1111-1111-111111111111"
+
+function makeResource(
+	overrides?: Partial<ResMediaThumbResource>,
+): ResMediaThumbResource {
+	return {
+		id: "res-1",
+		name: "Test Resource",
+		contentPluginId: PLUGIN_ID,
+		coverMeta: { kind: "image", width: 100, height: 100 },
+		sourceMeta: {},
+		searchMeta: { v: 1, facets: { video: true, audio: true } },
+		fileStats: undefined,
+		updatedAt: 1,
+		...overrides,
+	}
+}
+
+function renderWithTemplate(
+	template: string,
+	resourceOverrides?: Partial<ResMediaThumbResource>,
+) {
+	const consoleError = vi
+		.spyOn(console, "error")
+		.mockImplementation(() => undefined)
+
+	const queryClient = new QueryClient({
+		defaultOptions: { queries: { retry: false } },
+	})
+
+	queryClient.setQueryData(pluginKeys.listAll(), [
+		{
+			id: PLUGIN_ID,
+			manifest: {
+				id: PLUGIN_ID,
+				name: "Test Plugin",
+				description: "A plugin for testing",
+				version: "1.0.0",
+				permissions: {},
+				ui: {
+					card: {
+						image: {
+							tl: [template],
+						},
+					},
+					search: {
+						kinds: [
+							{ key: "video", label: "Video", icon: "{{icon('Video')}}" },
+							{ key: "audio", label: "Audio", icon: "{{icon('Music')}}" },
+						],
+					},
+				},
+			},
+			enabled: true,
+			priority: 0,
+			missing: false,
+			builtin: false,
+			dev: false,
+		},
+	])
+
+	render(
+		<QueryClientProvider client={queryClient}>
+			<ResMediaThumb resource={makeResource(resourceOverrides)} />
+		</QueryClientProvider>,
+	)
+
+	const keyWarning = consoleError.mock.calls.find(
+		(call) =>
+			typeof call[0] === "string" &&
+			call[0].includes('Each child in a list should have a unique "key"'),
+	)
+	consoleError.mockRestore()
+	return keyWarning
+}
+
+function renderThumb(resourceOverrides?: Partial<ResMediaThumbResource>) {
+	const queryClient = new QueryClient({
+		defaultOptions: { queries: { retry: false } },
+	})
+	queryClient.setQueryData(pluginKeys.listAll(), [])
+	return render(
+		<QueryClientProvider client={queryClient}>
+			<ResMediaThumb resource={makeResource(resourceOverrides)} />
+		</QueryClientProvider>,
+	)
+}
+
+describe("ResMediaThumb", () => {
+	it("renders search-kind icons without a missing key warning", () => {
+		expect(renderWithTemplate("{{searchKindIcons()}}")).toBeUndefined()
+	})
+
+	it("renders joined search-kind icons without a missing key warning", () => {
+		expect(
+			renderWithTemplate(
+				"{{join(' ', searchKindIcons(), bytes(file.sizeBytes))}}",
+				{
+					fileStats: { count: 1, sizeBytes: 1024 },
+				},
+			),
+		).toBeUndefined()
+	})
+
+	it("gives artwork-less audio the resident player instead of a thumbnail", () => {
+		renderThumb({ coverMeta: { kind: "audio" } })
+		const tile = screen.getByTestId("resource-audio-tile-res-1")
+		expect(screen.queryByTestId("resource-thumb-res-1")).toBeNull()
+		// The tile owns a deliberate rectangle: audio has no intrinsic
+		// geometry to scale, so the height is fixed and the width follows
+		// the card.
+		const box = tile.parentElement
+		expect(box?.style.height).toBe(`${AUDIO_TILE_HEIGHT}px`)
+		expect(box?.style.width).toBe("100%")
+	})
+
+	it("keeps the thumbnail and overlays the player when audio has artwork", () => {
+		renderThumb({ coverMeta: { kind: "audio", width: 300, height: 300 } })
+		expect(screen.queryByTestId("resource-thumb-res-1")).not.toBeNull()
+		expect(screen.queryByTestId("resource-audio-tile-res-1")).toBeNull()
+		expect(screen.queryByTestId("resource-audio-toggle-res-1")).not.toBeNull()
+	})
+
+	it("leaves non-audio covers untouched", () => {
+		renderThumb()
+		expect(screen.queryByTestId("resource-thumb-res-1")).not.toBeNull()
+		expect(screen.queryByTestId("resource-audio-res-1")).toBeNull()
+	})
+
+	it("shows the resource name instead of an image when there is no cover", () => {
+		const queryClient = new QueryClient({
+			defaultOptions: { queries: { retry: false } },
+		})
+		queryClient.setQueryData(pluginKeys.listAll(), [
+			{
+				id: PLUGIN_ID,
+				manifest: {
+					id: PLUGIN_ID,
+					name: "Test Plugin",
+					description: "A plugin for testing",
+					version: "1.0.0",
+					permissions: {},
+				},
+				enabled: true,
+				priority: 0,
+				missing: false,
+				builtin: false,
+				dev: false,
+			},
+		])
+		render(
+			<QueryClientProvider client={queryClient}>
+				<ResMediaThumb resource={makeResource({ coverMeta: undefined })} />
+			</QueryClientProvider>,
+		)
+		// jsdom never loads (or errors) images, so drive the 404 path by
+		// firing the error event the real route's 404 would produce.
+		fireEvent.error(screen.getByTestId("resource-thumb-img-res-1"))
+		const empty = screen.getByTestId("resource-thumb-empty-res-1")
+		expect(empty).toHaveTextContent("Test Resource")
+		expect(screen.getByText("Test Resource")).toHaveClass(
+			"text-base",
+			"font-bold",
+		)
+		expect(screen.queryByTestId("resource-thumb-img-res-1")).toBeNull()
+		// The media thumb hands the tile an `absolute` stretch layer; the
+		// base `relative` must merge away or the box collapses to zero
+		// height and clips the empty content.
+		const thumbRoot = screen.getByTestId("resource-thumb-res-1")
+		expect(thumbRoot.className.split(/\s+/)).toContain("absolute")
+		expect(thumbRoot.className.split(/\s+/)).not.toContain("relative")
+		expect(thumbRoot).toHaveClass("bg-muted")
+	})
+
+	it("still mounts a cover img when coverMeta is the empty sentinel", () => {
+		renderThumb({ coverMeta: { empty: true } })
+		expect(screen.getByTestId("resource-thumb-img-res-1")).toBeInTheDocument()
+		fireEvent.error(screen.getByTestId("resource-thumb-img-res-1"))
+		expect(screen.queryByTestId("resource-thumb-img-res-1")).toBeNull()
+		expect(screen.getByTestId("resource-thumb-empty-res-1")).toHaveTextContent(
+			"Test Resource",
+		)
+	})
+})

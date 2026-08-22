@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+  <link rel="manifest" href="/site.webmanifest" />
+  <!-- NOTE: initial-scale must stay in sync with MOBILE_INITIAL_SCALE in @hoardodile/ui/viewport -->
+  <meta name="viewport" content="width=device-width, initial-scale=0.8, maximum-scale=1.0, user-scalable=0, viewport-fit=cover" />
+  <title>Hoardodile</title>
+  <script>
+    // Resolve theme before React mounts so the first paint matches the
+    // user's stored preference. Without this, body would briefly render
+    // light-token background before ThemeProvider's useEffect flips it.
+    // Storage keys/palette names MUST match `lib/keys.ts`
+    // (`prefKeys.theme`, `prefKeys.themePalette`, `prefKeys.iconStyle`)
+    // and `ThemeProvider.THEME_PALETTES` / `IconStyleProvider.ICON_STYLES`.
+    (() => {
+      var t, p, resolved, iconStyle;
+      try {
+        t = localStorage.getItem("theme");
+        p = localStorage.getItem("themePalette");
+        resolved = t === "dark" || t === "light"
+          ? t
+          : (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.classList.add(resolved);
+        // Only non-default palettes get a class; the default (`mono`)
+        // lives in :root / .dark. Stale ids (e.g. the removed `warm-archive`
+        // palette) are ignored and fall back to the default look.
+        if (p === "sage" || p === "parchment" || p === "azure" || p === "hoardodile") {
+          document.documentElement.classList.add(`theme-${p}`);
+        }
+        // Duotone is the default icon rendering; stale or missing values
+        // leave the attribute unset (identical look).
+        iconStyle = localStorage.getItem("icons.style");
+        if (iconStyle === "grayscale" || iconStyle === "linear") {
+          document.documentElement.setAttribute("data-icon-style", iconStyle);
+        }
+      } catch (_) {
+        document.documentElement.classList.add("light");
+      }
+    })();
+  </script>
+  <style>
+    /* Scroll on demand only: the app shell's <main> owns the single
+       always-on scrollbar (see AppShell), so a permanent viewport bar
+       here would stack a second one. Pages without a shell (login) can
+       still overflow and scroll the viewport as usual. */
+    body {
+      overflow-y: auto;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+
+</html>

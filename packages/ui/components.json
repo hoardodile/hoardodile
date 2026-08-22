@@ -1,0 +1,27 @@
+{
+	"$schema": "https://ui.shadcn.com/schema.json",
+	"style": "base-vega",
+	"rsc": false,
+	"tsx": true,
+	"tailwind": {
+		"config": "",
+		"css": "src/styles/theme.css",
+		"baseColor": "neutral",
+		"cssVariables": true,
+		"prefix": ""
+	},
+	"iconLibrary": "lucide",
+	"rtl": false,
+	"menuColor": "default",
+	"menuAccent": "subtle",
+	"aliases": {
+		"components": "@hoardodile/ui/components",
+		"utils": "@hoardodile/ui/lib/utils",
+		"ui": "@hoardodile/ui/components",
+		"lib": "@hoardodile/ui/lib",
+		"hooks": "@hoardodile/ui/hooks"
+	},
+	"registries": {
+		"@reui": "https://reui.io/r/{style}/{name}.json"
+	}
+}

@@ -1,0 +1,64 @@
+node_modules
+dist
+build
+# vite-plugin-pwa dev-mode output
+dev-dist
+
+# dotenv environment variable files
+.env
+.env.development.local
+.env.test.local
+.env.production.local
+.env.local
+
+# caches
+.cache
+*.tsbuildinfo
+temp
+tmp
+.pnpm-store
+.turbo
+# Workbench render cache written by `hoardodile plugin dev`
+.hoardodile
+
+# Finder (MacOS) folder config
+.DS_Store
+
+# lefthook local overrides
+lefthook-local.yml
+
+.tanstack
+.playwright
+
+# TanStack Router generated route tree
+apps/web/src/routeTree.gen.ts
+
+# Generated third-party license artifacts
+apps/web/public/licenses.json
+apps/web/public/LICENSE
+
+# Playwright
+apps/web/test-results
+apps/web/playwright-report
+apps/web/stats.html
+
+# Vitest v8 coverage reports
+coverage
+
+# Real-world plugin sample downloads (plugins/*/testdata-real)
+testdata-real
+
+# Docs site (Next.js / Nextra)
+apps/docs/.next
+apps/docs/out
+apps/docs/next-env.d.ts
+# shadcn radix-to-base migration working reports
+.migration/
+
+# Playwright MCP artifacts
+.playwright-mcp/
+
+# Desktop Electron staging and installer output
+apps/desktop/extra-resources/
+apps/desktop/release/
+apps/desktop/out/

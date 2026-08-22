@@ -1,0 +1,22 @@
+name: Feature Request
+description: Suggest a use case for hoardodile
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Issues here are for discussing use cases. **Pull requests are not accepted** — please open a Discussion to propose changes.
+  - type: textarea
+    id: usecase
+    attributes:
+      label: Use case
+      description: The scenario and the problem it solves. Concrete scenarios are far more useful than abstract ideas.
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Desired solution
+      description: What you would like hoardodile to do. Optional — the use case matters more.
+    validations:
+      required: false

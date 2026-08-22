@@ -1,0 +1,15 @@
+{
+	"extends": "../../tsconfig.json",
+	"compilerOptions": {
+		"lib": ["ESNext"],
+		"paths": {
+			"src/*": ["./src/*"]
+		}
+	},
+	"include": [
+		"src/**/*.ts",
+		"bench/**/*.ts",
+		"vite.config.ts",
+		"scripts/assert-media-bins.d.ts"
+	]
+}

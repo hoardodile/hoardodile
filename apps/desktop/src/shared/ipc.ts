@@ -1,0 +1,23 @@
+export const HIDDEN_SWITCH = "--hidden"
+
+export const IPC = {
+	windowMinimize: "desktop:window:minimize",
+	windowToggleMaximize: "desktop:window:toggle-maximize",
+	windowClose: "desktop:window:close",
+	windowIsMaximized: "desktop:window:is-maximized",
+	windowMaximizedChanged: "desktop:window:maximized-changed",
+	updatesStatus: "desktop:updates:status",
+	updatesChanged: "desktop:updates:changed",
+	updatesCheck: "desktop:updates:check",
+	updatesQuitAndInstall: "desktop:updates:quit-and-install",
+	pickLibraryFolder: "desktop:library:pick",
+	relaunch: "desktop:relaunch",
+	getConfig: "desktop:config:get",
+	setConfig: "desktop:config:set",
+	configSync: "desktop:config:sync",
+	changeLibraryFolder: "desktop:library:change",
+	setSharedFolderRoot: "desktop:shared-folder:set",
+	setSharedFolderEnabled: "desktop:shared-folder:enabled",
+	completeWizard: "desktop:wizard:complete",
+	wizardDefaults: "desktop:wizard:defaults",
+} as const

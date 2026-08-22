@@ -1,0 +1,51 @@
+{
+	"name": "@hoardodile/workbench",
+	"version": "0.0.0",
+	"license": "MIT",
+	"description": "Offline dev workbench for hoardodile content plugins.",
+	"keywords": [
+		"hoardodile",
+		"plugin",
+		"workbench",
+		"dev",
+		"mock"
+	],
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/hoardodile/hoardodile.git",
+		"directory": "plugins/workbench"
+	},
+	"type": "module",
+	"exports": {
+		".": {
+			"types": "./dist/serve.d.mts",
+			"default": "./dist/serve.mjs"
+		}
+	},
+	"files": [
+		"dist"
+	],
+	"sideEffects": false,
+	"engines": {
+		"node": ">=24"
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"scripts": {
+		"prepack": "pnpm build",
+		"dev": "node scripts/dev.mjs",
+		"build": "vite build && node scripts/copy-serve.mjs",
+		"lint": "tsc --noEmit"
+	},
+	"devDependencies": {
+		"@hoardodile/host-web": "workspace:*",
+		"@hoardodile/sdk-types": "workspace:*",
+		"@hoardodile/sdk-web": "workspace:*",
+		"@playwright/test": "catalog:",
+		"@types/node": "catalog:",
+		"typescript": "catalog:",
+		"vite": "catalog:",
+		"zod": "catalog:"
+	}
+}

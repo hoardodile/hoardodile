@@ -1,0 +1,43 @@
+packages:
+  - apps/*
+  - packages/*
+  - plugins/*
+allowBuilds:
+  '@derhuerst/ffprobe-static': true
+  '@hoardodile/7z-bin': true
+  # 13.x bundles per-platform prebuilds loaded at runtime; its implicit
+  # node-gyp build (binding.gyp) is unnecessary and needs a Python toolchain.
+  better-sqlite3: false
+  electron: true
+  electron-winstaller: false
+  esbuild: true
+  ffmpeg-static: true
+  lefthook: true
+catalog:
+  '@playwright/test': ^1.62.1
+  '@rolldown/plugin-babel': ^0.2.3
+  '@tailwindcss/vite': ^4.3.3
+  '@testing-library/jest-dom': ^7.0.0
+  '@testing-library/react': ^16.3.2
+  '@types/node': ^26.1.2
+  '@types/react': ^19.2.18
+  '@types/react-dom': ^19.2.4
+  '@vitejs/plugin-react': ^6.0.5
+  babel-plugin-react-compiler: ^1.0.0
+  es-toolkit: ^1.50.0
+  ffmpeg-static: ^5.3.0
+  jsdom: ^30.0.1
+  react: ^19.2.8
+  react-dom: ^19.2.8
+  react-use: ^17.6.1
+  '@solar-icons/react': ^2.0.0
+  tailwindcss: ^4.3.3
+  tsup: ^8.5.1
+  typescript: ^7.0.2
+  vite: ^8.2.0
+  vite-node: ^6.0.0
+  vitest: ^4.1.10
+  zod: ^4.4.3
+  zustand: ^5.0.14
+minimumReleaseAgeExclude:
+  - '@hoardodile/7z-bin@1.1.0'

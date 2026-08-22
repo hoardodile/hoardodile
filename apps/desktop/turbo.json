@@ -1,0 +1,17 @@
+{
+	"extends": ["//"],
+	"tasks": {
+		"build": {
+			"dependsOn": ["@hoardodile/shared#build", "@hoardodile/ui#build"],
+			"outputs": ["out/**"]
+		},
+		"lint": {
+			"dependsOn": ["@hoardodile/shared#build", "@hoardodile/ui#build"],
+			"outputs": []
+		},
+		"test": {
+			"dependsOn": ["@hoardodile/shared#build", "@hoardodile/ui#build"],
+			"outputs": []
+		}
+	}
+}

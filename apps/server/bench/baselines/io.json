@@ -1,0 +1,844 @@
+{
+	"schema": 1,
+	"kind": "io",
+	"timestamp": "2026-08-12T09:25:21.466Z",
+	"config": {
+		"files": 10,
+		"bytes": 262144,
+		"poolNoise": 0,
+		"plugins": "stub",
+		"repeat": 2,
+		"seed": 42
+	},
+	"machine": {
+		"platform": "win32",
+		"arch": "x64",
+		"cpus": 16,
+		"cpuModel": "13th Gen Intel(R) Core(TM) i5-13400F",
+		"node": "v24.18.0"
+	},
+	"caveats": [
+		"Only same-window paired runs are comparable — the machine shows bimodal load (up to 4x swings).",
+		"Upload phases run sequentially; read phases use adaptive concurrency (max cpus, initial cpus-1) like production.",
+		"Step/hook aggregates are wall-time sums across concurrent items; they exceed phase wall time in proportion to parallelism.",
+		"The corpus is pseudo-random (incompressible) bytes; the stub is the in-process file-contract plugin (real CD parse + zip IO, no probing), real mode adds the sandbox RPC of the builtin file plugin (detect + statFiles round-trips per listFiles). Meta queues are drained between phases; upload cover render is out of scope (precache bench covers it).",
+		"listFiles.cold / byteRange.first start from a wiped local/cache + cleared zip CD cache (cold restart); warm phases reuse them.",
+		"detect step is the plugin detectFirstMatch wall time captured inside resource.create — the only finalize step not visible from outside."
+	],
+	"memoryPeakMb": 392.2,
+	"tiers": [
+		{
+			"tier": 100,
+			"corpus": {
+				"resources": 100,
+				"files": 10,
+				"bytes": 262144,
+				"poolNoise": 0,
+				"seedMs": 2.7679999999998017
+			},
+			"reps": [
+				{
+					"upload": {
+						"phase": {
+							"wallMs": 6016.772999999999,
+							"items": 100,
+							"succeeded": 100,
+							"failed": 0,
+							"errors": [],
+							"stepMs": {
+								"stage": 3733.019399999989,
+								"create": 2272.292000000001,
+								"detect": 1.23050000000012
+							},
+							"perItemMs": {
+								"mean": 60.14621599999995,
+								"p95": 86.96339999999964,
+								"min": 27.847899999999754,
+								"max": 200.5632000000005
+							},
+							"itemsPerSec": 16.62020488391369,
+							"memoryPeakMb": 386.4
+						},
+						"detectMs": 1.23050000000012,
+						"ids": [
+							"e3fc4ff5-fc9c-49bf-a65d-ae96879b43e8",
+							"210b8d39-3940-4650-aeb3-a957de40c5e5",
+							"80365350-7b64-4594-befe-e59705f17d38",
+							"4c470df8-9c59-44e5-a86f-27d1d9470e8a",
+							"47b165af-b361-4b28-bb95-ff7d9db4ae5d",
+							"e3d6a8a0-099a-4760-b48b-412b739dcb1d",
+							"20c42c0e-f478-4180-9ad9-938ff0e73856",
+							"1f5b46eb-21b2-4933-a803-4ca4426d0e37",
+							"38bf0785-ee11-4cc2-8c27-2fe519159bcb",
+							"ef11f3d0-060d-4dc4-a6af-8fa184d8d134",
+							"8b903622-1197-47f9-9913-b8e51432b351",
+							"037e32d3-e4c0-4c54-a404-d57c009c7482",
+							"ddbb8e76-5f7a-4a15-ae34-3123bc391a1e",
+							"0e6c334c-0eb0-4a0b-b9ba-699eae04f184",
+							"6e61fc31-9997-4776-9140-c4f515a180f4",
+							"302720f7-6d07-4960-ba95-7af5a9a2d59e",
+							"1af365b1-39d2-455c-8c07-b5c546be7be9",
+							"b5a76741-acd8-4d35-b230-276df7c0bd96",
+							"d74c36ba-35f5-4c26-9f1c-61a2ea66ee35",
+							"af99c207-a71a-4674-a43b-35d4c8e6f6fd",
+							"d2ec6e69-4c0b-484c-8df2-3947699f98ab",
+							"d9c2aa40-f4e3-4a19-9d6c-43a84ae81486",
+							"6fe72c88-619d-47f2-a498-096cf0ad39bc",
+							"d03532d3-d641-473e-86e0-3453b8e928a7",
+							"38885b1c-6868-407f-86f9-918995d8b626",
+							"db3022a2-00ab-441a-a327-c800c33923e6",
+							"80ee3f20-6eeb-4502-9c70-77e7e4b9f185",
+							"7f1b32fe-f799-4d46-bc2a-3da013f475e4",
+							"0f8114e0-43f4-4090-9abf-10e24cee8f0b",
+							"ab707677-6210-4d20-844d-fb8dd3317eba",
+							"074ac2ce-71e8-4c44-b4ce-f6449e7c0394",
+							"e64ccd55-a323-40af-8002-4cdc175b688e",
+							"29439a43-7acf-4dd6-ae6b-781689692dd6",
+							"bd340259-7e4b-4a8a-89a3-23b94f4cd7c6",
+							"c31811ab-10f7-47ea-9cbf-96387b18b641",
+							"b23d8f7b-c579-4a40-b1eb-c97e6a5d2d66",
+							"31d97ab9-6837-473a-95b2-3d2e6f6890ad",
+							"12c74159-895e-462e-a978-a05661eda1d5",
+							"12199415-ce37-44bf-b400-3bed2448f21b",
+							"6bb32c4a-10d8-4e68-a38e-68df04e6553b",
+							"02bf6ceb-0758-4d3b-ac17-2aaf20d5bec6",
+							"870f2b2c-d82b-418c-b518-17adb4107aae",
+							"21d75ad5-63cf-45c5-9d38-3428f86ddc3d",
+							"f5a81e2c-1bcb-4420-ac79-cf2b3a17a3d1",
+							"969f0ce5-a452-4ae8-93f3-c69c587705b0",
+							"6f22c728-f7d6-4507-8f4b-ebb60bd35d4b",
+							"2ed87c4f-3ab2-4d39-b279-ea218593dde4",
+							"5b6e26b1-49b5-43cf-9747-0361ff91e30c",
+							"d8ef5610-20ea-4756-bf50-4a63d15d41e5",
+							"e896c187-2049-4851-ac97-66f5e30cbe95",
+							"9b09502d-4427-416e-b00f-5153169dbec9",
+							"627c8a17-f0c4-4825-9138-97c80855ae2b",
+							"7dd6e341-daf0-494a-b3f3-4e7588f39dad",
+							"504057d5-9933-4c49-8f3e-9498eafffb1f",
+							"a20877fe-52d3-4ea8-9043-056be58f2803",
+							"c4faf1d5-3c8e-4aae-8b0a-11f5177b331e",
+							"a1e75c7c-ce2b-4f5c-b9a3-c5b348691dea",
+							"b8465341-ec7a-42b7-830b-77eb7c530374",
+							"2cbf3cab-2a9f-4bc3-9984-70c7d9e03e77",
+							"17a32d63-a6fd-444e-846d-aa8cd9387b5f",
+							"ecb2a67d-65be-483c-bbb2-bbe290e6e561",
+							"0bb992cc-4ed2-44c6-971d-f3cd44bdc065",
+							"8bbc4b29-dbbe-4d96-bbbf-df86bf2b6bd8",
+							"b65de045-3bf7-4efe-92fe-84ffce8d412f",
+							"108a9136-671b-4796-ba93-1c57b5facfa9",
+							"4dafb595-43a6-41d2-893e-a286d4bc6e33",
+							"af826a9b-b7fa-4cf7-a2ab-a8500606c9db",
+							"12a22c46-88c8-4dba-a296-eda897a439c9",
+							"e74c04b3-e07e-4cad-bb18-66efee668501",
+							"548f7c46-b19a-4758-be93-c21024f23274",
+							"8d71c699-c3e4-423c-a59c-93782c2d1214",
+							"474098b2-eb2c-4b76-b7c1-565b621c0414",
+							"398f77cd-588f-4bb5-98e8-35ec1b7bbed2",
+							"2cfc5590-b5c0-4e9e-9eae-e753bf7374d5",
+							"82bf65e4-3790-4a1c-9df7-7ac4f8eecc5b",
+							"a62e7592-8ef0-42b2-b1ba-f41c27657bb6",
+							"e7276d89-eb2d-47f9-a917-c1ab9e62f053",
+							"f3db6ba5-6d02-4470-b3e0-1f68e8b44841",
+							"61af3c89-ce42-4f8e-a31e-cd76d8806671",
+							"51255b82-cd0a-4b72-84a5-39ee57d10d4f",
+							"a90b6833-0b1f-4707-834b-363d93ccc59d",
+							"5512c19e-08bf-42f8-816b-739e9c5f14ca",
+							"9c9e8648-88a6-4e3b-a319-7e4af820b3f9",
+							"94514070-3e52-4d44-9bc6-f8d1f814d722",
+							"6e668d2f-5e5a-48f1-bee3-2c5604a4320b",
+							"1efba254-78b9-43c5-9e9e-f0d8559fe42d",
+							"c1ca41fb-cd4c-4b6f-8465-787f342e6850",
+							"452d9919-d863-43b0-938e-86b4ada8e901",
+							"c7f98cb6-797f-4c76-bd74-9123cf7c2288",
+							"e3a17240-94b2-428f-8e1f-87185dbd04d5",
+							"e3acf87f-12ef-4694-b168-251327cdacc6",
+							"c3a1e50d-5a09-40dd-a720-907a3c5bcb84",
+							"7e137fb1-da28-4801-94c6-39a619928234",
+							"91c7f7a1-16ca-4cae-8fe4-a4dd8e1c13d6",
+							"9f17c3a2-cd87-4d06-aa1c-6cacbbaee28c",
+							"b090495f-ae4c-4b88-a3b9-4792f3a0c596",
+							"3ea3be7d-0a0d-4b1d-92da-a7da745d6f66",
+							"9428f8e4-d1b7-468e-acb1-442f3468780b",
+							"80fee103-2267-4103-abfe-a4364db800ca",
+							"c47f111d-2f34-4023-909c-359abd7f20d7"
+						]
+					},
+					"archiveStored": {
+						"phase": {
+							"wallMs": 103.65470000000005,
+							"items": 2,
+							"succeeded": 2,
+							"failed": 0,
+							"errors": [],
+							"stepMs": {
+								"stage": 26.966699999999946,
+								"create": 61.21090000000004,
+								"detect": 0.02080000000023574
+							},
+							"perItemMs": {
+								"mean": 51.806049999999686,
+								"p95": 59.57309999999961,
+								"min": 44.03899999999976,
+								"max": 59.57309999999961
+							},
+							"itemsPerSec": 19.2948317828328,
+							"memoryPeakMb": 389.5
+						},
+						"detectMs": 0.02080000000023574,
+						"ids": [
+							"c4a0cd0f-316d-46ac-a675-e16e5cb171c5",
+							"5955e6d4-cd90-4368-9c2a-6544db99fe00"
+						]
+					},
+					"archiveDeflate": {
+						"phase": {
+							"wallMs": 100.79460000000017,
+							"items": 2,
+							"succeeded": 2,
+							"failed": 0,
+							"errors": [],
+							"stepMs": {
+								"stage": 6.305699999999888,
+								"create": 55.5587000000005,
+								"detect": 0.0227999999997337
+							},
+							"perItemMs": {
+								"mean": 50.376650000000154,
+								"p95": 51.71929999999975,
+								"min": 49.03400000000056,
+								"max": 51.71929999999975
+							},
+							"itemsPerSec": 19.842332823385348,
+							"memoryPeakMb": 388.9
+						},
+						"detectMs": 0.0227999999997337,
+						"ids": [
+							"d39ed620-7fac-4c3e-a63b-ca08d1a8a095",
+							"2b0f6a82-8a8e-4943-bca3-88bb2e84e02c"
+						]
+					},
+					"detail": {
+						"wallMs": 465.2464,
+						"items": 100,
+						"succeeded": 100,
+						"failed": 0,
+						"errors": [],
+						"stepMs": {
+							"detail": 6592.001599999993
+						},
+						"perItemMs": {
+							"mean": 65.92625099999995,
+							"p95": 107.46860000000015,
+							"min": 21.115200000000186,
+							"max": 118.94380000000001
+						},
+						"itemsPerSec": 214.93986842241014,
+						"memoryPeakMb": 392.2
+					},
+					"listCards": {
+						"wallMs": 26.822000000000116,
+						"items": 2,
+						"succeeded": 2,
+						"failed": 0,
+						"errors": [],
+						"stepMs": {},
+						"perItemMs": {
+							"mean": 13.407649999999194,
+							"p95": 25.966699999999037,
+							"min": 0.848599999999351,
+							"max": 25.966699999999037
+						},
+						"itemsPerSec": 74.56565505927936,
+						"memoryPeakMb": 0
+					},
+					"listFilesCold": {
+						"wallMs": 419.8664000000008,
+						"items": 100,
+						"succeeded": 100,
+						"failed": 0,
+						"errors": [],
+						"stepMs": {
+							"listFiles": 5995.919199999998
+						},
+						"perItemMs": {
+							"mean": 59.965369000000045,
+							"p95": 102.5048999999999,
+							"min": 35.07839999999851,
+							"max": 123.5562000000009
+						},
+						"itemsPerSec": 238.17099915592152,
+						"memoryPeakMb": 341.2
+					},
+					"listFilesWarm": {
+						"wallMs": 19.762500000000728,
+						"items": 100,
+						"succeeded": 100,
+						"failed": 0,
+						"errors": [],
+						"stepMs": {
+							"listFiles": 144.52879999998913
+						},
+						"perItemMs": {
+							"mean": 1.502705000000151,
+							"p95": 2.8105999999988853,
+							"min": 0.22960000000057335,
+							"max": 3.5375999999996566
+						},
+						"itemsPerSec": 5060.088551549466,
+						"memoryPeakMb": 340.2
+					},
+					"byteRangeFirst": {
+						"wallMs": 255.7378000000008,
+						"items": 100,
+						"succeeded": 100,
+						"failed": 0,
+						"errors": [],
+						"stepMs": {
+							"resolveView": 120.87680000000364,
+							"resolveRange": 707.2951000000066,
+							"slice": 2888.380099999993
+						},
+						"perItemMs": {
+							"mean": 37.18403100000003,
+							"p95": 62.55329999999958,
+							"min": 11.594600000000355,
+							"max": 62.95180000000073
+						},
+						"itemsPerSec": 391.0254956443658,
+						"memoryPeakMb": 345.8
+					},
+					"byteRangeWarm": {
+						"wallMs": 95.03009999999995,
+						"items": 100,
+						"succeeded": 100,
+						"failed": 0,
+						"errors": [],
+						"stepMs": {
+							"resolveView": 119.93120000000272,
+							"resolveRange": 466.9178000000047,
+							"slice": 738.0359000000099
+						},
+						"perItemMs": {
+							"mean": 13.265295999999944,
+							"p95": 15.647100000000137,
+							"min": 3.7968000000000757,
+							"max": 16.005699999999706
+						},
+						"itemsPerSec": 1052.298166580905,
+						"memoryPeakMb": 343.4
+					},
+					"fileRequest": {
+						"wallMs": 551.9544000000005,
+						"items": 100,
+						"succeeded": 100,
+						"failed": 0,
+						"errors": [],
+						"stepMs": {
+							"detail": 3925.220800000003,
+							"resolveView": 63.07020000000557,
+							"resolveRange": 1639.144400000012,
+							"stream": 2225.8221000000067
+						},
+						"perItemMs": {
+							"mean": 78.545488,
+							"p95": 109.21569999999883,
+							"min": 31.994000000000597,
+							"max": 143.6875
+						},
+						"itemsPerSec": 181.17438686963976,
+						"memoryPeakMb": 355.4
+					}
+				},
+				{
+					"upload": {
+						"phase": {
+							"wallMs": 3723.1450999999997,
+							"items": 100,
+							"succeeded": 100,
+							"failed": 0,
+							"errors": [],
+							"stepMs": {
+								"stage": 2265.4373999999934,
+								"create": 1450.1051999999945,
+								"detect": 0.7927999999938038
+							},
+							"perItemMs": {
+								"mean": 37.21631200000004,
+								"p95": 77.39170000000013,
+								"min": 25.901700000000346,
+								"max": 153.79399999999987
+							},
+							"itemsPerSec": 26.859012290442294,
+							"memoryPeakMb": 387.2
+						},
+						"detectMs": 0.7927999999938038,
+						"ids": [
+							"96542cb7-ade1-4f86-a082-7f66b850faba",
+							"4de21332-31ca-420a-b50e-173583554854",
+							"f10a6adc-03ea-46c3-8ea3-80d1dbbbda20",
+							"46257923-b3f6-44bb-bbc2-3294ad834999",
+							"309d4e1e-0e5b-449e-a180-a84be5deafc9",
+							"49a1effe-7596-44c2-9093-4b85736913d1",
+							"c030950a-ec19-44fa-824c-d267596dbc52",
+							"218e72ec-dfe3-45e0-a14c-460d63dd9db5",
+							"c6d9ee81-70d3-4a2e-ad2a-99a79195205e",
+							"7a6260d6-98ac-4614-b5f0-0b2b972949f4",
+							"3da97f24-7e53-4c00-a6ff-43dcb44ac383",
+							"fba2daa6-8015-46f1-bedc-852d98fec283",
+							"236b7610-df3b-4a0b-aa26-939f500bb01a",
+							"1a3cc408-fc9b-4b44-b517-4bd7caa6dac9",
+							"13780d2a-b280-4997-bdf5-b87c641460b9",
+							"684db6ee-8c4c-48a0-8ea0-136f31cdf5ac",
+							"9730807b-f4a2-403f-831c-1e9affdf037a",
+							"4e04ed33-abfb-4591-bd01-c0607221dd15",
+							"2aed2629-d21e-4c29-90ea-57d11c53d7c5",
+							"28ce7844-2dde-4b3b-ae40-c22554ca39d5",
+							"6a4d4db5-6dfd-4225-9b13-97ba3b2120e7",
+							"48773329-b20f-4b3c-b1d9-95cac9dd5dfd",
+							"14abe2d5-daad-48f7-8cb9-3633daabe16e",
+							"92354707-d3be-47d8-bee0-8d2e141a7cb9",
+							"38894ccd-0d5e-49f2-90b2-51df0dd8cd09",
+							"ea12449e-51f3-4fa1-a13b-22580213d343",
+							"b834a7b6-0f3e-4879-b124-9d24cc25f89c",
+							"bbb2fde8-d7c4-4ebd-bca5-791db6710e4f",
+							"96a4ffe5-d577-4799-9ee6-c889b2baa5d6",
+							"699e33b3-84b1-4cdf-83de-627170dfdc75",
+							"9e318a35-68d4-49f3-ab6e-0eaeb6252622",
+							"0d6e2cfa-b95b-410e-94b2-fffdf5444684",
+							"e624a740-4735-41ee-a69b-69117620c1a4",
+							"1d943ee7-3dae-4e4a-aca8-bd5e40414d7e",
+							"7a65e09c-e780-42d2-90a5-4064a36771be",
+							"95fe53e5-06cf-409b-a3bb-ea1c84c3b937",
+							"c2ada1aa-1620-4a25-ae6b-a577ec1fe067",
+							"ed9fcc35-90f4-4afc-b909-d8872b145c4d",
+							"878f6b87-4061-4623-adce-f63ac49e3028",
+							"bf034c30-da67-4f6d-bb57-504bb7e2e13c",
+							"b3e45b83-1918-4998-a4d4-5c98ef5b14cc",
+							"a3ec4367-74c1-4fc6-bc99-6dbb711d91e2",
+							"c0b20a2c-d98b-43c0-af63-a75c993c226c",
+							"082570a5-0a31-4436-ae71-e80d82c8e199",
+							"99187214-195c-4891-b501-cd13166e83d4",
+							"ff914838-bb68-4951-abf1-681dea283545",
+							"4f50aeae-1e1e-4fce-869b-24ae958498b9",
+							"34c1f29a-9d95-4204-8eff-97f1ad311de9",
+							"8b910bd3-1717-45f1-bb03-8c44cdd61348",
+							"852ebfe5-3df0-499c-8ee8-e5995cd3b020",
+							"da6b50de-6a83-4fcc-be2b-176093aec97e",
+							"8271896c-c2e7-4bd5-8606-60392187232a",
+							"c5dab869-c6b1-458d-8121-e484133078b9",
+							"f86125d5-fcd0-44bd-9a38-6a5930d36231",
+							"18bf858d-6d04-4d9c-82a2-e899422d6af5",
+							"d82e0977-c1b6-4008-8bd5-5141d173546b",
+							"1e31020a-d9b4-4cd4-991c-92c3651392ef",
+							"fdbffc56-362a-467d-9c67-7efaee729aa6",
+							"a6eed1fa-1b3b-4f0f-a1e6-e3426bd125e0",
+							"6b1584ef-807b-42b9-8230-829a0fe30f65",
+							"3c9866ca-5f32-481a-b637-93491700fef3",
+							"a7dd5551-7c6a-475b-bfff-bf18cd0d0335",
+							"9d11e39a-d742-4e29-98c6-7617fed0ce15",
+							"30367c29-d6d2-486d-a883-848f886a397e",
+							"e4fc642a-64e3-40f7-aac3-f8a7a119928c",
+							"4faabb82-cdbf-4bd7-b78e-813ff6f53de8",
+							"cdad2525-f2b6-463b-a901-4135946511d8",
+							"9a23b911-539b-45ca-b511-e5b1908e5dfb",
+							"73b6a8f3-e191-4e90-8d30-4bc1abdef2a8",
+							"67244e7f-b2e9-434a-a9ad-d556a5be8d29",
+							"b8535acf-b34f-467b-9b24-9fa0db5c9955",
+							"7993c0c6-2386-4754-8109-61942966dea3",
+							"1f714054-69a6-4a46-bc86-f92359c2c845",
+							"5bc420ba-2540-4814-92a4-c1940c945cdc",
+							"364d8d02-49ee-4e32-ad19-606b12615f91",
+							"9139d6b1-e6a9-4529-a105-86a3f56c4baa",
+							"8f0ab6bb-3f86-4f33-8051-79b4fbff8200",
+							"e59aeff5-77cf-4e72-893d-d77e36748127",
+							"8fcdb77f-0581-4074-853d-03eef2ce8a89",
+							"2d2c2908-fd24-4d02-bf2e-227706582d46",
+							"3d769f7b-d404-4b68-9285-d2e717fc6bf8",
+							"5bf92d07-e751-4c5b-8c61-5e1afca97531",
+							"a78eab1d-0c7c-48be-8d04-05a62156f792",
+							"d736abe1-6e89-41d4-9549-5349a36ff04c",
+							"f20983da-fbb5-4559-a485-a18e9dde2ff2",
+							"4fac56d6-a1e1-4695-93c4-8562da852e1d",
+							"c2ef306e-357a-4ee6-94ad-6f67961a69fb",
+							"69f8acc4-d821-41dd-a51e-81e266bf1341",
+							"236719b0-234c-48b4-b871-1b7699a49362",
+							"891bac41-31aa-4e47-b958-ea9696fe087a",
+							"ec260d29-4d90-426b-a911-3d0e8d4cc2b0",
+							"3e138c4b-19f1-42da-ab21-18f4ab077258",
+							"3b08795f-212b-43e9-9309-63f01c0a4099",
+							"b971ef4f-f7f5-476c-b1ea-5744ae4f674d",
+							"35da7129-a011-4195-95e3-ec06dc51a2b4",
+							"74ce8202-39f2-4c03-ab77-71dda4bce9b0",
+							"9a1eb971-56af-43b2-98c3-0450160962d6",
+							"31d152b9-79d7-4d62-9056-e2cebf18dcaa",
+							"9a5ceb6d-1e7e-4819-b1c4-72286d614207",
+							"4a60fcdc-7ec2-47fd-9a5a-d2ef3996a1f9"
+						]
+					},
+					"archiveStored": {
+						"phase": {
+							"wallMs": 45.8765999999996,
+							"items": 2,
+							"succeeded": 2,
+							"failed": 0,
+							"errors": [],
+							"stepMs": {
+								"stage": 6.070999999999913,
+								"create": 35.68950000000041,
+								"detect": 0.014699999999720603
+							},
+							"perItemMs": {
+								"mean": 22.926049999999123,
+								"p95": 24.70509999999922,
+								"min": 21.146999999999025,
+								"max": 24.70509999999922
+							},
+							"itemsPerSec": 43.595209758352134,
+							"memoryPeakMb": 342.1
+						},
+						"detectMs": 0.014699999999720603,
+						"ids": [
+							"66a92e88-af06-4465-be9a-4478e391dbe3",
+							"c4daff83-6b5a-4ed9-a851-9663ed1035a6"
+						]
+					},
+					"archiveDeflate": {
+						"phase": {
+							"wallMs": 57.00040000000081,
+							"items": 2,
+							"succeeded": 2,
+							"failed": 0,
+							"errors": [],
+							"stepMs": {
+								"stage": 2.928299999997762,
+								"create": 36.214599999999336,
+								"detect": 0.017399999998815474
+							},
+							"perItemMs": {
+								"mean": 28.48949999999968,
+								"p95": 29.632799999999406,
+								"min": 27.346199999999953,
+								"max": 29.632799999999406
+							},
+							"itemsPerSec": 35.08747307036392,
+							"memoryPeakMb": 344.7
+						},
+						"detectMs": 0.017399999998815474,
+						"ids": [
+							"21f625b4-76ad-495c-96b2-c242b85dfb7d",
+							"e9aa140a-36ea-4ccb-9905-9f8199efc6c9"
+						]
+					},
+					"detail": {
+						"wallMs": 178.1820000000007,
+						"items": 100,
+						"succeeded": 100,
+						"failed": 0,
+						"errors": [],
+						"stepMs": {
+							"detail": 2494.750100000001
+						},
+						"perItemMs": {
+							"mean": 24.9495410000001,
+							"p95": 31.578600000000733,
+							"min": 10.225499999998647,
+							"max": 37.3051000000014
+						},
+						"itemsPerSec": 561.2239171184498,
+						"memoryPeakMb": 350.4
+					},
+					"listCards": {
+						"wallMs": 21.68000000000029,
+						"items": 3,
+						"succeeded": 3,
+						"failed": 0,
+						"errors": [],
+						"stepMs": {},
+						"perItemMs": {
+							"mean": 7.225166666666458,
+							"p95": 18.825399999999718,
+							"min": 0.8413000000000466,
+							"max": 18.825399999999718
+						},
+						"itemsPerSec": 138.3763837638358,
+						"memoryPeakMb": 0
+					},
+					"listFilesCold": {
+						"wallMs": 174.45600000000013,
+						"items": 100,
+						"succeeded": 100,
+						"failed": 0,
+						"errors": [],
+						"stepMs": {
+							"listFiles": 2515.639900000009
+						},
+						"perItemMs": {
+							"mean": 25.15925000000001,
+							"p95": 33.10410000000047,
+							"min": 16.41490000000158,
+							"max": 37.588700000000244
+						},
+						"itemsPerSec": 573.2104370156368,
+						"memoryPeakMb": 348.7
+					},
+					"listFilesWarm": {
+						"wallMs": 6.468399999999747,
+						"items": 100,
+						"succeeded": 100,
+						"failed": 0,
+						"errors": [],
+						"stepMs": {
+							"listFiles": 47.03569999999854
+						},
+						"perItemMs": {
+							"mean": 0.4867659999998796,
+							"p95": 0.9018999999989319,
+							"min": 0.069100000000617,
+							"max": 1.0125000000007276
+						},
+						"itemsPerSec": 15459.773668914093,
+						"memoryPeakMb": 348.7
+					},
+					"byteRangeFirst": {
+						"wallMs": 135.6193999999996,
+						"items": 100,
+						"succeeded": 100,
+						"failed": 0,
+						"errors": [],
+						"stepMs": {
+							"resolveView": 52.79700000000412,
+							"resolveRange": 529.5699000000022,
+							"slice": 1358.9395000000113
+						},
+						"perItemMs": {
+							"mean": 19.416903999999995,
+							"p95": 21.32300000000032,
+							"min": 13.722500000001673,
+							"max": 24.169599999999264
+						},
+						"itemsPerSec": 737.3576346746873,
+						"memoryPeakMb": 351.3
+					},
+					"byteRangeWarm": {
+						"wallMs": 134.34809999999925,
+						"items": 100,
+						"succeeded": 100,
+						"failed": 0,
+						"errors": [],
+						"stepMs": {
+							"resolveView": 52.089500000000044,
+							"resolveRange": 467.77949999999146,
+							"slice": 1376.6171999999933
+						},
+						"perItemMs": {
+							"mean": 18.96852200000012,
+							"p95": 23.105199999999968,
+							"min": 14.619899999999689,
+							"max": 24.254899999999907
+						},
+						"itemsPerSec": 744.3350520029726,
+						"memoryPeakMb": 351.5
+					},
+					"fileRequest": {
+						"wallMs": 226.6921999999995,
+						"items": 100,
+						"succeeded": 100,
+						"failed": 0,
+						"errors": [],
+						"stepMs": {
+							"detail": 1544.0067999999956,
+							"resolveView": 26.068799999993644,
+							"resolveRange": 653.2841000000008,
+							"stream": 1028.5406999999977
+						},
+						"perItemMs": {
+							"mean": 32.52331299999992,
+							"p95": 40.14429999999993,
+							"min": 12.494399999999587,
+							"max": 53.8112000000001
+						},
+						"itemsPerSec": 441.1267789540188,
+						"memoryPeakMb": 360.1
+					}
+				}
+			],
+			"summary": {
+				"upload": {
+					"wallMs": {
+						"median": 6016.772999999999,
+						"min": 3723.1450999999997,
+						"max": 6016.772999999999
+					},
+					"itemsPerSec": {
+						"median": 26.859012290442294,
+						"min": 16.62020488391369,
+						"max": 26.859012290442294
+					},
+					"perItemMeanMs": {
+						"median": 60.14621599999995,
+						"min": 37.21631200000004,
+						"max": 60.14621599999995
+					}
+				},
+				"archiveStored": {
+					"wallMs": {
+						"median": 103.65470000000005,
+						"min": 45.8765999999996,
+						"max": 103.65470000000005
+					},
+					"itemsPerSec": {
+						"median": 43.595209758352134,
+						"min": 19.2948317828328,
+						"max": 43.595209758352134
+					},
+					"perItemMeanMs": {
+						"median": 51.806049999999686,
+						"min": 22.926049999999123,
+						"max": 51.806049999999686
+					}
+				},
+				"archiveDeflate": {
+					"wallMs": {
+						"median": 100.79460000000017,
+						"min": 57.00040000000081,
+						"max": 100.79460000000017
+					},
+					"itemsPerSec": {
+						"median": 35.08747307036392,
+						"min": 19.842332823385348,
+						"max": 35.08747307036392
+					},
+					"perItemMeanMs": {
+						"median": 50.376650000000154,
+						"min": 28.48949999999968,
+						"max": 50.376650000000154
+					}
+				},
+				"detail": {
+					"wallMs": {
+						"median": 465.2464,
+						"min": 178.1820000000007,
+						"max": 465.2464
+					},
+					"itemsPerSec": {
+						"median": 561.2239171184498,
+						"min": 214.93986842241014,
+						"max": 561.2239171184498
+					},
+					"perItemMeanMs": {
+						"median": 65.92625099999995,
+						"min": 24.9495410000001,
+						"max": 65.92625099999995
+					}
+				},
+				"listCards": {
+					"wallMs": {
+						"median": 26.822000000000116,
+						"min": 21.68000000000029,
+						"max": 26.822000000000116
+					},
+					"itemsPerSec": {
+						"median": 138.3763837638358,
+						"min": 74.56565505927936,
+						"max": 138.3763837638358
+					},
+					"perItemMeanMs": {
+						"median": 13.407649999999194,
+						"min": 7.225166666666458,
+						"max": 13.407649999999194
+					}
+				},
+				"listFilesCold": {
+					"wallMs": {
+						"median": 419.8664000000008,
+						"min": 174.45600000000013,
+						"max": 419.8664000000008
+					},
+					"itemsPerSec": {
+						"median": 573.2104370156368,
+						"min": 238.17099915592152,
+						"max": 573.2104370156368
+					},
+					"perItemMeanMs": {
+						"median": 59.965369000000045,
+						"min": 25.15925000000001,
+						"max": 59.965369000000045
+					}
+				},
+				"listFilesWarm": {
+					"wallMs": {
+						"median": 19.762500000000728,
+						"min": 6.468399999999747,
+						"max": 19.762500000000728
+					},
+					"itemsPerSec": {
+						"median": 15459.773668914093,
+						"min": 5060.088551549466,
+						"max": 15459.773668914093
+					},
+					"perItemMeanMs": {
+						"median": 1.502705000000151,
+						"min": 0.4867659999998796,
+						"max": 1.502705000000151
+					}
+				},
+				"byteRangeFirst": {
+					"wallMs": {
+						"median": 255.7378000000008,
+						"min": 135.6193999999996,
+						"max": 255.7378000000008
+					},
+					"itemsPerSec": {
+						"median": 737.3576346746873,
+						"min": 391.0254956443658,
+						"max": 737.3576346746873
+					},
+					"perItemMeanMs": {
+						"median": 37.18403100000003,
+						"min": 19.416903999999995,
+						"max": 37.18403100000003
+					}
+				},
+				"byteRangeWarm": {
+					"wallMs": {
+						"median": 134.34809999999925,
+						"min": 95.03009999999995,
+						"max": 134.34809999999925
+					},
+					"itemsPerSec": {
+						"median": 1052.298166580905,
+						"min": 744.3350520029726,
+						"max": 1052.298166580905
+					},
+					"perItemMeanMs": {
+						"median": 18.96852200000012,
+						"min": 13.265295999999944,
+						"max": 18.96852200000012
+					}
+				},
+				"fileRequest": {
+					"wallMs": {
+						"median": 551.9544000000005,
+						"min": 226.6921999999995,
+						"max": 551.9544000000005
+					},
+					"itemsPerSec": {
+						"median": 441.1267789540188,
+						"min": 181.17438686963976,
+						"max": 441.1267789540188
+					},
+					"perItemMeanMs": {
+						"median": 78.545488,
+						"min": 32.52331299999992,
+						"max": 78.545488
+					}
+				},
+				"uploadDetectMs": {
+					"median": 1.23050000000012,
+					"min": 0.7927999999938038,
+					"max": 1.23050000000012
+				}
+			}
+		}
+	]
+}

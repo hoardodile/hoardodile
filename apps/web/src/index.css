@@ -1,0 +1,52 @@
+@import "@hoardodile/ui/theme.css";
+@import "./features/doc/doc.css";
+
+@layer base {
+	body {
+		@apply bg-background;
+	}
+}
+
+@source "./**/*.{ts,tsx}";
+
+/* react-image-crop: selection handles / focus ring follow theme primary */
+.react-crop-theme {
+	--rc-focus-color: var(--primary);
+	--rc-border-color: color-mix(in oklab, var(--primary) 72%, white);
+	--rc-drag-handle-bg-colour: color-mix(
+		in oklab,
+		var(--primary) 42%,
+		transparent
+	);
+}
+
+.dark .react-crop-theme {
+	--rc-border-color: color-mix(in oklab, var(--primary) 58%, var(--foreground));
+}
+
+/* Preserve the base mobile scale (set via the viewport meta tag and
+   --mobile-initial-scale CSS variable) when the app enters native
+   fullscreen on a mobile viewport. Without this, the fullscreened
+   element renders at 1.0x because the meta-viewport scale only applies
+   to the page's layout viewport, not to fullscreen presentations.
+   The variable value is injected from @hoardodile/ui/viewport.
+   On desktop the viewport meta tag is ignored, so no zoom compensation
+   is needed. */
+:fullscreen.mobile-fs-zoom,
+:-webkit-full-screen.mobile-fs-zoom {
+	zoom: var(--mobile-initial-scale);
+}
+
+/* Global app font override */
+html {
+	font-family: var(--font-app, var(--font-sans));
+}
+
+/* Grid → detail card morph (the cover travel): the shared element
+   travels at the media duration with the standard curve, everything else
+   crossfades at the browser default. */
+::view-transition-group(char-card-hero),
+::view-transition-group(res-card-hero) {
+	animation-duration: var(--duration-4);
+	animation-timing-function: var(--ease-standard);
+}

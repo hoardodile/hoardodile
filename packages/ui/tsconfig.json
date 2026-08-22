@@ -1,0 +1,15 @@
+{
+	"extends": "../../tsconfig.web.json",
+	"compilerOptions": {
+		"paths": {
+			"@hoardodile/ui/*": ["./src/*"]
+		},
+		"types": [
+			"vite/client",
+			"vitest/globals",
+			"@testing-library/jest-dom",
+			"node"
+		]
+	},
+	"include": ["src/**/*.ts", "src/**/*.tsx"]
+}

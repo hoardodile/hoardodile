@@ -1,0 +1,261 @@
+{
+	"schema": 1,
+	"kind": "precache",
+	"timestamp": "2026-08-12T09:26:22.505Z",
+	"config": {
+		"plugins": "stub",
+		"videoRatio": 0,
+		"largeImageRatio": 0.15,
+		"repeat": 2,
+		"seed": 42
+	},
+	"machine": {
+		"platform": "win32",
+		"arch": "x64",
+		"cpus": 16,
+		"cpuModel": "13th Gen Intel(R) Core(TM) i5-13400F",
+		"node": "v24.18.0"
+	},
+	"caveats": [
+		"Only same-window paired runs are comparable — the machine shows bimodal load (up to 4x swings).",
+		"Step/hook aggregates are wall-time sums across concurrent items; they exceed phase wall time in proportion to parallelism.",
+		"Hook invoke counts are the RPC proxy: 1 worker message round-trip per invoke, plus 2 per ResourceAPI call made inside the worker.",
+		"ffmpeg spawn count for video covers ≈ video coverRenders (+1 retry each when materialization kicked in); ffprobe spawns ≈ cover unavailables (probe fallback).",
+		"Large-image resources (--large-image-ratio) cover-probe and render through the stream path (>32MB entries): a broken stream probe/render shows up as resources.largeCoverUnavailableRate ≈ 1 and a perItemMean jump.",
+		"Real mode seeds resources against the registered plugin (builtin file plugin, or the --plugin dev plugin): runMetaHooks (sourceMeta) and resolveLocalCoverSource invoke the sandboxed hooks; with the file plugin covers resolve unavailable (no coverLocal) — the cover render pipeline is exercised in stub mode (file-contract stub + coverLocal). Pass --plugin=<dist> to bench a cover-capable plugin.",
+		"Each tier is seeded once; reps share host-side caches (probe cache, zip CD cache) — rep 1 is the cold rep, all paired configurations get identical treatment.",
+		"Production-faithful duplication: the sweep's list() enqueues background missing-meta rebuilds while each item is also rebuilt directly — hook invoke counts are ~2x the resource count by design. Queues are drained after each rep so work never leaks across reps.",
+		"memoryPeakMb is the max RSS observed across phases/reps — noisy on bimodal machines; treat it as a coarse memory-regression signal."
+	],
+	"memoryPeakMb": 443.5,
+	"tiers": [
+		{
+			"tier": 20,
+			"charCount": 5,
+			"corpus": {
+				"resources": 20,
+				"characters": 5,
+				"files": 154,
+				"bytes": 352752925,
+				"videos": 0,
+				"largeImages": 3,
+				"seedMs": 13265.799799999999
+			},
+			"reps": [
+				{
+					"resources": {
+						"wallMs": 528.5341000000008,
+						"items": 20,
+						"succeeded": 20,
+						"failed": 0,
+						"errors": [],
+						"stepMs": {
+							"rebuildResourceFully": 6200.331400000001
+						},
+						"perItemMs": {
+							"mean": 310.02724000000023,
+							"p95": 439.1131999999998,
+							"min": 120.02459999999883,
+							"max": 447.6275999999998
+						},
+						"itemsPerSec": 37.84051019603082,
+						"memoryPeakMb": 432
+					},
+					"characters": {
+						"wallMs": 145.5638999999992,
+						"items": 5,
+						"succeeded": 5,
+						"failed": 0,
+						"errors": [],
+						"stepMs": {
+							"getVariantVersion": 3.440099999996164,
+							"getCharacterThumb": 471.8384999999962
+						},
+						"perItemMs": {
+							"mean": 95.25165999999953,
+							"p95": 143.69830000000002,
+							"min": 39.09299999999894,
+							"max": 143.69830000000002
+						},
+						"itemsPerSec": 34.349175860223774,
+						"memoryPeakMb": 416.1
+					},
+					"coverHit": {
+						"wallMs": 17.17330000000038,
+						"items": 20,
+						"succeeded": 20,
+						"failed": 0,
+						"errors": [],
+						"stepMs": {
+							"findCover": 38.578099999995175,
+							"getCover": 62.44989999999416
+						},
+						"perItemMs": {
+							"mean": 5.171275000000151,
+							"p95": 7.004100000000108,
+							"min": 2.9095999999990454,
+							"max": 7.421700000000783
+						},
+						"itemsPerSec": 1164.59853377042,
+						"memoryPeakMb": 412
+					},
+					"thumbBytes": 1074789,
+					"counters": {
+						"covers": {
+							"renders": 20,
+							"ready": 20,
+							"unavailable": 0,
+							"videoRenders": 0,
+							"videoReady": 0,
+							"videoGetCoverMs": 0,
+							"imageGetCoverMs": 4916.496699999996,
+							"largeRenders": 3,
+							"largeReady": 3
+						},
+						"videoItemMs": {
+							"mean": 0,
+							"p95": 0,
+							"min": 0,
+							"max": 0
+						},
+						"imageItemMs": {
+							"mean": 310.0210050000004,
+							"p95": 439.1110000000008,
+							"min": 120.02020000000084,
+							"max": 447.58550000000105
+						},
+						"materializedBytes": 0
+					}
+				},
+				{
+					"resources": {
+						"wallMs": 462.1884999999984,
+						"items": 20,
+						"succeeded": 20,
+						"failed": 0,
+						"errors": [],
+						"stepMs": {
+							"rebuildResourceFully": 5191.026099999999
+						},
+						"perItemMs": {
+							"mean": 259.55791000000033,
+							"p95": 378.6172999999999,
+							"min": 184.59510000000046,
+							"max": 380.38800000000083
+						},
+						"itemsPerSec": 43.272387781176015,
+						"memoryPeakMb": 442.7
+					},
+					"characters": {
+						"wallMs": 144.96210000000065,
+						"items": 5,
+						"succeeded": 5,
+						"failed": 0,
+						"errors": [],
+						"stepMs": {
+							"getVariantVersion": 2.6767999999992753,
+							"getCharacterThumb": 423.4243000000024
+						},
+						"perItemMs": {
+							"mean": 85.29368000000031,
+							"p95": 143.32690000000002,
+							"min": 35.33860000000095,
+							"max": 143.32690000000002
+						},
+						"itemsPerSec": 34.491774056805035,
+						"memoryPeakMb": 443.5
+					},
+					"coverHit": {
+						"wallMs": 23.476799999998548,
+						"items": 20,
+						"succeeded": 20,
+						"failed": 0,
+						"errors": [],
+						"stepMs": {
+							"findCover": 68.80060000000049,
+							"getCover": 67.6229000000003
+						},
+						"perItemMs": {
+							"mean": 6.955784999999833,
+							"p95": 9.744399999999587,
+							"min": 3.3479000000006636,
+							"max": 9.744799999998577
+						},
+						"itemsPerSec": 851.90485926537,
+						"memoryPeakMb": 428.4
+					},
+					"thumbBytes": 1074789,
+					"counters": {
+						"covers": {
+							"renders": 20,
+							"ready": 20,
+							"unavailable": 0,
+							"videoRenders": 0,
+							"videoReady": 0,
+							"videoGetCoverMs": 0,
+							"imageGetCoverMs": 3969.158100000004,
+							"largeRenders": 3,
+							"largeReady": 3
+						},
+						"videoItemMs": {
+							"mean": 0,
+							"p95": 0,
+							"min": 0,
+							"max": 0
+						},
+						"imageItemMs": {
+							"mean": 259.55436499999985,
+							"p95": 378.61309999999867,
+							"min": 184.59209999999985,
+							"max": 380.3841000000011
+						},
+						"materializedBytes": 0
+					}
+				}
+			],
+			"summary": {
+				"resources": {
+					"wallMs": {
+						"median": 528.5341000000008,
+						"min": 462.1884999999984,
+						"max": 528.5341000000008
+					},
+					"itemsPerSec": {
+						"median": 43.272387781176015,
+						"min": 37.84051019603082,
+						"max": 43.272387781176015
+					},
+					"perItemMeanMs": {
+						"median": 310.02724000000023,
+						"min": 259.55791000000033,
+						"max": 310.02724000000023
+					}
+				},
+				"characters": {
+					"wallMs": {
+						"median": 145.5638999999992,
+						"min": 144.96210000000065,
+						"max": 145.5638999999992
+					},
+					"itemsPerSec": {
+						"median": 34.491774056805035,
+						"min": 34.349175860223774,
+						"max": 34.491774056805035
+					}
+				},
+				"coverHit": {
+					"wallMs": {
+						"median": 23.476799999998548,
+						"min": 17.17330000000038,
+						"max": 23.476799999998548
+					},
+					"perItemMeanMs": {
+						"median": 6.955784999999833,
+						"min": 5.171275000000151,
+						"max": 6.955784999999833
+					}
+				}
+			}
+		}
+	]
+}
