@@ -3,7 +3,11 @@ import { setTimeout as delay } from "node:timers/promises"
 import getPort from "get-port"
 import type { DesktopConfig } from "./config.ts"
 import type { SidecarLayout } from "./paths.ts"
-import { buildSidecarEnv, createShutdownToken } from "./spawn-env.ts"
+import {
+	buildSidecarEnv,
+	createShutdownToken,
+	type SidecarHost,
+} from "./spawn-env.ts"
 
 const HEALTH_TIMEOUT_MS = 180_000
 const HEALTH_POLL_MS = 150
@@ -25,18 +29,24 @@ export type StartSidecarOptions = {
 	readonly log: (chunk: string) => void
 }
 
+/** Loopback by default; local-network sharing binds all IPv4 interfaces. */
+function sidecarHost(config: DesktopConfig): SidecarHost {
+	return config.lanEnabled ? "0.0.0.0" : "127.0.0.1"
+}
+
 export async function startSidecar(
 	options: StartSidecarOptions,
 ): Promise<SidecarHandle> {
 	let lastError: Error | undefined
 	let preferredPort = options.config.port
+	const host = sidecarHost(options.config)
 	for (let attempt = 1; attempt <= MAX_START_ATTEMPTS; attempt++) {
 		try {
-			return await spawnSidecarOnce(options, preferredPort)
+			return await spawnSidecarOnce(options, preferredPort, host)
 		} catch (err) {
 			lastError = err instanceof Error ? err : new Error(String(err))
 			if (attempt === MAX_START_ATTEMPTS) break
-			preferredPort = await getPort({ host: "127.0.0.1" })
+			preferredPort = await getPort({ host })
 		}
 	}
 	throw lastError ?? new Error("sidecar failed to start")
@@ -45,16 +55,18 @@ export async function startSidecar(
 async function spawnSidecarOnce(
 	options: StartSidecarOptions,
 	preferredPort: number,
+	host: SidecarHost,
 ): Promise<SidecarHandle> {
 	const port = await getPort({
 		port: preferredPort,
-		host: "127.0.0.1",
+		host,
 	})
 	if (port !== options.config.port) options.persistPort(port)
 	const shutdownToken = createShutdownToken()
 	const env = buildSidecarEnv({
 		layout: options.layout,
 		libraryPath: options.config.libraryPath,
+		host,
 		port,
 		sharedFolderRoot: options.config.sharedFolderRoot,
 		sharedFolderEnabled: options.config.sharedFolderEnabled,
@@ -182,6 +194,26 @@ export async function patchSidecarSharedFolder(
 			`sidecar shared-folder update failed (${String(res.status)})`,
 		)
 	}
+}
+
+/**
+ * Whether the sidecar has an admin password configured. The shell calls
+ * this before enabling local-network sharing: an unclaimed instance must
+ * never become reachable from other devices.
+ */
+export async function readSidecarAuthConfigured(
+	sidecar: SidecarHandle,
+): Promise<boolean> {
+	const res = await fetch(`${sidecar.url}api/internal/auth-configured`, {
+		headers: { "x-shutdown-token": sidecar.shutdownToken },
+	})
+	if (!res.ok) {
+		throw new Error(
+			`sidecar auth-configured check failed (${String(res.status)})`,
+		)
+	}
+	const body: unknown = await res.json()
+	return isRecord(body) && body.configured === true
 }
 
 function waitForExit(child: ChildProcess, timeoutMs: number): Promise<boolean> {

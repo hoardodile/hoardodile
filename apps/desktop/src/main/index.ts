@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url"
 import type {
 	DesktopUpdateState,
 	DesktopWizardResult,
+	LanInfo,
 } from "@hoardodile/shared/desktop"
 import { app, BrowserWindow, dialog, Notification, type Tray } from "electron"
 import { HIDDEN_SWITCH, IPC } from "../shared/ipc.ts"
@@ -20,6 +21,7 @@ import {
 	pickDirectory,
 	registerIpc,
 } from "./ipc.ts"
+import { computeLanAddresses } from "./lan.ts"
 import {
 	findWorkspaceRoot,
 	packagedLayout,
@@ -28,6 +30,7 @@ import {
 } from "./paths.ts"
 import {
 	patchSidecarSharedFolder,
+	readSidecarAuthConfigured,
 	type SidecarHandle,
 	startSidecar,
 } from "./sidecar.ts"
@@ -178,6 +181,100 @@ async function setSharedFolderEnabled(
 	persist(runtime)
 }
 
+function lanInfo(runtime: Runtime): LanInfo {
+	return {
+		enabled: runtime.config.lanEnabled,
+		port: runtime.config.port,
+		addresses: computeLanAddresses(),
+	}
+}
+
+/**
+ * Enable or disable local-network sharing. The bind host changes at
+ * `listen()` time, so the sidecar restarts in place; the app window is
+ * kept and reloaded (production) or left alone (dev, proxy target
+ * already rebound by `spawnSidecar`).
+ */
+async function setLanEnabled(
+	runtime: Runtime,
+	enabled: boolean,
+): Promise<void> {
+	if (enabled === runtime.config.lanEnabled) return
+	const sidecar = runtime.sidecar
+	if (sidecar === undefined) {
+		throw new Error("sidecar is not running")
+	}
+	if (enabled) {
+		const configured = await readSidecarAuthConfigured(sidecar)
+		if (!configured) {
+			dialog.showErrorBox(
+				"hoardodile",
+				"Set an admin password first before enabling local network access.",
+			)
+			throw new Error(
+				"refusing to enable LAN sharing without an admin password",
+			)
+		}
+	}
+	await applyLanChange(runtime, { lanEnabled: enabled })
+}
+
+/**
+ * Change the sidecar port (localhost and the LAN share use one port) and
+ * restart in place.
+ */
+async function setLanPort(runtime: Runtime, port: number): Promise<void> {
+	if (port === runtime.config.port) return
+	if (runtime.sidecar === undefined) {
+		throw new Error("sidecar is not running")
+	}
+	await applyLanChange(runtime, { port })
+}
+
+async function applyLanChange(
+	runtime: Runtime,
+	patch: Partial<Pick<DesktopConfig, "lanEnabled" | "port">>,
+): Promise<void> {
+	const previous = runtime.config
+	runtime.config = { ...runtime.config, ...patch }
+	persist(runtime)
+	let handle: SidecarHandle
+	try {
+		await runtime.sidecar?.stop()
+		handle = await spawnSidecar(runtime)
+	} catch (err) {
+		runtime.config = previous
+		persist(runtime)
+		runtime.crashed = true
+		runtime.window?.destroy()
+		runtime.window = undefined
+		rebuildSidecarTray(runtime)
+		const message = err instanceof Error ? err.message : String(err)
+		dialog.showErrorBox("hoardodile", `Server failed to start:\n${message}`)
+		throw err
+	}
+	runtime.sidecar = handle
+	runtime.crashed = false
+	rebuildSidecarTray(runtime)
+	const win = runtime.window
+	if (win !== undefined && !win.isDestroyed()) {
+		// Dev loads the Vite URL directly and the proxy already rebinds
+		// to the new sidecar URL; production pages come from the sidecar
+		// and die with it, so reload from the fresh URL.
+		if (process.env.HOARDODILE_WEB_URL === undefined) {
+			await win.loadURL(handle.url)
+		}
+	}
+}
+
+function rebuildSidecarTray(runtime: Runtime): void {
+	if (runtime.tray === undefined) return
+	rebuildTrayMenu(runtime.tray, trayHandlers(runtime), {
+		crashed: runtime.crashed,
+		updateReady: runtime.updateReady,
+	})
+}
+
 async function relaunchApp(runtime: Runtime): Promise<void> {
 	runtime.quitting = true
 	await runtime.sidecar?.stop()
@@ -223,20 +320,7 @@ async function spawnSidecar(runtime: Runtime): Promise<SidecarHandle> {
 		},
 	})
 	handle.onCrash(() => {
-		if (runtime.quitting) return
-		runtime.crashed = true
-		runtime.window?.destroy()
-		runtime.window = undefined
-		if (runtime.tray !== undefined) {
-			rebuildTrayMenu(runtime.tray, trayHandlers(runtime), {
-				crashed: true,
-				updateReady: runtime.updateReady,
-			})
-		}
-		new Notification({
-			title: "hoardodile",
-			body: "The server stopped. Use Restart server from the tray.",
-		}).show()
+		onSidecarCrash(runtime)
 	})
 	bindDestApiProxy({
 		packaged: app.isPackaged,
@@ -244,6 +328,23 @@ async function spawnSidecar(runtime: Runtime): Promise<SidecarHandle> {
 		sidecarUrl: handle.url,
 	})
 	return handle
+}
+
+function onSidecarCrash(runtime: Runtime): void {
+	if (runtime.quitting) return
+	runtime.crashed = true
+	runtime.window?.destroy()
+	runtime.window = undefined
+	if (runtime.tray !== undefined) {
+		rebuildTrayMenu(runtime.tray, trayHandlers(runtime), {
+			crashed: true,
+			updateReady: runtime.updateReady,
+		})
+	}
+	new Notification({
+		title: "hoardodile",
+		body: "The server stopped. Use Restart server from the tray.",
+	}).show()
 }
 
 async function resolveAppUrl(runtime: Runtime): Promise<string | undefined> {
@@ -396,6 +497,9 @@ async function boot(): Promise<void> {
 			setSharedFolder(runtime, sharedFolderRoot),
 		setSharedFolderEnabled: (enabled) =>
 			setSharedFolderEnabled(runtime, enabled),
+		lanInfo: () => lanInfo(runtime),
+		setLanEnabled: (enabled) => setLanEnabled(runtime, enabled),
+		setLanPort: (port) => setLanPort(runtime, port),
 		completeWizard(result) {
 			runtime.completeWizard?.(result)
 		},

@@ -236,7 +236,18 @@ Measure later with a script over `extraResources`. Until then, budget by bucket 
 
 ## Security and privacy
 
-- `HOST=127.0.0.1`. The wizard MUST NOT offer a LAN bind. A browser on the same machine MAY open the same URL; cookies are not shared with Electron.
+- `HOST=127.0.0.1` by default; Settings exposes an explicit local-network
+  toggle that binds `0.0.0.0` on the same port (single listener, localhost
+  keeps working). The wizard MUST NOT offer a LAN bind. A browser on the
+  same machine MAY open the same URL; cookies are not shared with Electron.
+- `/api/internal/*` control routes are loopback-gated: non-loopback peers
+  get 403 even with a valid `HOARDODILE_SHUTDOWN_TOKEN`, so the LAN bind
+  never exposes shutdown or shared-folder control. Enabling the LAN toggle
+  requires an admin password (`GET /api/internal/auth-configured`), so an
+  unclaimed instance is never reachable from other devices.
+- Enabling the LAN bind is an explicit user action behind authenticated
+  Settings; the first `0.0.0.0` bind triggers the Windows firewall prompt
+  (allow it, or LAN clients cannot connect while localhost keeps working).
 - Folder picker in main, not the renderer.
 - Shutdown is token-gated.
 - External https via `openExternal`.

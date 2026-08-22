@@ -1,7 +1,10 @@
 import type { FastifyInstance, FastifyPluginAsync } from "fastify"
 import fp from "fastify-plugin"
 import { patchSharedFolderRoot } from "src/config/env.ts"
-import { authorizeSidecarToken } from "src/infra/http/internal-token.ts"
+import {
+	authorizeSidecarToken,
+	isLoopbackRequest,
+} from "src/infra/http/internal-token.ts"
 import "src/infra/fastify-augment.ts"
 
 /**
@@ -14,6 +17,9 @@ import "src/infra/fastify-augment.ts"
  */
 async function sharedFolderPluginImpl(app: FastifyInstance): Promise<void> {
 	app.post("/api/internal/shared-folder", async (request, reply) => {
+		if (!isLoopbackRequest(request)) {
+			return reply.code(403).send({ ok: false as const })
+		}
 		if (!authorizeSidecarToken(app, request)) {
 			return reply.code(401).send({ ok: false as const })
 		}

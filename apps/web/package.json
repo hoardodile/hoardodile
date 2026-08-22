@@ -83,6 +83,7 @@
 		"react-hook-form": "^7.84.0",
 		"react-i18next": "^17.0.11",
 		"react-image-crop": "^11.1.2",
+		"react-qr-code": "^2.0.15",
 		"react-use": "catalog:",
 		"semver": "^7.8.5",
 		"workbox-expiration": "^7.4.1",

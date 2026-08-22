@@ -305,6 +305,19 @@
 				"enable": "Enable shared-folder import",
 				"enableDescription": "When on, Browse shared folders starts from the folder below."
 			},
+			"lan": {
+				"title": "Local network access",
+				"description": "Serve this app to phones and computers on the same Wi-Fi or network.",
+				"enable": "Allow access from the local network",
+				"enableDescription": "Anyone on your network needs your password to sign in. Windows asks for a firewall exception the first time you enable this.",
+				"portTitle": "Port",
+				"portDescription": "Localhost and the LAN share one port. Applying restarts the server.",
+				"portApply": "Apply",
+				"copy": "Copy",
+				"copied": "Address copied",
+				"copyFailed": "Copy failed",
+				"qrHint": "Scan the code with a phone camera to open this app."
+			},
 			"autostart": {
 				"title": "Start with Windows",
 				"description": "Open hoardodile when you sign in."

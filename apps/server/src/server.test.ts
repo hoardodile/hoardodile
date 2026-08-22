@@ -1956,3 +1956,134 @@ describe("POST /api/internal/shared-folder", () => {
 		}
 	})
 })
+
+describe("GET /api/internal/auth-configured", () => {
+	const token = "desktop-shutdown-secret"
+
+	async function bootstrapAuthConfigured(
+		withPassword: boolean,
+	): Promise<BuiltServer> {
+		const env = loadEnv({
+			NODE_ENV: "test",
+			LOG_LEVEL: "silent",
+			HOARDODILE_SHUTDOWN_TOKEN: token,
+		} satisfies NodeJS.ProcessEnv)
+		const db = openDb(":memory:")
+		db.runMigrations()
+		if (withPassword) {
+			const passwordHash = await hashPassword("hunter2")
+			db.db
+				.insert(schema.auth)
+				.values({ singleton: 1, passwordHash, updatedAt: Date.now() })
+				.run()
+		}
+		return buildServer({ env, dbHandles: db })
+	}
+
+	test("valid token: configured true when a password exists", async () => {
+		const built = await bootstrapAuthConfigured(true)
+		await built.app.ready()
+		try {
+			const res = await built.app.inject({
+				method: "GET",
+				url: "/api/internal/auth-configured",
+				remoteAddress: "127.0.0.1",
+				headers: { "x-shutdown-token": token },
+			})
+			expect(res.statusCode).toBe(200)
+			expect(res.json()).toEqual({ configured: true })
+		} finally {
+			await built.close()
+			built.db.close()
+		}
+	})
+
+	test("valid token: configured false when no password exists", async () => {
+		const built = await bootstrapAuthConfigured(false)
+		await built.app.ready()
+		try {
+			const res = await built.app.inject({
+				method: "GET",
+				url: "/api/internal/auth-configured",
+				remoteAddress: "127.0.0.1",
+				headers: { "x-shutdown-token": token },
+			})
+			expect(res.statusCode).toBe(200)
+			expect(res.json()).toEqual({ configured: false })
+		} finally {
+			await built.close()
+			built.db.close()
+		}
+	})
+
+	test("missing token is 401", async () => {
+		const built = await bootstrapAuthConfigured(true)
+		await built.app.ready()
+		try {
+			const res = await built.app.inject({
+				method: "GET",
+				url: "/api/internal/auth-configured",
+				remoteAddress: "127.0.0.1",
+			})
+			expect(res.statusCode).toBe(401)
+		} finally {
+			await built.close()
+			built.db.close()
+		}
+	})
+})
+
+describe("desktop control routes reject non-loopback peers", () => {
+	const token = "desktop-shutdown-secret"
+
+	async function bootstrapControlRoutes(): Promise<BuiltServer> {
+		const env = loadEnv({
+			NODE_ENV: "test",
+			LOG_LEVEL: "silent",
+			HOARDODILE_SHUTDOWN_TOKEN: token,
+		} satisfies NodeJS.ProcessEnv)
+		const db = openDb(":memory:")
+		db.runMigrations()
+		return buildServer({ env, dbHandles: db })
+	}
+
+	test("POST /api/internal/shutdown is 403 from a LAN peer even with the valid token", async () => {
+		const built = await bootstrapControlRoutes()
+		await built.app.ready()
+		try {
+			const res = await built.app.inject({
+				method: "POST",
+				url: "/api/internal/shutdown",
+				remoteAddress: "192.168.1.50",
+				headers: { "x-shutdown-token": token },
+			})
+			expect(res.statusCode).toBe(403)
+			const health = await built.app.inject({
+				method: "GET",
+				url: "/health",
+				remoteAddress: "127.0.0.1",
+			})
+			expect(health.statusCode).toBe(200)
+		} finally {
+			await built.close()
+			built.db.close()
+		}
+	})
+
+	test("GET /api/internal/auth-configured is 403 from a LAN peer even with the valid token", async () => {
+		const built = await bootstrapControlRoutes()
+		await built.app.ready()
+		try {
+			const res = await built.app.inject({
+				method: "GET",
+				url: "/api/internal/auth-configured",
+				remoteAddress: "192.168.1.50",
+				headers: { "x-shutdown-token": token },
+			})
+			expect(res.statusCode).toBe(403)
+		} finally {
+			await built.close()
+			built.db.close()
+		}
+	})
+})

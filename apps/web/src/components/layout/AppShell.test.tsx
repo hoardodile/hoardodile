@@ -484,6 +484,8 @@ function installDesktopBridge() {
 				libraryPath: "",
 				sharedFolderRoot: "",
 				sharedFolderEnabled: false,
+				port: 3000,
+				lanEnabled: false,
 				autoStart: false,
 				startInTray: false,
 				autoUpdate: false,
@@ -494,6 +496,11 @@ function installDesktopBridge() {
 		async changeLibraryFolder() {},
 		async setSharedFolderRoot() {},
 		async setSharedFolderEnabled() {},
+		async getLanInfo() {
+			return { enabled: false, port: 3000, addresses: [] }
+		},
+		async setLanEnabled() {},
+		async setLanPort() {},
 		async completeWizard() {},
 		async getWizardDefaults() {
 			return { libraryPath: "" }

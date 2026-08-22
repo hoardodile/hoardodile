@@ -18,9 +18,12 @@ const WINDOWS_ENV_KEYS = [
 	"PROCESSOR_ARCHITECTURE",
 ] as const
 
+export type SidecarHost = "0.0.0.0" | "127.0.0.1"
+
 export type SidecarEnvOptions = {
 	readonly layout: SidecarLayout
 	readonly libraryPath: string
+	readonly host: SidecarHost
 	readonly port: number
 	readonly sharedFolderRoot: string
 	readonly sharedFolderEnabled: boolean
@@ -42,6 +45,7 @@ export function buildSidecarEnv(
 	const {
 		layout,
 		libraryPath,
+		host,
 		port,
 		sharedFolderRoot,
 		sharedFolderEnabled,
@@ -53,7 +57,7 @@ export function buildSidecarEnv(
 		if (value !== undefined) env[key] = value
 	}
 	env.NODE_ENV = layout.packaged ? "production" : "development"
-	env.HOST = "127.0.0.1"
+	env.HOST = host
 	env.PORT = String(port)
 	env.STORAGE_ROOT = libraryPath
 	env.BUILTIN_PATH = layout.builtinPath

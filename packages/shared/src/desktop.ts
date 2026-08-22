@@ -16,10 +16,23 @@ export type DesktopShellConfig = {
 	readonly libraryPath: string
 	readonly sharedFolderRoot: string
 	readonly sharedFolderEnabled: boolean
+	readonly port: number
+	readonly lanEnabled: boolean
 	readonly autoStart: boolean
 	readonly startInTray: boolean
 	readonly autoUpdate: boolean
 	readonly portable: boolean
+}
+
+export type LanAddress = {
+	readonly interfaceName: string
+	readonly address: string
+}
+
+export type LanInfo = {
+	readonly enabled: boolean
+	readonly port: number
+	readonly addresses: readonly LanAddress[]
 }
 
 export type DesktopWizardResult = {
@@ -54,6 +67,24 @@ export type HoardodileDesktopBridge = {
 	changeLibraryFolder: (libraryPath: string) => Promise<void>
 	setSharedFolderRoot: (sharedFolderRoot: string) => Promise<void>
 	setSharedFolderEnabled: (enabled: boolean) => Promise<void>
+	/**
+	 * Local-network sharing state plus the machine's non-loopback IPv4
+	 * addresses. Resolves only when the sidecar is running.
+	 */
+	getLanInfo: () => Promise<LanInfo>
+	/**
+	 * Enable or disable local-network sharing and restart the sidecar
+	 * with the matching bind host. Rejects when the sidecar is down,
+	 * when no admin password is configured (LAN must never expose an
+	 * unclaimed instance), or when the restart fails.
+	 */
+	setLanEnabled: (enabled: boolean) => Promise<void>
+	/**
+	 * Change the sidecar port (localhost and LAN share share one port)
+	 * and restart the sidecar. Rejects on invalid ports or restart
+	 * failure; a busy port falls back to a free one.
+	 */
+	setLanPort: (port: number) => Promise<void>
 	completeWizard: (result: DesktopWizardResult) => Promise<void>
 	getWizardDefaults: () => Promise<{
 		readonly libraryPath: string

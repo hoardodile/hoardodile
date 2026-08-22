@@ -2,6 +2,7 @@ import type {
 	DesktopShellConfig,
 	DesktopUpdateState,
 	DesktopWizardResult,
+	LanInfo,
 } from "@hoardodile/shared/desktop"
 import {
 	app,
@@ -27,6 +28,9 @@ export type IpcHost = {
 	changeLibraryFolder: (libraryPath: string) => Promise<void>
 	setSharedFolderRoot: (sharedFolderRoot: string) => Promise<void>
 	setSharedFolderEnabled: (enabled: boolean) => Promise<void>
+	lanInfo: () => LanInfo
+	setLanEnabled: (enabled: boolean) => Promise<void>
+	setLanPort: (port: number) => Promise<void>
 	completeWizard: (result: DesktopWizardResult) => void
 	defaultLibraryPath: () => string
 	updateStatus: () => DesktopUpdateState
@@ -63,6 +67,8 @@ export function registerIpc(host: IpcHost): void {
 			libraryPath: config.libraryPath,
 			sharedFolderRoot: config.sharedFolderRoot,
 			sharedFolderEnabled: config.sharedFolderEnabled,
+			port: config.port,
+			lanEnabled: config.lanEnabled,
 			autoStart: config.autoStart,
 			startInTray: config.startInTray,
 			autoUpdate: config.autoUpdate,
@@ -92,6 +98,15 @@ export function registerIpc(host: IpcHost): void {
 		if (typeof enabled !== "boolean") return
 		return host.setSharedFolderEnabled(enabled)
 	})
+	ipcMain.handle(IPC.lanInfo, () => host.lanInfo())
+	ipcMain.handle(IPC.setLanEnabled, (_event, enabled: unknown) => {
+		if (typeof enabled !== "boolean") return
+		return host.setLanEnabled(enabled)
+	})
+	ipcMain.handle(IPC.setLanPort, (_event, port: unknown) => {
+		if (!isValidPort(port)) return
+		return host.setLanPort(port)
+	})
 	ipcMain.handle(IPC.completeWizard, (_event, result: unknown) => {
 		if (!isWizardResult(result)) return
 		host.completeWizard(result)
@@ -118,6 +133,15 @@ function windowFrom(
 
 function isRecord(value: unknown): value is Record<string, unknown> {
 	return typeof value === "object" && value !== null && !Array.isArray(value)
+}
+
+function isValidPort(value: unknown): value is number {
+	return (
+		typeof value === "number" &&
+		Number.isInteger(value) &&
+		value >= 1 &&
+		value <= 65535
+	)
 }
 
 function isConfigPatch(

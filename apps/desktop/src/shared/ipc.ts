@@ -18,6 +18,9 @@ export const IPC = {
 	changeLibraryFolder: "desktop:library:change",
 	setSharedFolderRoot: "desktop:shared-folder:set",
 	setSharedFolderEnabled: "desktop:shared-folder:enabled",
+	lanInfo: "desktop:lan:info",
+	setLanEnabled: "desktop:lan:set-enabled",
+	setLanPort: "desktop:lan:set-port",
 	completeWizard: "desktop:wizard:complete",
 	wizardDefaults: "desktop:wizard:defaults",
 } as const

@@ -3,6 +3,8 @@ import type {
 	DesktopUpdateState,
 	DesktopWizardResult,
 	HoardodileDesktopBridge,
+	LanAddress,
+	LanInfo,
 } from "@hoardodile/shared/desktop"
 import { contextBridge, ipcRenderer } from "electron"
 import { IPC } from "../shared/ipc.ts"
@@ -58,6 +60,40 @@ function isUpdateState(value: unknown): value is DesktopUpdateState {
 	}
 }
 
+function isValidPort(value: unknown): value is number {
+	return (
+		typeof value === "number" &&
+		Number.isInteger(value) &&
+		value >= 1 &&
+		value <= 65535
+	)
+}
+
+function parseLanInfo(value: unknown): LanInfo {
+	if (!isRecord(value) || !Array.isArray(value.addresses)) {
+		throw new Error("desktop LAN info unavailable")
+	}
+	const addresses: LanAddress[] = []
+	for (const entry of value.addresses) {
+		if (
+			!isRecord(entry) ||
+			typeof entry.interfaceName !== "string" ||
+			typeof entry.address !== "string"
+		) {
+			throw new Error("desktop LAN info unavailable")
+		}
+		addresses.push({
+			interfaceName: entry.interfaceName,
+			address: entry.address,
+		})
+	}
+	return {
+		enabled: value.enabled === true,
+		port: isValidPort(value.port) ? value.port : 0,
+		addresses,
+	}
+}
+
 async function invokeUnknown(
 	channel: string,
 	...args: unknown[]
@@ -107,7 +143,8 @@ const bridge: HoardodileDesktopBridge = {
 		if (
 			!isRecord(raw) ||
 			typeof raw.libraryPath !== "string" ||
-			typeof raw.sharedFolderRoot !== "string"
+			typeof raw.sharedFolderRoot !== "string" ||
+			!isValidPort(raw.port)
 		) {
 			throw new Error("desktop config unavailable")
 		}
@@ -115,6 +152,8 @@ const bridge: HoardodileDesktopBridge = {
 			libraryPath: raw.libraryPath,
 			sharedFolderRoot: raw.sharedFolderRoot,
 			sharedFolderEnabled: raw.sharedFolderEnabled === true,
+			port: raw.port,
+			lanEnabled: raw.lanEnabled === true,
 			autoStart: raw.autoStart === true,
 			startInTray: raw.startInTray === true,
 			autoUpdate: raw.autoUpdate === true,
@@ -132,6 +171,15 @@ const bridge: HoardodileDesktopBridge = {
 	},
 	async setSharedFolderEnabled(enabled) {
 		await invokeUnknown(IPC.setSharedFolderEnabled, enabled)
+	},
+	async getLanInfo() {
+		return parseLanInfo(await invokeUnknown(IPC.lanInfo))
+	},
+	async setLanEnabled(enabled) {
+		await invokeUnknown(IPC.setLanEnabled, enabled)
+	},
+	async setLanPort(port) {
+		await invokeUnknown(IPC.setLanPort, port)
 	},
 	async completeWizard(result: DesktopWizardResult) {
 		await invokeUnknown(IPC.completeWizard, result)

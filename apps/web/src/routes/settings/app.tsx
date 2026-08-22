@@ -13,6 +13,7 @@ import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { AboutSection } from "@/features/settings/AboutSection"
 import { DesktopLibrarySection } from "@/features/settings/DesktopLibrarySection"
+import { LanSharingSection } from "@/features/settings/LanSharingSection"
 import { LicensesDialog } from "@/features/settings/LicensesDialog"
 import { TrashPanel } from "@/features/settings/SettingsPanels"
 import { SettingsSection } from "@/features/settings/SettingsSection"
@@ -95,6 +96,7 @@ function AppSettingsRoute() {
 			</SettingsSection>
 			<SectionDivider />
 			<DesktopLibrarySection />
+			<LanSharingSection />
 			<AboutSection />
 			<SectionDivider />
 			<SettingsSection

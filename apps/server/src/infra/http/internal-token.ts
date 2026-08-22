@@ -3,6 +3,22 @@ import type { FastifyInstance, FastifyRequest } from "fastify"
 import "src/infra/fastify-augment.ts"
 
 /**
+ * Whether the request arrived over a loopback connection. Desktop control
+ * routes are only ever called by the shell on the same machine; when the
+ * sidecar listens on `0.0.0.0` (local-network sharing) the token gate
+ * alone would still expose them to the LAN, so control routes reject
+ * non-loopback peers outright.
+ */
+export function isLoopbackRequest(request: {
+	readonly socket: { readonly remoteAddress?: string | undefined }
+}): boolean {
+	const remote = request.socket.remoteAddress
+	return (
+		remote === "127.0.0.1" || remote === "::1" || remote === "::ffff:127.0.0.1"
+	)
+}
+
+/**
  * Accept a sidecar control request when `HOARDODILE_SHUTDOWN_TOKEN` is
  * set and matches the `x-shutdown-token` header or JSON `token` body.
  * Unset token (self-host) always fails.

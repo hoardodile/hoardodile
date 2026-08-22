@@ -21,6 +21,7 @@ describe("buildSidecarEnv", () => {
 			{
 				layout,
 				libraryPath: "C:/Users/me/Documents/hoardodile",
+				host: "127.0.0.1",
 				port: 3000,
 				sharedFolderRoot: "D:/imports",
 				sharedFolderEnabled: true,
@@ -52,6 +53,7 @@ describe("buildSidecarEnv", () => {
 			{
 				layout,
 				libraryPath: "C:/Users/me/Documents/hoardodile",
+				host: "127.0.0.1",
 				port: 3000,
 				sharedFolderRoot: "D:/imports",
 				sharedFolderEnabled: false,
@@ -60,5 +62,21 @@ describe("buildSidecarEnv", () => {
 			{ PATH: "C:/Windows/system32" },
 		)
 		expect(env.SHARED_FOLDER_ROOT).toBeUndefined()
+	})
+
+	it("injects the wildcard host when local-network sharing is on", () => {
+		const env = buildSidecarEnv(
+			{
+				layout,
+				libraryPath: "C:/Users/me/Documents/hoardodile",
+				host: "0.0.0.0",
+				port: 3000,
+				sharedFolderRoot: "D:/imports",
+				sharedFolderEnabled: false,
+				shutdownToken: "secret-token",
+			},
+			{ PATH: "C:/Windows/system32" },
+		)
+		expect(env.HOST).toBe("0.0.0.0")
 	})
 })

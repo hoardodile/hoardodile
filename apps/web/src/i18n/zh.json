@@ -305,6 +305,19 @@
 				"enable": "启用共享文件夹导入",
 				"enableDescription": "开启后，导入页的「浏览共享文件夹」会从这个文件夹开始。"
 			},
+			"lan": {
+				"title": "本地网络访问",
+				"description": "让同一个 Wi-Fi 或网络里的手机和电脑也能访问本应用。",
+				"enable": "允许从本地网络访问",
+				"enableDescription": "同一网络中的任何人需要知道你的密码才能登录。首次开启时，Windows 会请求防火墙放行。",
+				"portTitle": "端口",
+				"portDescription": "本机与局域网共用一个端口；应用后服务器会重启。",
+				"portApply": "应用",
+				"copy": "复制",
+				"copied": "地址已复制",
+				"copyFailed": "复制失败",
+				"qrHint": "用手机相机扫描二维码即可打开本应用。"
+			},
 			"autostart": {
 				"title": "开机启动",
 				"description": "登录 Windows 时打开 hoardodile。"

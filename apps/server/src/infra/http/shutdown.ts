@@ -1,6 +1,9 @@
 import type { FastifyInstance, FastifyPluginAsync } from "fastify"
 import fp from "fastify-plugin"
-import { authorizeSidecarToken } from "src/infra/http/internal-token.ts"
+import {
+	authorizeSidecarToken,
+	isLoopbackRequest,
+} from "src/infra/http/internal-token.ts"
 import "src/infra/fastify-augment.ts"
 
 export type ShutdownPluginOpts = {
@@ -22,6 +25,9 @@ async function shutdownPluginImpl(
 	let shuttingDown = false
 
 	app.post("/api/internal/shutdown", async (request, reply) => {
+		if (!isLoopbackRequest(request)) {
+			return reply.code(403).send({ ok: false as const })
+		}
 		if (!authorizeSidecarToken(app, request)) {
 			return reply.code(401).send({ ok: false as const })
 		}

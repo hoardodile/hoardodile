@@ -30,6 +30,7 @@ import {
 import { versionPlugin } from "src/domain/version/plugin.ts"
 import { type DbHandles, openDb } from "src/infra/db/connection.ts"
 import { volumeStatsOf } from "src/infra/disk.ts"
+import { authConfiguredPlugin } from "src/infra/http/auth-configured.ts"
 import { sendFile } from "src/infra/http/conditional-request.ts"
 import { healthPlugin } from "src/infra/http/health.ts"
 import { protectedHttpPlugin } from "src/infra/http/plugin.ts"
@@ -407,6 +408,7 @@ async function registerHttpSurface(
 		onAuthorized: opts.onAuthorizedShutdown,
 	})
 	await app.register(sharedFolderPlugin)
+	await app.register(authConfiguredPlugin)
 }
 
 /** Register the tRPC router and request context factory. */
