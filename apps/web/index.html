@@ -54,9 +54,11 @@
     }
     /* First-paint splash: index.html's #root is empty until React
        mounts, and a plain canvas frame reads as a flash after the
-       desktop loading page. The same small spinner (no wordmark) is
-       baked into this document so the first frame already shows it;
-       main.tsx removes it after the app's first paint. */
+       desktop loading page. The same small spinner (no wordmark, no
+       text) is baked into this document so the first frame already
+       shows it; main.tsx removes it after the app's first paint.
+       Keep size/tokens in sync with the desktop loading page spinner
+       (apps/desktop/src/main/error-page.ts, `.spin`). */
     #app-splash {
       position: fixed;
       inset: 0;
@@ -73,6 +75,7 @@
       width: 26px;
       height: 26px;
       border-radius: 50%;
+      box-sizing: border-box;
       border: 2px solid #9a9a96;
       border-top-color: #101010;
       animation: hd-splash-spin 0.8s linear infinite;

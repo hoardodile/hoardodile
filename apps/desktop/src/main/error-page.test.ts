@@ -4,7 +4,6 @@
 
 import { describe, expect, it } from "vitest"
 import {
-	CONNECTING_MESSAGE,
 	DEV_SERVER_ERROR_MESSAGE,
 	SERVER_ERROR_MESSAGE,
 	windowErrorPageUrl,
@@ -44,13 +43,15 @@ describe("windowErrorPageUrl", () => {
 })
 
 describe("windowLoadingPageUrl", () => {
-	it("shows a centered spinner and the caption bar", () => {
+	it("shows a centered spinner only (no text) with the caption bar", () => {
 		const decoded = decode(windowLoadingPageUrl())
-		expect(decoded).toContain(CONNECTING_MESSAGE)
 		expect(decoded).toContain("spin")
+		expect(decoded).toContain("box-sizing: border-box")
 		expect(decoded).toContain('id="drag"')
 		expect(decoded).toContain('aria-label="Back" disabled')
 		expect(decoded).toContain('aria-label="Forward" disabled')
+		expect(decoded).toContain('$("btn-restore").addEventListener')
+		expect(decoded).not.toContain("Connecting")
 	})
 })
 

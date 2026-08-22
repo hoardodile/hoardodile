@@ -6,11 +6,7 @@ export const SERVER_ERROR_MESSAGE =
 export const DEV_SERVER_ERROR_MESSAGE =
 	"The development server is not running. Start `pnpm dev` in another terminal, then press Retry."
 
-/** Loading-page copy. */
-export const CONNECTING_MESSAGE = "Connecting…"
-
-// ── Shared static page shell ──────────────────────────────────────────────────
-// Mirrors the SPA caption bar (`packages/ui/src/components/caption-bar.tsx`)
+// ── Shared static page shell ──────────────────────────────────────────────────// Mirrors the SPA caption bar (`packages/ui/src/components/caption-bar.tsx`)
 // and the Mono palette tokens (`packages/ui/src/styles/theme.css`) so the
 // error/loading pages read as part of the app: caption strip, drag region,
 // window controls, and no themed borders anywhere.
@@ -78,6 +74,7 @@ const CAPTION_SCRIPT = `
 	if (bridge) {
 		$("btn-min").addEventListener("click", function () { bridge.minimize(); });
 		$("btn-max").addEventListener("click", function () { bridge.toggleMaximize(); });
+		$("btn-restore").addEventListener("click", function () { bridge.toggleMaximize(); });
 		$("btn-close").addEventListener("click", function () { bridge.close(); });
 		function syncMax(max) {
 			$("btn-max").style.display = max ? "none" : "";
@@ -96,7 +93,7 @@ const CAPTION_SCRIPT = `
 const SPINNER_CSS = `
 .spin {
 	width: 26px; height: 26px; border-radius: 50%;
-	border: 2px solid var(--muted-fg); border-top-color: var(--fg);
+	box-sizing: border-box; border: 2px solid var(--muted-fg); border-top-color: var(--fg);
 	animation: hd-spin 0.8s linear infinite;
 }
 @keyframes hd-spin { to { transform: rotate(360deg); } }
@@ -150,12 +147,14 @@ function toDataUrl(html: string): string {
 }
 
 /**
- * Loading page: caption bar plus a centered spinner, shown while the shell
- * (re)loads the app URL so the window is never a blank white canvas.
+ * Loading page: caption bar plus a centered spinner (no text — identical
+ * to the app's index.html first-paint splash, same size and tokens), shown
+ * while the shell (re)loads the app URL so the window is never a blank
+ * white canvas.
  */
-export function windowLoadingPageUrl(message = CONNECTING_MESSAGE): string {
+export function windowLoadingPageUrl(): string {
 	const html = pageDoc(
-		`<div class="status"><div class="spin" role="progressbar" aria-label="Loading"></div><p>${escapeHtml(message)}</p></div>`,
+		`<div class="status"><div class="spin" role="progressbar" aria-label="Loading"></div></div>`,
 		"",
 	)
 	return toDataUrl(html)
