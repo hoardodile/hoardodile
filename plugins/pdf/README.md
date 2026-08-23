@@ -1,10 +1,10 @@
 # @hoardodile/plugin-pdf
 
 Official hoardodile content plugin: an online PDF reader. Renders `.pdf`
-documents in the plugin iframe with paged scrolling, zoom and fit modes,
-rotation, an optional text layer for copy/selection, and per-page comment
-anchors — all inside the host's design system (`@hoardodile/ui`), with
-zero network calls beyond the host's own tokenized file URLs.
+documents in the plugin iframe with paged scrolling at fit-to-width, and
+per-page comment anchors — all inside the host's design system
+(`@hoardodile/ui`), with zero network calls beyond the host's own
+tokenized file URLs.
 
 ## What a resource is
 
@@ -22,9 +22,14 @@ no web app:
 pnpm build                # bundle manifest + client + server hooks into dist/
 pnpm dev                  # watch-build and serve the workbench (http://127.0.0.1:5199)
 pnpm testdata             # regenerate synthetic PDF fixtures (scripts/make-testdata.mjs)
+pnpm testdata:verify      # open every testdata PDF and check page-2 text layers
 pnpm test                 # vitest (detect / sourceMeta / anchor decoding)
 pnpm run detect:smoke     # run detect against testdata/ through the real sandbox
 ```
+
+`testdata/` mixes regenerated synthetic fixtures with open-source samples
+from the Mozilla pdf.js repository (Apache-2.0) — sources and licenses are
+documented in `testdata/README.md`.
 
 `pnpm dev` captures the server-side hook results (`detect`,
 `sourceMeta`, `listFiles`) from the real worker sandbox and feeds them
@@ -47,21 +52,19 @@ push.
   files ≤ 96 MB.
 - `src/PdfViewer.tsx` — the iframe UI: virtualized page rendering
   (IntersectionObserver, canvases created only for visible pages),
-  toolbar (page nav, zoom in/out, fit-width/fit-page/actual, rotate,
-  text layer toggle, download), plugin-`usePref` persistence for fit
-  mode/scale/rotation/text layer.
+  toolbar (page nav, download), file selector for multi-PDF resources.
 - `src/anchor.ts` + manifest `message.anchor` — comments can be anchored
   to a page (`{{inc(data.pageIndex)}}`), and clicking an anchor in the
   host UI jumps the viewer to that page.
 
 ## Known limitations
 
+- Pages always render **fit-to-width** at 100% — zoom, rotate and text
+  layer controls are not implemented in v1 (PDF text is not selectable
+  or copyable; exact CJK glyph metrics are canvas-only).
 - Page counts in `sourceMeta` are a best-effort scan (see above); large
   PDFs (> 8 MB) report no estimate at all — the viewer's exact count
   wins.
-- The text layer approximates fonts (sans-serif metrics); exact glyph
-  shapes remain canvas-only, and CJK cMap support is not bundled —
-  copying from some CJK PDFs may be degraded.
 - No OCR, no full-text search, no thumbnails in v1 — the pluggable
   extension points are `imageHashes` (future) and client-side parsing.
 

@@ -71,17 +71,16 @@ export async function openPdfDocument(
 }
 
 /**
- * Render one page into a canvas at the given scale (CSS px per PDF pt)
- * and rotation (0/90/180/270). Cancels in-flight render work for the
- * same canvas so rapid zoom/scroll never queues stale draws.
+ * Render one page into a canvas at the given scale (CSS px per PDF pt).
+ * Cancels in-flight render work for the same canvas so rapid scrolling
+ * never queues stale draws.
  */
 export async function renderPdfPage(
 	page: PDFPageProxy,
 	canvas: HTMLCanvasElement,
 	scale: number,
-	rotation: number,
 ): Promise<void> {
-	const viewport = page.getViewport({ scale, rotation })
+	const viewport = page.getViewport({ scale })
 	canvas.width = Math.max(1, Math.floor(viewport.width))
 	canvas.height = Math.max(1, Math.floor(viewport.height))
 	const ctx = canvas.getContext("2d")
@@ -90,19 +89,19 @@ export async function renderPdfPage(
 	try {
 		await task.promise
 	} catch (err) {
-		// A rendering task cancelled by zoom/scroll is the normal turnover
-		// path — the caller re-renders with the new parameters.
+		// A rendering task cancelled by a scroll-away is the normal turnover
+		// path — the caller re-renders when the page comes back.
 		if (!(err instanceof Error && err.name === "RenderingCancelledException")) {
 			throw err
 		}
 	}
 }
 
-/** Natural page size in CSS px at the given rotation (scale = 1). */
-export function pageNaturalSize(
-	page: PDFPageProxy,
-	rotation: number,
-): { readonly width: number; readonly height: number } {
-	const viewport = page.getViewport({ scale: 1, rotation })
+/** Natural page size in CSS px (scale = 1). */
+export function pageNaturalSize(page: PDFPageProxy): {
+	readonly width: number
+	readonly height: number
+} {
+	const viewport = page.getViewport({ scale: 1 })
 	return { width: viewport.width, height: viewport.height }
 }
