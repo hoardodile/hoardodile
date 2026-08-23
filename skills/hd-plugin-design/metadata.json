@@ -1,0 +1,11 @@
+{
+	"version": "1.0.0",
+	"organization": "Hoardodile",
+	"date": "2026-08-23",
+	"abstract": "Self-contained plugin-facing design system for hoardodile: how the host themes a plugin iframe (applyTheme/applyFonts, palette/iconStyle/fonts context), the token vocabulary shipped in @hoardodile/ui theme.css (type scale, ten color roles, radius family, two shadows, container widths, control heights, motion durations and easings), iconography rules (registry, Icon tiers, duotone via --icon-tone, marks), recommended components, states, overlays, motion principles, and a pre-ship checklist.",
+	"references": [
+		"https://github.com/hoardodile/hoardodile/tree/main/packages/ui/src/styles/theme.css",
+		"https://github.com/hoardodile/hoardodile/tree/main/packages/ui/src/viewport.ts",
+		"https://github.com/hoardodile/hoardodile/tree/main/DESIGN.md"
+	]
+}

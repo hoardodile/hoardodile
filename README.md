@@ -2,19 +2,15 @@
 
 Hoardodile is a modern digital hoarding tool for self-hosted archivists. It lets you hoard and preview any kind of digital content — images, documents, videos, web pages, and more — in one private library.
 
-Hoardodile 是一个现代数字囤积工具，旨在囤积和预览任意形式的数字内容。它把图片、文档、视频、网页等资源统一收藏在同一个私有内容库中，方便随时浏览与预览。
+[中文说明 →](./README.zh-CN.md)
 
-## Features / 功能
+## Features
 
 - **Hoard any content** — extensible content plugins support different formats and media types.
 - **Preview in place** — browse and preview resources directly from your library.
 - **Self-hosted & private** — your data stays on your own storage, under your control.
 
-- **囤积任意内容** — 通过可扩展内容插件支持各种格式与媒体类型。
-- **就地预览** — 直接在内容库中浏览和预览资源。
-- **自托管且隐私优先** — 数据保留在自有存储中，始终由你掌控。
-
-## Quick Start / 快速开始
+## Quick Start
 
 ```bash
 pnpm install
@@ -24,6 +20,19 @@ pnpm start # http://127.0.0.1:3000
 ```
 
 Requires Node.js 24 and pnpm.
+
+## Agent Skills
+
+The `skills` CLI (open agent skills ecosystem) installs this repo's agent skills straight from GitHub:
+
+```bash
+npx skills add hoardodile/hoardodile@hd-plugin         # author content plugins
+npx skills add hoardodile/hoardodile@hd-plugin-design  # plugin UI design system (@hoardodile/ui)
+npx skills add hoardodile/hoardodile --list             # list all skills in this repo
+```
+
+- `hd-plugin` — author hoardodile content plugins: manifest, server hooks, iframe client, toolchain.
+- `hd-plugin-design` — the plugin UI design system built on `@hoardodile/ui`.
 
 ## License
 
