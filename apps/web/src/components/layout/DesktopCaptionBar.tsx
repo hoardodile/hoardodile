@@ -2,6 +2,7 @@ import { CaptionBar } from "@hoardodile/ui/components/caption-bar"
 import { type ReactNode, useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { CloseConfirmDialog } from "@/components/common/CloseConfirmDialog"
+import { resolveSystemLanguage } from "@/i18n"
 import { getDesktopBridge } from "@/lib/desktop"
 
 /**
@@ -28,10 +29,15 @@ export function DesktopCaptionBar(props: {
 
 	// The shell's static pages and native ask dialog render the user's
 	// language from the shared i18n catalogs; push the resolved language
-	// whenever it changes so they match the SPA.
+	// whenever it changes so they match the SPA. `resolvedLanguage` is the
+	// base code ("de") while `language` can keep the region tag ("de-DE"),
+	// which the shell's supported-language guard would reject — normalize
+	// before pushing.
 	useEffect(() => {
-		bridge.setLanguage(i18n.language)
-	}, [bridge, i18n.language])
+		bridge.setLanguage(
+			resolveSystemLanguage(i18n.resolvedLanguage ?? i18n.language),
+		)
+	}, [bridge, i18n.resolvedLanguage, i18n.language])
 
 	function handleClose() {
 		void bridge.getConfig().then((config) => {

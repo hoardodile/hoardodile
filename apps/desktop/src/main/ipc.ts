@@ -6,7 +6,7 @@ import type {
 	LanSetResult,
 } from "@hoardodile/shared/desktop"
 import type { SupportedLanguage } from "@hoardodile/shared/i18n"
-import { isSupportedLanguage } from "@hoardodile/shared/i18n"
+import { resolveSystemLanguage } from "@hoardodile/shared/i18n"
 import {
 	app,
 	BrowserWindow,
@@ -105,8 +105,11 @@ export function registerIpc(host: IpcHost): void {
 		return host.closeWithAction(action, remember)
 	})
 	ipcMain.on(IPC.setLanguage, (_event, language: unknown) => {
-		if (typeof language !== "string" || !isSupportedLanguage(language)) return
-		host.setLanguage(language)
+		if (typeof language !== "string") return
+		// Defense in depth: the SPA pushes a normalized code already, but a
+		// region-tagged value ("de-DE") would fail `isSupportedLanguage` and
+		// leave the shell in English — normalize instead of dropping.
+		host.setLanguage(resolveSystemLanguage(language))
 	})
 	ipcMain.handle(IPC.getLanguage, () => host.getLanguage())
 	ipcMain.handle(IPC.getConfig, (): DesktopShellConfig => {

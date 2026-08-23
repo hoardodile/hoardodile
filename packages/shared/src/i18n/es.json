@@ -1,0 +1,2167 @@
+{
+	"common": {
+		"back": "Volver",
+		"cancel": "Cancelar",
+		"close": "Cerrar",
+		"save": "Guardar",
+		"saving": "Guardando…",
+		"loading": "Cargando…",
+		"remove": "Quitar",
+		"removeAria": "Quitar",
+		"edit": "Editar",
+		"delete": "Eliminar",
+		"rename": "Renombrar",
+		"confirm": "Confirmar",
+		"expand": "Expandir",
+		"collapse": "Contraer",
+		"working": "Trabajando…",
+		"prev": "Ant.",
+		"next": "Sig.",
+		"previous": "Anterior",
+		"first": "Primera",
+		"last": "Última",
+		"jumpToPage": "Página",
+		"go": "Ir",
+		"goTo": "Ir a",
+		"unknownError": "Error desconocido",
+		"error": "Error",
+		"loadFailed": "No se pudo cargar",
+		"show": "Mostrar",
+		"hide": "Ocultar",
+		"selected": "Seleccionado",
+		"available": "Disponible",
+		"allSelected": "Todo seleccionado",
+		"tags": "Etiquetas",
+		"filterCategory": "Filtrar {{name}}…",
+		"requestFailed": "La solicitud falló",
+		"saved": "Guardado",
+		"saveFailed": "No se pudo guardar",
+		"confirmByTypingPrompt": "Escribe «<name>{{name}}</name>» para confirmar",
+		"searchIncludeIntro": "Buscar en la introducción",
+		"underline": "Subrayado",
+		"colorPicker": {
+			"clear": "Quitar color",
+			"customColor": "Color personalizado",
+			"customSwatch": "Elegir un color personalizado",
+			"addPreset": "Añadir a mis preajustes",
+			"removePresetAria": "Quitar preajuste {{color}}"
+		}
+	},
+	"entityMeta": {
+		"nameLabel": "Nombre",
+		"namePlaceholder": "p. ej., puerto",
+		"introLabel": "Introducción",
+		"introPlaceholder": "Una descripción breve…",
+		"colorLabel": "Color",
+		"colorPlaceholder": "Color CSS opcional; déjalo vacío para usar el predeterminado",
+		"pinned": "Fijado"
+	},
+	"language": {
+		"label": "Idioma",
+		"description": "Idioma de la interfaz; el contenido conserva su escritura.",
+		"english": "English",
+		"chinese": "中文",
+		"japanese": "日本語",
+		"german": "Deutsch",
+		"spanish": "Español"
+	},
+	"icons": {
+		"description": "Iconos Solar — el duotono sigue el tema, el gris conserva los dos tonos en tinta plana y el lineal se mantiene de un solo color.",
+		"style": {
+			"duotone": "Duotono",
+			"grayscale": "Escala de grises",
+			"linear": "Lineal"
+		}
+	},
+	"theme": {
+		"description": "Una paleta y si sigue la luz del día.",
+		"modeLabel": "Modo",
+		"paletteLabel": "Paleta",
+		"mode": {
+			"light": "Claro",
+			"dark": "Oscuro",
+			"system": "Sistema"
+		},
+		"palette": {
+			"mono": "Mono",
+			"sage": "Salvia",
+			"parchment": "Pergamino",
+			"azure": "Azul",
+			"hoardodile": "Hoardodile"
+		}
+	},
+	"font": {
+		"label": "Fuente",
+		"description": "Interfaz y listas; los documentos conservan su voz de lectura.",
+		"inherit": "Heredar la fuente global",
+		"inheritedHint": "Ahora estás heredando la configuración de fuente global",
+		"addCustom": "Añade una fuente por nombre y pulsa Intro…",
+		"selected": "Orden de reserva — arrastra para reordenar"
+	},
+	"dateTime": {
+		"description": "Cómo se leen las fechas — ahora mismo: {{preview}}.",
+		"formatLabel": "Formato",
+		"timeZoneLabel": "Zona horaria",
+		"format": {
+			"ymdDash": "2024-06-12 14:30:00",
+			"ymdSlash": "2024/06/12 14:30:00",
+			"dmySlash": "12/06/2024 14:30:00",
+			"mdySlash": "06/12/2024 14:30:00"
+		},
+		"timeZone": {
+			"auto": "Seguir el sistema",
+			"noMatches": "No hay zonas horarias coincidentes."
+		}
+	},
+	"appShell": {
+		"primaryNav": "Navegación principal",
+		"secondaryNav": "Navegación secundaria",
+		"openMenu": "Abrir menú",
+		"backToMainMenu": "Volver al menú principal",
+		"backToDocumentsMenu": "Volver al menú de documentos",
+		"nav": {
+			"overview": "Resumen",
+			"resources": "Recursos",
+			"characters": "Personajes",
+			"documents": "Documentos",
+			"messages": "Mensajes",
+			"me": "Ajustes",
+			"help": "Ayuda"
+		},
+		"syncDueBadge": "Hay un recordatorio de sincronización pendiente",
+		"syncStatus": {
+			"synced": "Sincronizado",
+			"due": "Sincronización pendiente",
+			"syncedTitle_one": "Al día — {{count}} dispositivo",
+			"syncedTitle_other": "Al día — {{count}} dispositivos",
+			"dueTitle_one": "{{count}} dispositivo pendiente de sincronización",
+			"dueTitle_other": "{{count}} dispositivos pendientes de sincronización",
+			"noDevicesTitle": "Aún no hay dispositivos de sincronización configurados."
+		}
+	},
+	"search": {
+		"placeholder": "Buscar personajes, recursos, documentos, mensajes…",
+		"placeholderShort": "Buscar",
+		"liveSearch": "Búsqueda en vivo",
+		"sectionTitles": {
+			"characters": "Personajes",
+			"resources": "Recursos",
+			"documents": "Documentos",
+			"messages": "Mensajes"
+		},
+		"sectionCount": "({{count}})",
+		"viewAll": "Ver todo ({{count}})",
+		"empty": {
+			"title": "No se encontraron resultados.",
+			"description": "Prueba con otra palabra clave."
+		},
+		"resultLabels": {
+			"document": "Documento",
+			"folder": "Carpeta"
+		},
+		"imageSearch": {
+			"button": "Buscar por imagen",
+			"uploadFailed": "La búsqueda de imágenes falló",
+			"title": "Resultados de búsqueda de imágenes",
+			"empty": "No se encontraron imágenes similares en tu biblioteca.",
+			"clear": "Borrar búsqueda de imágenes",
+			"queryAlt": "Imagen de consulta",
+			"similarity": "{{percent}}% similar"
+		}
+	},
+	"me": {
+		"tabs": {
+			"preferences": "Preferencias",
+			"data": "Datos",
+			"about": "Acerca de",
+			"desktop": "Escritorio",
+			"custom": "Personalizado",
+			"privacy": "Privacidad",
+			"archive": "Archivo",
+			"plugins": "Complementos",
+			"sync": "Sincronización"
+		},
+		"section": {
+			"language": "Idioma",
+			"icons": "Iconos",
+			"theme": "Tema",
+			"font": "Fuente",
+			"dateTime": "Fecha y hora",
+			"tagRules": "Reglas de etiquetas",
+			"rebuild": "Reconstruir",
+			"trash": "Papelera",
+			"usage": "Historial de uso",
+			"trace": "Registro de huellas",
+			"privacy": "Privacidad y seguridad"
+		},
+		"custom": {
+			"tab": {
+				"tags": "Etiquetas",
+				"traits": "Rasgos",
+				"relationships": "Relaciones",
+				"collections": "Colecciones"
+			},
+			"blurb": {
+				"tags": "Las categorías agrupan etiquetas; las etiquetas rotulan la biblioteca.",
+				"traits": "Datos tipados y buscables que llevan los personajes.",
+				"relationships": "Los verbos entre personajes.",
+				"collections": "Estanterías elegidas a mano y fijadas a la barra lateral."
+			},
+			"unused": "Sin usar",
+			"reorder": "Reordenar",
+			"add": "Añadir",
+			"more": "Más",
+			"filterTagsIn": "Filtrar etiquetas en {{category}}",
+			"tagsOf": "{{shown}} de {{total}} etiquetas",
+			"unusedCount": "{{count}} sin usar",
+			"newCategory": "Nueva categoría",
+			"moveTag": "Mover etiqueta",
+			"moveTagDescription": "La etiqueta sale de su categoría actual; su nombre debe estar libre en la nueva.",
+			"moveTagOut": "sale de {{category}}",
+			"rulesTravel": "Las reglas hermanas y de padre viajan con la etiqueta.",
+			"entity": {
+				"tag": "Etiqueta",
+				"category": "Categoría",
+				"trait": "Rasgo",
+				"relation": "Relación",
+				"collection": "Colección"
+			},
+			"link": "Enlazar"
+		},
+		"account": {
+			"title": "Cuenta",
+			"description": "De un solo usuario: la cuenta protege la puerta."
+		},
+		"privacy": {
+			"signOutSection": {
+				"title": "Cierre de sesión automático",
+				"description": "Si esta pestaña permanece oculta más del tiempo establecido, la sesión se cierra y se muestra la página de inicio de sesión — la única protección completa contra las miniaturas de vista previa."
+			},
+			"autoLogout": {
+				"title": "Cerrar sesión al dejar sin atención",
+				"description": "La pestaña vigila la visibilidad; al volver después del tiempo establecido aterrizas en la página de inicio de sesión."
+			},
+			"delayLabel": "Cerrar sesión después de",
+			"delay": {
+				"immediately": "Inmediatamente",
+				"minutes_one": "{{count}} minuto",
+				"minutes_other": "{{count}} minutos"
+			},
+			"idleTimeout": {
+				"label": "Tiempo de inactividad de sesión",
+				"description": "Se aplica en el servidor, por lo que también cubre pestañas cerradas y otros navegadores.",
+				"hours_one": "{{count}} hora",
+				"hours_other": "{{count}} horas",
+				"days_one": "{{count}} día",
+				"days_other": "{{count}} días"
+			}
+		},
+		"password": {
+			"title": "Contraseña",
+			"description": "La contraseña de administrador que se usa para iniciar sesión en este host.",
+			"changeButton": "Cambiar contraseña",
+			"dialogTitle": "Cambiar contraseña",
+			"currentPassword": "Contraseña actual",
+			"newPassword": "Nueva contraseña",
+			"confirm": "Confirmar nueva contraseña",
+			"newPasswordPlaceholder": "Al menos 10 caracteres",
+			"confirmPlaceholder": "Repítela una vez más",
+			"changed": "Contraseña cambiada.",
+			"errorIncorrect": "La contraseña actual es incorrecta.",
+			"errorGeneric": "No se pudo cambiar la contraseña. Revisa el servidor e inténtalo de nuevo.",
+			"mismatch": "Las contraseñas no coinciden."
+		},
+		"licenses": {
+			"title": "Licencias",
+			"description": "Atribución de código abierto para la app y los recursos incluidos.",
+			"viewButton": "Licencias",
+			"projectLicense": "Licencia del proyecto",
+			"projectLicenseDescription": "Esta aplicación se publica bajo la GNU General Public License v3.0 (GPL-3.0).",
+			"fullLicense": "Licencia completa",
+			"dependencies": "Dependencias de código abierto",
+			"fonts": "Fuentes",
+			"packageCount_one": "{{count}} paquete",
+			"packageCount_other": "{{count}} paquetes",
+			"noPackages": "Aún no hay paquetes."
+		},
+		"about": {
+			"title": "Acerca de",
+			"description": "Qué estás ejecutando y de dónde viene.",
+			"tagline": "App de archivado autoalojada y respetuosa con la privacidad para medios y documentos personales.",
+			"repository": "Repositorio de GitHub",
+			"checkUpdate": "Buscar actualizaciones",
+			"checking": "Comprobando…",
+			"latest": "Ya tienes la versión más reciente.",
+			"outdated": "La versión {{version}} está disponible.",
+			"viewRelease": "Ver la publicación",
+			"updateError": "La comprobación de actualizaciones falló. Inténtalo de nuevo más tarde.",
+			"downloading": "Descargando… {{percent}}%",
+			"updateReady": "La versión {{version}} está lista para instalar.",
+			"restartToUpdate": "Reiniciar",
+			"portableHint": "Las versiones portátiles se actualizan descargando un nuevo zip de GitHub."
+		},
+		"connections": {
+			"title": "Conexiones recientes",
+			"description": "Cada inicio de sesión con dispositivo, IP y hora. Se guarda solo en este dispositivo; las filas de más de 90 días se eliminan.",
+			"empty": "Aún no hay inicios de sesión.",
+			"loopback": "este dispositivo"
+		},
+		"desktop": {
+			"library": {
+				"title": "Carpeta de la biblioteca",
+				"description": "Donde esta app guarda el archivo. Al cambiar la carpeta, la app se reinicia; los archivos no se copian.",
+				"change": "Cambiar carpeta",
+				"confirmTitle": "¿Cambiar la carpeta de la biblioteca?",
+				"confirmDescription": "La app se reiniciará con la carpeta que elijas. Una carpeta vacía es una biblioteca nueva. Una carpeta con app.sqlite es esa biblioteca. No se copia ni se mueve nada."
+			},
+			"sharedFolder": {
+				"title": "Carpeta compartida",
+				"description": "Carpeta inicial para Explorar carpetas compartidas al importar.",
+				"enable": "Activar importación de carpetas compartidas",
+				"enableDescription": "Cuando está activado, Explorar carpetas compartidas se abre desde la carpeta de abajo."
+			},
+			"lan": {
+				"title": "Acceso desde la red local",
+				"description": "Sirve esta app a teléfonos y equipos en la misma Wi-Fi o red.",
+				"enable": "Permitir el acceso desde la red local",
+				"enableDescription": "Quien esté en tu red necesita tu contraseña para iniciar sesión. Windows pide una excepción de firewall la primera vez que activas esto.",
+				"applying": "Aplicando…",
+				"portTitle": "Puerto",
+				"portDescription": "Localhost y la red local comparten un puerto. Al aplicar se reinicia el servidor.",
+				"portApply": "Aplicar",
+				"copy": "Copiar",
+				"copied": "Dirección copiada",
+				"copyFailed": "No se pudo copiar",
+				"passwordRequired": "La compartición LAN no está activada — configura antes una contraseña de administrador.",
+				"weakPasswordTitle": "Tu contraseña de administrador es débil",
+				"weakPasswordDescription": "Quien adivine tu contraseña en tu red puede acceder a toda la biblioteca. Configura antes una contraseña más segura en Ajustes → Cambiar contraseña, o activa la compartición de todos modos.",
+				"enableAnyway": "Activar la compartición de todos modos",
+				"primaryHint": "Ábrelo en un dispositivo de la misma Wi-Fi.",
+				"portAdjustedTitle": "El puerto {{preferred}} está en uso — el servidor ahora escucha en {{actual}}.",
+				"portAdjustedHint": "Abre esta dirección desde otros dispositivos con el nuevo puerto.",
+				"portAdjustedDismiss": "Descartar",
+				"moreAddresses": "Otras direcciones ({{count}}) — adaptadores virtuales y VPN",
+				"noAddresses": "No se encontró ninguna dirección accesible — revisa la conexión de red."
+			},
+			"autostart": {
+				"title": "Iniciar con Windows",
+				"description": "Abre hoardodile cuando inicies sesión."
+			},
+			"startInTray": {
+				"title": "Iniciar en la bandeja",
+				"description": "No se abre ninguna ventana hasta que elijas Abrir desde la bandeja."
+			},
+			"autoUpdate": {
+				"title": "Actualizaciones automáticas",
+				"description": "Descarga las publicaciones de GitHub en segundo plano. El reinicio siempre se confirma."
+			},
+			"closeAction": {
+				"title": "Al cerrar la ventana",
+				"description": "Qué hace el botón de cerrar de la barra de título — preguntar cada vez, ocultar en la bandeja o salir.",
+				"ask": "Preguntarme cada vez",
+				"tray": "Ocultar en la bandeja",
+				"quit": "Salir de la app"
+			},
+			"closeConfirm": {
+				"title": "¿Cerrar hoardodile?",
+				"description": "La app sigue ejecutándose en la bandeja a menos que la cierres.",
+				"tray": "Ocultar en la bandeja",
+				"quit": "Salir de la app",
+				"remember": "Recordar mi elección"
+			},
+			"caption": {
+				"back": "Atrás",
+				"forward": "Adelante",
+				"reload": "Recargar",
+				"minimize": "Minimizar",
+				"maximize": "Maximizar",
+				"restore": "Restaurar",
+				"close": "Cerrar",
+				"devtools": "Herramientas de desarrollo"
+			},
+			"updateBanner": "La versión {{version}} está lista para instalar.",
+			"updateBannerRestart": "Reiniciar",
+			"shellCache": {
+				"title": "Caché del shell",
+				"description": "Cachés en disco de la propia ventana de la app — respuestas HTTP, código compilado y sombreadores de GPU — además de cualquier actualización descargada. Al limpiar nunca se tocan las cookies, tus preferencias ni los datos sin conexión, y la app vuelve a obtener los datos del servidor local de inmediato. Una actualización descargada lista para instalar no se toca.",
+				"currentSize": "{{size}}",
+				"unavailable": "No disponible",
+				"clear": "Limpiar caché",
+				"clearing": "Limpiando…",
+				"confirmTitle": "¿Limpiar la caché del shell?",
+				"confirmDescription": "La ventana de la app volverá a obtener sus archivos del servidor local en la próxima visita. Las cookies, las preferencias y los datos sin conexión nunca se tocan. Una actualización descargada lista para instalar no se toca.",
+				"toastCleared": "Caché del shell limpiada — {{bytes}} liberados.",
+				"clearFailed": "No se pudo limpiar la caché del shell."
+			}
+		},
+		"usage": {
+			"description": "Sesiones detrás de Estadísticas y el registro de huellas — al limpiar se pide escribir una frase.",
+			"rowTitle": "Sesiones de uso",
+			"rowDescription": "Los datos detrás de Estadísticas.",
+			"clearAll": "Eliminar todo",
+			"confirmTitle": "¿Limpiar todo el historial de uso?",
+			"confirmDescription": "Elimina de forma permanente todos los registros de uso. Las estadísticas y las recomendaciones del resumen se restablecerán. Esto no se puede deshacer.",
+			"confirmPhrase": "Limpiar todo el historial de uso",
+			"confirmLabel": "Confirmar limpieza",
+			"clearing": "Limpiando…",
+			"toastSuccess": "Todo el historial de uso se limpió",
+			"toastFailed": "No se pudo limpiar el historial de uso"
+		},
+		"trace": {
+			"description": "Registro de solo adición de tus acciones — importaciones, exportaciones, eliminaciones, restauraciones y votos.",
+			"rowTitle": "Registro de huellas",
+			"clearAll": "Eliminar todo",
+			"confirmTitle": "¿Limpiar las huellas?",
+			"confirmDescription": "Elimina de forma permanente todos los registros de acciones (importaciones, exportaciones, eliminaciones, restauraciones y votos de no me gusta). El tiempo de visualización son datos de uso aparte y no se ven afectados. Esto no se puede deshacer.",
+			"confirmPhrase": "Limpiar huellas",
+			"confirmLabel": "Confirmar limpieza",
+			"clearing": "Limpiando…",
+			"toastSuccess": "Huellas limpiadas",
+			"toastFailed": "No se pudo limpiar las huellas"
+		},
+		"trash": {
+			"description": "Paquetes en espera — cada uno puede recuperarse.",
+			"view": "Revisar papelera ({{count}})",
+			"loading": "Cargando la papelera…",
+			"download": "Descargar"
+		},
+		"systemPrefs": {
+			"title": "Valores predeterminados del sistema",
+			"description": "Interruptores ocultos del comportamiento del host — restaurados a los valores de fábrica. Los ajustes de los complementos no se tocan; viven en la página Complementos.",
+			"restore": "Restaurar",
+			"resetSuccess": "Todos los ajustes del sistema se han restablecido",
+			"confirmTitle": "¿Restablecer todos los ajustes del sistema?",
+			"confirmDescription": "Esto eliminará todas las preferencias del sistema, incluidos tema, idioma, fuente y formato de fecha. La página se recargará con valores predeterminados. Esto no se puede deshacer."
+		},
+		"systemCache": {
+			"title": "Caché del navegador",
+			"description": "Datos locales del lado del navegador — cachés de service worker, localStorage e IndexedDB (cola de uso sin conexión, borradores de documentos). El servidor nunca se toca; luego la página se recarga.",
+			"clear": "Limpiar todo",
+			"clearing": "Limpiando…",
+			"resetting": "Caché del navegador limpiada. Recargando…",
+			"confirmTitle": "¿Limpiar la caché del navegador?",
+			"confirmDescription": "Esto eliminará todos los datos locales del navegador, incluidas las preferencias de tema e idioma, los registros de uso sin conexión y los borradores guardados de documentos, y luego recargará la página. Esto no se puede deshacer."
+		}
+	},
+	"plugin": {
+		"loading": "Cargando la vista previa…",
+		"previewFailed": "El complemento falló al cargar",
+		"previewFallback": "El complemento {{name}} falta o no está disponible; se muestra la vista previa con el complemento de archivo integrado",
+		"previewFallbackManage": "Administrar complementos",
+		"previewFallbackUnknown": "complemento desconocido"
+	},
+	"plugins": {
+		"pageHint": "Instala desde un paquete .zip o vuelve a escanear la carpeta de complementos para detectar novedades.",
+		"uploadZip": "Subir .zip",
+		"uploadPluginSuccess": "Complemento instalado",
+		"uploading": "Instalando…",
+		"rescan": "Volver a escanear complementos",
+		"rescanSuccess": "Complementos escaneados de nuevo",
+		"more": "Más",
+		"enableToggle": "Activar o desactivar complemento",
+		"dragToReorder": "Arrastra para reordenar",
+		"dev": "dev",
+		"missing": "Falta",
+		"missingSource": "falta el origen",
+		"installed": "Instalado",
+		"installedDescription": "El orden decide quién reclama un paquete primero — arrastra para cambiar la prioridad.",
+		"filterPlaceholder": "Filtrar complementos",
+		"countInstalled": "{{count}} instalados",
+		"listView": "Vista de lista",
+		"gridView": "Vista de cuadrícula",
+		"searchCategories": "Buscar categorías",
+		"fileTitle": "Archivo",
+		"fileDescription": "El visor de reserva integrado para tipos de archivo desconocidos — no se puede quitar ni reordenar.",
+		"alwaysOn": "siempre activo",
+		"defaultsTitle": "Valores predeterminados de los complementos",
+		"defaultsDescription": "Los ajustes de cada complemento vuelven a sus valores predeterminados — el contenido y las instalaciones no se tocan.",
+		"restore": "Restaurar",
+		"cachesTitle": "Cachés de los complementos",
+		"cachesDescription": "Miniaturas y metadatos analizados de todos los complementos — se reconstruyen bajo demanda.",
+		"clearAll": "Limpiar todo",
+		"pin": "Fijar",
+		"color": "Color",
+		"appearance": "Apariencia",
+		"appearanceTitle": "Apariencia: {{name}}",
+		"appearanceDescription": "Elige un color y si quieres fijar este complemento a las tarjetas de recursos.",
+		"reset": "Restablecer",
+		"clear": "Limpiar",
+		"resetPluginPref": "Restablecer ajustes",
+		"resetPluginPrefConfirmTitle": "¿Restablecer los ajustes de {{name}}?",
+		"resetPluginPrefConfirmDescription": "Esto eliminará todos los ajustes guardados de este complemento. El complemento usará sus valores predeterminados tras reiniciar. Esto no se puede deshacer.",
+		"resetPluginPrefSuccess": "Los ajustes de {{name}} se han restablecido",
+		"clearPluginCache": "Limpiar caché",
+		"clearPluginCacheConfirmTitle": "¿Limpiar la caché de {{name}}?",
+		"clearPluginCacheConfirmDescription": "Esto eliminará todos los datos en caché (p. ej., posiciones de reanudación) de este complemento. Esto no se puede deshacer.",
+		"clearPluginCacheSuccess": "La caché de {{name}} se ha limpiado",
+		"uninstall": "Desinstalar",
+		"uninstallConfirmTitle": "¿Desinstalar el complemento {{name}}?",
+		"uninstallConfirmDescription_one": "{{count}} recurso usa este complemento. Tras desinstalarlo, se mostrará la vista previa con el complemento de archivo integrado; al reinstalar el complemento se restaura automáticamente. Esto no se puede deshacer.",
+		"uninstallConfirmDescription_other": "{{count}} recursos usan este complemento. Tras desinstalarlo, se mostrará la vista previa con el complemento de archivo integrado; al reinstalar el complemento se restauran automáticamente. Esto no se puede deshacer.",
+		"uninstallConfirmNoUsage": "Ningún recurso usa este complemento. Puedes reinstalarlo cuando quieras para usarlo de nuevo. Esto no se puede deshacer.",
+		"uninstallSuccess": "Se desinstaló {{name}}",
+		"resetAllPluginPrefSuccess": "Todos los ajustes de los complementos se han restablecido",
+		"resetAllPluginPrefConfirmTitle": "¿Restablecer todos los ajustes de los complementos?",
+		"resetAllPluginPrefConfirmDescription": "Esto eliminará los ajustes guardados de todos los complementos. Todos los complementos usarán sus valores predeterminados tras reiniciar. Esto no se puede deshacer.",
+		"clearAllPluginCacheSuccess": "Toda la caché de los complementos se ha limpiado",
+		"clearAllPluginCacheConfirmTitle": "¿Limpiar toda la caché de los complementos?",
+		"clearAllPluginCacheConfirmDescription": "Esto eliminará los datos en caché de todos los complementos, incluidas las posiciones de reanudación. Esto no se puede deshacer.",
+		"installConfirmTitle": "¿Instalar este complemento?",
+		"install": "Instalar",
+		"installConfirmRisk": "Un complemento ejecuta código en el servidor con los mismos privilegios que esta app: puede leer y modificar todos tus datos y hacer solicitudes de red. Los permisos declarados solo activan funciones del host — no aíslan el complemento. Solo instala complementos de fuentes de confianza.",
+		"uploadInvalidPlugin": "No es un paquete de complemento válido (falta o no es válido manifest.json).",
+		"permissions": {
+			"sourceMeta": "Metadatos de origen",
+			"searchMeta": "Metadatos de búsqueda",
+			"danmaku": "Danmaku",
+			"message": "Mensajes",
+			"imageHashes": "Hashes de imagen"
+		}
+	},
+	"overview": {
+		"usageHistory": {
+			"title": "Historial de uso"
+		},
+		"memories": {
+			"title": "En este día",
+			"yearsAgo_one": "El año pasado en este día",
+			"yearsAgo_other": "Hace {{count}} años en este día"
+		},
+		"activity": {
+			"title": "Actividad reciente",
+			"updated": "Actualizado {{time}}"
+		},
+		"stats": {
+			"resources": "Recursos",
+			"characters": "Personajes",
+			"documents": "Documentos",
+			"messages": "Mensajes"
+		},
+		"sections": {
+			"recentResources": "Actualizados recientemente",
+			"recentViewed": "Vistos recientemente",
+			"recentCharacters": "Personajes recientes",
+			"recentDocuments": "Documentos recientes",
+			"recentMessages": "Mensajes recientes"
+		},
+		"empty": {
+			"resources": "Aún no hay recursos.",
+			"recentViewed": "Aún no hay historial de visualización.",
+			"characters": "Aún no hay personajes.",
+			"documents": "Aún no hay documentos.",
+			"messages": "Aún no hay mensajes."
+		},
+		"todayUsage": {
+			"label": "Tiempo de visualización de hoy",
+			"sameAsYesterday": "Igual que ayer",
+			"moreThanYesterday": "{{duration}} más que ayer",
+			"lessThanYesterday": "{{duration}} menos que ayer"
+		},
+		"footprints": {
+			"aria": "Huellas",
+			"title": "Huellas",
+			"description": "Cada acción que has realizado",
+			"emptyPrompt": "Aún no hay huellas — importa o sube un recurso para empezar el registro.",
+			"uploadResource": "Subir un recurso",
+			"importFolder": "Importar una carpeta"
+		},
+		"viewAll": "Ver todo",
+		"recentViewed": {
+			"description": "Tu historial de visualización",
+			"unknownTime": "Hora desconocida",
+			"emptyPrompt": "Aún no hay historial de visualización — empieza a explorar o sube tu primer recurso.",
+			"browseResources": "Explorar recursos",
+			"uploadResource": "Subir un recurso"
+		},
+		"pinned": {
+			"charactersTitle": "Personajes fijados",
+			"resourcesTitle": "Recursos fijados",
+			"charactersEmpty": "No hay personajes que coincidan.",
+			"resourcesEmpty": "No hay recursos que coincidan.",
+			"add": "Añadir",
+			"maxReached": "Se alcanzó el máximo de {{max}} elementos fijados",
+			"dragToReorder": "Arrastra para reordenar",
+			"settings": {
+				"title": "Fijado: {{section}}",
+				"description": "Qué secciones fija el panel — arrastra para reordenar, edita al lado.",
+				"editTitle": "Editar sección",
+				"editDescription": "La sección tal como se muestra en el panel.",
+				"titleLabel": "Título",
+				"titlePlaceholder": "Déjalo vacío para usar el título predeterminado",
+				"showWhenEmpty": "Mostrar cuando está vacío",
+				"sizeLabel": "Tamaño",
+				"sectionsCount_one": "{{count}} sección",
+				"sectionsCount_other": "{{count}} secciones",
+				"save": "Guardar sección",
+				"done": "Listo",
+				"delete": "Eliminar",
+				"deleteConfirmTitle": "Eliminar vista fijada",
+				"deleteConfirmDescription": "¿Seguro que quieres eliminar «{{title}}»? Esto no se puede deshacer.",
+				"saveSuccess": "Ajustes fijados guardados",
+				"deleteSuccess": "Vista fijada eliminada",
+				"toggleEnabledAria": "Activar o desactivar {{title}}",
+				"noItems": "Aún no hay vistas fijadas.",
+				"noItemsHint": "Haz clic en Añadir para guardar los filtros actuales en el resumen.",
+				"noItemsWithFiltersHint": "La página de lista actual ya tiene filtros. Haz clic en el botón de arriba para guardarlos como vista fijada.",
+				"noSelection": "No hay ninguna vista fijada seleccionada.",
+				"noSelectionHint": "Selecciona un elemento de la lista o haz clic en Añadir para crear una vista nueva.",
+				"preview": "Vista previa",
+				"previewTitle": "Vista previa de los filtros",
+				"item": {
+					"refresh": {
+						"label": "Actualización automática",
+						"description": "Cada cuánto esta vista fijada genera un conjunto aleatorio nuevo.",
+						"always": "Siempre",
+						"never": "Nunca",
+						"every60s": "Cada minuto",
+						"every1800s": "Cada 30 minutos",
+						"every3600s": "Cada hora",
+						"every21600s": "Cada 6 horas",
+						"every43200s": "Cada 12 horas",
+						"midnight": "A medianoche"
+					}
+				}
+			},
+			"refreshSectionAria": "Actualizar {{title}}"
+		},
+		"sort": {
+			"created": "Creado",
+			"updated": "Actualizado"
+		},
+		"rebuildDescription": "Reconstruye desde cero los metadatos y las miniaturas de cada recurso, o limpia todos los datos reconstruibles (cachés locales + metadatos registrados) en este host.",
+		"signOut": "Cerrar sesión",
+		"signingOut": "Cerrando sesión…",
+		"precache": "Precalentar",
+		"precaching": "Precalentando…",
+		"caching": "Calentando la caché del navegador…",
+		"refreshCache": "Actualizar caché",
+		"clearCache": "Limpiar todo",
+		"clearing": "Limpiando…",
+		"progressLine": "{{done}} / {{total}} ({{percent}}%) - {{stage}}",
+		"cachedSummary_one": "{{count}} elemento precalentado",
+		"cachedSummary_other": "{{count}} elementos precalentados",
+		"precacheFailed": "Falló el precalentamiento: {{error}}",
+		"precacheStageLoading": "Reconstruyendo metadatos y generando miniaturas…",
+		"precacheDefaultError": "Falló el precalentamiento",
+		"precacheInProgress": "Ya hay un precalentamiento en curso",
+		"abortPrecache": "Abortar",
+		"precacheAborted": "Precalentamiento abortado",
+		"toastClearLocked_one": "{{count}} archivo de datos de reconstrucción está bloqueado y no se pudo eliminar. Reinicia el servidor para limpiarlo.",
+		"toastClearLocked_other": "{{count}} archivos de datos de reconstrucción están bloqueados y no se pudieron eliminar. Reinicia el servidor para limpiarlos.",
+		"clearCacheSuccess": "Datos de reconstrucción limpiados",
+		"toastClearFailed": "No se pudieron limpiar los datos de reconstrucción",
+		"toastPrecacheSuccess_one": "Se precalentó {{count}} elemento",
+		"toastPrecacheSuccess_other": "Se precalentaron {{count}} elementos",
+		"toastPrecachePartial": "El precalentamiento terminó con {{failed}} fallos"
+	},
+	"login": {
+		"brand": "Hoardodile",
+		"title": "Iniciar sesión",
+		"description": "Introduce la contraseña de este host.",
+		"demoDescription": "Esta es una biblioteca de demostración. La contraseña es {{password}}.",
+		"password": "Contraseña",
+		"submit": "Iniciar sesión",
+		"submitting": "Iniciando sesión…",
+		"formAria": "Iniciar sesión",
+		"errorIncorrect": "Contraseña incorrecta.",
+		"errorGeneric": "No se pudo iniciar sesión. Revisa el servidor e inténtalo de nuevo.",
+		"setupTitle": "Configurar una contraseña",
+		"setupDescription": "Este host aún no tiene contraseña. Configura una ahora — quien lo haga primero es dueño del host.",
+		"setupPassword": "Nueva contraseña",
+		"setupConfirm": "Confirmar contraseña",
+		"setupSubmit": "Configurar contraseña",
+		"setupSubmitting": "Configurando…",
+		"setupMismatch": "Las contraseñas no coinciden.",
+		"setupFormAria": "Configurar contraseña"
+	},
+	"dataHistory": {
+		"title": "Historial de datos",
+		"description": "Administra tus instantáneas de datos. Las copias de seguridad sirven para migraciones o recuperación ante desastres; los archivos congelan una versión como de solo lectura para que sus datos nunca vuelvan a cambiar.",
+		"status": {
+			"currentWritable": "Con escritura — v{{version}}",
+			"viewingArchive": "Viendo el archivo — v{{version}}"
+		},
+		"chip": {
+			"latest": "Más reciente",
+			"readOnly": "Solo lectura",
+			"auto": "Auto"
+		},
+		"archive": {
+			"title": "v{{version}}",
+			"tagCurrent": "Más reciente (con escritura)",
+			"tagActive": "En visualización",
+			"tagReadOnly": "Archivo histórico",
+			"tagCurrentShort": "reciente",
+			"tagActiveShort": "visualizando",
+			"nameLabel": "Nombre",
+			"namePlaceholder": "p. ej., hito v1",
+			"noteLabel": "Nota",
+			"notePlaceholder": "p. ej., antes de la migración, congelación de datos…",
+			"switchHint": "Tras cambiar, la app funciona en modo de solo lectura sobre este archivo. Vuelve a la versión más reciente para editar de nuevo.",
+			"activeHint": "Esta es la versión que estás viendo."
+		},
+		"backup": {
+			"typeLabel": "Copia de seguridad de la base de datos",
+			"autoTypeLabel": "Instantánea automática diaria",
+			"autoBadge": "auto",
+			"autoDeleteHint": "Esta instantánea automática se conserva durante una ventana móvil corta y se reemplazará automáticamente. Puedes eliminarla ahora para liberar espacio.",
+			"nameLabel": "Nombre",
+			"nameEmpty": "Ninguna",
+			"restoreHint": "Para restaurar se te pedirá escribir el nombre de la copia — la biblioteca actual se archiva primero, así que nada se pierde en silencio.",
+			"deleteHint": "Este archivo de copia de seguridad se eliminará de forma permanente y no se puede recuperar.",
+			"archivedHint": "Esta copia pertenece a una versión archivada. Sus datos están congelados y no se pueden restaurar ni eliminar."
+		},
+		"action": {
+			"backupNow": "Crear copia ahora",
+			"backingUp": "Creando copia…",
+			"archiveNow": "Archivar ahora",
+			"archiving": "Archivando…",
+			"restore": "Restaurar",
+			"restoring": "Restaurando…",
+			"delete": "Eliminar",
+			"deleting": "Eliminando…",
+			"switchToVersion": "Cambiar a esta versión",
+			"switching": "Cambiando…",
+			"download": "Descargar"
+		},
+		"reloading": "Recargando…",
+		"autoSnapshot": {
+			"enabled": "Instantánea automática: diaria · conserva {{keep}} días",
+			"disabled": "Las instantáneas automáticas están desactivadas",
+			"last": "la más reciente {{time}}"
+		},
+		"detail": {
+			"selectPrompt": "Selecciona una copia o un archivo en la línea de tiempo para ver los detalles y las acciones disponibles.",
+			"size": "Tamaño",
+			"versionNumber": "Versión",
+			"createdAt": "Creado",
+			"note": "Nota",
+			"contents": "Contenido",
+			"contentsValue": "{{resources}} recursos · {{characters}} personajes · {{documents}} documentos",
+			"backupOnVersion": "Copia en v{{version}}",
+			"archiveVersion": "Archivo v{{version}}"
+		},
+		"note": {
+			"empty": "Haz clic para añadir una nota…",
+			"placeholder": "Añade una descripción breve para esta instantánea…"
+		},
+		"confirm": {
+			"archiveTitle": "Archivar la versión más reciente",
+			"archiveDescription": "La base de datos de la versión más reciente y todos los recursos, personajes y documentos se congelarán como un archivo de solo lectura. Los datos dentro de un archivo nunca vuelven a cambiar; se creará una versión nueva con escritura para el trabajo continuo.",
+			"archivePhrase": "archivar",
+			"archiveAutoHint": "Las instantáneas automáticas de la versión actual se congelan con este archivo; se toma una instantánea nueva para la versión recién creada de inmediato.",
+			"restoreTitle": "Restaurar esta copia",
+			"restoreDescription": "La biblioteca actual se archiva primero, así que nada se pierde en silencio. Esta restauración se puede deshacer restaurando la versión archivada.",
+			"restorePhrase": "restaurar copia",
+			"autoPhrase": "auto",
+			"deleteBackupTitle": "Eliminar la copia para siempre",
+			"deleteBackupDescription": "Este archivo de copia de seguridad se eliminará de forma permanente y no se puede recuperar.",
+			"deleteBackupPhrase": "eliminar copia",
+			"switchTitle": "Cambiar a esta versión archivada",
+			"switchDescription": "Tras cambiar, la app funciona en modo de solo lectura y solo se ven los datos históricos. Vuelve a la versión más reciente para editar de nuevo."
+		},
+		"empty": {
+			"title": "Aún no hay historial de datos.",
+			"description": "Crea una copia ahora para protegerte contra la pérdida de datos."
+		},
+		"toast": {
+			"backupCreated": "Copia creada",
+			"backupFailed": "Falló la copia",
+			"archiveFailed": "Falló el archivado",
+			"backupDeleted": "Copia eliminada",
+			"deleteFailed": "Falló la eliminación",
+			"restoreFailed": "Falló la restauración",
+			"switchFailed": "Falló el cambio",
+			"metaSaved": "Guardado",
+			"metaSaveFailed": "No se pudo guardar"
+		}
+	},
+	"documents": {
+		"title": "Documentos",
+		"index": {
+			"docCount_one": "{{count}} documento",
+			"docCount_other": "{{count}} documentos",
+			"folderCount_one": "{{count}} carpeta",
+			"folderCount_other": "{{count}} carpetas",
+			"description": "{{docs}} en {{folders}} — todo lo que has escrito, en un solo lugar.",
+			"updated": "Actualizado {{time}}"
+		},
+		"create": "Nuevo",
+		"backToStart": "Volver a la página de inicio",
+		"new": "Documento",
+		"newFolder": "Carpeta",
+		"defaultNewTitle": "Documento sin título",
+		"defaultNewFolderTitle": "Carpeta sin título",
+		"searchPlaceholder": "Buscar por título o contenido",
+		"loading": "Cargando documentos…",
+		"listEmpty": "Aún no hay documentos.",
+		"notFound": {
+			"title": "No se encontró el documento",
+			"description": "Este documento ya no existe — puede que se haya eliminado.",
+			"back": "Volver a documentos"
+		},
+		"untitled": "Sin título",
+		"viewAll": "Ver todo",
+		"filter": {
+			"title": "Filtrar por personajes y recursos",
+			"dialogTitle": "Filtrar documentos",
+			"apply": "Aplicar",
+			"clear": "Limpiar"
+		},
+		"placeholder": "Empieza a escribir…",
+		"editorPlaceholder": "Ver comandos '/'",
+		"saveDraft": "Guardar borrador",
+		"discardDraft": "Descartar borrador",
+		"commit": "Confirmar versión",
+		"commitDialog": {
+			"title": "Confirmar versión",
+			"description": "Guarda el borrador actual como una versión inmutable. Proporciona un mensaje breve que describa qué cambió.",
+			"messageLabel": "Mensaje de confirmación",
+			"messagePlaceholder": "¿Qué cambió en esta versión?",
+			"submit": "Confirmar",
+			"committing": "Confirmando…"
+		},
+		"discardDialog": {
+			"title": "¿Descartar el borrador?",
+			"description": "Tus cambios sin guardar se reemplazarán con la última versión confirmada. Esto no se puede deshacer.",
+			"confirm": "Descartar",
+			"discarding": "Descartando…"
+		},
+		"leaveDialog": {
+			"confirm": "Tienes cambios sin guardar en este documento. ¿Salir de todos modos?"
+		},
+		"moreActions": "Más acciones",
+		"zoom": {
+			"label": "Zoom del texto",
+			"smaller": "Alejar",
+			"larger": "Acercar",
+			"reset": "Restablecer zoom"
+		},
+		"appearanceSettings": {
+			"title": "Apariencia",
+			"description": "Ajusta el aspecto de los documentos: tema, ancho de lectura y fuentes.",
+			"theme": "Tema del documento",
+			"inherit": "Heredar del tema web",
+			"readingWidth": "Ancho de lectura",
+			"readingWidthDescription": "Ancho de la columna de lectura centrada en la página del documento.",
+			"editorFont": "Fuente del editor",
+			"editorFontDescription": "Fuente que se usa dentro del editor de documentos.",
+			"uiFont": "Fuente de la página",
+			"uiFontDescription": "Fuente que se usa para títulos, barra lateral y otras áreas de la interfaz en la página del documento.",
+			"body": "Cuerpo",
+			"headings": "Encabezados"
+		},
+		"readOnly": {
+			"enable": "Vista previa",
+			"disable": "Salir de la vista previa"
+		},
+		"reading": {
+			"enter": "Modo lectura",
+			"exit": "Salir del modo lectura"
+		},
+		"diff": {
+			"show": "Comparar historial",
+			"exit": "Salir de la comparación",
+			"compareWith": "Comparar con",
+			"selectVersion": "Seleccionar versión"
+		},
+		"conflict": {
+			"title": "Se detectaron cambios remotos",
+			"description": "Tus cambios se conservan en el editor. Compara las dos versiones y elige cuál conservar.",
+			"keepCurrent": "Conservar el contenido actual",
+			"discardCurrent": "Descartar el contenido actual",
+			"viewDiff": "Comparar",
+			"diffLabel": "Borrador sin conexión frente a remoto",
+			"updatedHint": "El servidor actualizó {{remote}} · Edición local {{local}}",
+			"discardConfirm": {
+				"title": "¿Descartar las ediciones actuales?",
+				"description": "Los cambios aún no sincronizados con el servidor se perderán. Puedes comparar las diferencias primero.",
+				"confirm": "Descartar las ediciones actuales"
+			}
+		},
+		"indent": {
+			"enable": "Activar sangría de primera línea"
+		},
+		"welcome": {
+			"title": "Documentos",
+			"subtitle": "Crea documentos o carpetas a la izquierda. Los documentos también pueden contener hijos anidados."
+		},
+		"folderHint": "Esto es una carpeta. Elige un documento dentro para empezar a editar.",
+		"headings": "Contenido",
+		"noHeadings": "Este documento no tiene encabezados.",
+		"untitledHeading": "Encabezado sin título",
+		"detailMeta": {
+			"chars_one": "{{count, number}} carácter",
+			"chars_other": "{{count, number}} caracteres"
+		},
+		"notes": {
+			"tab": "Notas",
+			"empty": "Aún no hay notas."
+		},
+		"statusBar": {
+			"charCount": "{{count}} / {{max}} caracteres",
+			"offline": "Sin conexión · cambios sin guardar"
+		},
+		"autosave": {
+			"enable": "Activar guardado automático"
+		},
+		"editMode": {
+			"label": "Ajustar orden",
+			"toggle": "Activar o desactivar el modo de ajuste de orden",
+			"hint": "Actívalo para arrastrar y reordenar documentos en el árbol."
+		},
+		"expandAll": "Expandir todo",
+		"collapseAll": "Contraer todo",
+		"slash": {
+			"charactersGroup": "Personajes",
+			"resourcesGroup": "Recursos",
+			"insertCharacter": "Insertar personaje…",
+			"insertResource": "Insertar recurso…"
+		},
+		"toast": {
+			"createFailed": "No se pudo crear",
+			"renameFailed": "No se pudo renombrar",
+			"saveFailed": "No se pudo guardar el borrador",
+			"saved": "Guardado",
+			"commitFailed": "No se pudo confirmar la versión",
+			"committed": "Versión confirmada",
+			"contentTooLarge": "El contenido supera el límite máximo de caracteres",
+			"versionLoadFailed": "No se pudo cargar el contenido de la versión",
+			"savedLocally": "Guardado en este dispositivo",
+			"resolveConflictFirst": "Resuelve el conflicto sin conexión antes de confirmar",
+			"movedToTrash": "Movido a la papelera",
+			"restored": "Restaurado",
+			"restoreFailed": "No se pudo restaurar",
+			"deleteFailed": "No se pudo eliminar",
+			"deletedForever": "Eliminado para siempre",
+			"moveFailed": "No se pudo mover"
+		},
+		"search": {
+			"empty": "No hay documentos que coincidan."
+		},
+		"trash": {
+			"open": "Papelera",
+			"empty": "Aún no hay documentos en la papelera.",
+			"restore": "Restaurar",
+			"hardDelete": "Eliminar para siempre",
+			"hardDeleteTitle": "¿Eliminar para siempre?",
+			"hardDeleteDescription": "Esto elimina el elemento de forma permanente. Esto no se puede deshacer.",
+			"hardDeleteConfirm": "Eliminar para siempre",
+			"hardDeleting": "Eliminando…"
+		},
+		"softDeleteDialog": {
+			"title": "¿Mover a la papelera?",
+			"description": "El elemento se ocultará del árbol y se podrá restaurar más tarde desde la papelera.",
+			"folderWarning": "Todos los documentos descendientes de esta carpeta se moverán juntos a la papelera.",
+			"confirm": "Mover a la papelera"
+		},
+		"toolbar": {
+			"bold": "Negrita",
+			"italic": "Cursiva",
+			"strike": "Tachado",
+			"code": "Código en línea",
+			"h1": "Encabezado 1",
+			"h2": "Encabezado 2",
+			"h3": "Encabezado 3",
+			"bulletList": "Lista con viñetas",
+			"orderedList": "Lista numerada",
+			"blockquote": "Cita",
+			"noFirstLineIndent": "Sin sangría de primera línea (este párrafo)",
+			"link": "Enlace",
+			"linkPrompt": "Introduce la URL (déjala vacía para quitarla)",
+			"alignLeft": "Alinear a la izquierda",
+			"alignCenter": "Centrar",
+			"alignRight": "Alinear a la derecha",
+			"textColor": "Color del texto",
+			"tagChip": "Estilo de etiqueta",
+			"undo": "Deshacer",
+			"redo": "Rehacer"
+		}
+	},
+	"characters": {
+		"title": "Personajes",
+		"searchPlaceholder": "Buscar personajes…",
+		"filters": "Filtros",
+		"sortLabel": "Ordenar por",
+		"orderLabel": "Orden",
+		"search": {
+			"sectionOptions": "Opciones",
+			"sectionTags": "Etiquetas",
+			"sectionTraits": "Rasgos",
+			"sectionRelations": "Relaciones",
+			"clearAll": "Limpiar todo",
+			"apply": "Buscar",
+			"itemCount_one": "{{count}} personaje",
+			"itemCount_other": "{{count}} personajes"
+		},
+		"new": "Nuevo",
+		"listEmpty": "Aún no hay personajes.",
+		"trashEmpty": "Aún no hay personajes en la papelera.",
+		"filter": {
+			"trash": "Papelera"
+		},
+		"traitFilter": {
+			"add": "Añadir",
+			"empty": "Define rasgos en Ajustes para filtrar por ellos.",
+			"opContains": "contiene",
+			"opEmpty": "está vacío",
+			"opNotEmpty": "no está vacío",
+			"opDateAfter": "después de",
+			"opDateOnOrAfter": "en o después de",
+			"opDateBefore": "antes de",
+			"opDateOnOrBefore": "en o antes de",
+			"opDateOn": "en",
+			"opDateMonthDayOn": "mes/día en",
+			"opDateMonthDayToday": "el mes/día de hoy"
+		},
+		"viewSelected": "Solo seleccionados",
+		"viewSelectedTooMany": "Solo seleccionados admite hasta {{max}} elementos",
+		"sort": {
+			"created": "Creado",
+			"updated": "Actualizado",
+			"random": "Aleatorio",
+			"latest": "Más reciente",
+			"earliest": "Más antiguo"
+		},
+		"bulk": {
+			"select": "Seleccionar",
+			"done": "Listo",
+			"toolbarCount": "{{count}} seleccionados",
+			"editTags": "Editar etiquetas",
+			"clearSelection": "Limpiar",
+			"moveToTrash": "Papelera",
+			"confirmSoft_one": "¿Mover {{count}} personaje a la papelera?",
+			"confirmSoft_other": "¿Mover {{count}} personajes a la papelera?",
+			"softDeleteDescription": "Los personajes seleccionados se moverán a la papelera. Se podrán restaurar más tarde desde la papelera.",
+			"toastAllOk_one": "Se actualizó {{count}} personaje.",
+			"toastAllOk_other": "Se actualizaron {{count}} personajes.",
+			"toastAllFailed": "No se actualizó nada ({{count}} fallidos).",
+			"toastPartial": "{{ok}} correctos, {{failed}} fallidos."
+		},
+		"actionsAria": "Acciones para {{name}}",
+		"toast": {
+			"movedToTrash": "Movido a la papelera",
+			"deleteFailed": "No se pudo eliminar",
+			"restored": "Restaurado",
+			"restoreFailed": "No se pudo restaurar",
+			"deletedForever": "Eliminado para siempre",
+			"createSuccess": "Creado",
+			"createFailed": "Falló la creación"
+		},
+		"create": {
+			"title": "Nuevo personaje",
+			"description": "Con un nombre basta para empezar — todo lo demás puede esperar.",
+			"basicInfo": "Información básica",
+			"basicDescription": "Quiénes son, en palabras sencillas.",
+			"name": "Nombre",
+			"intro": "Introducción",
+			"namePlaceholder": "Personaje sin nombre",
+			"nameHint": "El nombre es obligatorio — ponle uno para activar Crear.",
+			"introPlaceholder": "Algunas frases — quiénes son, qué quieren.",
+			"links": "Vínculos",
+			"linksDescription": "Etiquetas y rasgos que vinculan a este personaje con la biblioteca.",
+			"tags": "Etiquetas",
+			"traits": "Rasgos",
+			"appearance": "Apariencia",
+			"appearanceDescription": "Avatar y figura completa — recorta para ajustar.",
+			"avatar": "Avatar",
+			"fullbody": "Figura completa",
+			"submit": "Crear",
+			"submitting": "Creando…"
+		},
+		"preview": {
+			"aria": "Vista previa: {{name}}"
+		},
+		"detail": {
+			"loadError": "No se pudo cargar este personaje.",
+			"noIntro": "Aún no hay introducción.",
+			"relationships": "Relaciones",
+			"recent": "Recursos recientes",
+			"viewAllResources": "Ver todo",
+			"fullbody": "Figura completa",
+			"traits": "Rasgos",
+			"tags": "Etiquetas",
+			"tabsAria": "secciones del personaje",
+			"documentsTitle": "En documentos",
+			"openSidebar": "Abrir barra lateral"
+		},
+		"editDialog": {
+			"aria": "Editar personaje",
+			"name": "Nombre",
+			"intro": "Introducción"
+		},
+		"editHub": {
+			"title": "Editar - {{name}}"
+		},
+		"tagsDialog": {
+			"title": "Editar etiquetas - {{name}}"
+		},
+		"actions": {
+			"uploadResource": "Subir recurso",
+			"editTags": "Etiquetas",
+			"editTraits": "Rasgos",
+			"editRelations": "Relaciones",
+			"editBasic": "Información básica",
+			"editAvatar": "Avatar",
+			"editFullbody": "Figura completa",
+			"openMessages": "Mensajes",
+			"restore": "Restaurar",
+			"hardDelete": "Eliminar para siempre",
+			"softDelete": "Mover a la papelera"
+		},
+		"hardDelete": {
+			"title": "¿Eliminar para siempre?",
+			"description": "Esto elimina al personaje de forma permanente y mueve su carpeta a la papelera local.",
+			"confirm": "Eliminar para siempre",
+			"deleting": "Eliminando…"
+		},
+		"chips": {
+			"linkCharacters": "Vincular personajes"
+		},
+		"picker": {
+			"selectedEmpty": "Aún no hay personajes seleccionados.",
+			"loadFailed": "No se pudo cargar"
+		},
+		"selectorDialog": {
+			"title": "Seleccionar personaje",
+			"confirm": "Confirmar",
+			"confirmCount": "Confirmar ({{count}})",
+			"notSelectable": "Este personaje no se puede seleccionar"
+		},
+		"charactership": {
+			"empty": "Aún no hay relaciones. Elige un tipo arriba para añadir una.",
+			"pickerTitle": "Seleccionar personaje",
+			"deleteEdge": "Quitar",
+			"deleteConfirmTitle": "Eliminar relación",
+			"deleteConfirmDescription": "¿Seguro que quieres eliminar esta relación? Esto no se puede deshacer.",
+			"pickCharacter": "Elegir personaje",
+			"enterName": "Introducir nombre",
+			"pickEndpoint": "Elegir extremo",
+			"namePlaceholder": "Nombre",
+			"noTypesHint": "Aún no hay tipos de relación.",
+			"noTypesLink": "Añade tipos en Ajustes → Personalizado",
+			"incompleteDraft": "Completa todas las relaciones nuevas antes de guardar",
+			"toast": {
+				"deleteSuccess": "Relación eliminada",
+				"deleteFailed": "No se pudo eliminar la relación",
+				"addSuccess": "Relación añadida",
+				"saveFailed": "No se pudo guardar la relación"
+			}
+		}
+	},
+	"collections": {
+		"entityLabel": "colección",
+		"usageLabelOne": "recurso",
+		"usageLabel": "recursos",
+		"chip": {
+			"openLabel": "Abrir la colección {{name}}"
+		},
+		"popover": {
+			"empty": "Aún no hay recursos en esta colección."
+		},
+		"picker": {
+			"quickCreate": "Añadir",
+			"searchPlaceholder": "Buscar colecciones"
+		},
+		"editDialog": {
+			"title": "Colecciones de {{name}}"
+		},
+		"panel": {
+			"empty": "Aún no hay colecciones.",
+			"addDialogTitle": "Añadir colección",
+			"editDialogTitle": "Editar colección",
+			"filterPlaceholder": "Filtrar colecciones",
+			"reorderMode": "Reordenar",
+			"reorderModeAria": "Activa la función de arrastrar y soltar para reordenar colecciones"
+		}
+	},
+	"usage": {
+		"title": "Estadísticas de uso",
+		"description": "Tiempo de visualización entre plataformas — totales, el ritmo diario y en qué se te va el tiempo.",
+		"history": {
+			"title": "Historial de uso",
+			"description": "Lo que has usado, lo más reciente primero",
+			"empty": "Aún no hay registros de uso.",
+			"loading": "Cargando…",
+			"loadError": "No se pudo cargar el historial de uso.",
+			"today": "Hoy",
+			"yesterday": "Ayer",
+			"unknownTime": "Hora desconocida",
+			"totalLabel_one": "{{count}} elemento",
+			"totalLabel_other": "{{count}} elementos",
+			"tabs": {
+				"all": "Todo",
+				"resources": "Recursos",
+				"characters": "Personajes",
+				"documents": "Documentos"
+			}
+		},
+		"stats": {
+			"totalTime": "Tiempo total de visualización",
+			"avgPerDay": "Promedio por día",
+			"mostActiveDay": "Día más activo",
+			"mostActiveDayFormat": "MMM D",
+			"entries_one": "{{count}} entrada",
+			"entries_other": "{{count}} entradas",
+			"shareSectionTitle": "Desglose de cuota",
+			"shareTitle": "Tiempo",
+			"shareDescription": "Ordenado por tiempo de visualización del período seleccionado.",
+			"viewShareTitle": "Vistas",
+			"viewShareDescription": "Ordenado por cantidad de aperturas del período seleccionado.",
+			"periodComparison": "Comparación de períodos",
+			"filtersTitle": "Filtros",
+			"trendDescription": "Minutos por día",
+			"todayHourlyDescription": "Minutos por hora · hora local",
+			"todayHourly": "Distribución por hora",
+			"hourlyAverage": "Ritmo diario",
+			"hourlyAverageDescription": "Promedio diario por hora · hora local",
+			"topEntities": "Entidades más vistas hoy",
+			"topEntitiesDescription": "Las más vistas hoy",
+			"trend": "Tendencia de uso",
+			"platformFilter": "Plataforma",
+			"platformAll": "Todas las plataformas",
+			"platformWebMobile": "Web móvil",
+			"platformWebPc": "Web PC",
+			"platformDesktop": "Escritorio",
+			"currentPlatform": {
+				"title": "Plataforma actual",
+				"web-mobile": "Móvil",
+				"web-pc": "PC",
+				"desktop": "Escritorio"
+			},
+			"platformPill": {
+				"web-mobile": "Web · Móvil",
+				"web-pc": "Web · PC",
+				"desktop": "Escritorio"
+			},
+			"exposureMode": "Conteo de tiempo",
+			"exposureDirect": "Directo",
+			"exposureAssociated": "Asociado",
+			"exposureTotal": "Total",
+			"exposureTime": {
+				"direct": "Tiempo directo",
+				"associated": "Tiempo asociado",
+				"total": "Tiempo total"
+			},
+			"exposureModeNote": "Los totales, las tendencias y los porcentajes de cuota de arriba cuentan solo las sesiones directas. Las clasificaciones de abajo usan el modo seleccionado."
+		},
+		"insight": {
+			"moreThanPeriod": "{{duration}} más que {{period}}",
+			"lessThanPeriod": "{{duration}} menos que {{period}}",
+			"sameAsPeriod": "Igual que {{period}}",
+			"comparison": {
+				"yesterday": "ayer",
+				"lastWeek": "la semana pasada",
+				"prior7Days": "los 7 días anteriores",
+				"lastMonth": "el mes pasado",
+				"lastYear": "el año pasado"
+			}
+		},
+		"entityExposure": {
+			"totalTime": "{{duration}} de visualización",
+			"views_one": "{{count}} vista",
+			"views_other": "{{count}} vistas",
+			"lastViewed": "Visto por última vez {{time}}"
+		},
+		"leaderboard": {
+			"entityAll": "Todo",
+			"entityResources": "Recursos",
+			"entityCharacters": "Personajes",
+			"entityDocuments": "Documentos",
+			"entityPlugins": "Complementos de contenido",
+			"empty": "No hay uso para este período.",
+			"viewsShort_one": "{{count}} vista",
+			"viewsShort_other": "{{count}} vistas",
+			"associatedSessionsShort": "{{count}} asociados",
+			"rankLabel": "Puesto {{rank}}"
+		},
+		"periods": {
+			"today": "Hoy",
+			"last7days": "7 días",
+			"thisWeek": "Esta semana",
+			"thisMonth": "Este mes",
+			"thisYear": "Este año",
+			"all": "Todo el tiempo"
+		}
+	},
+	"trace": {
+		"title": "Huellas",
+		"description": "Registro de solo adición de tus acciones — importaciones, exportaciones, eliminaciones, restauraciones y votos. Las filas conservan los nombres de las entidades, así que sobreviven a las eliminaciones permanentes.",
+		"timelineTitle": "Línea de tiempo",
+		"filterAll": "Todo",
+		"filters": {
+			"import": "Importaciones",
+			"export": "Exportaciones",
+			"softDelete": "Papelera",
+			"restore": "Restauraciones",
+			"hardDelete": "Eliminaciones permanentes",
+			"dislikeAdd": "No me gusta",
+			"dislikeCancel": "Deshacer voto",
+			"messageCreate": "Mensajes",
+			"messageSoftDelete": "Eliminaciones de mensajes",
+			"messageRestore": "Restauraciones de mensajes",
+			"messageHardDelete": "Eliminaciones permanentes",
+			"messageVoteAdd": "Votos",
+			"messageVoteCancel": "Deshacer voto",
+			"messageVoteSwap": "Cambios de voto",
+			"documentCreate": "Creaciones de documentos",
+			"documentCommit": "Actualizaciones de documentos",
+			"documentSoftDelete": "Documentos a la papelera",
+			"documentRestore": "Restauraciones de documentos",
+			"documentHardDelete": "Eliminaciones de documentos",
+			"characterCreate": "Creaciones de personajes",
+			"characterSoftDelete": "Personajes a la papelera",
+			"characterRestore": "Restauraciones de personajes",
+			"characterHardDelete": "Eliminaciones de personajes",
+			"group": {
+				"resource": "Recursos",
+				"messages": "Mensajes",
+				"document": "Documentos",
+				"character": "Personajes"
+			}
+		},
+		"actions": {
+			"import": "Se importó {{name}}",
+			"export": "Se exportó {{name}}",
+			"softDelete": "Se movió {{name}} a la papelera",
+			"restore": "Se restauró {{name}}",
+			"hardDelete": "Se eliminó {{name}} de forma permanente",
+			"dislikeAdd": "Se marcó {{name}} con no me gusta",
+			"dislikeCancel": "Se quitó el no me gusta de {{name}}",
+			"messageCreate": "Se dejó un mensaje: «{{name}}»",
+			"messageSoftDelete": "Se eliminó el mensaje «{{name}}»",
+			"messageRestore": "Se restauró el mensaje «{{name}}»",
+			"messageHardDelete": "Se eliminó de forma permanente el mensaje «{{name}}»",
+			"messageVoteAddLike": "Se marcó como me gusta el mensaje «{{name}}»",
+			"messageVoteAddDislike": "Se marcó con no me gusta el mensaje «{{name}}»",
+			"messageVoteCancelLike": "Se quitó el me gusta de «{{name}}»",
+			"messageVoteCancelDislike": "Se quitó el no me gusta de «{{name}}»",
+			"messageVoteSwapLike": "Se cambió a me gusta «{{name}}»",
+			"messageVoteSwapDislike": "Se cambió a no me gusta «{{name}}»",
+			"documentCreate": "Se creó el documento «{{name}}»",
+			"documentCommit": "Se actualizó el documento «{{name}}»",
+			"documentSoftDelete": "Se movió a la papelera el documento «{{name}}»",
+			"documentRestore": "Se restauró el documento «{{name}}»",
+			"documentHardDelete": "Se eliminó de forma permanente el documento «{{name}}»",
+			"characterCreate": "Se creó el personaje «{{name}}»",
+			"characterSoftDelete": "Se movió a la papelera el personaje «{{name}}»",
+			"characterRestore": "Se restauró el personaje «{{name}}»",
+			"characterHardDelete": "Se eliminó de forma permanente el personaje «{{name}}»"
+		},
+		"meta": {
+			"bulk": "Lote",
+			"source": "De {{name}}",
+			"fileCount_one": "{{count}} archivo",
+			"fileCount_other": "{{count}} archivos"
+		},
+		"overview": {
+			"title": "Resumen del período",
+			"today": "Hoy",
+			"last7days": "7 días",
+			"thisMonth": "Este mes",
+			"thisYear": "Este año",
+			"actions": {
+				"today": "Acciones de hoy",
+				"last7days": "Acciones de esta semana",
+				"thisMonth": "Acciones de este mes",
+				"thisYear": "Acciones de este año"
+			},
+			"busiestKind": "Tipo más frecuente",
+			"restores": "Restauraciones",
+			"weekTotal": "Total semanal",
+			"avgPerDay": "Promedio por día",
+			"moreThanPrev": "{{count}} más que el período anterior",
+			"lessThanPrev": "{{count}} menos que el período anterior",
+			"sameAsPrev": "Igual que el período anterior"
+		},
+		"today": "Hoy",
+		"yesterday": "Ayer",
+		"loading": "Cargando huellas…",
+		"loadError": "No se pudieron cargar las huellas",
+		"empty": "Aún no hay huellas. Las importaciones, exportaciones, eliminaciones y votos de no me gusta se registrarán aquí.",
+		"count_one": "{{count}} huella",
+		"count_other": "{{count}} huellas"
+	},
+	"resources": {
+		"title": "Recursos",
+		"upload": "Subir",
+		"import": {
+			"action": "Importar",
+			"title": "Importar",
+			"description": "Trae una carpeta completa de una vez — cada elemento de primer nivel se convierte en un recurso."
+		},
+		"source": {
+			"fallback": "Enlace de origen",
+			"aria": "Abrir origen: {{name}}"
+		},
+		"new": {
+			"title": "Subir",
+			"description": "Prepara primero los archivos — los metadatos pueden completarse después.",
+			"files": "Archivos",
+			"filesDescription": "Los archivos soltados se preparan de inmediato — reordena con libertad, nada se vuelve a subir.",
+			"filesCount": "archivos",
+			"basicInfo": "Información básica",
+			"basicDescription": "Qué son estos archivos, en conjunto.",
+			"links": "Vínculos",
+			"linksDescription": "Etiquetas, personajes y colecciones a los que pertenece este recurso.",
+			"coverDescription": "Opcional — se toma del primer archivo por defecto.",
+			"folder": {
+				"sourceShared": "Explorar carpetas compartidas",
+				"sourceZip": "Elegir un archivo comprimido",
+				"browseTitle": "Explorar carpeta",
+				"browseDescription": "Selecciona la carpeta a analizar.",
+				"previewTitle": "Resultados del análisis",
+				"previewDescription": "Revisa los elementos a importar.",
+				"resultTitle": "Resultados de la importación",
+				"scanHere": "Analizar",
+				"noSubdirs": "Aún no hay subcarpetas.",
+				"uploading": "Subiendo…",
+				"extracting": "Extrayendo…",
+				"scanning": "Analizando…",
+				"sharedRoot": "Raíz compartida",
+				"zipRoot": "Raíz del archivo comprimido",
+				"name": "Nombre",
+				"type": "Tipo",
+				"plugin": "Complemento",
+				"confirmImport": "Importar",
+				"importing": "Importando…",
+				"importDone": "Listo",
+				"resultScanned": "Analizado",
+				"resultImported": "Importado",
+				"resultFailed": "Fallido",
+				"sourceSharedDescription": "Elige una carpeta de las raíces de importación compartidas del servidor.",
+				"sourceSharedDisabled": "La importación de carpetas compartidas no está configurada.",
+				"sourceZipDescription": "Un .zip — se extrae en el servidor y luego se analiza.",
+				"importingDescription": "Se están creando recursos a partir de la carpeta seleccionada. Esto puede tardar un momento.",
+				"stepSource": "Origen",
+				"stepBrowse": "Explorar",
+				"stepPreview": "Vista previa",
+				"stepImport": "Importar",
+				"stepDone": "Listo",
+				"stepsAria": "Pasos de la importación",
+				"emptyTitle": "Esta carpeta está vacía.",
+				"emptyDescription": "No hay archivos ni carpetas para importar aquí todavía.",
+				"previewCount_one": "{{count}} elemento listo para importar",
+				"previewCount_other": "{{count}} elementos listos para importar",
+				"howTitle": "Cómo funciona",
+				"howScan": "Analizar",
+				"howScanMeta": "Se localiza y mide cada elemento de primer nivel",
+				"howPreview": "Vista previa",
+				"howPreviewMeta": "Se detecta el tipo de contenido por elemento, antes de escribir nada",
+				"howImport": "Importar",
+				"howImportMeta": "Progreso por elemento, con un resumen al final"
+			},
+			"name": "Nombre",
+			"intro": "Introducción",
+			"plugin": "Complemento",
+			"contentType": "Tipo de contenido",
+			"sourceName": "Nombre de origen",
+			"sourceUrl": "URL de origen",
+			"sourceHint": "Se recomienda al menos uno para que puedas encontrar de dónde viene esto.",
+			"sourceNamePlaceholder": "p. ej., un sitio web o una plataforma",
+			"sourceUrlPlaceholder": "p. ej. https://...",
+			"introPlaceholder": "De qué trata este conjunto.",
+			"tags": "Etiquetas",
+			"characters": "Personajes",
+			"cover": "Portada",
+			"collections": "Colecciones",
+			"namePlaceholder": "Nombre",
+			"useFilenameAsName": "Usar el nombre del archivo como nombre",
+			"oneFilePerResource": "Un archivo por recurso — cada recurso contiene un solo archivo.",
+			"createdCount_one": "Se creó {{count}} recurso",
+			"createdCount_other": "Se crearon {{count}} recursos",
+			"duplicatesFound_one": "Este recurso tiene {{count}} imagen duplicada de recursos existentes: {{names}}",
+			"duplicatesFound_other": "Este recurso tiene {{count}} imágenes duplicadas de recursos existentes: {{names}}",
+			"duplicateFileNames_one": "{{count}} archivo tiene un nombre duplicado en este lote — se renombrará automáticamente (p. ej., nombre-1.png)",
+			"duplicateFileNames_other": "{{count}} archivos tienen nombres duplicados en este lote — se renombrarán automáticamente (p. ej., nombre-1.png)",
+			"submit": "Crear",
+			"uploading": "Subiendo…",
+			"errors": {
+				"pickAtLeastOne": "Elige al menos un archivo",
+				"uploadFailed": "Falló la subida",
+				"stagingFailed_one": "{{count}} archivo falló al subir — quítalo e inténtalo de nuevo",
+				"stagingFailed_other": "{{count}} archivos fallaron al subir — quítalos e inténtalo de nuevo",
+				"attachCollectionsFailed": "Se creó el recurso, pero no se pudo adjuntar a una o más colecciones",
+				"batchPartialHint": "Si esto se detuvo a medias, algunos recursos ya pueden existir — revisa la lista."
+			},
+			"created": "Creado",
+			"autoDetect": "Detectar automáticamente"
+		},
+		"search": {
+			"placeholder": "Buscar recursos…",
+			"empty": "Aún no hay recursos.",
+			"trashEmpty": "Aún no hay recursos en la papelera.",
+			"filters": "Filtros",
+			"sectionOptions": "Opciones",
+			"sectionTags": "Etiquetas",
+			"sectionCharacters": "Personajes",
+			"sectionPlugins": "Complementos",
+			"sectionSource": "Origen",
+			"sectionCollections": "Colecciones",
+			"clearAll": "Limpiar todo",
+			"apply": "Buscar",
+			"viewGrid": "Vista de cuadrícula",
+			"viewMasonry": "Vista tipo mosaico",
+			"sourceLabel": "Origen",
+			"sourceAll": "Todos los orígenes",
+			"sortLabel": "Ordenar por",
+			"orderLabel": "Orden",
+			"sortCreated": "Creado",
+			"sortUpdated": "Actualizado",
+			"sortDisliked": "No me gusta",
+			"orderLatest": "Más reciente",
+			"orderEarliest": "Más antiguo",
+			"orderMost": "Más",
+			"orderLeast": "Menos",
+			"noCharacters": "Sin personajes",
+			"dislikedOnly": "Solo con no me gusta",
+			"trash": "Papelera",
+			"random": "Aleatorio",
+			"pageSizeLabel": "Por página",
+			"itemCount_one": "{{count}} recurso",
+			"itemCount_other": "{{count}} recursos"
+		},
+		"bulk": {
+			"select": "Seleccionar",
+			"done": "Listo",
+			"toolbarCount": "{{count}} seleccionados",
+			"selectCurrentPage": "Seleccionar página",
+			"invertCurrentPage": "Invertir",
+			"clearSelection": "Limpiar",
+			"download": "Descargar",
+			"downloadFailed": "Falló la descarga.",
+			"downloadRejected": "No se pudo crear el archivo comprimido (selección vacía o no válida).",
+			"downloadTooMany": "Selecciona como máximo {{max}} recursos para descargar a la vez.",
+			"editTags": "Editar etiquetas",
+			"moveToTrash": "Papelera",
+			"deleteForever": "Eliminar para siempre",
+			"confirmSoft_one": "¿Mover {{count}} recurso a la papelera?",
+			"confirmSoft_other": "¿Mover {{count}} recursos a la papelera?",
+			"softDeleteDescription": "Los recursos seleccionados se moverán a la papelera. Se podrán restaurar más tarde desde la papelera.",
+			"hardDeleteTitle": "¿Eliminar los seleccionados para siempre?",
+			"hardDeleteDescription": "Esto elimina de forma permanente los recursos seleccionados y mueve sus carpetas a la papelera local. Esto no se puede deshacer.",
+			"hardDeleteConfirm": "Eliminar para siempre",
+			"hardDeleteDeleting": "Eliminando…",
+			"toastAllOk_one": "Se actualizó {{count}} recurso.",
+			"toastAllOk_other": "Se actualizaron {{count}} recursos.",
+			"toastAllFailed": "No se actualizó nada ({{count}} fallidos).",
+			"toastPartial": "{{ok}} correctos, {{failed}} fallidos."
+		},
+		"actions": {
+			"editBasic": "Información básica",
+			"editCharacters": "Personajes vinculados",
+			"editTags": "Etiquetas",
+			"editCollections": "Colecciones",
+			"editCover": "Portada",
+			"download": "Descargar",
+			"openMessages": "Mensajes",
+			"extend": "Ampliar",
+			"dislike": "No me gusta",
+			"dislikeCancellable": "Puede deshacerse",
+			"restore": "Restaurar",
+			"hardDelete": "Eliminar para siempre",
+			"softDelete": "Mover a la papelera",
+			"actionsAria": "Acciones para {{name}}"
+		},
+		"hardDelete": {
+			"title": "¿Eliminar para siempre?",
+			"description": "Esto elimina el recurso de forma permanente y mueve su carpeta a la papelera local.",
+			"confirm": "Eliminar para siempre",
+			"deleting": "Eliminando…"
+		},
+		"toast": {
+			"movedToTrash": "Movido a la papelera",
+			"deleteFailed": "No se pudo eliminar",
+			"restored": "Restaurado",
+			"restoreFailed": "No se pudo restaurar",
+			"deletedForever": "Eliminado para siempre",
+			"disliked": "Marcado con no me gusta",
+			"dislikeRemoved": "No me gusta quitado",
+			"dislikeFailed": "No se pudo actualizar el no me gusta"
+		},
+		"preview": {
+			"aria": "Vista previa: {{name}}",
+			"closePreview": "Cerrar vista previa",
+			"enterFullscreen": "Entrar en pantalla completa",
+			"exitFullscreen": "Salir de pantalla completa"
+		},
+		"detail": {
+			"docSearchTitle": "En documentos",
+			"emptyInline": "Recurso vacío",
+			"notFound": "No se encontró el recurso",
+			"fileCount_one": "{{count}} archivo",
+			"fileCount_other": "{{count}} archivos",
+			"sourceFrom": "De {{name}}",
+			"openSidebar": "Abrir barra lateral",
+			"fullscreen": "Pantalla completa",
+			"anniversary_one": "En la biblioteca desde hace {{count}} año",
+			"anniversary_other": "En la biblioteca desde hace {{count}} años",
+			"sidebar": {
+				"tagsHeading": "Etiquetas",
+				"colEmpty": "Aún no hay otros recursos en esta colección.",
+				"noTags": "Aún no hay etiquetas asignadas.",
+				"relatedByTagsHeading": "Relacionados por etiquetas",
+				"similarImagesHeading": "Imágenes similares",
+				"duplicateImagesHeading": "Duplicados",
+				"similarWithinHeading": "Similares dentro de este recurso",
+				"imageMatchCount_one": "{{count}} archivo coincidente",
+				"imageMatchCount_other": "{{count}} archivos coincidentes",
+				"duplicateCount_one": "{{count}} archivo duplicado",
+				"duplicateCount_other": "{{count}} archivos duplicados",
+				"intraSimilarCount_one": "{{count}} archivo similar",
+				"intraSimilarCount_other": "{{count}} archivos similares",
+				"matchSimilarity": "{{name}} · {{percent}}% similar",
+				"similarity": "{{percent}}% similar"
+			}
+		},
+		"editDialog": {
+			"aria": "Editar información básica del recurso",
+			"plugin": "Complemento",
+			"contentTypeMissing": "Falta: {{names}}",
+			"name": "Nombre",
+			"intro": "Introducción",
+			"sourceName": "Nombre de origen",
+			"sourceUrl": "Dirección de origen",
+			"sourceHint": "Se recomienda al menos uno para que puedas encontrar de dónde viene esto.",
+			"namePlaceholder": "p. ej., Puerto al anochecer",
+			"introPlaceholder": "De qué trata este recurso.",
+			"sourceNamePlaceholder": "p. ej., un sitio web o una plataforma",
+			"sourceUrlPlaceholder": "p. ej. https://...",
+			"saveChanges": "Guardar cambios",
+			"toast": {
+				"contentTypeFailed": "No se pudo cambiar el tipo de contenido"
+			}
+		},
+		"editHub": {
+			"title": "Editar - {{name}}"
+		},
+		"tagsDialog": {
+			"title": "Editar etiquetas - {{name}}"
+		},
+		"selectorDialog": {
+			"title": "Seleccionar recurso"
+		},
+		"viewSelected": "Solo seleccionados",
+		"viewSelectedTooMany": "Solo seleccionados admite hasta {{max}} elementos",
+		"picker": {
+			"selectedEmpty": "No hay recursos seleccionados.",
+			"loadFailed": "No se pudo cargar el recurso."
+		},
+		"selectAria": "Seleccionar {{name}}",
+		"toggleSelectAria": "Alternar selección de {{name}}",
+		"video": {
+			"previewAria": "Vista previa de {{name}}",
+			"playAria": "Reproducir {{name}}",
+			"stopAria": "Detener {{name}}"
+		},
+		"audio": {
+			"playAria": "Reproducir {{name}}",
+			"pauseAria": "Pausar {{name}}",
+			"seekAria": "Avanzar dentro de {{name}}"
+		},
+		"editPanel": {
+			"nameRequired": "El nombre es obligatorio"
+		}
+	},
+	"relationshipTypes": {
+		"panel": {
+			"empty": "Aún no hay relaciones. Toca añadir para crear una.",
+			"addDialogTitle": "Añadir relación",
+			"editDialogTitle": "Editar relación",
+			"filterPlaceholder": "Filtrar tipos de relación",
+			"linkCount_one": "{{count}} vínculo",
+			"linkCount_other": "{{count}} vínculos",
+			"reorderMode": "Reordenar",
+			"reorderModeAria": "Activa la función de arrastrar y soltar para reordenar relaciones",
+			"tabDefinition": "Definición",
+			"tabDetails": "Detalles"
+		},
+		"preview": {
+			"characterA": "Personaje A",
+			"characterB": "Personaje B",
+			"aCallsB": "A llama a B",
+			"bCallsA": "B llama a A",
+			"labelPlaceholder": "p. ej., amigo"
+		},
+		"kind": {
+			"directed": {
+				"label": "Dirigida",
+				"iconLabel": "Unidireccional",
+				"hint": "Relación unidireccional solo de A a B, p. ej., amor no correspondido."
+			},
+			"symmetric": {
+				"label": "Simétrica",
+				"iconLabel": "Mutua",
+				"hint": "Relación mutua, p. ej., amigos o cónyuges."
+			},
+			"hierarchical": {
+				"label": "Jerárquica",
+				"iconLabel": "Jerarquizada",
+				"hint": "A por encima de B, dirección A→B, p. ej., mentor y aprendiz"
+			}
+		},
+		"delete": {
+			"kindLabel": "relación",
+			"usageLabelOne": "vínculo de relación",
+			"usageLabel": "vínculos de relación"
+		},
+		"toast": {
+			"created": "Relación creada",
+			"createFailed": "No se pudo crear la relación"
+		}
+	},
+	"traits": {
+		"panel": {
+			"empty": "Aún no hay definiciones de rasgos. Usa Añadir para crear una.",
+			"addDialogTitle": "Añadir rasgo",
+			"editDialogTitle": "Editar rasgo",
+			"filterPlaceholder": "Filtrar rasgos",
+			"reorderMode": "Reordenar",
+			"reorderModeAria": "Activa la función de arrastrar y soltar para reordenar rasgos",
+			"toast": {
+				"added": "Rasgo añadido"
+			}
+		},
+		"kind": {
+			"text": "Texto",
+			"multitext": "Texto múltiple",
+			"number": "Número",
+			"weight": "Peso",
+			"height": "Altura",
+			"date": "Fecha"
+		},
+		"delete": {
+			"kindLabel": "rasgo",
+			"usageLabelOne": "personaje",
+			"usageLabel": "personajes"
+		},
+		"values": {
+			"noDefinitions": "Aún no hay definiciones de rasgos. Abre Ajustes / Rasgos para añadirlas.",
+			"addField": "Añadir campo",
+			"removeField": "Quitar campo",
+			"inputPlaceholder": "Introducir valor",
+			"remove": "Quitar",
+			"allSet": "Todos los rasgos ya están definidos.",
+			"emptyError": "Estos rasgos están vacíos y no se pueden guardar: {{names}}",
+			"parseError": "Valor no válido para «{{name}}»: {{value}}",
+			"date": {
+				"prefixPlaceholder": "Era / calendario",
+				"after": "d. C.",
+				"before": "a. C.",
+				"year": "Año",
+				"month": "Mes",
+				"day": "Día"
+			}
+		}
+	},
+	"categories": {
+		"panel": {
+			"empty": "Aún no hay categorías ni etiquetas.",
+			"kindTabsAria": "Tipo de categoría",
+			"kindTab": {
+				"common": "Común",
+				"resource": "Recursos",
+				"character": "Personajes"
+			},
+			"dependencyMessage": "Esta etiqueta la usan {{parts}} y no se puede eliminar directamente.",
+			"dependencyResources": "{{count}} rec.",
+			"dependencyCharacters": "{{count}} pers.",
+			"tagCharacterCount": "pers. {{count}}",
+			"tagResourceCount": "rec. {{count}}",
+			"copyTagName": "Copiar al portapapeles",
+			"toast": {
+				"added": "Añadido",
+				"addFailed": "No se pudo añadir",
+				"copied": "Copiado al portapapeles",
+				"copyFailed": "No se pudo copiar",
+				"moved": "Etiqueta movida"
+			},
+			"mergeTagMenu": "Fusionar en…",
+			"specialStyle": {
+				"silver": "Plata",
+				"gold": "Oro",
+				"rainbow": "Arcoíris",
+				"oilslick": "Aceite",
+				"kintsugi": "Kintsugi"
+			}
+		},
+		"delete": {
+			"kindLabelCategory": "categoría",
+			"kindLabelTag": "etiqueta",
+			"usageLabelTagsOne": "etiqueta",
+			"usageLabelTags": "etiquetas"
+		},
+		"form": {
+			"createCategory": "Crear categoría",
+			"creating": "Creando…",
+			"addTag": "Crear etiqueta"
+		},
+		"dialog": {
+			"addCategoryTitle": "Nueva categoría",
+			"addTagTitle": "Nueva etiqueta",
+			"editCategoryTitle": "Editar categoría",
+			"editTagTitle": "Editar etiqueta"
+		}
+	},
+	"tags": {
+		"picker": {
+			"noCategories": "Aún no hay categorías.",
+			"selectedHeader": "Seleccionadas:",
+			"tagsHeader": "Etiquetas:",
+			"empty": "Aún no hay etiquetas en esta categoría.",
+			"emptyAll": "Aún no hay etiquetas definidas.",
+			"searchPlaceholder": "Buscar etiquetas…",
+			"noMatches": "No hay etiquetas que coincidan."
+		},
+		"bulk": {
+			"nonCommonHint_one": "{{count}} etiqueta no es común a todos los elementos seleccionados. Puedes añadir cualquier etiqueta; solo se pueden quitar las etiquetas comunes.",
+			"nonCommonHint_other": "{{count}} etiquetas no son comunes a todos los elementos seleccionados. Puedes añadir cualquier etiqueta; solo se pueden quitar las etiquetas comunes."
+		},
+		"toast": {
+			"attachFailed": "No se pudo adjuntar la etiqueta",
+			"detachFailed": "No se pudo quitar la etiqueta"
+		},
+		"filterMode": {
+			"and": "Todas",
+			"or": "Cualquiera",
+			"not": "Sin",
+			"nor": "Ninguna"
+		},
+		"merge": {
+			"title": "Fusionar etiquetas",
+			"description": "El uso y las reglas de la duplicada se mueven a la superviviente.",
+			"targetPlaceholder": "Elige la etiqueta superviviente",
+			"confirm": "Confirmar fusión",
+			"confirming": "Fusionando…",
+			"countResources_one": "{{count}} recurso",
+			"countResources_other": "{{count}} recursos",
+			"countCharacters_one": "{{count}} personaje",
+			"countCharacters_other": "{{count}} personajes",
+			"countSiblingRules_one": "{{count}} regla hermana",
+			"countSiblingRules_other": "{{count}} reglas hermanas",
+			"countParentRules_one": "{{count}} regla de padre",
+			"countParentRules_other": "{{count}} reglas de padre",
+			"preview": "Mueve {{resources}}, {{characters}}, {{siblingRules}} y {{parentRules}}.",
+			"collision": "Esta categoría ya tiene una etiqueta llamada «{{name}}» — puedes fusionarlas.",
+			"offer": "Fusionar con la duplicada",
+			"toast": {
+				"success": "Fusionado: {{resources}}, {{characters}}, {{siblingRules}}, {{parentRules}}"
+			}
+		},
+		"rules": {
+			"description": "Alias: varias etiquetas se muestran como una sola etiqueta display en todas partes (p. ej., «gato» y «gatito» → «gato»). Padres: una entrada etiquetada con el hijo también lleva al padre (p. ej., «atigrado» → «gato»). Los personajes pueden unirse a cualquiera de los dos lados: un personaje vinculado se muestra como su etiqueta, así que los recursos adjuntos a él muestran la etiqueta atenuada (marcada como virtual) y coinciden con sus búsquedas.",
+			"displayLabel": "etiqueta display",
+			"badPlaceholder": "sinónimo",
+			"goodPlaceholder": "etiqueta display",
+			"addAlias": "Añadir alias",
+			"alias": "Alias",
+			"addAliasDescription": "Elige el sinónimo y la etiqueta display en la que se muestra.",
+			"aliasesTitle": "Alias",
+			"groupCount_one": "{{count}} grupo",
+			"groupCount_other": "{{count}} grupos",
+			"setDisplay": "Establecer como etiqueta display",
+			"remove": "Quitar",
+			"pickCharacter": "Personaje…",
+			"pickTag": "Etiqueta…",
+			"tagPickTitle": "Elige una etiqueta",
+			"characterLinkHint": "Vínculos de personajes: un personaje se muestra como su etiqueta — los recursos adjuntos al personaje la muestran atenuada (marcada como virtual) y coinciden con sus búsquedas.",
+			"empty": "Aún no hay grupos hermanos.",
+			"displaysAs": "Se muestra como {{name}}",
+			"groupCounts": "{{resources}} rec. · {{characters}} pers.",
+			"parentsTitle": "Padres",
+			"ruleCount_one": "{{count}} regla",
+			"ruleCount_other": "{{count}} reglas",
+			"child": "Hijo",
+			"childPlaceholder": "hijo",
+			"parentPlaceholder": "padre",
+			"addRule": "Añadir regla",
+			"addRuleDescription": "Elige el hijo y el padre bajo el que se muestra.",
+			"endpointTag": "Etiqueta",
+			"endpointCharacter": "Personaje",
+			"parentsEmpty": "Aún no hay reglas de padre.",
+			"noMatch": "No hay reglas que coincidan.",
+			"searchPlaceholder": "Filtrar reglas…",
+			"toast": {
+				"pairAdded": "Par hermano añadido",
+				"pairRemoved": "Par hermano quitado",
+				"displaySet": "Etiqueta display establecida",
+				"parentAdded": "Regla de padre añadida",
+				"parentRemoved": "Regla de padre quitada"
+			}
+		},
+		"errors": {
+			"nameExists": "Ya existe una etiqueta con este nombre en esta categoría.",
+			"siblingCycle": "Esa combinación crearía un ciclo.",
+			"siblingKindIsolation": "Un grupo hermano puede combinar común con un solo otro tipo (las etiquetas de recursos y de personajes no se pueden mezclar).",
+			"parentSelf": "Una etiqueta no puede ser su propio padre.",
+			"parentCycle": "Esa regla crearía un ciclo.",
+			"parentKindIsolation": "Una cadena de padres puede combinar común con un solo otro tipo (las etiquetas de recursos y de personajes no se pueden mezclar).",
+			"characterMissing": "El personaje ya no existe — elige uno vigente.",
+			"mergeKindMismatch": "No se pueden fusionar etiquetas de tipos distintos (las etiquetas de recursos y de personajes no se pueden fusionar).",
+			"mergeCreatesCycle": "La fusión crearía un ciclo de reglas — ajusta antes las reglas relacionadas."
+		},
+		"virtual": {
+			"label": "virtual"
+		}
+	},
+	"imageCrop": {
+		"pickHint": "Haz clic o suelta",
+		"reselect": "Volver a subir",
+		"showPreview": "Mostrar vista previa",
+		"previewLabel": "Vista previa",
+		"previewAlt": "Vista previa recortada",
+		"saveFailed": "Falló el guardado"
+	},
+	"imageEdit": {
+		"confirmDeleteTitle": "¿Quitar la imagen?",
+		"confirmDeleteDescription": "Esto quitará la imagen actual. Esta acción no se puede deshacer."
+	},
+	"deleteEntity": {
+		"dialogConfirmTitle": "¿Eliminar «{{name}}»?",
+		"dialogConfirmDescription": "Se va a eliminar de forma permanente el elemento «{{kind}}». Esta acción no se puede deshacer.",
+		"defaultLabel": "Eliminar",
+		"defaultNoun": "elementos",
+		"defaultNounOne": "elemento",
+		"confirm": "Confirmar eliminación",
+		"deleting": "Eliminando…",
+		"forceTitle": "No se puede eliminar {{kind}}",
+		"usageMessage": "No se puede eliminar directamente: «{{kind}}» está en uso en {{count}} {{usage}}.",
+		"toast": {
+			"deleteSuccess": "Se eliminó «{{kind}}».",
+			"deleteFailed": "Falló la eliminación",
+			"forceDeleteSuccess": "«{{kind}}» se eliminó por la fuerza",
+			"forceDeleteFailed": "Falló la eliminación forzada",
+			"nameMismatch": "El nombre no coincide"
+		},
+		"forceConfirm": "Eliminar por la fuerza",
+		"forceDeleting": "Eliminando…"
+	},
+	"upload": {
+		"addFiles": "Añadir archivos",
+		"clearAll": "Limpiar",
+		"totalCount_one": "{{count}} archivo en total",
+		"totalCount_other": "{{count}} archivos en total",
+		"removeFile": "Quitar archivo",
+		"failed": "Fallido",
+		"duplicateName": "Nombre duplicado",
+		"duplicateNameTitle": "Otro archivo de este lote tiene el mismo nombre; se renombrará automáticamente al subir"
+	},
+	"messages": {
+		"title": "Mensajes",
+		"empty": "Aún no hay mensajes.",
+		"threadCount_one": "{{count}} hilo",
+		"threadCount_other": "{{count}} hilos",
+		"replyCount_one": "{{count}} respuesta",
+		"replyCount_other": "{{count}} respuestas",
+		"floor": "#{{n}}",
+		"replyNumber": "#{{n}}",
+		"composerPlaceholder": "Escribe un mensaje…",
+		"replyPlaceholder": "Escribe una respuesta…",
+		"submit": "Publicar",
+		"submitting": "Publicando…",
+		"reply": "Responder",
+		"actions": "Acciones de mensaje",
+		"trash": "Papelera",
+		"emptyTrash": "Aún no hay mensajes en la papelera.",
+		"deleted": "Eliminado",
+		"delete": "Eliminar",
+		"deleteConfirmTitle": "¿Eliminar este mensaje?",
+		"deleteConfirmDescription": "Se moverá a la papelera. Puedes restaurarlo más tarde.",
+		"restore": "Restaurar",
+		"hardDelete": "Eliminar de forma permanente",
+		"hardDeleteConfirmTitle": "¿Eliminar de forma permanente?",
+		"hardDeleteConfirmDescription": "No se puede deshacer. Eliminar un mensaje elimina todas sus respuestas.",
+		"viewReplies": "Ver respuestas ({{count}})",
+		"collapseReplies": "Contraer respuestas",
+		"sortBy": "Ordenar",
+		"sort": {
+			"newest": "Más recientes",
+			"oldest": "Más antiguas",
+			"mostLikes": "Más me gusta",
+			"leastLikes": "Menos me gusta"
+		},
+		"searchPlaceholder": "Buscar mensajes…",
+		"totalLabel_one": "{{count}} mensaje",
+		"totalLabel_other": "{{count}} mensajes",
+		"clearFilter": "Limpiar filtro",
+		"charsRemaining_one": "Queda {{count}} carácter",
+		"charsRemaining_other": "Quedan {{count}} caracteres",
+		"linkCharactersAdd": "Adjuntar personaje",
+		"linkResources": "Vincular recursos",
+		"linkResourcesAdd": "Adjuntar recurso",
+		"toast": {
+			"posted": "Mensaje publicado",
+			"postFailed": "No se pudo publicar el mensaje",
+			"deleted": "Movido a la papelera",
+			"restored": "Mensaje restaurado",
+			"hardDeleted": "Eliminado de forma permanente",
+			"voteFailed": "No se pudo registrar el voto"
+		}
+	},
+	"storage": {
+		"sectionTitle": "Almacenamiento",
+		"sectionDescription": "Cuánto espacio de disco ocupa tu archivo, desglosado por categoría.",
+		"volumeTotal": "Total del disco",
+		"volumeFree": "Libre",
+		"volumeUsed": "En uso",
+		"sidebarUsed": "En uso {{size}}",
+		"sidebarFree": "{{size}} libres",
+		"volumeUnavailable": "Información del volumen no disponible",
+		"usedByHoardodile": "uso de hoardodile",
+		"category": {
+			"database": "Base de datos",
+			"resources": "Recursos",
+			"archived": "Copias archivadas",
+			"cache": "Caché",
+			"trash": "Papelera",
+			"backups": "Copias de seguridad",
+			"other": "Otros",
+			"unattributedResources": "Recursos sin atribuir"
+		},
+		"otherHint": "Registros, complementos instalados, clave de sesión y otro estado local del host que no se enumera arriba.",
+		"unattributedCount_one": "{{count}} recurso sin tamaño registrado",
+		"unattributedCount_other": "{{count}} recursos sin tamaños registrados",
+		"unattributedHint": "Estos recursos aún no tienen metadatos de tamaño registrados (estimación medida en disco, incluye portadas y otros extras). Ejecuta el precalentamiento para atribuirlos a los complementos de arriba.",
+		"archivedHint": "Copias de recursos, personajes y documentos congeladas en versiones archivadas. Se miden mediante un análisis de disco, por lo que cuenta cada copia histórica — a diferencia de los tamaños de recursos de arriba, que provienen solo de los metadatos de la versión actual.",
+		"backupsHint": "Copias de seguridad manuales e instantáneas automáticas diarias.",
+		"cacheHint": "Portadas por recurso, miniaturas, vistas previas, cachés de extracción y files-cache.json.",
+		"lowSpaceBanner": "Poco espacio en disco — las instantáneas automáticas están en pausa. Libera algo de espacio para reanudarlas.",
+		"clearCache": "Limpiar",
+		"clearCacheTitle": "Limpiar caché",
+		"clearCacheDescription": "Las miniaturas, las vistas previas y las cachés de extracción se borrarán. Se reconstruyen bajo demanda — esto solo libera espacio.",
+		"pluginCount_one": "{{count}} recurso",
+		"pluginCount_other": "{{count}} recursos",
+		"legend": {
+			"resources": "Recursos",
+			"hostData": "Datos del host",
+			"archivedVersions": "Versiones archivadas",
+			"cache": "Caché",
+			"latest": "Más reciente"
+		}
+	},
+	"sync": {
+		"pageHint": "Por dispositivo: registra recuentos de entidades, tamaño del contenido y volumen de almacenamiento · conserva las dos instantáneas más recientes",
+		"status": {
+			"allUpToDate": "Todos los dispositivos están al día",
+			"dueCount_one": "{{count}} de {{total}} dispositivo pendiente",
+			"dueCount_other": "{{count}} de {{total}} dispositivos pendientes"
+		},
+		"tip": {
+			"oneWay": "Sincroniza en un solo sentido: un repositorio maestro y el resto como espejos, para evitar conflictos."
+		},
+		"config": {
+			"remindLabel": "Recordármelo después de",
+			"remindDescription": "Si pasa el intervalo sin una instantánea sincronizada, el panel lo pide.",
+			"remindDays_one": "{{count}} día",
+			"remindDays_other": "{{count}} días"
+		},
+		"devices": {
+			"addTitle": "Añadir un dispositivo",
+			"addAutoRecord": "El estado actual se sincroniza automáticamente al añadirlo.",
+			"namePlaceholder": "Nombre del dispositivo",
+			"notesPlaceholder": "Notas (opcional)",
+			"nameHint": "p. ej., Portátil",
+			"notesHint": "p. ej., USB 4TB",
+			"add": "Añadir dispositivo",
+			"addPending": "Añadiendo…",
+			"empty": "Aún no hay dispositivos — añade uno para empezar a sincronizar.",
+			"loading": "Cargando…",
+			"neverSynced": "Nunca sincronizado",
+			"lastSyncedAgo_one": "Última sincronización {{date}} · hace {{count}} día",
+			"lastSyncedAgo_other": "Última sincronización {{date}} · hace {{count}} días",
+			"justNow": "Ahora mismo",
+			"minutesAgo_one": "hace {{count}} minuto",
+			"minutesAgo_other": "hace {{count}} minutos",
+			"hoursAgo_one": "hace {{count}} hora",
+			"hoursAgo_other": "hace {{count}} horas",
+			"upToDate": "Al día",
+			"overdue_one": "Vencido · {{count}} día",
+			"overdue_other": "Vencido · {{count}} días",
+			"neverBadge": "Aún no sincronizado",
+			"record": "Sincronizar",
+			"recordNow": "Sincronizar ahora",
+			"deleteTitle": "¿Eliminar {{name}}?",
+			"deleteDescription": "El dispositivo y todos sus registros de sincronización se eliminarán.",
+			"delete": "Eliminar",
+			"deletePending": "Eliminando…",
+			"editTitle": "Editar dispositivo",
+			"edit": "Editar",
+			"save": "Guardar",
+			"editPending": "Guardando…"
+		},
+		"fields": {
+			"resources": "Recursos",
+			"characters": "Personajes",
+			"documents": "Documentos",
+			"messages": "Mensajes",
+			"tags": "Etiquetas",
+			"trash": "Papelera",
+			"contentSize": "Tamaño del contenido",
+			"storage": "Almacenamiento",
+			"firstRecord": "Primera sincronización"
+		},
+		"toast": {
+			"deviceAdded": "Dispositivo añadido y sincronizado",
+			"deviceAddFailed": "No se pudo añadir el dispositivo",
+			"deviceUpdated": "Dispositivo actualizado",
+			"deviceUpdateFailed": "No se pudo actualizar el dispositivo",
+			"deviceDeleted": "Dispositivo eliminado",
+			"deviceDeleteFailed": "No se pudo eliminar el dispositivo",
+			"recorded": "Sincronizado",
+			"recordFailed": "No se pudo sincronizar"
+		},
+		"banner": {
+			"noDevicesTitle": "Aún no hay dispositivos de sincronización configurados.",
+			"noDevicesDescription": "Añade al menos un dispositivo para registrar sincronizaciones.",
+			"configureLink": "Configurar",
+			"neverSyncedTitle": "{{name}} nunca se ha sincronizado",
+			"neverSyncedDescription": "Aún no hay sincronización registrada para este dispositivo.",
+			"overdueTitle_one": "{{name}} se sincronizó por última vez hace {{count}} día",
+			"overdueTitle_other": "{{name}} se sincronizó por última vez hace {{count}} días",
+			"overdueDescription": "Ha pasado más tiempo que tu intervalo de recordatorio de {{count}} días.",
+			"recordLink": "Sincronizar ahora"
+		}
+	},
+	"desktopShell": {
+		"tray": {
+			"open": "Abrir",
+			"changeLibrary": "Cambiar biblioteca…",
+			"copyLanAddress": "Copiar dirección LAN",
+			"restartServer": "Reiniciar servidor",
+			"updateReady": "Actualización lista — Abrir para reiniciar",
+			"quit": "Salir",
+			"tooltipServerStopped": "hoardodile — servidor detenido",
+			"tooltipUpdateReady": "hoardodile — actualización lista",
+			"copied": "Dirección LAN copiada al portapapeles."
+		},
+		"errorPage": {
+			"serverError": "No se pudo conectar con el servidor. Puede que aún esté iniciando, o que se haya detenido. Espera un momento y pulsa Reintentar, o usa Reiniciar servidor desde la bandeja.",
+			"devServerError": "El servidor de desarrollo no está en ejecución. Inicia `pnpm dev` en otra terminal y pulsa Reintentar."
+		},
+		"dialog": {
+			"lanPasswordRequired": "Configura antes una contraseña de administrador antes de activar el acceso desde la red local.",
+			"cancel": "Cancelar",
+			"serverStoppedBody": "El servidor se detuvo. Usa Reiniciar servidor desde la bandeja.",
+			"serverNotRunningMessage": "El servidor no está en ejecución.",
+			"restartServer": "Reiniciar servidor",
+			"serverFailedToStart": "No se pudo iniciar el servidor:\n{{message}}"
+		},
+		"shell": {
+			"serverUnreachable": "Servidor inaccesible",
+			"retry": "Reintentar",
+			"loadingLabel": "Cargando"
+		},
+		"wizard": {
+			"title": "Te damos la bienvenida a hoardodile",
+			"intro": "Elige dónde guarda este equipo el archivo. Puedes cambiar la carpeta más tarde desde Ajustes o la bandeja.",
+			"library": "Carpeta de la biblioteca",
+			"browse": "Explorar",
+			"autoStart": "Iniciar con Windows",
+			"autoStartHint": "Abre hoardodile cuando inicies sesión.",
+			"startInTray": "Iniciar en la bandeja",
+			"startInTrayHint": "No se abre ninguna ventana hasta que elijas Abrir desde la bandeja.",
+			"continue": "Continuar",
+			"missingBridge": "Falta el puente de escritorio. Reinicia la app."
+		}
+	}
+}

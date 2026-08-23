@@ -1,6 +1,7 @@
 import type { HoardodileDesktopBridge } from "@hoardodile/shared/desktop"
-import en from "@hoardodile/shared/i18n/en.json"
-import zh from "@hoardodile/shared/i18n/zh.json"
+import type { SupportedLanguage } from "@hoardodile/shared/i18n"
+import { resolveSystemLanguage } from "@hoardodile/shared/i18n"
+import { catalogFor } from "@hoardodile/shared/i18n/catalogs"
 import { Button } from "@hoardodile/ui/components/button"
 import { CaptionBar } from "@hoardodile/ui/components/caption-bar"
 import {
@@ -13,9 +14,11 @@ import { disabledCaptionHistory, shellCopy } from "./copy.ts"
 export type ShellPageMode = "loading" | "error"
 
 function closeDialogStrings(
-	language: string | undefined,
+	language: SupportedLanguage | undefined,
 ): CloseConfirmDialogStrings {
-	const catalog = language === "zh" ? zh : en
+	const catalog = catalogFor(
+		language ?? resolveSystemLanguage(navigator.language),
+	)
 	return {
 		title: catalog.me.desktop.closeConfirm.title,
 		description: catalog.me.desktop.closeConfirm.description,
@@ -56,14 +59,18 @@ function ShellPagesView(props: {
 }) {
 	const { mode, message, desktop } = props
 	const copy = shellCopy()
-	const [language, setLanguage] = useState<string | undefined>(undefined)
+	const [language, setLanguage] = useState<SupportedLanguage | undefined>(
+		undefined,
+	)
 	const [strings, setStrings] = useState<CloseConfirmDialogStrings | undefined>(
 		undefined,
 	)
 	const [askOpen, setAskOpen] = useState(false)
 	const [retrying, setRetrying] = useState(false)
 
-	const captionLabels = (language === "zh" ? zh : en).me.desktop.caption
+	const captionLabels = catalogFor(
+		language ?? resolveSystemLanguage(navigator.language),
+	).me.desktop.caption
 
 	useEffect(() => {
 		void desktop.getLanguage().then((resolved) => {

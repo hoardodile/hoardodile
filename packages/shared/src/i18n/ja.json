@@ -1,0 +1,2167 @@
+{
+	"common": {
+		"back": "戻る",
+		"cancel": "キャンセル",
+		"close": "閉じる",
+		"save": "保存",
+		"saving": "保存中…",
+		"loading": "読み込み中…",
+		"remove": "削除",
+		"removeAria": "削除",
+		"edit": "編集",
+		"delete": "削除",
+		"rename": "名前を変更",
+		"confirm": "確認",
+		"expand": "展開",
+		"collapse": "折りたたむ",
+		"working": "処理中…",
+		"prev": "前へ",
+		"next": "次へ",
+		"previous": "前へ",
+		"first": "最初",
+		"last": "最後",
+		"jumpToPage": "ページ",
+		"go": "移動",
+		"goTo": "移動先",
+		"unknownError": "不明なエラー",
+		"error": "エラー",
+		"loadFailed": "読み込みに失敗しました",
+		"show": "表示",
+		"hide": "非表示",
+		"selected": "選択中",
+		"available": "利用可能",
+		"allSelected": "すべて選択済み",
+		"tags": "タグ",
+		"filterCategory": "{{name}} をフィルター…",
+		"requestFailed": "リクエストに失敗しました",
+		"saved": "保存しました",
+		"saveFailed": "保存できませんでした",
+		"confirmByTypingPrompt": "確認するには「<name>{{name}}</name>」と入力してください",
+		"searchIncludeIntro": "紹介文を検索に含める",
+		"underline": "下線",
+		"colorPicker": {
+			"clear": "色をクリア",
+			"customColor": "カスタムカラー",
+			"customSwatch": "カスタム色を選択",
+			"addPreset": "マイプリセットに追加",
+			"removePresetAria": "プリセット {{color}} を削除"
+		}
+	},
+	"entityMeta": {
+		"nameLabel": "名前",
+		"namePlaceholder": "例: harbor",
+		"introLabel": "紹介",
+		"introPlaceholder": "短い説明…",
+		"colorLabel": "色",
+		"colorPlaceholder": "CSS 色 (任意)。未入力の場合は既定の色を使用",
+		"pinned": "ピン留め"
+	},
+	"language": {
+		"label": "言語",
+		"description": "インターフェース言語 — コンテンツの文字はそのまま維持されます。",
+		"english": "English",
+		"chinese": "中文",
+		"japanese": "日本語",
+		"german": "Deutsch",
+		"spanish": "Español"
+	},
+	"icons": {
+		"description": "Solar アイコン — デュオトーンはテーマに追従、グレースケールは2トーンを無地のインクで維持、リニアは単色を維持します。",
+		"style": {
+			"duotone": "デュオトーン",
+			"grayscale": "グレースケール",
+			"linear": "リニア"
+		}
+	},
+	"theme": {
+		"description": "1つのパレットと、日光に追従するかどうか。",
+		"modeLabel": "モード",
+		"paletteLabel": "パレット",
+		"mode": {
+			"light": "ライト",
+			"dark": "ダーク",
+			"system": "システム"
+		},
+		"palette": {
+			"mono": "モノ",
+			"sage": "セージ",
+			"parchment": "パーチメント",
+			"azure": "アジュール",
+			"hoardodile": "Hoardodile"
+		}
+	},
+	"font": {
+		"label": "フォント",
+		"description": "画面とリスト — ドキュメントは読み味を保ちます。",
+		"inherit": "グローバルフォントを継承",
+		"inheritedHint": "現在グローバルフォント設定を継承しています",
+		"addCustom": "フォント名を入力して Enter を押すと追加…",
+		"selected": "フォールバック順 — ドラッグで並べ替え"
+	},
+	"dateTime": {
+		"description": "日付の表示形式 — 現在: {{preview}}。",
+		"formatLabel": "形式",
+		"timeZoneLabel": "タイムゾーン",
+		"format": {
+			"ymdDash": "2024-06-12 14:30:00",
+			"ymdSlash": "2024/06/12 14:30:00",
+			"dmySlash": "12/06/2024 14:30:00",
+			"mdySlash": "06/12/2024 14:30:00"
+		},
+		"timeZone": {
+			"auto": "システムに従う",
+			"noMatches": "一致するタイムゾーンがありません。"
+		}
+	},
+	"appShell": {
+		"primaryNav": "メインナビゲーション",
+		"secondaryNav": "セカンダリナビゲーション",
+		"openMenu": "メニューを開く",
+		"backToMainMenu": "メインメニューに戻る",
+		"backToDocumentsMenu": "ドキュメントメニューに戻る",
+		"nav": {
+			"overview": "概要",
+			"resources": "リソース",
+			"characters": "キャラクター",
+			"documents": "ドキュメント",
+			"messages": "メッセージ",
+			"me": "設定",
+			"help": "ヘルプ"
+		},
+		"syncDueBadge": "同期リマインダー期限が来ています",
+		"syncStatus": {
+			"synced": "同期済み",
+			"due": "同期期限",
+			"syncedTitle_one": "最新 — {{count}}台のデバイス",
+			"syncedTitle_other": "最新 — {{count}}台のデバイス",
+			"dueTitle_one": "同期予定のデバイス {{count}}台",
+			"dueTitle_other": "同期予定のデバイス {{count}}台",
+			"noDevicesTitle": "同期デバイスがまだ設定されていません。"
+		}
+	},
+	"search": {
+		"placeholder": "キャラクター、リソース、ドキュメント、メッセージを検索…",
+		"placeholderShort": "検索",
+		"liveSearch": "ライブ検索",
+		"sectionTitles": {
+			"characters": "キャラクター",
+			"resources": "リソース",
+			"documents": "ドキュメント",
+			"messages": "メッセージ"
+		},
+		"sectionCount": "({{count}})",
+		"viewAll": "すべて表示 ({{count}})",
+		"empty": {
+			"title": "結果が見つかりません。",
+			"description": "別のキーワードをお試しください。"
+		},
+		"resultLabels": {
+			"document": "ドキュメント",
+			"folder": "フォルダー"
+		},
+		"imageSearch": {
+			"button": "画像で検索",
+			"uploadFailed": "画像検索に失敗しました",
+			"title": "画像検索結果",
+			"empty": "ライブラリに類似画像が見つかりません。",
+			"clear": "画像検索をクリア",
+			"queryAlt": "クエリ画像",
+			"similarity": "{{percent}}% 類似"
+		}
+	},
+	"me": {
+		"tabs": {
+			"preferences": "環境設定",
+			"data": "データ",
+			"about": "このアプリについて",
+			"desktop": "デスクトップ",
+			"custom": "カスタム",
+			"privacy": "プライバシー",
+			"archive": "アーカイブ",
+			"plugins": "プラグイン",
+			"sync": "同期"
+		},
+		"section": {
+			"language": "言語",
+			"icons": "アイコン",
+			"theme": "テーマ",
+			"font": "フォント",
+			"dateTime": "日付と時刻",
+			"tagRules": "タグルール",
+			"rebuild": "再構築",
+			"trash": "ごみ箱",
+			"usage": "利用履歴",
+			"trace": "足跡ログ",
+			"privacy": "プライバシーとセキュリティ"
+		},
+		"custom": {
+			"tab": {
+				"tags": "タグ",
+				"traits": "特性",
+				"relationships": "関係",
+				"collections": "コレクション"
+			},
+			"blurb": {
+				"tags": "カテゴリはタグをグループ化し、タグはライブラリにラベルを付けます。",
+				"traits": "キャラクターが持つ、型付きで検索可能な事実。",
+				"relationships": "キャラクター同士を結び付ける動詞。",
+				"collections": "サイドバーにピン留めした手選びの棚。"
+			},
+			"unused": "未使用",
+			"reorder": "並べ替え",
+			"add": "追加",
+			"more": "その他",
+			"filterTagsIn": "カテゴリ {{category}} でタグを絞り込む",
+			"tagsOf": "タグ {{shown}} / {{total}}",
+			"unusedCount": "未使用 {{count}}件",
+			"newCategory": "新しいカテゴリ",
+			"moveTag": "タグを移動",
+			"moveTagDescription": "タグは現在のカテゴリから移動します。新しいカテゴリで名前が空いている必要があります。",
+			"moveTagOut": "カテゴリ {{category}} から移動",
+			"rulesTravel": "兄弟グループと親ルールはタグと一緒に移動します。",
+			"entity": {
+				"tag": "タグ",
+				"category": "カテゴリ",
+				"trait": "特性",
+				"relation": "関係",
+				"collection": "コレクション"
+			},
+			"link": "リンク"
+		},
+		"account": {
+			"title": "アカウント",
+			"description": "シングルユーザー — アカウントが扉を守ります。"
+		},
+		"privacy": {
+			"signOutSection": {
+				"title": "自動サインアウト",
+				"description": "このタブが設定時間を超えて非表示のままだと、セッションがサインアウトされてログインページが表示されます。プレビューサムネイルに対する唯一の完全な保護です。"
+			},
+			"autoLogout": {
+				"title": "放置時にサインアウト",
+				"description": "タブが表示状態を監視します。設定時間を超えて戻るとログインページが表示されます。"
+			},
+			"delayLabel": "サインアウトまでの時間",
+			"delay": {
+				"immediately": "すぐに",
+				"minutes_one": "{{count}}分",
+				"minutes_other": "{{count}}分"
+			},
+			"idleTimeout": {
+				"label": "セッションのアイドルタイムアウト",
+				"description": "サーバー側で適用されるため、閉じたタブや他のブラウザにも適用されます。",
+				"hours_one": "{{count}}時間",
+				"hours_other": "{{count}}時間",
+				"days_one": "{{count}}日",
+				"days_other": "{{count}}日"
+			}
+		},
+		"password": {
+			"title": "パスワード",
+			"description": "このホストにサインインするための管理者パスワード。",
+			"changeButton": "パスワード変更",
+			"dialogTitle": "パスワード変更",
+			"currentPassword": "現在のパスワード",
+			"newPassword": "新しいパスワード",
+			"confirm": "新しいパスワードを確認",
+			"newPasswordPlaceholder": "10文字以上",
+			"confirmPlaceholder": "もう一度入力",
+			"changed": "パスワードを変更しました。",
+			"errorIncorrect": "現在のパスワードが正しくありません。",
+			"errorGeneric": "パスワードを変更できませんでした。サーバーを確認してもう一度お試しください。",
+			"mismatch": "パスワードが一致しません。"
+		},
+		"licenses": {
+			"title": "ライセンス",
+			"description": "アプリと同梱アセットのオープンソース帰属。",
+			"viewButton": "ライセンス",
+			"projectLicense": "プロジェクトライセンス",
+			"projectLicenseDescription": "このアプリケーションは GNU General Public License v3.0 (GPL-3.0) で公開されています。",
+			"fullLicense": "ライセンス全文",
+			"dependencies": "オープンソース依存関係",
+			"fonts": "フォント",
+			"packageCount_one": "パッケージ {{count}}件",
+			"packageCount_other": "パッケージ {{count}}件",
+			"noPackages": "まだパッケージがありません。"
+		},
+		"about": {
+			"title": "このアプリについて",
+			"description": "使用中のものと、その提供元。",
+			"tagline": "個人メディアとドキュメントのための、プライバシー重視のセルフホスト型アーカイブアプリ。",
+			"repository": "GitHub リポジトリ",
+			"checkUpdate": "更新を確認",
+			"checking": "確認中…",
+			"latest": "最新バージョンです。",
+			"outdated": "バージョン {{version}} が利用可能です。",
+			"viewRelease": "リリースを表示",
+			"updateError": "更新の確認に失敗しました。後でもう一度お試しください。",
+			"downloading": "ダウンロード中… {{percent}}%",
+			"updateReady": "バージョン {{version}} のインストール準備が完了しました。",
+			"restartToUpdate": "再起動",
+			"portableHint": "ポータブル版は GitHub から新しい zip をダウンロードして更新します。"
+		},
+		"connections": {
+			"title": "最近の接続",
+			"description": "デバイス、IP、時刻を伴うすべてのサインイン。このデバイスにのみ保存され、90日より古い行は削除されます。",
+			"empty": "まだサインインがありません。",
+			"loopback": "このデバイス"
+		},
+		"desktop": {
+			"library": {
+				"title": "ライブラリフォルダー",
+				"description": "このアプリがアーカイブを保存する場所。フォルダーを変更すると再起動します。ファイルはコピーされません。",
+				"change": "フォルダー変更",
+				"confirmTitle": "ライブラリフォルダーを切り替えますか？",
+				"confirmDescription": "選択したフォルダーに対してアプリが再起動します。空のフォルダーは新しいライブラリです。app.sqlite があるフォルダーはそのライブラリです。何もコピーまたは移動されません。"
+			},
+			"sharedFolder": {
+				"title": "共有フォルダー",
+				"description": "インポート時に「共有フォルダーを参照」が開始するフォルダー。",
+				"enable": "共有フォルダーからのインポートを有効化",
+				"enableDescription": "有効にすると、「共有フォルダーを参照」が下のフォルダーから開始されます。"
+			},
+			"lan": {
+				"title": "ローカルネットワークアクセス",
+				"description": "同じ Wi-Fi またはネットワーク上のスマートフォンやコンピューターにこのアプリを提供します。",
+				"enable": "ローカルネットワークからのアクセスを許可",
+				"enableDescription": "ネットワーク上の誰もがサインインにはパスワードが必要です。この機能を初めて有効にすると、Windows がファイアウォールの例外を求めます。",
+				"applying": "適用中…",
+				"portTitle": "ポート",
+				"portDescription": "Localhost と LAN は1つのポートを共有します。適用するとサーバーが再起動します。",
+				"portApply": "適用",
+				"copy": "コピー",
+				"copied": "アドレスをコピーしました",
+				"copyFailed": "コピーに失敗しました",
+				"passwordRequired": "LAN 共有が有効になっていません — まず管理者パスワードを設定してください。",
+				"weakPasswordTitle": "管理者パスワードが弱いです",
+				"weakPasswordDescription": "ネットワーク上の誰でも推測できればライブラリ全体にアクセスできます。まず「設定 → パスワード変更」でより強いパスワードを設定するか、それでも共有を有効にしてください。",
+				"enableAnyway": "それでも共有を有効化",
+				"primaryHint": "同じ Wi-Fi 上のデバイスで開いてください。",
+				"portAdjustedTitle": "ポート {{preferred}} は使用中のため、サーバーは現在 {{actual}} で待ち受けています。",
+				"portAdjustedHint": "新しいポートで、他のデバイスからこのアドレスを開いてください。",
+				"portAdjustedDismiss": "閉じる",
+				"moreAddresses": "その他のアドレス ({{count}}) — 仮想アダプターと VPN",
+				"noAddresses": "到達可能なアドレスが見つかりません — ネットワーク接続を確認してください。"
+			},
+			"autostart": {
+				"title": "Windows で起動",
+				"description": "サインイン時に hoardodile を起動します。"
+			},
+			"startInTray": {
+				"title": "トレイで起動",
+				"description": "トレイから「開く」を選択するまでウィンドウは表示されません。"
+			},
+			"autoUpdate": {
+				"title": "自動更新",
+				"description": "GitHub リリースをバックグラウンドでダウンロードします。再起動は常に確認されます。"
+			},
+			"closeAction": {
+				"title": "ウィンドウを閉じるとき",
+				"description": "タイトルバーの閉じるボタンの動作 — 毎回確認、トレイに隠す、または終了。",
+				"ask": "毎回確認する",
+				"tray": "トレイに隠す",
+				"quit": "アプリを終了"
+			},
+			"closeConfirm": {
+				"title": "hoardodile を閉じますか？",
+				"description": "終了しない限り、アプリはトレイで動作し続けます。",
+				"tray": "トレイに隠す",
+				"quit": "アプリを終了",
+				"remember": "選択を記憶する"
+			},
+			"caption": {
+				"back": "戻る",
+				"forward": "進む",
+				"reload": "再読み込み",
+				"minimize": "最小化",
+				"maximize": "最大化",
+				"restore": "元に戻す",
+				"close": "閉じる",
+				"devtools": "開発者ツール"
+			},
+			"updateBanner": "バージョン {{version}} のインストール準備が完了しました。",
+			"updateBannerRestart": "再起動",
+			"shellCache": {
+				"title": "シェルキャッシュ",
+				"description": "アプリウィンドウ自体のディスク上のキャッシュ — HTTP レスポンス、コンパイル済みコード、GPU シェーダー — とダウンロード済みの更新。クリアしても Cookie、設定、オフラインデータには一切触れず、アプリはすぐにローカルサーバーから再取得します。インストール準備が完了したダウンロード済み更新はそのまま残ります。",
+				"currentSize": "{{size}}",
+				"unavailable": "利用不可",
+				"clear": "キャッシュをクリア",
+				"clearing": "クリア中…",
+				"confirmTitle": "シェルキャッシュをクリアしますか？",
+				"confirmDescription": "次回アクセス時にアプリウィンドウはローカルサーバーからファイルを再度取得します。Cookie、設定、オフラインデータには一切触れません。インストール準備が完了したダウンロード済み更新はそのまま残ります。",
+				"toastCleared": "シェルキャッシュをクリアしました — {{bytes}} 解放。",
+				"clearFailed": "シェルキャッシュをクリアできませんでした。"
+			}
+		},
+		"usage": {
+			"description": "統計と足跡ログの背後にあるセッション — クリアには入力したフレーズが必要です。",
+			"rowTitle": "利用セッション",
+			"rowDescription": "統計の背後にあるデータ。",
+			"clearAll": "すべて削除",
+			"confirmTitle": "すべての利用履歴をクリアしますか？",
+			"confirmDescription": "すべての利用記録を完全に削除します。統計と概要のレコメンドはリセットされます。これは元に戻せません。",
+			"confirmPhrase": "すべての利用履歴をクリア",
+			"confirmLabel": "クリアを確認",
+			"clearing": "クリア中…",
+			"toastSuccess": "すべての利用履歴をクリアしました",
+			"toastFailed": "利用履歴をクリアできませんでした"
+		},
+		"trace": {
+			"description": "あなたの操作の追記専用ログ — インポート、エクスポート、削除、復元、投票。",
+			"rowTitle": "足跡ログ",
+			"clearAll": "すべて削除",
+			"confirmTitle": "足跡をクリアしますか？",
+			"confirmDescription": "すべての操作記録 (インポート、エクスポート、削除、復元、低評価の投票) を完全に削除します。閲覧時間は別の利用データであり、影響を受けません。これは元に戻せません。",
+			"confirmPhrase": "足跡をクリア",
+			"confirmLabel": "クリアを確認",
+			"clearing": "クリア中…",
+			"toastSuccess": "足跡をクリアしました",
+			"toastFailed": "足跡をクリアできませんでした"
+		},
+		"trash": {
+			"description": "ごみ箱で待機中のバンドル — それぞれ復元できます。",
+			"view": "ごみ箱を見直す ({{count}})",
+			"loading": "ごみ箱を読み込み中…",
+			"download": "ダウンロード"
+		},
+		"systemPrefs": {
+			"title": "システム既定値",
+			"description": "隠れたホスト動作のスイッチ — 工場出荷時の既定値に戻します。プラグイン設定には触れません。それらはプラグインページにあります。",
+			"restore": "復元",
+			"resetSuccess": "すべてのシステム設定をリセットしました",
+			"confirmTitle": "すべてのシステム設定をリセットしますか？",
+			"confirmDescription": "テーマ、言語、フォント、日付形式を含むすべてのシステム設定を削除します。ページは既定値で再読み込みされます。これは元に戻せません。"
+		},
+		"systemCache": {
+			"title": "ブラウザキャッシュ",
+			"description": "ブラウザ側のローカルデータ — サービスワーカーキャッシュ、localStorage、IndexedDB (オフライン利用キュー、ドキュメントの下書き)。サーバーには一切触れず、その後ページが再読み込みされます。",
+			"clear": "すべてクリア",
+			"clearing": "クリア中…",
+			"resetting": "ブラウザキャッシュをクリアしました。再読み込み中…",
+			"confirmTitle": "ブラウザキャッシュをクリアしますか？",
+			"confirmDescription": "テーマと言語の設定、オフライン利用記録、保存済みドキュメントの下書きを含む、ブラウザ側のすべてのローカルデータを削除してからページを再読み込みします。これは元に戻せません。"
+		}
+	},
+	"plugin": {
+		"loading": "プレビューを読み込み中…",
+		"previewFailed": "プラグインの読み込みに失敗しました",
+		"previewFallback": "プラグイン {{name}} が見つからないか利用できません。内蔵のファイルプラグインでプレビューします",
+		"previewFallbackManage": "プラグインを管理",
+		"previewFallbackUnknown": "不明なプラグイン"
+	},
+	"plugins": {
+		"pageHint": ".zip バンドルからインストールするか、プラグインフォルダーを再スキャンして新しいものを検出してください。",
+		"uploadZip": ".zip をアップロード",
+		"uploadPluginSuccess": "プラグインをインストールしました",
+		"uploading": "インストール中…",
+		"rescan": "プラグインを再スキャン",
+		"rescanSuccess": "プラグインを再スキャンしました",
+		"more": "その他",
+		"enableToggle": "プラグインを有効化または無効化",
+		"dragToReorder": "ドラッグで並べ替え",
+		"dev": "dev",
+		"missing": "欠落",
+		"missingSource": "ソース欠落",
+		"installed": "インストール済み",
+		"installedDescription": "順序が誰が最初にバンドルを取得するかを決めます — ドラッグで優先度を変更してください。",
+		"filterPlaceholder": "プラグインをフィルター",
+		"countInstalled": "{{count}}件 インストール済み",
+		"listView": "リスト表示",
+		"gridView": "グリッド表示",
+		"searchCategories": "カテゴリを検索",
+		"fileTitle": "ファイル",
+		"fileDescription": "不明なファイル形式のための内蔵フォールバックビューアー — 削除や並べ替えはできません。",
+		"alwaysOn": "常に有効",
+		"defaultsTitle": "プラグイン既定値",
+		"defaultsDescription": "すべてのプラグインの設定が既定値に戻ります — コンテンツとインストール状態はそのままです。",
+		"restore": "復元",
+		"cachesTitle": "プラグインキャッシュ",
+		"cachesDescription": "全プラグインのサムネイルと解析済みメタデータ — 必要に応じて再構築されます。",
+		"clearAll": "すべてクリア",
+		"pin": "ピン留め",
+		"color": "色",
+		"appearance": "外観",
+		"appearanceTitle": "外観: {{name}}",
+		"appearanceDescription": "色と、このプラグインをリソースカードにピン留めするかを選択します。",
+		"reset": "リセット",
+		"clear": "クリア",
+		"resetPluginPref": "設定をリセット",
+		"resetPluginPrefConfirmTitle": "{{name}} の設定をリセットしますか？",
+		"resetPluginPrefConfirmDescription": "このプラグインの保存済み設定をすべて削除します。再起動後、プラグインは既定値を使用します。これは元に戻せません。",
+		"resetPluginPrefSuccess": "{{name}} の設定をリセットしました",
+		"clearPluginCache": "キャッシュをクリア",
+		"clearPluginCacheConfirmTitle": "{{name}} のキャッシュをクリアしますか？",
+		"clearPluginCacheConfirmDescription": "このプラグインのすべてのキャッシュデータ (例: 再開位置) を削除します。これは元に戻せません。",
+		"clearPluginCacheSuccess": "{{name}} のキャッシュをクリアしました",
+		"uninstall": "アンインストール",
+		"uninstallConfirmTitle": "プラグイン {{name}} をアンインストールしますか？",
+		"uninstallConfirmDescription_one": "このプラグインを使用しているリソースが {{count}}件あります。アンインストール後は内蔵のファイルプラグインでプレビューされ、プラグインを再インストールすると自動的に復元されます。これは元に戻せません。",
+		"uninstallConfirmDescription_other": "このプラグインを使用しているリソースが {{count}}件あります。アンインストール後は内蔵のファイルプラグインでプレビューされ、プラグインを再インストールすると自動的に復元されます。これは元に戻せません。",
+		"uninstallConfirmNoUsage": "このプラグインを使用しているリソースはありません。いつでも再インストールして再度使用できます。これは元に戻せません。",
+		"uninstallSuccess": "{{name}} をアンインストールしました",
+		"resetAllPluginPrefSuccess": "すべてのプラグイン設定をリセットしました",
+		"resetAllPluginPrefConfirmTitle": "すべてのプラグイン設定をリセットしますか？",
+		"resetAllPluginPrefConfirmDescription": "すべてのプラグインの保存済み設定を削除します。再起動後、すべてのプラグインは既定値を使用します。これは元に戻せません。",
+		"clearAllPluginCacheSuccess": "すべてのプラグインキャッシュをクリアしました",
+		"clearAllPluginCacheConfirmTitle": "すべてのプラグインキャッシュをクリアしますか？",
+		"clearAllPluginCacheConfirmDescription": "再開位置を含む、すべてのプラグインのキャッシュデータを削除します。これは元に戻せません。",
+		"installConfirmTitle": "このプラグインをインストールしますか？",
+		"install": "インストール",
+		"installConfirmRisk": "プラグインはこのアプリと同じ権限でサーバー側コードを実行します。あなたのデータをすべて読み取り、変更し、ネットワークリクエストを送信できます。宣言された権限はホスト機能を切り替えるだけであり、プラグインをサンドボックス化するものではありません。信頼できるソースからのプラグインのみをインストールしてください。",
+		"uploadInvalidPlugin": "有効なプラグインパッケージではありません (manifest.json が欠落または無効)。",
+		"permissions": {
+			"sourceMeta": "ソースメタデータ",
+			"searchMeta": "検索メタデータ",
+			"danmaku": "弾幕",
+			"message": "メッセージ",
+			"imageHashes": "画像ハッシュ"
+		}
+	},
+	"overview": {
+		"usageHistory": {
+			"title": "利用履歴"
+		},
+		"memories": {
+			"title": "この日の思い出",
+			"yearsAgo_one": "前年のこの日",
+			"yearsAgo_other": "{{count}}年前のこの日"
+		},
+		"activity": {
+			"title": "最近のアクティビティ",
+			"updated": "更新 {{time}}"
+		},
+		"stats": {
+			"resources": "リソース",
+			"characters": "キャラクター",
+			"documents": "ドキュメント",
+			"messages": "メッセージ"
+		},
+		"sections": {
+			"recentResources": "最近更新されたもの",
+			"recentViewed": "最近閲覧したもの",
+			"recentCharacters": "最近のキャラクター",
+			"recentDocuments": "最近のドキュメント",
+			"recentMessages": "最近のメッセージ"
+		},
+		"empty": {
+			"resources": "まだリソースがありません。",
+			"recentViewed": "まだ閲覧履歴がありません。",
+			"characters": "まだキャラクターがありません。",
+			"documents": "まだドキュメントがありません。",
+			"messages": "まだメッセージがありません。"
+		},
+		"todayUsage": {
+			"label": "今日の視聴時間",
+			"sameAsYesterday": "昨日と同じ",
+			"moreThanYesterday": "昨日より {{duration}} 多い",
+			"lessThanYesterday": "昨日より {{duration}} 少ない"
+		},
+		"footprints": {
+			"aria": "足跡",
+			"title": "足跡",
+			"description": "あなたが行ったすべての操作",
+			"emptyPrompt": "まだ足跡がありません — リソースをインポートまたはアップロードしてログを開始してください。",
+			"uploadResource": "リソースをアップロード",
+			"importFolder": "フォルダーをインポート"
+		},
+		"viewAll": "すべて表示",
+		"recentViewed": {
+			"description": "あなたの閲覧履歴",
+			"unknownTime": "不明な時刻",
+			"emptyPrompt": "まだ閲覧履歴がありません — 探索を始めるか、最初のリソースをアップロードしてください。",
+			"browseResources": "リソースを閲覧",
+			"uploadResource": "リソースをアップロード"
+		},
+		"pinned": {
+			"charactersTitle": "ピン留めしたキャラクター",
+			"resourcesTitle": "ピン留めしたリソース",
+			"charactersEmpty": "一致するキャラクターがありません。",
+			"resourcesEmpty": "一致するリソースがありません。",
+			"add": "追加",
+			"maxReached": "ピン留め上限 {{max}}件に達しました",
+			"dragToReorder": "ドラッグで並べ替え",
+			"settings": {
+				"title": "ピン留め: {{section}}",
+				"description": "ダッシュボードがピン留めするセクション — ドラッグで並べ替え、横で編集。",
+				"editTitle": "セクションを編集",
+				"editDescription": "ダッシュボードに表示されるセクション。",
+				"titleLabel": "タイトル",
+				"titlePlaceholder": "空にすると既定のタイトルを使用",
+				"showWhenEmpty": "空のときも表示",
+				"sizeLabel": "サイズ",
+				"sectionsCount_one": "セクション {{count}}件",
+				"sectionsCount_other": "セクション {{count}}件",
+				"save": "セクションを保存",
+				"done": "完了",
+				"delete": "削除",
+				"deleteConfirmTitle": "ピン留めビューを削除",
+				"deleteConfirmDescription": "「{{title}}」を削除してもよろしいですか？これは元に戻せません。",
+				"saveSuccess": "ピン留め設定を保存しました",
+				"deleteSuccess": "ピン留めビューを削除しました",
+				"toggleEnabledAria": "{{title}} を有効化または無効化",
+				"noItems": "まだピン留めビューがありません。",
+				"noItemsHint": "「追加」をクリックして現在のフィルターを概要に保存します。",
+				"noItemsWithFiltersHint": "現在のリストページにはすでにフィルターがあります。上のボタンをクリックしてピン留めビューとして保存します。",
+				"noSelection": "ピン留めビューが選択されていません。",
+				"noSelectionHint": "リストから項目を選択するか、「追加」をクリックして新しいビューを作成します。",
+				"preview": "プレビュー",
+				"previewTitle": "フィルターをプレビュー",
+				"item": {
+					"refresh": {
+						"label": "自動更新",
+						"description": "このピン留めビューが新しいランダムセットを取得する頻度。",
+						"always": "常に",
+						"never": "なし",
+						"every60s": "毎分",
+						"every1800s": "30分ごと",
+						"every3600s": "毎時",
+						"every21600s": "6時間ごと",
+						"every43200s": "12時間ごと",
+						"midnight": "深夜0時"
+					}
+				}
+			},
+			"refreshSectionAria": "{{title}} を更新"
+		},
+		"sort": {
+			"created": "作成日時",
+			"updated": "更新日時"
+		},
+		"rebuildDescription": "すべてのリソースのメタデータとサムネイルをゼロから再構築するか、このホスト上の再構築可能なデータ (ローカルキャッシュ + 記録済みメタデータ) をすべてクリアします。",
+		"signOut": "サインアウト",
+		"signingOut": "サインアウト中…",
+		"precache": "プリキャッシュ",
+		"precaching": "プリキャッシュ中…",
+		"caching": "ブラウザキャッシュを準備中…",
+		"refreshCache": "キャッシュを更新",
+		"clearCache": "すべてクリア",
+		"clearing": "クリア中…",
+		"progressLine": "{{done}} / {{total}} ({{percent}}%) - {{stage}}",
+		"cachedSummary_one": "{{count}}件 プリキャッシュ済み",
+		"cachedSummary_other": "{{count}}件 プリキャッシュ済み",
+		"precacheFailed": "プリキャッシュに失敗しました: {{error}}",
+		"precacheStageLoading": "メタデータを再構築し、サムネイルを生成しています…",
+		"precacheDefaultError": "プリキャッシュの実行に失敗しました",
+		"precacheInProgress": "プリキャッシュがすでに進行中です",
+		"abortPrecache": "中止",
+		"precacheAborted": "プリキャッシュを中止しました",
+		"toastClearLocked_one": "{{count}}件の再構築データファイルがロックされており削除できませんでした。サーバーを再起動してクリアしてください。",
+		"toastClearLocked_other": "{{count}}件の再構築データファイルがロックされており削除できませんでした。サーバーを再起動してクリアしてください。",
+		"clearCacheSuccess": "再構築データをクリアしました",
+		"toastClearFailed": "再構築データをクリアできませんでした",
+		"toastPrecacheSuccess_one": "{{count}}件 プリキャッシュしました",
+		"toastPrecacheSuccess_other": "{{count}}件 プリキャッシュしました",
+		"toastPrecachePartial": "{{failed}}件の失敗を伴ってプリキャッシュが完了しました"
+	},
+	"login": {
+		"brand": "Hoardodile",
+		"title": "サインイン",
+		"description": "このホストのパスワードを入力してください。",
+		"demoDescription": "これはデモライブラリです。パスワードは {{password}} です。",
+		"password": "パスワード",
+		"submit": "サインイン",
+		"submitting": "サインイン中…",
+		"formAria": "サインイン",
+		"errorIncorrect": "パスワードが正しくありません。",
+		"errorGeneric": "サインインできませんでした。サーバーを確認してもう一度お試しください。",
+		"setupTitle": "パスワードを設定",
+		"setupDescription": "このホストにはまだパスワードがありません。今設定してください — 最初に行った人がこのホストを所有します。",
+		"setupPassword": "新しいパスワード",
+		"setupConfirm": "パスワードを確認",
+		"setupSubmit": "パスワードを設定",
+		"setupSubmitting": "設定中…",
+		"setupMismatch": "パスワードが一致しません。",
+		"setupFormAria": "パスワードを設定"
+	},
+	"dataHistory": {
+		"title": "データ履歴",
+		"description": "データスナップショットを管理します。バックアップは移行や災害復旧のため、アーカイブはバージョンを読み取り専用として凍結し、そのデータが二度と変更されないようにします。",
+		"status": {
+			"currentWritable": "書き込み可能 — v{{version}}",
+			"viewingArchive": "アーカイブを表示中 — v{{version}}"
+		},
+		"chip": {
+			"latest": "最新",
+			"readOnly": "読み取り専用",
+			"auto": "自動"
+		},
+		"archive": {
+			"title": "v{{version}}",
+			"tagCurrent": "最新 (書き込み可能)",
+			"tagActive": "表示中",
+			"tagReadOnly": "過去のアーカイブ",
+			"tagCurrentShort": "最新",
+			"tagActiveShort": "表示中",
+			"nameLabel": "名前",
+			"namePlaceholder": "例: v1 マイルストーン",
+			"noteLabel": "メモ",
+			"notePlaceholder": "例: 移行前、データ凍結…",
+			"switchHint": "切り替え後、アプリはこのアーカイブに対して読み取り専用モードで動作します。再度編集するには最新バージョンに戻ってください。",
+			"activeHint": "これは表示中のバージョンです。"
+		},
+		"backup": {
+			"typeLabel": "データベースバックアップ",
+			"autoTypeLabel": "自動デイリースナップショット",
+			"autoBadge": "自動",
+			"autoDeleteHint": "この自動スナップショットは短いローリング期間保存され、自動的に置き換えられます。今削除して容量を空けることもできます。",
+			"nameLabel": "名前",
+			"nameEmpty": "なし",
+			"restoreHint": "復元ではバックアップ名の入力を求められます — 現在のライブラリが先にアーカイブされるため、何も静かに失われることはありません。",
+			"deleteHint": "このバックアップファイルは完全に削除され、復元できません。",
+			"archivedHint": "このバックアップはアーカイブ版に属します。そのデータは凍結されており、復元または削除できません。"
+		},
+		"action": {
+			"backupNow": "今すぐバックアップ",
+			"backingUp": "バックアップ中…",
+			"archiveNow": "今すぐアーカイブ",
+			"archiving": "アーカイブ中…",
+			"restore": "復元",
+			"restoring": "復元中…",
+			"delete": "削除",
+			"deleting": "削除中…",
+			"switchToVersion": "このバージョンに切り替え",
+			"switching": "切り替え中…",
+			"download": "ダウンロード"
+		},
+		"reloading": "再読み込み中…",
+		"autoSnapshot": {
+			"enabled": "自動スナップショット: 毎日 · {{keep}}日保持",
+			"disabled": "自動スナップショットは無効です",
+			"last": "最新 {{time}}"
+		},
+		"detail": {
+			"selectPrompt": "タイムラインでバックアップまたはアーカイブを選択すると、詳細と利用可能な操作を表示できます。",
+			"size": "サイズ",
+			"versionNumber": "バージョン",
+			"createdAt": "作成日時",
+			"note": "メモ",
+			"contents": "内容",
+			"contentsValue": "リソース {{resources}}件 · キャラクター {{characters}}件 · ドキュメント {{documents}}件",
+			"backupOnVersion": "v{{version}} のバックアップ",
+			"archiveVersion": "アーカイブ v{{version}}"
+		},
+		"note": {
+			"empty": "クリックしてメモを追加…",
+			"placeholder": "このスナップショットに短い説明を追加…"
+		},
+		"confirm": {
+			"archiveTitle": "最新バージョンをアーカイブ",
+			"archiveDescription": "最新バージョンのデータベースとすべてのリソース、キャラクター、ドキュメントが読み取り専用のアーカイブとして凍結されます。アーカイブ内のデータは二度と変更されず、継続的な作業のために新しい書き込み可能バージョンが作成されます。",
+			"archivePhrase": "アーカイブ",
+			"archiveAutoHint": "現在のバージョンの自動スナップショットはこのアーカイブとともに凍結され、新しいバージョンのためにすぐに新しいスナップショットが作成されます。",
+			"restoreTitle": "このバックアップを復元",
+			"restoreDescription": "現在のライブラリが先にアーカイブされるため、何も静かに失われることはありません。この復元はアーカイブ版を復元することで取り消せます。",
+			"restorePhrase": "バックアップを復元",
+			"autoPhrase": "自動",
+			"deleteBackupTitle": "バックアップを完全に削除",
+			"deleteBackupDescription": "このバックアップファイルは完全に削除され、復元できません。",
+			"deleteBackupPhrase": "バックアップを削除",
+			"switchTitle": "このアーカイブバージョンに切り替え",
+			"switchDescription": "切り替え後、アプリは読み取り専用モードで動作し、過去データのみが表示されます。再度編集するには最新バージョンに戻ってください。"
+		},
+		"empty": {
+			"title": "まだデータ履歴がありません。",
+			"description": "データ損失に備えて、今すぐバックアップを作成してください。"
+		},
+		"toast": {
+			"backupCreated": "バックアップを作成しました",
+			"backupFailed": "バックアップに失敗しました",
+			"archiveFailed": "アーカイブに失敗しました",
+			"backupDeleted": "バックアップを削除しました",
+			"deleteFailed": "削除に失敗しました",
+			"restoreFailed": "復元に失敗しました",
+			"switchFailed": "切り替えに失敗しました",
+			"metaSaved": "保存しました",
+			"metaSaveFailed": "保存できませんでした"
+		}
+	},
+	"documents": {
+		"title": "ドキュメント",
+		"index": {
+			"docCount_one": "ドキュメント {{count}}件",
+			"docCount_other": "ドキュメント {{count}}件",
+			"folderCount_one": "フォルダー {{count}}件",
+			"folderCount_other": "フォルダー {{count}}件",
+			"description": "{{folders}} 中の {{docs}} — 書いたものをすべて1か所に。",
+			"updated": "更新: {{time}}"
+		},
+		"create": "新規",
+		"backToStart": "開始ページに戻る",
+		"new": "ドキュメント",
+		"newFolder": "フォルダー",
+		"defaultNewTitle": "無題のドキュメント",
+		"defaultNewFolderTitle": "無題のフォルダー",
+		"searchPlaceholder": "タイトルまたは内容を検索",
+		"loading": "ドキュメントを読み込み中…",
+		"listEmpty": "まだドキュメントがありません。",
+		"notFound": {
+			"title": "ドキュメントが見つかりません",
+			"description": "このドキュメントはもう存在しません — 削除された可能性があります。",
+			"back": "ドキュメントに戻る"
+		},
+		"untitled": "無題",
+		"viewAll": "すべて表示",
+		"filter": {
+			"title": "キャラクターとリソースで絞り込む",
+			"dialogTitle": "ドキュメントを絞り込む",
+			"apply": "適用",
+			"clear": "クリア"
+		},
+		"placeholder": "書き始めましょう…",
+		"editorPlaceholder": "'/' でコマンドを表示",
+		"saveDraft": "下書きを保存",
+		"discardDraft": "下書きを破棄",
+		"commit": "バージョンをコミット",
+		"commitDialog": {
+			"title": "バージョンをコミット",
+			"description": "現在の下書きを不変のバージョンとして保存します。変更点を説明する短いメッセージを入力してください。",
+			"messageLabel": "コミットメッセージ",
+			"messagePlaceholder": "このバージョンで何が変わりましたか？",
+			"submit": "コミット",
+			"committing": "コミット中…"
+		},
+		"discardDialog": {
+			"title": "下書きを破棄しますか？",
+			"description": "未保存の変更は最新のコミット済みバージョンに置き換えられます。これは元に戻せません。",
+			"confirm": "破棄",
+			"discarding": "破棄中…"
+		},
+		"leaveDialog": {
+			"confirm": "このドキュメントには未保存の変更があります。それでも離れますか？"
+		},
+		"moreActions": "その他の操作",
+		"zoom": {
+			"label": "文字の拡大率",
+			"smaller": "縮小",
+			"larger": "拡大",
+			"reset": "拡大率をリセット"
+		},
+		"appearanceSettings": {
+			"title": "外観",
+			"description": "ドキュメントの見た目を調整: テーマ、読み幅、フォント。",
+			"theme": "ドキュメントテーマ",
+			"inherit": "Web テーマから継承",
+			"readingWidth": "読み幅",
+			"readingWidthDescription": "ドキュメントページの中央寄せ読み取り列の幅。",
+			"editorFont": "エディターフォント",
+			"editorFontDescription": "ドキュメントエディター内で使用されるフォント。",
+			"uiFont": "ページフォント",
+			"uiFontDescription": "ドキュメントページのタイトル、サイドバー、その他の UI 領域で使用されるフォント。",
+			"body": "本文",
+			"headings": "見出し"
+		},
+		"readOnly": {
+			"enable": "プレビュー",
+			"disable": "プレビューを終了"
+		},
+		"reading": {
+			"enter": "読み取りモード",
+			"exit": "読み取りモードを終了"
+		},
+		"diff": {
+			"show": "履歴を比較",
+			"exit": "比較を終了",
+			"compareWith": "比較対象",
+			"selectVersion": "バージョンを選択"
+		},
+		"conflict": {
+			"title": "リモートの変更を検出しました",
+			"description": "変更内容はエディターに保持されています。2つのバージョンを比較して、どちらを保持するか選択してください。",
+			"keepCurrent": "現在の内容を保持",
+			"discardCurrent": "現在の内容を破棄",
+			"viewDiff": "比較",
+			"diffLabel": "オフラインとリモートの下書き",
+			"updatedHint": "サーバー更新: {{remote}} · ローカル編集: {{local}}",
+			"discardConfirm": {
+				"title": "現在の編集を破棄しますか？",
+				"description": "まだサーバーに同期されていない変更は失われます。先に差分を比較できます。",
+				"confirm": "現在の編集を破棄"
+			}
+		},
+		"indent": {
+			"enable": "先頭行インデントを有効化"
+		},
+		"welcome": {
+			"title": "ドキュメント",
+			"subtitle": "左側でドキュメントまたはフォルダーを作成します。ドキュメントは入れ子の子も持てます。"
+		},
+		"folderHint": "これはフォルダーです。中のドキュメントを選んで編集を始めてください。",
+		"headings": "目次",
+		"noHeadings": "このドキュメントには見出しがありません。",
+		"untitledHeading": "無題の見出し",
+		"detailMeta": {
+			"chars_one": "{{count, number}} 文字",
+			"chars_other": "{{count, number}} 文字"
+		},
+		"notes": {
+			"tab": "メモ",
+			"empty": "まだメモがありません。"
+		},
+		"statusBar": {
+			"charCount": "{{count}} / {{max}} 文字",
+			"offline": "オフライン · 変更は未保存"
+		},
+		"autosave": {
+			"enable": "自動保存を有効化"
+		},
+		"editMode": {
+			"label": "並び順を調整",
+			"toggle": "並び順調整モードを切り替え",
+			"hint": "有効にするとツリー内のドキュメントをドラッグで並べ替えられます。"
+		},
+		"expandAll": "すべて展開",
+		"collapseAll": "すべて折りたたむ",
+		"slash": {
+			"charactersGroup": "キャラクター",
+			"resourcesGroup": "リソース",
+			"insertCharacter": "キャラクターを挿入…",
+			"insertResource": "リソースを挿入…"
+		},
+		"toast": {
+			"createFailed": "作成できませんでした",
+			"renameFailed": "名前を変更できませんでした",
+			"saveFailed": "下書きを保存できませんでした",
+			"saved": "保存しました",
+			"commitFailed": "バージョンをコミットできませんでした",
+			"committed": "バージョンをコミットしました",
+			"contentTooLarge": "内容が最大文字数を超えています",
+			"versionLoadFailed": "バージョンの内容を読み込めませんでした",
+			"savedLocally": "このデバイスに保存しました",
+			"resolveConflictFirst": "コミットする前にオフラインの競合を解決してください",
+			"movedToTrash": "ごみ箱に移動しました",
+			"restored": "復元しました",
+			"restoreFailed": "復元できませんでした",
+			"deleteFailed": "削除できませんでした",
+			"deletedForever": "完全に削除しました",
+			"moveFailed": "移動できませんでした"
+		},
+		"search": {
+			"empty": "一致するドキュメントがありません。"
+		},
+		"trash": {
+			"open": "ごみ箱",
+			"empty": "ごみ箱にドキュメントがまだありません。",
+			"restore": "復元",
+			"hardDelete": "完全に削除",
+			"hardDeleteTitle": "完全に削除しますか？",
+			"hardDeleteDescription": "この項目を完全に削除します。これは元に戻せません。",
+			"hardDeleteConfirm": "完全に削除",
+			"hardDeleting": "削除中…"
+		},
+		"softDeleteDialog": {
+			"title": "ごみ箱に移動しますか？",
+			"description": "項目はツリーから非表示になり、後でごみ箱から復元できます。",
+			"folderWarning": "このフォルダー内のすべての子ドキュメントも一緒にごみ箱に移動されます。",
+			"confirm": "ごみ箱に移動"
+		},
+		"toolbar": {
+			"bold": "太字",
+			"italic": "斜体",
+			"strike": "取り消し線",
+			"code": "インラインコード",
+			"h1": "見出し 1",
+			"h2": "見出し 2",
+			"h3": "見出し 3",
+			"bulletList": "箇条書き",
+			"orderedList": "番号付きリスト",
+			"blockquote": "引用",
+			"noFirstLineIndent": "先頭行インデントなし (この段落)",
+			"link": "リンク",
+			"linkPrompt": "URL を入力 (空欄で削除)",
+			"alignLeft": "左揃え",
+			"alignCenter": "中央揃え",
+			"alignRight": "右揃え",
+			"textColor": "文字色",
+			"tagChip": "タグスタイル",
+			"undo": "元に戻す",
+			"redo": "やり直し"
+		}
+	},
+	"characters": {
+		"title": "キャラクター",
+		"searchPlaceholder": "キャラクターを検索…",
+		"filters": "フィルター",
+		"sortLabel": "ソート",
+		"orderLabel": "順序",
+		"search": {
+			"sectionOptions": "オプション",
+			"sectionTags": "タグ",
+			"sectionTraits": "特性",
+			"sectionRelations": "関係",
+			"clearAll": "すべてクリア",
+			"apply": "検索",
+			"itemCount_one": "キャラクター {{count}}件",
+			"itemCount_other": "キャラクター {{count}}件"
+		},
+		"new": "新規",
+		"listEmpty": "まだキャラクターがありません。",
+		"trashEmpty": "ごみ箱にキャラクターがまだありません。",
+		"filter": {
+			"trash": "ごみ箱"
+		},
+		"traitFilter": {
+			"add": "追加",
+			"empty": "設定で特性を定義すると、それで絞り込めます。",
+			"opContains": "を含む",
+			"opEmpty": "が空",
+			"opNotEmpty": "が空でない",
+			"opDateAfter": "以降",
+			"opDateOnOrAfter": "以上 (同日以降)",
+			"opDateBefore": "以前",
+			"opDateOnOrBefore": "以下 (同日以前)",
+			"opDateOn": "指定日",
+			"opDateMonthDayOn": "月/日が",
+			"opDateMonthDayToday": "今日の月/日"
+		},
+		"viewSelected": "選択中のみ",
+		"viewSelectedTooMany": "選択中のみは {{max}}件まで対応しています",
+		"sort": {
+			"created": "作成日時",
+			"updated": "更新日時",
+			"random": "ランダム",
+			"latest": "最新",
+			"earliest": "最古"
+		},
+		"bulk": {
+			"select": "選択",
+			"done": "完了",
+			"toolbarCount": "{{count}}件 選択中",
+			"editTags": "タグを編集",
+			"clearSelection": "クリア",
+			"moveToTrash": "ごみ箱",
+			"confirmSoft_one": "キャラクター {{count}}件をごみ箱に移動しますか？",
+			"confirmSoft_other": "キャラクター {{count}}件をごみ箱に移動しますか？",
+			"softDeleteDescription": "選択したキャラクターはごみ箱に移動されます。後でごみ箱から復元できます。",
+			"toastAllOk_one": "キャラクター {{count}}件を更新しました。",
+			"toastAllOk_other": "キャラクター {{count}}件を更新しました。",
+			"toastAllFailed": "何も更新されませんでした ({{count}}件失敗)。",
+			"toastPartial": "{{ok}}件成功、{{failed}}件失敗。"
+		},
+		"actionsAria": "{{name}} の操作",
+		"toast": {
+			"movedToTrash": "ごみ箱に移動しました",
+			"deleteFailed": "削除できませんでした",
+			"restored": "復元しました",
+			"restoreFailed": "復元できませんでした",
+			"deletedForever": "完全に削除しました",
+			"createSuccess": "作成しました",
+			"createFailed": "作成に失敗しました"
+		},
+		"create": {
+			"title": "新しいキャラクター",
+			"description": "名前だけで始められます — 他は後回しで構いません。",
+			"basicInfo": "基本情報",
+			"basicDescription": "彼らが誰なのか、平易な言葉で。",
+			"name": "名前",
+			"intro": "紹介",
+			"namePlaceholder": "名前のないキャラクター",
+			"nameHint": "名前は必須です — 名前を付けると「作成」が有効になります。",
+			"introPlaceholder": "数文 — 誰なのか、何を望むのか。",
+			"links": "リンク",
+			"linksDescription": "このキャラクターをライブラリに結び付けるタグと特性。",
+			"tags": "タグ",
+			"traits": "特性",
+			"appearance": "外観",
+			"appearanceDescription": "アバターと全身イラスト — 収まるように切り抜き。",
+			"avatar": "アバター",
+			"fullbody": "全身",
+			"submit": "作成",
+			"submitting": "作成中…"
+		},
+		"preview": {
+			"aria": "プレビュー: {{name}}"
+		},
+		"detail": {
+			"loadError": "このキャラクターの読み込みに失敗しました。",
+			"noIntro": "まだ紹介がありません。",
+			"relationships": "関係",
+			"recent": "最近のリソース",
+			"viewAllResources": "すべて表示",
+			"fullbody": "全身",
+			"traits": "特性",
+			"tags": "タグ",
+			"tabsAria": "キャラクターのセクション",
+			"documentsTitle": "ドキュメント内",
+			"openSidebar": "サイドバーを開く"
+		},
+		"editDialog": {
+			"aria": "キャラクターを編集",
+			"name": "名前",
+			"intro": "紹介"
+		},
+		"editHub": {
+			"title": "編集 - {{name}}"
+		},
+		"tagsDialog": {
+			"title": "タグ編集 - {{name}}"
+		},
+		"actions": {
+			"uploadResource": "リソースをアップロード",
+			"editTags": "タグ",
+			"editTraits": "特性",
+			"editRelations": "関係",
+			"editBasic": "基本情報",
+			"editAvatar": "アバター",
+			"editFullbody": "全身",
+			"openMessages": "メッセージ",
+			"restore": "復元",
+			"hardDelete": "完全に削除",
+			"softDelete": "ごみ箱に移動"
+		},
+		"hardDelete": {
+			"title": "完全に削除しますか？",
+			"description": "キャラクターを完全に削除し、そのフォルダーをローカルごみ箱に移動します。",
+			"confirm": "完全に削除",
+			"deleting": "削除中…"
+		},
+		"chips": {
+			"linkCharacters": "キャラクターをリンク"
+		},
+		"picker": {
+			"selectedEmpty": "まだキャラクターが選択されていません。",
+			"loadFailed": "読み込みに失敗しました"
+		},
+		"selectorDialog": {
+			"title": "キャラクターを選択",
+			"confirm": "確認",
+			"confirmCount": "確認 ({{count}})",
+			"notSelectable": "このキャラクターは選択できません"
+		},
+		"charactership": {
+			"empty": "まだ関係がありません。上の種類を選んで追加してください。",
+			"pickerTitle": "キャラクターを選択",
+			"deleteEdge": "削除",
+			"deleteConfirmTitle": "関係を削除",
+			"deleteConfirmDescription": "この関係を削除してもよろしいですか？これは元に戻せません。",
+			"pickCharacter": "キャラクターを選択",
+			"enterName": "名前を入力",
+			"pickEndpoint": "端点を選択",
+			"namePlaceholder": "名前",
+			"noTypesHint": "まだ関係の種類がありません。",
+			"noTypesLink": "「設定 → カスタム」で種類を追加",
+			"incompleteDraft": "保存する前にすべての新しい関係を完成させてください",
+			"toast": {
+				"deleteSuccess": "関係を削除しました",
+				"deleteFailed": "関係を削除できませんでした",
+				"addSuccess": "関係を追加しました",
+				"saveFailed": "関係を保存できませんでした"
+			}
+		}
+	},
+	"collections": {
+		"entityLabel": "コレクション",
+		"usageLabelOne": "リソース",
+		"usageLabel": "リソース",
+		"chip": {
+			"openLabel": "コレクション {{name}} を開く"
+		},
+		"popover": {
+			"empty": "このコレクションにはまだリソースがありません。"
+		},
+		"picker": {
+			"quickCreate": "追加",
+			"searchPlaceholder": "コレクションを検索"
+		},
+		"editDialog": {
+			"title": "{{name}} のコレクション"
+		},
+		"panel": {
+			"empty": "まだコレクションがありません。",
+			"addDialogTitle": "コレクションを追加",
+			"editDialogTitle": "コレクションを編集",
+			"filterPlaceholder": "コレクションをフィルター",
+			"reorderMode": "並べ替え",
+			"reorderModeAria": "ドラッグ＆ドロップでコレクションを並べ替え"
+		}
+	},
+	"usage": {
+		"title": "利用統計",
+		"description": "プラットフォーム横断の視聴時間 — 合計、日ごとのリズム、そして時間の使い道。",
+		"history": {
+			"title": "利用履歴",
+			"description": "使用したもの、新しい順",
+			"empty": "まだ利用記録がありません。",
+			"loading": "読み込み中…",
+			"loadError": "利用履歴を読み込めませんでした。",
+			"today": "今日",
+			"yesterday": "昨日",
+			"unknownTime": "不明な時刻",
+			"totalLabel_one": "アイテム {{count}}件",
+			"totalLabel_other": "アイテム {{count}}件",
+			"tabs": {
+				"all": "すべて",
+				"resources": "リソース",
+				"characters": "キャラクター",
+				"documents": "ドキュメント"
+			}
+		},
+		"stats": {
+			"totalTime": "合計視聴時間",
+			"avgPerDay": "1日あたりの平均",
+			"mostActiveDay": "最も利用の多い日",
+			"mostActiveDayFormat": "MMM D",
+			"entries_one": "エントリー {{count}}件",
+			"entries_other": "エントリー {{count}}件",
+			"shareSectionTitle": "割合の内訳",
+			"shareTitle": "時間",
+			"shareDescription": "選択した期間の視聴時間でランキング。",
+			"viewShareTitle": "閲覧",
+			"viewShareDescription": "選択した期間の開いた回数でランキング。",
+			"periodComparison": "期間比較",
+			"filtersTitle": "フィルター",
+			"trendDescription": "1日あたりの分数",
+			"todayHourlyDescription": "1時間あたりの分数 · ローカル時刻",
+			"todayHourly": "時間別分布",
+			"hourlyAverage": "日ごとのリズム",
+			"hourlyAverageDescription": "1時間あたりの日平均 · ローカル時刻",
+			"topEntities": "今日の上位エンティティ",
+			"topEntitiesDescription": "今日最も閲覧されたもの",
+			"trend": "利用トレンド",
+			"platformFilter": "プラットフォーム",
+			"platformAll": "すべてのプラットフォーム",
+			"platformWebMobile": "Web モバイル",
+			"platformWebPc": "Web PC",
+			"platformDesktop": "デスクトップ",
+			"currentPlatform": {
+				"title": "現在のプラットフォーム",
+				"web-mobile": "モバイル",
+				"web-pc": "PC",
+				"desktop": "デスクトップ"
+			},
+			"platformPill": {
+				"web-mobile": "Web · モバイル",
+				"web-pc": "Web · PC",
+				"desktop": "デスクトップ"
+			},
+			"exposureMode": "時間の数え方",
+			"exposureDirect": "直接",
+			"exposureAssociated": "関連",
+			"exposureTotal": "合計",
+			"exposureTime": {
+				"direct": "直接時間",
+				"associated": "関連時間",
+				"total": "合計時間"
+			},
+			"exposureModeNote": "上の合計、トレンド、割合は直接セッションのみを集計しています。下のランキングは選択したモードを使用します。"
+		},
+		"insight": {
+			"moreThanPeriod": "{{period}} より {{duration}} 多い",
+			"lessThanPeriod": "{{period}} より {{duration}} 少ない",
+			"sameAsPeriod": "{{period}} と同じ",
+			"comparison": {
+				"yesterday": "昨日",
+				"lastWeek": "先週",
+				"prior7Days": "過去7日間",
+				"lastMonth": "先月",
+				"lastYear": "去年"
+			}
+		},
+		"entityExposure": {
+			"totalTime": "{{duration}} 視聴",
+			"views_one": "閲覧 {{count}}件",
+			"views_other": "閲覧 {{count}}件",
+			"lastViewed": "最終閲覧: {{time}}"
+		},
+		"leaderboard": {
+			"entityAll": "すべて",
+			"entityResources": "リソース",
+			"entityCharacters": "キャラクター",
+			"entityDocuments": "ドキュメント",
+			"entityPlugins": "コンテンツプラグイン",
+			"empty": "この期間の利用はありません。",
+			"viewsShort_one": "閲覧 {{count}}件",
+			"viewsShort_other": "閲覧 {{count}}件",
+			"associatedSessionsShort": "{{count}}件 関連",
+			"rankLabel": "ランク {{rank}}"
+		},
+		"periods": {
+			"today": "今日",
+			"last7days": "7日間",
+			"thisWeek": "今週",
+			"thisMonth": "今月",
+			"thisYear": "今年",
+			"all": "全期間"
+		}
+	},
+	"trace": {
+		"title": "足跡",
+		"description": "あなたの操作の追記専用ログ — インポート、エクスポート、削除、復元、投票。行はエンティティ名を保持するため、完全削除後も残ります。",
+		"timelineTitle": "タイムライン",
+		"filterAll": "すべて",
+		"filters": {
+			"import": "インポート",
+			"export": "エクスポート",
+			"softDelete": "ごみ箱",
+			"restore": "復元",
+			"hardDelete": "完全削除",
+			"dislikeAdd": "低評価",
+			"dislikeCancel": "投票取り消し",
+			"messageCreate": "メッセージ",
+			"messageSoftDelete": "メッセージ削除",
+			"messageRestore": "メッセージ復元",
+			"messageHardDelete": "完全削除",
+			"messageVoteAdd": "投票",
+			"messageVoteCancel": "投票取り消し",
+			"messageVoteSwap": "投票切り替え",
+			"documentCreate": "ドキュメント作成",
+			"documentCommit": "ドキュメント更新",
+			"documentSoftDelete": "ドキュメントごみ箱",
+			"documentRestore": "ドキュメント復元",
+			"documentHardDelete": "ドキュメント削除",
+			"characterCreate": "キャラクター作成",
+			"characterSoftDelete": "キャラクターごみ箱",
+			"characterRestore": "キャラクター復元",
+			"characterHardDelete": "キャラクター削除",
+			"group": {
+				"resource": "リソース",
+				"messages": "メッセージ",
+				"document": "ドキュメント",
+				"character": "キャラクター"
+			}
+		},
+		"actions": {
+			"import": "{{name}} をインポートしました",
+			"export": "{{name}} をエクスポートしました",
+			"softDelete": "{{name}} をごみ箱に移動しました",
+			"restore": "{{name}} を復元しました",
+			"hardDelete": "{{name}} を完全に削除しました",
+			"dislikeAdd": "{{name}} に低評価を付けました",
+			"dislikeCancel": "{{name}} の低評価を取り消しました",
+			"messageCreate": "メッセージを残しました: 「{{name}}」",
+			"messageSoftDelete": "メッセージ「{{name}}」を削除しました",
+			"messageRestore": "メッセージ「{{name}}」を復元しました",
+			"messageHardDelete": "メッセージ「{{name}}」を完全に削除しました",
+			"messageVoteAddLike": "メッセージ「{{name}}」にいいねを付けました",
+			"messageVoteAddDislike": "メッセージ「{{name}}」に低評価を付けました",
+			"messageVoteCancelLike": "メッセージ「{{name}}」のいいねを取り消しました",
+			"messageVoteCancelDislike": "メッセージ「{{name}}」の低評価を取り消しました",
+			"messageVoteSwapLike": "メッセージ「{{name}}」をいいねに切り替えました",
+			"messageVoteSwapDislike": "メッセージ「{{name}}」を低評価に切り替えました",
+			"documentCreate": "ドキュメント「{{name}}」を作成しました",
+			"documentCommit": "ドキュメント「{{name}}」を更新しました",
+			"documentSoftDelete": "ドキュメント「{{name}}」をごみ箱に移動しました",
+			"documentRestore": "ドキュメント「{{name}}」を復元しました",
+			"documentHardDelete": "ドキュメント「{{name}}」を完全に削除しました",
+			"characterCreate": "キャラクター「{{name}}」を作成しました",
+			"characterSoftDelete": "キャラクター「{{name}}」をごみ箱に移動しました",
+			"characterRestore": "キャラクター「{{name}}」を復元しました",
+			"characterHardDelete": "キャラクター「{{name}}」を完全に削除しました"
+		},
+		"meta": {
+			"bulk": "一括",
+			"source": "{{name}} から",
+			"fileCount_one": "ファイル {{count}}件",
+			"fileCount_other": "ファイル {{count}}件"
+		},
+		"overview": {
+			"title": "期間の概要",
+			"today": "今日",
+			"last7days": "7日間",
+			"thisMonth": "今月",
+			"thisYear": "今年",
+			"actions": {
+				"today": "今日の操作",
+				"last7days": "今週の操作",
+				"thisMonth": "今月の操作",
+				"thisYear": "今年の操作"
+			},
+			"busiestKind": "最も多い種別",
+			"restores": "復元",
+			"weekTotal": "週合計",
+			"avgPerDay": "1日あたりの平均",
+			"moreThanPrev": "前の期間より {{count}}件 多い",
+			"lessThanPrev": "前の期間より {{count}}件 少ない",
+			"sameAsPrev": "前の期間と同じ"
+		},
+		"today": "今日",
+		"yesterday": "昨日",
+		"loading": "足跡を読み込み中…",
+		"loadError": "足跡の読み込みに失敗しました",
+		"empty": "まだ足跡がありません。インポート、エクスポート、削除、低評価の投票がここに記録されます。",
+		"count_one": "足跡 {{count}}件",
+		"count_other": "足跡 {{count}}件"
+	},
+	"resources": {
+		"title": "リソース",
+		"upload": "アップロード",
+		"import": {
+			"action": "インポート",
+			"title": "インポート",
+			"description": "フォルダー全体を一度に取り込みます — 各トップレベル項目が1つのリソースになります。"
+		},
+		"source": {
+			"fallback": "ソースリンク",
+			"aria": "ソースを開く: {{name}}"
+		},
+		"new": {
+			"title": "アップロード",
+			"description": "まずファイルをステージします — メタデータは後から追加できます。",
+			"files": "ファイル",
+			"filesDescription": "ドロップしたファイルはすぐにステージされます — 自由に並べ替えられ、再アップロードはされません。",
+			"filesCount": "ファイル",
+			"basicInfo": "基本情報",
+			"basicDescription": "これらのファイルが何であるか、まとめて。",
+			"links": "リンク",
+			"linksDescription": "このリソースが属するタグ、キャラクター、コレクション。",
+			"coverDescription": "任意 — 既定では最初のファイルから選択されます。",
+			"folder": {
+				"sourceShared": "共有フォルダーを参照",
+				"sourceZip": "アーカイブを選択",
+				"browseTitle": "フォルダーを参照",
+				"browseDescription": "スキャンするフォルダーを選択。",
+				"previewTitle": "スキャン結果",
+				"previewDescription": "インポートする項目を確認。",
+				"resultTitle": "インポート結果",
+				"scanHere": "スキャン",
+				"noSubdirs": "まだサブディレクトリがありません。",
+				"uploading": "アップロード中…",
+				"extracting": "展開中…",
+				"scanning": "スキャン中…",
+				"sharedRoot": "共有ルート",
+				"zipRoot": "アーカイブルート",
+				"name": "名前",
+				"type": "種類",
+				"plugin": "プラグイン",
+				"confirmImport": "インポート",
+				"importing": "インポート中…",
+				"importDone": "完了",
+				"resultScanned": "スキャン済み",
+				"resultImported": "インポート済み",
+				"resultFailed": "失敗",
+				"sourceSharedDescription": "サーバーの共有インポートルートからフォルダーを選択。",
+				"sourceSharedDisabled": "共有フォルダーからのインポートが設定されていません。",
+				"sourceZipDescription": ".zip — サーバー上で展開し、その後スキャンします。",
+				"importingDescription": "選択したフォルダーからリソースを作成しています。少し時間がかかる場合があります。",
+				"stepSource": "ソース",
+				"stepBrowse": "参照",
+				"stepPreview": "プレビュー",
+				"stepImport": "インポート",
+				"stepDone": "完了",
+				"stepsAria": "インポート手順",
+				"emptyTitle": "このフォルダーは空です。",
+				"emptyDescription": "ここにはまだインポートするファイルやフォルダーがありません。",
+				"previewCount_one": "インポート準備完了: {{count}}件",
+				"previewCount_other": "インポート準備完了: {{count}}件",
+				"howTitle": "仕組み",
+				"howScan": "スキャン",
+				"howScanMeta": "各トップレベル項目を検出してサイズを取得",
+				"howPreview": "プレビュー",
+				"howPreviewMeta": "書き込む前に各項目のコンテンツタイプを判定",
+				"howImport": "インポート",
+				"howImportMeta": "各項目の進捗と、最後にサマリー"
+			},
+			"name": "名前",
+			"intro": "紹介",
+			"plugin": "プラグイン",
+			"contentType": "コンテンツタイプ",
+			"sourceName": "ソース名",
+			"sourceUrl": "ソース URL",
+			"sourceHint": "出所をたどれるように、少なくとも1つを推奨します。",
+			"sourceNamePlaceholder": "例: ウェブサイトやプラットフォーム",
+			"sourceUrlPlaceholder": "e.g. https://...",
+			"introPlaceholder": "このセットについて。",
+			"tags": "タグ",
+			"characters": "キャラクター",
+			"cover": "カバー",
+			"collections": "コレクション",
+			"namePlaceholder": "名前",
+			"useFilenameAsName": "ファイル名を名前として使用",
+			"oneFilePerResource": "リソースごとに1ファイル — 各リソースは単一のファイルを含みます。",
+			"createdCount_one": "リソース {{count}}件を作成しました",
+			"createdCount_other": "リソース {{count}}件を作成しました",
+			"duplicatesFound_one": "このリソースには、既存のリソースと重複する画像が {{count}}件あります: {{names}}",
+			"duplicatesFound_other": "このリソースには、既存のリソースと重複する画像が {{count}}件あります: {{names}}",
+			"duplicateFileNames_one": "このバッチ内で {{count}}件のファイルに重複した名前があります — 自動的に名前が変更されます (例: name-1.png)",
+			"duplicateFileNames_other": "このバッチ内で {{count}}件のファイルに重複した名前があります — 自動的に名前が変更されます (例: name-1.png)",
+			"submit": "作成",
+			"uploading": "アップロード中…",
+			"errors": {
+				"pickAtLeastOne": "少なくとも1つのファイルを選択してください",
+				"uploadFailed": "アップロードに失敗しました",
+				"stagingFailed_one": "{{count}}件のファイルのアップロードに失敗しました — 削除してもう一度お試しください",
+				"stagingFailed_other": "{{count}}件のファイルのアップロードに失敗しました — 削除してもう一度お試しください",
+				"attachCollectionsFailed": "リソースは作成されましたが、1つ以上のコレクションへの添付に失敗しました",
+				"batchPartialHint": "途中で停止した場合、一部のリソースがすでに存在している可能性があります — リストを確認してください。"
+			},
+			"created": "作成日時",
+			"autoDetect": "自動検出"
+		},
+		"search": {
+			"placeholder": "リソースを検索…",
+			"empty": "まだリソースがありません。",
+			"trashEmpty": "ごみ箱にリソースがまだありません。",
+			"filters": "フィルター",
+			"sectionOptions": "オプション",
+			"sectionTags": "タグ",
+			"sectionCharacters": "キャラクター",
+			"sectionPlugins": "プラグイン",
+			"sectionSource": "ソース",
+			"sectionCollections": "コレクション",
+			"clearAll": "すべてクリア",
+			"apply": "検索",
+			"viewGrid": "グリッド表示",
+			"viewMasonry": "メーソンリー表示",
+			"sourceLabel": "ソース",
+			"sourceAll": "すべてのソース",
+			"sortLabel": "ソート",
+			"orderLabel": "順序",
+			"sortCreated": "作成日時",
+			"sortUpdated": "更新日時",
+			"sortDisliked": "低評価",
+			"orderLatest": "最新",
+			"orderEarliest": "最古",
+			"orderMost": "多い順",
+			"orderLeast": "少ない順",
+			"noCharacters": "キャラクターなし",
+			"dislikedOnly": "低評価のみ",
+			"trash": "ごみ箱",
+			"random": "ランダム",
+			"pageSizeLabel": "1ページあたり",
+			"itemCount_one": "リソース {{count}}件",
+			"itemCount_other": "リソース {{count}}件"
+		},
+		"bulk": {
+			"select": "選択",
+			"done": "完了",
+			"toolbarCount": "{{count}}件 選択中",
+			"selectCurrentPage": "ページを選択",
+			"invertCurrentPage": "反転",
+			"clearSelection": "クリア",
+			"download": "ダウンロード",
+			"downloadFailed": "ダウンロードに失敗しました。",
+			"downloadRejected": "アーカイブを作成できませんでした (選択が空または無効)。",
+			"downloadTooMany": "一度にダウンロードできるのは最大 {{max}}件です。",
+			"editTags": "タグを編集",
+			"moveToTrash": "ごみ箱",
+			"deleteForever": "完全に削除",
+			"confirmSoft_one": "リソース {{count}}件をごみ箱に移動しますか？",
+			"confirmSoft_other": "リソース {{count}}件をごみ箱に移動しますか？",
+			"softDeleteDescription": "選択したリソースはごみ箱に移動されます。後でごみ箱から復元できます。",
+			"hardDeleteTitle": "選択したものを完全に削除しますか？",
+			"hardDeleteDescription": "選択したリソースを完全に削除し、そのフォルダーをローカルごみ箱に移動します。これは元に戻せません。",
+			"hardDeleteConfirm": "完全に削除",
+			"hardDeleteDeleting": "削除中…",
+			"toastAllOk_one": "リソース {{count}}件を更新しました。",
+			"toastAllOk_other": "リソース {{count}}件を更新しました。",
+			"toastAllFailed": "何も更新されませんでした ({{count}}件失敗)。",
+			"toastPartial": "{{ok}}件成功、{{failed}}件失敗。"
+		},
+		"actions": {
+			"editBasic": "基本情報",
+			"editCharacters": "関連キャラクター",
+			"editTags": "タグ",
+			"editCollections": "コレクション",
+			"editCover": "カバー",
+			"download": "ダウンロード",
+			"openMessages": "メッセージ",
+			"extend": "拡張",
+			"dislike": "低評価",
+			"dislikeCancellable": "取り消し可能",
+			"restore": "復元",
+			"hardDelete": "完全に削除",
+			"softDelete": "ごみ箱に移動",
+			"actionsAria": "{{name}} の操作"
+		},
+		"hardDelete": {
+			"title": "完全に削除しますか？",
+			"description": "リソースを完全に削除し、そのフォルダーをローカルごみ箱に移動します。",
+			"confirm": "完全に削除",
+			"deleting": "削除中…"
+		},
+		"toast": {
+			"movedToTrash": "ごみ箱に移動しました",
+			"deleteFailed": "削除できませんでした",
+			"restored": "復元しました",
+			"restoreFailed": "復元できませんでした",
+			"deletedForever": "完全に削除しました",
+			"disliked": "低評価を付けました",
+			"dislikeRemoved": "低評価を削除しました",
+			"dislikeFailed": "低評価を更新できませんでした"
+		},
+		"preview": {
+			"aria": "プレビュー: {{name}}",
+			"closePreview": "プレビューを閉じる",
+			"enterFullscreen": "全画面表示",
+			"exitFullscreen": "全画面を終了"
+		},
+		"detail": {
+			"docSearchTitle": "ドキュメント内",
+			"emptyInline": "空のリソース",
+			"notFound": "リソースが見つかりません",
+			"fileCount_one": "ファイル {{count}}件",
+			"fileCount_other": "ファイル {{count}}件",
+			"sourceFrom": "{{name}} から",
+			"openSidebar": "サイドバーを開く",
+			"fullscreen": "全画面表示",
+			"anniversary_one": "ライブラリ加入 {{count}}年",
+			"anniversary_other": "ライブラリ加入 {{count}}年",
+			"sidebar": {
+				"tagsHeading": "タグ",
+				"colEmpty": "このコレクションには他にリソースがまだありません。",
+				"noTags": "まだタグが割り当てられていません。",
+				"relatedByTagsHeading": "タグで関連",
+				"similarImagesHeading": "類似画像",
+				"duplicateImagesHeading": "重複",
+				"similarWithinHeading": "このリソース内の類似",
+				"imageMatchCount_one": "一致するファイル {{count}}件",
+				"imageMatchCount_other": "一致するファイル {{count}}件",
+				"duplicateCount_one": "重複ファイル {{count}}件",
+				"duplicateCount_other": "重複ファイル {{count}}件",
+				"intraSimilarCount_one": "類似ファイル {{count}}件",
+				"intraSimilarCount_other": "類似ファイル {{count}}件",
+				"matchSimilarity": "{{name}} · {{percent}}% 類似",
+				"similarity": "{{percent}}% 類似"
+			}
+		},
+		"editDialog": {
+			"aria": "リソースの基本情報を編集",
+			"plugin": "プラグイン",
+			"contentTypeMissing": "欠落: {{names}}",
+			"name": "名前",
+			"intro": "紹介",
+			"sourceName": "ソース名",
+			"sourceUrl": "ソース URL",
+			"sourceHint": "出所をたどれるように、少なくとも1つを推奨します。",
+			"namePlaceholder": "例: 黄昏の港",
+			"introPlaceholder": "このリソースについて。",
+			"sourceNamePlaceholder": "例: ウェブサイトやプラットフォーム",
+			"sourceUrlPlaceholder": "e.g. https://...",
+			"saveChanges": "変更を保存",
+			"toast": {
+				"contentTypeFailed": "コンテンツタイプを変更できませんでした"
+			}
+		},
+		"editHub": {
+			"title": "編集 - {{name}}"
+		},
+		"tagsDialog": {
+			"title": "タグ編集 - {{name}}"
+		},
+		"selectorDialog": {
+			"title": "リソースを選択"
+		},
+		"viewSelected": "選択中のみ",
+		"viewSelectedTooMany": "選択中のみは {{max}}件まで対応しています",
+		"picker": {
+			"selectedEmpty": "選択されたリソースがありません。",
+			"loadFailed": "リソースの読み込みに失敗しました。"
+		},
+		"selectAria": "{{name}} を選択",
+		"toggleSelectAria": "{{name}} の選択を切り替え",
+		"video": {
+			"previewAria": "{{name}} をプレビュー",
+			"playAria": "{{name}} を再生",
+			"stopAria": "{{name}} を停止"
+		},
+		"audio": {
+			"playAria": "{{name}} を再生",
+			"pauseAria": "{{name}} を一時停止",
+			"seekAria": "{{name}} 内をシーク"
+		},
+		"editPanel": {
+			"nameRequired": "名前は必須です"
+		}
+	},
+	"relationshipTypes": {
+		"panel": {
+			"empty": "まだ関係がありません。追加をタップして作成してください。",
+			"addDialogTitle": "関係を追加",
+			"editDialogTitle": "関係を編集",
+			"filterPlaceholder": "関係の種類をフィルター",
+			"linkCount_one": "リンク {{count}}件",
+			"linkCount_other": "リンク {{count}}件",
+			"reorderMode": "並べ替え",
+			"reorderModeAria": "ドラッグ＆ドロップで関係を並べ替え",
+			"tabDefinition": "定義",
+			"tabDetails": "詳細"
+		},
+		"preview": {
+			"characterA": "キャラクター A",
+			"characterB": "キャラクター B",
+			"aCallsB": "A は B の",
+			"bCallsA": "B は A の",
+			"labelPlaceholder": "例: 友人"
+		},
+		"kind": {
+			"directed": {
+				"label": "方向付き",
+				"iconLabel": "一方向",
+				"hint": "A から B への一方向の関係。例: 片思い。"
+			},
+			"symmetric": {
+				"label": "対称",
+				"iconLabel": "相互",
+				"hint": "相互の関係。例: 友人や配偶者。"
+			},
+			"hierarchical": {
+				"label": "階層",
+				"iconLabel": "順位付き",
+				"hint": "A が B より上、方向は A→B。例: 師匠と弟子"
+			}
+		},
+		"delete": {
+			"kindLabel": "関係",
+			"usageLabelOne": "関係リンク",
+			"usageLabel": "関係リンク"
+		},
+		"toast": {
+			"created": "関係を作成しました",
+			"createFailed": "関係を作成できませんでした"
+		}
+	},
+	"traits": {
+		"panel": {
+			"empty": "まだ特性の定義がありません。追加を使用して作成してください。",
+			"addDialogTitle": "特性を追加",
+			"editDialogTitle": "特性を編集",
+			"filterPlaceholder": "特性をフィルター",
+			"reorderMode": "並べ替え",
+			"reorderModeAria": "ドラッグ＆ドロップで特性を並べ替え",
+			"toast": {
+				"added": "特性を追加しました"
+			}
+		},
+		"kind": {
+			"text": "テキスト",
+			"multitext": "複数テキスト",
+			"number": "数値",
+			"weight": "体重",
+			"height": "身長",
+			"date": "日付"
+		},
+		"delete": {
+			"kindLabel": "特性",
+			"usageLabelOne": "キャラクター",
+			"usageLabel": "キャラクター"
+		},
+		"values": {
+			"noDefinitions": "まだ特性の定義がありません。「設定 / 特性」を開いて追加してください。",
+			"addField": "フィールドを追加",
+			"removeField": "フィールドを削除",
+			"inputPlaceholder": "値を入力",
+			"remove": "削除",
+			"allSet": "すべての特性が設定済みです。",
+			"emptyError": "これらの特性は空のため保存できません: {{names}}",
+			"parseError": "「{{name}}」の値が無効です: {{value}}",
+			"date": {
+				"prefixPlaceholder": "紀元 / 暦",
+				"after": "西暦",
+				"before": "紀元前",
+				"year": "年",
+				"month": "月",
+				"day": "日"
+			}
+		}
+	},
+	"categories": {
+		"panel": {
+			"empty": "まだカテゴリやタグがありません。",
+			"kindTabsAria": "カテゴリの種類",
+			"kindTab": {
+				"common": "共通",
+				"resource": "リソース",
+				"character": "キャラクター"
+			},
+			"dependencyMessage": "このタグは {{parts}} で使用されているため、直接削除できません。",
+			"dependencyResources": "リソース {{count}}件",
+			"dependencyCharacters": "キャラクター {{count}}件",
+			"tagCharacterCount": "キャラクター {{count}}件",
+			"tagResourceCount": "リソース {{count}}件",
+			"copyTagName": "クリップボードにコピー",
+			"toast": {
+				"added": "追加しました",
+				"addFailed": "追加できませんでした",
+				"copied": "クリップボードにコピーしました",
+				"copyFailed": "コピーできませんでした",
+				"moved": "タグを移動しました"
+			},
+			"mergeTagMenu": "統合先…",
+			"specialStyle": {
+				"silver": "シルバー",
+				"gold": "ゴールド",
+				"rainbow": "レインボー",
+				"oilslick": "オイルスリック",
+				"kintsugi": "金継ぎ"
+			}
+		},
+		"delete": {
+			"kindLabelCategory": "カテゴリ",
+			"kindLabelTag": "タグ",
+			"usageLabelTagsOne": "タグ",
+			"usageLabelTags": "タグ"
+		},
+		"form": {
+			"createCategory": "カテゴリを作成",
+			"creating": "作成中…",
+			"addTag": "タグを作成"
+		},
+		"dialog": {
+			"addCategoryTitle": "新しいカテゴリ",
+			"addTagTitle": "新しいタグ",
+			"editCategoryTitle": "カテゴリを編集",
+			"editTagTitle": "タグを編集"
+		}
+	},
+	"tags": {
+		"picker": {
+			"noCategories": "まだカテゴリがありません。",
+			"selectedHeader": "選択中:",
+			"tagsHeader": "タグ:",
+			"empty": "このカテゴリにはまだタグがありません。",
+			"emptyAll": "まだタグが定義されていません。",
+			"searchPlaceholder": "タグを検索…",
+			"noMatches": "一致するタグがありません。"
+		},
+		"bulk": {
+			"nonCommonHint_one": "{{count}}件のタグは選択したすべての項目で共有されていません。任意のタグを追加できますが、削除できるのは共有タグのみです。",
+			"nonCommonHint_other": "{{count}}件のタグは選択したすべての項目で共有されていません。任意のタグを追加できますが、削除できるのは共有タグのみです。"
+		},
+		"toast": {
+			"attachFailed": "タグを付けられませんでした",
+			"detachFailed": "タグを外せませんでした"
+		},
+		"filterMode": {
+			"and": "すべて",
+			"or": "いずれか",
+			"not": "含まない",
+			"nor": "どれも含まない"
+		},
+		"merge": {
+			"title": "タグを統合",
+			"description": "重複タグの利用とルールは残すタグに移動します。",
+			"targetPlaceholder": "残すタグを選択",
+			"confirm": "統合を確認",
+			"confirming": "統合中…",
+			"countResources_one": "リソース {{count}}件",
+			"countResources_other": "リソース {{count}}件",
+			"countCharacters_one": "キャラクター {{count}}件",
+			"countCharacters_other": "キャラクター {{count}}件",
+			"countSiblingRules_one": "兄弟ルール {{count}}件",
+			"countSiblingRules_other": "兄弟ルール {{count}}件",
+			"countParentRules_one": "親ルール {{count}}件",
+			"countParentRules_other": "親ルール {{count}}件",
+			"preview": "{{resources}}、{{characters}}、{{siblingRules}}、{{parentRules}} を移動します。",
+			"collision": "このカテゴリにはすでに「{{name}}」というタグがあります — それらを統合できます。",
+			"offer": "重複タグと統合",
+			"toast": {
+				"success": "統合しました: {{resources}}、{{characters}}、{{siblingRules}}、{{parentRules}}"
+			}
+		},
+		"rules": {
+			"description": "別名: 複数のタグがどこでも1つの表示タグとして表示されます (例: 「cat」と「kitten」→「cat」)。親: 子タグが付いた項目は親タグも持ちます (例: 「tabby」→「cat」)。キャラクターはどちら側にも参加できます。リンクされたキャラクターはそのタグとして表示されるため、それに付いたリソースはタグが弱められて (仮想とマーク) 表示され、その検索に一致します。",
+			"displayLabel": "表示タグ",
+			"badPlaceholder": "類義語",
+			"goodPlaceholder": "表示タグ",
+			"addAlias": "別名を追加",
+			"alias": "別名",
+			"addAliasDescription": "類義語と、それが表示される表示タグを選択します。",
+			"aliasesTitle": "別名",
+			"groupCount_one": "グループ {{count}}件",
+			"groupCount_other": "グループ {{count}}件",
+			"setDisplay": "表示タグに設定",
+			"remove": "削除",
+			"pickCharacter": "キャラクター…",
+			"pickTag": "タグ…",
+			"tagPickTitle": "タグを選択",
+			"characterLinkHint": "キャラクターリンク: キャラクターはそのタグとして表示されます — キャラクターに付いたリソースはタグが弱められて (仮想とマーク) 表示され、その検索に一致します。",
+			"empty": "まだ兄弟グループがありません。",
+			"displaysAs": "{{name}} として表示",
+			"groupCounts": "リソース {{resources}}件 · キャラクター {{characters}}件",
+			"parentsTitle": "親ルール",
+			"ruleCount_one": "ルール {{count}}件",
+			"ruleCount_other": "ルール {{count}}件",
+			"child": "子",
+			"childPlaceholder": "子",
+			"parentPlaceholder": "親",
+			"addRule": "ルールを追加",
+			"addRuleDescription": "子タグと、その下に表示される親タグを選択します。",
+			"endpointTag": "タグ",
+			"endpointCharacter": "キャラクター",
+			"parentsEmpty": "まだ親ルールがありません。",
+			"noMatch": "一致するルールがありません。",
+			"searchPlaceholder": "ルールをフィルター…",
+			"toast": {
+				"pairAdded": "兄弟ペアを追加しました",
+				"pairRemoved": "兄弟ペアを削除しました",
+				"displaySet": "表示タグを設定しました",
+				"parentAdded": "親ルールを追加しました",
+				"parentRemoved": "親ルールを削除しました"
+			}
+		},
+		"errors": {
+			"nameExists": "このカテゴリには同じ名前のタグがすでに存在します。",
+			"siblingCycle": "その組み合わせはループを作成します。",
+			"siblingKindIsolation": "兄弟グループは共通と他の1種類のみ組み合わせられます (リソースタグとキャラクタータグは混在できません)。",
+			"parentSelf": "タグは自分自身の親にはなれません。",
+			"parentCycle": "そのルールはループを作成します。",
+			"parentKindIsolation": "親チェーンは共通と他の1種類のみ組み合わせられます (リソースタグとキャラクタータグは混在できません)。",
+			"characterMissing": "キャラクターはもう存在しません — 有効なものを選択してください。",
+			"mergeKindMismatch": "異なる種類のタグは統合できません (リソースタグとキャラクタータグは統合できません)。",
+			"mergeCreatesCycle": "統合するとルールのループが作成されます — 先に関連するルールを調整してください。"
+		},
+		"virtual": {
+			"label": "仮想"
+		}
+	},
+	"imageCrop": {
+		"pickHint": "クリックまたはドロップ",
+		"reselect": "再アップロード",
+		"showPreview": "プレビューを表示",
+		"previewLabel": "プレビュー",
+		"previewAlt": "切り抜きプレビュー",
+		"saveFailed": "保存に失敗しました"
+	},
+	"imageEdit": {
+		"confirmDeleteTitle": "画像を削除しますか？",
+		"confirmDeleteDescription": "現在の画像を削除します。この操作は元に戻せません。"
+	},
+	"deleteEntity": {
+		"dialogConfirmTitle": "「{{name}}」を削除しますか？",
+		"dialogConfirmDescription": "この{{kind}}を完全に削除します。この操作は元に戻せません。",
+		"defaultLabel": "削除",
+		"defaultNoun": "項目",
+		"defaultNounOne": "項目",
+		"confirm": "削除を確認",
+		"deleting": "削除中…",
+		"forceTitle": "{{kind}} を削除できません",
+		"usageMessage": "この{{kind}}は {{count}}件の{{usage}}で使用されているため、直接削除できません。",
+		"toast": {
+			"deleteSuccess": "{{kind}} を削除しました",
+			"deleteFailed": "削除に失敗しました",
+			"forceDeleteSuccess": "{{kind}} を強制削除しました",
+			"forceDeleteFailed": "強制削除に失敗しました",
+			"nameMismatch": "名前が一致しません"
+		},
+		"forceConfirm": "強制削除",
+		"forceDeleting": "削除中…"
+	},
+	"upload": {
+		"addFiles": "ファイルを追加",
+		"clearAll": "クリア",
+		"totalCount_one": "合計 {{count}}ファイル",
+		"totalCount_other": "合計 {{count}}ファイル",
+		"removeFile": "ファイルを削除",
+		"failed": "失敗",
+		"duplicateName": "重複した名前",
+		"duplicateNameTitle": "このバッチ内の別のファイルと同じ名前です。アップロード時に自動的に名前が変更されます"
+	},
+	"messages": {
+		"title": "メッセージ",
+		"empty": "まだメッセージがありません。",
+		"threadCount_one": "スレッド {{count}}件",
+		"threadCount_other": "スレッド {{count}}件",
+		"replyCount_one": "返信 {{count}}件",
+		"replyCount_other": "返信 {{count}}件",
+		"floor": "#{{n}}",
+		"replyNumber": "#{{n}}",
+		"composerPlaceholder": "メッセージを書く…",
+		"replyPlaceholder": "返信を書く…",
+		"submit": "投稿",
+		"submitting": "投稿中…",
+		"reply": "返信",
+		"actions": "メッセージの操作",
+		"trash": "ごみ箱",
+		"emptyTrash": "ごみ箱にメッセージがまだありません。",
+		"deleted": "削除済み",
+		"delete": "削除",
+		"deleteConfirmTitle": "このメッセージを削除しますか？",
+		"deleteConfirmDescription": "ごみ箱に移動されます。後で復元できます。",
+		"restore": "復元",
+		"hardDelete": "完全に削除",
+		"hardDeleteConfirmTitle": "完全に削除しますか？",
+		"hardDeleteConfirmDescription": "元に戻せません。フロアを削除すると、そのすべての返信も削除されます。",
+		"viewReplies": "返信を表示 ({{count}})",
+		"collapseReplies": "返信を折りたたむ",
+		"sortBy": "ソート",
+		"sort": {
+			"newest": "新しい順",
+			"oldest": "古い順",
+			"mostLikes": "いいねが多い順",
+			"leastLikes": "いいねが少ない順"
+		},
+		"searchPlaceholder": "メッセージを検索…",
+		"totalLabel_one": "メッセージ {{count}}件",
+		"totalLabel_other": "メッセージ {{count}}件",
+		"clearFilter": "フィルターをクリア",
+		"charsRemaining_one": "残り {{count}}文字",
+		"charsRemaining_other": "残り {{count}}文字",
+		"linkCharactersAdd": "キャラクターを添付",
+		"linkResources": "リソースをリンク",
+		"linkResourcesAdd": "リソースを添付",
+		"toast": {
+			"posted": "メッセージを投稿しました",
+			"postFailed": "メッセージを投稿できませんでした",
+			"deleted": "ごみ箱に移動しました",
+			"restored": "メッセージを復元しました",
+			"hardDeleted": "完全に削除しました",
+			"voteFailed": "投票を記録できませんでした"
+		}
+	},
+	"storage": {
+		"sectionTitle": "ストレージ",
+		"sectionDescription": "アーカイブが使用しているディスク容量をカテゴリ別に表示します。",
+		"volumeTotal": "ディスク合計",
+		"volumeFree": "空き",
+		"volumeUsed": "使用中",
+		"sidebarUsed": "使用中 {{size}}",
+		"sidebarFree": "空き {{size}}",
+		"volumeUnavailable": "ボリューム情報を利用できません",
+		"usedByHoardodile": "hoardodile の利用",
+		"category": {
+			"database": "データベース",
+			"resources": "リソース",
+			"archived": "アーカイブ済みコピー",
+			"cache": "キャッシュ",
+			"trash": "ごみ箱",
+			"backups": "バックアップ",
+			"other": "その他",
+			"unattributedResources": "未分類のリソース"
+		},
+		"otherHint": "ログ、インストール済みプラグイン、セッションキー、および上記以外のホストローカル状態。",
+		"unattributedCount_one": "サイズ未記録のリソース {{count}}件",
+		"unattributedCount_other": "サイズ未記録のリソース {{count}}件",
+		"unattributedHint": "これらのリソースにはまだサイズメタデータが記録されていません (ディスク計測による推定値で、カバーやその他の付随物を含みます)。プリキャッシュを実行して上のプラグインに属するようにしてください。",
+		"archivedHint": "アーカイブ版で凍結されたリソース、キャラクター、ドキュメントのコピー。ディスクスキャンで計測されるため、すべての過去のコピーを数えます。上のリソースサイズは現在のバージョンのメタデータのみから取得されるのとは異なります。",
+		"backupsHint": "手動バックアップと自動デイリースナップショット。",
+		"cacheHint": "リソースごとのカバー、サムネイル、プレビュー、展開キャッシュ、files-cache.json。",
+		"lowSpaceBanner": "ディスク容量が不足しています — 自動スナップショットを一時停止しました。容量を空けて再開してください。",
+		"clearCache": "クリア",
+		"clearCacheTitle": "キャッシュをクリア",
+		"clearCacheDescription": "サムネイル、プレビュー、展開キャッシュが削除されます。必要に応じて再構築されます — これで容量が空くだけです。",
+		"pluginCount_one": "リソース {{count}}件",
+		"pluginCount_other": "リソース {{count}}件",
+		"legend": {
+			"resources": "リソース",
+			"hostData": "ホストデータ",
+			"archivedVersions": "アーカイブ版",
+			"cache": "キャッシュ",
+			"latest": "最新"
+		}
+	},
+	"sync": {
+		"pageHint": "デバイスごと: エンティティ数、コンテンツサイズ、ストレージ容量を記録 · 最新2つのスナップショットを保持",
+		"status": {
+			"allUpToDate": "すべてのデバイスが最新です",
+			"dueCount_one": "同期期限のデバイス: {{total}}台中 {{count}}台",
+			"dueCount_other": "同期期限のデバイス: {{total}}台中 {{count}}台"
+		},
+		"tip": {
+			"oneWay": "一方向同期: 1つのマスターリポジトリと、残りをミラーとして。競合を避けるためです。"
+		},
+		"config": {
+			"remindLabel": "リマインド間隔",
+			"remindDescription": "同期されたスナップショットがなく間隔を過ぎると、ダッシュボードが尋ねます。",
+			"remindDays_one": "{{count}}日",
+			"remindDays_other": "{{count}}日"
+		},
+		"devices": {
+			"addTitle": "デバイスを追加",
+			"addAutoRecord": "追加されると現在の状態が自動的に同期されます。",
+			"namePlaceholder": "デバイス名",
+			"notesPlaceholder": "メモ (任意)",
+			"nameHint": "例: ノートPC",
+			"notesHint": "例: USB 4TB",
+			"add": "デバイスを追加",
+			"addPending": "追加中…",
+			"empty": "まだデバイスがありません — 追加して同期を開始してください。",
+			"loading": "読み込み中…",
+			"neverSynced": "未同期",
+			"lastSyncedAgo_one": "最終同期 {{date}} · {{count}}日前",
+			"lastSyncedAgo_other": "最終同期 {{date}} · {{count}}日前",
+			"justNow": "たった今",
+			"minutesAgo_one": "{{count}}分前",
+			"minutesAgo_other": "{{count}}分前",
+			"hoursAgo_one": "{{count}}時間前",
+			"hoursAgo_other": "{{count}}時間前",
+			"upToDate": "最新",
+			"overdue_one": "期限超過 · {{count}}日",
+			"overdue_other": "期限超過 · {{count}}日",
+			"neverBadge": "未同期",
+			"record": "同期",
+			"recordNow": "今すぐ同期",
+			"deleteTitle": "{{name}} を削除しますか？",
+			"deleteDescription": "デバイスとそのすべての同期記録が削除されます。",
+			"delete": "削除",
+			"deletePending": "削除中…",
+			"editTitle": "デバイスを編集",
+			"edit": "編集",
+			"save": "保存",
+			"editPending": "保存中…"
+		},
+		"fields": {
+			"resources": "リソース",
+			"characters": "キャラクター",
+			"documents": "ドキュメント",
+			"messages": "メッセージ",
+			"tags": "タグ",
+			"trash": "ごみ箱",
+			"contentSize": "コンテンツサイズ",
+			"storage": "ストレージ",
+			"firstRecord": "初回同期"
+		},
+		"toast": {
+			"deviceAdded": "デバイスを追加して同期しました",
+			"deviceAddFailed": "デバイスを追加できませんでした",
+			"deviceUpdated": "デバイスを更新しました",
+			"deviceUpdateFailed": "デバイスを更新できませんでした",
+			"deviceDeleted": "デバイスを削除しました",
+			"deviceDeleteFailed": "デバイスを削除できませんでした",
+			"recorded": "同期しました",
+			"recordFailed": "同期できませんでした"
+		},
+		"banner": {
+			"noDevicesTitle": "同期デバイスがまだ設定されていません。",
+			"noDevicesDescription": "同期を追跡するために少なくとも1台のデバイスを追加してください。",
+			"configureLink": "設定",
+			"neverSyncedTitle": "{{name}} は一度も同期されていません",
+			"neverSyncedDescription": "このデバイスの同期記録がまだありません。",
+			"overdueTitle_one": "{{name}} の最終同期は {{count}}日前です",
+			"overdueTitle_other": "{{name}} の最終同期は {{count}}日前です",
+			"overdueDescription": "{{count}}日間のリマインド間隔を超えています。",
+			"recordLink": "今すぐ同期"
+		}
+	},
+	"desktopShell": {
+		"tray": {
+			"open": "開く",
+			"changeLibrary": "ライブラリを変更…",
+			"copyLanAddress": "LAN アドレスをコピー",
+			"restartServer": "サーバーを再起動",
+			"updateReady": "更新準備完了 — 開いて再起動",
+			"quit": "終了",
+			"tooltipServerStopped": "hoardodile — サーバー停止",
+			"tooltipUpdateReady": "hoardodile — 更新準備完了",
+			"copied": "LAN アドレスをクリップボードにコピーしました。"
+		},
+		"errorPage": {
+			"serverError": "サーバーに接続できませんでした。まだ起動中か、停止している可能性があります。少し待って「再試行」を押すか、トレイの「サーバーを再起動」を使用してください。",
+			"devServerError": "開発サーバーが動作していません。別のターミナルで `pnpm dev` を起動し、「再試行」を押してください。"
+		},
+		"dialog": {
+			"lanPasswordRequired": "ローカルネットワークアクセスを有効にする前に、まず管理者パスワードを設定してください。",
+			"cancel": "キャンセル",
+			"serverStoppedBody": "サーバーが停止しました。トレイの「サーバーを再起動」を使用してください。",
+			"serverNotRunningMessage": "サーバーは動作していません。",
+			"restartServer": "サーバーを再起動",
+			"serverFailedToStart": "サーバーの起動に失敗しました：\n{{message}}"
+		},
+		"shell": {
+			"serverUnreachable": "サーバーに接続できません",
+			"retry": "再試行",
+			"loadingLabel": "読み込み中"
+		},
+		"wizard": {
+			"title": "hoardodile へようこそ",
+			"intro": "このコンピューターでアーカイブを保存する場所を選択してください。フォルダーは後で「設定」またはトレイから変更できます。",
+			"library": "ライブラリフォルダー",
+			"browse": "参照",
+			"autoStart": "Windows で起動",
+			"autoStartHint": "サインイン時に hoardodile を起動します。",
+			"startInTray": "トレイで起動",
+			"startInTrayHint": "トレイから「開く」を選択するまでウィンドウは表示されません。",
+			"continue": "続ける",
+			"missingBridge": "デスクトップブリッジが見つかりません。アプリを再起動してください。"
+		}
+	}
+}

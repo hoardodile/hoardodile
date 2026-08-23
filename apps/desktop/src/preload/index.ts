@@ -8,6 +8,8 @@ import type {
 	LanInfo,
 	LanSetResult,
 } from "@hoardodile/shared/desktop"
+// Pure helper module (no catalogs) — keeps the sandboxed preload bundle free of the JSON catalogs.
+import { isSupportedLanguage } from "@hoardodile/shared/i18n"
 import { contextBridge, ipcRenderer } from "electron"
 import { IPC } from "../shared/ipc.ts"
 
@@ -232,7 +234,7 @@ const bridge: HoardodileDesktopBridge = {
 	},
 	async getLanguage() {
 		const raw: unknown = await invokeUnknown(IPC.getLanguage)
-		return typeof raw === "string" ? raw : undefined
+		return typeof raw === "string" && isSupportedLanguage(raw) ? raw : undefined
 	},
 	async changeLibraryFolder(libraryPath) {
 		await invokeUnknown(IPC.changeLibraryFolder, libraryPath)

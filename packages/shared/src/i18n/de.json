@@ -1,0 +1,2167 @@
+{
+	"common": {
+		"back": "Zurück",
+		"cancel": "Abbrechen",
+		"close": "Schließen",
+		"save": "Speichern",
+		"saving": "Speichern…",
+		"loading": "Laden…",
+		"remove": "Entfernen",
+		"removeAria": "Entfernen",
+		"edit": "Bearbeiten",
+		"delete": "Löschen",
+		"rename": "Umbenennen",
+		"confirm": "Bestätigen",
+		"expand": "Erweitern",
+		"collapse": "Einklappen",
+		"working": "Arbeiten…",
+		"prev": "Zurück",
+		"next": "Weiter",
+		"previous": "Vorherige",
+		"first": "Erste",
+		"last": "Letzte",
+		"jumpToPage": "Seite",
+		"go": "Los",
+		"goTo": "Gehe zu",
+		"unknownError": "Unbekannter Fehler",
+		"error": "Fehler",
+		"loadFailed": "Laden fehlgeschlagen",
+		"show": "Anzeigen",
+		"hide": "Ausblenden",
+		"selected": "Ausgewählt",
+		"available": "Verfügbar",
+		"allSelected": "Alle ausgewählt",
+		"tags": "Tags",
+		"filterCategory": "{{name}} filtern…",
+		"requestFailed": "Anfrage fehlgeschlagen",
+		"saved": "Gespeichert",
+		"saveFailed": "Speichern fehlgeschlagen",
+		"confirmByTypingPrompt": "Tippe „<name>{{name}}</name>“ ein, um zu bestätigen",
+		"searchIncludeIntro": "Einführung durchsuchen",
+		"underline": "Unterstreichen",
+		"colorPicker": {
+			"clear": "Farbe entfernen",
+			"customColor": "Benutzerdefinierte Farbe",
+			"customSwatch": "Benutzerdefinierte Farbe wählen",
+			"addPreset": "Zu meinen Presets hinzufügen",
+			"removePresetAria": "Preset {{color}} entfernen"
+		}
+	},
+	"entityMeta": {
+		"nameLabel": "Name",
+		"namePlaceholder": "z. B. Hafen",
+		"introLabel": "Einführung",
+		"introPlaceholder": "Eine kurze Beschreibung…",
+		"colorLabel": "Farbe",
+		"colorPlaceholder": "Optionale CSS-Farbe; leer lassen für den Standard",
+		"pinned": "Angeheftet"
+	},
+	"language": {
+		"label": "Sprache",
+		"description": "Sprache der Oberfläche — Inhalte behalten ihre Schrift.",
+		"english": "Englisch",
+		"chinese": "中文",
+		"japanese": "日本語",
+		"german": "Deutsch",
+		"spanish": "Español"
+	},
+	"icons": {
+		"description": "Solar-Icons — Duoton folgt dem Design, Graustufen hält die beiden Töne in einfacher Tusche, Linear bleibt einfarbig.",
+		"style": {
+			"duotone": "Duoton",
+			"grayscale": "Graustufen",
+			"linear": "Linear"
+		}
+	},
+	"theme": {
+		"description": "Eine Palette und ob sie dem Tageslicht folgt.",
+		"modeLabel": "Modus",
+		"paletteLabel": "Palette",
+		"mode": {
+			"light": "Hell",
+			"dark": "Dunkel",
+			"system": "System"
+		},
+		"palette": {
+			"mono": "Mono",
+			"sage": "Salbei",
+			"parchment": "Pergament",
+			"azure": "Azurblau",
+			"hoardodile": "Hoardodile"
+		}
+	},
+	"font": {
+		"label": "Schriftart",
+		"description": "Oberfläche und Listen — Dokumente behalten ihre Lesestimme.",
+		"inherit": "Globale Schriftart übernehmen",
+		"inheritedHint": "Übernimmt derzeit die globale Schriftarteinstellung",
+		"addCustom": "Schriftart per Name hinzufügen, Eingabetaste drücken…",
+		"selected": "Fallback-Reihenfolge — zum Sortieren ziehen"
+	},
+	"dateTime": {
+		"description": "Wie Datumsangaben gelesen werden — gerade jetzt: {{preview}}.",
+		"formatLabel": "Format",
+		"timeZoneLabel": "Zeitzone",
+		"format": {
+			"ymdDash": "2024-06-12 14:30:00",
+			"ymdSlash": "2024/06/12 14:30:00",
+			"dmySlash": "12/06/2024 14:30:00",
+			"mdySlash": "06/12/2024 14:30:00"
+		},
+		"timeZone": {
+			"auto": "System folgen",
+			"noMatches": "Keine passenden Zeitzonen."
+		}
+	},
+	"appShell": {
+		"primaryNav": "Primäre Navigation",
+		"secondaryNav": "Sekundäre Navigation",
+		"openMenu": "Menü öffnen",
+		"backToMainMenu": "Zurück zum Hauptmenü",
+		"backToDocumentsMenu": "Zurück zum Dokumente-Menü",
+		"nav": {
+			"overview": "Übersicht",
+			"resources": "Ressourcen",
+			"characters": "Charaktere",
+			"documents": "Dokumente",
+			"messages": "Nachrichten",
+			"me": "Einstellungen",
+			"help": "Hilfe"
+		},
+		"syncDueBadge": "Eine Sync-Erinnerung ist fällig",
+		"syncStatus": {
+			"synced": "Synchronisiert",
+			"due": "Sync fällig",
+			"syncedTitle_one": "Auf dem neuesten Stand — {{count}} Gerät",
+			"syncedTitle_other": "Auf dem neuesten Stand — {{count}} Geräte",
+			"dueTitle_one": "{{count}} Gerät für Sync fällig",
+			"dueTitle_other": "{{count}} Geräte für Sync fällig",
+			"noDevicesTitle": "Noch keine Sync-Geräte eingerichtet."
+		}
+	},
+	"search": {
+		"placeholder": "Charaktere, Ressourcen, Dokumente, Nachrichten durchsuchen…",
+		"placeholderShort": "Suchen",
+		"liveSearch": "Live-Suche",
+		"sectionTitles": {
+			"characters": "Charaktere",
+			"resources": "Ressourcen",
+			"documents": "Dokumente",
+			"messages": "Nachrichten"
+		},
+		"sectionCount": "({{count}})",
+		"viewAll": "Alle anzeigen ({{count}})",
+		"empty": {
+			"title": "Keine Ergebnisse gefunden.",
+			"description": "Versuche ein anderes Schlüsselwort."
+		},
+		"resultLabels": {
+			"document": "Dokument",
+			"folder": "Ordner"
+		},
+		"imageSearch": {
+			"button": "Bildsuche",
+			"uploadFailed": "Bildsuche fehlgeschlagen",
+			"title": "Ergebnisse der Bildsuche",
+			"empty": "Keine ähnlichen Bilder in deiner Bibliothek gefunden.",
+			"clear": "Bildsuche löschen",
+			"queryAlt": "Suchbild",
+			"similarity": "{{percent}}% ähnlich"
+		}
+	},
+	"me": {
+		"tabs": {
+			"preferences": "Einstellungen",
+			"data": "Daten",
+			"about": "Über",
+			"desktop": "Desktop",
+			"custom": "Benutzerdefiniert",
+			"privacy": "Datenschutz",
+			"archive": "Archiv",
+			"plugins": "Plugins",
+			"sync": "Sync"
+		},
+		"section": {
+			"language": "Sprache",
+			"icons": "Icons",
+			"theme": "Design",
+			"font": "Schriftart",
+			"dateTime": "Datum & Uhrzeit",
+			"tagRules": "Tag-Regeln",
+			"rebuild": "Neu aufbauen",
+			"trash": "Papierkorb",
+			"usage": "Nutzungsverlauf",
+			"trace": "Fußspuren-Protokoll",
+			"privacy": "Datenschutz & Sicherheit"
+		},
+		"custom": {
+			"tab": {
+				"tags": "Tags",
+				"traits": "Merkmale",
+				"relationships": "Beziehungen",
+				"collections": "Sammlungen"
+			},
+			"blurb": {
+				"tags": "Kategorien gruppieren Tags; Tags kennzeichnen die Bibliothek.",
+				"traits": "Typisierte, durchsuchbare Fakten, die Charaktere tragen.",
+				"relationships": "Die Verben zwischen Charakteren.",
+				"collections": "Handverlesene Regale, die an der Seitenleiste angeheftet sind."
+			},
+			"unused": "Ungenutzt",
+			"reorder": "Neu ordnen",
+			"add": "Hinzufügen",
+			"more": "Mehr",
+			"filterTagsIn": "Tags in {{category}} filtern",
+			"tagsOf": "{{shown}} von {{total}} Tags",
+			"unusedCount": "{{count}} ungenutzt",
+			"newCategory": "Neue Kategorie",
+			"moveTag": "Tag verschieben",
+			"moveTagDescription": "Der Tag verlässt seine aktuelle Kategorie — sein Name muss in der neuen frei sein.",
+			"moveTagOut": "verlässt {{category}}",
+			"rulesTravel": "Geschwister- und Elternregeln wandern mit dem Tag.",
+			"entity": {
+				"tag": "Tag",
+				"category": "Kategorie",
+				"trait": "Merkmal",
+				"relation": "Beziehung",
+				"collection": "Sammlung"
+			},
+			"link": "Verknüpfen"
+		},
+		"account": {
+			"title": "Konto",
+			"description": "Einzelnutzer — das Konto bewacht die Tür."
+		},
+		"privacy": {
+			"signOutSection": {
+				"title": "Automatisches Abmelden",
+				"description": "Wenn dieser Tab länger als die Verzögerung verborgen bleibt, wird die Sitzung abgemeldet und die Anmeldeseite angezeigt — der einzige vollständige Schutz vor Vorschaubildern."
+			},
+			"autoLogout": {
+				"title": "Abmelden, wenn unbeaufsichtigt",
+				"description": "Der Tab beobachtet die Sichtbarkeit; wenn du nach der Verzögerung zurückkommst, landest du auf der Anmeldeseite."
+			},
+			"delayLabel": "Abmelden nach",
+			"delay": {
+				"immediately": "Sofort",
+				"minutes_one": "{{count}} Minute",
+				"minutes_other": "{{count}} Minuten"
+			},
+			"idleTimeout": {
+				"label": "Sitzungs-Timeout bei Inaktivität",
+				"description": "Gilt serverseitig und deckt daher auch geschlossene Tabs und andere Browser ab.",
+				"hours_one": "{{count}} Stunde",
+				"hours_other": "{{count}} Stunden",
+				"days_one": "{{count}} Tag",
+				"days_other": "{{count}} Tage"
+			}
+		},
+		"password": {
+			"title": "Passwort",
+			"description": "Das Admin-Passwort für die Anmeldung an diesem Host.",
+			"changeButton": "Passwort ändern",
+			"dialogTitle": "Passwort ändern",
+			"currentPassword": "Aktuelles Passwort",
+			"newPassword": "Neues Passwort",
+			"confirm": "Neues Passwort bestätigen",
+			"newPasswordPlaceholder": "Mindestens 10 Zeichen",
+			"confirmPlaceholder": "Noch einmal wiederholen",
+			"changed": "Passwort geändert.",
+			"errorIncorrect": "Das aktuelle Passwort ist falsch.",
+			"errorGeneric": "Das Passwort konnte nicht geändert werden. Prüfe den Server und versuche es erneut.",
+			"mismatch": "Die Passwörter stimmen nicht überein."
+		},
+		"licenses": {
+			"title": "Lizenzen",
+			"description": "Open-Source-Angaben für die App und die gebündelten Inhalte.",
+			"viewButton": "Lizenzen",
+			"projectLicense": "Projektlizenz",
+			"projectLicenseDescription": "Diese Anwendung wird unter der GNU General Public License v3.0 (GPL-3.0) veröffentlicht.",
+			"fullLicense": "Vollständige Lizenz",
+			"dependencies": "Open-Source-Abhängigkeiten",
+			"fonts": "Schriftarten",
+			"packageCount_one": "{{count}} Paket",
+			"packageCount_other": "{{count}} Pakete",
+			"noPackages": "Noch keine Pakete."
+		},
+		"about": {
+			"title": "Über",
+			"description": "Was du ausführst und woher es stammt.",
+			"tagline": "Datenschutzorientierte, selbst gehostete Archivierungs-App für persönliche Medien und Dokumente.",
+			"repository": "GitHub-Repository",
+			"checkUpdate": "Nach Updates suchen",
+			"checking": "Prüfen…",
+			"latest": "Du verwendest die neueste Version.",
+			"outdated": "Version {{version}} ist verfügbar.",
+			"viewRelease": "Release ansehen",
+			"updateError": "Die Update-Prüfung ist fehlgeschlagen. Bitte versuche es später erneut.",
+			"downloading": "Herunterladen… {{percent}}%",
+			"updateReady": "Version {{version}} ist zum Installieren bereit.",
+			"restartToUpdate": "Neu starten",
+			"portableHint": "Portable Versionen werden aktualisiert, indem du ein neues ZIP von GitHub herunterlädst."
+		},
+		"connections": {
+			"title": "Letzte Verbindungen",
+			"description": "Jede Anmeldung mit Gerät, IP und Zeitpunkt. Nur auf diesem Gerät gespeichert; Einträge älter als 90 Tage werden entfernt.",
+			"empty": "Noch keine Anmeldungen.",
+			"loopback": "dieses Gerät"
+		},
+		"desktop": {
+			"library": {
+				"title": "Bibliotheksordner",
+				"description": "Wo diese App das Archiv speichert. Das Ändern des Ordners startet die App neu; Dateien werden nicht kopiert.",
+				"change": "Ordner ändern",
+				"confirmTitle": "Bibliotheksordner wechseln?",
+				"confirmDescription": "Die App startet mit dem von dir gewählten Ordner neu. Ein leerer Ordner ist eine neue Bibliothek. Ein Ordner mit app.sqlite ist diese Bibliothek. Es wird nichts kopiert oder verschoben."
+			},
+			"sharedFolder": {
+				"title": "Gemeinsamer Ordner",
+				"description": "Startordner für „Gemeinsame Ordner durchsuchen“ beim Importieren.",
+				"enable": "Import aus gemeinsamen Ordnern aktivieren",
+				"enableDescription": "Wenn aktiviert, beginnt „Gemeinsame Ordner durchsuchen“ im unten stehenden Ordner."
+			},
+			"lan": {
+				"title": "Lokaler Netzwerkzugriff",
+				"description": "Diese App für Telefone und Computer im gleichen WLAN oder Netzwerk bereitstellen.",
+				"enable": "Zugriff aus dem lokalen Netzwerk erlauben",
+				"enableDescription": "Jeder in deinem Netzwerk benötigt dein Passwort zur Anmeldung. Windows fragt beim ersten Aktivieren nach einer Firewall-Ausnahme.",
+				"applying": "Wird angewendet…",
+				"portTitle": "Port",
+				"portDescription": "Localhost und LAN verwenden einen gemeinsamen Port. Das Anwenden startet den Server neu.",
+				"portApply": "Anwenden",
+				"copy": "Kopieren",
+				"copied": "Adresse kopiert",
+				"copyFailed": "Kopieren fehlgeschlagen",
+				"passwordRequired": "LAN-Freigabe nicht aktiviert — lege zuerst ein Admin-Passwort fest.",
+				"weakPasswordTitle": "Dein Admin-Passwort ist schwach",
+				"weakPasswordDescription": "Jeder in deinem Netzwerk, der es errät, kann auf die gesamte Bibliothek zugreifen. Lege zuerst unter Einstellungen → Passwort ändern ein stärkeres Passwort fest oder aktiviere die Freigabe trotzdem.",
+				"enableAnyway": "Freigabe trotzdem aktivieren",
+				"primaryHint": "Auf einem Gerät im gleichen WLAN öffnen.",
+				"portAdjustedTitle": "Port {{preferred}} ist belegt — der Server lauscht jetzt auf {{actual}}.",
+				"portAdjustedHint": "Öffne diese Adresse von anderen Geräten mit dem neuen Port.",
+				"portAdjustedDismiss": "Ausblenden",
+				"moreAddresses": "Weitere Adressen ({{count}}) — virtuelle Adapter und VPNs",
+				"noAddresses": "Keine erreichbare Adresse gefunden — prüfe die Netzwerkverbindung."
+			},
+			"autostart": {
+				"title": "Mit Windows starten",
+				"description": "hoardodile öffnen, wenn du dich anmeldest."
+			},
+			"startInTray": {
+				"title": "Im Infobereich starten",
+				"description": "Kein Fenster, bis du im Infobereich „Öffnen“ wählst."
+			},
+			"autoUpdate": {
+				"title": "Automatische Updates",
+				"description": "GitHub-Releases im Hintergrund herunterladen. Ein Neustart wird immer bestätigt."
+			},
+			"closeAction": {
+				"title": "Beim Schließen des Fensters",
+				"description": "Was der Schließen-Button der Titelleiste tut — jedes Mal fragen, im Infobereich ausblenden oder beenden.",
+				"ask": "Jedes Mal fragen",
+				"tray": "Im Infobereich ausblenden",
+				"quit": "App beenden"
+			},
+			"closeConfirm": {
+				"title": "hoardodile schließen?",
+				"description": "Die App läuft im Infobereich weiter, außer du beendest sie.",
+				"tray": "Im Infobereich ausblenden",
+				"quit": "App beenden",
+				"remember": "Meine Auswahl merken"
+			},
+			"caption": {
+				"back": "Zurück",
+				"forward": "Vorwärts",
+				"reload": "Neu laden",
+				"minimize": "Minimieren",
+				"maximize": "Maximieren",
+				"restore": "Wiederherstellen",
+				"close": "Schließen",
+				"devtools": "Entwicklertools"
+			},
+			"updateBanner": "Version {{version}} ist zum Installieren bereit.",
+			"updateBannerRestart": "Neu starten",
+			"shellCache": {
+				"title": "Shell-Cache",
+				"description": "Laufwerksbasierte Caches des App-Fensters selbst — HTTP-Antworten, kompilierter Code und GPU-Shader — sowie etwaige heruntergeladene Updates. Das Leeren berührt nie Cookies, deine Einstellungen oder Offline-Daten, und die App lädt sofort vom lokalen Server neu. Ein heruntergeladenes, installationsbereites Update bleibt unberührt.",
+				"currentSize": "{{size}}",
+				"unavailable": "Nicht verfügbar",
+				"clear": "Cache leeren",
+				"clearing": "Leeren…",
+				"confirmTitle": "Shell-Cache leeren?",
+				"confirmDescription": "Das App-Fenster lädt seine Dateien beim nächsten Besuch erneut vom lokalen Server. Cookies, Einstellungen und Offline-Daten werden nie berührt. Ein heruntergeladenes, installationsbereites Update bleibt unberührt.",
+				"toastCleared": "Shell-Cache geleert — {{bytes}} freigegeben.",
+				"clearFailed": "Der Shell-Cache konnte nicht geleert werden."
+			}
+		},
+		"usage": {
+			"description": "Sitzungen hinter Statistiken und dem Fußspuren-Protokoll — das Leeren verlangt eine eingegebene Phrase.",
+			"rowTitle": "Nutzungssitzungen",
+			"rowDescription": "Die Daten hinter den Statistiken.",
+			"clearAll": "Alle entfernen",
+			"confirmTitle": "Gesamten Nutzungsverlauf leeren?",
+			"confirmDescription": "Löscht dauerhaft alle Nutzungseinträge. Statistiken und Übersichtsempfehlungen werden zurückgesetzt. Dies kann nicht rückgängig gemacht werden.",
+			"confirmPhrase": "Gesamten Nutzungsverlauf leeren",
+			"confirmLabel": "Leeren bestätigen",
+			"clearing": "Leeren…",
+			"toastSuccess": "Gesamter Nutzungsverlauf geleert",
+			"toastFailed": "Nutzungsverlauf konnte nicht geleert werden"
+		},
+		"trace": {
+			"description": "Nur-Anfüge-Protokoll deiner Aktionen — Importe, Exporte, Löschungen, Wiederherstellungen und Stimmen.",
+			"rowTitle": "Fußspuren-Protokoll",
+			"clearAll": "Alle entfernen",
+			"confirmTitle": "Fußspuren leeren?",
+			"confirmDescription": "Löscht dauerhaft jeden Aktionsdatensatz (Importe, Exporte, Löschungen, Wiederherstellungen, Dislike-Stimmen). Die Sehdauer sind separate Nutzungsdaten und bleiben unberührt. Dies kann nicht rückgängig gemacht werden.",
+			"confirmPhrase": "Fußspuren leeren",
+			"confirmLabel": "Leeren bestätigen",
+			"clearing": "Leeren…",
+			"toastSuccess": "Fußspuren geleert",
+			"toastFailed": "Fußspuren konnten nicht geleert werden"
+		},
+		"trash": {
+			"description": "Pakete warten — jedes kann wiederkommen.",
+			"view": "Papierkorb sichten ({{count}})",
+			"loading": "Papierkorb wird geladen…",
+			"download": "Herunterladen"
+		},
+		"systemPrefs": {
+			"title": "Systemstandards",
+			"description": "Versteckte Host-Verhaltensschalter — zurückgesetzt auf Werkseinstellungen. Plugin-Einstellungen bleiben unberührt; diese befinden sich auf der Seite Plugins.",
+			"restore": "Wiederherstellen",
+			"resetSuccess": "Alle Systemeinstellungen wurden zurückgesetzt",
+			"confirmTitle": "Alle Systemeinstellungen zurücksetzen?",
+			"confirmDescription": "Dies löscht alle Systemeinstellungen einschließlich Design, Sprache, Schriftart und Datumsformat. Die Seite wird mit Standardwerten neu geladen. Dies kann nicht rückgängig gemacht werden."
+		},
+		"systemCache": {
+			"title": "Browser-Cache",
+			"description": "Lokale Daten im Browser — Service-Worker-Caches, localStorage und IndexedDB (Offline-Nutzungswarteschlange, Dokumententwürfe). Der Server wird nie berührt; die Seite wird danach neu geladen.",
+			"clear": "Alles leeren",
+			"clearing": "Leeren…",
+			"resetting": "Browser-Cache geleert. Wird neu geladen…",
+			"confirmTitle": "Browser-Cache leeren?",
+			"confirmDescription": "Dies löscht alle lokalen Daten im Browser, einschließlich Design- und Spracheinstellungen, Offline-Nutzungseinträge und gespeicherte Dokumententwürfe, und lädt dann die Seite neu. Dies kann nicht rückgängig gemacht werden."
+		}
+	},
+	"plugin": {
+		"loading": "Vorschau wird geladen…",
+		"previewFailed": "Plugin konnte nicht geladen werden",
+		"previewFallback": "Plugin {{name}} fehlt oder ist nicht verfügbar; Vorschau mit dem integrierten Datei-Plugin",
+		"previewFallbackManage": "Plugins verwalten",
+		"previewFallbackUnknown": "unbekanntes Plugin"
+	},
+	"plugins": {
+		"pageHint": "Aus einem .zip-Paket installieren oder den Plugins-Ordner neu scannen, um Neuzugänge zu übernehmen.",
+		"uploadZip": ".zip hochladen",
+		"uploadPluginSuccess": "Plugin installiert",
+		"uploading": "Installieren…",
+		"rescan": "Plugins neu scannen",
+		"rescanSuccess": "Plugins neu gescannt",
+		"more": "Mehr",
+		"enableToggle": "Plugin aktivieren oder deaktivieren",
+		"dragToReorder": "Zum Sortieren ziehen",
+		"dev": "dev",
+		"missing": "Fehlt",
+		"missingSource": "Quelle fehlt",
+		"installed": "Installiert",
+		"installedDescription": "Die Reihenfolge bestimmt, wer ein Paket zuerst beansprucht — zum Neusortieren ziehen.",
+		"filterPlaceholder": "Plugins filtern",
+		"countInstalled": "{{count}} installiert",
+		"listView": "Listenansicht",
+		"gridView": "Rasteransicht",
+		"searchCategories": "Kategorien durchsuchen",
+		"fileTitle": "Datei",
+		"fileDescription": "Der integrierte Fallback-Viewer für unbekannte Dateitypen — er kann nicht entfernt oder neu angeordnet werden.",
+		"alwaysOn": "immer an",
+		"defaultsTitle": "Plugin-Standardwerte",
+		"defaultsDescription": "Die Einstellungen jedes Plugins kehren zu ihren Standardwerten zurück — Inhalte und Installationen bleiben unberührt.",
+		"restore": "Wiederherstellen",
+		"cachesTitle": "Plugin-Caches",
+		"cachesDescription": "Thumbnails und geparste Metadaten aller Plugins — bei Bedarf neu aufgebaut.",
+		"clearAll": "Alles leeren",
+		"pin": "Anheften",
+		"color": "Farbe",
+		"appearance": "Erscheinungsbild",
+		"appearanceTitle": "Erscheinungsbild: {{name}}",
+		"appearanceDescription": "Wähle eine Farbe und ob dieses Plugin an Ressourcenkarten angeheftet wird.",
+		"reset": "Zurücksetzen",
+		"clear": "Leeren",
+		"resetPluginPref": "Einstellungen zurücksetzen",
+		"resetPluginPrefConfirmTitle": "Einstellungen für {{name}} zurücksetzen?",
+		"resetPluginPrefConfirmDescription": "Dies löscht alle gespeicherten Einstellungen für dieses Plugin. Nach dem Neustart verwendet das Plugin seine Standardwerte. Dies kann nicht rückgängig gemacht werden.",
+		"resetPluginPrefSuccess": "Einstellungen für {{name}} wurden zurückgesetzt",
+		"clearPluginCache": "Cache leeren",
+		"clearPluginCacheConfirmTitle": "Cache für {{name}} leeren?",
+		"clearPluginCacheConfirmDescription": "Dies löscht alle zwischengespeicherten Daten (z. B. Fortsetzungspunkte) für dieses Plugin. Dies kann nicht rückgängig gemacht werden.",
+		"clearPluginCacheSuccess": "Cache für {{name}} wurde geleert",
+		"uninstall": "Deinstallieren",
+		"uninstallConfirmTitle": "Plugin {{name}} deinstallieren?",
+		"uninstallConfirmDescription_one": "{{count}} Ressource verwendet dieses Plugin. Nach der Deinstallation wird sie mit dem integrierten Datei-Plugin vorgeschaut; die erneute Installation stellt sie automatisch wieder her. Dies kann nicht rückgängig gemacht werden.",
+		"uninstallConfirmDescription_other": "{{count}} Ressourcen verwenden dieses Plugin. Nach der Deinstallation werden sie mit dem integrierten Datei-Plugin vorgeschaut; die erneute Installation stellt sie automatisch wieder her. Dies kann nicht rückgängig gemacht werden.",
+		"uninstallConfirmNoUsage": "Keine Ressource verwendet dieses Plugin. Installiere es jederzeit neu, um es wieder zu nutzen. Dies kann nicht rückgängig gemacht werden.",
+		"uninstallSuccess": "{{name}} deinstalliert",
+		"resetAllPluginPrefSuccess": "Alle Plugin-Einstellungen wurden zurückgesetzt",
+		"resetAllPluginPrefConfirmTitle": "Alle Plugin-Einstellungen zurücksetzen?",
+		"resetAllPluginPrefConfirmDescription": "Dies löscht die gespeicherten Einstellungen jedes Plugins. Nach dem Neustart verwenden alle Plugins ihre Standardwerte. Dies kann nicht rückgängig gemacht werden.",
+		"clearAllPluginCacheSuccess": "Alle Plugin-Caches wurden geleert",
+		"clearAllPluginCacheConfirmTitle": "Alle Plugin-Caches leeren?",
+		"clearAllPluginCacheConfirmDescription": "Dies löscht alle zwischengespeicherten Daten jedes Plugins einschließlich Fortsetzungspunkten. Dies kann nicht rückgängig gemacht werden.",
+		"installConfirmTitle": "Dieses Plugin installieren?",
+		"install": "Installieren",
+		"installConfirmRisk": "Ein Plugin führt serverseitigen Code mit denselben Rechten wie diese App aus: Es kann alle deine Daten lesen und ändern und Netzwerkanfragen stellen. Die deklarierten Berechtigungen schalten nur Host-Funktionen um — sie sandboxen das Plugin nicht. Installiere Plugins nur aus vertrauenswürdigen Quellen.",
+		"uploadInvalidPlugin": "Kein gültiges Plugin-Paket (manifest.json fehlt oder ist ungültig).",
+		"permissions": {
+			"sourceMeta": "Quell-Metadaten",
+			"searchMeta": "Such-Metadaten",
+			"danmaku": "Danmaku",
+			"message": "Nachrichten",
+			"imageHashes": "Bild-Hashes"
+		}
+	},
+	"overview": {
+		"usageHistory": {
+			"title": "Nutzungsverlauf"
+		},
+		"memories": {
+			"title": "An diesem Tag",
+			"yearsAgo_one": "Im letzten Jahr an diesem Tag",
+			"yearsAgo_other": "vor {{count}} Jahren an diesem Tag"
+		},
+		"activity": {
+			"title": "Letzte Aktivität",
+			"updated": "Aktualisiert {{time}}"
+		},
+		"stats": {
+			"resources": "Ressourcen",
+			"characters": "Charaktere",
+			"documents": "Dokumente",
+			"messages": "Nachrichten"
+		},
+		"sections": {
+			"recentResources": "Zuletzt aktualisiert",
+			"recentViewed": "Zuletzt angesehen",
+			"recentCharacters": "Neueste Charaktere",
+			"recentDocuments": "Neueste Dokumente",
+			"recentMessages": "Neueste Nachrichten"
+		},
+		"empty": {
+			"resources": "Noch keine Ressourcen.",
+			"recentViewed": "Noch kein Anzeigeverlauf.",
+			"characters": "Noch keine Charaktere.",
+			"documents": "Noch keine Dokumente.",
+			"messages": "Noch keine Nachrichten."
+		},
+		"todayUsage": {
+			"label": "Sehdauer heute",
+			"sameAsYesterday": "Gleich wie gestern",
+			"moreThanYesterday": "{{duration}} mehr als gestern",
+			"lessThanYesterday": "{{duration}} weniger als gestern"
+		},
+		"footprints": {
+			"aria": "Fußspuren",
+			"title": "Fußspuren",
+			"description": "Jede Aktion, die du ausgeführt hast",
+			"emptyPrompt": "Noch keine Fußspuren — importiere oder lade eine Ressource hoch, um das Protokoll zu starten.",
+			"uploadResource": "Ressource hochladen",
+			"importFolder": "Ordner importieren"
+		},
+		"viewAll": "Alle anzeigen",
+		"recentViewed": {
+			"description": "Dein Anzeigeverlauf",
+			"unknownTime": "Unbekannter Zeitpunkt",
+			"emptyPrompt": "Noch kein Anzeigeverlauf — starte mit dem Erkunden oder lade deine erste Ressource hoch.",
+			"browseResources": "Ressourcen durchsuchen",
+			"uploadResource": "Ressource hochladen"
+		},
+		"pinned": {
+			"charactersTitle": "Angeheftete Charaktere",
+			"resourcesTitle": "Angeheftete Ressourcen",
+			"charactersEmpty": "Keine passenden Charaktere.",
+			"resourcesEmpty": "Keine passenden Ressourcen.",
+			"add": "Hinzufügen",
+			"maxReached": "Maximum von {{max}} angehefteten Elementen erreicht",
+			"dragToReorder": "Zum Sortieren ziehen",
+			"settings": {
+				"title": "Angeheftet: {{section}}",
+				"description": "Welche Bereiche das Dashboard anheftet — zum Sortieren ziehen, daneben bearbeiten.",
+				"editTitle": "Bereich bearbeiten",
+				"editDescription": "Der Bereich, wie er auf dem Dashboard erscheint.",
+				"titleLabel": "Titel",
+				"titlePlaceholder": "Leer lassen, um den Standardtitel zu verwenden",
+				"showWhenEmpty": "Bei Leere anzeigen",
+				"sizeLabel": "Größe",
+				"sectionsCount_one": "{{count}} Bereich",
+				"sectionsCount_other": "{{count}} Bereiche",
+				"save": "Bereich speichern",
+				"done": "Fertig",
+				"delete": "Löschen",
+				"deleteConfirmTitle": "Angeheftete Ansicht löschen",
+				"deleteConfirmDescription": "Möchtest du „{{title}}“ wirklich löschen? Das kann nicht rückgängig gemacht werden.",
+				"saveSuccess": "Angeheftete Einstellungen gespeichert",
+				"deleteSuccess": "Angeheftete Ansicht gelöscht",
+				"toggleEnabledAria": "{{title}} aktivieren oder deaktivieren",
+				"noItems": "Noch keine angehefteten Ansichten.",
+				"noItemsHint": "Klicke auf Hinzufügen, um die aktuellen Filter zur Übersicht zu speichern.",
+				"noItemsWithFiltersHint": "Die aktuelle Listenseite hat bereits Filter. Klicke oben auf den Button, um sie als angeheftete Ansicht zu speichern.",
+				"noSelection": "Keine angeheftete Ansicht ausgewählt.",
+				"noSelectionHint": "Wähle ein Element aus der Liste oder klicke auf Hinzufügen, um eine neue Ansicht zu erstellen.",
+				"preview": "Vorschau",
+				"previewTitle": "Filter-Vorschau",
+				"item": {
+					"refresh": {
+						"label": "Automatisch aktualisieren",
+						"description": "Wie oft diese angeheftete Ansicht einen neuen Zufallssatz zieht.",
+						"always": "Immer",
+						"never": "Nie",
+						"every60s": "Jede Minute",
+						"every1800s": "Alle 30 Minuten",
+						"every3600s": "Jede Stunde",
+						"every21600s": "Alle 6 Stunden",
+						"every43200s": "Alle 12 Stunden",
+						"midnight": "Um Mitternacht"
+					}
+				}
+			},
+			"refreshSectionAria": "{{title}} aktualisieren"
+		},
+		"sort": {
+			"created": "Erstellt",
+			"updated": "Aktualisiert"
+		},
+		"rebuildDescription": "Metadaten und Thumbnails jeder Ressource von Grund auf neu aufbauen oder alle neu aufbaubaren Daten (lokale Caches + gespeicherte Metadaten) auf diesem Host löschen.",
+		"signOut": "Abmelden",
+		"signingOut": "Abmelden…",
+		"precache": "Vorab aufbauen",
+		"precaching": "Vorab aufbauen…",
+		"caching": "Browser-Cache wird vorgewärmt…",
+		"refreshCache": "Cache aktualisieren",
+		"clearCache": "Alles leeren",
+		"clearing": "Leeren…",
+		"progressLine": "{{done}} / {{total}} ({{percent}}%) - {{stage}}",
+		"cachedSummary_one": "{{count}} Element vorab aufgebaut",
+		"cachedSummary_other": "{{count}} Elemente vorab aufgebaut",
+		"precacheFailed": "Vorab-Aufbau fehlgeschlagen: {{error}}",
+		"precacheStageLoading": "Metadaten neu aufbauen und Thumbnails erzeugen…",
+		"precacheDefaultError": "Vorab-Aufbau konnte nicht ausgeführt werden",
+		"precacheInProgress": "Ein Vorab-Aufbau läuft bereits",
+		"abortPrecache": "Abbrechen",
+		"precacheAborted": "Vorab-Aufbau abgebrochen",
+		"toastClearLocked_one": "{{count}} Datei für den Neuaufbau ist gesperrt und konnte nicht gelöscht werden. Starte den Server neu, um sie zu leeren.",
+		"toastClearLocked_other": "{{count}} Dateien für den Neuaufbau sind gesperrt und konnten nicht gelöscht werden. Starte den Server neu, um sie zu leeren.",
+		"clearCacheSuccess": "Neuaufbau-Daten geleert",
+		"toastClearFailed": "Neuaufbau-Daten konnten nicht geleert werden",
+		"toastPrecacheSuccess_one": "{{count}} Element vorab aufgebaut",
+		"toastPrecacheSuccess_other": "{{count}} Elemente vorab aufgebaut",
+		"toastPrecachePartial": "Vorab-Aufbau mit {{failed}} Fehlern abgeschlossen"
+	},
+	"login": {
+		"brand": "Hoardodile",
+		"title": "Anmelden",
+		"description": "Gib das Passwort für diesen Host ein.",
+		"demoDescription": "Dies ist eine Demo-Bibliothek. Das Passwort ist {{password}}.",
+		"password": "Passwort",
+		"submit": "Anmelden",
+		"submitting": "Anmelden…",
+		"formAria": "Anmelden",
+		"errorIncorrect": "Falsches Passwort.",
+		"errorGeneric": "Die Anmeldung ist fehlgeschlagen. Prüfe den Server und versuche es erneut.",
+		"setupTitle": "Passwort festlegen",
+		"setupDescription": "Dieser Host hat noch kein Passwort. Lege jetzt eines fest — wer dies zuerst tut, besitzt den Host.",
+		"setupPassword": "Neues Passwort",
+		"setupConfirm": "Passwort bestätigen",
+		"setupSubmit": "Passwort festlegen",
+		"setupSubmitting": "Einrichten…",
+		"setupMismatch": "Die Passwörter stimmen nicht überein.",
+		"setupFormAria": "Passwort festlegen"
+	},
+	"dataHistory": {
+		"title": "Datenverlauf",
+		"description": "Verwalte deine Daten-Snapshots. Backups dienen der Migration oder Notfallwiederherstellung; Archive frieren eine Version schreibgeschützt ein, sodass sich ihre Daten nie wieder ändern können.",
+		"status": {
+			"currentWritable": "Beschreibbar — v{{version}}",
+			"viewingArchive": "Archiv ansehen — v{{version}}"
+		},
+		"chip": {
+			"latest": "Neueste",
+			"readOnly": "Schreibgeschützt",
+			"auto": "Auto"
+		},
+		"archive": {
+			"title": "v{{version}}",
+			"tagCurrent": "Neueste (beschreibbar)",
+			"tagActive": "Wird angezeigt",
+			"tagReadOnly": "Historisches Archiv",
+			"tagCurrentShort": "aktuell",
+			"tagActiveShort": "ansicht",
+			"nameLabel": "Name",
+			"namePlaceholder": "z. B. v1 Meilenstein",
+			"noteLabel": "Notiz",
+			"notePlaceholder": "z. B. vor Migration, Daten-Einfrierung…",
+			"switchHint": "Nach dem Wechsel läuft die App gegen dieses Archiv im schreibgeschützten Modus. Kehre zur neuesten Version zurück, um wieder zu bearbeiten.",
+			"activeHint": "Dies ist die Version, die du gerade anzeigst."
+		},
+		"backup": {
+			"typeLabel": "Datenbank-Backup",
+			"autoTypeLabel": "Automatischer täglicher Snapshot",
+			"autoBadge": "auto",
+			"autoDeleteHint": "Dieser automatische Snapshot wird für ein kurzes rollierendes Fenster aufbewahrt und automatisch ersetzt. Du kannst ihn jetzt löschen, um Speicherplatz freizugeben.",
+			"nameLabel": "Name",
+			"nameEmpty": "Keine",
+			"restoreHint": "Beim Wiederherstellen musst du den Backup-Namen eingeben — die aktuelle Bibliothek wird zunächst archiviert, sodass nichts stillschweigend verloren geht.",
+			"deleteHint": "Diese Backup-Datei wird dauerhaft gelöscht und kann nicht wiederhergestellt werden.",
+			"archivedHint": "Dieses Backup gehört zu einer archivierten Version. Ihre Daten sind eingefroren und können nicht wiederhergestellt oder gelöscht werden."
+		},
+		"action": {
+			"backupNow": "Jetzt sichern",
+			"backingUp": "Sichern…",
+			"archiveNow": "Jetzt archivieren",
+			"archiving": "Archivieren…",
+			"restore": "Wiederherstellen",
+			"restoring": "Wiederherstellen…",
+			"delete": "Löschen",
+			"deleting": "Löschen…",
+			"switchToVersion": "Zu dieser Version wechseln",
+			"switching": "Wechseln…",
+			"download": "Herunterladen"
+		},
+		"reloading": "Wird neu geladen…",
+		"autoSnapshot": {
+			"enabled": "Automatischer Snapshot: täglich · behält {{keep}} Tage",
+			"disabled": "Automatische Snapshots sind deaktiviert",
+			"last": "neuester {{time}}"
+		},
+		"detail": {
+			"selectPrompt": "Wähle auf der Zeitachse ein Backup oder Archiv aus, um Details und verfügbare Aktionen anzuzeigen.",
+			"size": "Größe",
+			"versionNumber": "Version",
+			"createdAt": "Erstellt",
+			"note": "Notiz",
+			"contents": "Inhalt",
+			"contentsValue": "{{resources}} Ressourcen · {{characters}} Charaktere · {{documents}} Dokumente",
+			"backupOnVersion": "Backup auf v{{version}}",
+			"archiveVersion": "Archiv v{{version}}"
+		},
+		"note": {
+			"empty": "Klicken, um eine Notiz hinzuzufügen…",
+			"placeholder": "Füge eine kurze Beschreibung für diesen Snapshot hinzu…"
+		},
+		"confirm": {
+			"archiveTitle": "Neueste Version archivieren",
+			"archiveDescription": "Die Datenbank der neuesten Version sowie alle Ressourcen, Charaktere und Dokumente werden als schreibgeschütztes Archiv eingefroren. Daten in einem Archiv ändern sich nie wieder; für die laufende Arbeit wird eine neue beschreibbare Version erstellt.",
+			"archivePhrase": "archivieren",
+			"archiveAutoHint": "Die automatischen Snapshots der aktuellen Version werden mit diesem Archiv eingefroren; für die neue Version wird sofort ein frischer Snapshot erstellt.",
+			"restoreTitle": "Dieses Backup wiederherstellen",
+			"restoreDescription": "Die aktuelle Bibliothek wird zunächst archiviert, sodass nichts stillschweigend verloren geht. Diese Wiederherstellung kann durch Wiederherstellen der archivierten Version rückgängig gemacht werden.",
+			"restorePhrase": "Backup wiederherstellen",
+			"autoPhrase": "auto",
+			"deleteBackupTitle": "Backup endgültig löschen",
+			"deleteBackupDescription": "Diese Backup-Datei wird dauerhaft gelöscht und kann nicht wiederhergestellt werden.",
+			"deleteBackupPhrase": "Backup löschen",
+			"switchTitle": "Zu dieser Archivversion wechseln",
+			"switchDescription": "Nach dem Wechsel läuft die App im schreibgeschützten Modus und nur historische Daten sind sichtbar. Kehre zur neuesten Version zurück, um wieder zu bearbeiten."
+		},
+		"empty": {
+			"title": "Noch kein Datenverlauf.",
+			"description": "Erstelle jetzt ein Backup, um dich gegen Datenverlust zu schützen."
+		},
+		"toast": {
+			"backupCreated": "Backup erstellt",
+			"backupFailed": "Backup fehlgeschlagen",
+			"archiveFailed": "Archivieren fehlgeschlagen",
+			"backupDeleted": "Backup gelöscht",
+			"deleteFailed": "Löschen fehlgeschlagen",
+			"restoreFailed": "Wiederherstellen fehlgeschlagen",
+			"switchFailed": "Wechsel fehlgeschlagen",
+			"metaSaved": "Gespeichert",
+			"metaSaveFailed": "Speichern fehlgeschlagen"
+		}
+	},
+	"documents": {
+		"title": "Dokumente",
+		"index": {
+			"docCount_one": "{{count}} Dokument",
+			"docCount_other": "{{count}} Dokumente",
+			"folderCount_one": "{{count}} Ordner",
+			"folderCount_other": "{{count}} Ordner",
+			"description": "{{docs}} in {{folders}} — alles, was du geschrieben hast, an einem Ort.",
+			"updated": "Aktualisiert {{time}}"
+		},
+		"create": "Neu",
+		"backToStart": "Zurück zur Startseite",
+		"new": "Dokument",
+		"newFolder": "Ordner",
+		"defaultNewTitle": "Unbenanntes Dokument",
+		"defaultNewFolderTitle": "Unbenannter Ordner",
+		"searchPlaceholder": "Titel oder Inhalt durchsuchen",
+		"loading": "Dokumente werden geladen…",
+		"listEmpty": "Noch keine Dokumente.",
+		"notFound": {
+			"title": "Dokument nicht gefunden",
+			"description": "Dieses Dokument existiert nicht mehr — es wurde möglicherweise gelöscht.",
+			"back": "Zurück zu den Dokumenten"
+		},
+		"untitled": "Unbenannt",
+		"viewAll": "Alle anzeigen",
+		"filter": {
+			"title": "Nach Charakteren und Ressourcen filtern",
+			"dialogTitle": "Dokumente filtern",
+			"apply": "Anwenden",
+			"clear": "Leeren"
+		},
+		"placeholder": "Schreiben beginnen…",
+		"editorPlaceholder": "Befehle mit „/“ anzeigen",
+		"saveDraft": "Entwurf speichern",
+		"discardDraft": "Entwurf verwerfen",
+		"commit": "Version festschreiben",
+		"commitDialog": {
+			"title": "Version festschreiben",
+			"description": "Speichere den aktuellen Entwurf als unveränderliche Version. Gib eine kurze Nachricht ein, die beschreibt, was sich geändert hat.",
+			"messageLabel": "Commit-Nachricht",
+			"messagePlaceholder": "Was hat sich in dieser Version geändert?",
+			"submit": "Festschreiben",
+			"committing": "Wird festgeschrieben…"
+		},
+		"discardDialog": {
+			"title": "Entwurf verwerfen?",
+			"description": "Deine ungespeicherten Änderungen werden durch die neueste festgeschriebene Version ersetzt. Dies kann nicht rückgängig gemacht werden.",
+			"confirm": "Verwerfen",
+			"discarding": "Wird verworfen…"
+		},
+		"leaveDialog": {
+			"confirm": "Du hast ungespeicherte Änderungen in diesem Dokument. Trotzdem verlassen?"
+		},
+		"moreActions": "Weitere Aktionen",
+		"zoom": {
+			"label": "Textzoom",
+			"smaller": "Verkleinern",
+			"larger": "Vergrößern",
+			"reset": "Zoom zurücksetzen"
+		},
+		"appearanceSettings": {
+			"title": "Erscheinungsbild",
+			"description": "Passe das Aussehen von Dokumenten an: Design, Lesebreite und Schriftarten.",
+			"theme": "Dokument-Design",
+			"inherit": "Vom Web-Design übernehmen",
+			"readingWidth": "Lesebreite",
+			"readingWidthDescription": "Breite der zentrierten Lesespalte auf der Dokumentseite.",
+			"editorFont": "Editor-Schriftart",
+			"editorFontDescription": "Schriftart, die im Dokument-Editor verwendet wird.",
+			"uiFont": "Seitenschriftart",
+			"uiFontDescription": "Schriftart für Titel, Seitenleiste und andere UI-Bereiche auf der Dokumentseite.",
+			"body": "Fließtext",
+			"headings": "Überschriften"
+		},
+		"readOnly": {
+			"enable": "Vorschau",
+			"disable": "Vorschau verlassen"
+		},
+		"reading": {
+			"enter": "Lesemodus",
+			"exit": "Lesemodus verlassen"
+		},
+		"diff": {
+			"show": "Verlauf vergleichen",
+			"exit": "Vergleich verlassen",
+			"compareWith": "Vergleichen mit",
+			"selectVersion": "Version auswählen"
+		},
+		"conflict": {
+			"title": "Externe Änderungen erkannt",
+			"description": "Deine Änderungen bleiben im Editor. Vergleiche die beiden Versionen und wähle, welche du behalten möchtest.",
+			"keepCurrent": "Aktuellen Inhalt behalten",
+			"discardCurrent": "Aktuellen Inhalt verwerfen",
+			"viewDiff": "Vergleichen",
+			"diffLabel": "Offline- vs. externer Entwurf",
+			"updatedHint": "Server aktualisiert {{remote}} · Lokal bearbeitet {{local}}",
+			"discardConfirm": {
+				"title": "Aktuelle Änderungen verwerfen?",
+				"description": "Noch nicht mit dem Server synchronisierte Änderungen gehen verloren. Du kannst zuerst die Unterschiede vergleichen.",
+				"confirm": "Aktuelle Änderungen verwerfen"
+			}
+		},
+		"indent": {
+			"enable": "Einzug der ersten Zeile aktivieren"
+		},
+		"welcome": {
+			"title": "Dokumente",
+			"subtitle": "Erstelle links Dokumente oder Ordner. Dokumente können auch verschachtelte Unterelemente enthalten."
+		},
+		"folderHint": "Dies ist ein Ordner. Wähle darin ein Dokument aus, um mit dem Bearbeiten zu beginnen.",
+		"headings": "Inhalt",
+		"noHeadings": "Keine Überschriften in diesem Dokument.",
+		"untitledHeading": "Unbenannte Überschrift",
+		"detailMeta": {
+			"chars_one": "{{count, number}} Zeichen",
+			"chars_other": "{{count, number}} Zeichen"
+		},
+		"notes": {
+			"tab": "Notizen",
+			"empty": "Noch keine Notizen."
+		},
+		"statusBar": {
+			"charCount": "{{count}} / {{max}} Zeichen",
+			"offline": "Offline · Änderungen nicht gespeichert"
+		},
+		"autosave": {
+			"enable": "Autospeichern aktivieren"
+		},
+		"editMode": {
+			"label": "Reihenfolge anpassen",
+			"toggle": "Modus „Reihenfolge anpassen“ umschalten",
+			"hint": "Aktivieren, um Dokumente im Baum per Ziehen zu sortieren."
+		},
+		"expandAll": "Alle erweitern",
+		"collapseAll": "Alle einklappen",
+		"slash": {
+			"charactersGroup": "Charaktere",
+			"resourcesGroup": "Ressourcen",
+			"insertCharacter": "Charakter einfügen…",
+			"insertResource": "Ressource einfügen…"
+		},
+		"toast": {
+			"createFailed": "Erstellen fehlgeschlagen",
+			"renameFailed": "Umbenennen fehlgeschlagen",
+			"saveFailed": "Entwurf konnte nicht gespeichert werden",
+			"saved": "Gespeichert",
+			"commitFailed": "Version konnte nicht festgeschrieben werden",
+			"committed": "Version festgeschrieben",
+			"contentTooLarge": "Inhalt überschreitet das maximale Zeichenlimit",
+			"versionLoadFailed": "Versionsinhalt konnte nicht geladen werden",
+			"savedLocally": "Auf diesem Gerät gespeichert",
+			"resolveConflictFirst": "Löse den Offline-Konflikt, bevor du festschreibst",
+			"movedToTrash": "In den Papierkorb verschoben",
+			"restored": "Wiederhergestellt",
+			"restoreFailed": "Wiederherstellen fehlgeschlagen",
+			"deleteFailed": "Löschen fehlgeschlagen",
+			"deletedForever": "Endgültig gelöscht",
+			"moveFailed": "Verschieben fehlgeschlagen"
+		},
+		"search": {
+			"empty": "Keine passenden Dokumente."
+		},
+		"trash": {
+			"open": "Papierkorb",
+			"empty": "Noch keine Dokumente im Papierkorb.",
+			"restore": "Wiederherstellen",
+			"hardDelete": "Endgültig löschen",
+			"hardDeleteTitle": "Endgültig löschen?",
+			"hardDeleteDescription": "Dies entfernt das Element dauerhaft. Dies kann nicht rückgängig gemacht werden.",
+			"hardDeleteConfirm": "Endgültig löschen",
+			"hardDeleting": "Löschen…"
+		},
+		"softDeleteDialog": {
+			"title": "In den Papierkorb verschieben?",
+			"description": "Das Element wird im Baum ausgeblendet und kann später aus dem Papierkorb wiederhergestellt werden.",
+			"folderWarning": "Alle untergeordneten Dokumente in diesem Ordner werden gemeinsam in den Papierkorb verschoben.",
+			"confirm": "In den Papierkorb verschieben"
+		},
+		"toolbar": {
+			"bold": "Fett",
+			"italic": "Kursiv",
+			"strike": "Durchgestrichen",
+			"code": "Inline-Code",
+			"h1": "Überschrift 1",
+			"h2": "Überschrift 2",
+			"h3": "Überschrift 3",
+			"bulletList": "Aufzählungsliste",
+			"orderedList": "Nummerierte Liste",
+			"blockquote": "Zitat",
+			"noFirstLineIndent": "Kein Einzug der ersten Zeile (dieser Absatz)",
+			"link": "Link",
+			"linkPrompt": "URL eingeben (leer lassen zum Entfernen)",
+			"alignLeft": "Linksbündig",
+			"alignCenter": "Zentriert",
+			"alignRight": "Rechtsbündig",
+			"textColor": "Textfarbe",
+			"tagChip": "Tag-Stil",
+			"undo": "Rückgängig",
+			"redo": "Wiederholen"
+		}
+	},
+	"characters": {
+		"title": "Charaktere",
+		"searchPlaceholder": "Charaktere durchsuchen…",
+		"filters": "Filter",
+		"sortLabel": "Sortieren",
+		"orderLabel": "Reihenfolge",
+		"search": {
+			"sectionOptions": "Optionen",
+			"sectionTags": "Tags",
+			"sectionTraits": "Merkmale",
+			"sectionRelations": "Beziehungen",
+			"clearAll": "Alles leeren",
+			"apply": "Suchen",
+			"itemCount_one": "{{count}} Charakter",
+			"itemCount_other": "{{count}} Charaktere"
+		},
+		"new": "Neu",
+		"listEmpty": "Noch keine Charaktere.",
+		"trashEmpty": "Noch keine Charaktere im Papierkorb.",
+		"filter": {
+			"trash": "Papierkorb"
+		},
+		"traitFilter": {
+			"add": "Hinzufügen",
+			"empty": "Definiere Merkmale in den Einstellungen, um danach zu filtern.",
+			"opContains": "enthält",
+			"opEmpty": "ist leer",
+			"opNotEmpty": "nicht leer",
+			"opDateAfter": "nach",
+			"opDateOnOrAfter": "am oder nach",
+			"opDateBefore": "vor",
+			"opDateOnOrBefore": "am oder vor",
+			"opDateOn": "am",
+			"opDateMonthDayOn": "Monat/Tag am",
+			"opDateMonthDayToday": "heutiger Monat/Tag"
+		},
+		"viewSelected": "Nur ausgewählte",
+		"viewSelectedTooMany": "Nur ausgewählte unterstützt bis zu {{max}} Elemente",
+		"sort": {
+			"created": "Erstellt",
+			"updated": "Aktualisiert",
+			"random": "Zufällig",
+			"latest": "Neueste",
+			"earliest": "Älteste"
+		},
+		"bulk": {
+			"select": "Auswählen",
+			"done": "Fertig",
+			"toolbarCount": "{{count}} ausgewählt",
+			"editTags": "Tags bearbeiten",
+			"clearSelection": "Leeren",
+			"moveToTrash": "Papierkorb",
+			"confirmSoft_one": "{{count}} Charakter in den Papierkorb verschieben?",
+			"confirmSoft_other": "{{count}} Charaktere in den Papierkorb verschieben?",
+			"softDeleteDescription": "Die ausgewählten Charaktere werden in den Papierkorb verschoben. Sie können später aus dem Papierkorb wiederhergestellt werden.",
+			"toastAllOk_one": "{{count}} Charakter aktualisiert.",
+			"toastAllOk_other": "{{count}} Charaktere aktualisiert.",
+			"toastAllFailed": "Nichts aktualisiert ({{count}} fehlgeschlagen).",
+			"toastPartial": "{{ok}} erfolgreich, {{failed}} fehlgeschlagen."
+		},
+		"actionsAria": "Aktionen für {{name}}",
+		"toast": {
+			"movedToTrash": "In den Papierkorb verschoben",
+			"deleteFailed": "Löschen fehlgeschlagen",
+			"restored": "Wiederhergestellt",
+			"restoreFailed": "Wiederherstellen fehlgeschlagen",
+			"deletedForever": "Endgültig gelöscht",
+			"createSuccess": "Erstellt",
+			"createFailed": "Erstellen fehlgeschlagen"
+		},
+		"create": {
+			"title": "Neuer Charakter",
+			"description": "Ein Name genügt zum Start — alles andere kann warten.",
+			"basicInfo": "Grundinformationen",
+			"basicDescription": "Wer sie sind, in einfachen Worten.",
+			"name": "Name",
+			"intro": "Einführung",
+			"namePlaceholder": "Unbenannter Charakter",
+			"nameHint": "Ein Name ist erforderlich — gib ihnen einen, um Erstellen zu aktivieren.",
+			"introPlaceholder": "Ein paar Sätze — wer sie sind, was sie wollen.",
+			"links": "Verknüpfungen",
+			"linksDescription": "Tags und Merkmale, die diesen Charakter mit der Bibliothek verbinden.",
+			"tags": "Tags",
+			"traits": "Merkmale",
+			"appearance": "Erscheinungsbild",
+			"appearanceDescription": "Avatar und Ganzkörper-Kunst — zuschneiden, um sie anzupassen.",
+			"avatar": "Avatar",
+			"fullbody": "Ganzkörper",
+			"submit": "Erstellen",
+			"submitting": "Erstellen…"
+		},
+		"preview": {
+			"aria": "Vorschau: {{name}}"
+		},
+		"detail": {
+			"loadError": "Dieser Charakter konnte nicht geladen werden.",
+			"noIntro": "Noch keine Einführung.",
+			"relationships": "Beziehungen",
+			"recent": "Neueste Ressourcen",
+			"viewAllResources": "Alle anzeigen",
+			"fullbody": "Ganzkörper",
+			"traits": "Merkmale",
+			"tags": "Tags",
+			"tabsAria": "Charakter-Bereiche",
+			"documentsTitle": "In Dokumenten",
+			"openSidebar": "Seitenleiste öffnen"
+		},
+		"editDialog": {
+			"aria": "Charakter bearbeiten",
+			"name": "Name",
+			"intro": "Einführung"
+		},
+		"editHub": {
+			"title": "Bearbeiten — {{name}}"
+		},
+		"tagsDialog": {
+			"title": "Tags bearbeiten — {{name}}"
+		},
+		"actions": {
+			"uploadResource": "Ressource hochladen",
+			"editTags": "Tags",
+			"editTraits": "Merkmale",
+			"editRelations": "Beziehungen",
+			"editBasic": "Grundinformationen",
+			"editAvatar": "Avatar",
+			"editFullbody": "Ganzkörper",
+			"openMessages": "Nachrichten",
+			"restore": "Wiederherstellen",
+			"hardDelete": "Endgültig löschen",
+			"softDelete": "In den Papierkorb verschieben"
+		},
+		"hardDelete": {
+			"title": "Endgültig löschen?",
+			"description": "Dies löscht den Charakter dauerhaft und verschiebt seinen Ordner in den lokalen Papierkorb.",
+			"confirm": "Endgültig löschen",
+			"deleting": "Löschen…"
+		},
+		"chips": {
+			"linkCharacters": "Charaktere verknüpfen"
+		},
+		"picker": {
+			"selectedEmpty": "Noch keine Charaktere ausgewählt.",
+			"loadFailed": "Laden fehlgeschlagen"
+		},
+		"selectorDialog": {
+			"title": "Charakter auswählen",
+			"confirm": "Bestätigen",
+			"confirmCount": "Bestätigen ({{count}})",
+			"notSelectable": "Dieser Charakter kann nicht ausgewählt werden"
+		},
+		"charactership": {
+			"empty": "Noch keine Beziehungen. Wähle oben einen Typ, um eine hinzuzufügen.",
+			"pickerTitle": "Charakter auswählen",
+			"deleteEdge": "Entfernen",
+			"deleteConfirmTitle": "Beziehung löschen",
+			"deleteConfirmDescription": "Möchtest du diese Beziehung wirklich löschen? Das kann nicht rückgängig gemacht werden.",
+			"pickCharacter": "Charakter auswählen",
+			"enterName": "Name eingeben",
+			"pickEndpoint": "Endpunkt auswählen",
+			"namePlaceholder": "Name",
+			"noTypesHint": "Noch keine Beziehungstypen.",
+			"noTypesLink": "Füge Typen unter Einstellungen → Benutzerdefiniert hinzu",
+			"incompleteDraft": "Schließe alle neuen Beziehungen ab, bevor du speicherst",
+			"toast": {
+				"deleteSuccess": "Beziehung entfernt",
+				"deleteFailed": "Beziehung konnte nicht entfernt werden",
+				"addSuccess": "Beziehung hinzugefügt",
+				"saveFailed": "Beziehung konnte nicht gespeichert werden"
+			}
+		}
+	},
+	"collections": {
+		"entityLabel": "Sammlung",
+		"usageLabelOne": "Ressource",
+		"usageLabel": "Ressourcen",
+		"chip": {
+			"openLabel": "Sammlung {{name}} öffnen"
+		},
+		"popover": {
+			"empty": "Noch keine Ressourcen in dieser Sammlung."
+		},
+		"picker": {
+			"quickCreate": "Hinzufügen",
+			"searchPlaceholder": "Sammlungen durchsuchen"
+		},
+		"editDialog": {
+			"title": "Sammlungen für {{name}}"
+		},
+		"panel": {
+			"empty": "Noch keine Sammlungen.",
+			"addDialogTitle": "Sammlung hinzufügen",
+			"editDialogTitle": "Sammlung bearbeiten",
+			"filterPlaceholder": "Sammlungen filtern",
+			"reorderMode": "Neu ordnen",
+			"reorderModeAria": "Ziehen-und-Ablegen aktivieren, um Sammlungen zu sortieren"
+		}
+	},
+	"usage": {
+		"title": "Nutzungsstatistik",
+		"description": "Sehdauer über alle Plattformen — Summen, der tägliche Rhythmus und wofür deine Zeit aufgewendet wird.",
+		"history": {
+			"title": "Nutzungsverlauf",
+			"description": "Was du verwendet hast, neueste zuerst",
+			"empty": "Noch keine Nutzungseinträge.",
+			"loading": "Laden…",
+			"loadError": "Nutzungsverlauf konnte nicht geladen werden.",
+			"today": "Heute",
+			"yesterday": "Gestern",
+			"unknownTime": "Unbekannter Zeitpunkt",
+			"totalLabel_one": "{{count}} Element",
+			"totalLabel_other": "{{count}} Elemente",
+			"tabs": {
+				"all": "Alle",
+				"resources": "Ressourcen",
+				"characters": "Charaktere",
+				"documents": "Dokumente"
+			}
+		},
+		"stats": {
+			"totalTime": "Gesamte Sehdauer",
+			"avgPerDay": "Ø pro Tag",
+			"mostActiveDay": "Aktivster Tag",
+			"mostActiveDayFormat": "MMM D",
+			"entries_one": "{{count}} Eintrag",
+			"entries_other": "{{count}} Einträge",
+			"shareSectionTitle": "Aufteilung",
+			"shareTitle": "Zeit",
+			"shareDescription": "Nach Sehdauer für den gewählten Zeitraum sortiert.",
+			"viewShareTitle": "Aufrufe",
+			"viewShareDescription": "Nach Anzahl der Öffnungen für den gewählten Zeitraum sortiert.",
+			"periodComparison": "Zeitraumvergleich",
+			"filtersTitle": "Filter",
+			"trendDescription": "Minuten pro Tag",
+			"todayHourlyDescription": "Minuten pro Stunde · lokale Zeit",
+			"todayHourly": "Stündliche Verteilung",
+			"hourlyAverage": "Täglicher Rhythmus",
+			"hourlyAverageDescription": "Täglicher Durchschnitt pro Stunde · lokale Zeit",
+			"topEntities": "Top-Elemente heute",
+			"topEntitiesDescription": "Heute am häufigsten angesehen",
+			"trend": "Nutzungstrend",
+			"platformFilter": "Plattform",
+			"platformAll": "Alle Plattformen",
+			"platformWebMobile": "Web mobil",
+			"platformWebPc": "Web PC",
+			"platformDesktop": "Desktop",
+			"currentPlatform": {
+				"title": "Aktuelle Plattform",
+				"web-mobile": "Mobil",
+				"web-pc": "PC",
+				"desktop": "Desktop"
+			},
+			"platformPill": {
+				"web-mobile": "Web · Mobil",
+				"web-pc": "Web · PC",
+				"desktop": "Desktop"
+			},
+			"exposureMode": "Zeiterfassung",
+			"exposureDirect": "Direkt",
+			"exposureAssociated": "Zugeordnet",
+			"exposureTotal": "Gesamt",
+			"exposureTime": {
+				"direct": "Direkte Zeit",
+				"associated": "Zugeordnete Zeit",
+				"total": "Gesamtzeit"
+			},
+			"exposureModeNote": "Summen, Trends und die Prozentangaben oben zählen nur direkte Sitzungen. Die Rangfolge darunter verwendet den gewählten Modus."
+		},
+		"insight": {
+			"moreThanPeriod": "{{duration}} mehr als {{period}}",
+			"lessThanPeriod": "{{duration}} weniger als {{period}}",
+			"sameAsPeriod": "Gleich wie {{period}}",
+			"comparison": {
+				"yesterday": "gestern",
+				"lastWeek": "letzte Woche",
+				"prior7Days": "die vorherigen 7 Tage",
+				"lastMonth": "letzter Monat",
+				"lastYear": "letztes Jahr"
+			}
+		},
+		"entityExposure": {
+			"totalTime": "{{duration}} angesehen",
+			"views_one": "{{count}} Aufruf",
+			"views_other": "{{count}} Aufrufe",
+			"lastViewed": "Zuletzt angesehen {{time}}"
+		},
+		"leaderboard": {
+			"entityAll": "Alle",
+			"entityResources": "Ressourcen",
+			"entityCharacters": "Charaktere",
+			"entityDocuments": "Dokumente",
+			"entityPlugins": "Content-Plugins",
+			"empty": "Keine Nutzung für diesen Zeitraum.",
+			"viewsShort_one": "{{count}} Aufruf",
+			"viewsShort_other": "{{count}} Aufrufe",
+			"associatedSessionsShort": "{{count}} zugeordnet",
+			"rankLabel": "Rang {{rank}}"
+		},
+		"periods": {
+			"today": "Heute",
+			"last7days": "7 Tage",
+			"thisWeek": "Diese Woche",
+			"thisMonth": "Dieser Monat",
+			"thisYear": "Dieses Jahr",
+			"all": "Gesamter Zeitraum"
+		}
+	},
+	"trace": {
+		"title": "Fußspuren",
+		"description": "Nur-Anfüge-Protokoll deiner Aktionen — Importe, Exporte, Löschungen, Wiederherstellungen und Stimmen. Einträge behalten die Elementnamen, sodass sie endgültige Löschungen überstehen.",
+		"timelineTitle": "Zeitachse",
+		"filterAll": "Alle",
+		"filters": {
+			"import": "Importe",
+			"export": "Exporte",
+			"softDelete": "Papierkorb",
+			"restore": "Wiederherstellungen",
+			"hardDelete": "Endgültige Löschungen",
+			"dislikeAdd": "Dislikes",
+			"dislikeCancel": "Stimme rückgängig",
+			"messageCreate": "Nachrichten",
+			"messageSoftDelete": "Nachrichten-Löschungen",
+			"messageRestore": "Nachrichten-Wiederherstellungen",
+			"messageHardDelete": "Endgültige Löschungen",
+			"messageVoteAdd": "Stimmen",
+			"messageVoteCancel": "Stimme rückgängig",
+			"messageVoteSwap": "Stimmwechsel",
+			"documentCreate": "Dokument-Erstellungen",
+			"documentCommit": "Dokument-Aktualisierungen",
+			"documentSoftDelete": "Dokument-Papierkorb",
+			"documentRestore": "Dokument-Wiederherstellungen",
+			"documentHardDelete": "Dokument-Löschungen",
+			"characterCreate": "Charakter-Erstellungen",
+			"characterSoftDelete": "Charakter-Papierkorb",
+			"characterRestore": "Charakter-Wiederherstellungen",
+			"characterHardDelete": "Charakter-Löschungen",
+			"group": {
+				"resource": "Ressourcen",
+				"messages": "Nachrichten",
+				"document": "Dokumente",
+				"character": "Charaktere"
+			}
+		},
+		"actions": {
+			"import": "{{name}} importiert",
+			"export": "{{name}} exportiert",
+			"softDelete": "{{name}} in den Papierkorb verschoben",
+			"restore": "{{name}} wiederhergestellt",
+			"hardDelete": "{{name}} endgültig gelöscht",
+			"dislikeAdd": "{{name}} mit Dislike bewertet",
+			"dislikeCancel": "Dislike für {{name}} zurückgenommen",
+			"messageCreate": "Nachricht hinterlassen: „{{name}}“",
+			"messageSoftDelete": "Nachricht „{{name}}“ gelöscht",
+			"messageRestore": "Nachricht „{{name}}“ wiederhergestellt",
+			"messageHardDelete": "Nachricht „{{name}}“ endgültig gelöscht",
+			"messageVoteAddLike": "Nachricht „{{name}}“ mit „Gefällt mir“ bewertet",
+			"messageVoteAddDislike": "Nachricht „{{name}}“ mit Dislike bewertet",
+			"messageVoteCancelLike": "„Gefällt mir“ für „{{name}}“ zurückgenommen",
+			"messageVoteCancelDislike": "Dislike für „{{name}}“ zurückgenommen",
+			"messageVoteSwapLike": "Zu „Gefällt mir“ für „{{name}}“ gewechselt",
+			"messageVoteSwapDislike": "Zu „Gefällt mir nicht“ für „{{name}}“ gewechselt",
+			"documentCreate": "Dokument „{{name}}“ erstellt",
+			"documentCommit": "Dokument „{{name}}“ aktualisiert",
+			"documentSoftDelete": "Dokument „{{name}}“ in den Papierkorb verschoben",
+			"documentRestore": "Dokument „{{name}}“ wiederhergestellt",
+			"documentHardDelete": "Dokument „{{name}}“ endgültig gelöscht",
+			"characterCreate": "Charakter „{{name}}“ erstellt",
+			"characterSoftDelete": "Charakter „{{name}}“ in den Papierkorb verschoben",
+			"characterRestore": "Charakter „{{name}}“ wiederhergestellt",
+			"characterHardDelete": "Charakter „{{name}}“ endgültig gelöscht"
+		},
+		"meta": {
+			"bulk": "Stapel",
+			"source": "Von {{name}}",
+			"fileCount_one": "{{count}} Datei",
+			"fileCount_other": "{{count}} Dateien"
+		},
+		"overview": {
+			"title": "Zeitraumübersicht",
+			"today": "Heute",
+			"last7days": "7 Tage",
+			"thisMonth": "Dieser Monat",
+			"thisYear": "Dieses Jahr",
+			"actions": {
+				"today": "Aktionen heute",
+				"last7days": "Aktionen diese Woche",
+				"thisMonth": "Aktionen diesen Monat",
+				"thisYear": "Aktionen dieses Jahr"
+			},
+			"busiestKind": "Häufigste Art",
+			"restores": "Wiederherstellungen",
+			"weekTotal": "Wochensumme",
+			"avgPerDay": "Ø pro Tag",
+			"moreThanPrev": "{{count}} mehr als im vorherigen Zeitraum",
+			"lessThanPrev": "{{count}} weniger als im vorherigen Zeitraum",
+			"sameAsPrev": "Gleich wie im vorherigen Zeitraum"
+		},
+		"today": "Heute",
+		"yesterday": "Gestern",
+		"loading": "Fußspuren werden geladen…",
+		"loadError": "Fußspuren konnten nicht geladen werden",
+		"empty": "Noch keine Fußspuren. Importe, Exporte, Löschungen und Dislike-Stimmen werden hier aufgezeichnet.",
+		"count_one": "{{count}} Fußspur",
+		"count_other": "{{count}} Fußspuren"
+	},
+	"resources": {
+		"title": "Ressourcen",
+		"upload": "Hochladen",
+		"import": {
+			"action": "Importieren",
+			"title": "Importieren",
+			"description": "Einen ganzen Ordner auf einmal übernehmen — jeder Eintrag auf oberster Ebene wird eine Ressource."
+		},
+		"source": {
+			"fallback": "Quellenlink",
+			"aria": "Quelle öffnen: {{name}}"
+		},
+		"new": {
+			"title": "Hochladen",
+			"description": "Dateien zuerst bereitstellen — Metadaten können nachziehen.",
+			"files": "Dateien",
+			"filesDescription": "Abgelegte Dateien werden sofort bereitgestellt — frei sortieren, nichts wird erneut hochgeladen.",
+			"filesCount": "Dateien",
+			"basicInfo": "Grundinformationen",
+			"basicDescription": "Was diese Dateien gemeinsam sind.",
+			"links": "Verknüpfungen",
+			"linksDescription": "Tags, Charaktere und Sammlungen, zu denen diese Ressource gehört.",
+			"coverDescription": "Optional — standardmäßig von der ersten Datei übernommen.",
+			"folder": {
+				"sourceShared": "Gemeinsame Ordner durchsuchen",
+				"sourceZip": "Archiv auswählen",
+				"browseTitle": "Ordner durchsuchen",
+				"browseDescription": "Wähle den zu durchsuchenden Ordner aus.",
+				"previewTitle": "Scan-Ergebnisse",
+				"previewDescription": "Prüfe die zu importierenden Elemente.",
+				"resultTitle": "Import-Ergebnisse",
+				"scanHere": "Scannen",
+				"noSubdirs": "Noch keine Unterordner.",
+				"uploading": "Wird hochgeladen…",
+				"extracting": "Wird entpackt…",
+				"scanning": "Wird gescannt…",
+				"sharedRoot": "Gemeinsamer Stammordner",
+				"zipRoot": "Archiv-Stammordner",
+				"name": "Name",
+				"type": "Typ",
+				"plugin": "Plugin",
+				"confirmImport": "Importieren",
+				"importing": "Wird importiert…",
+				"importDone": "Fertig",
+				"resultScanned": "Gescannt",
+				"resultImported": "Importiert",
+				"resultFailed": "Fehlgeschlagen",
+				"sourceSharedDescription": "Wähle einen Ordner aus den gemeinsamen Import-Stammordnern des Servers.",
+				"sourceSharedDisabled": "Der Import aus gemeinsamen Ordnern ist nicht eingerichtet.",
+				"sourceZipDescription": "Eine .zip — wird auf dem Server entpackt und dann gescannt.",
+				"importingDescription": "Aus dem gewählten Ordner werden Ressourcen erstellt. Dies kann einen Moment dauern.",
+				"stepSource": "Quelle",
+				"stepBrowse": "Durchsuchen",
+				"stepPreview": "Vorschau",
+				"stepImport": "Importieren",
+				"stepDone": "Fertig",
+				"stepsAria": "Import-Schritte",
+				"emptyTitle": "Dieser Ordner ist leer.",
+				"emptyDescription": "Noch keine Dateien oder Ordner zum Importieren.",
+				"previewCount_one": "{{count}} Element bereit zum Importieren",
+				"previewCount_other": "{{count}} Elemente bereit zum Importieren",
+				"howTitle": "So funktioniert es",
+				"howScan": "Scannen",
+				"howScanMeta": "Jeder Eintrag auf oberster Ebene wird gefunden und vermessen",
+				"howPreview": "Vorschau",
+				"howPreviewMeta": "Inhaltstyp pro Eintrag erkannt, bevor etwas geschrieben wird",
+				"howImport": "Importieren",
+				"howImportMeta": "Fortschritt pro Eintrag, mit einer Zusammenfassung am Ende"
+			},
+			"name": "Name",
+			"intro": "Einführung",
+			"plugin": "Plugin",
+			"contentType": "Inhaltstyp",
+			"sourceName": "Quellenname",
+			"sourceUrl": "Quellen-URL",
+			"sourceHint": "Mindestens eines ist empfohlen, damit du nachvollziehen kannst, woher dies stammt.",
+			"sourceNamePlaceholder": "z. B. eine Website oder Plattform",
+			"sourceUrlPlaceholder": "e.g. https://...",
+			"introPlaceholder": "Worum es in dieser Zusammenstellung geht.",
+			"tags": "Tags",
+			"characters": "Charaktere",
+			"cover": "Cover",
+			"collections": "Sammlungen",
+			"namePlaceholder": "Name",
+			"useFilenameAsName": "Dateinamen als Namen verwenden",
+			"oneFilePerResource": "Eine Datei pro Ressource — jede Ressource enthält genau eine Datei.",
+			"createdCount_one": "{{count}} Ressource erstellt",
+			"createdCount_other": "{{count}} Ressourcen erstellt",
+			"duplicatesFound_one": "Diese Ressource enthält {{count}} Bild, das bestehende Ressourcen dupliziert: {{names}}",
+			"duplicatesFound_other": "Diese Ressource enthält {{count}} Bilder, die bestehende Ressourcen duplizieren: {{names}}",
+			"duplicateFileNames_one": "{{count}} Datei hat in diesem Stapel einen doppelten Namen — sie wird automatisch umbenannt (z. B. name-1.png)",
+			"duplicateFileNames_other": "{{count}} Dateien haben in diesem Stapel doppelte Namen — sie werden automatisch umbenannt (z. B. name-1.png)",
+			"submit": "Erstellen",
+			"uploading": "Wird hochgeladen…",
+			"errors": {
+				"pickAtLeastOne": "Wähle mindestens eine Datei",
+				"uploadFailed": "Hochladen fehlgeschlagen",
+				"stagingFailed_one": "{{count}} Datei konnte nicht hochgeladen werden — entferne sie und versuche es erneut",
+				"stagingFailed_other": "{{count}} Dateien konnten nicht hochgeladen werden — entferne sie und versuche es erneut",
+				"attachCollectionsFailed": "Ressource erstellt, aber die Zuordnung zu einer oder mehreren Sammlungen schlug fehl",
+				"batchPartialHint": "Wenn dies vorzeitig abgebrochen wurde, existieren einige Ressourcen möglicherweise bereits — prüfe die Liste."
+			},
+			"created": "Erstellt",
+			"autoDetect": "Automatisch erkennen"
+		},
+		"search": {
+			"placeholder": "Ressourcen durchsuchen…",
+			"empty": "Noch keine Ressourcen.",
+			"trashEmpty": "Noch keine Ressourcen im Papierkorb.",
+			"filters": "Filter",
+			"sectionOptions": "Optionen",
+			"sectionTags": "Tags",
+			"sectionCharacters": "Charaktere",
+			"sectionPlugins": "Plugins",
+			"sectionSource": "Quelle",
+			"sectionCollections": "Sammlungen",
+			"clearAll": "Alles leeren",
+			"apply": "Suchen",
+			"viewGrid": "Rasteransicht",
+			"viewMasonry": "Masonry-Ansicht",
+			"sourceLabel": "Quelle",
+			"sourceAll": "Alle Quellen",
+			"sortLabel": "Sortieren",
+			"orderLabel": "Reihenfolge",
+			"sortCreated": "Erstellt",
+			"sortUpdated": "Aktualisiert",
+			"sortDisliked": "Dislikes",
+			"orderLatest": "Neueste",
+			"orderEarliest": "Älteste",
+			"orderMost": "Meiste",
+			"orderLeast": "Wenigste",
+			"noCharacters": "Keine Charaktere",
+			"dislikedOnly": "Nur mit Dislike",
+			"trash": "Papierkorb",
+			"random": "Zufällig",
+			"pageSizeLabel": "Pro Seite",
+			"itemCount_one": "{{count}} Ressource",
+			"itemCount_other": "{{count}} Ressourcen"
+		},
+		"bulk": {
+			"select": "Auswählen",
+			"done": "Fertig",
+			"toolbarCount": "{{count}} ausgewählt",
+			"selectCurrentPage": "Seite auswählen",
+			"invertCurrentPage": "Umkehren",
+			"clearSelection": "Leeren",
+			"download": "Herunterladen",
+			"downloadFailed": "Herunterladen fehlgeschlagen.",
+			"downloadRejected": "Das Archiv konnte nicht erstellt werden (leere oder ungültige Auswahl).",
+			"downloadTooMany": "Wähle höchstens {{max}} Ressourcen zum gleichzeitigen Herunterladen aus.",
+			"editTags": "Tags bearbeiten",
+			"moveToTrash": "Papierkorb",
+			"deleteForever": "Endgültig löschen",
+			"confirmSoft_one": "{{count}} Ressource in den Papierkorb verschieben?",
+			"confirmSoft_other": "{{count}} Ressourcen in den Papierkorb verschieben?",
+			"softDeleteDescription": "Die ausgewählten Ressourcen werden in den Papierkorb verschoben. Sie können später aus dem Papierkorb wiederhergestellt werden.",
+			"hardDeleteTitle": "Ausgewählte endgültig löschen?",
+			"hardDeleteDescription": "Dies löscht die ausgewählten Ressourcen dauerhaft und verschiebt ihre Ordner in den lokalen Papierkorb. Dies kann nicht rückgängig gemacht werden.",
+			"hardDeleteConfirm": "Endgültig löschen",
+			"hardDeleteDeleting": "Löschen…",
+			"toastAllOk_one": "{{count}} Ressource aktualisiert.",
+			"toastAllOk_other": "{{count}} Ressourcen aktualisiert.",
+			"toastAllFailed": "Nichts aktualisiert ({{count}} fehlgeschlagen).",
+			"toastPartial": "{{ok}} erfolgreich, {{failed}} fehlgeschlagen."
+		},
+		"actions": {
+			"editBasic": "Grundinformationen",
+			"editCharacters": "Verknüpfte Charaktere",
+			"editTags": "Tags",
+			"editCollections": "Sammlungen",
+			"editCover": "Cover",
+			"download": "Herunterladen",
+			"openMessages": "Nachrichten",
+			"extend": "Erweitern",
+			"dislike": "Dislike",
+			"dislikeCancellable": "Rückgängig machbar",
+			"restore": "Wiederherstellen",
+			"hardDelete": "Endgültig löschen",
+			"softDelete": "In den Papierkorb verschieben",
+			"actionsAria": "Aktionen für {{name}}"
+		},
+		"hardDelete": {
+			"title": "Endgültig löschen?",
+			"description": "Dies löscht die Ressource dauerhaft und verschiebt ihren Ordner in den lokalen Papierkorb.",
+			"confirm": "Endgültig löschen",
+			"deleting": "Löschen…"
+		},
+		"toast": {
+			"movedToTrash": "In den Papierkorb verschoben",
+			"deleteFailed": "Löschen fehlgeschlagen",
+			"restored": "Wiederhergestellt",
+			"restoreFailed": "Wiederherstellen fehlgeschlagen",
+			"deletedForever": "Endgültig gelöscht",
+			"disliked": "Als Dislike bewertet",
+			"dislikeRemoved": "Dislike entfernt",
+			"dislikeFailed": "Dislike konnte nicht aktualisiert werden"
+		},
+		"preview": {
+			"aria": "Vorschau: {{name}}",
+			"closePreview": "Vorschau schließen",
+			"enterFullscreen": "Vollbild öffnen",
+			"exitFullscreen": "Vollbild verlassen"
+		},
+		"detail": {
+			"docSearchTitle": "In Dokumenten",
+			"emptyInline": "Leere Ressource",
+			"notFound": "Ressource nicht gefunden",
+			"fileCount_one": "{{count}} Datei",
+			"fileCount_other": "{{count}} Dateien",
+			"sourceFrom": "Von {{name}}",
+			"openSidebar": "Seitenleiste öffnen",
+			"fullscreen": "Vollbild",
+			"anniversary_one": "Seit {{count}} Jahr in der Bibliothek",
+			"anniversary_other": "Seit {{count}} Jahren in der Bibliothek",
+			"sidebar": {
+				"tagsHeading": "Tags",
+				"colEmpty": "Noch keine anderen Ressourcen in dieser Sammlung.",
+				"noTags": "Noch keine Tags zugewiesen.",
+				"relatedByTagsHeading": "Verwandt über Tags",
+				"similarImagesHeading": "Ähnliche Bilder",
+				"duplicateImagesHeading": "Duplikate",
+				"similarWithinHeading": "Ähnlich innerhalb dieser Ressource",
+				"imageMatchCount_one": "{{count}} passende Datei",
+				"imageMatchCount_other": "{{count}} passende Dateien",
+				"duplicateCount_one": "{{count}} doppelte Datei",
+				"duplicateCount_other": "{{count}} doppelte Dateien",
+				"intraSimilarCount_one": "{{count}} ähnliche Datei",
+				"intraSimilarCount_other": "{{count}} ähnliche Dateien",
+				"matchSimilarity": "{{name}} · {{percent}}% ähnlich",
+				"similarity": "{{percent}}% ähnlich"
+			}
+		},
+		"editDialog": {
+			"aria": "Grundinformationen der Ressource bearbeiten",
+			"plugin": "Plugin",
+			"contentTypeMissing": "Fehlt: {{names}}",
+			"name": "Name",
+			"intro": "Einführung",
+			"sourceName": "Quellenname",
+			"sourceUrl": "Quellenadresse",
+			"sourceHint": "Mindestens eines ist empfohlen, damit du nachvollziehen kannst, woher dies stammt.",
+			"namePlaceholder": "z. B. Hafen in der Abenddämmerung",
+			"introPlaceholder": "Worum es bei dieser Ressource geht.",
+			"sourceNamePlaceholder": "z. B. eine Website oder Plattform",
+			"sourceUrlPlaceholder": "e.g. https://...",
+			"saveChanges": "Änderungen speichern",
+			"toast": {
+				"contentTypeFailed": "Inhaltstyp konnte nicht geändert werden"
+			}
+		},
+		"editHub": {
+			"title": "Bearbeiten — {{name}}"
+		},
+		"tagsDialog": {
+			"title": "Tags bearbeiten — {{name}}"
+		},
+		"selectorDialog": {
+			"title": "Ressource auswählen"
+		},
+		"viewSelected": "Nur ausgewählte",
+		"viewSelectedTooMany": "Nur ausgewählte unterstützt bis zu {{max}} Elemente",
+		"picker": {
+			"selectedEmpty": "Keine Ressourcen ausgewählt.",
+			"loadFailed": "Ressource konnte nicht geladen werden."
+		},
+		"selectAria": "{{name}} auswählen",
+		"toggleSelectAria": "Auswahl für {{name}} umschalten",
+		"video": {
+			"previewAria": "{{name}} voranschauen",
+			"playAria": "{{name}} abspielen",
+			"stopAria": "{{name}} anhalten"
+		},
+		"audio": {
+			"playAria": "{{name}} abspielen",
+			"pauseAria": "{{name}} pausieren",
+			"seekAria": "In {{name}} springen"
+		},
+		"editPanel": {
+			"nameRequired": "Name ist erforderlich"
+		}
+	},
+	"relationshipTypes": {
+		"panel": {
+			"empty": "Noch keine Beziehungen. Tippe auf Hinzufügen, um eine zu erstellen.",
+			"addDialogTitle": "Beziehung hinzufügen",
+			"editDialogTitle": "Beziehung bearbeiten",
+			"filterPlaceholder": "Beziehungstypen filtern",
+			"linkCount_one": "{{count}} Verknüpfung",
+			"linkCount_other": "{{count}} Verknüpfungen",
+			"reorderMode": "Neu ordnen",
+			"reorderModeAria": "Ziehen-und-Ablegen aktivieren, um Beziehungen zu sortieren",
+			"tabDefinition": "Definition",
+			"tabDetails": "Details"
+		},
+		"preview": {
+			"characterA": "Charakter A",
+			"characterB": "Charakter B",
+			"aCallsB": "A ist Bs",
+			"bCallsA": "B ist As",
+			"labelPlaceholder": "z. B. Freund"
+		},
+		"kind": {
+			"directed": {
+				"label": "Gerichtet",
+				"iconLabel": "Einweg",
+				"hint": "Einseitige Beziehung nur von A zu B, z. B. unerwiderte Liebe."
+			},
+			"symmetric": {
+				"label": "Symmetrisch",
+				"iconLabel": "Gegenseitig",
+				"hint": "Gegenseitige Beziehung, z. B. Freunde oder Ehepartner."
+			},
+			"hierarchical": {
+				"label": "Hierarchisch",
+				"iconLabel": "Gestuft",
+				"hint": "A über B, Richtung A→B, z. B. Mentor und Lehrling"
+			}
+		},
+		"delete": {
+			"kindLabel": "Beziehung",
+			"usageLabelOne": "Beziehungsverknüpfung",
+			"usageLabel": "Beziehungsverknüpfungen"
+		},
+		"toast": {
+			"created": "Beziehung erstellt",
+			"createFailed": "Beziehung konnte nicht erstellt werden"
+		}
+	},
+	"traits": {
+		"panel": {
+			"empty": "Noch keine Merkmalsdefinitionen. Verwende Hinzufügen, um eine zu erstellen.",
+			"addDialogTitle": "Merkmal hinzufügen",
+			"editDialogTitle": "Merkmal bearbeiten",
+			"filterPlaceholder": "Merkmale filtern",
+			"reorderMode": "Neu ordnen",
+			"reorderModeAria": "Ziehen-und-Ablegen aktivieren, um Merkmale zu sortieren",
+			"toast": {
+				"added": "Merkmal hinzugefügt"
+			}
+		},
+		"kind": {
+			"text": "Text",
+			"multitext": "Mehrfachtext",
+			"number": "Zahl",
+			"weight": "Gewicht",
+			"height": "Größe",
+			"date": "Datum"
+		},
+		"delete": {
+			"kindLabel": "Merkmal",
+			"usageLabelOne": "Charakter",
+			"usageLabel": "Charaktere"
+		},
+		"values": {
+			"noDefinitions": "Noch keine Merkmalsdefinitionen. Öffne Einstellungen / Merkmale, um sie hinzuzufügen.",
+			"addField": "Feld hinzufügen",
+			"removeField": "Feld entfernen",
+			"inputPlaceholder": "Wert eingeben",
+			"remove": "Entfernen",
+			"allSet": "Alle Merkmale bereits gesetzt.",
+			"emptyError": "Diese Merkmale sind leer und können nicht gespeichert werden: {{names}}",
+			"parseError": "Ungültiger Wert für „{{name}}“: {{value}}",
+			"date": {
+				"prefixPlaceholder": "Epoche / Kalender",
+				"after": "n. Chr.",
+				"before": "v. Chr.",
+				"year": "Jahr",
+				"month": "Monat",
+				"day": "Tag"
+			}
+		}
+	},
+	"categories": {
+		"panel": {
+			"empty": "Noch keine Kategorien oder Tags.",
+			"kindTabsAria": "Kategorie-Art",
+			"kindTab": {
+				"common": "Allgemein",
+				"resource": "Ressourcen",
+				"character": "Charaktere"
+			},
+			"dependencyMessage": "Dieser Tag wird von {{parts}} verwendet und kann nicht direkt gelöscht werden.",
+			"dependencyResources": "{{count}} Ress.",
+			"dependencyCharacters": "{{count}} Char.",
+			"tagCharacterCount": "Char. {{count}}",
+			"tagResourceCount": "Ress. {{count}}",
+			"copyTagName": "In die Zwischenablage kopieren",
+			"toast": {
+				"added": "Hinzugefügt",
+				"addFailed": "Hinzufügen fehlgeschlagen",
+				"copied": "In die Zwischenablage kopiert",
+				"copyFailed": "Kopieren fehlgeschlagen",
+				"moved": "Tag verschoben"
+			},
+			"mergeTagMenu": "Einfügen in…",
+			"specialStyle": {
+				"silver": "Silber",
+				"gold": "Gold",
+				"rainbow": "Regenbogen",
+				"oilslick": "Ölfilm",
+				"kintsugi": "Kintsugi"
+			}
+		},
+		"delete": {
+			"kindLabelCategory": "Kategorie",
+			"kindLabelTag": "Tag",
+			"usageLabelTagsOne": "Tag",
+			"usageLabelTags": "Tags"
+		},
+		"form": {
+			"createCategory": "Kategorie erstellen",
+			"creating": "Erstellen…",
+			"addTag": "Tag erstellen"
+		},
+		"dialog": {
+			"addCategoryTitle": "Neue Kategorie",
+			"addTagTitle": "Neuer Tag",
+			"editCategoryTitle": "Kategorie bearbeiten",
+			"editTagTitle": "Tag bearbeiten"
+		}
+	},
+	"tags": {
+		"picker": {
+			"noCategories": "Noch keine Kategorien.",
+			"selectedHeader": "Ausgewählt:",
+			"tagsHeader": "Tags:",
+			"empty": "Noch keine Tags in dieser Kategorie.",
+			"emptyAll": "Noch keine Tags definiert.",
+			"searchPlaceholder": "Tags durchsuchen…",
+			"noMatches": "Keine passenden Tags."
+		},
+		"bulk": {
+			"nonCommonHint_one": "{{count}} Tag wird nicht von allen ausgewählten Elementen verwendet. Du kannst beliebige Tags hinzufügen; nur gemeinsame Tags können entfernt werden.",
+			"nonCommonHint_other": "{{count}} Tags werden nicht von allen ausgewählten Elementen verwendet. Du kannst beliebige Tags hinzufügen; nur gemeinsame Tags können entfernt werden."
+		},
+		"toast": {
+			"attachFailed": "Tag konnte nicht zugeordnet werden",
+			"detachFailed": "Tag konnte nicht entfernt werden"
+		},
+		"filterMode": {
+			"and": "Alle",
+			"or": "Beliebige",
+			"not": "Nicht",
+			"nor": "Weder"
+		},
+		"merge": {
+			"title": "Tags zusammenführen",
+			"description": "Nutzung und Regeln des Duplikats wandern zum Überlebenden.",
+			"targetPlaceholder": "Wähle den verbleibenden Tag",
+			"confirm": "Zusammenführung bestätigen",
+			"confirming": "Zusammenführen…",
+			"countResources_one": "{{count}} Ressource",
+			"countResources_other": "{{count}} Ressourcen",
+			"countCharacters_one": "{{count}} Charakter",
+			"countCharacters_other": "{{count}} Charaktere",
+			"countSiblingRules_one": "{{count}} Geschwisterregel",
+			"countSiblingRules_other": "{{count}} Geschwisterregeln",
+			"countParentRules_one": "{{count}} Elternregel",
+			"countParentRules_other": "{{count}} Elternregeln",
+			"preview": "Verschiebt {{resources}}, {{characters}}, {{siblingRules}} und {{parentRules}}.",
+			"collision": "Diese Kategorie hat bereits einen Tag namens „{{name}}“ — du kannst sie zusammenführen.",
+			"offer": "Mit dem Duplikat zusammenführen",
+			"toast": {
+				"success": "Zusammengeführt: {{resources}}, {{characters}}, {{siblingRules}}, {{parentRules}}"
+			}
+		},
+		"rules": {
+			"description": "Aliasse: Mehrere Tags werden überall als ein Anzeige-Tag gerendert (z. B. „Katze“ & „Kätzchen“ → „Katze“). Eltern: Ein Element, das mit dem Kind getaggt ist, trägt auch das Elternteil (z. B. „getigert“ → „Katze“). Charaktere können auf beiden Seiten teilnehmen: Ein verknüpfter Charakter wird als sein Tag gerendert, sodass damit verknüpfte Ressourcen das Tag abgeschwächt (als virtuell markiert) anzeigen und seine Suchen erfüllen.",
+			"displayLabel": "Anzeige-Tag",
+			"badPlaceholder": "Synonym",
+			"goodPlaceholder": "Anzeige-Tag",
+			"addAlias": "Alias hinzufügen",
+			"alias": "Alias",
+			"addAliasDescription": "Wähle das Synonym und das Anzeige-Tag, unter dem es erscheint.",
+			"aliasesTitle": "Aliasse",
+			"groupCount_one": "{{count}} Gruppe",
+			"groupCount_other": "{{count}} Gruppen",
+			"setDisplay": "Als Anzeige-Tag festlegen",
+			"remove": "Entfernen",
+			"pickCharacter": "Charakter…",
+			"pickTag": "Tag…",
+			"tagPickTitle": "Tag auswählen",
+			"characterLinkHint": "Charakter-Verknüpfungen: Ein Charakter wird als sein Tag gerendert — Ressourcen, die mit dem Charakter verknüpft sind, zeigen es abgeschwächt (als virtuell markiert) und erfüllen seine Suchen.",
+			"empty": "Noch keine Geschwistergruppen.",
+			"displaysAs": "Wird angezeigt als {{name}}",
+			"groupCounts": "{{resources}} Ress. · {{characters}} Char.",
+			"parentsTitle": "Eltern",
+			"ruleCount_one": "{{count}} Regel",
+			"ruleCount_other": "{{count}} Regeln",
+			"child": "Kind",
+			"childPlaceholder": "Kind",
+			"parentPlaceholder": "Elternteil",
+			"addRule": "Regel hinzufügen",
+			"addRuleDescription": "Wähle das Kind und das Elternteil, unter dem es erscheint.",
+			"endpointTag": "Tag",
+			"endpointCharacter": "Charakter",
+			"parentsEmpty": "Noch keine Elternregeln.",
+			"noMatch": "Keine passenden Regeln.",
+			"searchPlaceholder": "Regeln filtern…",
+			"toast": {
+				"pairAdded": "Geschwisterpaar hinzugefügt",
+				"pairRemoved": "Geschwisterpaar entfernt",
+				"displaySet": "Anzeige-Tag festgelegt",
+				"parentAdded": "Elternregel hinzugefügt",
+				"parentRemoved": "Elternregel entfernt"
+			}
+		},
+		"errors": {
+			"nameExists": "In dieser Kategorie existiert bereits ein Tag mit diesem Namen.",
+			"siblingCycle": "Diese Kombination würde eine Schleife erzeugen.",
+			"siblingKindIsolation": "Eine Geschwistergruppe kann Allgemein mit nur einer anderen Art kombinieren (Ressourcen- und Charakter-Tags dürfen nicht gemischt werden).",
+			"parentSelf": "Ein Tag kann nicht sein eigenes Elternteil sein.",
+			"parentCycle": "Diese Regel würde eine Schleife erzeugen.",
+			"parentKindIsolation": "Eine Elternkette kann Allgemein mit nur einer anderen Art kombinieren (Ressourcen- und Charakter-Tags dürfen nicht gemischt werden).",
+			"characterMissing": "Der Charakter existiert nicht mehr — wähle einen vorhandenen.",
+			"mergeKindMismatch": "Tags verschiedener Arten können nicht zusammengeführt werden (Ressourcen- und Charakter-Tags können nicht zusammengeführt werden).",
+			"mergeCreatesCycle": "Die Zusammenführung würde eine Regelschleife erzeugen — passe zuerst die zugehörigen Regeln an."
+		},
+		"virtual": {
+			"label": "virtuell"
+		}
+	},
+	"imageCrop": {
+		"pickHint": "Klicken oder ablegen",
+		"reselect": "Erneut hochladen",
+		"showPreview": "Vorschau anzeigen",
+		"previewLabel": "Vorschau",
+		"previewAlt": "Zugeschnittene Vorschau",
+		"saveFailed": "Speichern fehlgeschlagen"
+	},
+	"imageEdit": {
+		"confirmDeleteTitle": "Bild entfernen?",
+		"confirmDeleteDescription": "Dies entfernt das aktuelle Bild. Diese Aktion kann nicht rückgängig gemacht werden."
+	},
+	"deleteEntity": {
+		"dialogConfirmTitle": "„{{name}}“ löschen?",
+		"dialogConfirmDescription": "{{kind}} wird dauerhaft gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.",
+		"defaultLabel": "Löschen",
+		"defaultNoun": "Elemente",
+		"defaultNounOne": "Element",
+		"confirm": "Löschen bestätigen",
+		"deleting": "Löschen…",
+		"forceTitle": "{{kind}} kann nicht gelöscht werden",
+		"usageMessage": "{{kind}} wird von {{count}} {{usage}} verwendet und kann nicht direkt gelöscht werden.",
+		"toast": {
+			"deleteSuccess": "{{kind}} gelöscht",
+			"deleteFailed": "Löschen fehlgeschlagen",
+			"forceDeleteSuccess": "{{kind}} erzwungen gelöscht",
+			"forceDeleteFailed": "Erzwungenes Löschen fehlgeschlagen",
+			"nameMismatch": "Name stimmt nicht überein"
+		},
+		"forceConfirm": "Erzwungen löschen",
+		"forceDeleting": "Löschen…"
+	},
+	"upload": {
+		"addFiles": "Dateien hinzufügen",
+		"clearAll": "Leeren",
+		"totalCount_one": "{{count}} Datei insgesamt",
+		"totalCount_other": "{{count}} Dateien insgesamt",
+		"removeFile": "Datei entfernen",
+		"failed": "Fehlgeschlagen",
+		"duplicateName": "Doppelter Name",
+		"duplicateNameTitle": "Eine andere Datei in diesem Stapel hat denselben Namen; sie wird beim Hochladen automatisch umbenannt"
+	},
+	"messages": {
+		"title": "Nachrichten",
+		"empty": "Noch keine Nachrichten.",
+		"threadCount_one": "{{count}} Thread",
+		"threadCount_other": "{{count}} Threads",
+		"replyCount_one": "{{count}} Antwort",
+		"replyCount_other": "{{count}} Antworten",
+		"floor": "#{{n}}",
+		"replyNumber": "#{{n}}",
+		"composerPlaceholder": "Nachricht schreiben…",
+		"replyPlaceholder": "Antwort schreiben…",
+		"submit": "Veröffentlichen",
+		"submitting": "Veröffentlichen…",
+		"reply": "Antworten",
+		"actions": "Nachrichten-Aktionen",
+		"trash": "Papierkorb",
+		"emptyTrash": "Noch keine Nachrichten im Papierkorb.",
+		"deleted": "Gelöscht",
+		"delete": "Löschen",
+		"deleteConfirmTitle": "Diese Nachricht löschen?",
+		"deleteConfirmDescription": "Sie wird in den Papierkorb verschoben. Du kannst sie später wiederherstellen.",
+		"restore": "Wiederherstellen",
+		"hardDelete": "Endgültig löschen",
+		"hardDeleteConfirmTitle": "Endgültig löschen?",
+		"hardDeleteConfirmDescription": "Kann nicht rückgängig gemacht werden. Das Löschen eines Floors entfernt alle seine Antworten.",
+		"viewReplies": "Antworten anzeigen ({{count}})",
+		"collapseReplies": "Antworten einklappen",
+		"sortBy": "Sortieren",
+		"sort": {
+			"newest": "Neueste",
+			"oldest": "Älteste",
+			"mostLikes": "Meiste Likes",
+			"leastLikes": "Wenigste Likes"
+		},
+		"searchPlaceholder": "Nachrichten durchsuchen…",
+		"totalLabel_one": "{{count}} Nachricht",
+		"totalLabel_other": "{{count}} Nachrichten",
+		"clearFilter": "Filter leeren",
+		"charsRemaining_one": "{{count}} Zeichen übrig",
+		"charsRemaining_other": "{{count}} Zeichen übrig",
+		"linkCharactersAdd": "Charakter anhängen",
+		"linkResources": "Ressourcen verknüpfen",
+		"linkResourcesAdd": "Ressource anhängen",
+		"toast": {
+			"posted": "Nachricht veröffentlicht",
+			"postFailed": "Nachricht konnte nicht veröffentlicht werden",
+			"deleted": "In den Papierkorb verschoben",
+			"restored": "Nachricht wiederhergestellt",
+			"hardDeleted": "Endgültig gelöscht",
+			"voteFailed": "Stimme konnte nicht aufgezeichnet werden"
+		}
+	},
+	"storage": {
+		"sectionTitle": "Speicher",
+		"sectionDescription": "Wie viel Speicherplatz dein Archiv belegt, aufgeschlüsselt nach Kategorie.",
+		"volumeTotal": "Datenträger gesamt",
+		"volumeFree": "Frei",
+		"volumeUsed": "Belegt",
+		"sidebarUsed": "Belegt {{size}}",
+		"sidebarFree": "{{size}} frei",
+		"volumeUnavailable": "Datenträger-Information nicht verfügbar",
+		"usedByHoardodile": "hoardodile-Verbrauch",
+		"category": {
+			"database": "Datenbank",
+			"resources": "Ressourcen",
+			"archived": "Archivierte Kopien",
+			"cache": "Cache",
+			"trash": "Papierkorb",
+			"backups": "Backups",
+			"other": "Sonstiges",
+			"unattributedResources": "Nicht zugeordnete Ressourcen"
+		},
+		"otherHint": "Protokolle, installierte Plugins, Sitzungsschlüssel und anderer host-lokaler Zustand, der oben nicht aufgeführt ist.",
+		"unattributedCount_one": "{{count}} Ressource ohne erfasste Größe",
+		"unattributedCount_other": "{{count}} Ressourcen ohne erfasste Größen",
+		"unattributedHint": "Diese Ressourcen haben noch keine erfasste Größenmetadaten (festplattenbasierte Schätzung, einschließlich Covers und weiterer Extras). Führe den Vorab-Aufbau aus, um sie den Plugins oben zuzuordnen.",
+		"archivedHint": "Kopien von Ressourcen, Charakteren und Dokumenten, die in archivierten Versionen eingefroren sind. Durch einen Datenträgerscan gemessen, zählt daher jede historische Kopie — anders als die Ressourcengrößen oben, die nur aus Metadaten der aktuellen Version stammen.",
+		"backupsHint": "Manuelle Backups und automatische tägliche Snapshots.",
+		"cacheHint": "Covers pro Ressource, Thumbnails, Vorschauen, Entpack-Caches und files-cache.json.",
+		"lowSpaceBanner": "Wenig Speicherplatz — automatische Snapshots sind pausiert. Gib etwas Speicherplatz frei, um sie fortzusetzen.",
+		"clearCache": "Leeren",
+		"clearCacheTitle": "Cache leeren",
+		"clearCacheDescription": "Thumbnails, Vorschauen und Entpack-Caches werden gelöscht. Sie werden bei Bedarf neu aufgebaut — dies gibt nur Speicherplatz frei.",
+		"pluginCount_one": "{{count}} Ressource",
+		"pluginCount_other": "{{count}} Ressourcen",
+		"legend": {
+			"resources": "Ressourcen",
+			"hostData": "Host-Daten",
+			"archivedVersions": "Archivierte Versionen",
+			"cache": "Cache",
+			"latest": "Neueste"
+		}
+	},
+	"sync": {
+		"pageHint": "Pro Gerät: erfasst Elementanzahlen, Inhaltsgröße und Speichervolumen · behält die zwei neuesten Snapshots",
+		"status": {
+			"allUpToDate": "Alle Geräte auf dem neuesten Stand",
+			"dueCount_one": "{{count}} von {{total}} Gerät fällig",
+			"dueCount_other": "{{count}} von {{total}} Geräten fällig"
+		},
+		"tip": {
+			"oneWay": "Sync in eine Richtung: ein Master-Repository, der Rest als Spiegel, um Konflikte zu vermeiden."
+		},
+		"config": {
+			"remindLabel": "Erinnere mich nach",
+			"remindDescription": "Nach Ablauf des Intervalls ohne synchronisierten Snapshot fragt das Dashboard nach.",
+			"remindDays_one": "{{count}} Tag",
+			"remindDays_other": "{{count}} Tage"
+		},
+		"devices": {
+			"addTitle": "Gerät hinzufügen",
+			"addAutoRecord": "Der aktuelle Zustand wird nach dem Hinzufügen automatisch synchronisiert.",
+			"namePlaceholder": "Gerätename",
+			"notesPlaceholder": "Notizen (optional)",
+			"nameHint": "z. B. Laptop",
+			"notesHint": "z. B. USB 4TB",
+			"add": "Gerät hinzufügen",
+			"addPending": "Hinzufügen…",
+			"empty": "Noch keine Geräte — füge eines hinzu, um mit dem Sync zu beginnen.",
+			"loading": "Laden…",
+			"neverSynced": "Nie synchronisiert",
+			"lastSyncedAgo_one": "Zuletzt synchronisiert {{date}} · vor {{count}} Tag",
+			"lastSyncedAgo_other": "Zuletzt synchronisiert {{date}} · vor {{count}} Tagen",
+			"justNow": "Gerade eben",
+			"minutesAgo_one": "vor {{count}} Minute",
+			"minutesAgo_other": "vor {{count}} Minuten",
+			"hoursAgo_one": "vor {{count}} Stunde",
+			"hoursAgo_other": "vor {{count}} Stunden",
+			"upToDate": "Auf dem neuesten Stand",
+			"overdue_one": "Überfällig · {{count}} Tag",
+			"overdue_other": "Überfällig · {{count}} Tage",
+			"neverBadge": "Noch nicht synchronisiert",
+			"record": "Sync",
+			"recordNow": "Jetzt synchronisieren",
+			"deleteTitle": "{{name}} löschen?",
+			"deleteDescription": "Das Gerät und alle seine Sync-Einträge werden entfernt.",
+			"delete": "Löschen",
+			"deletePending": "Löschen…",
+			"editTitle": "Gerät bearbeiten",
+			"edit": "Bearbeiten",
+			"save": "Speichern",
+			"editPending": "Speichern…"
+		},
+		"fields": {
+			"resources": "Ressourcen",
+			"characters": "Charaktere",
+			"documents": "Dokumente",
+			"messages": "Nachrichten",
+			"tags": "Tags",
+			"trash": "Papierkorb",
+			"contentSize": "Inhaltsgröße",
+			"storage": "Speicher",
+			"firstRecord": "Erster Sync"
+		},
+		"toast": {
+			"deviceAdded": "Gerät hinzugefügt und synchronisiert",
+			"deviceAddFailed": "Gerät konnte nicht hinzugefügt werden",
+			"deviceUpdated": "Gerät aktualisiert",
+			"deviceUpdateFailed": "Gerät konnte nicht aktualisiert werden",
+			"deviceDeleted": "Gerät gelöscht",
+			"deviceDeleteFailed": "Gerät konnte nicht gelöscht werden",
+			"recorded": "Synchronisiert",
+			"recordFailed": "Sync fehlgeschlagen"
+		},
+		"banner": {
+			"noDevicesTitle": "Noch keine Sync-Geräte eingerichtet.",
+			"noDevicesDescription": "Füge mindestens ein Gerät hinzu, um Syncs zu verfolgen.",
+			"configureLink": "Einrichten",
+			"neverSyncedTitle": "{{name}} wurde noch nie synchronisiert",
+			"neverSyncedDescription": "Für dieses Gerät ist noch kein Sync aufgezeichnet.",
+			"overdueTitle_one": "{{name}} zuletzt vor {{count}} Tag synchronisiert",
+			"overdueTitle_other": "{{name}} zuletzt vor {{count}} Tagen synchronisiert",
+			"overdueDescription": "Es ist länger her als dein {{count}}-tägiges Erinnerungsintervall.",
+			"recordLink": "Jetzt synchronisieren"
+		}
+	},
+	"desktopShell": {
+		"tray": {
+			"open": "Öffnen",
+			"changeLibrary": "Bibliothek wechseln…",
+			"copyLanAddress": "LAN-Adresse kopieren",
+			"restartServer": "Server neu starten",
+			"updateReady": "Update bereit — Öffnen zum Neustart",
+			"quit": "Beenden",
+			"tooltipServerStopped": "hoardodile — Server gestoppt",
+			"tooltipUpdateReady": "hoardodile — Update bereit",
+			"copied": "LAN-Adresse in die Zwischenablage kopiert."
+		},
+		"errorPage": {
+			"serverError": "Der Server konnte nicht erreicht werden. Er startet möglicherweise noch oder wurde gestoppt. Warte einen Moment und drücke Erneut versuchen, oder verwende Server neu starten aus dem Infobereich.",
+			"devServerError": "Der Entwicklungsserver läuft nicht. Starte `pnpm dev` in einem anderen Terminal und drücke dann Erneut versuchen."
+		},
+		"dialog": {
+			"lanPasswordRequired": "Lege zuerst ein Admin-Passwort fest, bevor du den lokalen Netzwerkzugriff aktivierst.",
+			"cancel": "Abbrechen",
+			"serverStoppedBody": "Der Server wurde gestoppt. Verwende Server neu starten aus dem Infobereich.",
+			"serverNotRunningMessage": "Der Server läuft nicht.",
+			"restartServer": "Server neu starten",
+			"serverFailedToStart": "Server konnte nicht gestartet werden:\n{{message}}"
+		},
+		"shell": {
+			"serverUnreachable": "Server nicht erreichbar",
+			"retry": "Erneut versuchen",
+			"loadingLabel": "Wird geladen"
+		},
+		"wizard": {
+			"title": "Willkommen bei hoardodile",
+			"intro": "Wähle, wo dieser Computer das Archiv speichert. Du kannst den Ordner später in den Einstellungen oder im Infobereich ändern.",
+			"library": "Bibliotheksordner",
+			"browse": "Durchsuchen",
+			"autoStart": "Mit Windows starten",
+			"autoStartHint": "hoardodile öffnen, wenn du dich anmeldest.",
+			"startInTray": "Im Infobereich starten",
+			"startInTrayHint": "Kein Fenster, bis du im Infobereich „Öffnen“ wählst.",
+			"continue": "Weiter",
+			"missingBridge": "Desktop-Brücke fehlt. Starte die App neu."
+		}
+	}
+}

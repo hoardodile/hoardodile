@@ -1,5 +1,6 @@
-import en from "@hoardodile/shared/i18n/en.json"
-import zh from "@hoardodile/shared/i18n/zh.json"
+import type { SupportedLanguage } from "@hoardodile/shared/i18n"
+import { resolveSystemLanguage } from "@hoardodile/shared/i18n"
+import { catalogFor } from "@hoardodile/shared/i18n/catalogs"
 import type { CaptionHistoryControls } from "@hoardodile/ui/components/caption-bar"
 
 /**
@@ -36,15 +37,14 @@ export type ShellCopy = {
 	readonly loadingLabel: string
 }
 
-function pickCatalog(): typeof en {
-	if (typeof navigator !== "undefined" && navigator.language.startsWith("zh")) {
-		return zh
-	}
-	return en
+/** The shell's own copy before the SPA pushes a language: detect from the
+ *  system locale. */
+function pickSystemLanguage(): SupportedLanguage {
+	return resolveSystemLanguage(navigator.language)
 }
 
 export function wizardCopy(): WizardCopy {
-	const catalog = pickCatalog()
+	const catalog = catalogFor(pickSystemLanguage())
 	return {
 		title: catalog.desktopShell.wizard.title,
 		intro: catalog.desktopShell.wizard.intro,
@@ -60,7 +60,7 @@ export function wizardCopy(): WizardCopy {
 }
 
 export function shellCopy(): ShellCopy {
-	const catalog = pickCatalog()
+	const catalog = catalogFor(pickSystemLanguage())
 	return {
 		serverUnreachable: catalog.desktopShell.shell.serverUnreachable,
 		retry: catalog.desktopShell.shell.retry,

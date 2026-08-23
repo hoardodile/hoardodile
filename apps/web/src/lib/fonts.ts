@@ -17,7 +17,8 @@ export type FontPreset = {
 
 /** The system sans stack, plus CJK fallbacks.
  *  Used as the default app font and by the reset button to quickly
- *  restore a sensible default font-family. */
+ *  restore a sensible default font-family.
+ *  Keep in sync with `--font-sans` in `packages/ui/src/styles/theme.css`. */
 export const SYSTEM_FONT_TAGS: readonly string[] = [
 	"-apple-system",
 	"BlinkMacSystemFont",
@@ -25,9 +26,15 @@ export const SYSTEM_FONT_TAGS: readonly string[] = [
 	"Roboto",
 	"Helvetica Neue",
 	"Arial",
+	// Simplified-Chinese faces first so zh users keep their glyph forms;
+	// Japanese faces last: they only catch kana/rare-glyph fallbacks
+	// (system Latin faces already cover kana on Windows/macOS).
 	"PingFang SC",
 	"Hiragino Sans GB",
 	"Microsoft YaHei",
+	"Hiragino Sans",
+	"Yu Gothic UI",
+	"Meiryo",
 	"sans-serif",
 ] as const
 

@@ -60,7 +60,10 @@
 		"label": "语言",
 		"description": "界面语言——内容保留原有文字。",
 		"english": "English",
-		"chinese": "中文"
+		"chinese": "中文",
+		"japanese": "日本語",
+		"german": "Deutsch",
+		"spanish": "Español"
 	},
 	"icons": {
 		"description": "Solar 图标——双色跟随主题，灰度保持双色墨色，线性保持单色。",
@@ -2128,7 +2131,8 @@
 			"updateReady": "更新已就绪——重启以完成",
 			"quit": "退出",
 			"tooltipServerStopped": "hoardodile —— 服务器已停止",
-			"tooltipUpdateReady": "hoardodile —— 更新已就绪"
+			"tooltipUpdateReady": "hoardodile —— 更新已就绪",
+			"copied": "局域网地址已复制到剪贴板。"
 		},
 		"errorPage": {
 			"serverError": "无法连接服务器。服务器可能仍在启动，或已停止。稍候片刻后点击重试，或在托盘中使用「重启服务器」。",
@@ -2139,7 +2143,8 @@
 			"cancel": "取消",
 			"serverStoppedBody": "服务器已停止。请在托盘中使用「重启服务器」。",
 			"serverNotRunningMessage": "服务器未运行。",
-			"restartServer": "重启服务器"
+			"restartServer": "重启服务器",
+			"serverFailedToStart": "服务器启动失败：\n{{message}}"
 		},
 		"shell": {
 			"serverUnreachable": "无法连接服务器",

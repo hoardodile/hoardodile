@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next"
 import { type ThemePalette, useTheme } from "@/components/common/ThemeProvider"
 import { pushLanguageChanged } from "@/features/plugin/iframe/pushes"
 import { usePrefSync } from "@/hooks/usePrefSync"
-import { SUPPORTED_LANGUAGES, type SupportedLanguage } from "@/i18n"
+import { isSupportedLanguage, resolveSystemLanguage } from "@/i18n"
 import { prefKeys } from "@/lib/keys"
 import { plainStringCodec } from "./codecs"
 
@@ -92,7 +92,7 @@ function PalettePrefSync(): null {
 
 export function LanguagePrefSync(): null {
 	const { i18n } = useTranslation()
-	const current = normalizeLanguage(i18n.resolvedLanguage ?? i18n.language)
+	const current = resolveSystemLanguage(i18n.resolvedLanguage ?? i18n.language)
 	const [syncedLang, setSyncedLang] = usePrefSync<string>(
 		prefKeys.language,
 		current,
@@ -148,17 +148,6 @@ export function LanguagePrefSync(): null {
 	)
 
 	return null
-}
-
-function isSupportedLanguage(value: string): value is SupportedLanguage {
-	return SUPPORTED_LANGUAGES.includes(value as SupportedLanguage)
-}
-
-function normalizeLanguage(raw: string | undefined): SupportedLanguage {
-	if (!raw) return "en"
-	const base = raw.toLowerCase().split("-")[0]
-	if (base === "zh") return "zh"
-	return "en"
 }
 
 function isTheme(value: unknown): value is Theme {

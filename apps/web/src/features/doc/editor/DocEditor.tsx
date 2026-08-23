@@ -1,5 +1,11 @@
 import { filterSuggestionItems } from "@blocknote/core"
-import { en as blocknoteEn, zh as blocknoteZh } from "@blocknote/core/locales"
+import {
+	de as blocknoteDe,
+	en as blocknoteEn,
+	es as blocknoteEs,
+	ja as blocknoteJa,
+	zh as blocknoteZh,
+} from "@blocknote/core/locales"
 import {
 	type DefaultReactSuggestionItem,
 	getDefaultReactSlashMenuItems,
@@ -87,6 +93,16 @@ export type DocEditorProps = {
  * - Imperative handle exposes selection text, document text,
  *   replace-selection, append, and a tiny "stream into selection" buffer.
  */
+/** BlockNote's built-in UI dictionary per app language — English fallback
+ *  for anything not listed (BlockNote 0.51.x ships these five). */
+const BLOCKNOTE_DICTIONARY: Record<string, typeof blocknoteEn> = {
+	en: blocknoteEn,
+	zh: blocknoteZh,
+	ja: blocknoteJa,
+	de: blocknoteDe,
+	es: blocknoteEs,
+}
+
 export function DocEditor(props: DocEditorProps) {
 	const editable = props.editable !== false
 	const { resolvedTheme } = useTheme()
@@ -98,8 +114,8 @@ export function DocEditor(props: DocEditorProps) {
 		[],
 	)
 	const dictionary = useMemo(() => {
-		const zh = i18n.language?.startsWith("zh") === true
-		const base = zh ? blocknoteZh : blocknoteEn
+		const base =
+			BLOCKNOTE_DICTIONARY[i18n.resolvedLanguage ?? "en"] ?? blocknoteEn
 		return {
 			...base,
 			placeholders: {
@@ -107,7 +123,7 @@ export function DocEditor(props: DocEditorProps) {
 				default: t("documents.editorPlaceholder"),
 			},
 		}
-	}, [i18n.language, t])
+	}, [i18n.resolvedLanguage, t])
 	const editor = useCreateBlockNote({
 		schema: docSchema,
 		initialContent: initialBlocks,

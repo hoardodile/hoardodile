@@ -1,5 +1,13 @@
 import type { SupportedLanguage } from "@hoardodile/shared/i18n"
+import {
+	isSupportedLanguage,
+	resolveSystemLanguage,
+	SUPPORTED_LANGUAGES,
+} from "@hoardodile/shared/i18n"
+import de from "@hoardodile/shared/i18n/de.json"
 import en from "@hoardodile/shared/i18n/en.json"
+import es from "@hoardodile/shared/i18n/es.json"
+import ja from "@hoardodile/shared/i18n/ja.json"
 import zh from "@hoardodile/shared/i18n/zh.json"
 import type { TFunction } from "i18next"
 import i18n from "i18next"
@@ -7,8 +15,8 @@ import { initReactI18next } from "react-i18next"
 import { prefKeys } from "@/lib/keys"
 import { prefSync } from "@/lib/prefSync"
 
-export const SUPPORTED_LANGUAGES = ["en", "zh"] as const
 export type { SupportedLanguage }
+export { isSupportedLanguage, resolveSystemLanguage, SUPPORTED_LANGUAGES }
 
 /** Typed translate function (`t` from `useTranslation`), for helpers that
  *  receive it as a parameter and call it with catalog keys. */
@@ -42,14 +50,15 @@ declare module "i18next" {
 
 const storedLang = prefSync.get(prefKeys.language)
 const initialLang =
-	storedLang && SUPPORTED_LANGUAGES.includes(storedLang as SupportedLanguage)
-		? storedLang
-		: undefined
+	storedLang && isSupportedLanguage(storedLang) ? storedLang : undefined
 
 i18n.use(initReactI18next).init({
 	resources: {
 		en: { translation: en },
 		zh: { translation: zh },
+		ja: { translation: ja },
+		de: { translation: de },
+		es: { translation: es },
 	},
 	lng: initialLang,
 	fallbackLng: "en",

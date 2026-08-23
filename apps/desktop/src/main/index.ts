@@ -8,8 +8,8 @@ import type {
 	LanSetResult,
 } from "@hoardodile/shared/desktop"
 import type { SupportedLanguage } from "@hoardodile/shared/i18n"
-import en from "@hoardodile/shared/i18n/en.json"
-import zh from "@hoardodile/shared/i18n/zh.json"
+import { resolveSystemLanguage } from "@hoardodile/shared/i18n"
+import { catalogFor } from "@hoardodile/shared/i18n/catalogs"
 import {
 	app,
 	BrowserWindow,
@@ -321,7 +321,15 @@ async function applyLanChange(
 		runtime.window = undefined
 		rebuildSidecarTray(runtime)
 		const message = err instanceof Error ? err.message : String(err)
-		dialog.showErrorBox("hoardodile", `Server failed to start:\n${message}`)
+		dialog.showErrorBox(
+			"hoardodile",
+			catalogFor(
+				runtime.language,
+			).desktopShell.dialog.serverFailedToStart.replace(
+				"{{message}}",
+				() => message,
+			),
+		)
 		throw err
 	}
 	runtime.sidecar = handle
@@ -378,7 +386,7 @@ function copyLanAddress(runtime: Runtime): void {
 	clipboard.writeText(url)
 	new Notification({
 		title: "hoardodile",
-		body: "LAN address copied to the clipboard.",
+		body: catalogFor(runtime.language).desktopShell.tray.copied,
 	}).show()
 }
 
@@ -415,7 +423,15 @@ async function restartSidecar(runtime: Runtime): Promise<void> {
 		}
 	} catch (err) {
 		const message = err instanceof Error ? err.message : String(err)
-		dialog.showErrorBox("hoardodile", `Server failed to start:\n${message}`)
+		dialog.showErrorBox(
+			"hoardodile",
+			catalogFor(
+				runtime.language,
+			).desktopShell.dialog.serverFailedToStart.replace(
+				"{{message}}",
+				() => message,
+			),
+		)
 	}
 }
 
@@ -563,10 +579,6 @@ function closeDialogStrings(language: SupportedLanguage | undefined) {
 		cancel: catalog.common.cancel,
 		remember: catalog.me.desktop.closeConfirm.remember,
 	}
-}
-
-function catalogFor(language: SupportedLanguage | undefined) {
-	return language === "zh" ? zh : en
 }
 
 /** Localized tray copy — same language source as the close dialog. */
@@ -748,7 +760,9 @@ async function boot(): Promise<void> {
 		crashed: false,
 		updateReady: false,
 		quitting: false,
-		language: undefined,
+		// Seed from the OS locale so tray/menus/native dialogs are localized
+		// before the SPA pushes its persisted language choice.
+		language: resolveSystemLanguage(app.getLocale()),
 		iconPath: undefined,
 		completeWizard: undefined,
 	}
@@ -858,7 +872,15 @@ async function boot(): Promise<void> {
 		runtime.sidecar = await spawnSidecar(runtime)
 	} catch (err) {
 		const message = err instanceof Error ? err.message : String(err)
-		dialog.showErrorBox("hoardodile", `Server failed to start:\n${message}`)
+		dialog.showErrorBox(
+			"hoardodile",
+			catalogFor(
+				runtime.language,
+			).desktopShell.dialog.serverFailedToStart.replace(
+				"{{message}}",
+				() => message,
+			),
+		)
 		runtime.crashed = true
 	}
 

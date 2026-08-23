@@ -60,7 +60,10 @@
 		"label": "Language",
 		"description": "Interface language — content keeps its script.",
 		"english": "English",
-		"chinese": "中文"
+		"chinese": "中文",
+		"japanese": "日本語",
+		"german": "Deutsch",
+		"spanish": "Español"
 	},
 	"icons": {
 		"description": "Solar icons — duotone follows the theme, grayscale keeps the two tones in plain ink, linear stays single-color.",
@@ -2128,7 +2131,8 @@
 			"updateReady": "Update ready — Open to restart",
 			"quit": "Quit",
 			"tooltipServerStopped": "hoardodile — server stopped",
-			"tooltipUpdateReady": "hoardodile — update ready"
+			"tooltipUpdateReady": "hoardodile — update ready",
+			"copied": "LAN address copied to the clipboard."
 		},
 		"errorPage": {
 			"serverError": "The server could not be reached. It may still be starting, or it may have stopped. Wait a moment and press Retry, or use Restart server from the tray.",
@@ -2139,7 +2143,8 @@
 			"cancel": "Cancel",
 			"serverStoppedBody": "The server stopped. Use Restart server from the tray.",
 			"serverNotRunningMessage": "The server is not running.",
-			"restartServer": "Restart server"
+			"restartServer": "Restart server",
+			"serverFailedToStart": "Server failed to start:\n{{message}}"
 		},
 		"shell": {
 			"serverUnreachable": "Server unreachable",

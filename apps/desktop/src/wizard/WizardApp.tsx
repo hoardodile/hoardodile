@@ -1,6 +1,7 @@
 import type { HoardodileDesktopBridge } from "@hoardodile/shared/desktop"
-import en from "@hoardodile/shared/i18n/en.json"
-import zh from "@hoardodile/shared/i18n/zh.json"
+import type { SupportedLanguage } from "@hoardodile/shared/i18n"
+import { resolveSystemLanguage } from "@hoardodile/shared/i18n"
+import { catalogFor } from "@hoardodile/shared/i18n/catalogs"
 import { Button } from "@hoardodile/ui/components/button"
 import { CaptionBar } from "@hoardodile/ui/components/caption-bar"
 import { Input } from "@hoardodile/ui/components/input"
@@ -31,7 +32,9 @@ function WizardForm(props: {
 	const [autoStart, setAutoStart] = useState(false)
 	const [startInTray, setStartInTray] = useState(false)
 	const [busy, setBusy] = useState(false)
-	const [language, setLanguage] = useState<string | undefined>(undefined)
+	const [language, setLanguage] = useState<SupportedLanguage | undefined>(
+		undefined,
+	)
 
 	useEffect(() => {
 		void desktop.getWizardDefaults().then((defaults) => {
@@ -40,7 +43,9 @@ function WizardForm(props: {
 		void desktop.getLanguage().then(setLanguage)
 	}, [desktop])
 
-	const captionLabels = (language === "zh" ? zh : en).me.desktop.caption
+	const captionLabels = catalogFor(
+		language ?? resolveSystemLanguage(navigator.language),
+	).me.desktop.caption
 
 	async function handleBrowse(): Promise<void> {
 		const next = await desktop.pickLibraryFolder()

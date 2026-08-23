@@ -1,18 +1,20 @@
 /**
  * @vitest-environment node
  *
- * Guardrails that keep the two i18n catalogs in lockstep. These caught two
- * real regressions historically (dead `_plural` keys under i18next v4 and a
- * missing zh mirror), so they are intentionally strict: a new key must be
- * registered in both languages before it can ship.
+ * Guardrails that keep the five i18n catalogs in lockstep. These caught
+ * real regressions historically (dead `_plural` keys under i18next v4,
+ * a missing zh mirror, and the desktop shell's hardcoded ternaries), so
+ * they are intentionally strict: a new key must be registered in every
+ * language before it can ship.
  *
- * Structural rules only (key parity, placeholders, plural pairs, ellipsis).
- * Key *naming* is intentionally not enforced — see the documented
- * conventions in `packages/shared/src/i18n/index.ts`.
+ * Structural rules only (key parity, placeholders, plural pairs, markup
+ * tags, ellipsis). Key *naming* is intentionally not enforced — see the
+ * documented conventions in `packages/shared/src/i18n/index.ts`.
  */
 import { describe, expect, it } from "vitest"
-import en from "./en.json"
-import zh from "./zh.json"
+import { CATALOGS } from "./catalogs.ts"
+
+const EN = CATALOGS.en
 
 function flatten(
 	obj: Record<string, unknown>,
@@ -29,14 +31,20 @@ function flatten(
 	return out
 }
 
-const enFlat = flatten(en as unknown as Record<string, unknown>)
-const zhFlat = flatten(zh as unknown as Record<string, unknown>)
+const enFlat = flatten(EN as unknown as Record<string, unknown>)
+const enKeys = new Set(enFlat.map((r) => r.key))
+const enByKey = new Map(enFlat.map((r) => [r.key, r.value]))
 
 function vars(value: string): string {
 	return (value.match(/\{\{[^}]+\}\}/g) ?? [])
 		.map((m) => m.slice(2, -2))
 		.sort()
 		.join(",")
+}
+
+/** Markup tags (`<name>`, `</name>`, …) — translations must keep them. */
+function tags(value: string): string {
+	return (value.match(/<\/?[a-zA-Z][a-zA-Z0-9-]*>/g) ?? []).sort().join(",")
 }
 
 /** Keys that legitimately keep `{{count}}` without a plural pair. */
@@ -72,49 +80,75 @@ const ASCII_ELLIPSIS_ALLOWLIST = new Set([
 ])
 
 describe("i18n catalog parity", () => {
-	const enKeys = new Set(enFlat.map((r) => r.key))
-	const zhKeys = new Set(zhFlat.map((r) => r.key))
+	for (const [name, catalog] of Object.entries(CATALOGS)) {
+		const flat = flatten(catalog as unknown as Record<string, unknown>)
+		const keys = new Set(flat.map((r) => r.key))
+		const byKey = new Map(flat.map((r) => [r.key, r.value]))
 
-	it("has identical flat key sets", () => {
-		expect(
-			[...enKeys].filter((k) => !zhKeys.has(k)),
-			"keys only in en.json",
-		).toEqual([])
-		expect(
-			[...zhKeys].filter((k) => !enKeys.has(k)),
-			"keys only in zh.json",
-		).toEqual([])
-	})
+		it(`${name} has identical flat key sets`, () => {
+			expect(
+				[...enKeys].filter((k) => !keys.has(k)),
+				`keys only in en.json (missing from ${name}.json)`,
+			).toEqual([])
+			expect(
+				[...keys].filter((k) => !enKeys.has(k)),
+				`keys only in ${name}.json`,
+			).toEqual([])
+		})
 
-	it("uses the same interpolation placeholders per key", () => {
-		const zhByKey = new Map(zhFlat.map((r) => [r.key, r.value]))
-		const mismatched: string[] = []
-		for (const { key, value } of enFlat) {
-			const zv = zhByKey.get(key)
-			if (zv !== undefined && vars(value) !== vars(zv)) {
-				mismatched.push(key)
+		it(`${name} uses the same interpolation placeholders per key`, () => {
+			const mismatched: string[] = []
+			for (const key of enKeys) {
+				const value = byKey.get(key)
+				if (
+					value !== undefined &&
+					vars(enByKey.get(key) ?? "") !== vars(value)
+				) {
+					mismatched.push(key)
+				}
 			}
-		}
-		expect(mismatched, "placeholder mismatch").toEqual([])
-	})
+			expect(mismatched, "placeholder mismatch").toEqual([])
+		})
 
-	it("has complete plural pairs and no legacy suffixes", () => {
-		const bad: string[] = []
-		for (const key of enKeys) {
-			if (/_(plural|singular)$/.test(key)) bad.push(`${key} (legacy suffix)`)
-		}
-		for (const key of enKeys) {
-			const base = key.replace(/_(one|other|few|many|zero)$/, "")
-			if (base === key) continue
-			if (!enKeys.has(`${base}_one`) || !enKeys.has(`${base}_other`)) {
-				bad.push(`${key} (incomplete pair)`)
+		it(`${name} keeps <name> markup tags identical per key`, () => {
+			const mismatched: string[] = []
+			for (const key of enKeys) {
+				const value = byKey.get(key)
+				if (
+					value !== undefined &&
+					tags(enByKey.get(key) ?? "") !== tags(value)
+				) {
+					mismatched.push(key)
+				}
 			}
-		}
-		expect(bad, "plural violations").toEqual([])
-	})
+			expect(mismatched, "markup tag mismatch").toEqual([])
+		})
+
+		it(`${name} has complete plural pairs and no legacy suffixes`, () => {
+			const bad: string[] = []
+			for (const key of keys) {
+				if (/_(plural|singular)$/.test(key)) bad.push(`${key} (legacy suffix)`)
+			}
+			for (const key of keys) {
+				const base = key.replace(/_(one|other|few|many|zero)$/, "")
+				if (base === key) continue
+				if (!keys.has(`${base}_one`) || !keys.has(`${base}_other`)) {
+					bad.push(`${key} (incomplete pair)`)
+				}
+			}
+			expect(bad, "plural violations").toEqual([])
+		})
+
+		it(`${name} uses U+2026 ellipsis everywhere except URL placeholders`, () => {
+			const violating = flat
+				.filter((r) => r.value.includes("..."))
+				.map((r) => r.key)
+				.filter((k) => !ASCII_ELLIPSIS_ALLOWLIST.has(k))
+			expect(violating, "ASCII ellipsis outside allowlist").toEqual([])
+		})
+	}
 
 	it("never leaves a count key without a plural pair unless allowlisted", () => {
-		const enByKey = new Map(enFlat.map((r) => [r.key, r.value]))
 		const violating: string[] = []
 		for (const [key, value] of enByKey) {
 			if (!value.includes("{{count}}")) continue
@@ -123,13 +157,5 @@ describe("i18n catalog parity", () => {
 			violating.push(key)
 		}
 		expect(violating, "count key without plural pair").toEqual([])
-	})
-
-	it("uses U+2026 ellipsis everywhere except URL placeholders", () => {
-		const violating = enFlat
-			.filter((r) => r.value.includes("..."))
-			.map((r) => r.key)
-			.filter((k) => !ASCII_ELLIPSIS_ALLOWLIST.has(k))
-		expect(violating, "ASCII ellipsis outside allowlist").toEqual([])
 	})
 })

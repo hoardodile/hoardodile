@@ -4,6 +4,8 @@
  * `platform: "desktop"` so macOS / Linux ports can reuse it.
  */
 
+import type { SupportedLanguage } from "./i18n"
+
 export type DesktopUpdateState =
 	| { readonly status: "idle" }
 	| { readonly status: "checking" }
@@ -106,9 +108,9 @@ export type HoardodileDesktopBridge = {
 	 * the native ask dialog render localized copy; `navigator.language` is
 	 * the shell-side fallback until the SPA has pushed once.
 	 */
-	setLanguage: (language: string) => void
+	setLanguage: (language: SupportedLanguage) => void
 	/** The language the SPA last pushed, or undefined before the first push. */
-	getLanguage: () => Promise<string | undefined>
+	getLanguage: () => Promise<SupportedLanguage | undefined>
 	/**
 	 * Open a URL in the OS browser. Only http(s) is accepted by the shell;
 	 * anything else is dropped. The SPA routes all non-app navigation
