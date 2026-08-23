@@ -38,6 +38,14 @@ jobs:
       - name: Lint
         run: pnpm lint
       - name: Test
+        id: test
+        # Windows runners intermittently crash vitest child processes with
+        # 0xC0000142 — re-run once via the follow-up step below; a real
+        # failure fails again there instead of being masked.
+        continue-on-error: true
+        run: pnpm exec turbo run test --concurrency=2
+      - name: Test (retry)
+        if: steps.test.outcome == 'failure'
         run: pnpm exec turbo run test --concurrency=2
       # Published SDK d.ts must not reference node (browser-facing entries).
       - name: Guard node pollution in SDK d.ts
