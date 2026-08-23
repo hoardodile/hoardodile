@@ -53,9 +53,8 @@ const config = {
 		provider: "github",
 		owner: "hoardodile",
 		repo: "hoardodile",
-		// Attach to the GitHub Release `pnpm release` already published;
-		// the default `draft` would open a second, unpublished release.
-		releaseType: "release",
+		// Default `draft` — the release-it-created draft is the review gate:
+		// a human finalizes it on GitHub before electron-updater sees it.
 	},
 }
 

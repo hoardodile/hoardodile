@@ -1,0 +1,82 @@
+name: Release
+
+# Publish flow after `pnpm release <version>` (local): release-it bumps
+# versions, commits, tags and creates a DRAFT GitHub Release; pushing the
+# tag triggers this workflow, which publishes the SDK release set to npm
+# and builds/attaches the Windows installers to the same draft. A human
+# then reviews the draft on GitHub and clicks Publish — electron-updater
+# only sees published releases, so the draft is the review gate.
+#
+# Secrets (Settings → Secrets and variables → Actions):
+#   NODE_AUTH_TOKEN  npm registry token for the SDK release set
+#   (release-it itself needs a local GITHUB_TOKEN on the dev machine)
+#
+# Future platform expansions (needs the Phase B porting work, see
+# apps/desktop/README.md): add the matching runners to the desktop job
+# matrix and the macOS signing/notarization secrets:
+#   - macos-latest: CSC_LINK / CSC_KEY_PASSWORD (codesign),
+#     APPLE_ID / APPLE_APP_SPECIFIC_PASSWORD / APPLE_TEAM_ID (notarization)
+#   - ubuntu-latest: no signing required (AppImage + deb, sha512 checks)
+# electron-builder then emits latest-mac.yml / latest-linux.yml per
+# platform automatically; no code change needed.
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  npm:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+      - name: Verify tag matches the unified version
+        run: node scripts/check-tag-version.mjs
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Build
+        run: pnpm build
+      - name: Verify SDK closure packs
+        run: pnpm sdks:pack
+      - name: Check third-party notices
+        run: pnpm licenses:check
+      - name: Check version sync
+        run: pnpm version:check
+      - name: Publish SDK release set
+        run: pnpm -r publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
+          NPM_CONFIG_REGISTRY: https://registry.npmjs.org
+
+  desktop:
+    # Windows x64 only for v0.1; see the matrix notes above for mac/linux.
+    runs-on: windows-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+      - name: Verify tag matches the unified version
+        run: node scripts/check-tag-version.mjs
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Build
+        run: pnpm build
+      - name: Package and publish to the GitHub Release
+        # The chain runs stage-resources → electron-builder(always) →
+        # verify-package → verify-feed; publish fails if either check fails.
+        run: pnpm -F @hoardodile/desktop package:publish
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

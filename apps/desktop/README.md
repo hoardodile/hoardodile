@@ -45,7 +45,7 @@ The shell prefers the persisted `port`, falls back through `get-port`, and write
 
 ## Spawn env
 
-With `HOARDODILE_PACKAGED=1` the server skips workspace `.env` loading and the shell injects a complete env, every path absolute: `NODE_ENV=production`, `HOST=127.0.0.1`, `PORT` (persisted, then `get-port`), `STORAGE_ROOT` (libraryPath), `BUILTIN_PATH` (packaged `plugins/file`), `SEED_PLUGIN_PATHS` (gallery), `DISABLE_DEV_PLUGINS=true`, optional `SHARED_FOLDER_ROOT` when enabled, `HOARDODILE_SHUTDOWN_TOKEN` (per-spawn secret), `SESSION_SECURE_COOKIE=false`, `FORCE_HTTPS=false`. `APP_WEB_ROOT` stays unset so the sidecar serves `server/web` from its own dist tree. If Fastify binds a different port than requested, persist it and load it — the `/health` probe on the intended port is enough; don't parse logs.
+With `HOARDODILE_PACKAGED=1` the server skips workspace `.env` loading and the shell injects a complete env, every path absolute: `NODE_ENV=production`, `HOST=127.0.0.1`, `PORT` (persisted, then `get-port`), `STORAGE_ROOT` (libraryPath), `BUILTIN_PATH` (packaged `plugins/file`), `SEED_PLUGIN_PATHS` (gallery + pdf), `DISABLE_DEV_PLUGINS=true`, optional `SHARED_FOLDER_ROOT` when enabled, `HOARDODILE_SHUTDOWN_TOKEN` (per-spawn secret), `SESSION_SECURE_COOKIE=false`, `FORCE_HTTPS=false`. `APP_WEB_ROOT` stays unset so the sidecar serves `server/web` from its own dist tree. If Fastify binds a different port than requested, persist it and load it — the `/health` probe on the intended port is enough; don't parse logs.
 
 ## Renderer bridge
 
@@ -67,14 +67,24 @@ electron-builder, Windows x64, NSIS installer plus optional portable zip (manual
 extraResources/
   node/node.exe
   server/     apps/server/dist, spawned as `node.exe server/main.js`
-  plugins/    file + gallery dist
+  plugins/    file + gallery + pdf dist (staged by `stage-resources.mjs`)
 ```
 
-Shell JS may live in asar; nothing the sidecar reads may (server dist, plugin dists). Prune tests, docs, extra Electron locales, PDBs; keep ffmpeg, ffprobe, 7z, sharp, official plugins, and server `.map` files. ffmpeg/ffprobe/7z resolve from the copied `server/node_modules` via `createRequire` — the shell must not inject `FFMPEG_PATH` / `FFPROBE_PATH` / `7Z_BIN_PATH`. `SEED_PLUGIN_PATHS` seeds gallery into `{storage}/versions/<latest>/plugins` when the on-disk tree differs; app updates refresh gallery on the current version only. User data never goes in `extraResources`; DB migrations run against `STORAGE_ROOT` on next start. App version is the root `package.json`; never hand-edit a `version` field.
+Shell JS may live in asar; nothing the sidecar reads may (server dist, plugin dists). Prune tests, docs, extra Electron locales, PDBs; keep ffmpeg, ffprobe, 7z, sharp, official plugins, and server `.map` files. ffmpeg/ffprobe/7z resolve from the copied `server/node_modules` via `createRequire` — the shell must not inject `FFMPEG_PATH` / `FFPROBE_PATH` / `7Z_BIN_PATH`. `SEED_PLUGIN_PATHS` (`gallery` + `pdf`) seeds those plugins into `{storage}/versions/<latest>/plugins` when the on-disk tree differs, so they behave like installed plugins; app updates refresh them on the current version only. User data never goes in `extraResources`; DB migrations run against `STORAGE_ROOT` on next start. App version is the root `package.json`; never hand-edit a `version` field.
 
 ## Updates
 
 electron-updater against GitHub Releases (`latest.yml` + blockmap). State machine: `idle → checking → downloading → ready → user Restart → graceful sidecar stop → quitAndInstall()`. `autoDownload` follows `autoUpdate`; never restart while a window is using the library without confirmation. Portable builds link to GitHub from About; no `quitAndInstall`. Unsigned self-builds must not require publisher signature verification; signed official releases must verify. Desktop stays click-to-check on web, one brain: preload `desktop.updates` (same GitHub artifacts).
+
+## Release gates
+
+What turns "the CI job passed" into "we ship this": the tag-triggered `release.yml` builds, uploads and self-checks (`stage-resources` → electron-builder `--publish always` → `verify-package` → `verify-feed`), then a **human publishes the draft** — electron-updater does not see draft releases, so the draft is the review gate. The manual gates below are run by a human on a clean machine before publishing that draft; they are the release checklist, not optional extras.
+
+1. **Launch smoke** — install `Hoardodile-Setup-<version>-x64.exe` on a clean Windows machine: wizard → sidecar `/health` → login → import one resource → About shows `<version>`.
+2. **Upgrade smoke** — install the previous release artifact, create a library and import something, then Settings → About → check for updates → update → restart → login, library intact, About shows `<version>`.
+3. **Draft review** — GitHub Releases page: CHANGELOG body sane, attachments present (installer, portable zip, blockmap, `latest.yml`), no leftover `0.0.0` artifacts.
+
+v0.1 installers are **unsigned**: SmartScreen warns "unknown publisher", users must choose *Run anyway*, and `verifyUpdateCodeSignature: false` stays until a certificate is wired in (`CSC_LINK`/`CSC_KEY_PASSWORD`); release notes must say so.
 
 ## Shutdown (Windows)
 
