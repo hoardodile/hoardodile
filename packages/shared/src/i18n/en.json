@@ -395,7 +395,7 @@
 			"confirmLabel": "Confirm clear",
 			"clearing": "Clearing…",
 			"toastSuccess": "All usage history cleared",
-			"toastFailed": "Failed to clear usage history"
+			"toastFailed": "Could not clear usage history"
 		},
 		"trace": {
 			"description": "Append-only log of your actions — imports, exports, deletes, restores and votes.",
@@ -407,7 +407,7 @@
 			"confirmLabel": "Confirm clear",
 			"clearing": "Clearing…",
 			"toastSuccess": "Footprints cleared",
-			"toastFailed": "Failed to clear footprints"
+			"toastFailed": "Could not clear footprints"
 		},
 		"trash": {
 			"description": "Bundles waiting — each can come back.",
@@ -639,7 +639,7 @@
 		"toastClearLocked_one": "{{count}} rebuild data file is locked and could not be deleted. Restart the server to clear it.",
 		"toastClearLocked_other": "{{count}} rebuild data files are locked and could not be deleted. Restart the server to clear them.",
 		"clearCacheSuccess": "Rebuild data cleared",
-		"toastClearFailed": "Failed to clear rebuild data",
+		"toastClearFailed": "Could not clear rebuild data",
 		"toastPrecacheSuccess_one": "Precached {{count}} item",
 		"toastPrecacheSuccess_other": "Precached {{count}} items",
 		"toastPrecachePartial": "Precache completed with {{failed}} failures"
@@ -763,7 +763,7 @@
 			"restoreFailed": "Restore failed",
 			"switchFailed": "Switch failed",
 			"metaSaved": "Saved",
-			"metaSaveFailed": "Failed to save"
+			"metaSaveFailed": "Could not save"
 		}
 	},
 	"documents": {
@@ -909,22 +909,22 @@
 			"insertResource": "Insert resource…"
 		},
 		"toast": {
-			"createFailed": "Failed to create",
-			"renameFailed": "Failed to rename",
-			"saveFailed": "Failed to save draft",
+			"createFailed": "Could not create",
+			"renameFailed": "Could not rename",
+			"saveFailed": "Could not save draft",
 			"saved": "Saved",
-			"commitFailed": "Failed to commit version",
+			"commitFailed": "Could not commit version",
 			"committed": "Version committed",
 			"contentTooLarge": "Content exceeds maximum character limit",
-			"versionLoadFailed": "Failed to load version content",
+			"versionLoadFailed": "Could not load version content",
 			"savedLocally": "Saved on this device",
 			"resolveConflictFirst": "Resolve the offline conflict before committing",
 			"movedToTrash": "Moved to recycle bin",
 			"restored": "Restored",
-			"restoreFailed": "Failed to restore",
-			"deleteFailed": "Failed to delete",
+			"restoreFailed": "Could not restore",
+			"deleteFailed": "Could not delete",
 			"deletedForever": "Permanently deleted",
-			"moveFailed": "Failed to move"
+			"moveFailed": "Could not move"
 		},
 		"search": {
 			"empty": "No matching documents."
@@ -1063,7 +1063,7 @@
 			"aria": "Preview: {{name}}"
 		},
 		"detail": {
-			"loadError": "Could not load this character.",
+			"loadError": "Failed to load this character.",
 			"noIntro": "No intro yet.",
 			"relationships": "Relationships",
 			"recent": "Recent resources",
@@ -1110,7 +1110,7 @@
 		},
 		"picker": {
 			"selectedEmpty": "No characters selected yet.",
-			"loadFailed": "Could not load"
+			"loadFailed": "Failed to load"
 		},
 		"selectorDialog": {
 			"title": "Select character",
@@ -1173,7 +1173,7 @@
 			"description": "What you've used, newest first",
 			"empty": "No usage records yet.",
 			"loading": "Loading…",
-			"loadError": "Couldn't load usage history.",
+			"loadError": "Could not load usage history.",
 			"today": "Today",
 			"yesterday": "Yesterday",
 			"unknownTime": "Unknown time",
@@ -1981,11 +1981,11 @@
 		"linkResourcesAdd": "Attach resource",
 		"toast": {
 			"posted": "Message posted",
-			"postFailed": "Failed to post message",
+			"postFailed": "Could not post message",
 			"deleted": "Moved to trash",
 			"restored": "Message restored",
 			"hardDeleted": "Permanently deleted",
-			"voteFailed": "Failed to record vote"
+			"voteFailed": "Could not record vote"
 		}
 	},
 	"storage": {
