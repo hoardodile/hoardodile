@@ -2,6 +2,7 @@ import type { ClientPlatform } from "@hoardodile/schemas"
 import { cn } from "@hoardodile/ui/lib/utils"
 import { useTranslation } from "react-i18next"
 import { z } from "zod"
+import { loose } from "@/i18n"
 
 export type UsagePlatformFilterValue = "all" | ClientPlatform
 
@@ -54,7 +55,7 @@ export function UsagePlatformFilter(props: UsagePlatformFilterProps) {
 								: "bg-muted text-muted-foreground hover:bg-muted/80",
 						)}
 					>
-						{t(option.labelKey)}
+						{loose(t)(option.labelKey)}
 					</button>
 				))}
 			</div>

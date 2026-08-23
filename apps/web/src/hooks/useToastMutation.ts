@@ -6,8 +6,8 @@ import {
 	useMutation,
 	useQueryClient,
 } from "@tanstack/react-query"
-import type { TFunction } from "i18next"
 import { useTranslation } from "react-i18next"
+import { loose, type Translate } from "@/i18n"
 import { errorMessage } from "@/lib/errors"
 
 /**
@@ -47,7 +47,7 @@ export type ToastMutationConfig<TInput, TOutput = unknown> = {
 	 * fallback key" behavior (e.g. for mapping server domain errors to
 	 * localized copy).
 	 */
-	readonly resolveError?: (err: unknown, t: TFunction) => string
+	readonly resolveError?: (err: unknown, t: Translate) => string
 	/** Extra side effect after success (runs after invalidate + toast). */
 	readonly onSuccess?: MutationSuccessFn<TInput, TOutput>
 } & Omit<UseMutationOptions<TOutput, Error, TInput>, "onSuccess">
@@ -75,7 +75,10 @@ export function useToastMutation<TInput, TOutput = unknown>(
 			const [result, input] = args
 			if (invalidate !== undefined) await invalidate(qc, result, input)
 			if (successToastKey !== undefined) {
-				toast.add({ title: t(successToastKey), type: "success" })
+				toast.add({
+					title: loose(t)(successToastKey),
+					type: "success",
+				})
 			}
 			await onSuccess?.(...args)
 		},
@@ -86,7 +89,7 @@ export function useToastMutation<TInput, TOutput = unknown>(
 			const title =
 				resolveError !== undefined
 					? resolveError(err, t)
-					: errorMessage(err, t(errorKey))
+					: errorMessage(err, loose(t)(errorKey))
 			toast.add({ title, type: "error" })
 		},
 	})

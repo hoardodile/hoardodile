@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query"
 import { Link, useNavigate } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 import { docSearchQueryOptions } from "@/features/doc/api"
+import { loose } from "@/i18n"
 
 export type LinkedDocumentsSectionProps = (
 	| { readonly charIds: readonly string[] }
@@ -46,7 +47,7 @@ export function LinkedDocumentsSection(props: LinkedDocumentsSectionProps) {
 		<section data-testid="linked-documents">
 			<SectionHeader
 				icon={DocumentText}
-				title={t(titleKey)}
+				title={loose(t)(titleKey)}
 				count={String(rows.length)}
 				viewAll={t("documents.viewAll")}
 				onViewAll={() =>

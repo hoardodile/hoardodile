@@ -1,5 +1,6 @@
 import { SectionLabel } from "@hoardodile/ui/components/section-label"
 import type { ReactNode } from "react"
+import type { LooseTranslate } from "@/i18n"
 import { dayjsFor } from "@/lib/timezone"
 
 export type TimelineDayGroup<T> = {
@@ -45,7 +46,7 @@ export function groupByTimestamp<T>(
 export function dayLabel(
 	day: string,
 	timeZone: string,
-	t: (key: string) => string,
+	t: LooseTranslate,
 	todayKey: string,
 	yesterdayKey: string,
 ): string {

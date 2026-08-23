@@ -11,6 +11,7 @@ import {
 	traceEventIcon,
 	traceEventLabelKey,
 } from "@/features/trace/lib/actionMeta"
+import { loose } from "@/i18n"
 import { OverviewRailCard, RailRowSkeleton } from "./OverviewRailCard"
 
 const FOOTPRINT_PREVIEW_LIMIT = 3
@@ -102,7 +103,7 @@ function FootprintRow(props: {
 	const { event, relativeTime } = props
 	const { t } = useTranslation()
 	const Icon = traceEventIcon(event.action, event.detail?.kind)
-	const label = t(traceEventLabelKey(event.action, event.detail?.kind), {
+	const label = loose(t)(traceEventLabelKey(event.action, event.detail?.kind), {
 		name: event.entityName,
 	})
 	const time = relativeTime(event.createdAt)

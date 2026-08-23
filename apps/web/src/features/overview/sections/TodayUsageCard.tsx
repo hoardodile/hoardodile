@@ -16,6 +16,7 @@ import {
 	computeUsageInsight,
 	getUsageInsightComparison,
 } from "@/features/usage/lib/usageInsight"
+import { loose } from "@/i18n"
 import { formatDurationMs } from "@/lib/formatDuration"
 import { dayjsFor, formatCalendarDay } from "@/lib/timezone"
 
@@ -91,16 +92,16 @@ export function TodayUsageCard(props: TodayUsageCardProps) {
 			? undefined
 			: weekInsight.deltaMs === 0
 				? t("usage.insight.sameAsPeriod", {
-						period: t(weekInsight.comparisonKey),
+						period: loose(t)(weekInsight.comparisonKey),
 					})
 				: weekInsight.deltaMs > 0
 					? t("usage.insight.moreThanPeriod", {
 							duration: formatDurationMs(weekInsight.deltaMs),
-							period: t(weekInsight.comparisonKey),
+							period: loose(t)(weekInsight.comparisonKey),
 						})
 					: t("usage.insight.lessThanPeriod", {
 							duration: formatDurationMs(Math.abs(weekInsight.deltaMs)),
-							period: t(weekInsight.comparisonKey),
+							period: loose(t)(weekInsight.comparisonKey),
 						})
 
 	const isCompact = variant === "compact"

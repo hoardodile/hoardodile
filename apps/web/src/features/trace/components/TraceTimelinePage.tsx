@@ -18,6 +18,7 @@ import { useUsageTimeZones } from "@/features/settings/datePrefs"
 import { useUsageEntityCharacter } from "@/features/usage/components/UsageEntityRow"
 import type { UsagePlatformFilterValue } from "@/features/usage/components/UsagePlatformFilter"
 import { usagePlatformFilterParam } from "@/features/usage/components/UsagePlatformFilter"
+import { loose } from "@/i18n"
 import { type TraceTimelineInput, traceTimelineQueryOptions } from "../api"
 import {
 	TRACE_ENTITY_GROUPS,
@@ -91,7 +92,7 @@ export function TraceTimelinePage(props: TraceTimelinePageProps) {
 						{ value: "all", label: t("trace.filterAll") },
 						...TRACE_ENTITY_GROUPS.map((group) => ({
 							value: group.value,
-							label: t(group.labelKey),
+							label: loose(t)(group.labelKey),
 							testId: `trace-filter-${group.value}`,
 						})),
 					]}
@@ -113,7 +114,7 @@ export function TraceTimelinePage(props: TraceTimelinePageProps) {
 								dayLabel(
 									day,
 									resolvedTimeZone,
-									t,
+									loose(t),
 									"trace.today",
 									"trace.yesterday",
 								)
@@ -197,7 +198,7 @@ function TraceEventRow(props: {
 				<Icon className="size-4 shrink-0 text-muted-foreground" />
 			)}
 			<span className="min-w-0 flex-1 truncate text-ui text-foreground">
-				{t(traceEventLabelKey(event.action, kind), {
+				{loose(t)(traceEventLabelKey(event.action, kind), {
 					name: event.entityName,
 				})}
 			</span>

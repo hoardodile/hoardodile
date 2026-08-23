@@ -20,6 +20,7 @@ import { DualChipList } from "@/components/common/DualChipList"
 import { TagChip } from "@/features/tags/TagChip"
 import { traitListQueryOptions } from "@/features/traits"
 import { TraitAddDialog } from "@/features/traits/TraitAddDialog"
+import type { Translate } from "@/i18n"
 import { TraitDateField } from "./TraitDateField"
 
 type CharTraitFilterProps = Readonly<{
@@ -393,7 +394,7 @@ function TraitValueInput(props: {
 	)
 }
 
-function labelForOp(op: TraitFilterOp, t: (key: string) => string): string {
+function labelForOp(op: TraitFilterOp, t: Translate): string {
 	switch (op) {
 		case "contains":
 			return t("characters.traitFilter.opContains")

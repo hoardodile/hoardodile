@@ -12,6 +12,7 @@ import { useTranslation } from "react-i18next"
 import { CharCard as CharacterCard } from "@/features/char/components/CharCard"
 import { ResCard as ResourceCard } from "@/features/res/components/ResCard"
 import { useDateFormatter } from "@/features/settings/datePrefs"
+import { loose } from "@/i18n"
 import { SearchHighlight } from "./SearchHighlight"
 import { SearchResultRow } from "./SearchResultRow"
 
@@ -71,7 +72,7 @@ export function SearchResultSections(props: SearchResultSectionsProps) {
 				return (
 					<section key={section.kind} className="flex flex-col">
 						<SectionHeader
-							title={t(section.titleKey)}
+							title={loose(t)(section.titleKey)}
 							count={t("search.sectionCount", { count: page.total })}
 							viewAll={t("search.viewAll", { count: page.total })}
 							onViewAll={viewAll(section.kind)}

@@ -1,9 +1,5 @@
 import { toast } from "@hoardodile/ui/components/toast"
-
-type BulkToastTranslate = (
-	key: string,
-	opts?: Record<string, unknown>,
-) => string
+import type { Translate } from "@/i18n"
 
 /**
  * Shared bulk-operation outcome toast for the resource / character batch
@@ -11,7 +7,7 @@ type BulkToastTranslate = (
  * keys live under `<ns>.bulk.toastAllOk|toastAllFailed|toastPartial`.
  */
 export function toastBulkOutcome(
-	t: BulkToastTranslate,
+	t: Translate,
 	ns: "resources" | "characters",
 	okCount: number,
 	failures: readonly { readonly message: string }[],

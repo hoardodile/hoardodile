@@ -13,6 +13,7 @@ import {
 	type UsagePlatformFilterValue,
 	usagePlatformFilterParam,
 } from "@/features/usage/components/UsagePlatformFilter"
+import { loose } from "@/i18n"
 import dayjs from "@/lib/dayjs"
 import { traceReportQueryOptions } from "../api"
 import { TRACE_ACTION_META, type TraceAction } from "../lib/actionMeta"
@@ -164,7 +165,7 @@ export function TraceOverviewSection(props: {
 						label={t("trace.overview.busiestKind")}
 						value={
 							busiest.action !== undefined
-								? `${t(TRACE_ACTION_META[busiest.action].filterKey)} · ${busiest.count}`
+								? `${loose(t)(TRACE_ACTION_META[busiest.action].filterKey)} · ${busiest.count}`
 								: "—"
 						}
 					/>

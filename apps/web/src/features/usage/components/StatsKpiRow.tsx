@@ -7,6 +7,7 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query"
 import { useMemo } from "react"
 import { useTranslation } from "react-i18next"
 import { useUsageTimeZones } from "@/features/settings/datePrefs"
+import { loose } from "@/i18n"
 import dayjs from "@/lib/dayjs"
 import { formatDurationMs } from "@/lib/formatDuration"
 import { dayjsFor, formatCalendarDay } from "@/lib/timezone"
@@ -133,7 +134,7 @@ export function StatsKpiRow(props: StatsKpiRowProps) {
 	let insightLabel: string | undefined
 	let deltaDirection: keyof typeof DELTA_ICONS = "flat"
 	if (insight !== null) {
-		const comparisonLabel = t(insight.comparisonKey)
+		const comparisonLabel = loose(t)(insight.comparisonKey)
 		if (insight.deltaMs === 0) {
 			insightLabel = t("usage.insight.sameAsPeriod", {
 				period: comparisonLabel,

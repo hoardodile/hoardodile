@@ -12,6 +12,7 @@ import { useTranslation } from "react-i18next"
 import { SearchField } from "@/components/common/SearchField"
 import { useClaimPanelSlot } from "@/components/layout/panelSlot"
 import type { FilterDraft } from "@/hooks/useFilterDraft"
+import { loose } from "@/i18n"
 import {
 	type CharFilterDraft,
 	CharFilterRail,
@@ -84,7 +85,7 @@ export function CharFilterBar(props: CharFilterBarProps) {
 				aria-label={t("characters.sortLabel")}
 				options={SORT_OPTIONS.map((opt) => ({
 					value: opt.value,
-					label: t(opt.tKey),
+					label: loose(t)(opt.tKey),
 				}))}
 			/>
 			<PillTabs

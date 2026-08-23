@@ -18,6 +18,7 @@ import {
 	useDocReadingWidth,
 	useDocTheme,
 } from "@/features/doc/hooks/useDocPrefs"
+import { loose } from "@/i18n"
 import { DOC_PAGE_FONT_TAGS } from "@/lib/fonts"
 import { prefKeys } from "@/lib/keys"
 
@@ -103,7 +104,7 @@ export function DocAppearanceSettingsDialog(
 							},
 							...THEME_PALETTES.map((palette) => ({
 								value: palette.id,
-								label: t(palette.labelKey),
+								label: loose(t)(palette.labelKey),
 							})),
 						]}
 						placeholder={t("documents.appearanceSettings.theme")}

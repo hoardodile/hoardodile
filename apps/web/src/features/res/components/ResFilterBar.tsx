@@ -14,6 +14,7 @@ import { SearchField } from "@/components/common/SearchField"
 import { useClaimPanelSlot } from "@/components/layout/panelSlot"
 import { ImageSearchButton } from "@/features/search/components/ImageSearchButton"
 import type { FilterDraft } from "@/hooks/useFilterDraft"
+import { loose } from "@/i18n"
 import {
 	RESOURCE_PAGE_SIZE_OPTIONS,
 	type ResSearchState,
@@ -127,7 +128,7 @@ export function ResFilterBar(props: ResFilterBarProps) {
 				aria-label={t("resources.search.sortLabel")}
 				options={SORT_OPTIONS.map((opt) => ({
 					value: opt.value,
-					label: t(opt.tKey),
+					label: loose(t)(opt.tKey),
 				}))}
 			/>
 			<PillTabs

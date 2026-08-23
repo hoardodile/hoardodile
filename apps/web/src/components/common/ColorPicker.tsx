@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next"
 import { jsonCodec } from "@/features/prefs"
 import { TagChip } from "@/features/tags/TagChip"
 import { usePrefSync } from "@/hooks/usePrefSync"
+import { loose } from "@/i18n"
 import {
 	DEFAULT_COLOR_PRESETS,
 	isSpecialTagStyle,
@@ -67,9 +68,9 @@ export function ColorPicker(props: ColorPickerProps) {
 								color={style}
 								active={active}
 								onClick={onPick}
-								title={t(`categories.panel.specialStyle.${style}`)}
+								title={loose(t)(`categories.panel.specialStyle.${style}`)}
 							>
-								{t(`categories.panel.specialStyle.${style}`)}
+								{loose(t)(`categories.panel.specialStyle.${style}`)}
 							</TagChip>
 						)
 					: undefined

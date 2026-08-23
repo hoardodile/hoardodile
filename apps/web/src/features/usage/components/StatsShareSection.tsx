@@ -12,6 +12,7 @@ import { useEffect, useMemo, useRef } from "react"
 import { useTranslation } from "react-i18next"
 import { PaginationBar } from "@/components/common/PaginationBar"
 import { useUsageTimeZones } from "@/features/settings/datePrefs"
+import { loose } from "@/i18n"
 import { formatCalendarDay } from "@/lib/timezone"
 import {
 	usageDailySummaryQueryOptions,
@@ -326,7 +327,7 @@ export function StatsShareSection(props: StatsShareSectionProps) {
 				className="mt-4"
 				items={ENTITY_FILTER_OPTIONS.map((option) => ({
 					value: option.value,
-					label: t(option.labelKey),
+					label: loose(t)(option.labelKey),
 					render: (active, className, trigger) => (
 						<Link
 							{...trigger}
@@ -339,7 +340,7 @@ export function StatsShareSection(props: StatsShareSectionProps) {
 							className={className}
 							aria-current={active ? "page" : undefined}
 						>
-							{t(option.labelKey)}
+							{loose(t)(option.labelKey)}
 						</Link>
 					),
 				}))}

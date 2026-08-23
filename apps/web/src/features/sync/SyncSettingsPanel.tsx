@@ -57,7 +57,15 @@ type StateKey =
 type StateField = {
 	readonly key: StateKey
 	/** i18n key under `sync.fields`. */
-	readonly labelKey: string
+	readonly labelKey:
+		| "resources"
+		| "characters"
+		| "documents"
+		| "messages"
+		| "tags"
+		| "trash"
+		| "contentSize"
+		| "storage"
 	/** Whether the value is a byte count rendered via `formatBytes`. */
 	readonly bytes: boolean
 }

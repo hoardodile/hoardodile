@@ -1,6 +1,7 @@
 import type { AppRouter } from "@hoardodile/server/router"
 import { isTRPCClientError, type TRPCClientError } from "@trpc/client"
 import type { TFunction } from "i18next"
+import { loose } from "@/i18n"
 import { errorMessage } from "@/lib/errors"
 
 /**
@@ -26,7 +27,7 @@ export function tagErrorMessage(err: unknown, t: TFunction): string {
 		const kind = readDomainKind((err as TRPCClientError<AppRouter>).data)
 		if (kind !== undefined) {
 			const key = TAG_ERROR_KEYS[kind]
-			if (key !== undefined) return t(key)
+			if (key !== undefined) return loose(t)(key)
 		}
 	}
 	return errorMessage(err, t("common.unknownError"))

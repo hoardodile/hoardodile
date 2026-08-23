@@ -62,6 +62,7 @@ import { TagChip } from "@/features/tags/TagChip"
 import { TagChipLink } from "@/features/tags/TagChipLink"
 import { EntityUsageStats } from "@/features/usage/components/EntityUsageStats"
 import { useUsageTracker } from "@/features/usage/useUsageTracker"
+import { loose } from "@/i18n"
 import { requireAuth } from "@/lib/auth-guard"
 import { formatBytes } from "@/lib/formatBytes"
 import {
@@ -703,7 +704,9 @@ function SimilarityEntry(props: {
 					) : undefined
 				}
 			/>
-			<p className="text-xs text-muted-foreground">{t(labelKey, { count })}</p>
+			<p className="text-xs text-muted-foreground">
+				{loose(t)(labelKey, { count })}
+			</p>
 			<MatchThumbStrip resId={thumbResId} files={files} />
 		</div>
 	)

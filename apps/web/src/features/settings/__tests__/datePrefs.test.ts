@@ -1,5 +1,6 @@
 import { act, renderHook } from "@testing-library/react"
 import { describe, expect, test, vi } from "vitest"
+import type { Translate } from "@/i18n"
 import { syncBrowserTimeZone } from "@/lib/timezone"
 import {
 	formatDate,
@@ -46,46 +47,46 @@ describe("date formatting helpers", () => {
 	})
 
 	test("formatDateTrait renders prefix and sign label", () => {
-		const t = (key: string) =>
-			key === "traits.values.date.before" ? "BC" : key
+		const t = ((key: string) =>
+			key === "traits.values.date.before" ? "BC" : key) as Translate
 		expect(
 			formatDateTrait(
 				{ prefix: "AD", sign: "+", year: 2024, month: 6, day: 12 },
 				"YYYY-MM-DD HH:mm:ss",
-				t,
+				t as unknown as Translate,
 			),
 		).toBe("AD 2024-6-12")
 		expect(
 			formatDateTrait(
 				{ prefix: "", sign: "-", year: 100, month: 1, day: 15 },
 				"YYYY-MM-DD HH:mm:ss",
-				t,
+				t as unknown as Translate,
 			),
 		).toBe("BC 100-1-15")
 	})
 
 	test("formatDateTrait renders partial dates", () => {
-		const t = (key: string) =>
-			key === "traits.values.date.before" ? "BC" : key
+		const t = ((key: string) =>
+			key === "traits.values.date.before" ? "BC" : key) as Translate
 		expect(
 			formatDateTrait(
 				{ prefix: "", sign: "+", year: 2000, month: undefined, day: undefined },
 				"YYYY-MM-DD HH:mm:ss",
-				t,
+				t as unknown as Translate,
 			),
 		).toBe("2000-?-?")
 		expect(
 			formatDateTrait(
 				{ prefix: "", sign: "+", year: 2000, month: 6, day: undefined },
 				"YYYY-MM-DD HH:mm:ss",
-				t,
+				t as unknown as Translate,
 			),
 		).toBe("2000-6-?")
 		expect(
 			formatDateTrait(
 				{ prefix: "", sign: "+", year: undefined, month: 6, day: 12 },
 				"YYYY-MM-DD HH:mm:ss",
-				t,
+				t as unknown as Translate,
 			),
 		).toBe("?-6-12")
 		expect(
@@ -98,27 +99,27 @@ describe("date formatting helpers", () => {
 					day: undefined,
 				},
 				"YYYY-MM-DD HH:mm:ss",
-				t,
+				t as unknown as Translate,
 			),
 		).toBe("Era BC ?-6-?")
 		expect(
 			formatDateTrait(
 				{ prefix: "", sign: "+", year: undefined, month: undefined, day: 12 },
 				"YYYY-MM-DD HH:mm:ss",
-				t,
+				t as unknown as Translate,
 			),
 		).toBe("?-?-12")
 	})
 
 	test("formatDateTrait renders fictional full dates without rollover", () => {
-		const t = (key: string) =>
-			key === "traits.values.date.before" ? "BC" : key
+		const t = ((key: string) =>
+			key === "traits.values.date.before" ? "BC" : key) as Translate
 		// 13th month should not roll over to next year.
 		expect(
 			formatDateTrait(
 				{ prefix: "", sign: "+", year: 2024, month: 13, day: 1 },
 				"YYYY-MM-DD HH:mm:ss",
-				t,
+				t as unknown as Translate,
 			),
 		).toBe("2024-13-1")
 		// Feb 30th should not roll over to March.
@@ -126,7 +127,7 @@ describe("date formatting helpers", () => {
 			formatDateTrait(
 				{ prefix: "", sign: "+", year: 2024, month: 2, day: 30 },
 				"YYYY-MM-DD HH:mm:ss",
-				t,
+				t as unknown as Translate,
 			),
 		).toBe("2024-2-30")
 		// Different user date format is ignored; trait dates use fixed Y-M-D.
@@ -134,7 +135,7 @@ describe("date formatting helpers", () => {
 			formatDateTrait(
 				{ prefix: "", sign: "+", year: 2024, month: 2, day: 30 },
 				"DD/MM/YYYY HH:mm:ss",
-				t,
+				t as unknown as Translate,
 			),
 		).toBe("2024-2-30")
 		// BC fictional date keeps sign label.
@@ -142,33 +143,33 @@ describe("date formatting helpers", () => {
 			formatDateTrait(
 				{ prefix: "", sign: "-", year: 100, month: 13, day: 5 },
 				"YYYY-MM-DD HH:mm:ss",
-				t,
+				t as unknown as Translate,
 			),
 		).toBe("BC 100-13-5")
 	})
 
 	test("formatDateTrait renders fictional partial dates", () => {
-		const t = (key: string) =>
-			key === "traits.values.date.before" ? "BC" : key
+		const t = ((key: string) =>
+			key === "traits.values.date.before" ? "BC" : key) as Translate
 		expect(
 			formatDateTrait(
 				{ prefix: "", sign: "+", year: 2024, month: 13, day: undefined },
 				"YYYY-MM-DD HH:mm:ss",
-				t,
+				t as unknown as Translate,
 			),
 		).toBe("2024-13-?")
 		expect(
 			formatDateTrait(
 				{ prefix: "", sign: "+", year: undefined, month: 2, day: 30 },
 				"YYYY-MM-DD HH:mm:ss",
-				t,
+				t as unknown as Translate,
 			),
 		).toBe("?-2-30")
 		expect(
 			formatDateTrait(
 				{ prefix: "", sign: "+", year: undefined, month: 13, day: undefined },
 				"YYYY-MM-DD HH:mm:ss",
-				t,
+				t as unknown as Translate,
 			),
 		).toBe("?-13-?")
 	})

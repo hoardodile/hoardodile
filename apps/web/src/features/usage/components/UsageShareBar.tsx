@@ -2,6 +2,7 @@ import type { UsageEntityType, UsageExposureMode } from "@hoardodile/schemas"
 import { useQueries } from "@tanstack/react-query"
 import { useTranslation } from "react-i18next"
 import { useUsageTimeZones } from "@/features/settings/datePrefs"
+import type { Translate } from "@/i18n"
 import { usageTotalsQueryOptions } from "../api"
 import {
 	getRangeListTotalsInput,
@@ -119,10 +120,7 @@ export function UsageShareBar(props: UsageShareBarProps) {
 	)
 }
 
-function entityLabel(
-	entityType: UsageEntityType,
-	t: ReturnType<typeof useTranslation>["t"],
-): string {
+function entityLabel(entityType: UsageEntityType, t: Translate): string {
 	switch (entityType) {
 		case "resource":
 			return t("usage.leaderboard.entityResources")

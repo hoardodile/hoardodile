@@ -1,5 +1,6 @@
 import { DropdownSelect } from "@hoardodile/ui/components/dropdown-select"
 import { useTranslation } from "react-i18next"
+import { loose } from "@/i18n"
 import type { UsagePlatformFilterValue } from "./UsagePlatformFilter"
 
 const PLATFORM_OPTIONS: {
@@ -31,7 +32,7 @@ export function PlatformFilterSelect(props: {
 			onValueChange={(next) => onChange(next as UsagePlatformFilterValue)}
 			options={PLATFORM_OPTIONS.map((option) => ({
 				value: option.value,
-				label: t(option.labelKey),
+				label: loose(t)(option.labelKey),
 			}))}
 			aria-label={t("usage.stats.platformFilter")}
 			data-testid="platform-filter-select"

@@ -1,3 +1,4 @@
+import type { Translate } from "@/i18n"
 import type { StorageOverview } from "./api"
 
 export type StorageSegmentGroup = "plugins" | "host" | "archived" | "cache"
@@ -51,7 +52,7 @@ function paletteColor(index: number): string {
  */
 export function buildStorageSegments(
 	overview: StorageOverview,
-	t: (key: string, params?: Record<string, unknown>) => string,
+	t: Translate,
 ): readonly StorageSegment[] {
 	const segments: StorageSegment[] = overview.resources.byPlugin.map(
 		(plugin, index) => ({

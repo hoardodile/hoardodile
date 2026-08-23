@@ -5,6 +5,7 @@ import {
 	type ThemePalette,
 	useTheme,
 } from "@/components/common/ThemeProvider"
+import { loose } from "@/i18n"
 import { ChoiceCard } from "./ChoiceCard"
 
 const MODE_OPTIONS = [
@@ -59,7 +60,7 @@ export function ThemeSettingsPanel() {
 					{THEME_PALETTES.map((p) => (
 						<ChoiceCard
 							key={p.id}
-							label={t(p.labelKey)}
+							label={loose(t)(p.labelKey)}
 							selected={palette === p.id}
 							onSelect={() => setPalette(p.id)}
 						>

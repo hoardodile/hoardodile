@@ -1,5 +1,6 @@
 import { SectionTabs } from "@hoardodile/ui/components/section-tabs"
 import { useTranslation } from "react-i18next"
+import { loose } from "@/i18n"
 import type { UsageRange } from "../lib/date"
 import type { StatsSearch, StatsSearchPatch } from "../lib/statsSearch"
 
@@ -29,7 +30,7 @@ export function StatsToolbar(props: StatsToolbarProps) {
 			}}
 			items={RANGES.map((range) => ({
 				value: range.value,
-				label: t(range.labelKey),
+				label: loose(t)(range.labelKey),
 			}))}
 		/>
 	)

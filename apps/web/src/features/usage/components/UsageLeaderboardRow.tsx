@@ -12,6 +12,7 @@ import { cn } from "@hoardodile/ui/lib/utils"
 import { Link } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 import { CharThumb } from "@/features/char/components/CharThumb"
+import type { Translate } from "@/i18n"
 import { formatDurationMs } from "@/lib/formatDuration"
 import type { ShareMetric } from "../lib/statsShare"
 import {
@@ -49,7 +50,7 @@ function metricLabel(
 	metric: ShareMetric,
 	total: UsageTotal,
 	exposureMode: UsageExposureMode,
-	t: ReturnType<typeof useTranslation>["t"],
+	t: Translate,
 ): string {
 	if (metric === "time") {
 		return formatDurationMs(total.totalMs)

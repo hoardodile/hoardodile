@@ -1,4 +1,11 @@
-/** Locales the app ships; mirrored by the web i18n bootstrapping. */
+/**
+ * Locales the app ships; mirrored by the web i18n bootstrapping.
+ *
+ * `en.json` and `zh.json` must stay in lockstep: identical flat key sets,
+ * matching interpolation placeholders, and complete `_one`/`_other` pairs.
+ * `packages/shared/src/i18n/parity.test.ts` enforces this — run it after
+ * touching either catalog.
+ */
 export const SUPPORTED_LANGUAGES = ["en", "zh"] as const
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number]
 

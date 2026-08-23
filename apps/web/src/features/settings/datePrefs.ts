@@ -2,6 +2,7 @@ import { LOCAL_TIME_ZONE_SENTINEL } from "@hoardodile/schemas/timezone"
 import { useMemo, useSyncExternalStore } from "react"
 import { useTranslation } from "react-i18next"
 import { useStringPrefSync } from "@/hooks/usePrefSync"
+import type { Translate } from "@/i18n"
 import { prefKeys } from "@/lib/keys"
 import {
 	dayjsFor,
@@ -130,7 +131,7 @@ export function formatDateTrait(
 		readonly day: number | undefined
 	},
 	_dateFormat: string,
-	t: (key: string) => string,
+	t: Translate,
 ): string {
 	const dateLabel = formatPartialDate(parsed.year, parsed.month, parsed.day)
 	const signLabel = parsed.sign === "+" ? "" : t("traits.values.date.before")

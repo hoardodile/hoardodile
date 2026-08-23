@@ -1,6 +1,7 @@
 import type { UsageExposureMode } from "@hoardodile/schemas"
 import { DropdownSelect } from "@hoardodile/ui/components/dropdown-select"
 import { useTranslation } from "react-i18next"
+import { loose } from "@/i18n"
 
 const EXPOSURE_OPTIONS: { value: UsageExposureMode; labelKey: string }[] = [
 	{ value: "direct", labelKey: "usage.stats.exposureTime.direct" },
@@ -26,7 +27,7 @@ export function ExposureModeSelect(props: {
 			onValueChange={(next) => onChange(next as UsageExposureMode)}
 			options={EXPOSURE_OPTIONS.map((option) => ({
 				value: option.value,
-				label: t(option.labelKey),
+				label: loose(t)(option.labelKey),
 			}))}
 			aria-label={t("usage.stats.exposureMode")}
 			data-testid="exposure-mode-select"

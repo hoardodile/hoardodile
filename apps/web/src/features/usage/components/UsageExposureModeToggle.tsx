@@ -1,6 +1,7 @@
 import type { UsageExposureMode } from "@hoardodile/schemas"
 import { cn } from "@hoardodile/ui/lib/utils"
 import { useTranslation } from "react-i18next"
+import { loose } from "@/i18n"
 
 const EXPOSURE_MODES: readonly {
 	readonly value: UsageExposureMode
@@ -38,7 +39,7 @@ export function UsageExposureModeToggle(props: UsageExposureModeToggleProps) {
 								: "bg-muted text-muted-foreground hover:bg-muted/80",
 						)}
 					>
-						{t(mode.labelKey)}
+						{loose(t)(mode.labelKey)}
 					</button>
 				))}
 			</div>

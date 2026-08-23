@@ -13,6 +13,7 @@ import {
 import { mergeRecentViewedTotals } from "@/features/overview/lib/mergeRecentViewedTotals"
 import { RECENT_VIEWED_ENTITY_TYPES } from "@/features/overview/lib/recentViewedConstants"
 import { useResolvedTimeZone } from "@/features/settings/datePrefs"
+import { loose } from "@/i18n"
 import { usageTotalsPageQueryOptions, usageTotalsQueryOptions } from "../api"
 import { UsageHistoryRow } from "./UsageHistoryRow"
 import {
@@ -171,7 +172,7 @@ export function UsageHistoryPage(props: {
 								: dayLabel(
 										day,
 										resolvedTimeZone,
-										t,
+										loose(t),
 										"usage.history.today",
 										"usage.history.yesterday",
 									)
