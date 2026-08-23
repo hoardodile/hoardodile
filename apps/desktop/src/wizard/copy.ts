@@ -1,3 +1,6 @@
+import en from "@hoardodile/shared/i18n/en.json"
+import zh from "@hoardodile/shared/i18n/zh.json"
+
 export type WizardCopy = {
 	readonly title: string
 	readonly intro: string
@@ -11,61 +14,40 @@ export type WizardCopy = {
 	readonly missingBridge: string
 }
 
-const EN: WizardCopy = {
-	title: "Welcome to hoardodile",
-	intro:
-		"Choose where this computer keeps the archive. You can change the folder later from Settings or the tray.",
-	library: "Library folder",
-	browse: "Browse",
-	autoStart: "Start with Windows",
-	autoStartHint: "Open hoardodile when you sign in.",
-	startInTray: "Start in tray",
-	startInTrayHint: "No window until you choose Open from the tray.",
-	continue: "Continue",
-	missingBridge: "Desktop bridge missing. Restart the app.",
-}
-
-const ZH: WizardCopy = {
-	title: "欢迎使用 hoardodile",
-	intro: "选择这台电脑存放归档的位置。之后可以在设置或托盘里更换文件夹。",
-	library: "存储文件夹",
-	browse: "浏览",
-	autoStart: "开机启动",
-	autoStartHint: "登录 Windows 时打开 hoardodile。",
-	startInTray: "启动到托盘",
-	startInTrayHint: "在托盘中选择打开之前不显示窗口。",
-	continue: "继续",
-	missingBridge: "桌面桥接不可用。请重启应用。",
-}
-
-export function wizardCopy(): WizardCopy {
-	if (typeof navigator !== "undefined" && navigator.language.startsWith("zh")) {
-		return ZH
-	}
-	return EN
-}
-
 export type ShellCopy = {
 	readonly serverUnreachable: string
 	readonly retry: string
 	readonly loadingLabel: string
 }
 
-const SHELL_EN: ShellCopy = {
-	serverUnreachable: "Server unreachable",
-	retry: "Retry",
-	loadingLabel: "Loading",
+function pickCatalog(): typeof en {
+	if (typeof navigator !== "undefined" && navigator.language.startsWith("zh")) {
+		return zh
+	}
+	return en
 }
 
-const SHELL_ZH: ShellCopy = {
-	serverUnreachable: "无法连接服务器",
-	retry: "重试",
-	loadingLabel: "加载中",
+export function wizardCopy(): WizardCopy {
+	const catalog = pickCatalog()
+	return {
+		title: catalog.desktopShell.wizard.title,
+		intro: catalog.desktopShell.wizard.intro,
+		library: catalog.desktopShell.wizard.library,
+		browse: catalog.desktopShell.wizard.browse,
+		autoStart: catalog.desktopShell.wizard.autoStart,
+		autoStartHint: catalog.desktopShell.wizard.autoStartHint,
+		startInTray: catalog.desktopShell.wizard.startInTray,
+		startInTrayHint: catalog.desktopShell.wizard.startInTrayHint,
+		continue: catalog.desktopShell.wizard.continue,
+		missingBridge: catalog.desktopShell.wizard.missingBridge,
+	}
 }
 
 export function shellCopy(): ShellCopy {
-	if (typeof navigator !== "undefined" && navigator.language.startsWith("zh")) {
-		return SHELL_ZH
+	const catalog = pickCatalog()
+	return {
+		serverUnreachable: catalog.desktopShell.shell.serverUnreachable,
+		retry: catalog.desktopShell.shell.retry,
+		loadingLabel: catalog.desktopShell.shell.loadingLabel,
 	}
-	return SHELL_EN
 }

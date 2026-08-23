@@ -1,6 +1,6 @@
 import { join } from "node:path"
 import { app, BrowserWindow, nativeTheme, shell } from "electron"
-import { SERVER_ERROR_MESSAGE } from "./error-page.ts"
+import { serverErrorMessage } from "./error-page.ts"
 import {
 	appWindowDecision,
 	type WindowOpenDecision,
@@ -163,7 +163,7 @@ function loadWindow(win: BrowserWindow, options: CreateWindowOptions): void {
 					win,
 					options.shellPage,
 					"error",
-					SERVER_ERROR_MESSAGE,
+					serverErrorMessage(undefined),
 				)
 			}
 		})

@@ -1,4 +1,6 @@
 import type { HoardodileDesktopBridge } from "@hoardodile/shared/desktop"
+import en from "@hoardodile/shared/i18n/en.json"
+import zh from "@hoardodile/shared/i18n/zh.json"
 import { Button } from "@hoardodile/ui/components/button"
 import { CaptionBar } from "@hoardodile/ui/components/caption-bar"
 import { Input } from "@hoardodile/ui/components/input"
@@ -29,12 +31,16 @@ function WizardForm(props: {
 	const [autoStart, setAutoStart] = useState(false)
 	const [startInTray, setStartInTray] = useState(false)
 	const [busy, setBusy] = useState(false)
+	const [language, setLanguage] = useState<string | undefined>(undefined)
 
 	useEffect(() => {
 		void desktop.getWizardDefaults().then((defaults) => {
 			setLibraryPath(defaults.libraryPath)
 		})
+		void desktop.getLanguage().then(setLanguage)
 	}, [desktop])
+
+	const captionLabels = (language === "zh" ? zh : en).me.desktop.caption
 
 	async function handleBrowse(): Promise<void> {
 		const next = await desktop.pickLibraryFolder()
@@ -60,13 +66,13 @@ function WizardForm(props: {
 			<CaptionBar
 				controls={desktop}
 				labels={{
-					back: "Back",
-					forward: "Forward",
-					reload: "Reload",
-					minimize: "Minimize",
-					maximize: "Maximize",
-					restore: "Restore",
-					close: "Close",
+					back: captionLabels.back,
+					forward: captionLabels.forward,
+					reload: captionLabels.reload,
+					minimize: captionLabels.minimize,
+					maximize: captionLabels.maximize,
+					restore: captionLabels.restore,
+					close: captionLabels.close,
 				}}
 			/>
 			<main className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto px-8 py-8">

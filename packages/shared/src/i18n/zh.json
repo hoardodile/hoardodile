@@ -2102,5 +2102,48 @@
 			"overdueDescription": "已超过你设定的 {{count}} 天提醒间隔。",
 			"recordLink": "去同步"
 		}
+	},
+	"desktopShell": {
+		"tray": {
+			"open": "打开",
+			"changeLibrary": "更换存储文件夹…",
+			"copyLanAddress": "复制局域网地址",
+			"restartServer": "重启服务器",
+			"updateReady": "更新已就绪——重启以完成",
+			"quit": "退出",
+			"tooltipServerStopped": "hoardodile —— 服务器已停止",
+			"tooltipUpdateReady": "hoardodile —— 更新已就绪"
+		},
+		"errorPage": {
+			"serverError": "无法连接服务器。服务器可能仍在启动，或已停止。稍候片刻后点击重试，或在托盘中使用「重启服务器」。",
+			"devServerError": "开发服务器未运行。请在另一个终端运行 `pnpm dev`，然后点击重试。"
+		},
+		"dialog": {
+			"lanPasswordRequired": "请先设置管理员密码，再启用局域网访问。",
+			"weakPasswordMessage": "你的管理员密码强度较弱。",
+			"weakPasswordDetail": "任何人猜到密码都可以访问整个内容库。请先在 设置 → 修改密码 中设置更强的密码，或仍然启用共享。",
+			"enableAnyway": "仍然启用共享",
+			"cancel": "取消",
+			"serverStoppedBody": "服务器已停止。请在托盘中使用「重启服务器」。",
+			"serverNotRunningMessage": "服务器未运行。",
+			"restartServer": "重启服务器"
+		},
+		"shell": {
+			"serverUnreachable": "无法连接服务器",
+			"retry": "重试",
+			"loadingLabel": "加载中"
+		},
+		"wizard": {
+			"title": "欢迎使用 hoardodile",
+			"intro": "选择这台电脑存放归档的位置。之后可以在设置或托盘里更换文件夹。",
+			"library": "存储文件夹",
+			"browse": "浏览",
+			"autoStart": "开机启动",
+			"autoStartHint": "登录 Windows 时打开 hoardodile。",
+			"startInTray": "启动到托盘",
+			"startInTrayHint": "在托盘中选择打开之前不显示窗口。",
+			"continue": "继续",
+			"missingBridge": "桌面桥接不可用。请重启应用。"
+		}
 	}
 }

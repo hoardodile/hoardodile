@@ -27,7 +27,7 @@ import {
 	writeDesktopConfig,
 } from "./config.ts"
 import { bindDestApiProxy } from "./dest-api-proxy.ts"
-import { DEV_SERVER_ERROR_MESSAGE, SERVER_ERROR_MESSAGE } from "./error-page.ts"
+import { devServerErrorMessage, serverErrorMessage } from "./error-page.ts"
 import {
 	applyLoginItem,
 	bindWindowMaximizeEvents,
@@ -138,11 +138,16 @@ function broadcastUpdate(runtime: Runtime, state: DesktopUpdateState): void {
 		if (!win.isDestroyed()) win.webContents.send(IPC.updatesChanged, state)
 	}
 	if (runtime.tray !== undefined) {
-		rebuildTrayMenu(runtime.tray, trayHandlers(runtime), {
-			crashed: runtime.crashed,
-			updateReady: runtime.updateReady,
-			lanUrl: lanTrayUrl(runtime),
-		})
+		rebuildTrayMenu(
+			runtime.tray,
+			trayHandlers(runtime),
+			{
+				crashed: runtime.crashed,
+				updateReady: runtime.updateReady,
+				lanUrl: lanTrayUrl(runtime),
+			},
+			trayStrings(runtime.language),
+		)
 	}
 }
 
@@ -258,10 +263,11 @@ async function setLanEnabled(
 	}
 	if (enabled) {
 		const state = await readSidecarAuthConfigured(sidecar)
+		const catalog = catalogFor(runtime.language)
 		if (!state.configured) {
 			dialog.showErrorBox(
 				"hoardodile",
-				"Set an admin password first before enabling local network access.",
+				catalog.desktopShell.dialog.lanPasswordRequired,
 			)
 			throw new Error(
 				"refusing to enable LAN sharing without an admin password",
@@ -271,12 +277,12 @@ async function setLanEnabled(
 			const { response } = await dialog.showMessageBox({
 				type: "warning",
 				title: "hoardodile",
-				message: "Your admin password is weak.",
-				detail:
-					"Anyone on your network who guesses it can access the " +
-					"whole library. Set a stronger password in Settings → " +
-					"Change password first, or enable sharing anyway.",
-				buttons: ["Enable sharing anyway", "Cancel"],
+				message: catalog.desktopShell.dialog.weakPasswordMessage,
+				detail: catalog.desktopShell.dialog.weakPasswordDetail,
+				buttons: [
+					catalog.desktopShell.dialog.enableAnyway,
+					catalog.desktopShell.dialog.cancel,
+				],
 				defaultId: 1,
 				cancelId: 1,
 			})
@@ -344,7 +350,7 @@ async function applyLanChange(
 					win,
 					shellPageTarget(runtime),
 					"error",
-					SERVER_ERROR_MESSAGE,
+					serverErrorMessage(runtime.language),
 				)
 			}
 		}
@@ -353,11 +359,16 @@ async function applyLanChange(
 
 function rebuildSidecarTray(runtime: Runtime): void {
 	if (runtime.tray === undefined) return
-	rebuildTrayMenu(runtime.tray, trayHandlers(runtime), {
-		crashed: runtime.crashed,
-		updateReady: runtime.updateReady,
-		lanUrl: lanTrayUrl(runtime),
-	})
+	rebuildTrayMenu(
+		runtime.tray,
+		trayHandlers(runtime),
+		{
+			crashed: runtime.crashed,
+			updateReady: runtime.updateReady,
+			lanUrl: lanTrayUrl(runtime),
+		},
+		trayStrings(runtime.language),
+	)
 }
 
 /** The URL the tray copies, using the actual listening port. */
@@ -399,11 +410,16 @@ async function restartSidecar(runtime: Runtime): Promise<void> {
 		runtime.sidecar = await spawnSidecar(runtime)
 		runtime.crashed = false
 		if (runtime.tray !== undefined) {
-			rebuildTrayMenu(runtime.tray, trayHandlers(runtime), {
-				crashed: false,
-				updateReady: runtime.updateReady,
-				lanUrl: lanTrayUrl(runtime),
-			})
+			rebuildTrayMenu(
+				runtime.tray,
+				trayHandlers(runtime),
+				{
+					crashed: false,
+					updateReady: runtime.updateReady,
+					lanUrl: lanTrayUrl(runtime),
+				},
+				trayStrings(runtime.language),
+			)
 		}
 	} catch (err) {
 		const message = err instanceof Error ? err.message : String(err)
@@ -441,15 +457,20 @@ function onSidecarCrash(runtime: Runtime): void {
 	runtime.window?.destroy()
 	runtime.window = undefined
 	if (runtime.tray !== undefined) {
-		rebuildTrayMenu(runtime.tray, trayHandlers(runtime), {
-			crashed: true,
-			updateReady: runtime.updateReady,
-			lanUrl: lanTrayUrl(runtime),
-		})
+		rebuildTrayMenu(
+			runtime.tray,
+			trayHandlers(runtime),
+			{
+				crashed: true,
+				updateReady: runtime.updateReady,
+				lanUrl: lanTrayUrl(runtime),
+			},
+			trayStrings(runtime.language),
+		)
 	}
 	new Notification({
 		title: "hoardodile",
-		body: "The server stopped. Use Restart server from the tray.",
+		body: catalogFor(runtime.language).desktopShell.dialog.serverStoppedBody,
 	}).show()
 }
 
@@ -473,11 +494,15 @@ async function resolveAppUrl(runtime: Runtime): Promise<string | undefined> {
 
 async function openAppWindow(runtime: Runtime): Promise<void> {
 	if (runtime.crashed || runtime.sidecar === undefined) {
+		const catalog = catalogFor(runtime.language)
 		const { response } = await dialog.showMessageBox({
 			type: "warning",
 			title: "hoardodile",
-			message: "The server is not running.",
-			buttons: ["Restart server", "Cancel"],
+			message: catalog.desktopShell.dialog.serverNotRunningMessage,
+			buttons: [
+				catalog.desktopShell.dialog.restartServer,
+				catalog.desktopShell.dialog.cancel,
+			],
 			defaultId: 0,
 			cancelId: 1,
 		})
@@ -525,7 +550,7 @@ async function openAppWindow(runtime: Runtime): Promise<void> {
 			win,
 			shellPageTarget(runtime),
 			"error",
-			DEV_SERVER_ERROR_MESSAGE,
+			devServerErrorMessage(runtime.language),
 		)
 		return
 	}
@@ -537,7 +562,7 @@ async function openAppWindow(runtime: Runtime): Promise<void> {
 
 /** Localized close-confirm copy for the native dialog; the SPA pushes the language via the bridge. */
 function closeDialogStrings(language: SupportedLanguage | undefined) {
-	const catalog = language === "zh" ? zh : en
+	const catalog = catalogFor(language)
 	return {
 		title: catalog.me.desktop.closeConfirm.title,
 		description: catalog.me.desktop.closeConfirm.description,
@@ -545,6 +570,25 @@ function closeDialogStrings(language: SupportedLanguage | undefined) {
 		quit: catalog.me.desktop.closeConfirm.quit,
 		cancel: catalog.common.cancel,
 		remember: catalog.me.desktop.closeConfirm.remember,
+	}
+}
+
+function catalogFor(language: SupportedLanguage | undefined) {
+	return language === "zh" ? zh : en
+}
+
+/** Localized tray copy — same language source as the close dialog. */
+function trayStrings(language: SupportedLanguage | undefined) {
+	const catalog = catalogFor(language)
+	return {
+		open: catalog.desktopShell.tray.open,
+		changeLibrary: catalog.desktopShell.tray.changeLibrary,
+		copyLanAddress: catalog.desktopShell.tray.copyLanAddress,
+		restartServer: catalog.desktopShell.tray.restartServer,
+		updateReady: catalog.desktopShell.tray.updateReady,
+		quit: catalog.desktopShell.tray.quit,
+		tooltipServerStopped: catalog.desktopShell.tray.tooltipServerStopped,
+		tooltipUpdateReady: catalog.desktopShell.tray.tooltipUpdateReady,
 	}
 }
 
@@ -619,7 +663,7 @@ async function retryAppWindow(runtime: Runtime): Promise<void> {
 			win,
 			shellPageTarget(runtime),
 			"error",
-			SERVER_ERROR_MESSAGE,
+			serverErrorMessage(runtime.language),
 		)
 		return
 	}
@@ -628,7 +672,7 @@ async function retryAppWindow(runtime: Runtime): Promise<void> {
 			win,
 			shellPageTarget(runtime),
 			"error",
-			DEV_SERVER_ERROR_MESSAGE,
+			devServerErrorMessage(runtime.language),
 		)
 		return
 	}
@@ -832,6 +876,7 @@ async function boot(): Promise<void> {
 			crashed: runtime.crashed,
 			updateReady: runtime.updateReady,
 		},
+		trayStrings(runtime.language),
 	)
 
 	runtime.updater = startUpdater({

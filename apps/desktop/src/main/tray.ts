@@ -23,17 +23,29 @@ export type TrayFlags = {
 	readonly lanUrl?: string | undefined
 }
 
+export type TrayStrings = {
+	readonly open: string
+	readonly changeLibrary: string
+	readonly copyLanAddress: string
+	readonly restartServer: string
+	readonly updateReady: string
+	readonly quit: string
+	readonly tooltipServerStopped: string
+	readonly tooltipUpdateReady: string
+}
+
 export function createAppTray(
 	iconPath: string | undefined,
 	handlers: TrayHandlers,
 	flags: TrayFlags,
+	strings: TrayStrings,
 ): Tray {
 	const image =
 		iconPath !== undefined && existsSync(iconPath)
 			? nativeImage.createFromPath(iconPath)
 			: nativeImage.createEmpty()
 	const tray = new Tray(image.isEmpty() ? nativeImage.createEmpty() : image)
-	rebuildTrayMenu(tray, handlers, flags)
+	rebuildTrayMenu(tray, handlers, flags, strings)
 	tray.on("click", () => {
 		handlers.openWindow()
 	})
@@ -44,38 +56,39 @@ export function rebuildTrayMenu(
 	tray: Tray,
 	handlers: TrayHandlers,
 	flags: TrayFlags,
+	strings: TrayStrings,
 ): void {
 	const items: MenuItemConstructorOptions[] = [
-		{ label: "Open", click: () => handlers.openWindow() },
+		{ label: strings.open, click: () => handlers.openWindow() },
 		{
-			label: "Change library…",
+			label: strings.changeLibrary,
 			click: () => handlers.changeLibrary(),
 		},
 		{
-			label: "Copy LAN address",
+			label: strings.copyLanAddress,
 			enabled: flags.lanUrl !== undefined,
 			click: () => handlers.copyLanAddress(),
 		},
 	]
 	if (flags.crashed) {
 		items.push({
-			label: "Restart server",
+			label: strings.restartServer,
 			click: () => handlers.restartSidecar(),
 		})
 	}
 	if (flags.updateReady) {
-		items.push({ label: "Update ready — Open to restart", enabled: false })
+		items.push({ label: strings.updateReady, enabled: false })
 	}
 	items.push(
 		{ type: "separator" },
-		{ label: "Quit", click: () => handlers.quit() },
+		{ label: strings.quit, click: () => handlers.quit() },
 	)
 	tray.setContextMenu(Menu.buildFromTemplate(items))
 	tray.setToolTip(
 		flags.crashed
-			? "hoardodile — server stopped"
+			? strings.tooltipServerStopped
 			: flags.updateReady
-				? "hoardodile — update ready"
+				? strings.tooltipUpdateReady
 				: "hoardodile",
 	)
 }

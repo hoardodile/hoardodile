@@ -2102,5 +2102,48 @@
 			"overdueDescription": "It's been longer than your {{count}}-day reminder interval.",
 			"recordLink": "Sync now"
 		}
+	},
+	"desktopShell": {
+		"tray": {
+			"open": "Open",
+			"changeLibrary": "Change library…",
+			"copyLanAddress": "Copy LAN address",
+			"restartServer": "Restart server",
+			"updateReady": "Update ready — Open to restart",
+			"quit": "Quit",
+			"tooltipServerStopped": "hoardodile — server stopped",
+			"tooltipUpdateReady": "hoardodile — update ready"
+		},
+		"errorPage": {
+			"serverError": "The server could not be reached. It may still be starting, or it may have stopped. Wait a moment and press Retry, or use Restart server from the tray.",
+			"devServerError": "The development server is not running. Start `pnpm dev` in another terminal, then press Retry."
+		},
+		"dialog": {
+			"lanPasswordRequired": "Set an admin password first before enabling local network access.",
+			"weakPasswordMessage": "Your admin password is weak.",
+			"weakPasswordDetail": "Anyone on your network who guesses it can access the whole library. Set a stronger password in Settings → Change password first, or enable sharing anyway.",
+			"enableAnyway": "Enable sharing anyway",
+			"cancel": "Cancel",
+			"serverStoppedBody": "The server stopped. Use Restart server from the tray.",
+			"serverNotRunningMessage": "The server is not running.",
+			"restartServer": "Restart server"
+		},
+		"shell": {
+			"serverUnreachable": "Server unreachable",
+			"retry": "Retry",
+			"loadingLabel": "Loading"
+		},
+		"wizard": {
+			"title": "Welcome to hoardodile",
+			"intro": "Choose where this computer keeps the archive. You can change the folder later from Settings or the tray.",
+			"library": "Library folder",
+			"browse": "Browse",
+			"autoStart": "Start with Windows",
+			"autoStartHint": "Open hoardodile when you sign in.",
+			"startInTray": "Start in tray",
+			"startInTrayHint": "No window until you choose Open from the tray.",
+			"continue": "Continue",
+			"missingBridge": "Desktop bridge missing. Restart the app."
+		}
 	}
 }

@@ -56,15 +56,19 @@ function ShellPagesView(props: {
 }) {
 	const { mode, message, desktop } = props
 	const copy = shellCopy()
+	const [language, setLanguage] = useState<string | undefined>(undefined)
 	const [strings, setStrings] = useState<CloseConfirmDialogStrings | undefined>(
 		undefined,
 	)
 	const [askOpen, setAskOpen] = useState(false)
 	const [retrying, setRetrying] = useState(false)
 
+	const captionLabels = (language === "zh" ? zh : en).me.desktop.caption
+
 	useEffect(() => {
-		void desktop.getLanguage().then((language) => {
-			setStrings(closeDialogStrings(language))
+		void desktop.getLanguage().then((resolved) => {
+			setLanguage(resolved)
+			setStrings(closeDialogStrings(resolved))
 		})
 	}, [desktop])
 
@@ -93,13 +97,13 @@ function ShellPagesView(props: {
 			<CaptionBar
 				controls={{ ...desktop, close: handleClose }}
 				labels={{
-					back: "Back",
-					forward: "Forward",
-					reload: "Reload",
-					minimize: "Minimize",
-					maximize: "Maximize",
-					restore: "Restore",
-					close: "Close",
+					back: captionLabels.back,
+					forward: captionLabels.forward,
+					reload: captionLabels.reload,
+					minimize: captionLabels.minimize,
+					maximize: captionLabels.maximize,
+					restore: captionLabels.restore,
+					close: captionLabels.close,
 				}}
 			/>
 			<main className="flex min-h-0 flex-1 items-center justify-center p-6">
