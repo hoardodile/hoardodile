@@ -6,10 +6,8 @@ dev-dist
 
 # dotenv environment variable files
 .env
-.env.development.local
-.env.test.local
-.env.production.local
-.env.local
+.env.*
+!.env.example
 
 # caches
 .cache
@@ -44,16 +42,6 @@ apps/web/stats.html
 
 # Vitest v8 coverage reports
 coverage
-
-# Real-world plugin sample downloads (plugins/*/testdata-real)
-testdata-real
-
-# Docs site (Next.js / Nextra)
-apps/docs/.next
-apps/docs/out
-apps/docs/next-env.d.ts
-# shadcn radix-to-base migration working reports
-.migration/
 
 # Playwright MCP artifacts
 .playwright-mcp/
