@@ -76,10 +76,18 @@ export function MergeTagsDialog(props: MergeTagsDialogProps) {
 			onMerged?.()
 			toast.add({
 				title: t("tags.merge.toast.success", {
-					resources: result.movedResources,
-					characters: result.movedCharacters,
-					siblingRules: result.movedSiblingRules,
-					parentRules: result.movedParentRules,
+					resources: t("tags.merge.countResources", {
+						count: result.movedResources,
+					}),
+					characters: t("tags.merge.countCharacters", {
+						count: result.movedCharacters,
+					}),
+					siblingRules: t("tags.merge.countSiblingRules", {
+						count: result.movedSiblingRules,
+					}),
+					parentRules: t("tags.merge.countParentRules", {
+						count: result.movedParentRules,
+					}),
 				}),
 				type: "success",
 			})
@@ -164,10 +172,18 @@ export function MergeTagsDialog(props: MergeTagsDialogProps) {
 						data-testid="tag-merge-preview"
 					>
 						{t("tags.merge.preview", {
-							resources: preview.data.resourceCount,
-							characters: preview.data.characterCount,
-							siblingRules: preview.data.siblingRuleCount,
-							parentRules: preview.data.parentRuleCount,
+							resources: t("tags.merge.countResources", {
+								count: preview.data.resourceCount,
+							}),
+							characters: t("tags.merge.countCharacters", {
+								count: preview.data.characterCount,
+							}),
+							siblingRules: t("tags.merge.countSiblingRules", {
+								count: preview.data.siblingRuleCount,
+							}),
+							parentRules: t("tags.merge.countParentRules", {
+								count: preview.data.parentRuleCount,
+							}),
 						})}
 					</p>
 				) : null}

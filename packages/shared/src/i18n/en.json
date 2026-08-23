@@ -128,8 +128,10 @@
 		"syncStatus": {
 			"synced": "Synced",
 			"due": "Sync due",
-			"syncedTitle": "Up to date — {{count}} devices",
-			"dueTitle": "{{count}} device(s) with a pending sync reminder",
+			"syncedTitle_one": "Up to date — {{count}} device",
+			"syncedTitle_other": "Up to date — {{count}} devices",
+			"dueTitle_one": "{{count}} device with a pending sync reminder",
+			"dueTitle_other": "{{count}} devices with a pending sync reminder",
 			"noDevicesTitle": "No sync devices configured yet."
 		}
 	},
@@ -238,16 +240,16 @@
 			"delayLabel": "Sign out after",
 			"delay": {
 				"immediately": "Immediately",
-				"minutes": "{{count}} minute",
-				"minutes_plural": "{{count}} minutes"
+				"minutes_one": "{{count}} minute",
+				"minutes_other": "{{count}} minutes"
 			},
 			"idleTimeout": {
 				"label": "Session idle timeout",
 				"description": "Applies server-side, so it also covers closed tabs and other browsers.",
-				"hours": "{{count}} hour",
-				"hours_plural": "{{count}} hours",
-				"days": "{{count}} day",
-				"days_plural": "{{count}} days"
+				"hours_one": "{{count}} hour",
+				"hours_other": "{{count}} hours",
+				"days_one": "{{count}} day",
+				"days_other": "{{count}} days"
 			}
 		},
 		"password": {
@@ -274,7 +276,8 @@
 			"fullLicense": "Full license",
 			"dependencies": "Open Source Dependencies",
 			"fonts": "Fonts",
-			"packageCount": "{{count}} packages",
+			"packageCount_one": "{{count}} package",
+			"packageCount_other": "{{count}} packages",
 			"noPackages": "No packages yet."
 		},
 		"about": {
@@ -482,7 +485,8 @@
 		"clearPluginCacheSuccess": "Cache for {{name}} has been cleared",
 		"uninstall": "Uninstall",
 		"uninstallConfirmTitle": "Uninstall plugin {{name}}?",
-		"uninstallConfirmDescription": "{{count}} resources are using this plugin. After uninstalling, they will preview with the built-in file plugin; reinstalling the plugin restores them automatically. This cannot be undone.",
+		"uninstallConfirmDescription_one": "{{count}} resource is using this plugin. After uninstalling, it will preview with the built-in file plugin; reinstalling the plugin restores it automatically. This cannot be undone.",
+		"uninstallConfirmDescription_other": "{{count}} resources are using this plugin. After uninstalling, they will preview with the built-in file plugin; reinstalling the plugin restores them automatically. This cannot be undone.",
 		"uninstallConfirmNoUsage": "No resources are using this plugin. Reinstall it any time to use it again. This cannot be undone.",
 		"uninstallSuccess": "Uninstalled {{name}}",
 		"resetAllPluginPrefSuccess": "All plugin settings have been reset",
@@ -575,7 +579,8 @@
 				"titlePlaceholder": "Leave empty to use the default title",
 				"showWhenEmpty": "Show when empty",
 				"sizeLabel": "Size",
-				"sectionsCount": "{{count}} sections",
+				"sectionsCount_one": "{{count}} section",
+				"sectionsCount_other": "{{count}} sections",
 				"save": "Save section",
 				"done": "Done",
 				"delete": "Delete",
@@ -622,17 +627,20 @@
 		"clearCache": "Clear all",
 		"clearing": "Clearing...",
 		"progressLine": "{{done}} / {{total}} ({{percent}}%) - {{stage}}",
-		"cachedSummary": "{{count}} items precached",
+		"cachedSummary_one": "{{count}} item precached",
+		"cachedSummary_other": "{{count}} items precached",
 		"precacheFailed": "Failed to precache: {{error}}",
 		"precacheStageLoading": "Rebuilding metadata and generating thumbnails...",
 		"precacheDefaultError": "Failed to run precache",
 		"precacheInProgress": "A precache is already in progress",
 		"abortPrecache": "Abort",
 		"precacheAborted": "Precache aborted",
-		"toastClearLocked": "{{count}} rebuild data files are locked and could not be deleted. Restart the server to clear them.",
+		"toastClearLocked_one": "{{count}} rebuild data file is locked and could not be deleted. Restart the server to clear it.",
+		"toastClearLocked_other": "{{count}} rebuild data files are locked and could not be deleted. Restart the server to clear them.",
 		"clearCacheSuccess": "Rebuild data cleared",
 		"toastClearFailed": "Failed to clear rebuild data",
-		"toastPrecacheSuccess": "Precached {{count}} items",
+		"toastPrecacheSuccess_one": "Precached {{count}} item",
+		"toastPrecacheSuccess_other": "Precached {{count}} items",
 		"toastPrecachePartial": "Precache completed with {{failed}} failures"
 	},
 	"login": {
@@ -868,7 +876,8 @@
 		"noHeadings": "No headings in this document.",
 		"untitledHeading": "Untitled heading",
 		"detailMeta": {
-			"chars": "{{count}} chars"
+			"chars_one": "{{count, number}} char",
+			"chars_other": "{{count, number}} chars"
 		},
 		"notes": {
 			"tab": "Notes",
@@ -1006,9 +1015,11 @@
 			"editTags": "Edit tags",
 			"clearSelection": "Clear",
 			"moveToTrash": "Trash",
-			"confirmSoft": "Move {{count}} character(s) to trash?",
+			"confirmSoft_one": "Move {{count}} character to trash?",
+			"confirmSoft_other": "Move {{count}} characters to trash?",
 			"softDeleteDescription": "The selected characters will be moved to the recycle bin. They can be restored later from the trash.",
-			"toastAllOk": "Updated {{count}} character(s).",
+			"toastAllOk_one": "Updated {{count}} character.",
+			"toastAllOk_other": "Updated {{count}} characters.",
 			"toastAllFailed": "Nothing was updated ({{count}} failed).",
 			"toastPartial": "{{ok}} succeeded, {{failed}} failed."
 		},
@@ -1160,7 +1171,8 @@
 			"today": "Today",
 			"yesterday": "Yesterday",
 			"unknownTime": "Unknown time",
-			"totalLabel": "{{count}} items",
+			"totalLabel_one": "{{count}} item",
+			"totalLabel_other": "{{count}} items",
 			"tabs": {
 				"all": "All",
 				"resources": "Resources",
@@ -1173,7 +1185,8 @@
 			"avgPerDay": "Avg per day",
 			"mostActiveDay": "Most active day",
 			"mostActiveDayFormat": "MMM D",
-			"entries": "{{count}} entries",
+			"entries_one": "{{count}} entry",
+			"entries_other": "{{count}} entries",
 			"shareSectionTitle": "Share breakdown",
 			"shareTitle": "Time",
 			"shareDescription": "Ranked by watch time for the selected period.",
@@ -1230,7 +1243,8 @@
 		},
 		"entityExposure": {
 			"totalTime": "{{duration}} watched",
-			"views": "{{count}} views",
+			"views_one": "{{count}} view",
+			"views_other": "{{count}} views",
 			"lastViewed": "Last viewed {{time}}"
 		},
 		"leaderboard": {
@@ -1240,7 +1254,8 @@
 			"entityDocuments": "Documents",
 			"entityPlugins": "Content plugins",
 			"empty": "No usage for this period.",
-			"viewsShort": "{{count}} views",
+			"viewsShort_one": "{{count}} view",
+			"viewsShort_other": "{{count}} views",
 			"associatedSessionsShort": "{{count}} associated",
 			"rankLabel": "Rank {{rank}}"
 		},
@@ -1320,7 +1335,8 @@
 		"meta": {
 			"bulk": "Batch",
 			"source": "From {{name}}",
-			"fileCount": "{{count}} files"
+			"fileCount_one": "{{count}} file",
+			"fileCount_other": "{{count}} files"
 		},
 		"overview": {
 			"title": "Period overview",
@@ -1347,7 +1363,8 @@
 		"loading": "Loading footprints...",
 		"loadError": "Failed to load footprints",
 		"empty": "No footprints yet. Imports, exports, deletes and dislike votes will be recorded here.",
-		"count": "{{count}} footprints"
+		"count_one": "{{count}} footprint",
+		"count_other": "{{count}} footprints"
 	},
 	"resources": {
 		"title": "Resources",
@@ -1408,7 +1425,8 @@
 				"stepsAria": "Import steps",
 				"emptyTitle": "This folder is empty.",
 				"emptyDescription": "No files or folders to import here yet.",
-				"previewCount": "{{count}} items ready to import",
+				"previewCount_one": "{{count}} item ready to import",
+				"previewCount_other": "{{count}} items ready to import",
 				"howTitle": "How it works",
 				"howScan": "Scan",
 				"howScanMeta": "Every top-level entry is found and sized",
@@ -1434,8 +1452,10 @@
 			"namePlaceholder": "Name",
 			"useFilenameAsName": "Use filename as name",
 			"oneFilePerResource": "One file per resource — each resource contains a single file.",
-			"createdCount": "Created {{count}} resources",
-			"duplicatesFound": "This resource has {{count}} images duplicating existing resources: {{names}}",
+			"createdCount_one": "Created {{count}} resource",
+			"createdCount_other": "Created {{count}} resources",
+			"duplicatesFound_one": "This resource has {{count}} image duplicating existing resources: {{names}}",
+			"duplicatesFound_other": "This resource has {{count}} images duplicating existing resources: {{names}}",
 			"duplicateFileNames_one": "{{count}} file has a duplicate name in this batch — it will be renamed automatically (e.g. name-1.png)",
 			"duplicateFileNames_other": "{{count}} files have duplicate names in this batch — they will be renamed automatically (e.g. name-1.png)",
 			"submit": "Create",
@@ -1499,13 +1519,15 @@
 			"editTags": "Edit tags",
 			"moveToTrash": "Trash",
 			"deleteForever": "Delete forever",
-			"confirmSoft": "Move {{count}} resource(s) to trash?",
+			"confirmSoft_one": "Move {{count}} resource to trash?",
+			"confirmSoft_other": "Move {{count}} resources to trash?",
 			"softDeleteDescription": "The selected resources will be moved to the recycle bin. They can be restored later from the trash.",
 			"hardDeleteTitle": "Delete selected forever?",
 			"hardDeleteDescription": "This permanently deletes the selected resources and moves their folders to local trash. This cannot be undone.",
 			"hardDeleteConfirm": "Delete forever",
 			"hardDeleteDeleting": "Deleting...",
-			"toastAllOk": "Updated {{count}} resource(s).",
+			"toastAllOk_one": "Updated {{count}} resource.",
+			"toastAllOk_other": "Updated {{count}} resources.",
 			"toastAllFailed": "Nothing was updated ({{count}} failed).",
 			"toastPartial": "{{ok}} succeeded, {{failed}} failed."
 		},
@@ -1770,7 +1792,8 @@
 			"noMatches": "No matching tags."
 		},
 		"bulk": {
-			"nonCommonHint": "{{count}} tags are not shared by all selected items. You can add any tag; only shared tags can be removed."
+			"nonCommonHint_one": "{{count}} tag is not shared by all selected items. You can add any tag; only shared tags can be removed.",
+			"nonCommonHint_other": "{{count}} tags are not shared by all selected items. You can add any tag; only shared tags can be removed."
 		},
 		"toast": {
 			"attachFailed": "Could not attach tag",
@@ -1788,11 +1811,19 @@
 			"targetPlaceholder": "Choose the surviving tag",
 			"confirm": "Confirm merge",
 			"confirming": "Merging...",
-			"preview": "Moves {{resources}} resource(s), {{characters}} character(s), {{siblingRules}} sibling rule(s) and {{parentRules}} parent rule(s).",
+			"countResources_one": "{{count}} resource",
+			"countResources_other": "{{count}} resources",
+			"countCharacters_one": "{{count}} character",
+			"countCharacters_other": "{{count}} characters",
+			"countSiblingRules_one": "{{count}} sibling rule",
+			"countSiblingRules_other": "{{count}} sibling rules",
+			"countParentRules_one": "{{count}} parent rule",
+			"countParentRules_other": "{{count}} parent rules",
+			"preview": "Moves {{resources}}, {{characters}}, {{siblingRules}} and {{parentRules}}.",
 			"collision": "This category already has a tag named \"{{name}}\" — you can merge them.",
 			"offer": "Merge with the duplicate",
 			"toast": {
-				"success": "Merged: {{resources}} resource(s), {{characters}} character(s), {{siblingRules}} sibling rule(s), {{parentRules}} parent rule(s)"
+				"success": "Merged: {{resources}}, {{characters}}, {{siblingRules}}, {{parentRules}}"
 			}
 		},
 		"rules": {
@@ -1885,7 +1916,8 @@
 	"upload": {
 		"addFiles": "Add files",
 		"clearAll": "Clear",
-		"totalCount": "{{count}} files in total",
+		"totalCount_one": "{{count}} file in total",
+		"totalCount_other": "{{count}} files in total",
 		"removeFile": "Remove file",
 		"failed": "Failed",
 		"duplicateName": "Duplicate name",
@@ -1926,9 +1958,11 @@
 			"leastLikes": "Least likes"
 		},
 		"searchPlaceholder": "Search messages…",
-		"totalLabel": "{{count}} messages",
+		"totalLabel_one": "{{count}} message",
+		"totalLabel_other": "{{count}} messages",
 		"clearFilter": "Clear filter",
-		"charsRemaining": "{{count}} characters left",
+		"charsRemaining_one": "{{count}} character left",
+		"charsRemaining_other": "{{count}} characters left",
 		"linkCharactersAdd": "Attach character",
 		"linkResources": "Link resources",
 		"linkResourcesAdd": "Attach resource",
@@ -1962,7 +1996,8 @@
 			"unattributedResources": "Unattributed resources"
 		},
 		"otherHint": "Logs, installed plugins, session key, and other host-local state not listed above.",
-		"unattributedCount": "{{count}} resources without recorded sizes",
+		"unattributedCount_one": "{{count}} resource without recorded size",
+		"unattributedCount_other": "{{count}} resources without recorded sizes",
 		"unattributedHint": "These resources have no recorded size metadata yet (disk-measured estimate, includes covers and other extras). Run precache to attribute them to the plugins above.",
 		"archivedHint": "Copies of resources, characters and documents frozen in archived versions. Measured by a disk scan, so this counts every historical copy — unlike the resource sizes above, which come from metadata of the current version only.",
 		"backupsHint": "Manual backups and automatic daily snapshots.",
@@ -1971,7 +2006,8 @@
 		"clearCache": "Clear",
 		"clearCacheTitle": "Clear cache",
 		"clearCacheDescription": "Thumbnails, previews and extraction caches will be wiped. They are rebuilt on demand — this only frees space.",
-		"pluginCount": "{{count}} resources",
+		"pluginCount_one": "{{count}} resource",
+		"pluginCount_other": "{{count}} resources",
 		"legend": {
 			"resources": "Resources",
 			"hostData": "Host data",

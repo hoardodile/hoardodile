@@ -34,9 +34,7 @@ export const DocDetailMeta = memo(function DocDetailMeta(
 	const { t } = useTranslation()
 	const formatter = useDateFormatter()
 
-	const segments = [
-		t("documents.detailMeta.chars", { count: charCount.toLocaleString() }),
-	]
+	const segments = [t("documents.detailMeta.chars", { count: charCount })]
 	if (exposure !== undefined && exposure.viewCount > 0) {
 		segments.push(
 			t("usage.entityExposure.totalTime", {

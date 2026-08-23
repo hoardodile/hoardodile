@@ -128,8 +128,10 @@
 		"syncStatus": {
 			"synced": "已同步",
 			"due": "同步到期",
-			"syncedTitle": "已是最新 — {{count}} 台设备",
-			"dueTitle": "{{count}} 台设备有同步提醒待处理",
+			"syncedTitle_one": "已是最新 — {{count}} 台设备",
+			"syncedTitle_other": "已是最新 — {{count}} 台设备",
+			"dueTitle_one": "{{count}} 台设备有同步提醒待处理",
+			"dueTitle_other": "{{count}} 台设备有同步提醒待处理",
 			"noDevicesTitle": "暂无同步设备。"
 		}
 	},
@@ -238,16 +240,16 @@
 			"delayLabel": "离开多久后登出",
 			"delay": {
 				"immediately": "立即",
-				"minutes": "{{count}} 分钟",
-				"minutes_plural": "{{count}} 分钟"
+				"minutes_one": "{{count}} 分钟",
+				"minutes_other": "{{count}} 分钟"
 			},
 			"idleTimeout": {
 				"label": "会话闲置超时",
 				"description": "在服务端生效，因此同样覆盖关闭的标签页与其他浏览器。",
-				"hours": "{{count}} 小时",
-				"hours_plural": "{{count}} 小时",
-				"days": "{{count}} 天",
-				"days_plural": "{{count}} 天"
+				"hours_one": "{{count}} 小时",
+				"hours_other": "{{count}} 小时",
+				"days_one": "{{count}} 天",
+				"days_other": "{{count}} 天"
 			}
 		},
 		"password": {
@@ -274,7 +276,8 @@
 			"fullLicense": "完整许可证",
 			"dependencies": "开源依赖",
 			"fonts": "字体",
-			"packageCount": "{{count}} 个包",
+			"packageCount_one": "{{count}} 个包",
+			"packageCount_other": "{{count}} 个包",
 			"noPackages": "暂无依赖包。"
 		},
 		"about": {
@@ -482,7 +485,8 @@
 		"clearPluginCacheSuccess": "{{name}} 的缓存已清空",
 		"uninstall": "卸载",
 		"uninstallConfirmTitle": "卸载插件 {{name}}？",
-		"uninstallConfirmDescription": "有 {{count}} 个资源正在使用该插件。卸载后这些资源将改用内置文件插件预览；重新安装该插件可自动恢复。此操作无法撤销。",
+		"uninstallConfirmDescription_one": "有 {{count}} 个资源正在使用该插件。卸载后这些资源将改用内置文件插件预览；重新安装该插件可自动恢复。此操作无法撤销。",
+		"uninstallConfirmDescription_other": "有 {{count}} 个资源正在使用该插件。卸载后这些资源将改用内置文件插件预览；重新安装该插件可自动恢复。此操作无法撤销。",
 		"uninstallConfirmNoUsage": "没有资源正在使用该插件。卸载后如需恢复，重新安装即可。此操作无法撤销。",
 		"uninstallSuccess": "已卸载 {{name}}",
 		"resetAllPluginPrefSuccess": "所有插件设置已重置",
@@ -575,7 +579,8 @@
 				"titlePlaceholder": "留空则使用默认标题",
 				"showWhenEmpty": "为空时显示",
 				"sizeLabel": "数量",
-				"sectionsCount": "{{count}} 个分区",
+				"sectionsCount_one": "{{count}} 个分区",
+				"sectionsCount_other": "{{count}} 个分区",
 				"save": "保存分区",
 				"done": "完成",
 				"delete": "删除",
@@ -622,17 +627,20 @@
 		"clearCache": "清空全部",
 		"clearing": "清空中...",
 		"progressLine": "{{done}} / {{total}} ({{percent}}%) - {{stage}}",
-		"cachedSummary": "已预缓存 {{count}} 项",
+		"cachedSummary_one": "已预缓存 {{count}} 项",
+		"cachedSummary_other": "已预缓存 {{count}} 项",
 		"precacheFailed": "预缓存失败：{{error}}",
 		"precacheStageLoading": "正在重建元数据并生成缩略图...",
 		"precacheDefaultError": "预缓存失败",
 		"precacheInProgress": "预缓存正在进行中",
 		"abortPrecache": "中断",
 		"precacheAborted": "预缓存已中断",
-		"toastClearLocked": "{{count}} 个可重建数据文件被占用，无法删除。请重启服务器以彻底清除。",
+		"toastClearLocked_one": "{{count}} 个可重建数据文件被占用，无法删除。请重启服务器以彻底清除。",
+		"toastClearLocked_other": "{{count}} 个可重建数据文件被占用，无法删除。请重启服务器以彻底清除。",
 		"clearCacheSuccess": "已清空可重建数据",
 		"toastClearFailed": "清空可重建数据失败",
-		"toastPrecacheSuccess": "已预缓存 {{count}} 项",
+		"toastPrecacheSuccess_one": "已预缓存 {{count}} 项",
+		"toastPrecacheSuccess_other": "已预缓存 {{count}} 项",
 		"toastPrecachePartial": "预缓存完成，{{failed}} 项失败"
 	},
 	"login": {
@@ -886,7 +894,8 @@
 		"noHeadings": "本文档暂无标题。",
 		"untitledHeading": "无标题",
 		"detailMeta": {
-			"chars": "{{count}} 字"
+			"chars_one": "{{count, number}} 字",
+			"chars_other": "{{count, number}} 字"
 		},
 		"notes": {
 			"tab": "笔记",
@@ -1006,9 +1015,11 @@
 			"editTags": "编辑标签",
 			"clearSelection": "清空",
 			"moveToTrash": "回收站",
-			"confirmSoft": "将 {{count}} 个角色移入回收站？",
+			"confirmSoft_one": "将 {{count}} 个角色移入回收站？",
+			"confirmSoft_other": "将 {{count}} 个角色移入回收站？",
 			"softDeleteDescription": "选中的角色将被移入回收站，之后可从回收站恢复。",
-			"toastAllOk": "已处理 {{count}} 个角色。",
+			"toastAllOk_one": "已处理 {{count}} 个角色。",
+			"toastAllOk_other": "已处理 {{count}} 个角色。",
 			"toastAllFailed": "未处理任何项（{{count}} 个失败）。",
 			"toastPartial": "成功 {{ok}} 个，失败 {{failed}} 个。"
 		},
@@ -1160,7 +1171,8 @@
 			"today": "今天",
 			"yesterday": "昨天",
 			"unknownTime": "时间未知",
-			"totalLabel": "共 {{count}} 条",
+			"totalLabel_one": "共 {{count}} 条",
+			"totalLabel_other": "共 {{count}} 条",
 			"tabs": {
 				"all": "全部",
 				"resources": "资源",
@@ -1173,7 +1185,8 @@
 			"avgPerDay": "日均时长",
 			"mostActiveDay": "最活跃的一天",
 			"mostActiveDayFormat": "M月D日",
-			"entries": "共 {{count}} 条",
+			"entries_one": "共 {{count}} 条",
+			"entries_other": "共 {{count}} 条",
 			"shareSectionTitle": "占比排行",
 			"shareTitle": "时长",
 			"shareDescription": "按所选周期内的查看时长排序。",
@@ -1230,7 +1243,8 @@
 		},
 		"entityExposure": {
 			"totalTime": "累计查看 {{duration}}",
-			"views": "查看 {{count}} 次",
+			"views_one": "查看 {{count}} 次",
+			"views_other": "查看 {{count}} 次",
 			"lastViewed": "最近打开 {{time}}"
 		},
 		"leaderboard": {
@@ -1240,7 +1254,8 @@
 			"entityDocuments": "文档",
 			"entityPlugins": "内容插件",
 			"empty": "该周期暂无使用记录。",
-			"viewsShort": "查看 {{count}} 次",
+			"viewsShort_one": "查看 {{count}} 次",
+			"viewsShort_other": "查看 {{count}} 次",
 			"associatedSessionsShort": "关联 {{count}} 次",
 			"rankLabel": "第 {{rank}} 名"
 		},
@@ -1320,7 +1335,8 @@
 		"meta": {
 			"bulk": "批量",
 			"source": "来源：{{name}}",
-			"fileCount": "{{count}} 个文件"
+			"fileCount_one": "{{count}} 个文件",
+			"fileCount_other": "{{count}} 个文件"
 		},
 		"overview": {
 			"title": "周期概览",
@@ -1347,7 +1363,8 @@
 		"loading": "加载足迹中...",
 		"loadError": "加载足迹失败",
 		"empty": "暂无足迹。导入、导出、删除或表态后，这里会逐条记录。",
-		"count": "{{count}} 条足迹"
+		"count_one": "{{count}} 条足迹",
+		"count_other": "{{count}} 条足迹"
 	},
 	"resources": {
 		"title": "资源",
@@ -1408,7 +1425,8 @@
 				"stepsAria": "导入步骤",
 				"emptyTitle": "此目录为空。",
 				"emptyDescription": "暂无文件或目录可导入。",
-				"previewCount": "共 {{count}} 项待导入",
+				"previewCount_one": "共 {{count}} 项待导入",
+				"previewCount_other": "共 {{count}} 项待导入",
 				"howTitle": "工作原理",
 				"howScan": "扫描",
 				"howScanMeta": "每个顶层条目都会被找到并统计大小",
@@ -1434,8 +1452,10 @@
 			"namePlaceholder": "名称",
 			"useFilenameAsName": "用文件名作为名称",
 			"oneFilePerResource": "每个文件一个资源 — 每个资源仅包含一个文件。",
-			"createdCount": "已创建 {{count}} 个资源",
-			"duplicatesFound": "此资源有 {{count}} 张图片与已有资源重复：{{names}}",
+			"createdCount_one": "已创建 {{count}} 个资源",
+			"createdCount_other": "已创建 {{count}} 个资源",
+			"duplicatesFound_one": "此资源有 {{count}} 张图片与已有资源重复：{{names}}",
+			"duplicatesFound_other": "此资源有 {{count}} 张图片与已有资源重复：{{names}}",
 			"duplicateFileNames_one": "本批次有 {{count}} 个文件重名，将自动重命名（如 name-1.png）",
 			"duplicateFileNames_other": "本批次有 {{count}} 个文件重名，将自动重命名（如 name-1.png）",
 			"submit": "创建",
@@ -1499,13 +1519,15 @@
 			"editTags": "编辑标签",
 			"moveToTrash": "回收站",
 			"deleteForever": "永久删除",
-			"confirmSoft": "将 {{count}} 个资源移入回收站？",
+			"confirmSoft_one": "将 {{count}} 个资源移入回收站？",
+			"confirmSoft_other": "将 {{count}} 个资源移入回收站？",
 			"softDeleteDescription": "选中的资源将被移入回收站，之后可从回收站恢复。",
 			"hardDeleteTitle": "永久删除所选？",
 			"hardDeleteDescription": "将永久删除所选资源并将其文件夹移入本地回收站，此操作不可撤销。",
 			"hardDeleteConfirm": "永久删除",
 			"hardDeleteDeleting": "删除中...",
-			"toastAllOk": "已处理 {{count}} 个资源。",
+			"toastAllOk_one": "已处理 {{count}} 个资源。",
+			"toastAllOk_other": "已处理 {{count}} 个资源。",
 			"toastAllFailed": "未处理任何项（{{count}} 个失败）。",
 			"toastPartial": "成功 {{ok}} 个，失败 {{failed}} 个。"
 		},
@@ -1770,7 +1792,8 @@
 			"noMatches": "暂无匹配标签。"
 		},
 		"bulk": {
-			"nonCommonHint": "有 {{count}} 个标签未被全部选中项共享。你可以添加任意标签；只有公共标签可以被移除。"
+			"nonCommonHint_one": "有 {{count}} 个标签未被全部选中项共享。你可以添加任意标签；只有公共标签可以被移除。",
+			"nonCommonHint_other": "有 {{count}} 个标签未被全部选中项共享。你可以添加任意标签；只有公共标签可以被移除。"
 		},
 		"toast": {
 			"attachFailed": "添加标签失败",
@@ -1788,11 +1811,19 @@
 			"targetPlaceholder": "选择目标标签",
 			"confirm": "确认合并",
 			"confirming": "合并中...",
-			"preview": "将移动 {{resources}} 个资源、{{characters}} 个角色的引用，以及 {{siblingRules}} 条同义词关系、{{parentRules}} 条上下级关系。",
+			"countResources_one": "{{count}} 个资源",
+			"countResources_other": "{{count}} 个资源",
+			"countCharacters_one": "{{count}} 个角色",
+			"countCharacters_other": "{{count}} 个角色",
+			"countSiblingRules_one": "{{count}} 条同义词关系",
+			"countSiblingRules_other": "{{count}} 条同义词关系",
+			"countParentRules_one": "{{count}} 条上下级关系",
+			"countParentRules_other": "{{count}} 条上下级关系",
+			"preview": "将移动 {{resources}}、{{characters}}，以及 {{siblingRules}}、{{parentRules}}。",
 			"collision": "该分类已有同名标签「{{name}}」，可以合并。",
 			"offer": "与同名标签合并",
 			"toast": {
-				"success": "已合并：{{resources}} 个资源、{{characters}} 个角色、{{siblingRules}} 条同义词关系、{{parentRules}} 条上下级关系"
+				"success": "已合并：{{resources}}、{{characters}}、{{siblingRules}}、{{parentRules}}"
 			}
 		},
 		"rules": {
@@ -1885,7 +1916,8 @@
 	"upload": {
 		"addFiles": "添加文件",
 		"clearAll": "清空",
-		"totalCount": "总共 {{count}} 个文件",
+		"totalCount_one": "总共 {{count}} 个文件",
+		"totalCount_other": "总共 {{count}} 个文件",
 		"removeFile": "移除文件",
 		"failed": "上传失败",
 		"duplicateName": "重名",
@@ -1926,9 +1958,11 @@
 			"leastLikes": "赞最少"
 		},
 		"searchPlaceholder": "搜索留言…",
-		"totalLabel": "共 {{count}} 条留言",
+		"totalLabel_one": "共 {{count}} 条留言",
+		"totalLabel_other": "共 {{count}} 条留言",
 		"clearFilter": "清除筛选",
-		"charsRemaining": "还可输入 {{count}} 字",
+		"charsRemaining_one": "还可输入 {{count}} 字",
+		"charsRemaining_other": "还可输入 {{count}} 字",
 		"linkCharactersAdd": "关联角色",
 		"linkResources": "关联资源",
 		"linkResourcesAdd": "关联资源",
@@ -1962,7 +1996,8 @@
 			"unattributedResources": "其他资源"
 		},
 		"otherHint": "日志、已安装的插件、会话密钥及其他未在上方列出的本机状态。",
-		"unattributedCount": "{{count}} 个资源未统计体积",
+		"unattributedCount_one": "{{count}} 个资源未统计体积",
+		"unattributedCount_other": "{{count}} 个资源未统计体积",
 		"unattributedHint": "这些资源尚未记录体积（含封面等杂项，按磁盘扫描估算）。运行预缓存后，将按插件归入上方明细。",
 		"archivedHint": "归档版本中冻结的资源、角色与文档副本。此数字按磁盘扫描统计，包含所有历史副本；与上方按元数据统计的当前版本资源口径不同。",
 		"backupsHint": "手动备份与每日自动快照。",
@@ -1971,7 +2006,8 @@
 		"clearCache": "清理",
 		"clearCacheTitle": "清理缓存",
 		"clearCacheDescription": "缩略图、预览与解压缓存将被清空。它们会在需要时重新生成——此操作只释放空间。",
-		"pluginCount": "{{count}} 个资源",
+		"pluginCount_one": "{{count}} 个资源",
+		"pluginCount_other": "{{count}} 个资源",
 		"legend": {
 			"resources": "资源",
 			"hostData": "主机数据",

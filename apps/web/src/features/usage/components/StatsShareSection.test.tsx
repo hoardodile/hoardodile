@@ -180,7 +180,7 @@ describe("StatsShareSection", () => {
 			{ wrapper: Wrapper },
 		)
 		expect(await screen.findByText("75% · 3 views")).toBeInTheDocument()
-		expect(screen.getByText("25% · 1 views")).toBeInTheDocument()
+		expect(screen.getByText("25% · 1 view")).toBeInTheDocument()
 		expect(screen.queryByText("2m")).not.toBeInTheDocument()
 	})
 
