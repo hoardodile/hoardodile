@@ -8,15 +8,15 @@ import { SDK_DEP_NAMES } from "./sdk-deps.gen.ts"
 
 /** Concrete versions for the catalog: specs the template uses. */
 export const THIRD_PARTY_VERSIONS: Readonly<Record<string, string>> = {
-	"@types/node": "^26.1.2",
+	"@types/node": "^26.2.0",
 	"@types/react": "^19.2.18",
 	"@types/react-dom": "^19.2.4",
 	jsdom: "^30.0.1",
 	react: "^19.2.8",
 	"react-dom": "^19.2.8",
 	typescript: "^7.0.2",
-	vite: "^8.2.0",
-	vitest: "^4.1.10",
+	vite: "^8.2.2",
+	vitest: "^4.1.11",
 }
 
 export type ManifestShape = {

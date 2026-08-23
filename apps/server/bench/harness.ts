@@ -631,15 +631,6 @@ export function metricFromSummary(
 	}
 }
 
-/** Summarize raw per-call samples as a gate-comparable BenchMetric. */
-export function metricFromSamples(
-	name: string,
-	unit: BenchMetric["unit"],
-	samples: readonly number[],
-): BenchMetric {
-	return metricFromSummary(name, unit, summarizeMetric(samples))
-}
-
 /** Peak phase memory across a suite's reps, rounded to the report convention. */
 export function maxPhaseMemory(phases: readonly PhaseResult[]): number {
 	let max = 0
@@ -647,33 +638,61 @@ export function maxPhaseMemory(phases: readonly PhaseResult[]): number {
 	return Math.round(max * 10) / 10
 }
 
-export type TinyTaskResult = {
-	readonly samples: readonly number[]
+/** tinybench 6 result statistics — the fields the report consumes. */
+type LatencyStats = {
+	readonly p50: number
 	readonly mean: number
 	readonly p99: number
+	readonly min: number
+	readonly max: number
+}
+
+function isLatencyStats(value: unknown): value is LatencyStats {
+	return (
+		typeof value === "object" &&
+		value !== null &&
+		"p50" in value &&
+		"mean" in value &&
+		"p99" in value &&
+		"min" in value &&
+		"max" in value
+	)
 }
 
 /**
  * Collect tinybench task results into report metrics, printing the
- * per-task median line as the micro suites do. Tasks that errored
- * (tinybench records `result: { error }` without samples) are printed
- * and skipped instead of crashing the report.
+ * per-task median line as the micro suites do. Tasks that produced no
+ * latency statistics (tinybench 6 records state-tagged results: errored,
+ * not started, aborted without statistics) are printed and skipped instead
+ * of crashing the report.
  */
 export function summarizeBenchTasks(
-	tasks: readonly { readonly name: string; readonly result?: TinyTaskResult }[],
+	tasks: readonly {
+		readonly name: string
+		readonly result?: unknown
+	}[],
 ): BenchMetric[] {
 	const metrics: BenchMetric[] = []
 	for (const task of tasks) {
-		const result = task.result
-		if (result === undefined) continue
-		if (result.samples === undefined || result.samples.length === 0) {
+		const raw = task.result
+		let stats: LatencyStats | undefined
+		if (typeof raw === "object" && raw !== null && "latency" in raw) {
+			const latency = raw.latency
+			if (isLatencyStats(latency)) stats = latency
+		}
+		if (stats === undefined) {
 			console.log(`  ${task.name.padEnd(24)} ERROR (no samples)`)
 			continue
 		}
-		metrics.push(metricFromSamples(task.name, "ms", result.samples))
-		const m = summarizeMetric(result.samples)
+		metrics.push({
+			name: task.name,
+			unit: "ms",
+			median: stats.p50,
+			min: stats.min,
+			max: stats.max,
+		})
 		console.log(
-			`  ${task.name.padEnd(24)} median ${m.median.toFixed(3)}ms | mean ${result.mean.toFixed(3)}ms | p99 ${result.p99.toFixed(3)}ms | min ${m.min.toFixed(3)}ms`,
+			`  ${task.name.padEnd(24)} median ${stats.p50.toFixed(3)}ms | mean ${stats.mean.toFixed(3)}ms | p99 ${stats.p99.toFixed(3)}ms | min ${stats.min.toFixed(3)}ms`,
 		)
 	}
 	return metrics

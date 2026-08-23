@@ -61,7 +61,7 @@ export function AppShell(props: AppShellProps) {
 	const routerState = useRouterState({
 		select: (state) => ({
 			pathname: state.location.pathname,
-			loading: state.isLoading || state.isTransitioning,
+			loading: state.isLoading || state.status === "pending",
 		}),
 	})
 	const isLoginRoute = routerState.pathname === "/login"
