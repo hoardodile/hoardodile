@@ -1,0 +1,14 @@
+@import "@hoardodile/ui/theme.css";
+@source "./**/*.{ts,tsx}";
+
+/* Workbench chrome: canvas holds the toolbar and the stage; the plugin
+   iframe floats as the app's single card (bg-card + hairline +
+   rounded-2xl + shadow-card — DESIGN.md: cards are the only surface with
+   a shadow). The page is a single scroll container, like `<main
+   data-app-scroll>` in the SPA. */
+html,
+body,
+#root {
+	height: 100%;
+	margin: 0;
+}

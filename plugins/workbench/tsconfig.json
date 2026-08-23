@@ -2,7 +2,14 @@
 	"extends": "../../tsconfig.json",
 	"compilerOptions": {
 		"lib": ["ESNext", "DOM", "DOM.Iterable"],
+		"jsx": "react-jsx",
 		"types": ["node", "vite/client"]
 	},
-	"include": ["src/**/*.ts", "vite.config.ts", "scripts/**/*.mjs"]
+	"include": [
+		"src/**/*.ts",
+		"src/**/*.tsx",
+		"vite.config.ts",
+		"vitest.config.ts",
+		"scripts/**/*.mjs"
+	]
 }

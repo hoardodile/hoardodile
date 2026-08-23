@@ -1,5 +1,8 @@
 import { readFileSync } from "node:fs"
 import { resolve } from "node:path"
+import babel from "@rolldown/plugin-babel"
+import tailwindcss from "@tailwindcss/vite"
+import react, { reactCompilerPreset } from "@vitejs/plugin-react"
 import type { Connect, Plugin } from "vite"
 import { defineConfig } from "vite"
 // The dev server and the published standalone server share one routing
@@ -65,9 +68,20 @@ function workbenchMountsPlugin(): Plugin {
 }
 
 export default defineConfig({
-	plugins: [workbenchMountsPlugin()],
+	plugins: [
+		react(),
+		babel({ presets: [reactCompilerPreset()] }),
+		tailwindcss(),
+		workbenchMountsPlugin(),
+	],
 	server: {
+		// Same bind as serveWorkbench/serve.mjs: the documented URL is
+		// http://127.0.0.1:5199 (vite 8 would default to ::1 only).
+		host: "127.0.0.1",
 		port: 5199,
 		strictPort: true,
+	},
+	build: {
+		chunkSizeWarningLimit: Infinity,
 	},
 })

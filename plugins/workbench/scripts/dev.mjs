@@ -8,7 +8,7 @@
 import { spawn } from "node:child_process"
 import { existsSync, statSync } from "node:fs"
 import { createRequire } from "node:module"
-import { resolve } from "node:path"
+import { dirname, join, resolve } from "node:path"
 
 const require = createRequire(import.meta.url)
 
@@ -35,7 +35,13 @@ const dataDir = requireDir(takeArg("data"), "data")
 console.log(`[workbench] plugin: ${pluginDir}`)
 console.log(`[workbench] data:   ${dataDir}`)
 
-const viteBin = require.resolve("vite/bin/vite.js")
+// Vite 8 no longer exports `./bin/vite.js` from its exports map; resolve
+// the CLI through the package root instead.
+const viteBin = join(
+	dirname(require.resolve("vite/package.json")),
+	"bin",
+	"vite.js",
+)
 const child = spawn(process.execPath, [viteBin], {
 	stdio: "inherit",
 	env: {

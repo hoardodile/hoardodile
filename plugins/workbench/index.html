@@ -3,95 +3,47 @@
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="color-scheme" content="light dark" />
 		<title>hoardodile plugin workbench</title>
-		<style>
-			:root {
-				color-scheme: dark;
-				font-family: system-ui, sans-serif;
-			}
-			body {
-				margin: 0;
-				background: #111;
-				color: #ddd;
-			}
-			#bar {
-				display: flex;
-				align-items: center;
-				gap: 12px;
-				padding: 8px 12px;
-				border-bottom: 1px solid #333;
-				font-size: 13px;
-			}
-			#bar code {
-				color: #7dd3fc;
-			}
-			#bar #hook-status {
-				color: #a3a3a3;
-				font-size: 12px;
-			}
-			#bar select {
-				background: #1a1a1a;
-				color: #ddd;
-				border: 1px solid #444;
-				border-radius: 6px;
-				padding: 3px 8px;
-				font-size: 12px;
-				max-width: 320px;
-			}
-			#bar #resource-cover {
-				width: 28px;
-				height: 28px;
-				object-fit: cover;
-				border-radius: 4px;
-				border: 1px solid #444;
-				background: #1a1a1a;
-				flex: none;
-			}
-			#bar #resource-cover[hidden] {
-				display: none;
-			}
-			#bar button {
-				margin-left: auto;
-				background: #222;
-				color: #ddd;
-				border: 1px solid #444;
-				border-radius: 6px;
-				padding: 4px 12px;
-				cursor: pointer;
-			}
-			#bar button:hover {
-				background: #333;
-			}
-			#stage {
-				display: flex;
-				justify-content: center;
-				padding: 16px;
-			}
-			iframe {
-				border: 1px solid #333;
-				border-radius: 8px;
-				background: #000;
-				width: min(1200px, 100%);
-				height: 80vh;
-			}
-		</style>
+		<script>
+			// Pre-hydration: apply the persisted config so the first frame is
+			// already themed (same dialect as apps/web/index.html's inline
+			// script; the workbench uses its own storage key). The values are
+			// mirror-checked by src/config.test.ts against the app defaults.
+			;(() => {
+				try {
+					const raw = localStorage.getItem("hoardodile.workbench.config")
+					const config = raw === null ? {} : JSON.parse(raw)
+					const root = document.documentElement
+					const mode = config.themeMode === "light" || config.themeMode === "dark"
+						? config.themeMode
+						: "system"
+					const resolved = mode === "system"
+						? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
+						: mode
+					root.classList.add(resolved)
+					if (
+						config.palette !== undefined &&
+						config.palette !== null &&
+						config.palette !== "mono"
+					) {
+						root.classList.add(`theme-${config.palette}`)
+					}
+					const iconStyle = config.iconStyle
+					if (iconStyle === "grayscale" || iconStyle === "linear") {
+						root.dataset.iconStyle = iconStyle
+					}
+					root.style.colorScheme = resolved
+					// Hold the mono canvas tone until theme.css arrives.
+					root.style.backgroundColor = resolved === "dark" ? "oklch(0.12 0 0)" : "#fbfbfb"
+				} catch (_err) {
+					// Corrupt config: leave the defaults; the workbench will repersist.
+				}
+			})()
+		</script>
 	</head>
 	<body>
-		<div id="bar">
-			<span>plugin</span>
-			<code id="plugin-name">…</code>
-			<label for="resource-picker">resource</label>
-			<img
-				id="resource-cover"
-				alt=""
-				referrerpolicy="no-referrer"
-				hidden
-			/>
-			<select id="resource-picker"></select>
-			<span id="hook-status">…</span>
-			<button id="reload" type="button">reload</button>
-		</div>
-		<div id="stage"></div>
-		<script type="module" src="/src/main.ts"></script>
+		<div id="root"></div>
+		<script type="module" src="/src/main.tsx"></script>
 	</body>
 </html>

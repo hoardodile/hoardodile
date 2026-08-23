@@ -131,6 +131,41 @@ export function createDirectoryProviders(dataDir, resId = "workbench") {
 	}
 }
 
+/**
+ * Mobile viewport initial-scale factor injected into every served plugin
+ * page — the host server runs `wrapHtml` with the same value
+ * (apps/server/src/infra/http/plugin-render.ts). NOTE: keep in sync with
+ * `MOBILE_INITIAL_SCALE` in `@hoardodile/ui/viewport` (single source of
+ * truth, Design.md — Layout); `mounts.test.ts` guards the alignment.
+ * This module stays dependency-free, so the constant is mirrored, not
+ * imported.
+ */
+const PLUGIN_SHELL_VIEWPORT_SCALE = 0.8
+
+/**
+ * Wraps a plugin page in the same shell the host server produces
+ * (plugin-render.ts `wrapHtml`, kept byte-identical): the viewport meta
+ * the app injects, the overflow reset, and the postMessage bridge that
+ * exposes `__pluginContext` / `__pluginVisibility` as CustomEvents for
+ * SDK builds that predate the pure-postMessage protocol.
+ */
+export function wrapPluginHtml(body) {
+	return [
+		"<!DOCTYPE html>",
+		"<html>",
+		"<head>",
+		'<meta charset="utf-8">',
+		`<meta name="viewport" content="width=device-width, initial-scale=${PLUGIN_SHELL_VIEWPORT_SCALE}, maximum-scale=1.0, user-scalable=0">`,
+		'<style type="text/css">html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden}</style>',
+		"</head>",
+		"<body>",
+		`<script>(function(){window.__pluginContext=undefined;window.__pluginVisibility=undefined;window.addEventListener("message",function(e){if(e.source!==window.parent)return;if(e.data?.type==="push"){if(e.data?.key==="context"){window.__pluginContext=e.data.data;window.dispatchEvent(new CustomEvent("context-ready",{detail:e.data.data}))}else if(e.data?.key==="visibility"){window.__pluginVisibility=e.data.data;window.dispatchEvent(new CustomEvent("visibility-changed",{detail:e.data.data}))}}})})();</script>`,
+		body,
+		"</body>",
+		"</html>",
+	].join("")
+}
+
 /** Read-only mount of a directory under `basePath` (the plugin bundle). */
 function staticMount(basePath, dir) {
 	const root = resolve(dir)
@@ -155,6 +190,25 @@ function staticMount(basePath, dir) {
 		}
 		if (!existsSync(abs) || statSync(abs).isDirectory()) {
 			notFound(res)
+			return true
+		}
+		const ext = abs.slice(abs.lastIndexOf(".")).toLowerCase()
+		if (ext === ".html") {
+			// Mirror the host server: the page runs in a sandboxed iframe
+			// (no allow-same-origin). The same sandbox via CSP keeps it in
+			// an opaque origin even top-level; frame-ancestors restricts
+			// embedding to the workbench origin (the page and /plugin/*
+			// share it, so the embedded workbench keeps working).
+			res.setHeader(
+				"content-security-policy",
+				"sandbox allow-scripts allow-forms allow-downloads; frame-ancestors 'self'",
+			)
+			res.setHeader("x-content-type-options", "nosniff")
+			sendBytes(
+				res,
+				contentTypeOf(abs),
+				wrapPluginHtml(readFileSync(abs, "utf-8")),
+			)
 			return true
 		}
 		sendBytes(res, contentTypeOf(abs), readFileSync(abs))

@@ -36,16 +36,28 @@
 		"prepack": "pnpm build",
 		"dev": "node scripts/dev.mjs",
 		"build": "vite build && node scripts/copy-serve.mjs",
-		"lint": "tsc --noEmit"
+		"lint": "tsc --noEmit",
+		"test": "vitest run"
 	},
 	"devDependencies": {
 		"@hoardodile/host-web": "workspace:*",
 		"@hoardodile/sdk-types": "workspace:*",
 		"@hoardodile/sdk-web": "workspace:*",
+		"@hoardodile/ui": "workspace:*",
 		"@playwright/test": "catalog:",
+		"@rolldown/plugin-babel": "catalog:",
+		"@tailwindcss/vite": "catalog:",
 		"@types/node": "catalog:",
+		"@types/react": "catalog:",
+		"@types/react-dom": "catalog:",
+		"@vitejs/plugin-react": "catalog:",
+		"babel-plugin-react-compiler": "catalog:",
+		"react": "catalog:",
+		"react-dom": "catalog:",
+		"tailwindcss": "catalog:",
 		"typescript": "catalog:",
 		"vite": "catalog:",
+		"vitest": "catalog:",
 		"zod": "catalog:"
 	}
 }
