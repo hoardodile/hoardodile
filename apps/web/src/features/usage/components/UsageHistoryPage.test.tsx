@@ -190,9 +190,15 @@ describe("UsageHistoryPage", () => {
 		expect(screen.getByRole("tab", { name: "Characters" })).toBeInTheDocument()
 		expect(screen.getByRole("tab", { name: "Documents" })).toBeInTheDocument()
 
-		// Merged order: res-1 (1m), char-1 (2m), doc-1 (4m), res-2 (1h).
+		// Merged order: res-1 (1m), char-1 (2m), doc-1 (4m), res-2 (1h). The
+		// row's name query resolves after the merged list renders; wait for it
+		// (the row starts as a skeleton).
+		await waitFor(() => {
+			expect(
+				screen.getByTestId("usage-history-resource-res-1"),
+			).toHaveTextContent("Resource 1")
+		})
 		const first = screen.getByTestId("usage-history-resource-res-1")
-		expect(first).toHaveTextContent("Resource 1")
 		expect(first).toHaveAttribute("href", "/resources/res-1")
 		expect(
 			screen.getByTestId("usage-history-character-char-1"),

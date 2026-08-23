@@ -13,9 +13,9 @@ import {
 } from "./api"
 
 function mockBrowserTimeZone(timeZone: string) {
-	vi.spyOn(Intl, "DateTimeFormat").mockReturnValue({
-		resolvedOptions: () => ({ timeZone }),
-	} as Intl.DateTimeFormat)
+	vi.spyOn(Intl.DateTimeFormat.prototype, "resolvedOptions").mockReturnValue({
+		timeZone,
+	} as Intl.ResolvedDateTimeFormatOptions)
 	syncBrowserTimeZone()
 }
 

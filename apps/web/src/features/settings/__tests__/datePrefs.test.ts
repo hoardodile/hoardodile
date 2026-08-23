@@ -30,9 +30,9 @@ describe("date formatting helpers", () => {
 	})
 
 	test("formatDateTime resolves local sentinel via browser zone", () => {
-		vi.spyOn(Intl, "DateTimeFormat").mockReturnValue({
-			resolvedOptions: () => ({ timeZone: "Asia/Shanghai" }),
-		} as Intl.DateTimeFormat)
+		vi.spyOn(Intl.DateTimeFormat.prototype, "resolvedOptions").mockReturnValue({
+			timeZone: "Asia/Shanghai",
+		} as Intl.ResolvedDateTimeFormatOptions)
 		syncBrowserTimeZone()
 		const shanghaiTs = Date.UTC(2024, 5, 11, 16, 30, 0)
 		expect(formatDateTime(shanghaiTs, "YYYY-MM-DD HH:mm:ss", "local")).toBe(
@@ -177,16 +177,19 @@ describe("date formatting helpers", () => {
 
 describe("useResolvedTimeZone", () => {
 	test("re-resolves local pref when browser zone changes on visibility", () => {
-		const intlSpy = vi.spyOn(Intl, "DateTimeFormat").mockReturnValue({
-			resolvedOptions: () => ({ timeZone: "Asia/Shanghai" }),
-		} as Intl.DateTimeFormat)
+		const intlSpy = vi
+			.spyOn(Intl.DateTimeFormat.prototype, "resolvedOptions")
+			.mockReturnValue({
+				timeZone: "Asia/Shanghai",
+			} as Intl.ResolvedDateTimeFormatOptions)
+		syncBrowserTimeZone()
 
 		const { result, rerender } = renderHook(() => useResolvedTimeZone())
 		expect(result.current).toBe("Asia/Shanghai")
 
 		intlSpy.mockReturnValue({
-			resolvedOptions: () => ({ timeZone: "Europe/Berlin" }),
-		} as Intl.DateTimeFormat)
+			timeZone: "Europe/Berlin",
+		} as Intl.ResolvedDateTimeFormatOptions)
 
 		act(() => {
 			syncBrowserTimeZone()
