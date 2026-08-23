@@ -34,6 +34,10 @@ npx skills add hoardodile/hoardodile --list             # list all skills in thi
 - `hd-plugin` — author hoardodile content plugins: manifest, server hooks, iframe client, toolchain.
 - `hd-plugin-design` — the plugin UI design system built on `@hoardodile/ui`.
 
+## Contributions
+
+Pull requests are not accepted at this time. Bug reports and feature ideas are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ## License
 
 [GPL-3.0](LICENSE)

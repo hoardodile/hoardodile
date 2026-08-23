@@ -34,6 +34,10 @@ npx skills add hoardodile/hoardodile --list             # 列出仓库内全部�
 - `hd-plugin` — 编写 hoardodile 内容插件：manifest、服务端钩子、iframe 客户端、工具链。
 - `hd-plugin-design` — 基于 `@hoardodile/ui` 的插件界面设计系统。
 
+## 贡献
+
+当前暂不接受 Pull Request;欢迎提交 bug 报告与功能想法 — 详见 [CONTRIBUTING.md](CONTRIBUTING.md)。
+
 ## 许可证
 
 [GPL-3.0](LICENSE)
