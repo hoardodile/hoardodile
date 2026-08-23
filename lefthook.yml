@@ -16,3 +16,5 @@ pre-commit:
       run: node scripts/guard-versions.mjs --staged
     - name: external-link-guard
       run: node scripts/guard-external-links.mjs --staged
+    - name: protected-deps-guard
+      run: node scripts/guard-protected-deps.mjs

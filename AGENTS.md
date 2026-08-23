@@ -33,7 +33,7 @@ Server has no CLI flags; config from env vars validated in `apps/server/src/conf
 - `apps/server` ships a production `node_modules` — runtime imports must be in `dependencies`.
 - SDK closure (`@hoardodile/{ui,sdk-*}`) must not import outside itself (enforced by `sdks:pack`); terminal packages (`cli`, `host`, `host-web`, `workbench`) are never imported by plugin code. SSOT: `scripts/lib/sdk-closure.mjs` (closure = 5, release set = 9).
 - SDK + `host` / `host-web` ship `src` alongside `dist` — never drop it from `files`; `@hoardodile/cli`, `workbench`, `create-plugin` are dist-only.
-- Pinned: `@blocknote/*` 0.51.x; the 10 tsup-built packages pin `typescript: 5.9.3` (do not bump them to catalog TypeScript 7).
+- Pinned: `@blocknote/*` 0.51.4 (plus `@handlewithcare/prosemirror-suggest-changes` 0.1.8) — the doc diff feature depends on BlockNote internals that 0.52+ removed; `@videojs/react` 10.0.0-beta.25 (gallery player prerelease, API churns between betas); the 10 tsup-built packages pin `typescript: 5.9.3` (do not bump them to catalog TypeScript 7). All of these are enforced by `scripts/guard-protected-deps.mjs` (pre-commit + CI) and excluded from `deps:update`; an intentional bump must follow the checklist in `apps/web/src/features/doc/README.md`.
 
 ## Project structure
 

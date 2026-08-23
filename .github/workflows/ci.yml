@@ -31,6 +31,9 @@ jobs:
           cache: pnpm
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+      # BlockNote + the diff-machinery pins must never drift silently.
+      - name: Guard protected dependencies
+        run: node scripts/guard-protected-deps.mjs
       # Build first so that generated files (e.g. apps/web/src/routeTree.gen.ts)
       # exist before the type-only lint and tests run.
       - name: Build
