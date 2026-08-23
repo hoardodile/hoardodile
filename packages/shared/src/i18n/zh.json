@@ -150,7 +150,7 @@
 		"viewAll": "查看全部 ({{count}})",
 		"empty": {
 			"title": "暂无结果。",
-			"description": "换个关键词试试"
+			"description": "换个关键词试试。"
 		},
 		"resultLabels": {
 			"document": "文档",
@@ -916,7 +916,7 @@
 		"editMode": {
 			"label": "调整顺序",
 			"toggle": "切换调整顺序模式",
-			"hint": "开启后可拖拽调整文档树顺序"
+			"hint": "开启后可拖拽调整文档树顺序。"
 		},
 		"expandAll": "全部展开",
 		"collapseAll": "全部闭合",
@@ -1677,12 +1677,12 @@
 			"directed": {
 				"label": "有向",
 				"iconLabel": "单向",
-				"hint": "单向关系，仅 A→B 方向生效，如单恋"
+				"hint": "单向关系，仅 A→B 方向生效，如单恋。"
 			},
 			"symmetric": {
 				"label": "对称",
 				"iconLabel": "对等",
-				"hint": "双方对等关系，如朋友、配偶"
+				"hint": "双方对等关系，如朋友、配偶。"
 			},
 			"hierarchical": {
 				"label": "层级",

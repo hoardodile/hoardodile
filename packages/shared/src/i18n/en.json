@@ -150,7 +150,7 @@
 		"viewAll": "View all ({{count}})",
 		"empty": {
 			"title": "No results found.",
-			"description": "Try a different keyword"
+			"description": "Try a different keyword."
 		},
 		"resultLabels": {
 			"document": "Document",
@@ -898,7 +898,7 @@
 		"editMode": {
 			"label": "Adjust order",
 			"toggle": "Toggle adjust order mode",
-			"hint": "Enable to drag-reorder documents in the tree"
+			"hint": "Enable to drag-reorder documents in the tree."
 		},
 		"expandAll": "Expand all",
 		"collapseAll": "Collapse all",
@@ -1677,12 +1677,12 @@
 			"directed": {
 				"label": "Directed",
 				"iconLabel": "One-way",
-				"hint": "One-way relationship from A to B only, e.g. unrequited love"
+				"hint": "One-way relationship from A to B only, e.g. unrequited love."
 			},
 			"symmetric": {
 				"label": "Symmetric",
 				"iconLabel": "Mutual",
-				"hint": "Mutual relationship, e.g. friends or spouses"
+				"hint": "Mutual relationship, e.g. friends or spouses."
 			},
 			"hierarchical": {
 				"label": "Hierarchical",
