@@ -13,6 +13,7 @@
 export const PLUGIN_MANIFESTS = [
 	"plugins/file/manifest.json",
 	"plugins/gallery/manifest.json",
+	"plugins/pdf/manifest.json",
 ]
 
 /** The published package.json files (SDK closure + terminal packages). */

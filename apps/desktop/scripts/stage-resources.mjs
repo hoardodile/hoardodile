@@ -49,6 +49,7 @@ assertCopiedMediaBins(join(serverDest, "node_modules"))
 const plugins = [
 	["file", join(workspaceRoot, "plugins", "file", "dist")],
 	["gallery", join(workspaceRoot, "plugins", "gallery", "dist")],
+	["pdf", join(workspaceRoot, "plugins", "pdf", "dist")],
 ]
 for (const [id, src] of plugins) {
 	copyDir(src, join(destRoot, "plugins", id))

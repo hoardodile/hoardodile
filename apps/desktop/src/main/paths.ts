@@ -16,7 +16,7 @@ export type SidecarLayout = {
 	readonly webRoot: string | undefined
 }
 
-const SEED_PLUGIN_IDS = ["gallery"] as const
+const SEED_PLUGIN_IDS = ["gallery", "pdf"] as const
 
 export function packagedLayout(resourcesPath: string): SidecarLayout {
 	const serverDir = join(resourcesPath, "server")

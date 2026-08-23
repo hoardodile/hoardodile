@@ -104,6 +104,12 @@ function ensurePluginDists() {
 			"[desktop] gallery dist missing — run `pnpm build:pkgs` to preview the gallery",
 		)
 	}
+	const pdf = resolve(workspaceRoot, "plugins", "pdf", "dist", "manifest.json")
+	if (!existsSync(pdf)) {
+		console.warn(
+			"[desktop] pdf dist missing — run `pnpm build:pkgs` to preview the PDF reader",
+		)
+	}
 }
 
 /**

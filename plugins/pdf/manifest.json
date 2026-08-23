@@ -1,0 +1,45 @@
+{
+	"id": "f8ef0814-0f0f-4083-a5f1-6d95d79bc99e",
+	"name": "PDF",
+	"description": "Online PDF reader.",
+	"version": "0.0.0",
+	"permissions": {
+		"sourceMeta": true,
+		"message": true
+	},
+	"i18n": {
+		"name": {
+			"en": "PDF",
+			"zh": "PDF"
+		},
+		"description": {
+			"en": "Online PDF reader.",
+			"zh": "在线 PDF 阅读器。"
+		},
+		"pagesLabel": {
+			"en": "pages",
+			"zh": "页"
+		},
+		"pageAnchor": {
+			"en": "Page ",
+			"zh": "第 "
+		},
+		"pageSuffix": {
+			"en": "",
+			"zh": "页"
+		}
+	},
+	"ui": {
+		"height": "85vh",
+		"card": {
+			"default": {
+				"bl": [
+					"{{if(gt(source.pageCount, 0), join(' ', number(source.pageCount), t('pagesLabel')), 'PDF')}}"
+				]
+			}
+		},
+		"message": {
+			"anchor": "{{t('pageAnchor')}}{{inc(data.pageIndex)}}{{t('pageSuffix')}}"
+		}
+	}
+}

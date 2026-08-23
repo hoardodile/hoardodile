@@ -1,0 +1,39 @@
+{
+	"name": "@hoardodile/plugin-pdf",
+	"version": "0.0.0",
+	"private": true,
+	"license": "GPL-3.0-only",
+	"type": "module",
+	"scripts": {
+		"dev": "hoardodile plugin dev",
+		"build": "hoardodile plugin build",
+		"watch": "hoardodile plugin build --watch",
+		"testdata": "node scripts/make-testdata.mjs",
+		"detect:smoke": "hoardodile plugin run detect testdata --plugin-dir dist",
+		"lint": "tsc --noEmit",
+		"test": "vitest run"
+	},
+	"dependencies": {
+		"@hoardodile/sdk-react": "workspace:*",
+		"@hoardodile/sdk-server": "workspace:*",
+		"@hoardodile/sdk-types": "workspace:*",
+		"@hoardodile/sdk-web": "workspace:*",
+		"@hoardodile/ui": "workspace:*",
+		"pdfjs-dist": "^6.2.108",
+		"react": "catalog:",
+		"react-dom": "catalog:"
+	},
+	"devDependencies": {
+		"@hoardodile/cli": "workspace:*",
+		"@hoardodile/host": "workspace:*",
+		"@hoardodile/workbench": "workspace:*",
+		"@testing-library/jest-dom": "catalog:",
+		"@types/node": "catalog:",
+		"@types/react": "catalog:",
+		"@types/react-dom": "catalog:",
+		"jsdom": "catalog:",
+		"typescript": "catalog:",
+		"vite": "catalog:",
+		"vitest": "catalog:"
+	}
+}

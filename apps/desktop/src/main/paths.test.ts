@@ -21,6 +21,7 @@ describe("packagedLayout", () => {
 		expect(layout.builtinPath).toBe(join(resources, "plugins", "file"))
 		expect(layout.seedPluginPaths).toEqual([
 			join(resources, "plugins", "gallery"),
+			join(resources, "plugins", "pdf"),
 		])
 		expect(layout.webRoot).toBeUndefined()
 	})
@@ -49,6 +50,7 @@ describe("workspaceLayout", () => {
 		)
 		expect(layout.seedPluginPaths).toEqual([
 			join(workspaceRoot, "plugins", "gallery", "dist"),
+			join(workspaceRoot, "plugins", "pdf", "dist"),
 		])
 		// On this machine apps/web/dist exists only if the SPA has been
 		// built; the dev LAN flow needs it (or the sidecar 404s at `/`).
