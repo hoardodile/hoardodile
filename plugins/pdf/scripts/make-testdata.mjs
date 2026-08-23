@@ -21,17 +21,21 @@ const outDir = join(here, "..", "testdata")
 function buildPdf(pages) {
 	const objects = []
 	const header = "%PDF-1.4\n"
-	const pageIds = pages.map((_, i) => 3 + i * 2)
+	// Three object ids per page — page, font, content stream — so ids
+	// never collide (a page's content stream is NOT its own number plus
+	// a neighbour's page number). E.g. 2 pages: 3/4/5 and 6/7/8.
+	const base = (i) => 3 + i * 3
 
 	// Object 1: catalog
 	objects.push("1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n")
 	// Object 2: pages tree
-	const kids = pageIds.map((id) => `${id} 0 R`).join(" ")
+	const kids = pages.map((_, i) => `${base(i)} 0 R`).join(" ")
 	objects.push(
 		`2 0 obj\n<< /Type /Pages /Count ${pages.length} /Kids [${kids}] >>\nendobj\n`,
 	)
 
-	pageIds.forEach((id, i) => {
+	pages.forEach((_, i) => {
+		const id = base(i)
 		// Page object
 		objects.push(
 			`${id} 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 ${id + 1} 0 R >> >> /Contents ${id + 2} 0 R >>\nendobj\n`,
