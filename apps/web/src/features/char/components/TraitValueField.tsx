@@ -111,6 +111,7 @@ function formatDateRaw(parts: DateParts): string {
 
 export function TraitValueField(props: TraitValueFieldProps) {
 	const { kind, value, onChange, placeholder, testId } = props
+	const { t } = useTranslation()
 
 	if (kind === "text") {
 		return (
@@ -156,7 +157,7 @@ export function TraitValueField(props: TraitValueFieldProps) {
 					size="icon"
 					className="size-8 shrink-0"
 					onClick={() => onChange([...parts, ""].join(","))}
-					aria-label="Add field"
+					aria-label={t("traits.values.addField")}
 				>
 					<Add className="size-4" />
 				</Button>
@@ -172,7 +173,7 @@ export function TraitValueField(props: TraitValueFieldProps) {
 						}
 						onChange(parts.slice(0, -1).join(","))
 					}}
-					aria-label="Remove field"
+					aria-label={t("traits.values.removeField")}
 				>
 					<MinusSquare className="size-4" />
 				</Button>

@@ -17,6 +17,7 @@
 		"working": "Working…",
 		"prev": "Prev",
 		"next": "Next",
+		"previous": "Previous",
 		"first": "First",
 		"last": "Last",
 		"jumpToPage": "Page",
@@ -1571,6 +1572,7 @@
 		},
 		"detail": {
 			"docSearchTitle": "In documents",
+			"emptyInline": "Empty resource",
 			"notFound": "Resource not found",
 			"fileCount_one": "{{count}} file",
 			"fileCount_other": "{{count}} files",
@@ -1718,6 +1720,8 @@
 		},
 		"values": {
 			"noDefinitions": "No trait definitions yet. Open Settings / Traits to add them.",
+			"addField": "Add field",
+			"removeField": "Remove field",
 			"inputPlaceholder": "Enter value",
 			"remove": "Remove",
 			"allSet": "All traits already set.",

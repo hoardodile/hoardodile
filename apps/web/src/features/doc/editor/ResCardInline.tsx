@@ -2,6 +2,7 @@ import { createReactInlineContentSpec } from "@blocknote/react"
 import { Box } from "@hoardodile/ui/icons/registry"
 import { useQuery } from "@tanstack/react-query"
 import { useState } from "react"
+import { useTranslation } from "react-i18next"
 import { resDetailCardQueryOptions } from "@/features/res/api"
 import { ResMediaThumb } from "@/features/res/components/ResMediaThumb"
 import { ResPreviewDialog } from "@/features/res/components/ResPreviewDialog"
@@ -43,6 +44,7 @@ type ResCardViewProps = {
 }
 
 function ResCardView(props: ResCardViewProps) {
+	const { t } = useTranslation()
 	const enabled = props.resId.length > 0
 	const query = useQuery({
 		...resDetailCardQueryOptions(props.resId),
@@ -56,7 +58,7 @@ function ResCardView(props: ResCardViewProps) {
 				className="inline-flex items-center gap-1 rounded-md border border-dashed bg-muted/30 px-2 py-1 text-xs text-muted-foreground align-middle"
 			>
 				<Box className="size-3.5" />
-				<span>Empty resource</span>
+				<span>{t("resources.detail.emptyInline")}</span>
 			</span>
 		)
 	}
@@ -68,7 +70,7 @@ function ResCardView(props: ResCardViewProps) {
 				className="inline-flex items-center gap-1 rounded-md border bg-muted/30 px-2 py-1 text-xs text-muted-foreground animate-pulse align-middle"
 			>
 				<Box className="size-3.5" />
-				<span>Loading…</span>
+				<span>{t("common.loading")}</span>
 			</span>
 		)
 	}

@@ -17,6 +17,7 @@
 		"working": "处理中…",
 		"prev": "上一页",
 		"next": "下一页",
+		"previous": "上一个",
 		"first": "首页",
 		"last": "末页",
 		"jumpToPage": "页",
@@ -1571,6 +1572,7 @@
 		},
 		"detail": {
 			"docSearchTitle": "关联文档",
+			"emptyInline": "空资源",
 			"notFound": "未找到该资源",
 			"fileCount_one": "{{count}} 个文件",
 			"fileCount_other": "{{count}} 个文件",
@@ -1718,6 +1720,8 @@
 		},
 		"values": {
 			"noDefinitions": "暂无特征定义。请前往 设置 / 特征 添加。",
+			"addField": "添加字段",
+			"removeField": "移除字段",
 			"inputPlaceholder": "请输入",
 			"remove": "移除",
 			"allSet": "所有特征均已设置。",

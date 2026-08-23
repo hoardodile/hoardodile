@@ -12,6 +12,7 @@ import {
 	useRef,
 	useState,
 } from "react"
+import { useTranslation } from "react-i18next"
 
 /** Fallback window (ms) for the smooth auto-step to settle — manual-scroll
     window corrections stay out of the way while a step is in flight. */
@@ -45,12 +46,13 @@ export function MarqueeChevrons({
 }: {
 	stripRef: RefObject<MarqueeHandle | null>
 }) {
+	const { t } = useTranslation()
 	return (
 		<span className="flex items-center gap-0.5">
 			<button
 				type="button"
-				title="Previous"
-				aria-label="Previous"
+				title={t("common.previous")}
+				aria-label={t("common.previous")}
 				onClick={() => stripRef.current?.step(-1)}
 				className="flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-secondary-foreground"
 			>
@@ -58,8 +60,8 @@ export function MarqueeChevrons({
 			</button>
 			<button
 				type="button"
-				title="Next"
-				aria-label="Next"
+				title={t("common.next")}
+				aria-label={t("common.next")}
 				onClick={() => stripRef.current?.step(1)}
 				className="flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-secondary-foreground"
 			>
