@@ -106,7 +106,7 @@
 		},
 		"timeZone": {
 			"auto": "跟随系统",
-			"noMatches": "没有匹配的时区"
+			"noMatches": "暂无匹配时区。"
 		}
 	},
 	"appShell": {
@@ -130,7 +130,7 @@
 			"due": "同步到期",
 			"syncedTitle": "已是最新 — {{count}} 台设备",
 			"dueTitle": "{{count}} 台设备有同步提醒待处理",
-			"noDevicesTitle": "未配置同步设备"
+			"noDevicesTitle": "暂无同步设备。"
 		}
 	},
 	"search": {
@@ -146,7 +146,7 @@
 		"sectionCount": "({{count}})",
 		"viewAll": "查看全部 ({{count}})",
 		"empty": {
-			"title": "未找到结果",
+			"title": "暂无结果。",
 			"description": "换个关键词试试"
 		},
 		"resultLabels": {
@@ -157,7 +157,7 @@
 			"button": "以图搜图",
 			"uploadFailed": "图片搜索失败",
 			"title": "以图搜图结果",
-			"empty": "图库中未找到相似图片",
+			"empty": "图库中暂无相似图片。",
 			"clear": "清除图片搜索",
 			"queryAlt": "查询图片",
 			"similarity": "相似度 {{percent}}%"
@@ -275,7 +275,7 @@
 			"dependencies": "开源依赖",
 			"fonts": "字体",
 			"packageCount": "{{count}} 个包",
-			"noPackages": "无依赖包"
+			"noPackages": "暂无依赖包。"
 		},
 		"about": {
 			"title": "关于",
@@ -296,7 +296,7 @@
 		"connections": {
 			"title": "最近连接",
 			"description": "每次登录的设备、IP 与时间。数据只保存在本机，超过 90 天自动清除。",
-			"empty": "还没有登录记录。",
+			"empty": "暂无登录记录。",
 			"loopback": "本机"
 		},
 		"desktop": {
@@ -546,7 +546,7 @@
 			"aria": "足迹",
 			"title": "足迹",
 			"description": "你的每一次操作",
-			"emptyPrompt": "还没有足迹，先导入或上传一个资源吧。",
+			"emptyPrompt": "暂无足迹，先导入或上传一个资源吧。",
 			"uploadResource": "上传资源",
 			"importFolder": "导入文件夹"
 		},
@@ -554,15 +554,15 @@
 		"recentViewed": {
 			"description": "你的查看历史",
 			"unknownTime": "时间未知",
-			"emptyPrompt": "还没有浏览记录，先去逛逛吧。",
+			"emptyPrompt": "暂无浏览记录，先去逛逛吧。",
 			"browseResources": "浏览资源",
 			"uploadResource": "上传首个资源"
 		},
 		"pinned": {
 			"charactersTitle": "角色置顶",
 			"resourcesTitle": "资源置顶",
-			"charactersEmpty": "暂无匹配角色",
-			"resourcesEmpty": "暂无匹配资源",
+			"charactersEmpty": "暂无匹配角色。",
+			"resourcesEmpty": "暂无匹配资源。",
 			"add": "添加",
 			"maxReached": "最多可置顶 {{max}} 个",
 			"dragToReorder": "拖拽排序",
@@ -584,10 +584,10 @@
 				"saveSuccess": "置顶设置已保存",
 				"deleteSuccess": "置顶已删除",
 				"toggleEnabledAria": "启用或禁用 {{title}}",
-				"noItems": "暂无置顶内容",
+				"noItems": "暂无置顶内容。",
 				"noItemsHint": "点击「添加」将当前筛选保存到总览。",
 				"noItemsWithFiltersHint": "当前列表页已有筛选条件，点击上方按钮即可保存为置顶视图。",
-				"noSelection": "未选择置顶项",
+				"noSelection": "暂无已选置顶项。",
 				"noSelectionHint": "在左侧列表中选择一项，或点击「添加」创建新视图。",
 				"preview": "预览",
 				"previewTitle": "预览筛选结果",
@@ -742,7 +742,7 @@
 			"switchDescription": "切换后服务将以只读模式启动，只能查看历史数据。要恢复编辑，请返回最新可写版本。"
 		},
 		"empty": {
-			"title": "还没有数据历史",
+			"title": "暂无数据历史。",
 			"description": "建议你立即创建一次备份，以防数据丢失。"
 		},
 		"toast": {
@@ -913,11 +913,11 @@
 			"insertResource": "插入资源…"
 		},
 		"search": {
-			"empty": "未匹配到任何文档"
+			"empty": "暂无匹配文档。"
 		},
 		"trash": {
 			"open": "回收站",
-			"empty": "回收站为空。",
+			"empty": "回收站中暂无文档。",
 			"restore": "还原",
 			"hardDelete": "永久删除",
 			"hardDeleteTitle": "永久删除？",
@@ -1048,7 +1048,7 @@
 		},
 		"detail": {
 			"loadError": "无法加载该角色。",
-			"noIntro": "暂无简介",
+			"noIntro": "暂无简介。",
 			"relationships": "关系",
 			"recent": "最近资源",
 			"viewAllResources": "查看全部",
@@ -1093,7 +1093,7 @@
 			"linkCharacters": "关联角色"
 		},
 		"picker": {
-			"selectedEmpty": "尚未选择任何角色。",
+			"selectedEmpty": "暂无已选角色。",
 			"loadFailed": "加载失败"
 		},
 		"selectorDialog": {
@@ -1103,7 +1103,7 @@
 			"notSelectable": "该角色不可选"
 		},
 		"charactership": {
-			"empty": "尚无关系。请在上方选择关系类型添加。",
+			"empty": "暂无关系。请在上方选择关系类型添加。",
 			"pickerTitle": "选择角色",
 			"deleteEdge": "删除",
 			"deleteConfirmTitle": "删除关系",
@@ -1112,7 +1112,7 @@
 			"enterName": "输入名称",
 			"pickEndpoint": "选择关系端",
 			"namePlaceholder": "名称",
-			"noTypesHint": "尚无关系类型。",
+			"noTypesHint": "暂无关系类型。",
 			"noTypesLink": "前往自制页添加",
 			"incompleteDraft": "请完成所有新增关系后再保存",
 			"toast": {
@@ -1130,7 +1130,7 @@
 			"openLabel": "打开 {{name}} 组合"
 		},
 		"popover": {
-			"empty": "该组合中暂无资源"
+			"empty": "该组合中暂无资源。"
 		},
 		"picker": {
 			"quickCreate": "添加",
@@ -1140,7 +1140,7 @@
 			"title": "{{name}} 的组合"
 		},
 		"panel": {
-			"empty": "暂无组合",
+			"empty": "暂无组合。",
 			"addDialogTitle": "添加组合",
 			"editDialogTitle": "编辑组合",
 			"filterPlaceholder": "筛选资源组合",
@@ -1346,7 +1346,7 @@
 		"yesterday": "昨天",
 		"loading": "加载足迹中...",
 		"loadError": "加载足迹失败",
-		"empty": "还没有足迹。导入、导出、删除或表态后，这里会逐条记录。",
+		"empty": "暂无足迹。导入、导出、删除或表态后，这里会逐条记录。",
 		"count": "{{count}} 条足迹"
 	},
 	"resources": {
@@ -1381,7 +1381,7 @@
 				"previewDescription": "确认要导入的项目。",
 				"resultTitle": "导入结果",
 				"scanHere": "扫描",
-				"noSubdirs": "无子目录",
+				"noSubdirs": "暂无子目录。",
 				"uploading": "上传中...",
 				"extracting": "解压中...",
 				"scanning": "扫描中...",
@@ -1406,8 +1406,8 @@
 				"stepImport": "导入",
 				"stepDone": "完成",
 				"stepsAria": "导入步骤",
-				"emptyTitle": "此目录为空",
-				"emptyDescription": "这里没有可导入的文件或目录。",
+				"emptyTitle": "此目录为空。",
+				"emptyDescription": "暂无文件或目录可导入。",
 				"previewCount": "共 {{count}} 项待导入",
 				"howTitle": "工作原理",
 				"howScan": "扫描",
@@ -1454,7 +1454,7 @@
 		"search": {
 			"placeholder": "搜索资源…",
 			"empty": "暂无资源。",
-			"trashEmpty": "回收站为空。",
+			"trashEmpty": "回收站中暂无资源。",
 			"filters": "筛选",
 			"sectionOptions": "选项",
 			"sectionTags": "标签",
@@ -1560,7 +1560,7 @@
 			"sidebar": {
 				"tagsHeading": "标签",
 				"colEmpty": "该组合下暂无其它资源。",
-				"noTags": "暂无标签",
+				"noTags": "暂无标签。",
 				"relatedByTagsHeading": "相关推荐",
 				"similarImagesHeading": "相似图片",
 				"duplicateImagesHeading": "重复图片",
@@ -1626,7 +1626,7 @@
 	},
 	"relationshipTypes": {
 		"panel": {
-			"empty": "尚无关系。请点击添加。",
+			"empty": "暂无关系。请点击添加。",
 			"addDialogTitle": "添加关系",
 			"editDialogTitle": "编辑关系",
 			"filterPlaceholder": "筛选关系类型",
@@ -1672,7 +1672,7 @@
 	},
 	"traits": {
 		"panel": {
-			"empty": "尚无特征定义。请点击添加。",
+			"empty": "暂无特征定义。请点击添加。",
 			"addDialogTitle": "添加特征",
 			"editDialogTitle": "编辑特征",
 			"filterPlaceholder": "筛选特征",
@@ -1695,7 +1695,7 @@
 			"usageLabel": "角色"
 		},
 		"values": {
-			"noDefinitions": "尚无特征定义。请前往 设置 / 特征 添加。",
+			"noDefinitions": "暂无特征定义。请前往 设置 / 特征 添加。",
 			"inputPlaceholder": "请输入",
 			"remove": "移除",
 			"allSet": "所有特征均已设置。",
@@ -1767,7 +1767,7 @@
 			"empty": "该分类下暂无标签。",
 			"emptyAll": "暂无标签定义。",
 			"searchPlaceholder": "搜索标签…",
-			"noMatches": "无匹配标签"
+			"noMatches": "暂无匹配标签。"
 		},
 		"bulk": {
 			"nonCommonHint": "有 {{count}} 个标签未被全部选中项共享。你可以添加任意标签；只有公共标签可以被移除。"
@@ -1826,7 +1826,7 @@
 			"endpointTag": "标签",
 			"endpointCharacter": "角色",
 			"parentsEmpty": "暂无上下级规则。",
-			"noMatch": "没有匹配的规则",
+			"noMatch": "暂无匹配规则。",
 			"searchPlaceholder": "筛选规则…",
 			"toast": {
 				"pairAdded": "已添加同义词",
@@ -1893,7 +1893,7 @@
 	},
 	"messages": {
 		"title": "留言",
-		"empty": "还没有留言",
+		"empty": "暂无留言。",
 		"threadCount_one": "{{count}} 个主题",
 		"threadCount_other": "{{count}} 个主题",
 		"replyCount_one": "{{count}} 条回复",
@@ -1907,7 +1907,7 @@
 		"reply": "回复",
 		"actions": "留言操作",
 		"trash": "回收站",
-		"emptyTrash": "回收站是空的",
+		"emptyTrash": "回收站中暂无留言。",
 		"deleted": "已删除",
 		"delete": "删除",
 		"deleteConfirmTitle": "删除这条留言？",
@@ -2005,7 +2005,7 @@
 			"notesHint": "例如：USB 4TB",
 			"add": "添加设备",
 			"addPending": "添加中...",
-			"empty": "还没有设备——添加一个开始同步。",
+			"empty": "暂无设备——添加一个开始同步。",
 			"loading": "加载中...",
 			"neverSynced": "从未同步",
 			"lastSyncedAgo_one": "上次同步 {{date}}（{{count}} 天前）",
@@ -2052,11 +2052,11 @@
 			"recordFailed": "同步失败"
 		},
 		"banner": {
-			"noDevicesTitle": "未配置同步设备",
+			"noDevicesTitle": "暂无同步设备。",
 			"noDevicesDescription": "至少添加一个设备才能追踪同步。",
 			"configureLink": "去配置",
 			"neverSyncedTitle": "{{name}} 从未同步过",
-			"neverSyncedDescription": "该设备还没有任何同步记录。",
+			"neverSyncedDescription": "该设备暂无同步记录。",
 			"overdueTitle_one": "{{name}} 上次同步在 {{count}} 天前",
 			"overdueTitle_other": "{{name}} 上次同步在 {{count}} 天前",
 			"overdueDescription": "已超过你设定的 {{count}} 天提醒间隔。",

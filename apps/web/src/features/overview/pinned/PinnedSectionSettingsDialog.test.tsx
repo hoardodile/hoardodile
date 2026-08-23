@@ -131,7 +131,7 @@ async function selectItemByTitle(
 describe("PinnedSectionSettingsDialog", () => {
 	it("renders empty state when no items", async () => {
 		renderDialog({})
-		expect(screen.getByText("No pinned views yet")).toBeInTheDocument()
+		expect(screen.getByText("No pinned views yet.")).toBeInTheDocument()
 		expect(screen.getByTestId("pinned-add-button")).toBeInTheDocument()
 	})
 

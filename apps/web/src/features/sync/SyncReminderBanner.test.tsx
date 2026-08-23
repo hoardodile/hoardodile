@@ -140,7 +140,9 @@ describe("SyncReminderBanner", () => {
 		await waitFor(() => {
 			expect(screen.getByTestId("sync-warning-no-devices")).toBeInTheDocument()
 		})
-		expect(screen.getByText("No sync devices configured")).toBeInTheDocument()
+		expect(
+			screen.getByText("No sync devices configured yet."),
+		).toBeInTheDocument()
 		expect(
 			screen.queryByTestId("sync-warning-due-dev-laptop"),
 		).not.toBeInTheDocument()

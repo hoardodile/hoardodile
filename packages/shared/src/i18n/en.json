@@ -106,7 +106,7 @@
 		},
 		"timeZone": {
 			"auto": "Follow system",
-			"noMatches": "No matching time zones"
+			"noMatches": "No matching time zones."
 		}
 	},
 	"appShell": {
@@ -130,7 +130,7 @@
 			"due": "Sync due",
 			"syncedTitle": "Up to date — {{count}} devices",
 			"dueTitle": "{{count}} device(s) with a pending sync reminder",
-			"noDevicesTitle": "No sync devices configured"
+			"noDevicesTitle": "No sync devices configured yet."
 		}
 	},
 	"search": {
@@ -146,7 +146,7 @@
 		"sectionCount": "({{count}})",
 		"viewAll": "View all ({{count}})",
 		"empty": {
-			"title": "No results found",
+			"title": "No results found.",
 			"description": "Try a different keyword"
 		},
 		"resultLabels": {
@@ -157,7 +157,7 @@
 			"button": "Search by image",
 			"uploadFailed": "Image search failed",
 			"title": "Image search results",
-			"empty": "No similar images found in your library",
+			"empty": "No similar images found in your library.",
 			"clear": "Clear image search",
 			"queryAlt": "Query image",
 			"similarity": "{{percent}}% similar"
@@ -275,7 +275,7 @@
 			"dependencies": "Open Source Dependencies",
 			"fonts": "Fonts",
 			"packageCount": "{{count}} packages",
-			"noPackages": "No packages"
+			"noPackages": "No packages yet."
 		},
 		"about": {
 			"title": "About",
@@ -561,8 +561,8 @@
 		"pinned": {
 			"charactersTitle": "Pinned characters",
 			"resourcesTitle": "Pinned resources",
-			"charactersEmpty": "No matching characters",
-			"resourcesEmpty": "No matching resources",
+			"charactersEmpty": "No matching characters.",
+			"resourcesEmpty": "No matching resources.",
 			"add": "Add",
 			"maxReached": "Maximum {{max}} pinned items reached",
 			"dragToReorder": "Drag to reorder",
@@ -584,10 +584,10 @@
 				"saveSuccess": "Pinned settings saved",
 				"deleteSuccess": "Pinned view deleted",
 				"toggleEnabledAria": "Enable or disable {{title}}",
-				"noItems": "No pinned views yet",
+				"noItems": "No pinned views yet.",
 				"noItemsHint": "Click Add to save the current filters to the overview.",
 				"noItemsWithFiltersHint": "The current list page already has filters. Click the button above to save them as a pinned view.",
-				"noSelection": "No pinned view selected",
+				"noSelection": "No pinned view selected.",
 				"noSelectionHint": "Select an item from the list, or click Add to create a new view.",
 				"preview": "Preview",
 				"previewTitle": "Preview filters",
@@ -742,7 +742,7 @@
 			"switchDescription": "After switching, the app runs in read-only mode and only historical data is visible. Return to the latest version to edit again."
 		},
 		"empty": {
-			"title": "No data history yet",
+			"title": "No data history yet.",
 			"description": "Create a backup now to protect against data loss."
 		},
 		"toast": {
@@ -913,11 +913,11 @@
 			"moveFailed": "Failed to move"
 		},
 		"search": {
-			"empty": "No documents matched"
+			"empty": "No matching documents."
 		},
 		"trash": {
 			"open": "Recycle bin",
-			"empty": "Recycle bin is empty.",
+			"empty": "No documents in trash yet.",
 			"restore": "Restore",
 			"hardDelete": "Delete forever",
 			"hardDeleteTitle": "Delete forever?",
@@ -972,7 +972,7 @@
 		},
 		"new": "New",
 		"listEmpty": "No characters yet.",
-		"trashEmpty": "Trash is empty.",
+		"trashEmpty": "No characters in trash yet.",
 		"filter": {
 			"trash": "Trash"
 		},
@@ -1048,7 +1048,7 @@
 		},
 		"detail": {
 			"loadError": "Could not load this character.",
-			"noIntro": "No intro yet",
+			"noIntro": "No intro yet.",
 			"relationships": "Relationships",
 			"recent": "Recent resources",
 			"viewAllResources": "View all",
@@ -1130,7 +1130,7 @@
 			"openLabel": "Open {{name}} collection"
 		},
 		"popover": {
-			"empty": "No resources in this collection"
+			"empty": "No resources in this collection yet."
 		},
 		"picker": {
 			"quickCreate": "Add",
@@ -1140,7 +1140,7 @@
 			"title": "Collections for {{name}}"
 		},
 		"panel": {
-			"empty": "No collections yet",
+			"empty": "No collections yet.",
 			"addDialogTitle": "Add collection",
 			"editDialogTitle": "Edit collection",
 			"filterPlaceholder": "Filter collections",
@@ -1154,7 +1154,7 @@
 		"history": {
 			"title": "Usage history",
 			"description": "What you've used, newest first",
-			"empty": "Nothing used yet.",
+			"empty": "No usage records yet.",
 			"loading": "Loading…",
 			"loadError": "Couldn't load usage history.",
 			"today": "Today",
@@ -1381,7 +1381,7 @@
 				"previewDescription": "Review the items to import.",
 				"resultTitle": "Import results",
 				"scanHere": "Scan",
-				"noSubdirs": "No subdirectories",
+				"noSubdirs": "No subdirectories yet.",
 				"uploading": "Uploading...",
 				"extracting": "Extracting...",
 				"scanning": "Scanning...",
@@ -1406,8 +1406,8 @@
 				"stepImport": "Import",
 				"stepDone": "Done",
 				"stepsAria": "Import steps",
-				"emptyTitle": "This folder is empty",
-				"emptyDescription": "There are no files or folders to import here.",
+				"emptyTitle": "This folder is empty.",
+				"emptyDescription": "No files or folders to import here yet.",
 				"previewCount": "{{count}} items ready to import",
 				"howTitle": "How it works",
 				"howScan": "Scan",
@@ -1453,8 +1453,8 @@
 		},
 		"search": {
 			"placeholder": "Search resources…",
-			"empty": "No resources.",
-			"trashEmpty": "Trash is empty.",
+			"empty": "No resources yet.",
+			"trashEmpty": "No resources in trash yet.",
 			"filters": "Filters",
 			"sectionOptions": "Options",
 			"sectionTags": "Tags",
@@ -1559,8 +1559,8 @@
 			"anniversary_other": "In the library for {{count}} years",
 			"sidebar": {
 				"tagsHeading": "Tags",
-				"colEmpty": "This collection has no other resources.",
-				"noTags": "No tags assigned",
+				"colEmpty": "No other resources in this collection yet.",
+				"noTags": "No tags assigned yet.",
 				"relatedByTagsHeading": "Related by tags",
 				"similarImagesHeading": "Similar images",
 				"duplicateImagesHeading": "Duplicates",
@@ -1767,7 +1767,7 @@
 			"empty": "No tags in this category yet.",
 			"emptyAll": "No tags defined yet.",
 			"searchPlaceholder": "Search tags…",
-			"noMatches": "No matching tags"
+			"noMatches": "No matching tags."
 		},
 		"bulk": {
 			"nonCommonHint": "{{count}} tags are not shared by all selected items. You can add any tag; only shared tags can be removed."
@@ -1826,7 +1826,7 @@
 			"endpointTag": "Tag",
 			"endpointCharacter": "Character",
 			"parentsEmpty": "No parent rules yet.",
-			"noMatch": "No matching rules",
+			"noMatch": "No matching rules.",
 			"searchPlaceholder": "Filter rules…",
 			"toast": {
 				"pairAdded": "Sibling pair added",
@@ -1893,7 +1893,7 @@
 	},
 	"messages": {
 		"title": "Messages",
-		"empty": "No messages yet",
+		"empty": "No messages yet.",
 		"threadCount_one": "{{count}} thread",
 		"threadCount_other": "{{count}} threads",
 		"replyCount_one": "{{count}} reply",
@@ -1907,7 +1907,7 @@
 		"reply": "Reply",
 		"actions": "Message actions",
 		"trash": "Trash",
-		"emptyTrash": "Trash is empty",
+		"emptyTrash": "No messages in trash yet.",
 		"deleted": "Deleted",
 		"delete": "Delete",
 		"deleteConfirmTitle": "Delete this message?",
@@ -2052,7 +2052,7 @@
 			"recordFailed": "Could not sync"
 		},
 		"banner": {
-			"noDevicesTitle": "No sync devices configured",
+			"noDevicesTitle": "No sync devices configured yet.",
 			"noDevicesDescription": "Add at least one device to track syncs.",
 			"configureLink": "Set up",
 			"neverSyncedTitle": "{{name}} has never been synced",

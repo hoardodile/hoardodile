@@ -320,7 +320,7 @@ describe("PinnedCharactersSection via OverviewPinnedRow", () => {
 		await waitFor(() => {
 			expect(characterHandler).toHaveBeenCalled()
 		})
-		expect(screen.getByText("No matching characters")).toBeInTheDocument()
+		expect(screen.getByText("No matching characters.")).toBeInTheDocument()
 	})
 })
 
@@ -439,7 +439,7 @@ describe("PinnedResourcesSection via OverviewPinnedRow", () => {
 		await waitFor(() => {
 			expect(resourceHandler).toHaveBeenCalled()
 		})
-		expect(screen.getByText("No matching resources")).toBeInTheDocument()
+		expect(screen.getByText("No matching resources.")).toBeInTheDocument()
 	})
 })
 

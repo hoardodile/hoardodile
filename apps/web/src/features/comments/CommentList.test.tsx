@@ -117,7 +117,7 @@ describe("CommentList", () => {
 		await waitFor(() => {
 			expect(screen.getByTestId("comment-list-empty")).toBeInTheDocument()
 		})
-		expect(screen.getByText("No messages yet")).toBeInTheDocument()
+		expect(screen.getByText("No messages yet.")).toBeInTheDocument()
 	})
 
 	it("renders comment cards when rows are returned", async () => {

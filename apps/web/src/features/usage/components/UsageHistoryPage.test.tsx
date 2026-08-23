@@ -274,7 +274,7 @@ describe("UsageHistoryPage", () => {
 			)
 		})
 		await waitFor(() => {
-			expect(screen.getByText("Nothing used yet.")).toBeInTheDocument()
+			expect(screen.getByText("No usage records yet.")).toBeInTheDocument()
 		})
 	})
 
@@ -295,12 +295,12 @@ describe("UsageHistoryPage", () => {
 		await renderPage()
 
 		await waitFor(() => {
-			expect(screen.getByText("Nothing used yet.")).toBeInTheDocument()
+			expect(screen.getByText("No usage records yet.")).toBeInTheDocument()
 		})
 		await user.click(screen.getByRole("tab", { name: "Characters" }))
 
 		await waitFor(() => {
-			expect(screen.getByText("Nothing used yet.")).toBeInTheDocument()
+			expect(screen.getByText("No usage records yet.")).toBeInTheDocument()
 		})
 	})
 
