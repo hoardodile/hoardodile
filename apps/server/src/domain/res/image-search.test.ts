@@ -80,7 +80,10 @@ describe("buildImageSearchSessions", () => {
 	})
 
 	test("sweep removes sessions older than the max age", async () => {
-		const sessions = await makeSessions()
+		// The sweep deadline must never collide with the session dir's
+		// mtime on the same millisecond: skew the injected clock forward
+		// so `mtimeMs < now() - maxAgeMs` cannot be racy at maxAge 0.
+		const sessions = await makeSessions({ now: () => Date.now() + 2000 })
 		const sessionId = await storeImage(sessions)
 
 		await sessions.sweep(60 * 60 * 1000)
