@@ -1,5 +1,5 @@
 import { readdir, rm, stat } from "node:fs/promises"
-import { join } from "node:path"
+import { join, win32 } from "node:path"
 import type { Session } from "electron"
 
 /**
@@ -52,7 +52,7 @@ export function resolveUpdaterCacheDir(options: {
 	readonly appName: string
 }): string {
 	const base = options.localAppData ?? ""
-	return join(base, `${options.appName.toLowerCase()}-updater`)
+	return win32.join(base, `${options.appName.toLowerCase()}-updater`)
 }
 
 /** Delete the updater download cache; electron-updater recreates it on demand. */
