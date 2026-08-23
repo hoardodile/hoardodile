@@ -769,7 +769,11 @@
 	"documents": {
 		"title": "文档",
 		"index": {
-			"description": "{{folders}} 个文件夹中的 {{count}} 篇文档——你写的一切都在这里。",
+			"docCount_one": "{{count}} 篇文档",
+			"docCount_other": "{{count}} 篇文档",
+			"folderCount_one": "{{count}} 个文件夹",
+			"folderCount_other": "{{count}} 个文件夹",
+			"description": "{{folders}}中的{{docs}}——你写的一切都在这里。",
 			"updated": "更新于 {{time}}"
 		},
 		"create": "新建",
@@ -1137,7 +1141,8 @@
 	},
 	"collections": {
 		"entityLabel": "组合",
-		"usageLabel": "资源",
+		"usageLabelOne": "个资源",
+		"usageLabel": "个资源",
 		"chip": {
 			"openLabel": "打开 {{name}} 组合"
 		},
@@ -1687,6 +1692,7 @@
 		},
 		"delete": {
 			"kindLabel": "关系",
+			"usageLabelOne": "条关系",
 			"usageLabel": "条关系"
 		},
 		"toast": {
@@ -1716,7 +1722,8 @@
 		},
 		"delete": {
 			"kindLabel": "特征",
-			"usageLabel": "角色"
+			"usageLabelOne": "个角色",
+			"usageLabel": "个角色"
 		},
 		"values": {
 			"noDefinitions": "暂无特征定义。请前往 设置 / 特征 添加。",
@@ -1771,7 +1778,8 @@
 		"delete": {
 			"kindLabelCategory": "分类",
 			"kindLabelTag": "标签",
-			"usageLabelTags": "标签"
+			"usageLabelTagsOne": "个标签",
+			"usageLabelTags": "个标签"
 		},
 		"form": {
 			"createCategory": "创建分类",
@@ -1903,10 +1911,11 @@
 		"dialogConfirmDescription": "将永久删除该{{kind}}，此操作无法撤销。",
 		"defaultLabel": "删除",
 		"defaultNoun": "处",
+		"defaultNounOne": "处",
 		"confirm": "确认删除",
 		"deleting": "删除中…",
 		"forceTitle": "无法删除{{kind}}",
-		"usageMessage": "该{{kind}}已被 {{count}} 个{{usage}}使用，无法直接删除。",
+		"usageMessage": "该{{kind}}已被 {{count}} {{usage}}使用，无法直接删除。",
 		"toast": {
 			"deleteSuccess": "已删除{{kind}}",
 			"deleteFailed": "删除失败",

@@ -200,6 +200,7 @@ const RelationshipTypeDeleteButton = forwardRef<
 			testId={`relationship-type-delete-${type.id}`}
 			usageCount={type.edgeCount}
 			usageLabel={t("relationshipTypes.delete.usageLabel")}
+			usageLabelOne={t("relationshipTypes.delete.usageLabelOne")}
 			onDelete={() => handleDelete(type.id)}
 			onForceDelete={(typed) => handleForceDelete(type.id, typed)}
 			hideTrigger={hideTrigger}

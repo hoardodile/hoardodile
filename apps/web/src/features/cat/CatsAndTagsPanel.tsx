@@ -577,6 +577,7 @@ const CategoryDeleteButton = forwardRef<
 			testId={`category-delete-${category.id}`}
 			usageCount={category.tagCount}
 			usageLabel={t("categories.delete.usageLabelTags")}
+			usageLabelOne={t("categories.delete.usageLabelTagsOne")}
 			onDelete={() => handleDelete(category.id)}
 			onForceDelete={(typed) => handleForceDelete(category.id, typed)}
 			compactIcon={hideTrigger ? false : compactIcon}

@@ -131,8 +131,8 @@
 			"due": "Sync due",
 			"syncedTitle_one": "Up to date — {{count}} device",
 			"syncedTitle_other": "Up to date — {{count}} devices",
-			"dueTitle_one": "{{count}} device with a pending sync reminder",
-			"dueTitle_other": "{{count}} devices with a pending sync reminder",
+			"dueTitle_one": "{{count}} device due for sync",
+			"dueTitle_other": "{{count}} devices due for sync",
 			"noDevicesTitle": "No sync devices configured yet."
 		}
 	},
@@ -769,7 +769,11 @@
 	"documents": {
 		"title": "Documents",
 		"index": {
-			"description": "{{count}} documents in {{folders}} folders — everything you've written, in one place.",
+			"docCount_one": "{{count}} document",
+			"docCount_other": "{{count}} documents",
+			"folderCount_one": "{{count}} folder",
+			"folderCount_other": "{{count}} folders",
+			"description": "{{docs}} in {{folders}} — everything you've written, in one place.",
 			"updated": "Updated {{time}}"
 		},
 		"create": "New",
@@ -1137,6 +1141,7 @@
 	},
 	"collections": {
 		"entityLabel": "collection",
+		"usageLabelOne": "resource",
 		"usageLabel": "resources",
 		"chip": {
 			"openLabel": "Open {{name}} collection"
@@ -1687,6 +1692,7 @@
 		},
 		"delete": {
 			"kindLabel": "relationship",
+			"usageLabelOne": "relationship link",
 			"usageLabel": "relationship links"
 		},
 		"toast": {
@@ -1716,6 +1722,7 @@
 		},
 		"delete": {
 			"kindLabel": "trait",
+			"usageLabelOne": "character",
 			"usageLabel": "characters"
 		},
 		"values": {
@@ -1771,6 +1778,7 @@
 		"delete": {
 			"kindLabelCategory": "category",
 			"kindLabelTag": "tag",
+			"usageLabelTagsOne": "tag",
 			"usageLabelTags": "tags"
 		},
 		"form": {
@@ -1903,6 +1911,7 @@
 		"dialogConfirmDescription": "This will permanently delete this {{kind}}. This action cannot be undone.",
 		"defaultLabel": "Delete",
 		"defaultNoun": "items",
+		"defaultNounOne": "item",
 		"confirm": "Confirm delete",
 		"deleting": "Deleting…",
 		"forceTitle": "Cannot delete {{kind}}",

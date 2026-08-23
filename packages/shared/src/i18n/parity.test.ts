@@ -48,8 +48,7 @@ const NO_PLURAL_PAIR_ALLOWLIST = new Set([
 	"categories.panel.dependencyCharacters", // "{{count}} char" (abbreviation)
 	"categories.panel.tagCharacterCount", // "char {{count}}"
 	"categories.panel.tagResourceCount", // "res {{count}}"
-	"deleteEntity.usageMessage", // count noun is the {{usage}} variable
-	"documents.index.description", // two counts in one string
+	"deleteEntity.usageMessage", // usage noun is passed in (singular when count=1)
 	"documents.statusBar.charCount", // "{{count}} / {{max}} chars" (range)
 	"sync.banner.overdueDescription", // "{{count}}-day reminder" (compound)
 	"trace.overview.moreThanPrev", // "{{count}} more than the previous period"

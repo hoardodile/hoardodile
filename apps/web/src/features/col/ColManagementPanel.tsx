@@ -224,6 +224,7 @@ const ColDeleteButton = forwardRef<
 			onForceDelete={(typed) => handleForceDelete(collection.id, typed)}
 			usageCount={collection.resCount}
 			usageLabel={t("collections.usageLabel")}
+			usageLabelOne={t("collections.usageLabelOne")}
 		/>
 	)
 })

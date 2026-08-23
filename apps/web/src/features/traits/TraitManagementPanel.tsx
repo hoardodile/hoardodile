@@ -193,6 +193,7 @@ const TraitDeleteButton = forwardRef<
 			testId={`trait-delete-${trait.id}`}
 			usageCount={trait.charCount}
 			usageLabel={t("traits.delete.usageLabel")}
+			usageLabelOne={t("traits.delete.usageLabelOne")}
 			onDelete={() => handleDelete(trait.id)}
 			onForceDelete={(typed) => handleForceDelete(trait.id, typed)}
 			compactIcon={hideTrigger ? false : compactIcon}

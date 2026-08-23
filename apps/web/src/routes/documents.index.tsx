@@ -40,6 +40,10 @@ function DocsIndex() {
 		() => nodes.filter((node) => node.kind === "folder").length,
 		[nodes],
 	)
+	const docCount = useMemo(
+		() => nodes.filter((node) => node.kind === "document").length,
+		[nodes],
+	)
 
 	return (
 		<div className="px-8 pt-16 pb-24">
@@ -49,8 +53,10 @@ function DocsIndex() {
 				</h1>
 				<p className="mt-3 text-ui text-muted-foreground">
 					{t("documents.index.description", {
-						count: nodes.filter((node) => node.kind === "document").length,
-						folders: folderCount,
+						docs: t("documents.index.docCount", { count: docCount }),
+						folders: t("documents.index.folderCount", {
+							count: folderCount,
+						}),
 					})}
 				</p>
 				<div className="mt-6 mb-8 h-px w-32 bg-border" />

@@ -20,7 +20,10 @@ export type DeleteEntityButtonProps = Readonly<{
 	onForceDelete(typedName: string): Promise<void>
 	disabled?: boolean
 	usageCount?: number
+	/** Plural usage noun (used when count is not exactly one) */
 	usageLabel?: string
+	/** Singular usage noun (used when count is exactly one) */
+	usageLabelOne?: string
 	dependencyMessage?: string
 	/** Small red trash icon instead of a text "Delete" button */
 	compactIcon?: boolean
@@ -59,6 +62,7 @@ export const DeleteEntityButton = forwardRef<
 		disabled,
 		usageCount,
 		usageLabel,
+		usageLabelOne,
 		dependencyMessage,
 		compactIcon = false,
 		hideTrigger = false,
@@ -143,7 +147,10 @@ export const DeleteEntityButton = forwardRef<
 			: t("deleteEntity.usageMessage", {
 					kind: entityKindLabel,
 					count: usageCount ?? 0,
-					usage: usageLabel ?? t("deleteEntity.defaultNoun"),
+					usage:
+						(usageCount ?? 0) === 1
+							? (usageLabelOne ?? t("deleteEntity.defaultNounOne"))
+							: (usageLabel ?? t("deleteEntity.defaultNoun")),
 				})
 		openForceDialog(reason)
 	}, [
