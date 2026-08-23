@@ -4,8 +4,8 @@
 		"cancel": "Cancel",
 		"close": "Close",
 		"save": "Save",
-		"saving": "Saving...",
-		"loading": "Loading...",
+		"saving": "Saving…",
+		"loading": "Loading…",
 		"remove": "Remove",
 		"removeAria": "Remove",
 		"edit": "Edit",
@@ -14,7 +14,7 @@
 		"confirm": "Confirm",
 		"expand": "Expand",
 		"collapse": "Collapse",
-		"working": "Working...",
+		"working": "Working…",
 		"prev": "Prev",
 		"next": "Next",
 		"first": "First",
@@ -286,7 +286,7 @@
 			"tagline": "Privacy-first, self-hosted archiving app for personal media and documents.",
 			"repository": "GitHub repository",
 			"checkUpdate": "Check for updates",
-			"checking": "Checking...",
+			"checking": "Checking…",
 			"latest": "You're on the latest version.",
 			"outdated": "Version {{version}} is available.",
 			"viewRelease": "View release",
@@ -376,7 +376,7 @@
 				"currentSize": "{{size}}",
 				"unavailable": "Unavailable",
 				"clear": "Clear cache",
-				"clearing": "Clearing...",
+				"clearing": "Clearing…",
 				"confirmTitle": "Clear the shell cache?",
 				"confirmDescription": "The app window will fetch its files from the local server again on the next visit. Cookies, preferences and offline data are never touched. A downloaded update that is ready to install stays untouched.",
 				"toastCleared": "Shell cache cleared — {{bytes}} freed.",
@@ -392,7 +392,7 @@
 			"confirmDescription": "Permanently deletes all usage records. Stats and overview recommendations will reset. This cannot be undone.",
 			"confirmPhrase": "Clear all usage history",
 			"confirmLabel": "Confirm clear",
-			"clearing": "Clearing...",
+			"clearing": "Clearing…",
 			"toastSuccess": "All usage history cleared",
 			"toastFailed": "Failed to clear usage history"
 		},
@@ -404,7 +404,7 @@
 			"confirmDescription": "Permanently deletes every action record (imports, exports, deletes, restores, dislike votes). Viewing time is separate usage data and is not affected. This cannot be undone.",
 			"confirmPhrase": "Clear footprints",
 			"confirmLabel": "Confirm clear",
-			"clearing": "Clearing...",
+			"clearing": "Clearing…",
 			"toastSuccess": "Footprints cleared",
 			"toastFailed": "Failed to clear footprints"
 		},
@@ -426,14 +426,14 @@
 			"title": "Browser cache",
 			"description": "Browser-side local data — service-worker caches, localStorage and IndexedDB (offline usage queue, document drafts). The server is never touched; the page reloads afterwards.",
 			"clear": "Clear all",
-			"clearing": "Clearing...",
-			"resetting": "Browser cache cleared. Reloading...",
+			"clearing": "Clearing…",
+			"resetting": "Browser cache cleared. Reloading…",
 			"confirmTitle": "Clear browser cache?",
 			"confirmDescription": "This will delete every piece of browser-side local data, including theme and language preferences, offline usage records, and saved document drafts, then reload the page. This cannot be undone."
 		}
 	},
 	"plugin": {
-		"loading": "Loading preview...",
+		"loading": "Loading preview…",
 		"previewFailed": "Plugin failed to load",
 		"previewFallback": "Plugin {{name}} is missing or unavailable; previewing with the built-in file plugin",
 		"previewFallbackManage": "Manage plugins",
@@ -443,7 +443,7 @@
 		"pageHint": "Install from a .zip bundle, or rescan the plugins folder to pick up new arrivals.",
 		"uploadZip": "Upload .zip",
 		"uploadPluginSuccess": "Plugin installed",
-		"uploading": "Installing...",
+		"uploading": "Installing…",
 		"rescan": "Rescan plugins",
 		"rescanSuccess": "Plugins rescanned",
 		"more": "More",
@@ -619,18 +619,18 @@
 		},
 		"rebuildDescription": "Rebuild every resource's metadata and thumbnails from scratch, or clear all rebuildable data (local caches + recorded metadata) on this host.",
 		"signOut": "Sign out",
-		"signingOut": "Signing out...",
+		"signingOut": "Signing out…",
 		"precache": "Precache",
-		"precaching": "Precaching...",
-		"caching": "Warming browser cache...",
+		"precaching": "Precaching…",
+		"caching": "Warming browser cache…",
 		"refreshCache": "Refresh cache",
 		"clearCache": "Clear all",
-		"clearing": "Clearing...",
+		"clearing": "Clearing…",
 		"progressLine": "{{done}} / {{total}} ({{percent}}%) - {{stage}}",
 		"cachedSummary_one": "{{count}} item precached",
 		"cachedSummary_other": "{{count}} items precached",
 		"precacheFailed": "Failed to precache: {{error}}",
-		"precacheStageLoading": "Rebuilding metadata and generating thumbnails...",
+		"precacheStageLoading": "Rebuilding metadata and generating thumbnails…",
 		"precacheDefaultError": "Failed to run precache",
 		"precacheInProgress": "A precache is already in progress",
 		"abortPrecache": "Abort",
@@ -650,7 +650,7 @@
 		"demoDescription": "This is a demo library. Password is {{password}}.",
 		"password": "Password",
 		"submit": "Sign in",
-		"submitting": "Signing in...",
+		"submitting": "Signing in…",
 		"formAria": "Sign in",
 		"errorIncorrect": "Incorrect password.",
 		"errorGeneric": "Could not sign in. Check the server and try again.",
@@ -659,7 +659,7 @@
 		"setupPassword": "New password",
 		"setupConfirm": "Confirm password",
 		"setupSubmit": "Set password",
-		"setupSubmitting": "Setting up...",
+		"setupSubmitting": "Setting up…",
 		"setupMismatch": "Passwords do not match.",
 		"setupFormAria": "Set password"
 	},
@@ -1052,7 +1052,7 @@
 			"avatar": "Avatar",
 			"fullbody": "Fullbody",
 			"submit": "Create",
-			"submitting": "Creating..."
+			"submitting": "Creating…"
 		},
 		"preview": {
 			"aria": "Preview: {{name}}"
@@ -1098,7 +1098,7 @@
 			"title": "Delete forever?",
 			"description": "This permanently deletes the character and moves its folder to local trash.",
 			"confirm": "Delete forever",
-			"deleting": "Deleting..."
+			"deleting": "Deleting…"
 		},
 		"chips": {
 			"linkCharacters": "Link characters"
@@ -1360,7 +1360,7 @@
 		},
 		"today": "Today",
 		"yesterday": "Yesterday",
-		"loading": "Loading footprints...",
+		"loading": "Loading footprints…",
 		"loadError": "Failed to load footprints",
 		"empty": "No footprints yet. Imports, exports, deletes and dislike votes will be recorded here.",
 		"count_one": "{{count}} footprint",
@@ -1399,16 +1399,16 @@
 				"resultTitle": "Import results",
 				"scanHere": "Scan",
 				"noSubdirs": "No subdirectories yet.",
-				"uploading": "Uploading...",
-				"extracting": "Extracting...",
-				"scanning": "Scanning...",
+				"uploading": "Uploading…",
+				"extracting": "Extracting…",
+				"scanning": "Scanning…",
 				"sharedRoot": "Shared root",
 				"zipRoot": "Archive root",
 				"name": "Name",
 				"type": "Type",
 				"plugin": "Plugin",
 				"confirmImport": "Import",
-				"importing": "Importing...",
+				"importing": "Importing…",
 				"importDone": "Done",
 				"resultScanned": "Scanned",
 				"resultImported": "Imported",
@@ -1459,14 +1459,14 @@
 			"duplicateFileNames_one": "{{count}} file has a duplicate name in this batch — it will be renamed automatically (e.g. name-1.png)",
 			"duplicateFileNames_other": "{{count}} files have duplicate names in this batch — they will be renamed automatically (e.g. name-1.png)",
 			"submit": "Create",
-			"uploading": "Uploading...",
+			"uploading": "Uploading…",
 			"errors": {
 				"pickAtLeastOne": "Pick at least one file",
 				"uploadFailed": "Upload failed",
 				"stagingFailed_one": "{{count}} file failed to upload — remove it and try again",
 				"stagingFailed_other": "{{count}} files failed to upload — remove them and try again",
 				"attachCollectionsFailed": "Created the resource but failed to attach to one or more collections",
-				"batchPartialHint": "If this stopped partway, some resources may already exist—check the list."
+				"batchPartialHint": "If this stopped partway, some resources may already exist — check the list."
 			},
 			"created": "Created",
 			"autoDetect": "Auto-detect"
@@ -1525,7 +1525,7 @@
 			"hardDeleteTitle": "Delete selected forever?",
 			"hardDeleteDescription": "This permanently deletes the selected resources and moves their folders to local trash. This cannot be undone.",
 			"hardDeleteConfirm": "Delete forever",
-			"hardDeleteDeleting": "Deleting...",
+			"hardDeleteDeleting": "Deleting…",
 			"toastAllOk_one": "Updated {{count}} resource.",
 			"toastAllOk_other": "Updated {{count}} resources.",
 			"toastAllFailed": "Nothing was updated ({{count}} failed).",
@@ -1551,7 +1551,7 @@
 			"title": "Delete forever?",
 			"description": "This permanently deletes the resource and moves its folder to local trash.",
 			"confirm": "Delete forever",
-			"deleting": "Deleting..."
+			"deleting": "Deleting…"
 		},
 		"toast": {
 			"movedToTrash": "Moved to trash",
@@ -1771,7 +1771,7 @@
 		},
 		"form": {
 			"createCategory": "Create category",
-			"creating": "Creating...",
+			"creating": "Creating…",
 			"addTag": "Create tag"
 		},
 		"dialog": {
@@ -1810,7 +1810,7 @@
 			"description": "The duplicate's usage and rules move to the survivor.",
 			"targetPlaceholder": "Choose the surviving tag",
 			"confirm": "Confirm merge",
-			"confirming": "Merging...",
+			"confirming": "Merging…",
 			"countResources_one": "{{count}} resource",
 			"countResources_other": "{{count}} resources",
 			"countCharacters_one": "{{count}} character",
@@ -1900,7 +1900,7 @@
 		"defaultLabel": "Delete",
 		"defaultNoun": "items",
 		"confirm": "Confirm delete",
-		"deleting": "Deleting...",
+		"deleting": "Deleting…",
 		"forceTitle": "Cannot delete {{kind}}",
 		"usageMessage": "This {{kind}} is used by {{count}} {{usage}} and cannot be deleted directly.",
 		"toast": {
@@ -1911,7 +1911,7 @@
 			"nameMismatch": "Name does not match"
 		},
 		"forceConfirm": "Force delete",
-		"forceDeleting": "Deleting..."
+		"forceDeleting": "Deleting…"
 	},
 	"upload": {
 		"addFiles": "Add files",
@@ -1935,7 +1935,7 @@
 		"composerPlaceholder": "Write a message…",
 		"replyPlaceholder": "Write a reply…",
 		"submit": "Post",
-		"submitting": "Posting...",
+		"submitting": "Posting…",
 		"reply": "Reply",
 		"actions": "Message actions",
 		"trash": "Trash",
@@ -2040,9 +2040,9 @@
 			"nameHint": "e.g. Laptop",
 			"notesHint": "e.g. USB 4TB",
 			"add": "Add device",
-			"addPending": "Adding...",
+			"addPending": "Adding…",
 			"empty": "No devices yet — add one to start syncing.",
-			"loading": "Loading...",
+			"loading": "Loading…",
 			"neverSynced": "Never synced",
 			"lastSyncedAgo_one": "Last synced {{date}} · {{count}} day ago",
 			"lastSyncedAgo_other": "Last synced {{date}} · {{count}} days ago",
@@ -2060,11 +2060,11 @@
 			"deleteTitle": "Delete {{name}}?",
 			"deleteDescription": "The device and all of its sync records will be removed.",
 			"delete": "Delete",
-			"deletePending": "Deleting...",
+			"deletePending": "Deleting…",
 			"editTitle": "Edit device",
 			"edit": "Edit",
 			"save": "Save",
-			"editPending": "Saving..."
+			"editPending": "Saving…"
 		},
 		"fields": {
 			"resources": "Resources",

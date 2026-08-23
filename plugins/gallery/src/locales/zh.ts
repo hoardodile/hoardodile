@@ -20,7 +20,7 @@ export default {
 		engineEnhanced: "增强",
 		more: "更多",
 		sendDanmaku: "发送弹幕",
-		sendDanmakuPlaceholder: "输入弹幕...",
+		sendDanmakuPlaceholder: "输入弹幕…",
 		danmakuSendFailed: "弹幕发送失败",
 		danmakuSettings: "弹幕设置",
 		danmakuEnabled: "弹幕",

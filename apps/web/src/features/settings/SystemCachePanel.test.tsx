@@ -35,7 +35,7 @@ describe("SystemCachePanel", () => {
 
 		expect(mockedReset).toHaveBeenCalledTimes(1)
 		expect(mockedReset).toHaveBeenCalledWith(
-			"Browser cache cleared. Reloading...",
+			"Browser cache cleared. Reloading…",
 		)
 	})
 })

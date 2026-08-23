@@ -4,8 +4,8 @@
 		"cancel": "取消",
 		"close": "关闭",
 		"save": "保存",
-		"saving": "保存中...",
-		"loading": "加载中...",
+		"saving": "保存中…",
+		"loading": "加载中…",
 		"remove": "移除",
 		"removeAria": "移除",
 		"edit": "编辑",
@@ -14,7 +14,7 @@
 		"confirm": "确定",
 		"expand": "展开",
 		"collapse": "折叠",
-		"working": "处理中...",
+		"working": "处理中…",
 		"prev": "上一页",
 		"next": "下一页",
 		"first": "首页",
@@ -57,12 +57,12 @@
 	},
 	"language": {
 		"label": "语言",
-		"description": "界面语言 — 内容保留原有文字。",
+		"description": "界面语言——内容保留原有文字。",
 		"english": "English",
 		"chinese": "中文"
 	},
 	"icons": {
-		"description": "Solar 图标 — 双色跟随主题，灰度保持双色墨色，线性保持单色。",
+		"description": "Solar 图标——双色跟随主题，灰度保持双色墨色，线性保持单色。",
 		"style": {
 			"duotone": "双色",
 			"grayscale": "灰度",
@@ -88,14 +88,14 @@
 	},
 	"font": {
 		"label": "字体",
-		"description": "界面与列表 — 文档保持其阅读音色。",
+		"description": "界面与列表——文档保持其阅读音色。",
 		"inherit": "继承主字体",
 		"inheritedHint": "当前继承全局字体设置",
 		"addCustom": "按名称添加字体，回车确认…",
-		"selected": "回退顺序 — 拖拽调整"
+		"selected": "回退顺序——拖拽调整"
 	},
 	"dateTime": {
-		"description": "日期如何呈现 — 现在：{{preview}}。",
+		"description": "日期如何呈现——现在：{{preview}}。",
 		"formatLabel": "格式",
 		"timeZoneLabel": "时区",
 		"format": {
@@ -128,8 +128,8 @@
 		"syncStatus": {
 			"synced": "已同步",
 			"due": "同步到期",
-			"syncedTitle_one": "已是最新 — {{count}} 台设备",
-			"syncedTitle_other": "已是最新 — {{count}} 台设备",
+			"syncedTitle_one": "已是最新——{{count}} 台设备",
+			"syncedTitle_other": "已是最新——{{count}} 台设备",
 			"dueTitle_one": "{{count}} 台设备有同步提醒待处理",
 			"dueTitle_other": "{{count}} 台设备有同步提醒待处理",
 			"noDevicesTitle": "暂无同步设备。"
@@ -226,7 +226,7 @@
 		},
 		"account": {
 			"title": "账户",
-			"description": "单用户实例 — 账户守护大门。"
+			"description": "单用户实例——账户守护大门。"
 		},
 		"privacy": {
 			"signOutSection": {
@@ -286,7 +286,7 @@
 			"tagline": "隐私优先的自托管个人媒体与文档归档应用。",
 			"repository": "GitHub 仓库",
 			"checkUpdate": "检查更新",
-			"checking": "正在检查...",
+			"checking": "正在检查…",
 			"latest": "已是最新版本。",
 			"outdated": "发现新版本 {{version}}。",
 			"viewRelease": "查看发布页",
@@ -392,7 +392,7 @@
 			"confirmDescription": "将永久删除全部使用记录，统计页与总览推荐会重置。此操作无法撤销。",
 			"confirmPhrase": "清空所有使用记录",
 			"confirmLabel": "确认清空",
-			"clearing": "清空中...",
+			"clearing": "清空中…",
 			"toastSuccess": "已清空所有使用记录",
 			"toastFailed": "清空使用记录失败"
 		},
@@ -404,7 +404,7 @@
 			"confirmDescription": "将永久删除全部操作记录（导入、导出、删除、恢复与表态），不可恢复。翻阅时长属于统计数据，不受影响。",
 			"confirmPhrase": "清空足迹",
 			"confirmLabel": "确认清空",
-			"clearing": "清空中...",
+			"clearing": "清空中…",
 			"toastSuccess": "已清空足迹",
 			"toastFailed": "清空足迹失败"
 		},
@@ -426,14 +426,14 @@
 			"title": "浏览器缓存",
 			"description": "浏览器侧的本地数据——Service Worker 缓存、localStorage 与 IndexedDB（离线使用队列、文档草稿）。不会触碰服务器，随后页面将重新加载。",
 			"clear": "全部清空",
-			"clearing": "清空中...",
-			"resetting": "浏览器缓存已清空，正在重新加载...",
+			"clearing": "清空中…",
+			"resetting": "浏览器缓存已清空，正在重新加载…",
 			"confirmTitle": "清空浏览器缓存？",
 			"confirmDescription": "这将删除所有浏览器侧本地数据，包括主题与语言偏好、离线使用记录和已保存的文档草稿，然后重新加载页面。此操作无法撤销。"
 		}
 	},
 	"plugin": {
-		"loading": "预览加载中...",
+		"loading": "预览加载中…",
 		"previewFailed": "插件加载失败",
 		"previewFallback": "插件 {{name}} 缺失或不可用，已用内置文件插件预览",
 		"previewFallbackManage": "管理插件",
@@ -443,7 +443,7 @@
 		"pageHint": "从 .zip 包安装，或重新扫描插件文件夹以拾取新到的插件。",
 		"uploadZip": "上传 .zip",
 		"uploadPluginSuccess": "插件已安装",
-		"uploading": "安装中...",
+		"uploading": "安装中…",
 		"rescan": "重新扫描插件",
 		"rescanSuccess": "插件已重新扫描",
 		"more": "更多",
@@ -453,20 +453,20 @@
 		"missing": "缺失",
 		"missingSource": "来源缺失",
 		"installed": "已安装",
-		"installedDescription": "顺序决定谁优先认领内容 — 拖拽可调整优先级。",
+		"installedDescription": "顺序决定谁优先认领内容——拖拽可调整优先级。",
 		"filterPlaceholder": "筛选插件",
 		"countInstalled": "已安装 {{count}} 个",
 		"listView": "列表视图",
 		"gridView": "网格视图",
 		"searchCategories": "搜索分类",
 		"fileTitle": "文件",
-		"fileDescription": "未知文件类型的内置兜底查看器 — 不可移除或排序。",
+		"fileDescription": "未知文件类型的内置兜底查看器——不可移除或排序。",
 		"alwaysOn": "始终开启",
 		"defaultsTitle": "插件默认设置",
-		"defaultsDescription": "所有插件的设置将恢复默认 — 内容和安装不受影响。",
+		"defaultsDescription": "所有插件的设置将恢复默认——内容和安装不受影响。",
 		"restore": "恢复默认",
 		"cachesTitle": "插件缓存",
-		"cachesDescription": "所有插件的缩略图和解析元数据 — 按需重建。",
+		"cachesDescription": "所有插件的缩略图和解析元数据——按需重建。",
 		"clearAll": "全部清空",
 		"pin": "置顶",
 		"color": "颜色",
@@ -514,7 +514,7 @@
 		"memories": {
 			"title": "回忆 · 今日",
 			"yearsAgo_one": "去年今天",
-			"yearsAgo_other": "{{count}}年前的今天"
+			"yearsAgo_other": "{{count}} 年前的今天"
 		},
 		"activity": {
 			"title": "最近活动",
@@ -572,7 +572,7 @@
 			"dragToReorder": "拖拽排序",
 			"settings": {
 				"title": "固定的{{section}}",
-				"description": "概览固定哪些分区 — 拖拽排序，在右侧编辑。",
+				"description": "概览固定哪些分区——拖拽排序，在右侧编辑。",
 				"editTitle": "编辑分区",
 				"editDescription": "分区在概览上的显示效果。",
 				"titleLabel": "标题",
@@ -619,18 +619,18 @@
 		},
 		"rebuildDescription": "从零重建所有资源的元数据与缩略图，或清空本机全部可重建数据（本地缓存 + 已记录的元数据）。",
 		"signOut": "退出登录",
-		"signingOut": "退出中...",
+		"signingOut": "退出中…",
 		"precache": "预缓存",
-		"precaching": "预缓存中...",
-		"caching": "预热浏览器缓存...",
+		"precaching": "预缓存中…",
+		"caching": "预热浏览器缓存…",
 		"refreshCache": "刷新缓存",
 		"clearCache": "清空全部",
-		"clearing": "清空中...",
+		"clearing": "清空中…",
 		"progressLine": "{{done}} / {{total}} ({{percent}}%) - {{stage}}",
 		"cachedSummary_one": "已预缓存 {{count}} 项",
 		"cachedSummary_other": "已预缓存 {{count}} 项",
 		"precacheFailed": "预缓存失败：{{error}}",
-		"precacheStageLoading": "正在重建元数据并生成缩略图...",
+		"precacheStageLoading": "正在重建元数据并生成缩略图…",
 		"precacheDefaultError": "预缓存失败",
 		"precacheInProgress": "预缓存正在进行中",
 		"abortPrecache": "中断",
@@ -650,7 +650,7 @@
 		"demoDescription": "这是演示库，密码是 {{password}}。",
 		"password": "密码",
 		"submit": "登录",
-		"submitting": "登录中...",
+		"submitting": "登录中…",
 		"formAria": "登录",
 		"errorIncorrect": "密码错误。",
 		"errorGeneric": "无法登录，请检查服务后重试。",
@@ -659,7 +659,7 @@
 		"setupPassword": "新密码",
 		"setupConfirm": "确认密码",
 		"setupSubmit": "设置密码",
-		"setupSubmitting": "设置中...",
+		"setupSubmitting": "设置中…",
 		"setupMismatch": "两次输入的密码不一致。",
 		"setupFormAria": "设置密码"
 	},
@@ -667,8 +667,8 @@
 		"title": "数据历史",
 		"description": "管理你的数据快照。备份用于迁移或灾难恢复；归档会把最新版本冻结为只读快照，归档内的数据不会再被修改。",
 		"status": {
-			"currentWritable": "可写 — v{{version}}",
-			"viewingArchive": "正在查看归档 — v{{version}}"
+			"currentWritable": "可写——v{{version}}",
+			"viewingArchive": "正在查看归档——v{{version}}"
 		},
 		"chip": {
 			"latest": "最新",
@@ -768,7 +768,7 @@
 	"documents": {
 		"title": "文档",
 		"index": {
-			"description": "{{folders}} 个文件夹中的 {{count}} 篇文档 — 你写的一切都在这里。",
+			"description": "{{folders}} 个文件夹中的 {{count}} 篇文档——你写的一切都在这里。",
 			"updated": "更新于 {{time}}"
 		},
 		"create": "新建",
@@ -1035,24 +1035,24 @@
 		},
 		"create": {
 			"title": "新建角色",
-			"description": "有名字就能开始 — 其他都可以稍后补。",
+			"description": "有名字就能开始——其他都可以稍后补。",
 			"basicInfo": "基本信息",
 			"basicDescription": "用简单的话介绍这个人。",
 			"name": "名称",
 			"intro": "简介",
 			"namePlaceholder": "未命名角色",
-			"nameHint": "名称必填 — 填写后才能创建。",
-			"introPlaceholder": "写几句话 — 他们是谁、想要什么。",
+			"nameHint": "名称必填——填写后才能创建。",
+			"introPlaceholder": "写几句话——他们是谁、想要什么。",
 			"links": "关联",
 			"linksDescription": "用标签和特征把角色编入内容库。",
 			"tags": "标签",
 			"traits": "特征",
 			"appearance": "外观",
-			"appearanceDescription": "头像与立绘 — 裁切到合适。",
+			"appearanceDescription": "头像与立绘——裁切到合适。",
 			"avatar": "头像",
 			"fullbody": "立绘",
 			"submit": "创建",
-			"submitting": "创建中..."
+			"submitting": "创建中…"
 		},
 		"preview": {
 			"aria": "预览：{{name}}"
@@ -1098,7 +1098,7 @@
 			"title": "永久删除？",
 			"description": "此操作会永久删除该角色并将其文件夹移入本地回收站。",
 			"confirm": "永久删除",
-			"deleting": "删除中..."
+			"deleting": "删除中…"
 		},
 		"chips": {
 			"linkCharacters": "关联角色"
@@ -1161,7 +1161,7 @@
 	},
 	"usage": {
 		"title": "使用统计",
-		"description": "各平台的查看时长 — 总计、每日节奏，以及时间花在了哪里。",
+		"description": "各平台的查看时长——总计、每日节奏，以及时间花在了哪里。",
 		"history": {
 			"title": "使用记录",
 			"description": "你最近使用过的内容，新在前",
@@ -1270,7 +1270,7 @@
 	},
 	"trace": {
 		"title": "足迹",
-		"description": "追加式操作日志 — 导入、导出、删除、还原与投票。行内保留实体名称，硬删除后仍可追溯。",
+		"description": "追加式操作日志——导入、导出、删除、还原与投票。行内保留实体名称，硬删除后仍可追溯。",
 		"timelineTitle": "时间线",
 		"filterAll": "全部",
 		"filters": {
@@ -1360,7 +1360,7 @@
 		},
 		"today": "今天",
 		"yesterday": "昨天",
-		"loading": "加载足迹中...",
+		"loading": "加载足迹中…",
 		"loadError": "加载足迹失败",
 		"empty": "暂无足迹。导入、导出、删除或表态后，这里会逐条记录。",
 		"count_one": "{{count}} 条足迹",
@@ -1380,15 +1380,15 @@
 		},
 		"new": {
 			"title": "上传",
-			"description": "先放入文件 — 元数据可以稍后补。",
+			"description": "先放入文件——元数据可以稍后补。",
 			"files": "文件",
-			"filesDescription": "拖入的文件立即暂存 — 可自由排序，无需重新上传。",
+			"filesDescription": "拖入的文件立即暂存——可自由排序，无需重新上传。",
 			"filesCount": "个文件",
 			"basicInfo": "基本信息",
 			"basicDescription": "一句话说明这些文件是什么。",
 			"links": "关联",
 			"linksDescription": "这个资源所属的标签、角色和组合。",
-			"coverDescription": "可选 — 默认取第一个文件。",
+			"coverDescription": "可选——默认取第一个文件。",
 			"folder": {
 				"sourceShared": "浏览共享文件夹",
 				"sourceZip": "选择压缩包",
@@ -1399,23 +1399,23 @@
 				"resultTitle": "导入结果",
 				"scanHere": "扫描",
 				"noSubdirs": "暂无子目录。",
-				"uploading": "上传中...",
-				"extracting": "解压中...",
-				"scanning": "扫描中...",
+				"uploading": "上传中…",
+				"extracting": "解压中…",
+				"scanning": "扫描中…",
 				"sharedRoot": "共享根目录",
 				"zipRoot": "压缩包根目录",
 				"name": "名称",
 				"type": "类型",
 				"plugin": "插件",
 				"confirmImport": "导入",
-				"importing": "导入中...",
+				"importing": "导入中…",
 				"importDone": "完成",
 				"resultScanned": "扫描",
 				"resultImported": "已导入",
 				"resultFailed": "失败",
 				"sourceSharedDescription": "从服务器的共享导入根目录中挑选一个文件夹。",
 				"sourceSharedDisabled": "未配置共享文件夹导入。",
-				"sourceZipDescription": "上传 .zip — 在服务器端解压后扫描。",
+				"sourceZipDescription": "上传 .zip——在服务器端解压后扫描。",
 				"importingDescription": "正在从所选目录创建资源，请稍候。",
 				"stepSource": "来源",
 				"stepBrowse": "浏览",
@@ -1451,7 +1451,7 @@
 			"collections": "组合",
 			"namePlaceholder": "名称",
 			"useFilenameAsName": "用文件名作为名称",
-			"oneFilePerResource": "每个文件一个资源 — 每个资源仅包含一个文件。",
+			"oneFilePerResource": "每个文件一个资源——每个资源仅包含一个文件。",
 			"createdCount_one": "已创建 {{count}} 个资源",
 			"createdCount_other": "已创建 {{count}} 个资源",
 			"duplicatesFound_one": "此资源有 {{count}} 张图片与已有资源重复：{{names}}",
@@ -1459,7 +1459,7 @@
 			"duplicateFileNames_one": "本批次有 {{count}} 个文件重名，将自动重命名（如 name-1.png）",
 			"duplicateFileNames_other": "本批次有 {{count}} 个文件重名，将自动重命名（如 name-1.png）",
 			"submit": "创建",
-			"uploading": "上传中...",
+			"uploading": "上传中…",
 			"errors": {
 				"pickAtLeastOne": "请至少选择一个文件",
 				"uploadFailed": "上传失败",
@@ -1525,7 +1525,7 @@
 			"hardDeleteTitle": "永久删除所选？",
 			"hardDeleteDescription": "将永久删除所选资源并将其文件夹移入本地回收站，此操作不可撤销。",
 			"hardDeleteConfirm": "永久删除",
-			"hardDeleteDeleting": "删除中...",
+			"hardDeleteDeleting": "删除中…",
 			"toastAllOk_one": "已处理 {{count}} 个资源。",
 			"toastAllOk_other": "已处理 {{count}} 个资源。",
 			"toastAllFailed": "未处理任何项（{{count}} 个失败）。",
@@ -1551,7 +1551,7 @@
 			"title": "永久删除？",
 			"description": "此操作会永久删除该资源并将其文件夹移入本地回收站。",
 			"confirm": "永久删除",
-			"deleting": "删除中..."
+			"deleting": "删除中…"
 		},
 		"toast": {
 			"movedToTrash": "已移入回收站",
@@ -1600,7 +1600,7 @@
 		"editDialog": {
 			"aria": "编辑资源基本信息",
 			"plugin": "插件",
-			"contentTypeMissing": "缺少: {{names}}",
+			"contentTypeMissing": "缺少：{{names}}",
 			"name": "名称",
 			"intro": "简介",
 			"sourceName": "来源名称",
@@ -1771,7 +1771,7 @@
 		},
 		"form": {
 			"createCategory": "创建分类",
-			"creating": "创建中...",
+			"creating": "创建中…",
 			"addTag": "创建标签"
 		},
 		"dialog": {
@@ -1810,7 +1810,7 @@
 			"description": "重复标签的引用与关系将移动到目标标签。",
 			"targetPlaceholder": "选择目标标签",
 			"confirm": "确认合并",
-			"confirming": "合并中...",
+			"confirming": "合并中…",
 			"countResources_one": "{{count}} 个资源",
 			"countResources_other": "{{count}} 个资源",
 			"countCharacters_one": "{{count}} 个角色",
@@ -1900,7 +1900,7 @@
 		"defaultLabel": "删除",
 		"defaultNoun": "处",
 		"confirm": "确认删除",
-		"deleting": "删除中...",
+		"deleting": "删除中…",
 		"forceTitle": "无法删除{{kind}}",
 		"usageMessage": "该{{kind}}已被 {{count}} 个{{usage}}使用，无法直接删除。",
 		"toast": {
@@ -1911,7 +1911,7 @@
 			"nameMismatch": "名称不一致"
 		},
 		"forceConfirm": "强制删除",
-		"forceDeleting": "删除中..."
+		"forceDeleting": "删除中…"
 	},
 	"upload": {
 		"addFiles": "添加文件",
@@ -1935,7 +1935,7 @@
 		"composerPlaceholder": "写下你的留言…",
 		"replyPlaceholder": "写下你的回复…",
 		"submit": "发布",
-		"submitting": "发布中...",
+		"submitting": "发布中…",
 		"reply": "回复",
 		"actions": "留言操作",
 		"trash": "回收站",
@@ -2040,9 +2040,9 @@
 			"nameHint": "例如：笔记本",
 			"notesHint": "例如：USB 4TB",
 			"add": "添加设备",
-			"addPending": "添加中...",
+			"addPending": "添加中…",
 			"empty": "暂无设备——添加一个开始同步。",
-			"loading": "加载中...",
+			"loading": "加载中…",
 			"neverSynced": "从未同步",
 			"lastSyncedAgo_one": "上次同步 {{date}}（{{count}} 天前）",
 			"lastSyncedAgo_other": "上次同步 {{date}}（{{count}} 天前）",
@@ -2060,11 +2060,11 @@
 			"deleteTitle": "删除 {{name}}？",
 			"deleteDescription": "该设备及其全部同步记录将被删除。",
 			"delete": "删除",
-			"deletePending": "删除中...",
+			"deletePending": "删除中…",
 			"editTitle": "编辑设备",
 			"edit": "编辑",
 			"save": "保存",
-			"editPending": "保存中..."
+			"editPending": "保存中…"
 		},
 		"fields": {
 			"resources": "资源",

@@ -20,7 +20,7 @@ export default {
 		engineEnhanced: "Enhanced",
 		more: "More",
 		sendDanmaku: "Send danmaku",
-		sendDanmakuPlaceholder: "Type a danmaku...",
+		sendDanmakuPlaceholder: "Type a danmaku…",
 		danmakuSendFailed: "Failed to send danmaku",
 		danmakuSettings: "Danmaku settings",
 		danmakuEnabled: "Danmaku",
