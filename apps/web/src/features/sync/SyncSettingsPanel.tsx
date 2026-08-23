@@ -28,13 +28,12 @@ import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { ConfirmDialog } from "@/components/common/ConfirmDialog"
 import { numberCodec } from "@/features/prefs"
-import { useDatePrefs } from "@/features/settings/datePrefs"
+import { formatDateTime, useDatePrefs } from "@/features/settings/datePrefs"
 import { SettingsSection } from "@/features/settings/SettingsSection"
 import { usePref } from "@/hooks/usePref"
 import { useToastMutation } from "@/hooks/useToastMutation"
 import { formatBytes } from "@/lib/formatBytes"
 import { prefKeys } from "@/lib/keys"
-import { dayjsFor } from "@/lib/timezone"
 import {
 	createSyncDeviceMutation,
 	deleteSyncDeviceMutation,
@@ -557,13 +556,15 @@ function LastSyncedLabel(props: {
 				: hours < 24
 					? t("sync.devices.hoursAgo", { count: hours })
 					: t("sync.devices.lastSyncedAgo", {
-							date: dayjsFor(lastRecordedAt, timeZone).format(
+							date: formatDateTime(
+								lastRecordedAt,
 								"YYYY-MM-DD HH:mm",
+								timeZone,
 							),
 							count: elapsedDays ?? Math.floor(hours / 24),
 						})
 	return (
-		<span title={dayjsFor(lastRecordedAt, timeZone).format("YYYY-MM-DD HH:mm")}>
+		<span title={formatDateTime(lastRecordedAt, "YYYY-MM-DD HH:mm", timeZone)}>
 			{label}
 		</span>
 	)

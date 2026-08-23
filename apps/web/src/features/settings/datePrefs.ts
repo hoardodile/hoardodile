@@ -81,12 +81,65 @@ export function useUsageTimeZones(): {
 
 export { dayjsFor, getBrowserTimeZone, resolveBrowserTimeZone }
 
+/** Date separators that may be dropped together with the year token. */
+const DATE_SEPARATORS = ["-", "/", "."] as const
+
+/**
+ * The date format with the year token and one adjacent separator removed,
+ * for dates in the current calendar year. E.g. "YYYY-MM-DD HH:mm:ss" →
+ * "MM-DD HH:mm:ss", "DD/MM/YYYY HH:mm:ss" → "DD/MM HH:mm:ss". Formats
+ * without a year token (or with nothing left once the year is gone) are
+ * returned unchanged.
+ */
+export function yearlessDatePart(dateFormat: string): string {
+	const match = /(YYYY|YY)/.exec(dateFormat)
+	if (match === null) return dateFormat
+	const start = match.index
+	const tokenLength = match[0].length
+	const after = dateFormat[start + tokenLength]
+	const before = start > 0 ? dateFormat[start - 1] : undefined
+
+	let removedStart = start
+	let removedLength = tokenLength
+	if (after !== undefined && isDateSeparator(after)) {
+		// The token starts the date part: "YYYY-MM-DD" → "MM-DD".
+		removedLength = tokenLength + 1
+	} else if (before !== undefined && isDateSeparator(before)) {
+		// The token ends the date part: "DD/MM/YYYY" → "DD/MM".
+		removedStart = start - 1
+		removedLength = tokenLength + 1
+	}
+	const withoutYear =
+		dateFormat.slice(0, removedStart) +
+		dateFormat.slice(removedStart + removedLength)
+	const result = withoutYear.trim()
+	// A format that reduces to only separators shows nothing useful — keep
+	// the year rather than rendering an empty date.
+	return result.length > 0 ? result : dateFormat
+}
+
+function isDateSeparator(char: string): boolean {
+	return (DATE_SEPARATORS as readonly string[]).includes(char)
+}
+
+function formatTimestamp(
+	ts: number,
+	dateFormat: string,
+	timeZone: string,
+): string {
+	const d = dayjsFor(ts, timeZone)
+	const currentYear = dayjsFor(Date.now(), timeZone).year()
+	return d.format(
+		d.year() === currentYear ? yearlessDatePart(dateFormat) : dateFormat,
+	)
+}
+
 export function formatDateTime(
 	ts: number,
 	dateFormat: string,
 	timeZone: string,
 ): string {
-	return dayjsFor(ts, timeZone).format(dateFormat)
+	return formatTimestamp(ts, dateFormat, timeZone)
 }
 
 export function formatDate(
@@ -95,7 +148,7 @@ export function formatDate(
 	timeZone: string,
 ): string {
 	const dateOnly = dateFormat.split(" ")[0] ?? dateFormat
-	return dayjsFor(ts, timeZone).format(dateOnly)
+	return formatTimestamp(ts, dateOnly, timeZone)
 }
 
 function stripNumericLeadingZeros(value: string): string {

@@ -41,7 +41,8 @@ export function groupByTimestamp<T>(
 
 /**
  * "Today" / "Yesterday" / raw date label for a day key, using the
- * feature's own i18n keys for the friendly labels.
+ * feature's own i18n keys for the friendly labels. Dates in the current
+ * calendar year drop the year ("2026-08-24" → "08-24").
  */
 export function dayLabel(
 	day: string,
@@ -56,6 +57,9 @@ export function dayLabel(
 		.subtract(1, "day")
 		.format("YYYY-MM-DD")
 	if (day === yesterday) return t(yesterdayKey)
+	if (day.length === 10 && day.slice(0, 4) === today.slice(0, 4)) {
+		return day.slice(5)
+	}
 	return day
 }
 

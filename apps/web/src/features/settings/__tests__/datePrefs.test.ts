@@ -7,6 +7,7 @@ import {
 	formatDateTime,
 	formatDateTrait,
 	useResolvedTimeZone,
+	yearlessDatePart,
 } from "../datePrefs"
 
 vi.mock("@/hooks/usePrefSync", () => ({
@@ -44,6 +45,58 @@ describe("date formatting helpers", () => {
 	test("formatDate strips time portion from format", () => {
 		expect(formatDate(ts, "YYYY-MM-DD HH:mm:ss", "UTC")).toBe("2024-06-12")
 		expect(formatDate(ts, "DD/MM/YYYY HH:mm:ss", "UTC")).toBe("12/06/2024")
+	})
+
+	test("yearlessDatePart removes the year and one adjacent separator", () => {
+		expect(yearlessDatePart("YYYY-MM-DD HH:mm:ss")).toBe("MM-DD HH:mm:ss")
+		expect(yearlessDatePart("YYYY/MM/DD HH:mm:ss")).toBe("MM/DD HH:mm:ss")
+		expect(yearlessDatePart("DD/MM/YYYY HH:mm:ss")).toBe("DD/MM HH:mm:ss")
+		expect(yearlessDatePart("MM/DD/YYYY HH:mm:ss")).toBe("MM/DD HH:mm:ss")
+		// No year token (or nothing left): unchanged.
+		expect(yearlessDatePart("MM-DD HH:mm:ss")).toBe("MM-DD HH:mm:ss")
+		expect(yearlessDatePart("YYYY")).toBe("YYYY")
+	})
+
+	test("formatDateTime hides the year for dates in the current calendar year", () => {
+		vi.useFakeTimers({ now: Date.UTC(2026, 5, 12, 12, 0, 0) })
+		const currentYearTs = Date.UTC(2026, 5, 12, 14, 30, 0)
+		expect(formatDateTime(currentYearTs, "YYYY-MM-DD HH:mm:ss", "UTC")).toBe(
+			"06-12 14:30:00",
+		)
+		expect(formatDateTime(currentYearTs, "YYYY/MM/DD HH:mm:ss", "UTC")).toBe(
+			"06/12 14:30:00",
+		)
+		expect(formatDateTime(currentYearTs, "DD/MM/YYYY HH:mm:ss", "UTC")).toBe(
+			"12/06 14:30:00",
+		)
+		expect(formatDateTime(currentYearTs, "MM/DD/YYYY HH:mm:ss", "UTC")).toBe(
+			"06/12 14:30:00",
+		)
+		expect(formatDate(currentYearTs, "YYYY-MM-DD HH:mm:ss", "UTC")).toBe(
+			"06-12",
+		)
+		vi.useRealTimers()
+	})
+
+	test("formatDateTime keeps the year for dates in another year", () => {
+		vi.useFakeTimers({ now: Date.UTC(2026, 5, 12, 12, 0, 0) })
+		expect(formatDateTime(ts, "YYYY-MM-DD HH:mm:ss", "UTC")).toBe(
+			"2024-06-12 14:30:00",
+		)
+		vi.useRealTimers()
+	})
+
+	test("year hiding follows the formatted zone's calendar year", () => {
+		vi.useFakeTimers({ now: Date.UTC(2026, 5, 12, 12, 0, 0) })
+		// 2025-12-31 16:30 UTC is 2026-01-01 00:30 in Shanghai.
+		const newYearEve = Date.UTC(2025, 11, 31, 16, 30, 0)
+		expect(
+			formatDateTime(newYearEve, "YYYY-MM-DD HH:mm:ss", "Asia/Shanghai"),
+		).toBe("01-01 00:30:00")
+		expect(formatDateTime(newYearEve, "YYYY-MM-DD HH:mm:ss", "UTC")).toBe(
+			"2025-12-31 16:30:00",
+		)
+		vi.useRealTimers()
 	})
 
 	test("formatDateTrait renders prefix and sign label", () => {
