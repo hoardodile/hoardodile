@@ -334,6 +334,13 @@ function createFastifyApp(
 		// impact of transient WiFi/NAT dropouts. Keep connections alive for
 		// 2 minutes so idle sessions reuse the same socket.
 		keepAliveTimeout: 120_000,
+		// Node's `server.close()` only reaps sockets Node already tracks as
+		// idle, and clients that read their responses fully (browsers,
+		// undici) may still have a keep-alive socket in the half-open window
+		// — with the 2-minute `keepAliveTimeout` a graceful shutdown would
+		// stall on it. Close all connections at shutdown; in-flight requests
+		// are dropped but SQLite/WAL keeps the data durable.
+		forceCloseConnections: true,
 		// tRPC's `httpBatchLink` joins every batched procedure name into a
 		// single URL segment (`/trpc/a.x,b.y,c.z,...`). Fastify's default
 		// `maxParamLength` of 100 silently 404s once the segment grows
