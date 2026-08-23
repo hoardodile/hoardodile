@@ -23,13 +23,13 @@ const config = {
 		output: "release",
 	},
 	files: ["out/**"],
-	extraResources: [
-		{ from: "extra-resources/node", to: "node" },
-		{ from: "extra-resources/server", to: "server" },
-		{ from: "extra-resources/plugins", to: "plugins" },
-		{ from: "extra-resources/icon.png", to: "icon.png" },
-		{ from: "extra-resources/tray.png", to: "tray.png" },
-	],
+	// One entry for the whole staged tree, never per-resource: electron-builder
+	// drops a `node_modules` that sits at the ROOT of an extraResources copy
+	// (app-builder-lib filter: relative === "node_modules" is excluded), but
+	// keeps nested ones. With `from: "extra-resources"` the staged
+	// `server/node_modules` is nested and survives; the output layout is
+	// unchanged (resources/{node,server,plugins,icon.png,tray.png}).
+	extraResources: [{ from: "extra-resources" }],
 	asar: true,
 	npmRebuild: false,
 	nodeGypRebuild: false,

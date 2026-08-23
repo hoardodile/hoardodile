@@ -2,6 +2,12 @@
 /**
  * Copy the sidecar tree into extra-resources/ for electron-builder:
  * node.exe, apps/server/dist, official plugin dists.
+ *
+ * Keep the whole staged tree under one extraResources entry
+ * (electron-builder.config.mjs): electron-builder drops a `node_modules`
+ * sitting at the ROOT of a single extraResources copy, but keeps nested
+ * ones — `server/node_modules` must stay below the copy root. The post-pack
+ * check is `scripts/verify-package.mjs`.
  */
 import { copyFileSync, cpSync, existsSync, mkdirSync, rmSync } from "node:fs"
 import { dirname, join, resolve } from "node:path"
