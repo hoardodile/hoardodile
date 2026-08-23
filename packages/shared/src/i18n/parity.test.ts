@@ -5,6 +5,10 @@
  * real regressions historically (dead `_plural` keys under i18next v4 and a
  * missing zh mirror), so they are intentionally strict: a new key must be
  * registered in both languages before it can ship.
+ *
+ * Structural rules only (key parity, placeholders, plural pairs, ellipsis).
+ * Key *naming* is intentionally not enforced — see the documented
+ * conventions in `packages/shared/src/i18n/index.ts`.
  */
 import { describe, expect, it } from "vitest"
 import en from "./en.json"

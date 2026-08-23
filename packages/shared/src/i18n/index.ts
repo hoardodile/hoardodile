@@ -5,6 +5,23 @@
  * matching interpolation placeholders, and complete `_one`/`_other` pairs.
  * `packages/shared/src/i18n/parity.test.ts` enforces this — run it after
  * touching either catalog.
+ *
+ * Naming conventions for catalog keys (documented, not enforced by lint so
+ * existing keys stay untouched — renaming keys would churn every call site
+ * against the typed `t()` from `apps/web/src/i18n`):
+ *
+ * - Empty-state members prefer an `empty*` suffix on the section's key:
+ *   `empty`, `emptyTitle`, `emptyDescription`, `emptyPrompt`, `emptyAll`,
+ *   `emptyTrash`, `emptyInline`, `emptyError`, or an entity-scoped variant
+ *   (`listEmpty`, `trashEmpty`, `colEmpty`, `parentsEmpty`, `nameEmpty`,
+ *   `selectedEmpty`, `charactersEmpty`, `resourcesEmpty`).
+ * - `no*` is reserved for non-empty "state/find" notices: `noMatches`,
+ *   `noMatch`, `noTags`, `noItems`, `noSubdirs`, `noPackages`,
+ *   `noDefinitions`, `noCategories`, `noHeadings`, `noIntro`, `noSelection`,
+ *   `noTypesHint`, `noDevicesTitle`, `notFound`.
+ * - The `{{count}}`-bearing keys always come with `_one`/`_other` plural
+ *   pairs (guarded by `parity.test.ts`); keys whose noun is passed in as a
+ *   variable (e.g. `deleteEntity.usageMessage`) are allowlisted there.
  */
 export const SUPPORTED_LANGUAGES = ["en", "zh"] as const
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number]
