@@ -1,8 +1,14 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { render, screen, waitFor } from "@testing-library/react"
 import { beforeAll, describe, expect, it } from "vitest"
+import {
+	DEFAULT_DATE_FORMAT,
+	formatDateTime,
+} from "@/features/settings/datePrefs"
 import { setTrpcClient, type TRPCClient } from "@/trpc/client"
 import { ConnectionsSection } from "./ConnectionsSection"
+
+const FIRST_RECORDED_AT = Date.now() - 60_000
 
 function createMockTrpcClient(
 	handlers: Record<string, (input: unknown) => unknown>,
@@ -42,7 +48,7 @@ beforeAll(() => {
 						ip: "192.168.1.50",
 						origin: "lan",
 						deviceLabel: "Chrome on Windows",
-						recordedAt: Date.now() - 60_000,
+						recordedAt: FIRST_RECORDED_AT,
 					},
 					{
 						id: "session-2",
@@ -74,6 +80,13 @@ describe("ConnectionsSection", () => {
 		expect(screen.getByText("192.168.1.50")).toBeInTheDocument()
 		expect(screen.getByText("Electron desktop")).toBeInTheDocument()
 		expect(screen.getByText("this device")).toBeInTheDocument()
+		// The sign-in time is a full date (same-year dates drop the year),
+		// not a relative "x minutes ago".
+		expect(
+			screen.getByText(
+				formatDateTime(FIRST_RECORDED_AT, DEFAULT_DATE_FORMAT, "local"),
+			),
+		).toBeInTheDocument()
 	})
 
 	it("renders an empty state without sign-ins", async () => {

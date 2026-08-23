@@ -1,7 +1,7 @@
 import { UsersGroupRounded } from "@hoardodile/ui/icons/registry"
 import { useQuery } from "@tanstack/react-query"
 import { useTranslation } from "react-i18next"
-import { useRelativeTime } from "@/features/overview/hooks/useRelativeTime"
+import { useDateFormatter } from "@/features/settings/datePrefs"
 import { trpcQueryOptions } from "@/trpc/factory"
 import { SettingsSection } from "./SettingsSection"
 
@@ -26,7 +26,7 @@ function connectionsQueryOptions() {
  */
 export function ConnectionsSection() {
 	const { t } = useTranslation()
-	const relativeTime = useRelativeTime()
+	const formatter = useDateFormatter()
 	const query = useQuery(connectionsQueryOptions())
 	const connections = query.data?.connections ?? []
 
@@ -65,8 +65,8 @@ export function ConnectionsSection() {
 									{conn.ip}
 								</p>
 							</div>
-							<span className="shrink-0 text-xs text-muted-foreground">
-								{relativeTime(conn.recordedAt)}
+							<span className="shrink-0 text-xs text-muted-foreground tabular-nums whitespace-nowrap">
+								{formatter.formatDateTime(conn.recordedAt)}
 							</span>
 						</li>
 					))}
