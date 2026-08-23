@@ -41,6 +41,20 @@ export type LanInfo = {
 	readonly addresses: readonly LanAddress[]
 }
 
+/**
+ * Outcome of a `setLanEnabled` request. Enabling can be declined by the
+ * shell without an error when the admin password is missing or when a
+ * weak admin password has not been confirmed yet — the renderer surfaces
+ * that in-app (error toast / UI confirm dialog) instead of the shell
+ * logging a rejection.
+ */
+export type LanSetResult =
+	| { readonly ok: true }
+	| {
+			readonly ok: false
+			readonly reason: "no-admin-password" | "weak-password-required"
+	  }
+
 export type DesktopWizardResult = {
 	readonly libraryPath: string
 	readonly autoStart: boolean
@@ -53,6 +67,12 @@ export type HoardodileDesktopBridge = {
 	minimize: () => void
 	toggleMaximize: () => void
 	close: () => void
+	/**
+	 * Toggle the DevTools dock (right side, dev only). Present on
+	 * unpackaged (dev) runs only; packaged builds never expose it, so the
+	 * caption bar simply hides the button.
+	 */
+	toggleDevtools?: () => void
 	/**
 	 * Re-attempt loading the app URL (Vite in dev, sidecar otherwise).
 	 * Used by the in-window error page's Retry button; the shell decides
@@ -120,11 +140,18 @@ export type HoardodileDesktopBridge = {
 	getLanInfo: () => Promise<LanInfo>
 	/**
 	 * Enable or disable local-network sharing and restart the sidecar
-	 * with the matching bind host. Rejects when the sidecar is down,
-	 * when no admin password is configured (LAN must never expose an
-	 * unclaimed instance), or when the restart fails.
+	 * with the matching bind host. Rejects when the sidecar is down or
+	 * when the restart fails; resolves `{ ok: false }` when enabling is
+	 * declined so the renderer can explain — `no-admin-password` never
+	 * enables (an unclaimed instance must not become reachable), while
+	 * `weak-password-required` means the user must confirm the weak
+	 * admin password first, then retry with `{ weakPasswordConfirmed:
+	 * true }` (the shell re-checks the password on every call).
 	 */
-	setLanEnabled: (enabled: boolean) => Promise<void>
+	setLanEnabled: (
+		enabled: boolean,
+		options?: { readonly weakPasswordConfirmed?: boolean },
+	) => Promise<LanSetResult>
 	/**
 	 * Change the sidecar port (localhost and LAN share share one port)
 	 * and restart the sidecar. Rejects on invalid ports or restart

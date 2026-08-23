@@ -3,6 +3,7 @@ import type {
 	DesktopUpdateState,
 	DesktopWizardResult,
 	LanInfo,
+	LanSetResult,
 } from "@hoardodile/shared/desktop"
 import type { SupportedLanguage } from "@hoardodile/shared/i18n"
 import { isSupportedLanguage } from "@hoardodile/shared/i18n"
@@ -37,7 +38,10 @@ export type IpcHost = {
 	setSharedFolderRoot: (sharedFolderRoot: string) => Promise<void>
 	setSharedFolderEnabled: (enabled: boolean) => Promise<void>
 	lanInfo: () => LanInfo
-	setLanEnabled: (enabled: boolean) => Promise<void>
+	setLanEnabled: (
+		enabled: boolean,
+		options?: { readonly weakPasswordConfirmed?: boolean },
+	) => Promise<LanSetResult>
 	setLanPort: (port: number) => Promise<void>
 	shellCacheSize: () => Promise<number>
 	shellCacheClear: () => Promise<number>
@@ -58,6 +62,17 @@ export function registerIpc(host: IpcHost): void {
 		if (win === undefined) return
 		if (win.isMaximized()) win.unmaximize()
 		else win.maximize()
+	})
+	ipcMain.on(IPC.windowToggleDevTools, (event) => {
+		// Dev-only: the preload only exposes the caption-bar control on
+		// unpackaged runs, this guard is the second line. The docked-right
+		// mode needs the app to keep its designed width, hence the dev
+		// width reservation in `createDesktopWindow`.
+		if (app.isPackaged) return
+		const contents = windowFrom(event)?.webContents
+		if (contents === undefined) return
+		if (contents.isDevToolsOpened()) contents.closeDevTools()
+		else contents.openDevTools({ mode: "right" })
 	})
 	ipcMain.on(IPC.windowClose, (event) => {
 		// `close()` (not `destroy()`) so the app-window close guard in the
@@ -110,7 +125,10 @@ export function registerIpc(host: IpcHost): void {
 		}
 	})
 	ipcMain.on(IPC.configSync, (event) => {
-		event.returnValue = { portable: host.portable() }
+		event.returnValue = {
+			portable: host.portable(),
+			devtools: !app.isPackaged,
+		}
 	})
 	ipcMain.handle(IPC.setConfig, (_event, patch: unknown) => {
 		if (!isConfigPatch(patch)) return
@@ -133,10 +151,18 @@ export function registerIpc(host: IpcHost): void {
 		return host.setSharedFolderEnabled(enabled)
 	})
 	ipcMain.handle(IPC.lanInfo, () => host.lanInfo())
-	ipcMain.handle(IPC.setLanEnabled, (_event, enabled: unknown) => {
-		if (typeof enabled !== "boolean") return
-		return host.setLanEnabled(enabled)
-	})
+	ipcMain.handle(
+		IPC.setLanEnabled,
+		(_event, enabled: unknown, options: unknown) => {
+			if (typeof enabled !== "boolean") return
+			return host.setLanEnabled(
+				enabled,
+				isRecord(options) && options.weakPasswordConfirmed === true
+					? { weakPasswordConfirmed: true }
+					: undefined,
+			)
+		},
+	)
 	ipcMain.handle(IPC.setLanPort, (_event, port: unknown) => {
 		if (!isValidPort(port)) return
 		return host.setLanPort(port)

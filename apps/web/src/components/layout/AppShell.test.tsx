@@ -571,7 +571,9 @@ function installDesktopBridge() {
 		async getLanInfo() {
 			return { enabled: false, port: 3000, preferredPort: 3000, addresses: [] }
 		},
-		async setLanEnabled() {},
+		async setLanEnabled() {
+			return { ok: true }
+		},
 		async setLanPort() {},
 		async getShellCacheSize() {
 			return 0

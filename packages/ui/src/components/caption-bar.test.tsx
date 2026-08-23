@@ -49,6 +49,24 @@ describe("CaptionBar", () => {
 		expect(screen.queryByText("hoardodile")).toBeNull()
 	})
 
+	it("hides the DevTools button when the control is absent", () => {
+		render(<CaptionBar controls={fakeControls()} history={fakeHistory()} />)
+		expect(screen.queryByTestId("desktop-caption-devtools")).toBeNull()
+	})
+
+	it("toggles DevTools from the caption button", async () => {
+		const user = userEvent.setup()
+		const toggleDevtools = vi.fn()
+		render(
+			<CaptionBar
+				controls={fakeControls({ toggleDevtools })}
+				history={fakeHistory()}
+			/>,
+		)
+		await user.click(screen.getByTestId("desktop-caption-devtools"))
+		expect(toggleDevtools).toHaveBeenCalledTimes(1)
+	})
+
 	it("does not double-toggle on double-click of the drag region (native handles it)", async () => {
 		const user = userEvent.setup()
 		const controls = fakeControls()

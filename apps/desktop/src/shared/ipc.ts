@@ -3,6 +3,7 @@ export const HIDDEN_SWITCH = "--hidden"
 export const IPC = {
 	windowMinimize: "desktop:window:minimize",
 	windowToggleMaximize: "desktop:window:toggle-maximize",
+	windowToggleDevTools: "desktop:window:toggle-devtools",
 	windowClose: "desktop:window:close",
 	windowIsMaximized: "desktop:window:is-maximized",
 	windowMaximizedChanged: "desktop:window:maximized-changed",

@@ -1,7 +1,13 @@
+import type { LanSetResult } from "@hoardodile/shared/desktop"
+import { toast } from "@hoardodile/ui/components/toast"
 import { fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import type { HoardodileDesktopBridge } from "@/lib/desktop"
 import { LanSharingSection } from "./LanSharingSection"
+
+vi.mock("@hoardodile/ui/components/toast", () => ({
+	toast: { add: vi.fn() },
+}))
 
 function installBridge(
 	overrides?: Partial<HoardodileDesktopBridge>,
@@ -66,7 +72,9 @@ function installBridge(
 				addresses: [{ interfaceName: "Ethernet", address: "192.168.1.20" }],
 			}
 		},
-		async setLanEnabled() {},
+		async setLanEnabled() {
+			return { ok: true }
+		},
 		async setLanPort() {},
 		async getShellCacheSize() {
 			return 0
@@ -88,6 +96,7 @@ function installBridge(
 
 afterEach(() => {
 	Reflect.deleteProperty(window, "hoardodileDesktop")
+	vi.mocked(toast.add).mockClear()
 })
 
 describe("LanSharingSection", () => {
@@ -204,6 +213,73 @@ describe("LanSharingSection", () => {
 		expect(screen.getByTestId("desktop-lan-port-apply")).toBeDisabled()
 	})
 
+	it("hides the port-adjusted notice while sharing is off", async () => {
+		installBridge({
+			async getConfig() {
+				return {
+					libraryPath: "",
+					sharedFolderRoot: "",
+					sharedFolderEnabled: false,
+					port: 3000,
+					lanEnabled: false,
+					autoStart: false,
+					startInTray: false,
+					closeAction: "ask",
+					autoUpdate: false,
+					portable: false,
+				}
+			},
+			async getLanInfo() {
+				return {
+					enabled: false,
+					port: 4040,
+					preferredPort: 3000,
+					addresses: [],
+				}
+			},
+		})
+		render(<LanSharingSection />)
+		await screen.findByTestId("desktop-lan-section")
+		expect(screen.queryByTestId("desktop-lan-port-adjusted")).toBeNull()
+	})
+
+	it("dismisses the port-adjusted notice for the same adjustment only", async () => {
+		function adjustedBridge(port: number) {
+			installBridge({
+				async getLanInfo() {
+					return {
+						enabled: true,
+						port,
+						preferredPort: 3000,
+						addresses: [{ interfaceName: "Ethernet", address: "192.168.1.20" }],
+					}
+				},
+			})
+		}
+
+		adjustedBridge(4040)
+		const first = render(<LanSharingSection />)
+		await screen.findByTestId("desktop-lan-port-adjusted")
+		fireEvent.click(screen.getByTestId("desktop-lan-port-adjusted-dismiss"))
+		await waitFor(() => {
+			expect(screen.queryByTestId("desktop-lan-port-adjusted")).toBeNull()
+		})
+		first.unmount()
+
+		// Reopening the section keeps the dismissal (it lives in
+		// localStorage, not component state).
+		adjustedBridge(4040)
+		const second = render(<LanSharingSection />)
+		await screen.findByTestId("desktop-lan-section")
+		expect(screen.queryByTestId("desktop-lan-port-adjusted")).toBeNull()
+		second.unmount()
+
+		// A different fallback port is a new adjustment: notice returns.
+		adjustedBridge(5000)
+		render(<LanSharingSection />)
+		await screen.findByTestId("desktop-lan-port-adjusted")
+	})
+
 	it("applies a new port via the bridge", async () => {
 		const setLanPort = vi.fn(async () => {})
 		installBridge({ setLanPort })
@@ -217,13 +293,138 @@ describe("LanSharingSection", () => {
 	})
 
 	it("toggles sharing through the bridge", async () => {
-		const setLanEnabled = vi.fn(async () => {})
+		const setLanEnabled = vi.fn(
+			async (): Promise<LanSetResult> => ({ ok: true }),
+		)
 		installBridge({ setLanEnabled })
 		render(<LanSharingSection />)
 		const toggle = await screen.findByTestId("desktop-lan-enable")
 		fireEvent.click(toggle)
 		await waitFor(() => {
 			expect(setLanEnabled).toHaveBeenCalledWith(false)
+		})
+	})
+
+	it("asks in the UI dialog before enabling with a weak admin password", async () => {
+		const setLanEnabled = vi.fn(
+			async (
+				_enabled: boolean,
+				options?: {
+					readonly weakPasswordConfirmed?: boolean
+				},
+			): Promise<LanSetResult> => {
+				if (options?.weakPasswordConfirmed === true) return { ok: true }
+				return { ok: false, reason: "weak-password-required" }
+			},
+		)
+		installBridge({
+			async getConfig() {
+				return {
+					libraryPath: "",
+					sharedFolderRoot: "",
+					sharedFolderEnabled: false,
+					port: 3000,
+					lanEnabled: false,
+					autoStart: false,
+					startInTray: false,
+					closeAction: "ask",
+					autoUpdate: false,
+					portable: false,
+				}
+			},
+			async getLanInfo() {
+				return {
+					enabled: false,
+					port: 3000,
+					preferredPort: 3000,
+					addresses: [],
+				}
+			},
+			setLanEnabled,
+		})
+		render(<LanSharingSection />)
+		const toggle = await screen.findByTestId("desktop-lan-enable")
+		fireEvent.click(toggle)
+		// The shell declines with `weak-password-required`; the dialog is
+		// shown instead of enabling.
+		await screen.findByTestId("desktop-lan-weak-confirm")
+		await waitFor(() => {
+			expect(setLanEnabled).toHaveBeenCalledTimes(1)
+			expect(setLanEnabled).toHaveBeenCalledWith(true)
+		})
+		fireEvent.click(screen.getByTestId("desktop-lan-weak-confirm"))
+		await waitFor(() => {
+			expect(setLanEnabled).toHaveBeenCalledWith(true, {
+				weakPasswordConfirmed: true,
+			})
+		})
+		// The confirmation completed; the dialog closes.
+		await waitFor(() => {
+			expect(screen.queryByTestId("desktop-lan-weak-confirm")).toBeNull()
+		})
+	})
+
+	it("does nothing when the weak-password confirmation is cancelled", async () => {
+		const setLanEnabled = vi.fn(
+			async (): Promise<LanSetResult> => ({
+				ok: false,
+				reason: "weak-password-required",
+			}),
+		)
+		installBridge({
+			async getConfig() {
+				return {
+					libraryPath: "",
+					sharedFolderRoot: "",
+					sharedFolderEnabled: false,
+					port: 3000,
+					lanEnabled: false,
+					autoStart: false,
+					startInTray: false,
+					closeAction: "ask",
+					autoUpdate: false,
+					portable: false,
+				}
+			},
+			async getLanInfo() {
+				return {
+					enabled: false,
+					port: 3000,
+					preferredPort: 3000,
+					addresses: [],
+				}
+			},
+			setLanEnabled,
+		})
+		render(<LanSharingSection />)
+		const toggle = await screen.findByTestId("desktop-lan-enable")
+		fireEvent.click(toggle)
+		await screen.findByTestId("desktop-lan-weak-cancel")
+		fireEvent.click(screen.getByTestId("desktop-lan-weak-cancel"))
+		await waitFor(() => {
+			expect(screen.queryByTestId("desktop-lan-weak-confirm")).toBeNull()
+		})
+		// Only the probe call happened; nothing was enabled.
+		expect(setLanEnabled).toHaveBeenCalledTimes(1)
+	})
+
+	it("shows the busy spinner while enabling restarts the sidecar", async () => {
+		let resolveEnable: (() => void) | undefined
+		const setLanEnabled = vi.fn(async (): Promise<LanSetResult> => {
+			await new Promise<void>((resolve) => {
+				resolveEnable = resolve
+			})
+			return { ok: true }
+		})
+		installBridge({ setLanEnabled })
+		render(<LanSharingSection />)
+		const toggle = await screen.findByTestId("desktop-lan-enable")
+		fireEvent.click(toggle)
+		const spinner = await screen.findByTestId("desktop-lan-busy")
+		expect(spinner).toBeInTheDocument()
+		resolveEnable?.()
+		await waitFor(() => {
+			expect(screen.queryByTestId("desktop-lan-busy")).toBeNull()
 		})
 	})
 

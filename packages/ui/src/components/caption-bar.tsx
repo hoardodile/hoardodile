@@ -9,6 +9,12 @@ export type CaptionWindowControls = {
 	minimize: () => void
 	toggleMaximize: () => void
 	close: () => void
+	/**
+	 * Toggle the DevTools dock. Present only on dev (unpackaged) runs —
+	 * the desktop bridge carries it only there, so packaged builds never
+	 * render the button.
+	 */
+	toggleDevtools?: () => void
 	isMaximized: () => Promise<boolean>
 	onMaximizedChange: (listener: (maximized: boolean) => void) => () => void
 }
@@ -21,6 +27,7 @@ export type CaptionBarLabels = {
 	readonly maximize: string
 	readonly restore: string
 	readonly close: string
+	readonly devtools: string
 }
 
 const DEFAULT_LABELS: CaptionBarLabels = {
@@ -31,6 +38,7 @@ const DEFAULT_LABELS: CaptionBarLabels = {
 	maximize: "Maximize",
 	restore: "Restore",
 	close: "Close",
+	devtools: "Developer tools",
 }
 
 const captionChromeButtonClassName =
@@ -166,6 +174,20 @@ function CaptionBar({
 			{/* Double-click toggles maximize natively on Windows drag regions;
 			    a JS handler here would double-toggle (native + JS). */}
 			<div className="flex shrink-0 [-webkit-app-region:no-drag]">
+				{controls.toggleDevtools !== undefined ? (
+					<button
+						type="button"
+						title={resolved.devtools}
+						aria-label={resolved.devtools}
+						data-testid="desktop-caption-devtools"
+						className={captionChromeButtonClassName}
+						onClick={() => {
+							controls.toggleDevtools?.()
+						}}
+					>
+						<DevToolsGlyph />
+					</button>
+				) : null}
 				<button
 					type="button"
 					aria-label={resolved.minimize}
@@ -322,6 +344,19 @@ function MinimizeGlyph() {
 	return (
 		<svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
 			<path d="M0 5h10" fill="none" stroke="currentColor" strokeWidth="1" />
+		</svg>
+	)
+}
+
+function DevToolsGlyph() {
+	return (
+		<svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+			<path
+				d="M4.5 4.5L2 7l2.5 2.5M9.5 4.5L12 7l-2.5 2.5"
+				fill="none"
+				stroke="currentColor"
+				strokeWidth="1"
+			/>
 		</svg>
 	)
 }

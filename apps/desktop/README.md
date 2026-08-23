@@ -82,14 +82,16 @@ electron-updater against GitHub Releases (`latest.yml` + blockmap). State machin
 
 ## Security and privacy
 
-- `HOST=127.0.0.1` by default; local-network binding is an authenticated Settings toggle (same port, `0.0.0.0`) that requires an admin password and is never offered by the wizard.
+- `HOST=127.0.0.1` by default; local-network binding is an authenticated Settings toggle (same port, `0.0.0.0`) that requires an admin password and is never offered by the wizard; a weak password needs an explicit in-app confirmation before enabling.
 - `/api/internal/*` control routes are loopback-gated: non-loopback peers get 403 even with a valid token. A browser on the same machine may open the same URL; cookies are not shared with Electron.
 - Production desktop never registers `/sw.js` (a SW on `http://127.0.0.1` stale-caches across installer updates) and unregisters any existing controller.
 - Folder picker in main, not the renderer; shutdown is token-gated; external https via `openExternal`.
 
 ## Dev
 
-`pnpm dev` (browser tab) and `pnpm desktop` (Electron) are independent — `pnpm desktop` never requires `pnpm dev` to be running. Desktop loads the Vite URL so HMR works; when nothing answers there, the shell window shows its own Retry page (caption bar intact) and you can start `pnpm dev` and press Retry inside the window. The desktop never uses the dev Fastify: main registers `session.protocol.handle("http")` to forward SPA-origin `/trpc`, `/auth`, `/api`, `/health` to the sidecar (`dest-api-proxy.ts`); `/api/internal` is never forwarded, and a sidecar restart only updates the target origin. Production windows load the Fastify-served SPA from the sidecar `server/web` tree (no proxy). The wizard has its own small Vite.
+`pnpm dev` (browser tab) and `pnpm desktop` (Electron) are independent — `pnpm desktop` never requires `pnpm dev` to be running. Desktop loads the Vite URL so HMR works; when nothing answers there, the shell window shows its own Retry page (caption bar intact) and you can start `pnpm dev` and press Retry inside the window. A main-frame response with an error status (e.g. the proxy's 502 when a target is down) also swaps in that error page — a raw failure body is never shown. The desktop never uses the dev Fastify: main registers `session.protocol.handle("http")` to forward SPA-origin `/trpc`, `/auth`, `/api`, `/health` to the sidecar (`dest-api-proxy.ts`); `/api/internal` is never forwarded, and a sidecar restart only updates the target origin. Production windows load the Fastify-served SPA from the sidecar `server/web` tree (no proxy). The wizard has its own small Vite.
+
+DevTools is not auto-opened; dev runs show a toggle button on the caption bar (left of minimize) that docks it on the right, and the window keeps the dock-width reservation so the app still renders at 1440px next to the panel.
 
 `apps/desktop/scripts/dev.mjs` never starts or owns the SPA and does not wait for one. It resolves the SPA URL (ports live in `scripts/lib/dev-ports.json` — change them there, never in consumers) from `HOARDODILE_WEB_URL` or the default, starts the wizard on the first free port at or above its default (bound to `127.0.0.1`), one-shot builds main + preload, and spawns Electron with `HOARDODILE_WEB_URL` / `ELECTRON_WIZARD_URL` / `HOARDODILE_WORKSPACE`; the sidecar is spawned by the shell (vite-node on `apps/server` source), so no backend or plugin watchers from `pnpm dev` are needed, and the SPA's `VITE_SERVER_URL` proxy target is never touched. Ctrl+C closes the wizard server and tree-kills Electron so the sidecar does not linger.
 

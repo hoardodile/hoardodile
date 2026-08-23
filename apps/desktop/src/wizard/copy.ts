@@ -1,5 +1,21 @@
 import en from "@hoardodile/shared/i18n/en.json"
 import zh from "@hoardodile/shared/i18n/zh.json"
+import type { CaptionHistoryControls } from "@hoardodile/ui/components/caption-bar"
+
+/**
+ * Caption history for shell pages and the wizard: back / forward are never
+ * allowed to walk away from these flows (the retry page is a dead end by
+ * design), while reload re-fetches the current shell page in place.
+ */
+export const disabledCaptionHistory: CaptionHistoryControls = {
+	canGoBack: false,
+	canGoForward: false,
+	back() {},
+	forward() {},
+	reload() {
+		window.location.reload()
+	},
+}
 
 export type WizardCopy = {
 	readonly title: string

@@ -7,7 +7,7 @@ import { Input } from "@hoardodile/ui/components/input"
 import { Label } from "@hoardodile/ui/components/label"
 import { Switch } from "@hoardodile/ui/components/switch"
 import { useEffect, useState } from "react"
-import { type WizardCopy, wizardCopy } from "./copy.ts"
+import { disabledCaptionHistory, type WizardCopy, wizardCopy } from "./copy.ts"
 
 export function WizardApp() {
 	const copy = wizardCopy()
@@ -65,6 +65,7 @@ function WizardForm(props: {
 		<div className="flex h-full flex-col bg-background">
 			<CaptionBar
 				controls={desktop}
+				history={disabledCaptionHistory}
 				labels={{
 					back: captionLabels.back,
 					forward: captionLabels.forward,
@@ -73,6 +74,7 @@ function WizardForm(props: {
 					maximize: captionLabels.maximize,
 					restore: captionLabels.restore,
 					close: captionLabels.close,
+					devtools: captionLabels.devtools,
 				}}
 			/>
 			<main className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto px-8 py-8">

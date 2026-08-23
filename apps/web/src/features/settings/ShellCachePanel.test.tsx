@@ -67,7 +67,9 @@ function installBridge(
 				addresses: [],
 			}
 		},
-		async setLanEnabled() {},
+		async setLanEnabled() {
+			return { ok: true }
+		},
 		async setLanPort() {},
 		async getShellCacheSize() {
 			return 1024

@@ -8,7 +8,7 @@ import {
 	type CloseConfirmDialogStrings,
 } from "@hoardodile/ui/components/close-confirm-dialog"
 import { useEffect, useState } from "react"
-import { shellCopy } from "./copy.ts"
+import { disabledCaptionHistory, shellCopy } from "./copy.ts"
 
 export type ShellPageMode = "loading" | "error"
 
@@ -96,6 +96,7 @@ function ShellPagesView(props: {
 		<div className="flex h-full flex-col bg-background">
 			<CaptionBar
 				controls={{ ...desktop, close: handleClose }}
+				history={disabledCaptionHistory}
 				labels={{
 					back: captionLabels.back,
 					forward: captionLabels.forward,
@@ -104,6 +105,7 @@ function ShellPagesView(props: {
 					maximize: captionLabels.maximize,
 					restore: captionLabels.restore,
 					close: captionLabels.close,
+					devtools: captionLabels.devtools,
 				}}
 			/>
 			<main className="flex min-h-0 flex-1 items-center justify-center p-6">

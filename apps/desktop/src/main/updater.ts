@@ -16,6 +16,8 @@ const INTERVAL_MS = 24 * 60 * 60 * 1000
 export function startUpdater(options: {
 	readonly enabled: boolean
 	readonly portable: boolean
+	/** Unpackaged (dev) runs: electron-updater skips anyway, so never poll. */
+	readonly dev: boolean
 	readonly onReady: () => void
 }): UpdaterHandle {
 	let state: DesktopUpdateState = { status: "idle" }
@@ -87,6 +89,9 @@ export function startUpdater(options: {
 	}
 
 	function scheduleBackgroundChecks(): void {
+		// Unpackaged runs can never download updates; polling would only
+		// print the "application is not packed" skip line on every boot.
+		if (options.dev) return
 		clearTimers()
 		timers.push(
 			setTimeout(() => {

@@ -6,8 +6,10 @@ import type {
 import { Button } from "@hoardodile/ui/components/button"
 import { Icon } from "@hoardodile/ui/components/icon"
 import { Input } from "@hoardodile/ui/components/input"
+import { Spinner } from "@hoardodile/ui/components/spinner"
 import { Switch } from "@hoardodile/ui/components/switch"
 import { toast } from "@hoardodile/ui/components/toast"
+import { Cross } from "@hoardodile/ui/icons/marks"
 import {
 	Copy,
 	InfoCircle,
@@ -16,9 +18,16 @@ import {
 import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import QRCode from "react-qr-code"
+import { ConfirmDialog } from "@/components/common/ConfirmDialog"
 import { getDesktopBridge } from "@/lib/desktop"
 import { SettingsSection } from "./SettingsSection"
 import { SectionDivider } from "./SettingsSheet"
+
+/**
+ * Device-local key for the dismissed port-conflict notice. Not server
+ * synced: the adjustment is specific to this machine's port layout.
+ */
+const PORT_ADJUST_DISMISS_KEY = "desktop.lan.portAdjustedDismissed"
 
 /**
  * Desktop-only local-network sharing: serve the sidecar on all IPv4
@@ -78,12 +87,39 @@ function LanSharingForm(props: {
 	const { t } = useTranslation()
 	const [portInput, setPortInput] = useState(String(lan.preferredPort))
 	const [busy, setBusy] = useState(false)
+	const [weakConfirmOpen, setWeakConfirmOpen] = useState(false)
+	// Device-local dismiss of the port-conflict notice: value is the
+	// `(preferredPort, port)` pair it was dismissed for, so a later
+	// conflict on a different fallback port shows the notice again.
+	const [dismissedAdjustment, setDismissedAdjustment] = useState<
+		string | undefined
+	>(() => {
+		try {
+			return localStorage.getItem(PORT_ADJUST_DISMISS_KEY) ?? undefined
+		} catch {
+			return undefined
+		}
+	})
 
 	const portValue = Number(portInput.trim())
 	const portDirty = portInput.trim() !== String(lan.preferredPort)
 	const portValid =
 		Number.isInteger(portValue) && portValue >= 1 && portValue <= 65535
 	const portAdjusted = lan.port !== lan.preferredPort
+	const adjustmentKey = `${lan.preferredPort}:${lan.port}`
+	// Only relevant while sharing is on: the copy tells other devices to
+	// use the new port, and with sharing off nothing else displays it.
+	const portAdjustedNotice =
+		config.lanEnabled && portAdjusted && dismissedAdjustment !== adjustmentKey
+
+	function dismissPortAdjusted(): void {
+		setDismissedAdjustment(adjustmentKey)
+		try {
+			localStorage.setItem(PORT_ADJUST_DISMISS_KEY, adjustmentKey)
+		} catch {
+			// best-effort
+		}
+	}
 
 	async function refresh(): Promise<void> {
 		const [nextConfig, nextLan] = await Promise.all([
@@ -94,18 +130,52 @@ function LanSharingForm(props: {
 		setPortInput(String(nextLan.preferredPort))
 	}
 
-	async function handleEnabled(enabled: boolean) {
+	/**
+	 * Enable or disable sharing and restart the sidecar. A declined weak
+	 * password is not an error: the shell resolves `{ ok: false,
+	 * reason: "weak-password-required" }` so the in-app confirm dialog is
+	 * shown instead; retrying with `weakPasswordConfirmed` is how the
+	 * user accepts the risk (the shell re-checks the password each time).
+	 */
+	async function enable(
+		enabled: boolean,
+		options?: { readonly weakPasswordConfirmed?: boolean },
+	): Promise<void> {
 		if (busy) return
 		setBusy(true)
 		try {
-			await desktop.setLanEnabled(enabled)
-			await refresh()
+			const result =
+				options === undefined
+					? await desktop.setLanEnabled(enabled)
+					: await desktop.setLanEnabled(enabled, options)
+			if (result.ok) {
+				await refresh()
+				return
+			}
+			if (result.reason === "weak-password-required") {
+				setWeakConfirmOpen(true)
+				return
+			}
+			// no admin password: the shell pointed it out in a native box
+			// (an unclaimed instance must never become reachable); say it
+			// in-app too so the switch not moving is never silent.
+			toast.add({
+				title: t("me.desktop.lan.passwordRequired"),
+				type: "error",
+			})
 		} catch {
-			// rejection is surface by the shell (password required, restart
-			// failed); the switch stays at the previous state
+			// genuine failure (restart failed): the shell pointed out the
+			// native error; the switch stays at the previous state
 		} finally {
 			setBusy(false)
 		}
+	}
+
+	async function handleWeakConfirm(): Promise<void> {
+		// Keep the dialog open while the sidecar restarts — its button
+		// label switches to the pending copy (isPending + pendingLabel).
+		await enable(true, { weakPasswordConfirmed: true })
+		setWeakConfirmOpen(false)
 	}
 
 	async function handlePortApply() {
@@ -151,7 +221,10 @@ function LanSharingForm(props: {
 				data-testid="desktop-lan-section"
 			>
 				<div className="flex flex-col gap-4">
-					<div className="flex items-center justify-between gap-6">
+					<div
+						className="flex items-center justify-between gap-6"
+						aria-busy={busy}
+					>
 						<div className="min-w-0">
 							<div className="text-ui font-semibold text-foreground">
 								{t("me.desktop.lan.enable")}
@@ -160,16 +233,24 @@ function LanSharingForm(props: {
 								{t("me.desktop.lan.enableDescription")}
 							</p>
 						</div>
-						<Switch
-							checked={config.lanEnabled}
-							onCheckedChange={(enabled) => {
-								void handleEnabled(enabled)
-							}}
-							disabled={busy}
-							aria-label={t("me.desktop.lan.enable")}
-							data-testid="desktop-lan-enable"
-							className="[-webkit-app-region:no-drag]"
-						/>
+						<div className="flex shrink-0 items-center gap-2 [-webkit-app-region:no-drag]">
+							{busy ? (
+								<Spinner
+									className="size-4 text-muted-foreground"
+									aria-label={t("me.desktop.lan.applying")}
+									data-testid="desktop-lan-busy"
+								/>
+							) : null}
+							<Switch
+								checked={config.lanEnabled}
+								onCheckedChange={(enabled) => {
+									void enable(enabled)
+								}}
+								disabled={busy}
+								aria-label={t("me.desktop.lan.enable")}
+								data-testid="desktop-lan-enable"
+							/>
+						</div>
 					</div>
 					<div className="flex flex-wrap items-center justify-between gap-3">
 						<div className="min-w-0">
@@ -205,7 +286,7 @@ function LanSharingForm(props: {
 							</Button>
 						</div>
 					</div>
-					{portAdjusted ? (
+					{portAdjustedNotice ? (
 						<div
 							className="flex items-start gap-3 rounded-lg bg-muted px-3 py-2.5"
 							data-testid="desktop-lan-port-adjusted"
@@ -225,6 +306,16 @@ function LanSharingForm(props: {
 									{t("me.desktop.lan.portAdjustedHint")}
 								</p>
 							</div>
+							<Button
+								variant="ghost"
+								size="icon-sm"
+								aria-label={t("me.desktop.lan.portAdjustedDismiss")}
+								data-testid="desktop-lan-port-adjusted-dismiss"
+								className="ml-auto shrink-0"
+								onClick={dismissPortAdjusted}
+							>
+								<Cross />
+							</Button>
 						</div>
 					) : null}
 					{config.lanEnabled ? (
@@ -310,6 +401,20 @@ function LanSharingForm(props: {
 				</div>
 			</SettingsSection>
 			<SectionDivider />
+			<ConfirmDialog
+				open={weakConfirmOpen}
+				onOpenChange={setWeakConfirmOpen}
+				title={t("me.desktop.lan.weakPasswordTitle")}
+				description={t("me.desktop.lan.weakPasswordDescription")}
+				confirmLabel={t("me.desktop.lan.enableAnyway")}
+				isPending={busy}
+				pendingLabel={t("me.desktop.lan.applying")}
+				onConfirm={() => {
+					void handleWeakConfirm()
+				}}
+				confirmTestId="desktop-lan-weak-confirm"
+				cancelTestId="desktop-lan-weak-cancel"
+			/>
 		</>
 	)
 }

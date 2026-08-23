@@ -5,6 +5,7 @@ import type {
 	DesktopUpdateState,
 	DesktopWizardResult,
 	LanInfo,
+	LanSetResult,
 } from "@hoardodile/shared/desktop"
 import type { SupportedLanguage } from "@hoardodile/shared/i18n"
 import en from "@hoardodile/shared/i18n/en.json"
@@ -251,12 +252,20 @@ function updaterCacheClearable(runtime: Runtime): boolean {
  * `listen()` time, so the sidecar restarts in place; the app window is
  * kept and reloaded (production) or left alone (dev, proxy target
  * already rebound by `spawnSidecar`).
+ *
+ * Enabling can be declined without an error: no admin password (LAN must
+ * never expose an unclaimed instance) or a weak admin password that the
+ * user has not confirmed yet — the renderer shows the in-app confirm
+ * dialog and retries with `weakPasswordConfirmed: true`. The password is
+ * re-checked on every call, so the flag is only ever UX consent. Genuine
+ * failures (sidecar down, restart failed) still reject.
  */
 async function setLanEnabled(
 	runtime: Runtime,
 	enabled: boolean,
-): Promise<void> {
-	if (enabled === runtime.config.lanEnabled) return
+	weakPasswordConfirmed: boolean,
+): Promise<LanSetResult> {
+	if (enabled === runtime.config.lanEnabled) return { ok: true }
 	const sidecar = runtime.sidecar
 	if (sidecar === undefined) {
 		throw new Error("sidecar is not running")
@@ -269,31 +278,14 @@ async function setLanEnabled(
 				"hoardodile",
 				catalog.desktopShell.dialog.lanPasswordRequired,
 			)
-			throw new Error(
-				"refusing to enable LAN sharing without an admin password",
-			)
+			return { ok: false, reason: "no-admin-password" }
 		}
-		if (state.weakPassword) {
-			const { response } = await dialog.showMessageBox({
-				type: "warning",
-				title: "hoardodile",
-				message: catalog.desktopShell.dialog.weakPasswordMessage,
-				detail: catalog.desktopShell.dialog.weakPasswordDetail,
-				buttons: [
-					catalog.desktopShell.dialog.enableAnyway,
-					catalog.desktopShell.dialog.cancel,
-				],
-				defaultId: 1,
-				cancelId: 1,
-			})
-			if (response !== 0) {
-				throw new Error(
-					"refusing to enable LAN sharing with a weak admin password",
-				)
-			}
+		if (state.weakPassword && !weakPasswordConfirmed) {
+			return { ok: false, reason: "weak-password-required" }
 		}
 	}
 	await applyLanChange(runtime, { lanEnabled: enabled })
+	return { ok: true }
 }
 
 /**
@@ -809,7 +801,8 @@ async function boot(): Promise<void> {
 		setSharedFolderEnabled: (enabled) =>
 			setSharedFolderEnabled(runtime, enabled),
 		lanInfo: () => lanInfo(runtime),
-		setLanEnabled: (enabled) => setLanEnabled(runtime, enabled),
+		setLanEnabled: (enabled, options) =>
+			setLanEnabled(runtime, enabled, options?.weakPasswordConfirmed === true),
 		setLanPort: (port) => setLanPort(runtime, port),
 		shellCacheSize: () =>
 			getShellCacheSize({
@@ -882,6 +875,7 @@ async function boot(): Promise<void> {
 	runtime.updater = startUpdater({
 		enabled: runtime.config.autoUpdate && !runtime.portable,
 		portable: runtime.portable,
+		dev: !app.isPackaged,
 		onReady() {
 			runtime.updateReady = true
 			broadcastUpdate(runtime, runtime.updater?.status() ?? { status: "idle" })

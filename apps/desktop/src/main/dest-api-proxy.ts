@@ -70,11 +70,7 @@ export function installDestApiProxy(options: {
 	let sidecarOrigin = options.sidecarOrigin
 	const spaOrigin = options.spaOrigin
 	session.defaultSession.protocol.handle("http", (request) => {
-		const target = destApiProxyTarget(request.url, spaOrigin, sidecarOrigin)
-		if (target === undefined) {
-			return net.fetch(request, { bypassCustomProtocolHandlers: true })
-		}
-		return forwardToSidecar(request, target)
+		return proxyHttpRequest(request, spaOrigin, sidecarOrigin)
 	})
 	installed = {
 		setSidecarOrigin(next) {
@@ -111,6 +107,43 @@ function parseUrl(value: string): URL | undefined {
 		return new URL(value)
 	} catch {
 		return undefined
+	}
+}
+
+/**
+ * Route one renderer request: SPA-origin API paths forward to the sidecar,
+ * everything else passes through untouched.
+ *
+ * The two failure modes are deliberately different:
+ * - Pass-through failures can be main-frame navigations (refresh while the
+ *   dev server is down). A 502 body would be committed and painted as a
+ *   bare "request failed" page (or flash) — fail the request with a
+ *   network error (`Response.error()` → `net::ERR_FAILED`, the documented
+ *   `protocol.handle` semantics) so the navigation lands in `did-fail-load`
+ *   and the shell's in-window error page, with the previous page visible
+ *   until it is replaced.
+ * - Forward failures are API calls; a 502 keeps the renderer's request
+ *   failure semantics identical (it still rejects as a network error, and
+ *   the rejection is swallowed here so nothing prints an unhandled
+ *   `net::ERR_*` during sidecar restarts).
+ */
+export async function proxyHttpRequest(
+	request: Request,
+	spaOrigin: string,
+	sidecarOrigin: string,
+): Promise<Response> {
+	const target = destApiProxyTarget(request.url, spaOrigin, sidecarOrigin)
+	if (target === undefined) {
+		try {
+			return await net.fetch(request, { bypassCustomProtocolHandlers: true })
+		} catch {
+			return Response.error()
+		}
+	}
+	try {
+		return await forwardToSidecar(request, target)
+	} catch {
+		return new Response("request failed", { status: 502 })
 	}
 }
 

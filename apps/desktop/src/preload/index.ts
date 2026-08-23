@@ -6,6 +6,7 @@ import type {
 	HoardodileDesktopBridge,
 	LanAddress,
 	LanInfo,
+	LanSetResult,
 } from "@hoardodile/shared/desktop"
 import { contextBridge, ipcRenderer } from "electron"
 import { IPC } from "../shared/ipc.ts"
@@ -14,9 +15,16 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 	return typeof value === "object" && value !== null && !Array.isArray(value)
 }
 
-function readPortable(): boolean {
+/** One sync round-trip for the static facts the bridge needs at creation. */
+function readSyncState(): {
+	readonly portable: boolean
+	readonly devtools: boolean
+} {
 	const raw: unknown = ipcRenderer.sendSync(IPC.configSync)
-	return isRecord(raw) && raw.portable === true
+	return {
+		portable: isRecord(raw) && raw.portable === true,
+		devtools: isRecord(raw) && raw.devtools === true,
+	}
 }
 
 function subscribeMaximized(
@@ -100,12 +108,26 @@ function parseLanInfo(value: unknown): LanInfo {
 	}
 }
 
+function parseLanSetResult(value: unknown): LanSetResult {
+	if (isRecord(value) && value.ok === true) return { ok: true }
+	if (
+		isRecord(value) &&
+		(value.reason === "no-admin-password" ||
+			value.reason === "weak-password-required")
+	) {
+		return { ok: false, reason: value.reason }
+	}
+	throw new Error("desktop LAN set result unavailable")
+}
+
 async function invokeUnknown(
 	channel: string,
 	...args: unknown[]
 ): Promise<unknown> {
 	return await ipcRenderer.invoke(channel, ...args)
 }
+
+const syncState = readSyncState()
 
 const bridge: HoardodileDesktopBridge = {
 	isDesktop: true,
@@ -116,6 +138,15 @@ const bridge: HoardodileDesktopBridge = {
 	toggleMaximize() {
 		ipcRenderer.send(IPC.windowToggleMaximize)
 	},
+	// Present only on unpackaged (dev) runs; the caption bar hides its
+	// DevTools button when the bridge does not carry the control.
+	...(syncState.devtools
+		? {
+				toggleDevtools() {
+					ipcRenderer.send(IPC.windowToggleDevTools)
+				},
+			}
+		: {}),
 	close() {
 		ipcRenderer.send(IPC.windowClose)
 	},
@@ -138,7 +169,7 @@ const bridge: HoardodileDesktopBridge = {
 	},
 	onMaximizedChange: subscribeMaximized,
 	updates: {
-		portable: readPortable(),
+		portable: syncState.portable,
 		async status() {
 			const raw = await invokeUnknown(IPC.updatesStatus)
 			return isUpdateState(raw) ? raw : { status: "idle" }
@@ -215,8 +246,10 @@ const bridge: HoardodileDesktopBridge = {
 	async getLanInfo() {
 		return parseLanInfo(await invokeUnknown(IPC.lanInfo))
 	},
-	async setLanEnabled(enabled) {
-		await invokeUnknown(IPC.setLanEnabled, enabled)
+	async setLanEnabled(enabled, options) {
+		return parseLanSetResult(
+			await invokeUnknown(IPC.setLanEnabled, enabled, options),
+		)
 	},
 	async setLanPort(port) {
 		await invokeUnknown(IPC.setLanPort, port)

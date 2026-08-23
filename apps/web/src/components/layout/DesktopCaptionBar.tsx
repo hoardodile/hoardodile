@@ -61,6 +61,7 @@ export function DesktopCaptionBar(props: {
 					back: t("me.desktop.caption.back"),
 					forward: t("me.desktop.caption.forward"),
 					reload: t("me.desktop.caption.reload"),
+					devtools: t("me.desktop.caption.devtools"),
 				}}
 			/>
 			<CloseConfirmDialog

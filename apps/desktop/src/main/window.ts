@@ -1,6 +1,6 @@
 import { join } from "node:path"
 import { app, BrowserWindow, nativeTheme, shell } from "electron"
-import { serverErrorMessage } from "./error-page.ts"
+import { devServerErrorMessage, serverErrorMessage } from "./error-page.ts"
 import {
 	appWindowDecision,
 	type WindowOpenDecision,
@@ -54,10 +54,11 @@ export type CreateWindowOptions = {
 export function createDesktopWindow(
 	options: CreateWindowOptions,
 ): BrowserWindow {
-	// Dev mode docks DevTools on the right (see ready-to-show below): the
-	// window takes the production width plus the dock's typical width, so
-	// the app still renders at its designed size next to the panel instead
-	// of being squeezed into the leftover ~1040px.
+	// Dev mode docks DevTools on the right when the caption-bar button
+	// toggles it (see `desktop:window:toggle-devtools`): the window takes
+	// the production width plus the dock's typical width, so the app still
+	// renders at its designed size next to the panel instead of being
+	// squeezed into the leftover ~1040px.
 	const devToolsDockWidth = 600
 	const width =
 		options.kind === "wizard"
@@ -114,10 +115,12 @@ export function createDesktopWindow(
 	})
 
 	win.once("ready-to-show", () => {
+		// DevTools is on demand in dev (caption-bar button, IPC
+		// `desktop:window:toggle-devtools`); never auto-open — an
+		// always-on DevTools panel prints Chromium-internal protocol
+		// errors (Autofill domain is unimplemented in Electron) into the
+		// main console on every load.
 		win.show()
-		if (!app.isPackaged && options.kind === "app") {
-			win.webContents.openDevTools({ mode: "right" })
-		}
 	})
 
 	loadWindow(win, options)
@@ -152,20 +155,48 @@ function loadWindow(win: BrowserWindow, options: CreateWindowOptions): void {
 		return
 	}
 	if (options.kind === "app") {
-		// A failed main-frame load would leave a blank window. Swap in the
-		// in-window error page (centered Retry button) instead; the button
-		// asks the shell to re-resolve the app URL via IPC.
+		// Any failed main-frame load — a network failure (did-fail-load)
+		// or an erroring HTTP response like a 502 failure body, which
+		// Chromium would render as a bare white "request failed" page and
+		// which never fails the load — swaps in the in-window error page
+		// (centered Retry button); the button asks the shell to re-resolve
+		// the app URL via IPC. A raw failure body must never reach the
+		// user, no matter which layer produced it.
+		let errorPageShown = false
+		function showErrorPage(): void {
+			if (options.shellPage === undefined || errorPageShown) return
+			errorPageShown = true
+			void loadShellPage(
+				win,
+				options.shellPage,
+				"error",
+				process.env.HOARDODILE_WEB_URL === undefined
+					? serverErrorMessage(undefined)
+					: devServerErrorMessage(undefined),
+			)
+		}
 		win.webContents.on("did-fail-load", (_event, _code, desc, _url, isMain) => {
 			if (!isMain) return
 			console.error(`[desktop] app load failed: ${desc}`)
-			if (options.shellPage !== undefined) {
-				void loadShellPage(
-					win,
-					options.shellPage,
-					"error",
-					serverErrorMessage(undefined),
+			showErrorPage()
+		})
+		win.webContents.on(
+			"did-frame-navigate",
+			(_event, url, httpResponseCode, _statusText, isMainFrame) => {
+				// -1 means a non-HTTP navigation, so only >= 400 matters.
+				if (!isMainFrame || httpResponseCode < 400) return
+				console.error(
+					`[desktop] app load failed: HTTP ${String(httpResponseCode)} ${url}`,
 				)
-			}
+				showErrorPage()
+			},
+		)
+		// Any successful load re-arms the error page so a later Retry can
+		// show it again; while an error page load is in flight (or a
+		// shell target itself is down), further failures are ignored —
+		// the swap can never loop.
+		win.webContents.on("did-finish-load", () => {
+			errorPageShown = false
 		})
 	}
 	void win.loadURL(options.url)
