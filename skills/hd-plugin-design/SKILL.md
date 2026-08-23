@@ -184,11 +184,33 @@ popover, dropdown-select, dropdown-menu, toast, app-dialog
 @hoardodile/ui/viewport                (breakpoint constants + queries)
 ```
 
-`hooks/use-mobile.ts` is the repo-wide source of truth for viewport
-detection — if a `shadcn add` regenerates it with its own `useIsMobile`,
-restore this file. The gallery plugin is the live example of a plugin
-built on these components (players, settings popovers, sliders,
-toasts).
+- **`Button` is a base-ui thin wrapper — the polymorphic prop is
+  `render`, not shadcn's `asChild`** (e.g.
+  `render={<a href={url} download />}`). Real options: variants
+  `default | outline | secondary | ghost | destructive | danger | link`,
+  sizes `default | xs | sm | lg | icon | icon-xs | icon-sm | icon-lg`,
+  and `active` (latched toggle fill — pair it with `aria-pressed`).
+- **Components are thin — check the props of the version you import.**
+  Example: `Spinner` is plain `ComponentProps<"svg">` (no `size` prop;
+  size it via `className`). `Icon`'s `icon/mode/size/selected` are the
+  real contract.
+- **`theme.css` pulls peer dependencies into your build**: it
+  `@import`s `tailwindcss`, `tw-animate-css` and `shadcn/tailwind.css`.
+  In the monorepo those resolve via hoisting; a standalone plugin must
+  declare `shadcn` + `tw-animate-css` (and `tailwindcss`) as
+  devDependencies or the CSS import fails.
+- `hooks/use-mobile.ts` is the repo-wide source of truth for viewport
+  detection — if a `shadcn add` regenerates it with its own
+  `useIsMobile`, restore this file.
+
+### Verified sample: the PDF plugin
+
+`plugins/pdf` is the current official plugin that follows this system
+end to end — worth reading before writing your own chrome: minimal
+toolbar (density + hairline separator, ghost icon buttons with
+`title`/`aria-label`), explicit loading/error/empty states (render
+failures never show as loading), `@hoardodile/ui` subpath imports, and
+auto theme/font/icon-style following through the SDK.
 
 ## Layout & surfaces in the iframe
 

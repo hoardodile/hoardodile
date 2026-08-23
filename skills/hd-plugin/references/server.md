@@ -62,7 +62,7 @@ must handle the absent case by re-deriving.
 
 Every method is resource-relative; the host resolves absolute paths.
 Container addressing `outer!inner` reads inside a zip/tar entry
-(`manga.cbz!Chapter 1/001.jpg`).
+(`book.cbz!Chapter 1/001.jpg`).
 
 | Method | Purpose |
 | --- | --- |
@@ -109,6 +109,24 @@ directly.
   addressing), `context`. Paths match exactly, or by `.ext` fragment
   (longest wins), or `""` as the default. It decodes nothing — a hook
   needing real dimensions belongs in a sandbox test.
+- **Fixture tables are keyed by path — always.** A bare object like
+  `stats: { sizeBytes: 4096 }` is *not* a "default for all paths"; the
+  fixture treats any object as a matching table and finds no keys, so
+  every `statFile` comes back `undefined` (and the guard that was
+  supposed to skip a read doesn't skip). Write per-path keys
+  (`stats: { "a.pdf": { sizeBytes: 10 } }`) or a `""` default key
+  (`stats: { "": { sizeBytes: 10 } }`).
+- **Optional hooks are optional in the type too.** `definePlugin`
+  returns `PluginDefinition`, where `sourceMeta`/`listFiles` are
+  optional — `plugin.sourceMeta(api)` fails to compile in tests with
+  "possibly undefined". Assert with `plugin.sourceMeta!(api)` or wrap
+  the plugin in a `Required`-style helper once and reuse it.
+- **`detect` for multi-file resources: claim if *any* candidate
+  matches.** Iterate the candidates, verify content on each (magic
+  header, container listing…), return `{ ok: true }` on the first hit
+  and collect reasons only when every candidate failed. Probing only
+  the first file rejects good resources that happen to contain one
+  stray bad file (a `.pdf`-named text file next to a real PDF).
 - **`runPluginHook` / `createDirectoryResourceAPI`** in
   `@hoardodile/host` (devDependency only) run hooks through the same
   worker sandbox the server uses — the exact production execution path.

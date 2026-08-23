@@ -76,10 +76,34 @@ the host arrive via `onAnchorJump(cb)`.
 Query/mutation results have the shape
 `{ data, isLoading, isError, error }`.
 
-Also in `@hoardodile/sdk-react`: `createPluginTranslation()` (returns
-`{ t(key, vars?), language }` — flattened bundle, `{{var}}`
-interpolation, picks the `language` from the iframe context),
-`useCacheWriter`, `useExtractProgress`, `useVisibility`.
+Also in `@hoardodile/sdk-react`: `createPluginTranslation(bundles)` —
+returns `{ useTranslation }`, and the hook returns `{ t(key, vars?),
+language }` (flattened bundle, `{{var}}` interpolation, initial
+language from the iframe context, re-resolved on `languageChanged`):
+
+```ts
+const { useTranslation } = createPluginTranslation({ en: {…}, zh: {…} })
+// in a component:
+const { t } = useTranslation()
+```
+
+Plus `useCacheWriter`, `useExtractProgress`, `useVisibility`.
+
+### `usePref` — encode before you compare
+
+Prefs are **string** end to end. Without a codec the SDK serializes with
+`String(value)`:
+
+- **Never store `null` in a codec-less pref** — it round-trips as the
+  literal string `"null"` and `=== null` never matches. Use a string
+  sentinel (`"custom"`) for discrete modes;
+- codecs are **factories**: `numberCodec()`, `booleanCodec()`,
+  `jsonCodec()` — call them, don't pass them;
+- the setter is `(value: T) => void` — **no functional updates**
+  (`setPref(v => …)` does not exist); compute from the current value.
+
+This class of bug is silent: the value persists, the comparison just
+never fires.
 
 ## Iframe context and pushes
 
@@ -110,6 +134,57 @@ the bridge + context), `applyTheme`, `applyFonts`,
 the `codecs` (`booleanCodec`, `jsonCodec`, `numberCodec` — for `usePref`
 typed reads). `createIframeHostAPI` is the runtime used by the mount
 wrapper.
+
+## Sandbox and CSP reality
+
+Plugin pages are served with
+`sandbox allow-scripts allow-forms allow-downloads` (host-side CSP,
+mirrored on the iframe). Consequences:
+
+- **Opaque origin**: all requests are cross-origin (the host answers
+  with `access-control-allow-origin: *`), and no cookies — resource
+  URLs carry a short-lived `fileToken` instead.
+- **No popups, no top navigation**: `window.open`, `target="_blank"`
+  and anchor navigation out of the iframe do nothing. Downloads work
+  through the sandbox's `allow-downloads`: render a plain `<a href={url}
+  download>`.
+- **Workers are allowed** (no `worker-src` restriction) — but a worker
+  script URL from a sandboxed document is often rejected by the
+  same-origin check (document origin is "null"), so `new Worker(...)`
+  on a plain asset URL may throw; the blob fallback below covers it.
+
+## Large files
+
+Prefer the URL path over whole-file reads:
+
+- `resolveFileUrl(filename)` points at the host's Range-capable file
+  server (`accept-ranges: bytes`, ETag/If-Range, CORS `*`) — libraries
+  with range transport (e.g. pdf.js `getDocument({ url })`) stream
+  progressively and never hold the whole file in memory.
+- Fall back to `readFile()` (full bytes) only for small files, guarded
+  by size (e.g. ≤ 96 MB); above that, surface the streaming error
+  instead of loading a giant buffer into the sandbox.
+
+## Workers and bundled assets
+
+- Import worker scripts as asset URLs:
+  `import w from "pkg/build/worker.min.mjs?url"`, then
+  `new Worker(new URL(w, import.meta.url).href, { type: "module" })`.
+- If worker construction throws under the opaque origin, re-serve the
+  same bytes as a blob URL (`fetch(url) → blob → URL.createObjectURL`)
+  — blob workers are allowed in sandboxed documents. Libraries like
+  pdf.js additionally fall back to a main-thread "fake worker"
+  automatically.
+- Verify the worker actually loads in the workbench before shipping;
+  some engines reject URL workers in sandboxed frames even when the CSP
+  permits them.
+
+## Never swallow render errors
+
+A failed canvas/decoder render must not look like loading. Keep a
+per-surface error state: show a small error placeholder and
+`console.warn` the cause, instead of leaving the loading spinner up
+forever.
 
 ## Anchors and messages
 

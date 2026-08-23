@@ -98,9 +98,7 @@ types from the root entry.
 | `plugins/template` (hoardodile repo) | The minimal end-to-end path: `detect` → `sourceMeta` → iframe render, fixture tests, `detect:smoke`. Start here. |
 | `plugins/gallery` (hoardodile repo) | The official media plugin: multi-kind cards (`ui.card.<kind>`), video/audio skipping + probes, danmaku/message/imageHashes permissions, `testdata` generation script, bench baseline. |
 | `plugins/file` (hoardodile repo) | The built-in fallback plugin: a resource as a browseable file tree. |
-| `plugin-spine` (community) | Range of formats in one viewer with version-pinned runtimes, an extra "EX" search kind, a scene selector for multi-skeleton resources, and a dev loop that captures real sandbox hook results into the workbench. |
-| `plugin-manga` / `plugin-novel` (community) | Container/text formats: `outer!inner` addressing, extraction, and text-heavy iframe UIs. |
-| `plugin-live2d` (community) | A binary/asset-heavy format with its own runtime and web assets. |
+| `plugins/pdf` (hoardodile repo) | Official seed plugin, the newest end-to-end example: multi-candidate `detect`, range-streamed binary via the host file URL, a worker blob fallback for the sandboxed opaque origin, per-page anchors, and structural fixture verification (`testdata:verify`). |
 
 ## Resources
 

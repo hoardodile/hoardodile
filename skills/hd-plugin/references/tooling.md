@@ -57,6 +57,33 @@ dependencies: `@hoardodile/sdk-{types,server,react}` (+ `react`,
 `@hoardodile/cli`, `@hoardodile/host`, `@hoardodile/host-web`,
 `@hoardodile/workbench` + the usual Vite/Vitest/TS toolchain.
 
+### tsconfig — standalone vs in-repo
+
+- **Standalone plugin** (copied out of the repo): the template's own
+  `tsconfig.json` works everywhere.
+- **In-repo plugin** (under `plugins/`, official): extend the web
+  config like `gallery`/`file` do —
+  `{ "extends": "../../tsconfig.web.json", "include": ["src/**/*.ts",
+  "src/**/*.tsx"] }`. It pulls `@testing-library/jest-dom` into `types`,
+  so the plugin must declare it in devDependencies or `tsc` fails with
+  "Cannot find type definition file for '@testing-library/jest-dom'".
+
+### `@hoardodile/ui/theme.css` needs its import chain
+
+`theme.css` starts with `@import "tailwindcss"`, `@import
+"tw-animate-css"` and `@import "shadcn/tailwind.css"`. In the monorepo
+those resolve by hoisting; a standalone plugin must provide them as
+devDependencies (`shadcn`, `tw-animate-css`, `tailwindcss`) or the
+build fails at CSS import resolution.
+
+### Verify third-party libraries against the bundled version
+
+Viewer libraries move their public API between majors (pdf.js v6
+dropped `enableRange` — range streaming is on by default — and made
+`render({ canvas })` a required parameter). Pin the version, then check
+the `.d.ts` of the version you actually bundle before writing calls
+from memory or old docs.
+
 ## CLI semantics
 
 ```bash
@@ -89,6 +116,11 @@ hoardodile plugin dev             # watch-build + workbench (http://127.0.0.1:51
   copyrighted content).
 - `detect:smoke` runs detection against `testdata/` through the real
   sandbox — needs a build first.
+- **Verify binary fixtures with a real parser.** The `plugins/pdf`
+  plugin keeps `testdata:verify`: a Node script opens every sample with
+  the actual library and asserts page counts and that page 2 extracts
+  text — the regression check that catches PDFs which open but never
+  render. Do the same for any fixture format your plugin renders.
 
 ## Unit tests
 

@@ -49,9 +49,9 @@ labels (search kind labels, etc.) are referenced from the `ui` block:
 
 ```jsonc
 "i18n": {
-  "name": { "en": "Spine", "zh": "Spine" },
-  "description": { "en": "Spine skeleton viewer.", "zh": "Spine 骨骼查看器。" },
-  "exKindLabel": { "en": "EX", "zh": "EX" }
+  "name": { "en": "PDF", "zh": "PDF" },
+  "description": { "en": "Online PDF reader.", "zh": "在线 PDF 阅读器。" },
+  "pagesLabel": { "en": "pages", "zh": "页" }
 }
 ```
 
@@ -63,11 +63,10 @@ labels (search kind labels, etc.) are referenced from the `ui` block:
   "inheritFont": true,                  // default: inherit host font stack;
                                         //   false keeps your own fonts
   "card": {
-    "default": {                        // keyed by source kind ("default",
-      "bl": [ "…templates…" ],          //   "image", "video", "audio"…): the
-      "br": [ "…templates…" ]           //   resource card's bottom-left/right
-    }                                   //   corner content
-  },
+    "default": {                        // keyed by source kind — the only
+      "bl": [ "…templates…" ]           //   keys are "default", "image",
+    }                                   //   "video", "audio"; each corner
+  },                                    //   slot (tl/tr/bl/br) is optional
   "search": {
     "kinds": [
       { "key": "kind", "label": "{{t('labelKey')}}", "icon": "{{icon('Box')}}" }
@@ -78,8 +77,9 @@ labels (search kind labels, etc.) are referenced from the `ui` block:
 ```
 
 - **`card.<kind>`** — one entry per kind your `sourceMeta` can produce;
-  `default` covers the rest. Corner slots take template expressions that
-  resolve to small strings (counts, durations, versions…).
+  `default` covers the rest. Corner slots (`tl`/`tr`/`bl`/`br`) are all
+  optional and take template expressions that resolve to small strings
+  (counts, durations, versions…).
 - **`search.kinds`** — searchable categories your plugin supplies.
   `key` is stable and typed; labels via `{{t()}}`; icons via
   `{{icon('<SolarGlyph>')}}` (see `hd-plugin-design` for the icon set).
@@ -91,10 +91,13 @@ labels (search kind labels, etc.) are referenced from the `ui` block:
 
 `{{t('key')}}` — i18n label · `{{icon('Name')}}` — registry icon ·
 `{{join(' ', a, b)}}` — join · `{{number(x)}}` — locale number ·
-`{{duration(ms)}}` — time string · `{{if(cond, a, b)}}` — conditional ·
+`{{duration(ms)}}` — time string · `{{inc(n)}}` — 0-based value + 1
+(pipes `bytes`/`duration`/`number`/`inc`, comparisons `eq`/`ne`/`gt`/
+`lt`/`gte`/`lte` also exist) · `{{if(cond, a, b)}}` — conditional ·
 `{{gt(a, b)}}` — comparison · `{{source.<field>}}` — from `sourceMeta` ·
 `{{file.<field>}}` — from the typed file list · `{{searchKindIcons()}}`
-— the plugin's active search-kind icons.
+— the plugin's active search-kind icons. **Unknown expressions render
+as the empty string** — conditional corner content is safe to write.
 
 ## Real examples
 
@@ -111,17 +114,26 @@ labels (search kind labels, etc.) are referenced from the `ui` block:
 }
 ```
 
-**Spine** — a plugin-defined search kind and its card:
+**Gallery** — plugin-defined search kinds (each media kind is a facet):
 
 ```jsonc
 "search": { "kinds": [
-  { "key": "standard", "label": "{{t('standardKindLabel')}}", "icon": "{{icon('Box')}}" },
-  { "key": "ex",       "label": "{{t('exKindLabel')}}",       "icon": "{{icon('Layers')}}" }
-]},
-"card": { "default": {
-  "bl": ["{{join(' ', searchKindIcons(), number(source.animationCount))}}"],
-  "br": ["{{source.version}}"]
-}}
+  { "key": "image",     "label": "{{t('imageKindLabel')}}",     "icon": "{{icon('Image')}}"   },
+  { "key": "animation", "label": "{{t('animationKindLabel')}}", "icon": "{{icon('Sparkle')}}" },
+  { "key": "video",     "label": "{{t('videoKindLabel')}}",     "icon": "{{icon('Video')}}"   },
+  { "key": "audio",     "label": "{{t('audioKindLabel')}}",     "icon": "{{icon('Music')}}"   }
+]}
+```
+
+**PDF** — a conditional card corner plus a page-anchored message:
+
+```jsonc
+"card": {
+  "default": {
+    "bl": ["{{if(gt(source.pageCount, 0), join(' ', number(source.pageCount), t('pagesLabel')), 'PDF')}}"]
+  }
+},
+"message": { "anchor": "{{t('pageAnchor')}}{{inc(data.pageIndex)}}{{t('pageSuffix')}}" }
 ```
 
 ## Rules of thumb
