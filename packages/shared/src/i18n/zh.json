@@ -773,7 +773,7 @@
 			"docCount_other": "{{count}} 篇文档",
 			"folderCount_one": "{{count}} 个文件夹",
 			"folderCount_other": "{{count}} 个文件夹",
-			"description": "{{folders}}中的{{docs}}——你写的一切都在这里。",
+			"description": "{{folders}}中的 {{docs}}——你写的一切都在这里。",
 			"updated": "更新于 {{time}}"
 		},
 		"create": "新建",
