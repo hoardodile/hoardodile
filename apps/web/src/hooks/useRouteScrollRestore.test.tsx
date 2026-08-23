@@ -6,6 +6,7 @@ import {
 	RouterProvider,
 } from "@tanstack/react-router"
 import { act, render } from "@testing-library/react"
+import { StrictMode } from "react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { useRouteScrollRestore } from "./useRouteScrollRestore"
 
@@ -40,7 +41,7 @@ function makeContainer() {
 	return { container, layout, scrollTo }
 }
 
-function renderWithHook(initialPath = "/") {
+function renderWithHook(initialPath = "/", options?: { strict?: boolean }) {
 	const fixture = makeContainer()
 	const rootRoute = createRootRoute({
 		component: () => {
@@ -71,7 +72,8 @@ function renderWithHook(initialPath = "/") {
 		]),
 		history: createMemoryHistory({ initialEntries: [initialPath] }),
 	})
-	render(<RouterProvider router={router} />)
+	const tree = <RouterProvider router={router} />
+	render(options?.strict === true ? <StrictMode>{tree}</StrictMode> : tree)
 	return { fixture, router }
 }
 
@@ -121,17 +123,21 @@ describe("useRouteScrollRestore", () => {
 		})
 	})
 
-	it("keeps re-applying while the content is still growing", async () => {
+	it("keeps re-aligning while the content grows after a long stable skeleton", async () => {
 		sessionStorage.setItem(`${PREFIX}:/`, "300")
 		const { fixture } = renderWithHook()
-		// Skeleton-height content at first; the real list lands gradually,
-		// so every tick must see the height growing.
-		fixture.layout.scrollHeight = 400
-		const grow = setInterval(() => {
-			fixture.layout.scrollHeight += 80
-		}, 5)
-		await flushFrames(24)
-		clearInterval(grow)
+		// A long stable skeleton (~1s): the old fixed-frame loop would have
+		// stopped at the clamped 50 within a few frames.
+		fixture.layout.scrollHeight = 450
+		await flushFrames(60)
+		expect(fixture.scrollTo).toHaveBeenLastCalledWith({
+			top: 50,
+			behavior: "instant",
+		})
+		// The real content lands and grows past the target: the loop must
+		// still be alive and re-align onto it.
+		fixture.layout.scrollHeight = 1400
+		await flushFrames(5)
 		expect(fixture.scrollTo).toHaveBeenLastCalledWith({
 			top: 300,
 			behavior: "instant",
@@ -142,9 +148,34 @@ describe("useRouteScrollRestore", () => {
 		sessionStorage.setItem(`${PREFIX}:/`, "300")
 		const { fixture } = renderWithHook()
 		fixture.layout.scrollHeight = 450
-		await flushFrames(2)
+		// The page is genuinely short: the loop ends only after ~1.5s of an
+		// unchanged height (~90 frames).
+		await flushFrames(96)
 		expect(fixture.scrollTo).toHaveBeenLastCalledWith({
 			top: 50,
+			behavior: "instant",
+		})
+	})
+
+	it("re-applies after a route swap clamps the position", async () => {
+		sessionStorage.setItem(`${PREFIX}:/`, "300")
+		const { fixture } = renderWithHook()
+		// The outgoing page is taller than the target, so the first tick
+		// looks "landed"; simulate the swap shrinking the content and the
+		// browser clamping the scrollTop back.
+		await flushFrames(2)
+		fixture.layout.scrollHeight = 400
+		fixture.layout.scrollTop = 0
+		await flushFrames(2)
+		expect(fixture.scrollTo).toHaveBeenLastCalledWith({
+			top: 0,
+			behavior: "instant",
+		})
+		// The real content grows past the target: the loop re-aligns.
+		fixture.layout.scrollHeight = 1400
+		await flushFrames(5)
+		expect(fixture.scrollTo).toHaveBeenLastCalledWith({
+			top: 300,
 			behavior: "instant",
 		})
 	})
@@ -185,6 +216,19 @@ describe("useRouteScrollRestore", () => {
 		fixture.layout.scrollHeight = 800
 		await flushFrames(20)
 		expect(fixture.scrollTo).not.toHaveBeenCalled()
+	})
+
+	it("restores on the second StrictMode mount", async () => {
+		sessionStorage.setItem(`${PREFIX}:/`, "300")
+		// StrictMode (dev) runs the effect, tears it down and runs it again:
+		// the cached route must be cleared so the second mount still applies
+		// and restores, instead of skipping it as a no-op.
+		const { fixture } = renderWithHook("/", { strict: true })
+		await flushFrames()
+		expect(fixture.scrollTo).toHaveBeenLastCalledWith({
+			top: 300,
+			behavior: "instant",
+		})
 	})
 
 	it("flushes the exact position when leaving a tracked route", async () => {
