@@ -859,6 +859,7 @@ function PluginRowActions(props: {
 					<DropdownMenuItem
 						onClick={handleResetPref}
 						disabled={prefResetMut.isPending}
+						variant="destructive"
 					>
 						<Icon icon={Restart} />
 						{t("plugins.resetPluginPref")}
@@ -866,6 +867,7 @@ function PluginRowActions(props: {
 					<DropdownMenuItem
 						onClick={handleClearCache}
 						disabled={cacheClearMut.isPending}
+						variant="destructive"
 					>
 						<Icon icon={Eraser} />
 						{t("plugins.clearPluginCache")}
@@ -873,7 +875,7 @@ function PluginRowActions(props: {
 					{!plugin.builtin && !plugin.dev ? (
 						<DropdownMenuItem
 							onClick={() => setUninstallOpen(true)}
-							className="text-destructive"
+							variant="destructive"
 						>
 							<Icon icon={TrashBinMinimalistic} />
 							{t("plugins.uninstall")}
