@@ -1,44 +1,18 @@
+import { uiCatalogFor } from "@hoardodile/i18n/catalogs/ui"
+import { isSupportedLanguage, SUPPORTED_LANGUAGES } from "@hoardodile/i18n/core"
+import { createI18n } from "@hoardodile/i18n/create-i18n"
 import { ensureHostBridge, getPluginContext } from "@hoardodile/sdk-web"
-import { useEffect, useState } from "react"
+import type { Resource } from "i18next"
+import { useEffect } from "react"
+import { setI18n, useTranslation as useReactTranslation } from "react-i18next"
 
 type RawBundle = Record<string, unknown>
-
-type FlatBundle = Record<string, string>
 
 type InterpolationVars = Record<string, string | number>
 
 type PluginTranslation = {
 	readonly t: (key: string, vars?: InterpolationVars) => string
 	readonly language: string
-}
-
-function isPlainObject(value: unknown): value is Record<string, unknown> {
-	return value !== null && typeof value === "object" && !Array.isArray(value)
-}
-
-function flattenMessages(
-	obj: Record<string, unknown>,
-	prefix = "",
-): Record<string, string> {
-	const result: Record<string, string> = {}
-	for (const [key, value] of Object.entries(obj)) {
-		const fullKey = prefix !== "" ? `${prefix}.${key}` : key
-		if (isPlainObject(value)) {
-			Object.assign(result, flattenMessages(value, fullKey))
-		} else {
-			result[fullKey] = String(value)
-		}
-	}
-	return result
-}
-
-function interpolate(template: string, vars?: InterpolationVars): string {
-	if (vars === undefined) return template
-	let result = template
-	for (const [k, v] of Object.entries(vars)) {
-		result = result.replaceAll(`{{${k}}}`, String(v))
-	}
-	return result
 }
 
 function resolveLocale(lang: string, available: Set<string>): string {
@@ -48,47 +22,72 @@ function resolveLocale(lang: string, available: Set<string>): string {
 	return "en"
 }
 
-function resolveInitialLanguage(bundles: Record<string, FlatBundle>): string {
-	const ctx = getPluginContext()
-	if (ctx === undefined) return "en"
-	return resolveLocale(ctx.language, new Set(Object.keys(bundles)))
-}
-
 /**
- * Creates a `useTranslation` hook backed by the given locale bundles.
- * The initial language is read from the plugin context and updated when
- * the host sends a `languageChanged` push.
+ * Creates a `useTranslation` hook backed by the given locale bundles plus
+ * the shared `ui` catalog namespace (so `@hoardodile/ui` components
+ * render localized chrome in every supported host language).
  *
- * Translation values support `{{var}}` interpolation placeholders.
+ * Backed by i18next/react-i18next with the same options as the host
+ * surfaces: the language follows the plugin context, updates when the
+ * host sends a `languageChanged` push, interpolates `{{var}}`
+ * placeholders, and falls back to English (via `fallbackLng`) for
+ * languages the plugin's own bundle does not ship.
  */
 export function createPluginTranslation(bundles: Record<string, RawBundle>): {
 	readonly useTranslation: () => PluginTranslation
 } {
-	const flat: Record<string, FlatBundle> = {}
-	const availableLocales = new Set<string>()
-	for (const [lang, bundle] of Object.entries(bundles)) {
-		flat[lang] = flattenMessages(bundle)
-		availableLocales.add(lang)
+	const availableLangs = new Set<string>([
+		...Object.keys(bundles),
+		...SUPPORTED_LANGUAGES,
+	])
+
+	// The small shared `ui` namespace (every supported language, so ui
+	// chrome always matches the host language) plus the plugin's own
+	// `plugin` namespace — never the full app catalog (the iframe bundle
+	// stays a fraction of the SPA's i18n payload).
+	const resources: Resource = {}
+	for (const language of availableLangs) {
+		const base = language.split("-")[0]!
+		resources[language] = {
+			...(isSupportedLanguage(base) ? { ui: uiCatalogFor(base) } : {}),
+			...(bundles[language] === undefined ? {} : { plugin: bundles[language] }),
+		}
+	}
+
+	const initial = resolveLocale(
+		getPluginContext()?.language ?? "en",
+		availableLangs,
+	)
+	const instance = createI18n({ lng: initial, resources })
+
+	// Bind as react-i18next's default instance so every `@hoardodile/ui`
+	// component rendered in this iframe resolves the same instance.
+	setI18n(instance)
+
+	let subscribed = false
+	function subscribeToLanguageChanges(): void {
+		if (subscribed) return
+		subscribed = true
+		ensureHostBridge().subscribe("languageChanged", (data) => {
+			void instance.changeLanguage(
+				resolveLocale(
+					String((data as { language: string }).language),
+					availableLangs,
+				),
+			)
+		})
 	}
 
 	function useTranslation(): PluginTranslation {
-		const [language, setLanguage] = useState(() => resolveInitialLanguage(flat))
-
-		useEffect(function subscribeToLanguageChanges() {
-			return ensureHostBridge().subscribe(
-				"languageChanged",
-				function handle(data) {
-					setLanguage(resolveLocale(data.language, availableLocales))
-				},
-			)
-		}, [])
-
-		function t(key: string, vars?: InterpolationVars): string {
-			const bundle = flat[language] ?? flat.en ?? {}
-			return interpolate(bundle[key] ?? key, vars)
+		useEffect(subscribeToLanguageChanges, [])
+		const { t, i18n } = useReactTranslation("plugin", {
+			i18n: instance,
+			useSuspense: false,
+		})
+		return {
+			t: t as unknown as PluginTranslation["t"],
+			language: i18n.resolvedLanguage ?? i18n.language,
 		}
-
-		return { t, language }
 	}
 
 	return { useTranslation }

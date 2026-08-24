@@ -5,6 +5,7 @@ export const SDK_DEP_NAMES: readonly string[] = [
 	"@hoardodile/cli",
 	"@hoardodile/host",
 	"@hoardodile/host-web",
+	"@hoardodile/i18n",
 	"@hoardodile/sdk-react",
 	"@hoardodile/sdk-server",
 	"@hoardodile/sdk-types",

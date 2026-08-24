@@ -4,9 +4,8 @@
 
 import { readFileSync } from "node:fs"
 import { resolve } from "node:path"
+import { CATALOGS } from "@hoardodile/i18n/catalogs"
 import { pluginThemePalettes } from "@hoardodile/sdk-web"
-import en from "@hoardodile/shared/i18n/en.json"
-import zh from "@hoardodile/shared/i18n/zh.json"
 import { describe, expect, it } from "vitest"
 
 // Guards the remaining manual steps of adding a palette: the CSS token
@@ -28,8 +27,8 @@ describe("theme palette registry", () => {
 
 	it("every palette has an i18n label in both locales", () => {
 		for (const id of pluginThemePalettes) {
-			expect(en.theme.palette).toHaveProperty(id)
-			expect(zh.theme.palette).toHaveProperty(id)
+			expect(CATALOGS.en.theme.palette).toHaveProperty(id)
+			expect(CATALOGS.zh.theme.palette).toHaveProperty(id)
 		}
 	})
 })

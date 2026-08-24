@@ -1,7 +1,7 @@
 import { CaptionBar } from "@hoardodile/ui/components/caption-bar"
+import { CloseConfirmDialog } from "@hoardodile/ui/components/close-confirm-dialog"
 import { type ReactNode, useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { CloseConfirmDialog } from "@/components/common/CloseConfirmDialog"
 import { resolveSystemLanguage } from "@/i18n"
 import { getDesktopBridge } from "@/lib/desktop"
 
@@ -19,7 +19,7 @@ export function DesktopCaptionBar(props: {
 	/** Leftmost strip control (the shell's global sidebar toggle). */
 	readonly leading?: ReactNode
 }) {
-	const { t, i18n } = useTranslation()
+	const { i18n } = useTranslation()
 	const desktop = getDesktopBridge()
 	const [closeConfirmOpen, setCloseConfirmOpen] = useState(false)
 
@@ -59,16 +59,6 @@ export function DesktopCaptionBar(props: {
 			<CaptionBar
 				controls={{ ...bridge, close: handleClose }}
 				leading={props.leading}
-				labels={{
-					minimize: t("me.desktop.caption.minimize"),
-					maximize: t("me.desktop.caption.maximize"),
-					restore: t("me.desktop.caption.restore"),
-					close: t("me.desktop.caption.close"),
-					back: t("me.desktop.caption.back"),
-					forward: t("me.desktop.caption.forward"),
-					reload: t("me.desktop.caption.reload"),
-					devtools: t("me.desktop.caption.devtools"),
-				}}
 			/>
 			<CloseConfirmDialog
 				open={closeConfirmOpen}

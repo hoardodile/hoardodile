@@ -78,8 +78,11 @@ Query/mutation results have the shape
 
 Also in `@hoardodile/sdk-react`: `createPluginTranslation(bundles)` —
 returns `{ useTranslation }`, and the hook returns `{ t(key, vars?),
-language }` (flattened bundle, `{{var}}` interpolation, initial
-language from the iframe context, re-resolved on `languageChanged`):
+language }` (`{{var}}` interpolation + plurals via i18next, initial
+language from the iframe context, re-resolved on `languageChanged`).
+Your bundle covers your own strings only (missing languages fall back to
+English); `@hoardodile/ui` component chrome is translated separately from
+the shared `@hoardodile/i18n` `ui` catalog in every host language:
 
 ```ts
 const { useTranslation } = createPluginTranslation({ en: {…}, zh: {…} })

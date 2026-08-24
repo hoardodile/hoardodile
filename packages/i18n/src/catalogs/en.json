@@ -371,23 +371,6 @@
 				"tray": "Hide to tray",
 				"quit": "Quit the app"
 			},
-			"closeConfirm": {
-				"title": "Close hoardodile?",
-				"description": "The app keeps running in the tray unless you quit it.",
-				"tray": "Hide to tray",
-				"quit": "Quit the app",
-				"remember": "Remember my choice"
-			},
-			"caption": {
-				"back": "Back",
-				"forward": "Forward",
-				"reload": "Reload",
-				"minimize": "Minimize",
-				"maximize": "Maximize",
-				"restore": "Restore",
-				"close": "Close",
-				"devtools": "Developer tools"
-			},
 			"updateBanner": "Version {{version}} is ready to install.",
 			"updateBannerRestart": "Restart",
 			"shellCache": {
@@ -528,18 +511,6 @@
 			"container": "Containers",
 			"download": "Downloads"
 		}
-	},
-	"pluginDownload": {
-		"eyebrow": "Plugin download",
-		"title": "Download this file?",
-		"description": "{{pluginName}} wants to download a file into its own storage folder. The file is fetched from the URL below and stored only inside the plugin's folder.",
-		"urlLabel": "URL",
-		"destLabel": "Destination",
-		"sizeLabel": "Size",
-		"unknownSize": "unknown",
-		"deny": "Deny",
-		"allow": "Allow",
-		"remember": "Remember for this session (no more prompts from this plugin)"
 	},
 	"overview": {
 		"usageHistory": {

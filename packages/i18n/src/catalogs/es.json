@@ -371,23 +371,6 @@
 				"tray": "Ocultar en la bandeja",
 				"quit": "Salir de la app"
 			},
-			"closeConfirm": {
-				"title": "¿Cerrar hoardodile?",
-				"description": "La app sigue ejecutándose en la bandeja a menos que la cierres.",
-				"tray": "Ocultar en la bandeja",
-				"quit": "Salir de la app",
-				"remember": "Recordar mi elección"
-			},
-			"caption": {
-				"back": "Atrás",
-				"forward": "Adelante",
-				"reload": "Recargar",
-				"minimize": "Minimizar",
-				"maximize": "Maximizar",
-				"restore": "Restaurar",
-				"close": "Cerrar",
-				"devtools": "Herramientas de desarrollo"
-			},
 			"updateBanner": "La versión {{version}} está lista para instalar.",
 			"updateBannerRestart": "Reiniciar",
 			"shellCache": {
@@ -528,18 +511,6 @@
 			"container": "Contenedores",
 			"download": "Descargas"
 		}
-	},
-	"pluginDownload": {
-		"eyebrow": "Descarga de plugin",
-		"title": "¿Descargar este archivo?",
-		"description": "{{pluginName}} quiere descargar un archivo a su propia carpeta de almacenamiento. El archivo se obtiene desde la URL siguiente y solo se guarda dentro de la carpeta del plugin.",
-		"urlLabel": "URL",
-		"destLabel": "Destino",
-		"sizeLabel": "Tamaño",
-		"unknownSize": "desconocido",
-		"deny": "Rechazar",
-		"allow": "Permitir",
-		"remember": "Recordar para esta sesión (sin más avisos de este plugin)"
 	},
 	"overview": {
 		"usageHistory": {

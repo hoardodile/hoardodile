@@ -1,3 +1,5 @@
+// Pure helper module (no catalogs) — keeps the sandboxed preload bundle free of the JSON catalogs.
+import { isSupportedLanguage } from "@hoardodile/i18n/core"
 import type {
 	DesktopCloseAction,
 	DesktopShellConfig,
@@ -8,8 +10,6 @@ import type {
 	LanInfo,
 	LanSetResult,
 } from "@hoardodile/shared/desktop"
-// Pure helper module (no catalogs) — keeps the sandboxed preload bundle free of the JSON catalogs.
-import { isSupportedLanguage } from "@hoardodile/shared/i18n"
 import { contextBridge, ipcRenderer } from "electron"
 import { IPC } from "../shared/ipc.ts"
 

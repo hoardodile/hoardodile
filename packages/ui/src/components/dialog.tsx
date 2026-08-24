@@ -1,5 +1,6 @@
 import * as React from "react"
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog"
+import { useTranslation } from "react-i18next"
 
 import { cn } from "@hoardodile/ui/lib/utils"
 import { Button } from "@hoardodile/ui/components/button"
@@ -92,6 +93,7 @@ function DialogContent({
      */
     contentMotion?: "default" | "minimal"
   }) {
+  const { t } = useTranslation("ui", { useSuspense: false })
   // Auto-wrap "loose" body children (anything that is not a DialogHeader
   // or DialogFooter) inside a DialogBody. This guarantees a single
   // scroll container — historically callers relied on DialogContent
@@ -140,7 +142,7 @@ function DialogContent({
             className="absolute top-3 right-3 z-20 flex size-6 items-center justify-center rounded-md text-muted-foreground transition-colors duration-150 hover:bg-muted hover:text-foreground"
           >
             <Cross className="size-3" />
-            <span className="sr-only">Close</span>
+            <span className="sr-only">{t("aria.close")}</span>
           </DialogPrimitive.Close>
         )}
       </DialogPrimitive.Popup>

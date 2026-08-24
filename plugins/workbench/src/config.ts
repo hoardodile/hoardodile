@@ -1,4 +1,10 @@
 import {
+	isSupportedLanguage,
+	resolveSystemLanguage,
+	SUPPORTED_LANGUAGES,
+	type SupportedLanguage,
+} from "@hoardodile/i18n"
+import {
 	type PluginIframeContext,
 	type PluginThemePalette,
 	pluginThemePalettes,
@@ -24,9 +30,9 @@ export type WorkbenchIconStyle = PluginIframeContext["iconStyle"]
  *   (`defaultStyle = "duotone"`).
  * - `language: "system"` — the app resolves the stored pref, then the
  *   navigator language, then falls back to `"en"` (`apps/web/src/i18n/index.ts`);
- *   {@link resolveWorkbenchLanguage} mirrors `resolveSystemLanguage` in
- *   `@hoardodile/shared/i18n` (private, so the logic is mirrored, not
- *   imported).
+ *   `{@link resolveWorkbenchLanguage}` is `resolveSystemLanguage` from
+ *   `@hoardodile/i18n` (now published into the SDK closure, so the
+ *   workbench imports it instead of mirroring it).
  * - `fontFamily: ""` — `apps/web/src/lib/fonts.ts`: with no font pref the
  *   context payload is `{ family: "", cssPaths: [] }` (`PRESET_FONTS` is
  *   empty, so `cssPaths` is always empty).
@@ -74,12 +80,13 @@ export const WORKBENCH_DEFAULTS: WorkbenchConfig = {
 }
 
 /**
- * Keep in sync with `SUPPORTED_LANGUAGES` in `@hoardodile/shared/i18n`
- * (private package — the list is mirrored, not imported; the shared
- * catalogs are the source of truth).
+ * The supported language set and system-locale resolver come from the
+ * published `@hoardodile/i18n` package — the same source the app and the
+ * desktop shell use (no more mirrored copies).
  */
-export const WORKBENCH_LANGUAGES = ["en", "zh", "ja", "de", "es"] as const
-export type WorkbenchLanguage = (typeof WORKBENCH_LANGUAGES)[number]
+export const WORKBENCH_LANGUAGES = SUPPORTED_LANGUAGES
+export type WorkbenchLanguage = SupportedLanguage
+export const resolveWorkbenchLanguage = resolveSystemLanguage
 
 export const PALETTE_LABELS: Readonly<Record<PluginThemePalette, string>> = {
 	// Labels match `theme.palette.*` in the app's i18n catalogs.
@@ -136,22 +143,7 @@ export function resolveWorkbenchTheme(
 }
 
 /**
- * Map a BCP-47 locale (e.g. `navigator.language`) onto the supported set,
- * taking the base code, falling back to `"en"` (the app's own fallback).
- * Mirrors `resolveSystemLanguage` in `@hoardodile/shared/i18n`.
- */
-export function resolveWorkbenchLanguage(raw: string | undefined): string {
-	const base = raw?.toLowerCase().split("-")[0]
-	if (
-		base !== undefined &&
-		(WORKBENCH_LANGUAGES as readonly string[]).includes(base)
-	) {
-		return base
-	}
-	return "en"
-}
-
-/** Display line for the viewport, e.g. `"Fill"` or `"900×700"`. */
+ * Display line for the viewport, e.g. `"Fill"` or `"900×700"`. */
 export function describeViewport(viewport: WorkbenchViewport): string {
 	if (viewport.width === null || viewport.height === null) return "Fill"
 	return `${viewport.width}×${viewport.height}`
@@ -208,8 +200,7 @@ function normalizeConfig(raw: unknown): WorkbenchConfig {
 				: WORKBENCH_DEFAULTS.iconStyle
 	const language =
 		typeof candidate.language === "string" &&
-		(candidate.language === "system" ||
-			(WORKBENCH_LANGUAGES as readonly string[]).includes(candidate.language))
+		(candidate.language === "system" || isSupportedLanguage(candidate.language))
 			? candidate.language
 			: WORKBENCH_DEFAULTS.language
 	const fontFamily =

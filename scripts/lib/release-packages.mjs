@@ -19,6 +19,7 @@ export const PLUGIN_MANIFESTS = [
 /** The published package.json files (SDK closure + terminal packages). */
 export const PUBLISHED_PACKAGE_MANIFESTS = [
 	"packages/cli/package.json",
+	"packages/i18n/package.json",
 	"packages/ui/package.json",
 	"plugins/host/package.json",
 	"plugins/host-web/package.json",

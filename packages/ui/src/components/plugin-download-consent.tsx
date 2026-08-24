@@ -2,6 +2,7 @@ import { Button } from "./button.tsx"
 import { Checkbox } from "./checkbox.tsx"
 import { AppDialog } from "./app-dialog.tsx"
 import { useEffect, useState } from "react"
+import { useTranslation } from "react-i18next"
 
 /**
  * The shared plugin asset-download consent dialog — host chrome used by
@@ -10,8 +11,11 @@ import { useEffect, useState } from "react"
  *
  * Presentational by design: the queue lives in the host's consent store
  * (`@hoardodile/host-web`), this component renders exactly one ticket
- * and reports the decision through callbacks. Nothing here imports
- * anything outside `@hoardodile/ui`, keeping the SDK closure intact.
+ * and reports the decision through callbacks. Copy comes from the shared
+ * `ui` catalog namespace (`pluginDownload.*`), so every React surface
+ * renders the same localized strings; nothing here imports anything
+ * outside `@hoardodile/ui` + `@hoardodile/i18n`, keeping the SDK closure
+ * intact.
  */
 
 /**
@@ -30,45 +34,12 @@ export type PluginConsentTicket = {
 	readonly reason?: string
 }
 
-/** Minimal translate signature both host apps can satisfy. */
-export type PluginConsentTranslate = (
-	key: string,
-	opts?: Record<string, unknown>,
-) => string
-
-const DEFAULT_LABELS: Readonly<Record<string, string>> = {
-	eyebrow: "Plugin download",
-	title: "Download this file?",
-	description:
-		"{{pluginName}} wants to download a file into its own storage folder. The file is fetched from the URL below and stored only inside the plugin's folder.",
-	urlLabel: "URL",
-	destLabel: "Destination",
-	sizeLabel: "Size",
-	unknownSize: "unknown",
-	deny: "Deny",
-	allow: "Allow",
-	remember: "Remember for this session (no more prompts from this plugin)",
-}
-
-function defaultTranslate(key: string, opts?: Record<string, unknown>): string {
-	const bare = key.replace(/^pluginDownload\./, "")
-	let out = DEFAULT_LABELS[bare] ?? key
-	if (opts !== undefined) {
-		for (const [name, value] of Object.entries(opts)) {
-			out = out.replace(`{{${name}}}`, String(value))
-		}
-	}
-	return out
-}
-
 export type PluginDownloadConsentDialogProps = {
 	/** Ticket to show; `null` hides the dialog (one at a time). */
 	readonly entry: PluginConsentTicket | null
 	/** Decision callbacks — the host wires them to its own decide path. */
 	readonly onDeny: (ticketId: string) => void
 	readonly onAllow: (ticketId: string, remember: boolean) => void
-	/** Host i18n; falls back to the built-in English labels. */
-	readonly t?: PluginConsentTranslate
 	/** Byte formatter; defaults to `"<n> B"`. */
 	readonly formatBytes?: (bytes: number) => string
 }
@@ -87,7 +58,7 @@ export function PluginDownloadConsentDialog(
 	props: PluginDownloadConsentDialogProps,
 ) {
 	const { entry, onDeny, onAllow } = props
-	const t = props.t ?? defaultTranslate
+	const { t } = useTranslation("ui", { useSuspense: false })
 	const formatBytes = props.formatBytes ?? ((bytes: number) => `${bytes} B`)
 	const activeId = entry === null ? null : entry.ticketId
 	const [remember, setRemember] = useState(false)
@@ -109,7 +80,9 @@ export function PluginDownloadConsentDialog(
 			description={
 				entry === null
 					? undefined
-					: t("pluginDownload.description", { pluginName: entry.pluginName })
+					: t("pluginDownload.description", {
+							pluginName: entry.pluginName,
+						})
 			}
 			size="md"
 			contentTestId="plugin-download-consent"
@@ -142,7 +115,6 @@ export function PluginDownloadConsentDialog(
 					entry={entry}
 					remember={remember}
 					onRememberChange={setRemember}
-					t={t}
 					formatBytes={formatBytes}
 				/>
 			)}
@@ -154,10 +126,10 @@ function ConsentBody(props: {
 	readonly entry: PluginConsentTicket
 	readonly remember: boolean
 	readonly onRememberChange: (value: boolean) => void
-	readonly t: PluginConsentTranslate
 	readonly formatBytes: (bytes: number) => string
 }) {
-	const { entry, remember, onRememberChange, t, formatBytes } = props
+	const { entry, remember, onRememberChange, formatBytes } = props
+	const { t } = useTranslation("ui", { useSuspense: false })
 	return (
 		<div className="flex flex-col gap-4">
 			<div className="flex flex-col gap-1.5">

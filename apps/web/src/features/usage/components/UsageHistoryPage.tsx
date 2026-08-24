@@ -1,10 +1,10 @@
+﻿import { PaginationBar } from "@hoardodile/ui/components/pagination-bar"
 import { SectionHeader } from "@hoardodile/ui/components/section-header"
 import { SectionTabs } from "@hoardodile/ui/components/section-tabs"
 import { ClockCircle } from "@hoardodile/ui/icons/registry"
 import { keepPreviousData, useQueries } from "@tanstack/react-query"
 import { useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { PaginationBar } from "@/components/common/PaginationBar"
 import {
 	dayLabel,
 	groupByTimestamp,
@@ -55,7 +55,7 @@ const TAB_LABEL_KEYS: Record<
  *
  * The "All" tab merges the three types client-side: it fetches a deep
  * window of each type (100) once and slices pages locally, so every page
- * shows a consistent slice of one global recency-ordered list — per-page
+ * shows a consistent slice of one global recency-ordered list â€” per-page
  * totalsPage windows would skip entities and leave pages with ragged
  * counts. Entity tabs paginate on the server; `keepPreviousData` keeps
  * the current page visible while the next one loads.

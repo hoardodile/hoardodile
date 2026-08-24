@@ -1,0 +1,51 @@
+{
+	"caption": {
+		"back": "戻る",
+		"forward": "進む",
+		"reload": "再読み込み",
+		"minimize": "最小化",
+		"maximize": "最大化",
+		"restore": "元に戻す",
+		"close": "閉じる",
+		"devtools": "開発者ツール"
+	},
+	"closeConfirm": {
+		"title": "hoardodile を閉じますか？",
+		"description": "終了しない限り、アプリはトレイで動作し続けます。",
+		"tray": "トレイに隠す",
+		"quit": "アプリを終了",
+		"cancel": "キャンセル",
+		"remember": "選択を記憶する"
+	},
+	"pluginDownload": {
+		"eyebrow": "プラグインのダウンロード",
+		"title": "このファイルをダウンロードしますか？",
+		"description": "{{pluginName}} はファイルを自身のストレージフォルダにダウンロードしようとしています。ファイルは下記のURLから取得され、プラグイン自身のフォルダ内にのみ保存されます。",
+		"urlLabel": "URL",
+		"destLabel": "保存先",
+		"sizeLabel": "サイズ",
+		"unknownSize": "不明",
+		"deny": "拒否",
+		"allow": "許可",
+		"remember": "このセッションでは記憶する（このプラグインへの確認を省略）"
+	},
+	"pagination": {
+		"region": "ページネーション",
+		"prev": "前へ",
+		"next": "次へ",
+		"previous": "前へ",
+		"goTo": "移動先",
+		"jumpToPage": "ページ",
+		"morePages": "その他のページ"
+	},
+	"aria": {
+		"loading": "読み込み中",
+		"closeToast": "通知を閉じる",
+		"close": "閉じる",
+		"more": "その他",
+		"toggleSidebar": "サイドバーを切り替え",
+		"mobileSidebarDescription": "モバイルサイドバーを表示します。",
+		"sidebar": "サイドバー",
+		"breadcrumb": "パンくず"
+	}
+}

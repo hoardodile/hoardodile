@@ -1,6 +1,7 @@
-import { cleanup, render, screen } from "@testing-library/react"
+import { cleanup, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, describe, expect, it, vi } from "vitest"
+import { renderWithI18n, testI18n } from "../test/i18n"
 import {
 	PluginDownloadConsentDialog,
 	type PluginConsentTicket,
@@ -18,6 +19,7 @@ const TICKET: PluginConsentTicket = {
 
 afterEach(() => {
 	cleanup()
+	void testI18n.changeLanguage("en")
 })
 
 function renderDialog(
@@ -25,7 +27,7 @@ function renderDialog(
 ) {
 	const onDeny = vi.fn()
 	const onAllow = vi.fn()
-	render(
+	renderWithI18n(
 		<PluginDownloadConsentDialog
 			entry={TICKET}
 			onDeny={onDeny}
@@ -76,8 +78,13 @@ describe("PluginDownloadConsentDialog", () => {
 		).not.toBeInTheDocument()
 	})
 
-	it("host i18n overrides the built-in labels", () => {
-		renderDialog({ t: (key) => (key === "pluginDownload.allow" ? "允许" : key) })
-		expect(screen.getByRole("button", { name: "允许" })).toBeInTheDocument()
+	it("follows the host language via the ui catalog", async () => {
+		await testI18n.changeLanguage("zh")
+		renderDialog()
+		// Base UI mounts the dialog portal on effects; wait for the first
+		// assertion instead of querying the pre-mount tree.
+		expect(
+			await screen.findByRole("button", { name: "允许" }),
+		).toBeInTheDocument()
 	})
 })

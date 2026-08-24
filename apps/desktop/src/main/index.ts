@@ -1,15 +1,16 @@
 import { existsSync } from "node:fs"
 import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
+import type { SupportedLanguage } from "@hoardodile/i18n"
+import { resolveSystemLanguage } from "@hoardodile/i18n"
+import { catalogFor } from "@hoardodile/i18n/catalogs"
+import { uiCatalogFor } from "@hoardodile/i18n/catalogs/ui"
 import type {
 	DesktopUpdateState,
 	DesktopWizardResult,
 	LanInfo,
 	LanSetResult,
 } from "@hoardodile/shared/desktop"
-import type { SupportedLanguage } from "@hoardodile/shared/i18n"
-import { resolveSystemLanguage } from "@hoardodile/shared/i18n"
-import { catalogFor } from "@hoardodile/shared/i18n/catalogs"
 import {
 	app,
 	BrowserWindow,
@@ -576,14 +577,14 @@ async function openAppWindow(runtime: Runtime): Promise<void> {
 
 /** Localized close-confirm copy for the native dialog; the SPA pushes the language via the bridge. */
 function closeDialogStrings(language: SupportedLanguage | undefined) {
-	const catalog = catalogFor(language)
+	const ui = uiCatalogFor(language)
 	return {
-		title: catalog.me.desktop.closeConfirm.title,
-		description: catalog.me.desktop.closeConfirm.description,
-		tray: catalog.me.desktop.closeConfirm.tray,
-		quit: catalog.me.desktop.closeConfirm.quit,
-		cancel: catalog.common.cancel,
-		remember: catalog.me.desktop.closeConfirm.remember,
+		title: ui.closeConfirm.title,
+		description: ui.closeConfirm.description,
+		tray: ui.closeConfirm.tray,
+		quit: ui.closeConfirm.quit,
+		cancel: ui.closeConfirm.cancel,
+		remember: ui.closeConfirm.remember,
 	}
 }
 

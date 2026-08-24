@@ -1,4 +1,5 @@
-import { MetaChip } from "@hoardodile/ui/components/meta-chip"
+﻿import { MetaChip } from "@hoardodile/ui/components/meta-chip"
+import { PaginationBar } from "@hoardodile/ui/components/pagination-bar"
 import { SectionHeader } from "@hoardodile/ui/components/section-header"
 import { SectionTabs } from "@hoardodile/ui/components/section-tabs"
 import { SortByTime } from "@hoardodile/ui/icons/registry"
@@ -6,7 +7,6 @@ import { useQuery } from "@tanstack/react-query"
 import { Link } from "@tanstack/react-router"
 import { useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { PaginationBar } from "@/components/common/PaginationBar"
 import {
 	dayLabel,
 	groupByTimestamp,
@@ -181,7 +181,7 @@ function TraceEventRow(props: {
 		)
 	}
 	const detailText =
-		detailParts.length > 0 ? `${detailParts.join(" · ")} · ` : ""
+		detailParts.length > 0 ? `${detailParts.join(" Â· ")} Â· ` : ""
 
 	const content = (
 		<>

@@ -1,26 +1,29 @@
 /**
  * @vitest-environment node
  *
- * Guardrails that keep the five i18n catalogs in lockstep. These caught
- * real regressions historically (dead `_plural` keys under i18next v4,
- * a missing zh mirror, and the desktop shell's hardcoded ternaries), so
- * they are intentionally strict: a new key must be registered in every
- * language before it can ship.
+ * Guardrails that keep the i18n catalogs in lockstep — both the app
+ * `translation` namespace (`src/catalogs/*.json`) and the shared `ui`
+ * namespace (`src/ui/*.json`). These caught real regressions
+ * historically (dead `_plural` keys under i18next v4, a missing zh
+ * mirror, and the desktop shell's hardcoded ternaries), so they are
+ * intentionally strict: a new key must be registered in every language
+ * before it can ship.
  *
  * Structural rules only (key parity, placeholders, plural pairs, markup
  * tags, ellipsis). Key *naming* is intentionally not enforced — see the
- * documented conventions in `packages/shared/src/i18n/index.ts`.
+ * documented conventions in `src/core.ts` and the catalog registries.
  */
 import { describe, expect, it } from "vitest"
+import { UI_CATALOGS } from "./catalogs/ui.ts"
 import { CATALOGS } from "./catalogs.ts"
 
-const EN = CATALOGS.en
+type FlatEntry = { key: string; value: string }
 
 function flatten(
 	obj: Record<string, unknown>,
 	path: string[] = [],
-	out: { key: string; value: string }[] = [],
-): { key: string; value: string }[] {
+	out: FlatEntry[] = [],
+): FlatEntry[] {
 	for (const [k, v] of Object.entries(obj)) {
 		if (typeof v === "object" && v !== null) {
 			flatten(v as Record<string, unknown>, [...path, k], out)
@@ -30,10 +33,6 @@ function flatten(
 	}
 	return out
 }
-
-const enFlat = flatten(EN as unknown as Record<string, unknown>)
-const enKeys = new Set(enFlat.map((r) => r.key))
-const enByKey = new Map(enFlat.map((r) => [r.key, r.value]))
 
 function vars(value: string): string {
 	return (value.match(/\{\{[^}]+\}\}/g) ?? [])
@@ -79,8 +78,15 @@ const ASCII_ELLIPSIS_ALLOWLIST = new Set([
 	"resources.editDialog.sourceUrlPlaceholder",
 ])
 
-describe("i18n catalog parity", () => {
-	for (const [name, catalog] of Object.entries(CATALOGS)) {
+function checkCatalogLockstep(
+	catalogs: Readonly<Record<string, Readonly<Record<string, unknown>>>>,
+): void {
+	const EN = catalogs.en as Record<string, unknown>
+	const enFlat = flatten(EN)
+	const enKeys = new Set(enFlat.map((r) => r.key))
+	const enByKey = new Map(enFlat.map((r) => [r.key, r.value]))
+
+	for (const [name, catalog] of Object.entries(catalogs)) {
 		const flat = flatten(catalog as unknown as Record<string, unknown>)
 		const keys = new Set(flat.map((r) => r.key))
 		const byKey = new Map(flat.map((r) => [r.key, r.value]))
@@ -88,11 +94,11 @@ describe("i18n catalog parity", () => {
 		it(`${name} has identical flat key sets`, () => {
 			expect(
 				[...enKeys].filter((k) => !keys.has(k)),
-				`keys only in en.json (missing from ${name}.json)`,
+				`keys only in en (missing from ${name})`,
 			).toEqual([])
 			expect(
 				[...keys].filter((k) => !enKeys.has(k)),
-				`keys only in ${name}.json`,
+				`keys only in ${name}`,
 			).toEqual([])
 		})
 
@@ -158,4 +164,9 @@ describe("i18n catalog parity", () => {
 		}
 		expect(violating, "count key without plural pair").toEqual([])
 	})
+}
+
+describe("i18n catalog parity", () => {
+	checkCatalogLockstep(CATALOGS)
+	checkCatalogLockstep(UI_CATALOGS)
 })

@@ -1,17 +1,12 @@
-import type { SupportedLanguage } from "@hoardodile/shared/i18n"
 import {
+	createI18n,
 	isSupportedLanguage,
 	resolveSystemLanguage,
 	SUPPORTED_LANGUAGES,
-} from "@hoardodile/shared/i18n"
-import de from "@hoardodile/shared/i18n/de.json"
-import en from "@hoardodile/shared/i18n/en.json"
-import es from "@hoardodile/shared/i18n/es.json"
-import ja from "@hoardodile/shared/i18n/ja.json"
-import zh from "@hoardodile/shared/i18n/zh.json"
+	type SupportedLanguage,
+} from "@hoardodile/i18n"
 import type { TFunction } from "i18next"
-import i18n from "i18next"
-import { initReactI18next } from "react-i18next"
+import { setI18n } from "react-i18next"
 import { prefKeys } from "@/lib/keys"
 import { prefSync } from "@/lib/prefSync"
 
@@ -36,44 +31,21 @@ export function loose(t: Translate): LooseTranslate {
 	return t as unknown as LooseTranslate
 }
 
-// Type-check `t()` keys against the en catalog. A wrong key (typo or a key
-// added to one catalog but not the other) becomes a compile error instead
-// of a silently rendered key name.
-declare module "i18next" {
-	interface CustomTypeOptions {
-		defaultNS: "translation"
-		resources: { translation: typeof en }
-		returnNull: false
-		returnEmptyString: false
-	}
-}
-
+// The i18next instance is created by the shared factory with the same
+// options every other surface uses (fallback language, plurals,
+// interpolation, the shared `translation` + `ui` catalogs). It is bound
+// as react-i18next's default instance for the SPA's own `useTranslation()`
+// calls and passed to `@hoardodile/ui` via <I18nProvider> (see main.tsx).
+//
+// The cast bridges pnpm's two physical react-i18next copies (the optional
+// `typescript` peer splits i18next into one store per toolchain context)
+// — the instance object itself is copy-agnostic.
 const storedLang = prefSync.get(prefKeys.language)
 const initialLang =
 	storedLang && isSupportedLanguage(storedLang) ? storedLang : undefined
 
-i18n.use(initReactI18next).init({
-	resources: {
-		en: { translation: en },
-		zh: { translation: zh },
-		ja: { translation: ja },
-		de: { translation: de },
-		es: { translation: es },
-	},
-	lng: initialLang,
-	fallbackLng: "en",
-	supportedLngs: [...SUPPORTED_LANGUAGES],
-	nonExplicitSupportedLngs: true,
-	interpolation: { escapeValue: false },
-	returnNull: false,
-	returnEmptyString: false,
-	compatibilityJSON: "v4",
-	pluralSeparator: "_",
-	detection: {
-		order: ["navigator", "htmlTag"],
-		caches: [],
-	},
-})
+const i18n = createI18n({ lng: initialLang })
+setI18n(i18n as unknown as Parameters<typeof setI18n>[0])
 
 export { i18n }
 export default i18n

@@ -3,7 +3,7 @@
  * External smoke test for the published SDK closure — the acceptance gate
  * before a release:
  *
- *   1. pack the 9 tarballs (`pnpm sdks:pack`),
+ *   1. pack the 10 tarballs (`pnpm sdks:pack`),
  *   2. scaffold a plugin into a temp dir with the scaffolder
  *      (`create-hoardodile-plugin --tarballs`),
  *   3. in the standalone install: tsc --noEmit, build, vitest, one

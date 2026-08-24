@@ -1,41 +1,21 @@
 import type { HoardodileDesktopBridge } from "@hoardodile/shared/desktop"
-import type { SupportedLanguage } from "@hoardodile/shared/i18n"
-import { resolveSystemLanguage } from "@hoardodile/shared/i18n"
-import { catalogFor } from "@hoardodile/shared/i18n/catalogs"
 import { Button } from "@hoardodile/ui/components/button"
 import { CaptionBar } from "@hoardodile/ui/components/caption-bar"
-import {
-	CloseConfirmDialog,
-	type CloseConfirmDialogStrings,
-} from "@hoardodile/ui/components/close-confirm-dialog"
+import { CloseConfirmDialog } from "@hoardodile/ui/components/close-confirm-dialog"
 import { useEffect, useState } from "react"
 import { disabledCaptionHistory, shellCopy } from "./copy.ts"
+import { applyLanguage } from "./i18n.ts"
 
 export type ShellPageMode = "loading" | "error"
-
-function closeDialogStrings(
-	language: SupportedLanguage | undefined,
-): CloseConfirmDialogStrings {
-	const catalog = catalogFor(
-		language ?? resolveSystemLanguage(navigator.language),
-	)
-	return {
-		title: catalog.me.desktop.closeConfirm.title,
-		description: catalog.me.desktop.closeConfirm.description,
-		tray: catalog.me.desktop.closeConfirm.tray,
-		quit: catalog.me.desktop.closeConfirm.quit,
-		cancel: catalog.common.cancel,
-		remember: catalog.me.desktop.closeConfirm.remember,
-	}
-}
 
 /**
  * Shell pages (loading spinner / server unreachable + Retry) with the same
  * caption bar and close dialog as the SPA. Loaded from the wizard bundle in
  * the matching mode (`?mode=loading|error`); the close flow mirrors the
  * SPA caption: ask shows the shared close-confirm dialog, tray/quit run
- * directly. The dialog copy follows the language the SPA pushed (shared
- * catalogs), falling back to the shell's system language / English.
+ * directly. Caption and dialog copy follow the shared `ui` catalog
+ * namespace (instance in `./i18n.ts`); the language follows the SPA push
+ * (shared catalogs), falling back to the shell's system language.
  */
 export function ShellPages(props: {
 	readonly mode: ShellPageMode
@@ -59,24 +39,11 @@ function ShellPagesView(props: {
 }) {
 	const { mode, message, desktop } = props
 	const copy = shellCopy()
-	const [language, setLanguage] = useState<SupportedLanguage | undefined>(
-		undefined,
-	)
-	const [strings, setStrings] = useState<CloseConfirmDialogStrings | undefined>(
-		undefined,
-	)
 	const [askOpen, setAskOpen] = useState(false)
 	const [retrying, setRetrying] = useState(false)
 
-	const captionLabels = catalogFor(
-		language ?? resolveSystemLanguage(navigator.language),
-	).me.desktop.caption
-
 	useEffect(() => {
-		void desktop.getLanguage().then((resolved) => {
-			setLanguage(resolved)
-			setStrings(closeDialogStrings(resolved))
-		})
+		void desktop.getLanguage().then(applyLanguage)
 	}, [desktop])
 
 	function handleClose(): void {
@@ -104,16 +71,6 @@ function ShellPagesView(props: {
 			<CaptionBar
 				controls={{ ...desktop, close: handleClose }}
 				history={disabledCaptionHistory}
-				labels={{
-					back: captionLabels.back,
-					forward: captionLabels.forward,
-					reload: captionLabels.reload,
-					minimize: captionLabels.minimize,
-					maximize: captionLabels.maximize,
-					restore: captionLabels.restore,
-					close: captionLabels.close,
-					devtools: captionLabels.devtools,
-				}}
 			/>
 			<main className="flex min-h-0 flex-1 items-center justify-center p-6">
 				{mode === "loading" ? (
@@ -136,14 +93,11 @@ function ShellPagesView(props: {
 					</div>
 				)}
 			</main>
-			{strings !== undefined ? (
-				<CloseConfirmDialog
-					open={askOpen}
-					onOpenChange={setAskOpen}
-					onDecide={handleDecide}
-					strings={strings}
-				/>
-			) : null}
+			<CloseConfirmDialog
+				open={askOpen}
+				onOpenChange={setAskOpen}
+				onDecide={handleDecide}
+			/>
 		</div>
 	)
 }

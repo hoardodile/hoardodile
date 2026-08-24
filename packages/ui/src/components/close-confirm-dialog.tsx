@@ -2,32 +2,26 @@ import { AppDialog } from "@hoardodile/ui/components/app-dialog"
 import { Button } from "@hoardodile/ui/components/button"
 import { Checkbox } from "@hoardodile/ui/components/checkbox"
 import { useEffect, useState } from "react"
-
-export type CloseConfirmDialogStrings = {
-	readonly title: string
-	readonly description: string
-	readonly tray: string
-	readonly quit: string
-	readonly cancel: string
-	readonly remember: string
-}
+import { useTranslation } from "react-i18next"
 
 export type CloseConfirmDialogProps = {
 	readonly open: boolean
 	readonly onOpenChange: (open: boolean) => void
 	readonly onDecide: (action: "tray" | "quit", remember: boolean) => void
-	readonly strings: CloseConfirmDialogStrings
 }
 
 /**
  * The shared close confirmation: hide to tray (primary), quit, or cancel,
- * plus a "remember my choice" checkbox. Used by the SPA caption (strings
- * from react-i18next) and the shell's static pages / native dialog (the
- * localized catalogs). The three-button footer follows DESIGN.md: quit at
- * the left edge, cancel and the primary action right-aligned.
+ * plus a "remember my choice" checkbox. Copy comes from the shared `ui`
+ * catalog namespace, so the SPA, the shell's static pages and the
+ * workbench all render the same strings for the current language (the
+ * native dialog in the Electron main process reads the same catalog
+ * directly). The three-button footer follows DESIGN.md: quit at the left
+ * edge, cancel and the primary action right-aligned.
  */
 export function CloseConfirmDialog(props: CloseConfirmDialogProps) {
-	const { open, onOpenChange, onDecide, strings } = props
+	const { open, onOpenChange, onDecide } = props
+	const { t } = useTranslation("ui", { useSuspense: false })
 	const [remember, setRemember] = useState(false)
 
 	// One-shot choice: the checkbox applies only to the close it was
@@ -51,7 +45,7 @@ export function CloseConfirmDialog(props: CloseConfirmDialogProps) {
 				}}
 				data-testid="close-confirm-quit"
 			>
-				{strings.quit}
+				{t("closeConfirm.quit")}
 			</Button>
 			<Button
 				variant="secondary"
@@ -60,7 +54,7 @@ export function CloseConfirmDialog(props: CloseConfirmDialogProps) {
 				}}
 				data-testid="close-confirm-cancel"
 			>
-				{strings.cancel}
+				{t("closeConfirm.cancel")}
 			</Button>
 			<Button
 				variant="default"
@@ -69,7 +63,7 @@ export function CloseConfirmDialog(props: CloseConfirmDialogProps) {
 				}}
 				data-testid="close-confirm-tray"
 			>
-				{strings.tray}
+				{t("closeConfirm.tray")}
 			</Button>
 		</>
 	)
@@ -78,8 +72,8 @@ export function CloseConfirmDialog(props: CloseConfirmDialogProps) {
 		<AppDialog
 			open={open}
 			onOpenChange={onOpenChange}
-			title={strings.title}
-			description={strings.description}
+			title={t("closeConfirm.title")}
+			description={t("closeConfirm.description")}
 			footer={footer}
 		>
 			{/* The checkbox is the only toggle (no label row); `py-2` keeps
@@ -94,10 +88,10 @@ export function CloseConfirmDialog(props: CloseConfirmDialogProps) {
 					onCheckedChange={(checked) => {
 						setRemember(checked === true)
 					}}
-					aria-label={strings.remember}
+					aria-label={t("closeConfirm.remember")}
 				/>
 				<span className="text-xs text-muted-foreground">
-					{strings.remember}
+					{t("closeConfirm.remember")}
 				</span>
 			</div>
 		</AppDialog>

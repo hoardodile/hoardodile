@@ -24,6 +24,7 @@ import {
 	type WorkbenchResource,
 } from "./context.ts"
 import { type Mounted, mountIframe, pushPresentation } from "./host.ts"
+import { i18n } from "./i18n.ts"
 
 function readSystemDark(): boolean {
 	return window.matchMedia("(prefers-color-scheme: dark)").matches
@@ -141,6 +142,12 @@ export function App() {
 			presentation.iconStyle,
 		)
 	}, [presentation.resolvedTheme, presentation.palette, presentation.iconStyle])
+
+	// The chrome's own language follows the configured language (the
+	// plugin iframe receives it in its initial context + pushes).
+	useEffect(() => {
+		void i18n.changeLanguage(presentation.language)
+	}, [presentation.language])
 
 	useEffect(() => {
 		saveWorkbenchConfig(config)

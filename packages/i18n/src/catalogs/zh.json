@@ -371,23 +371,6 @@
 				"tray": "最小化到托盘",
 				"quit": "退出应用"
 			},
-			"closeConfirm": {
-				"title": "关闭 hoardodile？",
-				"description": "除非选择退出，应用会继续在托盘运行。",
-				"tray": "最小化到托盘",
-				"quit": "退出应用",
-				"remember": "记住我的选择"
-			},
-			"caption": {
-				"back": "后退",
-				"forward": "前进",
-				"reload": "刷新",
-				"minimize": "最小化",
-				"maximize": "最大化",
-				"restore": "还原",
-				"close": "关闭",
-				"devtools": "开发者工具"
-			},
 			"updateBanner": "版本 {{version}} 已就绪，可以安装。",
 			"updateBannerRestart": "重启",
 			"shellCache": {
@@ -528,18 +511,6 @@
 			"container": "容器",
 			"download": "下载"
 		}
-	},
-	"pluginDownload": {
-		"eyebrow": "插件下载",
-		"title": "下载这个文件？",
-		"description": "{{pluginName}} 想下载一个文件到它自己的存储目录。文件将从下面的链接获取，且只会保存到插件自身的文件夹内。",
-		"urlLabel": "链接",
-		"destLabel": "目标路径",
-		"sizeLabel": "大小",
-		"unknownSize": "未知",
-		"deny": "拒绝",
-		"allow": "允许",
-		"remember": "本会话记住（不再向此插件询问）"
 	},
 	"overview": {
 		"usageHistory": {

@@ -1,9 +1,10 @@
-import type { TraitFilter } from "@hoardodile/schemas"
+﻿import type { TraitFilter } from "@hoardodile/schemas"
 import { MAX_ID_FILTER_SIZE } from "@hoardodile/schemas"
 import type { SortBy, SortOrder } from "@hoardodile/shared"
 import { Button } from "@hoardodile/ui/components/button"
 import { Icon } from "@hoardodile/ui/components/icon"
 import { ListEmptyRow } from "@hoardodile/ui/components/list-empty-row"
+import { PaginationBar } from "@hoardodile/ui/components/pagination-bar"
 import { toast } from "@hoardodile/ui/components/toast"
 import { Tag, TrashBinMinimalistic } from "@hoardodile/ui/icons/registry"
 import { pageCountOf } from "@hoardodile/ui/lib/pagination"
@@ -12,7 +13,6 @@ import { useNavigate } from "@tanstack/react-router"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { ConfirmByTypingDialog } from "@/components/common/ConfirmByTypingDialog"
-import { PaginationBar } from "@/components/common/PaginationBar"
 import { booleanCodec } from "@/features/prefs"
 import { useUsageTimeZones } from "@/features/settings/datePrefs"
 import { BulkTagsDialog, type TagFilterMode } from "@/features/tags"
@@ -54,7 +54,7 @@ import {
 	pickCharFilterDraft,
 } from "./CharFilterRail"
 
-// ── Selection types ──────────────────────────────────────────────────────────
+// â”€â”€ Selection types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export type CharSearchMultiSelection = {
 	readonly mode: "multi"
@@ -72,7 +72,7 @@ export type CharSearchSelection =
 	| CharSearchMultiSelection
 	| CharSearchSingleSelection
 
-// ── Props ────────────────────────────────────────────────────────────────────
+// â”€â”€ Props â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export type CharSearchProps = {
 	/**
@@ -103,7 +103,7 @@ export type CharSearchProps = {
 	readonly railPlacement?: "inline" | "panel"
 	/**
 	 * Browse-mode card open handler: when provided, each card's avatar and
-	 * name call it with the card element instead of linking — the routed
+	 * name call it with the card element instead of linking â€” the routed
 	 * search wires it to the shared-element card transition.
 	 */
 	readonly onOpenCard?: (id: string, card: HTMLElement) => void
@@ -259,8 +259,8 @@ function CharSearchInner(props: CharSearchInnerProps) {
 		applyDraft,
 	)
 
-	// "Live search" preference: checked → every filter change applies
-	// immediately (the pre-refactor behaviour), unchecked → the staged
+	// "Live search" preference: checked â†’ every filter change applies
+	// immediately (the pre-refactor behaviour), unchecked â†’ the staged
 	// rail with apply-on-demand. The live mode reuses the FilterDraft
 	// interface with a draft that mirrors the applied state and patches
 	// straight through, so the rail components need no awareness of it.
@@ -455,7 +455,7 @@ function CharSearchInner(props: CharSearchInnerProps) {
 				onLiveSearchChange={setLiveSearch}
 				liveFilterDraft={liveFilterDraft}
 			/>
-			{/* Selection toolbar — page-selection tools left (Done first, away
+			{/* Selection toolbar â€” page-selection tools left (Done first, away
 			    from destructive picks), edit actions right. Rendered only
 			    while selection tools are active; browsing shows no extra
 			    row under the filter bar. */}

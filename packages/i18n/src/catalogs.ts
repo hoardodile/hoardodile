@@ -1,9 +1,9 @@
 /**
- * The catalog registry: every shipped language's complete JSON catalog
- * plus the single resolution point the Electron shell (main process,
- * wizard, error pages) uses to pick translations.
+ * The app catalog registry: every shipped language's complete JSON
+ * catalog plus the single resolution point the Electron shell (main
+ * process, wizard, error pages) uses to pick translations.
  *
- * Split from `./index.ts` (pure helpers, no catalogs) so the sandboxed
+ * Split from `./core.ts` (pure helpers, no catalogs) so the sandboxed
  * preload and any other bundle that only needs `isSupportedLanguage` /
  * `resolveSystemLanguage` never loads the catalogs.
  *
@@ -13,19 +13,19 @@
  * pairs, markup tags, ellipsis).
  */
 
-import de from "./de.json"
-import en from "./en.json"
-import es from "./es.json"
-import type { SupportedLanguage } from "./index.ts"
-import ja from "./ja.json"
-import zh from "./zh.json"
+import de from "./catalogs/de.json"
+import en from "./catalogs/en.json"
+import es from "./catalogs/es.json"
+import ja from "./catalogs/ja.json"
+import zh from "./catalogs/zh.json"
+import type { SupportedLanguage } from "./core.ts"
 
 export const CATALOGS = { en, zh, ja, de, es } as const satisfies Record<
 	SupportedLanguage,
 	typeof en
 >
 
-/** Resolve the catalog for the active language; pre-SPA (undefined) → English. */
+/** Resolve the app catalog for the active language; pre-SPA (undefined) → English. */
 export function catalogFor(language: SupportedLanguage | undefined): typeof en {
 	return language === undefined ? en : CATALOGS[language]
 }

@@ -4,6 +4,7 @@ import { Icon } from "@hoardodile/ui/components/icon"
 import { Refresh } from "@hoardodile/ui/icons/registry"
 import { cn } from "@hoardodile/ui/lib/utils"
 import { type ReactNode, useEffect, useState } from "react"
+import { useTranslation } from "react-i18next"
 
 export type CaptionWindowControls = {
 	minimize: () => void
@@ -19,28 +20,6 @@ export type CaptionWindowControls = {
 	onMaximizedChange: (listener: (maximized: boolean) => void) => () => void
 }
 
-export type CaptionBarLabels = {
-	readonly back: string
-	readonly forward: string
-	readonly reload: string
-	readonly minimize: string
-	readonly maximize: string
-	readonly restore: string
-	readonly close: string
-	readonly devtools: string
-}
-
-const DEFAULT_LABELS: CaptionBarLabels = {
-	back: "Back",
-	forward: "Forward",
-	reload: "Reload",
-	minimize: "Minimize",
-	maximize: "Maximize",
-	restore: "Restore",
-	close: "Close",
-	devtools: "Developer tools",
-}
-
 const captionChromeButtonClassName =
 	"flex h-nav w-[46px] items-center justify-center text-secondary-foreground enabled:hover:bg-muted enabled:hover:text-foreground disabled:text-muted-foreground focus:outline-none focus-visible:outline-none focus-visible:ring-0"
 
@@ -54,7 +33,6 @@ export type CaptionHistoryControls = {
 
 export type CaptionBarProps = {
 	readonly controls: CaptionWindowControls
-	readonly labels?: Partial<CaptionBarLabels>
 	/** Test seam; production uses the window history stack. */
 	readonly history?: CaptionHistoryControls
 	/**
@@ -74,12 +52,11 @@ export type CaptionBarProps = {
  */
 function CaptionBar({
 	controls,
-	labels,
 	history,
 	leading,
 	className,
 }: CaptionBarProps) {
-	const resolved = { ...DEFAULT_LABELS, ...labels }
+	const { t } = useTranslation("ui", { useSuspense: false })
 	const windowHistory = useWindowHistoryControls()
 	const nav = history ?? windowHistory
 	const [maximized, setMaximized] = useState(false)
@@ -130,8 +107,8 @@ function CaptionBar({
 				{leading}
 				<button
 					type="button"
-					title={resolved.back}
-					aria-label={resolved.back}
+					title={t("caption.back")}
+					aria-label={t("caption.back")}
 					data-testid="desktop-caption-back"
 					disabled={!nav.canGoBack}
 					className={captionChromeButtonClassName}
@@ -143,8 +120,8 @@ function CaptionBar({
 				</button>
 				<button
 					type="button"
-					title={resolved.forward}
-					aria-label={resolved.forward}
+					title={t("caption.forward")}
+					aria-label={t("caption.forward")}
 					data-testid="desktop-caption-forward"
 					disabled={!nav.canGoForward}
 					className={captionChromeButtonClassName}
@@ -156,8 +133,8 @@ function CaptionBar({
 				</button>
 				<button
 					type="button"
-					title={resolved.reload}
-					aria-label={resolved.reload}
+					title={t("caption.reload")}
+					aria-label={t("caption.reload")}
 					data-testid="desktop-caption-reload"
 					className={captionChromeButtonClassName}
 					onClick={() => {
@@ -177,8 +154,8 @@ function CaptionBar({
 				{controls.toggleDevtools !== undefined ? (
 					<button
 						type="button"
-						title={resolved.devtools}
-						aria-label={resolved.devtools}
+						title={t("caption.devtools")}
+						aria-label={t("caption.devtools")}
 						data-testid="desktop-caption-devtools"
 						className={captionChromeButtonClassName}
 						onClick={() => {
@@ -190,7 +167,7 @@ function CaptionBar({
 				) : null}
 				<button
 					type="button"
-					aria-label={resolved.minimize}
+					aria-label={t("caption.minimize")}
 					data-testid="desktop-caption-minimize"
 					className={captionChromeButtonClassName}
 					onClick={() => {
@@ -201,7 +178,7 @@ function CaptionBar({
 				</button>
 				<button
 					type="button"
-					aria-label={maximized ? resolved.restore : resolved.maximize}
+					aria-label={maximized ? t("caption.restore") : t("caption.maximize")}
 					data-testid="desktop-caption-maximize"
 					className={captionChromeButtonClassName}
 					onClick={() => {
@@ -212,7 +189,7 @@ function CaptionBar({
 				</button>
 				<button
 					type="button"
-					aria-label={resolved.close}
+					aria-label={t("caption.close")}
 					data-testid="desktop-caption-close"
 					className="flex h-nav w-[46px] items-center justify-center text-secondary-foreground hover:bg-[#c42b1c] hover:text-white"
 					onClick={() => {

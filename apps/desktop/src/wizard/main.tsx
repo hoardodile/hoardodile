@@ -1,8 +1,10 @@
 import "./index.css"
 
+import { I18nProvider } from "@hoardodile/i18n/react"
 import type { HoardodileDesktopBridge } from "@hoardodile/shared/desktop"
 import { StrictMode } from "react"
 import { createRoot } from "react-dom/client"
+import { i18n } from "./i18n.ts"
 import { ShellPages } from "./shell-pages.tsx"
 import { WizardApp } from "./WizardApp.tsx"
 
@@ -43,4 +45,8 @@ const ui =
 		<WizardApp />
 	)
 
-createRoot(root).render(<StrictMode>{ui}</StrictMode>)
+createRoot(root).render(
+	<StrictMode>
+		<I18nProvider i18n={i18n}>{ui}</I18nProvider>
+	</StrictMode>,
+)

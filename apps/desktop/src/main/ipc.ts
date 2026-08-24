@@ -1,3 +1,5 @@
+import type { SupportedLanguage } from "@hoardodile/i18n"
+import { resolveSystemLanguage } from "@hoardodile/i18n"
 import type {
 	DesktopShellConfig,
 	DesktopUpdateState,
@@ -5,8 +7,6 @@ import type {
 	LanInfo,
 	LanSetResult,
 } from "@hoardodile/shared/desktop"
-import type { SupportedLanguage } from "@hoardodile/shared/i18n"
-import { resolveSystemLanguage } from "@hoardodile/shared/i18n"
 import {
 	app,
 	BrowserWindow,

@@ -25,7 +25,7 @@ Server config: env vars only, validated in `apps/server/src/config/env.ts` — n
 ## Dependencies
 
 - Runtime deps live in the package that uses them; shared versions via `catalog:` in `pnpm-workspace.yaml`; `apps/server` ships a production `node_modules`.
-- SDK closure (`@hoardodile/{ui,sdk-*}`) must not import outside itself (`sdks:pack`); terminal packages (`cli`, `host`, `host-web`, `workbench`) are never imported by plugin code; `host`/`host-web` and the SDKs ship `src` alongside `dist`.
+- SDK closure (`@hoardodile/{i18n,ui,sdk-*}`) must not import outside itself (`sdks:pack`); terminal packages (`cli`, `host`, `host-web`, `workbench`) are never imported by plugin code; `host`/`host-web` and the SDKs ship `src` alongside `dist`.
 - Pinned by `scripts/guard-protected-deps.mjs` (pre-commit + CI): `@blocknote/*` 0.51.4 (+ `@handlewithcare/prosemirror-suggest-changes` 0.1.8), `@videojs/react` 10.0.0-beta.25, `typescript: 5.9.3` in the tsup-built packages — an intentional bump must follow the checklist in `apps/web/src/features/doc/README.md`.
 
 ## Structure
@@ -37,6 +37,7 @@ apps/
 packages/
   shared/      App-internal utils (incl. dayjs re-export)
   schemas/     App-internal Zod schemas (tables live in domain/*/schema.ts)
+  i18n/        Published shared catalogs + i18next factory (app `translation` + component `ui` namespaces; used by the SPA, the desktop shell and the plugin SDK)
   ui/          Published shadcn/ui
   cli/         Developer CLI — hoardodile plugin build/run/bench/dev
 plugins/

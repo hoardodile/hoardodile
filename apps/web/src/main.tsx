@@ -1,6 +1,7 @@
 import "./index.css"
 import "./i18n"
 
+import { I18nProvider } from "@hoardodile/i18n/react"
 import { setNavigationResolver } from "@hoardodile/ui"
 import { RoutePendingFallback } from "@hoardodile/ui/components/page-scaffold"
 import { TooltipProvider } from "@hoardodile/ui/components/tooltip"
@@ -25,6 +26,7 @@ import { readInheritFont } from "@/features/plugin/iframe/use-iframe-slot"
 import { PluginListProvider } from "@/features/plugin/PluginListContext"
 import { PrefsSync } from "@/features/prefs"
 import { initPrefSyncQueue } from "@/features/prefs/prefSyncQueue"
+import { i18n } from "@/i18n"
 import { collectRoutePaths } from "@/lib/appRoutes"
 import { getDesktopBridge, isHoardodileDesktop } from "@/lib/desktop"
 import { collectFontCssPaths } from "@/lib/fonts"
@@ -130,23 +132,25 @@ if (!rootElement) {
 
 createRoot(rootElement).render(
 	<StrictMode>
-		<ThemeProvider defaultPalette="mono">
-			<IconStyleProvider>
-				<FontProvider>
-					<ThemeBroadcast />
-					<FontBroadcast />
-					<TooltipProvider>
-						<QueryClientProvider client={queryClient}>
-							<PluginListProvider>
-								<PluginIframePoolHost />
-								<PrefsSync />
-								<RouterProvider router={router} />
-							</PluginListProvider>
-						</QueryClientProvider>
-					</TooltipProvider>
-				</FontProvider>
-			</IconStyleProvider>
-		</ThemeProvider>
+		<I18nProvider i18n={i18n}>
+			<ThemeProvider defaultPalette="mono">
+				<IconStyleProvider>
+					<FontProvider>
+						<ThemeBroadcast />
+						<FontBroadcast />
+						<TooltipProvider>
+							<QueryClientProvider client={queryClient}>
+								<PluginListProvider>
+									<PluginIframePoolHost />
+									<PrefsSync />
+									<RouterProvider router={router} />
+								</PluginListProvider>
+							</QueryClientProvider>
+						</TooltipProvider>
+					</FontProvider>
+				</IconStyleProvider>
+			</ThemeProvider>
+		</I18nProvider>
 	</StrictMode>,
 )
 

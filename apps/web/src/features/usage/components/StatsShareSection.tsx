@@ -1,4 +1,5 @@
-import type { UsageExposureMode, UsageTotal } from "@hoardodile/schemas"
+﻿import type { UsageExposureMode, UsageTotal } from "@hoardodile/schemas"
+import { PaginationBar } from "@hoardodile/ui/components/pagination-bar"
 import { PillTabs } from "@hoardodile/ui/components/pill-tabs"
 import { SectionHeader } from "@hoardodile/ui/components/section-header"
 import { SectionTabs } from "@hoardodile/ui/components/section-tabs"
@@ -10,7 +11,6 @@ import { keepPreviousData, useQueries, useQuery } from "@tanstack/react-query"
 import { Link, useNavigate } from "@tanstack/react-router"
 import { useEffect, useMemo, useRef } from "react"
 import { useTranslation } from "react-i18next"
-import { PaginationBar } from "@/components/common/PaginationBar"
 import { useUsageTimeZones } from "@/features/settings/datePrefs"
 import { loose } from "@/i18n"
 import { formatCalendarDay } from "@/lib/timezone"
@@ -198,7 +198,7 @@ export function StatsShareSection(props: StatsShareSectionProps) {
 			return {
 				items: data?.rows ?? [],
 				total: data?.total ?? 0,
-				// A placeholder carries the previous key's data — treat it
+				// A placeholder carries the previous key's data â€” treat it
 				// as loading so range/entity switches show the skeleton
 				// instead of numbers that do not match the active filters.
 				isLoading: singleQuery.isLoading || singleQuery.isPlaceholderData,
@@ -346,7 +346,7 @@ export function StatsShareSection(props: StatsShareSectionProps) {
 				}))}
 			/>
 
-			{/* The share bar and the ranked rows split into two cards — the
+			{/* The share bar and the ranked rows split into two cards â€” the
 			    bar answers "how is it split", the list who is in it. The bar
 			    card is dropped entirely when the period has no usage. */}
 			{entityFilter === "all" && shareSegments.total > 0 ? (

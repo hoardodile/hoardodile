@@ -41,6 +41,7 @@
 	},
 	"devDependencies": {
 		"@hoardodile/host-web": "workspace:*",
+		"@hoardodile/i18n": "workspace:*",
 		"@hoardodile/sdk-types": "workspace:*",
 		"@hoardodile/sdk-web": "workspace:*",
 		"@hoardodile/ui": "workspace:*",
@@ -52,8 +53,10 @@
 		"@types/react-dom": "catalog:",
 		"@vitejs/plugin-react": "catalog:",
 		"babel-plugin-react-compiler": "catalog:",
+		"i18next": "catalog:",
 		"react": "catalog:",
 		"react-dom": "catalog:",
+		"react-i18next": "catalog:",
 		"tailwindcss": "catalog:",
 		"typescript": "catalog:",
 		"vite": "catalog:",

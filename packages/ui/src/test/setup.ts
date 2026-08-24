@@ -3,6 +3,10 @@ import "@testing-library/jest-dom/vitest"
 import { cleanup } from "@testing-library/react"
 import { afterEach } from "vitest"
 
+// Test components that render `@hoardodile/ui` strings use the
+// `renderWithI18n` helper (see `./i18n.ts`) — it wraps the tree in an
+// I18nProvider bound to the shared test instance.
+
 // jsdom does not implement matchMedia; stub it deterministically so
 // media-query code paths (use-mobile, useMobileBackToClose) have
 // something to consult during tests.

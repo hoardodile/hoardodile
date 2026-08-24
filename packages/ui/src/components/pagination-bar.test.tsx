@@ -1,6 +1,7 @@
-import { fireEvent, render, screen } from "@testing-library/react"
+import { fireEvent, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
+import { renderWithI18n } from "../test/i18n"
 import { PaginationBar } from "./pagination-bar"
 
 let mobileMock = false
@@ -16,14 +17,8 @@ describe("PaginationBar", () => {
 
 	it("renders the asymmetric window with first, last and the total label", () => {
 		const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {})
-		render(
+		renderWithI18n(
 			<PaginationBar
-				labels={{
-					prev: "Prev",
-					next: "Next",
-					goTo: "Go to",
-					jumpToPage: "Page",
-				}}
 				page={6}
 				pageCount={68}
 				totalLabel="68 items"
@@ -42,14 +37,8 @@ describe("PaginationBar", () => {
 
 	it("collapses to a page/total chip below the md breakpoint", () => {
 		mobileMock = true
-		render(
+		renderWithI18n(
 			<PaginationBar
-				labels={{
-					prev: "Prev",
-					next: "Next",
-					goTo: "Go to",
-					jumpToPage: "Page",
-				}}
 				page={6}
 				pageCount={68}
 				totalLabel="68 items"
@@ -64,14 +53,8 @@ describe("PaginationBar", () => {
 	it("disables the prev chevron on the first page without hover", async () => {
 		const onChangePage = vi.fn()
 		const user = userEvent.setup()
-		render(
+		renderWithI18n(
 			<PaginationBar
-				labels={{
-					prev: "Prev",
-					next: "Next",
-					goTo: "Go to",
-					jumpToPage: "Page",
-				}}
 				page={1}
 				pageCount={3}
 				totalLabel="3 items"
@@ -87,14 +70,8 @@ describe("PaginationBar", () => {
 	it("jumps to a clamped page via the go-to field", async () => {
 		const onChangePage = vi.fn()
 		const user = userEvent.setup()
-		render(
+		renderWithI18n(
 			<PaginationBar
-				labels={{
-					prev: "Prev",
-					next: "Next",
-					goTo: "Go to",
-					jumpToPage: "Page",
-				}}
 				page={3}
 				pageCount={10}
 				totalLabel="10 items"

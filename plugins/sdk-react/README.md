@@ -21,7 +21,9 @@ pnpm add @hoardodile/sdk-react
 - **`useCacheWriter()`** — debounced per-resource cache writes with a
   flush on `pagehide`/unmount
 - **`createPluginTranslation(bundles)`** — `useTranslation()` backed by
-  the host's language pushes
+  the shared `@hoardodile/i18n` catalogs and the host's language pushes;
+  `@hoardodile/ui` chrome is localized for free in every supported host
+  language
 - **`StubPluginAPIProvider`** — render-test fixture
 
 ## Quick start

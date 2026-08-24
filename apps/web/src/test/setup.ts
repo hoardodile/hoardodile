@@ -6,7 +6,13 @@ import { afterEach } from "vitest"
 // IndexedDB, or RTL cleanup.
 if (typeof window !== "undefined") {
 	await import("@testing-library/jest-dom/vitest")
-	await import("@/i18n")
+	const { setI18n: setUiI18n } = await import("@hoardodile/i18n/react")
+	// @/i18n binds the SPA's own react-i18next copy; bind the same instance
+	// for the copy `@hoardodile/i18n`/`@hoardodile/ui` use (pnpm keeps two
+	// physical copies keyed by peer context), so ui components resolve the
+	// ui namespace in rendered tests.
+	const uiI18n = await import("@/i18n")
+	setUiI18n(uiI18n.i18n)
 	// fake-indexeddb/auto ships auto.d.ts but omits it from package.json
 	// exports, so tsc (moduleResolution: bundler) reports TS7016. The main
 	// entry is typed; install the same globals the /auto shim would.

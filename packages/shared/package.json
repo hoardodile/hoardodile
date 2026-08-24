@@ -11,14 +11,7 @@
 		"./immer": "./src/immer.ts",
 		"./dayjs": "./src/dayjs.ts",
 		"./usage-period": "./src/usage-period.ts",
-		"./desktop": "./src/desktop.ts",
-		"./i18n": "./src/i18n/index.ts",
-		"./i18n/catalogs": "./src/i18n/catalogs.ts",
-		"./i18n/en.json": "./src/i18n/en.json",
-		"./i18n/zh.json": "./src/i18n/zh.json",
-		"./i18n/ja.json": "./src/i18n/ja.json",
-		"./i18n/de.json": "./src/i18n/de.json",
-		"./i18n/es.json": "./src/i18n/es.json"
+		"./desktop": "./src/desktop.ts"
 	},
 	"scripts": {
 		"dev": "tsc --noEmit --watch --preserveWatchOutput",
@@ -27,6 +20,7 @@
 		"test": "vitest run --maxWorkers=2"
 	},
 	"devDependencies": {
+		"@hoardodile/i18n": "workspace:*",
 		"@hoardodile/sdk-types": "workspace:*",
 		"typescript": "catalog:",
 		"vitest": "catalog:"

@@ -10,6 +10,7 @@ import { AltArrowLeft, AltArrowRight } from "@hoardodile/ui/icons/registry"
 import { paginationWindow } from "@hoardodile/ui/lib/pagination"
 import { cn } from "@hoardodile/ui/lib/utils"
 import { useState } from "react"
+import { useTranslation } from "react-i18next"
 
 export type PaginationBarProps = {
 	readonly page: number
@@ -17,13 +18,6 @@ export type PaginationBarProps = {
 	readonly onChangePage: (page: number) => void
 	/** Result-count label rendered in the left slot (e.g. "56 messages"). */
 	readonly totalLabel: string
-	/** Localized chrome labels. */
-	readonly labels: {
-		readonly prev: string
-		readonly next: string
-		readonly goTo: string
-		readonly jumpToPage: string
-	}
 }
 
 const pageButton =
@@ -40,7 +34,8 @@ const pageButton =
  * characters, comments, stats, footprints).
  */
 export function PaginationBar(props: PaginationBarProps) {
-	const { page, pageCount, onChangePage, totalLabel, labels } = props
+	const { page, pageCount, onChangePage, totalLabel } = props
+	const { t } = useTranslation("ui", { useSuspense: false })
 	const [draft, setDraft] = useState("")
 	const isMobile = useBelowMd()
 
@@ -73,7 +68,7 @@ export function PaginationBar(props: PaginationBarProps) {
 							type="button"
 							className={chip(false)}
 							disabled={page <= 1}
-							aria-label={labels.prev}
+							aria-label={t("pagination.prev")}
 							onClick={() => onChangePage(page - 1)}
 						>
 							<Icon icon={AltArrowLeft} />
@@ -106,7 +101,7 @@ export function PaginationBar(props: PaginationBarProps) {
 							type="button"
 							className={chip(false)}
 							disabled={page >= pageCount}
-							aria-label={labels.next}
+							aria-label={t("pagination.next")}
 							onClick={() => onChangePage(page + 1)}
 						>
 							<Icon icon={AltArrowRight} />
@@ -120,15 +115,15 @@ export function PaginationBar(props: PaginationBarProps) {
 						jump()
 					}}
 				>
-					<span className="shrink-0 whitespace-nowrap">{labels.goTo}</span>
+					<span className="shrink-0 whitespace-nowrap">{t("pagination.goTo")}</span>
 					<Input
 						type="number"
 						min={1}
 						max={pageCount}
 						value={draft}
 						onChange={(event) => setDraft(event.target.value)}
-						placeholder={labels.jumpToPage}
-						aria-label={labels.goTo}
+						placeholder={t("pagination.jumpToPage")}
+						aria-label={t("pagination.goTo")}
 						size="sm"
 						// Content-elastic width in `ch` units (the native `size`
 						// attribute's modern equivalent — `field-sizing` is not

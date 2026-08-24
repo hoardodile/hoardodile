@@ -7,6 +7,7 @@
 
 /** Workspace directory of each published package, keyed by package name. */
 export const PACKAGE_DIRS = {
+	"@hoardodile/i18n": "packages/i18n",
 	"@hoardodile/ui": "packages/ui",
 	"@hoardodile/sdk-types": "plugins/sdk-types",
 	"@hoardodile/sdk-web": "plugins/sdk-web",
@@ -24,6 +25,7 @@ export const PACKAGE_DIRS = {
  * outside the set. `sdks:pack` enforces this.
  */
 export const SDK_CLOSURE = new Set([
+	"@hoardodile/i18n",
 	"@hoardodile/ui",
 	"@hoardodile/sdk-types",
 	"@hoardodile/sdk-web",

@@ -1,6 +1,6 @@
-import type { SupportedLanguage } from "@hoardodile/shared/i18n"
-import { resolveSystemLanguage } from "@hoardodile/shared/i18n"
-import { catalogFor } from "@hoardodile/shared/i18n/catalogs"
+import type { SupportedLanguage } from "@hoardodile/i18n"
+import { resolveSystemLanguage } from "@hoardodile/i18n"
+import { catalogFor } from "@hoardodile/i18n/catalogs"
 import type { CaptionHistoryControls } from "@hoardodile/ui/components/caption-bar"
 
 /**

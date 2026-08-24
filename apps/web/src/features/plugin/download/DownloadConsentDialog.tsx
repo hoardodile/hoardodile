@@ -1,6 +1,5 @@
 import { PluginDownloadConsentDialog } from "@hoardodile/ui/components/plugin-download-consent"
 import { useSyncExternalStore } from "react"
-import { useTranslation } from "react-i18next"
 import { formatBytes } from "@/lib/formatBytes"
 import { trpcMutate } from "@/trpc/factory"
 import {
@@ -15,7 +14,6 @@ import {
  * broadcast closes the entry in every tab.
  */
 export function DownloadConsentDialog() {
-	const { t } = useTranslation()
 	const { queue } = useSyncExternalStore(
 		subscribeDownloadConsent,
 		getDownloadConsentSnapshot,
@@ -28,7 +26,6 @@ export function DownloadConsentDialog() {
 			entry={entry}
 			onDeny={(ticketId) => decide(ticketId, false, false)}
 			onAllow={(ticketId, remember) => decide(ticketId, true, remember)}
-			t={t as unknown as Parameters<typeof PluginDownloadConsentDialog>[0]["t"]}
 			formatBytes={formatBytes}
 		/>
 	)

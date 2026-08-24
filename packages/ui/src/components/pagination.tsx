@@ -5,12 +5,14 @@ import { Button } from "@hoardodile/ui/components/button"
 import { AltArrowLeft } from "@hoardodile/ui/icons/registry"
 import { AltArrowRight } from "@hoardodile/ui/icons/registry"
 import { MenuDots } from "@hoardodile/ui/icons/registry"
+import { useTranslation } from "react-i18next"
 
 function Pagination({ className, ...props }: React.ComponentProps<"nav">) {
+  const { t } = useTranslation("ui", { useSuspense: false })
   return (
     <nav
       role="navigation"
-      aria-label="pagination"
+      aria-label={t("pagination.region")}
       data-slot="pagination"
       className={cn("mx-auto flex w-full justify-center", className)}
       {...props}
@@ -66,35 +68,39 @@ function PaginationLink({
 
 function PaginationPrevious({
   className,
-  text = "Previous",
+  text,
   ...props
 }: React.ComponentProps<typeof PaginationLink> & { text?: string }) {
+  const { t } = useTranslation("ui", { useSuspense: false })
   return (
     <PaginationLink
-      aria-label="Go to previous page"
+      aria-label={t("pagination.previous")}
       size="default"
       className={cn("pl-2!", className)}
       {...props}
     >
       <AltArrowLeft data-icon="inline-start" />
-      <span className="hidden sm:block">{text}</span>
+      <span className="hidden sm:block">
+        {text ?? t("pagination.previous")}
+      </span>
     </PaginationLink>
   )
 }
 
 function PaginationNext({
   className,
-  text = "Next",
+  text,
   ...props
 }: React.ComponentProps<typeof PaginationLink> & { text?: string }) {
+  const { t } = useTranslation("ui", { useSuspense: false })
   return (
     <PaginationLink
-      aria-label="Go to next page"
+      aria-label={t("pagination.next")}
       size="default"
       className={cn("pr-2!", className)}
       {...props}
     >
-      <span className="hidden sm:block">{text}</span>
+      <span className="hidden sm:block">{text ?? t("pagination.next")}</span>
       <AltArrowRight data-icon="inline-end" />
     </PaginationLink>
   )
@@ -104,6 +110,7 @@ function PaginationEllipsis({
   className,
   ...props
 }: React.ComponentProps<"span">) {
+  const { t } = useTranslation("ui", { useSuspense: false })
   return (
     <span
       aria-hidden
@@ -116,7 +123,7 @@ function PaginationEllipsis({
     >
       <MenuDots
       />
-      <span className="sr-only">More pages</span>
+      <span className="sr-only">{t("pagination.morePages")}</span>
     </span>
   )
 }

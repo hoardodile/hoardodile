@@ -371,23 +371,6 @@
 				"tray": "トレイに隠す",
 				"quit": "アプリを終了"
 			},
-			"closeConfirm": {
-				"title": "hoardodile を閉じますか？",
-				"description": "終了しない限り、アプリはトレイで動作し続けます。",
-				"tray": "トレイに隠す",
-				"quit": "アプリを終了",
-				"remember": "選択を記憶する"
-			},
-			"caption": {
-				"back": "戻る",
-				"forward": "進む",
-				"reload": "再読み込み",
-				"minimize": "最小化",
-				"maximize": "最大化",
-				"restore": "元に戻す",
-				"close": "閉じる",
-				"devtools": "開発者ツール"
-			},
 			"updateBanner": "バージョン {{version}} のインストール準備が完了しました。",
 			"updateBannerRestart": "再起動",
 			"shellCache": {
@@ -528,18 +511,6 @@
 			"container": "コンテナ",
 			"download": "ダウンロード"
 		}
-	},
-	"pluginDownload": {
-		"eyebrow": "プラグインのダウンロード",
-		"title": "このファイルをダウンロードしますか？",
-		"description": "{{pluginName}} はファイルを自身のストレージフォルダにダウンロードしようとしています。ファイルは下記のURLから取得され、プラグイン自身のフォルダ内にのみ保存されます。",
-		"urlLabel": "URL",
-		"destLabel": "保存先",
-		"sizeLabel": "サイズ",
-		"unknownSize": "不明",
-		"deny": "拒否",
-		"allow": "許可",
-		"remember": "このセッションでは記憶する（このプラグインへの確認を省略）"
 	},
 	"overview": {
 		"usageHistory": {

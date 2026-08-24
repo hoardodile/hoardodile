@@ -1,5 +1,5 @@
-import type { SupportedLanguage } from "@hoardodile/shared/i18n"
-import { catalogFor } from "@hoardodile/shared/i18n/catalogs"
+import type { SupportedLanguage } from "@hoardodile/i18n"
+import { catalogFor } from "@hoardodile/i18n/catalogs"
 
 /** Generic message shown when the server cannot be reached. */
 export function serverErrorMessage(

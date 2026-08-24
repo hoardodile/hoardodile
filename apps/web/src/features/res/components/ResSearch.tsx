@@ -1,8 +1,9 @@
-import type { ResCard as ResCardData } from "@hoardodile/schemas"
+﻿import type { ResCard as ResCardData } from "@hoardodile/schemas"
 import { MAX_ID_FILTER_SIZE } from "@hoardodile/schemas"
 import { Button } from "@hoardodile/ui/components/button"
 import { Icon } from "@hoardodile/ui/components/icon"
 import { ListEmptyRow } from "@hoardodile/ui/components/list-empty-row"
+import { PaginationBar } from "@hoardodile/ui/components/pagination-bar"
 import { Skeleton } from "@hoardodile/ui/components/skeleton"
 import { toast } from "@hoardodile/ui/components/toast"
 import {
@@ -16,7 +17,6 @@ import { useNavigate } from "@tanstack/react-router"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { ConfirmByTypingDialog } from "@/components/common/ConfirmByTypingDialog"
-import { PaginationBar } from "@/components/common/PaginationBar"
 import { booleanCodec } from "@/features/prefs"
 import { useDatePrefs } from "@/features/settings/datePrefs"
 import { BulkTagsDialog } from "@/features/tags"
@@ -59,7 +59,7 @@ import {
 
 const MAX_BULK_PACK_DOWNLOAD = 150
 
-/** Masonry column width — cards cap their covers at this. */
+/** Masonry column width â€” cards cap their covers at this. */
 const MASONRY_COLUMN_PX = 280
 
 import { ResCard } from "./ResCard"
@@ -117,7 +117,7 @@ type ResSearchProps = {
 	readonly railPlacement?: "inline" | "panel"
 	/**
 	 * Browse-mode card open handler: when provided, each card's thumbnail
-	 * overlay and name call it with the card element instead of linking —
+	 * overlay and name call it with the card element instead of linking â€”
 	 * the routed search wires it to the shared-element card transition.
 	 */
 	readonly onOpenCard?: (id: string, card: HTMLElement) => void
@@ -237,7 +237,7 @@ function ResSearchInner(props: ResSearchInnerProps) {
 				partial.contentPluginId !== contentPluginId &&
 				partial.searchMetaFacets === undefined
 			) {
-				// Switching plugins invalidates the old plugin's facet picks —
+				// Switching plugins invalidates the old plugin's facet picks â€”
 				// unless the caller supplies its own facets (the filter rail's
 				// apply carries the already-consistent draft facets).
 				patchStateInner({ ...partial, searchMetaFacets: {} }, opts)
@@ -261,8 +261,8 @@ function ResSearchInner(props: ResSearchInnerProps) {
 		applyDraft,
 	)
 
-	// "Live search" preference: checked → every filter change applies
-	// immediately (the pre-refactor behaviour), unchecked → the staged
+	// "Live search" preference: checked â†’ every filter change applies
+	// immediately (the pre-refactor behaviour), unchecked â†’ the staged
 	// rail with apply-on-demand. The live mode reuses the FilterDraft
 	// interface with a draft that mirrors the applied state and patches
 	// straight through, so the rail components need no awareness of it.
@@ -539,7 +539,7 @@ function ResSearchInner(props: ResSearchInnerProps) {
 				onLiveSearchChange={setLiveSearch}
 				liveFilterDraft={liveFilterDraft}
 			/>
-			{/* Selection toolbar — page-selection tools left (Done first, away
+			{/* Selection toolbar â€” page-selection tools left (Done first, away
 			    from destructive picks), edit actions right. Rendered only
 			    while selection tools are active; browsing shows no extra
 			    row under the filter bar. */}
@@ -742,7 +742,7 @@ function ResSearchInner(props: ResSearchInnerProps) {
 											? (card) => onOpenCard(r.id, card)
 											: undefined
 									}
-									// Masonry columns cap the cover's width —
+									// Masonry columns cap the cover's width â€”
 									// the mirror of the pinned strip's
 									// fit-height, on the other axis.
 									thumbFitWidth={MASONRY_COLUMN_PX}

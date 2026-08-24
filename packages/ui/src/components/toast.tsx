@@ -4,6 +4,7 @@ import { ForbiddenCircle } from "@hoardodile/ui/icons/registry"
 import { InfoCircle } from "@hoardodile/ui/icons/registry"
 import * as React from "react"
 import { Toast as ToastPrimitive } from "@base-ui/react/toast"
+import { useTranslation } from "react-i18next"
 
 import { cn } from "@hoardodile/ui/lib/utils"
 import { Button } from "@hoardodile/ui/components/button"
@@ -117,10 +118,11 @@ function ToastClose({
   render = <Button variant="ghost" size="icon-sm" />,
   ...props
 }: ToastPrimitive.Close.Props) {
+  const { t } = useTranslation("ui", { useSuspense: false })
   return (
     <ToastPrimitive.Close
       data-slot="toast-close"
-      aria-label="Close toast"
+      aria-label={t("aria.closeToast")}
       render={render}
       className={cn(
         "relative shrink-0 text-muted-foreground after:absolute after:-inset-2 after:content-[''] hover:text-foreground",

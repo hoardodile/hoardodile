@@ -1,0 +1,51 @@
+{
+	"caption": {
+		"back": "Zurück",
+		"forward": "Vorwärts",
+		"reload": "Neu laden",
+		"minimize": "Minimieren",
+		"maximize": "Maximieren",
+		"restore": "Wiederherstellen",
+		"close": "Schließen",
+		"devtools": "Entwicklertools"
+	},
+	"closeConfirm": {
+		"title": "hoardodile schließen?",
+		"description": "Die App läuft im Infobereich weiter, außer du beendest sie.",
+		"tray": "Im Infobereich ausblenden",
+		"quit": "App beenden",
+		"cancel": "Abbrechen",
+		"remember": "Meine Auswahl merken"
+	},
+	"pluginDownload": {
+		"eyebrow": "Plugin-Download",
+		"title": "Diese Datei herunterladen?",
+		"description": "{{pluginName}} möchte eine Datei in seinen eigenen Speicherordner herunterladen. Die Datei wird von der unten stehenden URL geladen und nur innerhalb des Plugin-Ordners gespeichert.",
+		"urlLabel": "URL",
+		"destLabel": "Ziel",
+		"sizeLabel": "Größe",
+		"unknownSize": "unbekannt",
+		"deny": "Ablehnen",
+		"allow": "Erlauben",
+		"remember": "Für diese Sitzung merken (keine weiteren Rückfragen dieses Plugins)"
+	},
+	"pagination": {
+		"region": "Seitennavigation",
+		"prev": "Zurück",
+		"next": "Weiter",
+		"previous": "Vorherige",
+		"goTo": "Gehe zu",
+		"jumpToPage": "Seite",
+		"morePages": "Weitere Seiten"
+	},
+	"aria": {
+		"loading": "Wird geladen",
+		"closeToast": "Benachrichtigung schließen",
+		"close": "Schließen",
+		"more": "Mehr",
+		"toggleSidebar": "Seitenleiste umschalten",
+		"mobileSidebarDescription": "Zeigt die mobile Seitenleiste.",
+		"sidebar": "Seitenleiste",
+		"breadcrumb": "Breadcrumb"
+	}
+}

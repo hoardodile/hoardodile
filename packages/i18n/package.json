@@ -1,0 +1,77 @@
+{
+	"name": "@hoardodile/i18n",
+	"version": "0.0.0",
+	"license": "MIT",
+	"description": "Shared i18n catalogs and helpers for the hoardodile host surfaces and plugin SDK.",
+	"keywords": [
+		"hoardodile",
+		"i18n",
+		"i18next",
+		"translation"
+	],
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/hoardodile/hoardodile.git",
+		"directory": "packages/i18n"
+	},
+	"type": "module",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"development": "./src/index.ts",
+			"default": "./dist/index.js"
+		},
+		"./core": {
+			"types": "./dist/core.d.ts",
+			"development": "./src/core.ts",
+			"default": "./dist/core.js"
+		},
+		"./create-i18n": {
+			"types": "./dist/create-i18n.d.ts",
+			"development": "./src/create-i18n.ts",
+			"default": "./dist/create-i18n.js"
+		},
+		"./react": {
+			"types": "./dist/react.d.ts",
+			"development": "./src/react.ts",
+			"default": "./dist/react.js"
+		},
+		"./catalogs": {
+			"types": "./dist/catalogs.d.ts",
+			"development": "./src/catalogs.ts",
+			"default": "./dist/catalogs.js"
+		},
+		"./catalogs/ui": {
+			"types": "./dist/catalogs/ui.d.ts",
+			"development": "./src/catalogs/ui.ts",
+			"default": "./dist/catalogs/ui.js"
+		}
+	},
+	"files": [
+		"dist",
+		"src"
+	],
+	"sideEffects": false,
+	"engines": {
+		"node": ">=24"
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"scripts": {
+		"prepack": "pnpm build",
+		"build": "tsup",
+		"lint": "tsc --noEmit",
+		"test": "vitest run"
+	},
+	"dependencies": {
+		"i18next": "^26.4.0",
+		"react-i18next": "catalog:"
+	},
+	"devDependencies": {
+		"@types/node": "catalog:",
+		"tsup": "catalog:",
+		"typescript": "5.9.3",
+		"vitest": "catalog:"
+	}
+}

@@ -1,11 +1,14 @@
+import { useTranslation } from "react-i18next"
+
 import { cn } from "@hoardodile/ui/lib/utils"
 
 function Spinner({ className, ...props }: React.ComponentProps<"svg">) {
+	const { t } = useTranslation("ui", { useSuspense: false })
 	return (
 		<svg
 			data-slot="spinner"
 			role="status"
-			aria-label="Loading"
+			aria-label={t("aria.loading")}
 			viewBox="0 0 24 24"
 			fill="none"
 			className={cn("size-4 animate-spin", className)}

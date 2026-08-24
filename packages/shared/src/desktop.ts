@@ -4,7 +4,7 @@
  * `platform: "desktop"` so macOS / Linux ports can reuse it.
  */
 
-import type { SupportedLanguage } from "./i18n"
+import type { SupportedLanguage } from "@hoardodile/i18n"
 
 export type DesktopUpdateState =
 	| { readonly status: "idle" }
