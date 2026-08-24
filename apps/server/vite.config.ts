@@ -427,6 +427,15 @@ export default defineConfig(({ command }) => ({
 			reporter: ["text-summary", "html"],
 		},
 	},
+	// `vite-node --watch` runs a real vite dev server, so this also governs
+	// its file watcher. Atomic-save temp artifacts (plus their dot-dir
+	// variants) must never be watched mid-write — EBUSY would kill the
+	// backend dev loop.
+	server: {
+		watch: {
+			ignored: ["**/*.tmpdir/**", "**/.*.tmpdir/**", "**/*.tmp"],
+		},
+	},
 	plugins: [
 		copyMigrationSqlPlugin(),
 		copyWorkerEntryPlugin(),

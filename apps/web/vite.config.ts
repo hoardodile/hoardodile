@@ -92,6 +92,15 @@ export default defineConfig({
 	server: {
 		port: devPorts.spa,
 		strictPort: false,
+		watch: {
+			// Atomic-save temp artifacts stage writes as sibling
+			// `*.tmpdir/*.tmp` files (also with a leading dot, e.g. when the
+			// target is a dotfile like `.env.ts`); watching them mid-write
+			// can EBUSY the chokidar watcher on Windows and take the dev
+			// server down. Dot-dirs need their own glob — picomatch's
+			// default `*` never matches a leading dot.
+			ignored: ["**/*.tmpdir/**", "**/.*.tmpdir/**", "**/*.tmp"],
+		},
 		proxy: Object.fromEntries(
 			proxyPaths.map((p) => [
 				p,
