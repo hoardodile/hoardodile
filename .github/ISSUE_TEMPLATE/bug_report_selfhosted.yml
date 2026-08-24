@@ -1,0 +1,143 @@
+name: Bug Report — Self-hosted
+description: Report a defect on a self-hosted server (Docker or running directly on the host)
+labels: ["bug"]
+body:
+  - type: checkboxes
+    id: search
+    attributes:
+      label: Search first
+      description: I searched the existing issues (open and closed) and found no duplicate.
+      options:
+        - label: I searched and no similar issue was found.
+    validations:
+      required: true
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. Use this template when the hoardodile **server** runs on your own
+        machine — either Docker or directly on the host with Node.js (`pnpm start`). For the
+        packaged desktop app, please use the **Desktop** template instead.
+        This form is for defects only: deployment and usage questions belong in
+        [Discussions](https://github.com/hoardodile/hoardodile/discussions).
+        Attach screenshots or copied text, and **redact** library paths, hostnames, IPs, passwords
+        and tokens before pasting anything.
+  - type: dropdown
+    id: deploy
+    attributes:
+      label: Deployment method
+      options:
+        - Direct on host (pnpm start, no containers)
+        - Docker Compose
+        - Docker run / Dockerfile build
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Server version (tag or commit)
+      description: Release tag (e.g. v0.1.0) or the commit hash you are running; for a locally built image, the git commit of the build.
+      placeholder: v0.1.0
+    validations:
+      required: true
+  - type: input
+    id: hostos
+    attributes:
+      label: Host OS and architecture
+      description: For example "Ubuntu 24.04, amd64", "Debian 13, arm64", "Windows 11, x64".
+      placeholder: Ubuntu 24.04, amd64
+    validations:
+      required: true
+  - type: input
+    id: node
+    attributes:
+      label: Node.js version (direct host only)
+      description: Output of `node --version`. Leave empty when using Docker.
+      placeholder: v24.0.0
+    validations:
+      required: false
+  - type: dropdown
+    id: runner
+    attributes:
+      label: How is the server started? (direct host only)
+      options:
+        - Foreground (pnpm start)
+        - systemd service
+        - pm2
+        - Docker (not applicable)
+        - Other
+    validations:
+      required: false
+  - type: textarea
+    id: compose
+    attributes:
+      label: Your compose file / run command (optional)
+      description: If you use Docker — paste the compose file (or the `docker run` command), redacted.
+      render: yaml
+    validations:
+      required: false
+  - type: textarea
+    id: env
+    attributes:
+      label: Your environment overrides (optional)
+      description: "Paste the `.env` values and any environment overrides you set — HOST, PORT, STORAGE_ROOT, FORCE_HTTPS, SESSION_SECURE_COOKIE, SEED_PLUGIN_PATHS… Redact secrets."
+      render: shell
+      placeholder: |
+        STORAGE_ROOT=/data
+        FORCE_HTTPS=true
+    validations:
+      required: false
+  - type: dropdown
+    id: proxy
+    attributes:
+      label: Reverse proxy / TLS
+      options:
+        - None (direct http)
+        - nginx
+        - Caddy
+        - Traefik
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser (optional)
+      description: If the issue shows in the web UI — browser and version.
+      placeholder: Firefox 141 / Chrome 140
+    validations:
+      required: false
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: What you did, step by step, so the problem can be reproduced.
+      value: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What you expected to happen.
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior and logs
+      description: What actually happened — server logs (`docker compose logs` / console output), error text in the UI, or a screenshot attached below. Redact anything private first.
+      render: shell
+    validations:
+      required: true
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Privacy
+      options:
+        - label: I have removed library paths, hostnames, IPs and any other personal data from this report.
+    validations:
+      required: true

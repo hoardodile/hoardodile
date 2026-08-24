@@ -1,0 +1,118 @@
+name: Bug Report — Desktop
+description: Report a defect in the desktop app (Windows / Linux / macOS)
+labels: ["bug"]
+body:
+  - type: checkboxes
+    id: search
+    attributes:
+      label: Search first
+      description: I searched the existing issues (open and closed) and found no duplicate.
+      options:
+        - label: I searched and no similar issue was found.
+    validations:
+      required: true
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. The desktop app bundles its own server — if you are accessing a
+        *self-hosted* instance in a browser instead, please use the **Self-hosted** template.
+        This form is for defects only: usage questions belong in [Discussions](https://github.com/hoardodile/hoardodile/discussions).
+        Attach screenshots or copied text, and **redact** library paths (e.g. `C:\Users\...\hoardodile`,
+        `~/hoardodile`) before pasting anything.
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options:
+        - Windows x64
+        - Linux x64 (AppImage)
+        - macOS arm64 (Apple Silicon)
+        - macOS x64
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: OS version
+      description: For example "Windows 11 24H2", "Ubuntu 24.04", "macOS 15.1".
+      placeholder: Windows 11 24H2
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: App version (release tag or commit)
+      description: Settings → About shows the version (e.g. v0.1.0); dev builds — use the commit hash.
+      placeholder: v0.1.0
+    validations:
+      required: true
+  - type: dropdown
+    id: install
+    attributes:
+      label: How is it installed?
+      options:
+        - Installer (NSIS)
+        - Portable zip
+        - AppImage
+        - dmg
+        - Dev build from source
+        - Other
+    validations:
+      required: true
+  - type: dropdown
+    id: autoUpdate
+    attributes:
+      label: Auto-update
+      options:
+        - Off
+        - On, never updated
+        - On, updated recently
+        - Unknown
+    validations:
+      required: true
+  - type: dropdown
+    id: freshLibrary
+    attributes:
+      label: Does it still reproduce with a brand-new library?
+      description: Settings → library folder → create a new library and try the steps there.
+      options:
+        - Not tried
+        - Yes, still reproduces
+        - No, only happens in my library
+    validations:
+      required: false
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: What you did, step by step, so the problem can be reproduced.
+      value: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What you expected to happen.
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior and logs
+      description: What actually happened — error-page text, tray message, console output, or a screenshot attached below. Redact anything private first.
+      render: shell
+    validations:
+      required: true
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Privacy
+      options:
+        - label: I have removed library paths and any other personal data from this report.
+    validations:
+      required: true
