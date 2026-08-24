@@ -35,10 +35,12 @@ not wired, and the plugin's calls are rejected by the bridge.
 | `danmaku` | Read/create danmaku (bullet comments) for the resource. |
 | `message` | Read/create anchored messages for the resource. |
 | `imageHashes` | `imageHashes` results participate in duplicate detection. |
+| `container` | `listContainer`/`extractArchive` (archive entries) work; the sandbox denies these APIs without it. |
 
 The gallery manifest shows the typical media-plugin set:
 `{ "sourceMeta": true, "searchMeta": true, "danmaku": true, "message": true, "imageHashes": true }`.
-A read-only viewer may ship only `sourceMeta`.
+A read-only viewer may ship only `sourceMeta`; the builtin file plugin adds
+`"container": true` for archive listing.
 
 ## i18n
 

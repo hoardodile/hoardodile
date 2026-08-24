@@ -19,6 +19,7 @@ function buildManifest(): PluginManifest {
 			danmaku: false,
 			message: false,
 			imageHashes: false,
+			container: false,
 		},
 	}
 }

@@ -40,6 +40,7 @@ Please include in your report:
 - Authentication bypass, privilege escalation, SQL injection
 - Path traversal or filesystem access outside the storage root
 - Sandbox escape via imported content (plugins, documents, media)
+- Plugin sandbox boundary (Node permission model + module policy loader)
 - Disclosure of private library data
 - Electron shell issues (arbitrary code execution, broken isolation)
 

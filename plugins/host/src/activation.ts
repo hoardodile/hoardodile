@@ -106,6 +106,8 @@ async function loadDiskPlugin(
 		id: candidate.id,
 		mainPath: mainJsPath,
 		eager: candidate.enabled,
+		// The sandbox enforces manifest-gated API surface (container).
+		permissions: candidate.manifest.permissions,
 	})
 	if (plugin === undefined) {
 		return createFailingPlugin(["main.js load error"])

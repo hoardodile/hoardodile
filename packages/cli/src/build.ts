@@ -2,6 +2,7 @@ import {
 	copyFileSync,
 	existsSync,
 	mkdirSync,
+	readdirSync,
 	readFileSync,
 	rmSync,
 	watch,
@@ -106,9 +107,11 @@ export async function buildPlugin(
 				watch: watchMode ? {} : null,
 			},
 		})
+		assertNoNodeBuiltinImports(join(outDir))
 		if (watchMode && isWatcher(result)) {
 			result.on("event", (event) => {
 				if (event.code === "END") {
+					assertNoNodeBuiltinImports(join(outDir))
 					console.log(`[watch] ${manifest.id} server rebuilt`)
 				} else if (event.code === "ERROR") {
 					console.error(`[watch] ${manifest.id} server error:`, event.error)
@@ -150,5 +153,32 @@ function lintTemplates(manifest: PluginManifest): void {
 		issue.message.includes("i18n key"),
 	)) {
 		console.warn(`[build] warning: ${issue.message}\n    ${issue.template}`)
+	}
+}
+
+/**
+ * Fail the build when the server bundle references Node builtins. The
+ * plugin main process runs in a capability sandbox whose only privileged
+ * interface is the host's ResourceAPI RPC, so `node:` imports and
+ * `require` never have a legitimate home in a bundle (the Vite SSR build
+ * inlines the SDK closure). The runtime module policy enforces the same
+ * rule independently — this check is an early, friendly error.
+ */
+function assertNoNodeBuiltinImports(outDir: string): void {
+	for (const file of readdirSync(outDir, { withFileTypes: true })) {
+		if (!file.isFile() || !file.name.endsWith(".js")) continue
+		const source = readFileSync(join(outDir, file.name), "utf-8")
+		// Computed specifiers (`import("node:" + x)`) slip past a static
+		// scan by design — the runtime policy gate still denies them.
+		if (/(?:from\s*["']node:|import\s*\(\s*["']node:)/.test(source)) {
+			throw new Error(
+				`plugin main bundle (${file.name}) imports a Node builtin — the plugin main process cannot use node:fs/net/child_process/…; read files and probe metadata through the ResourceAPI instead`,
+			)
+		}
+		if (/\brequire\s*\(/.test(source)) {
+			throw new Error(
+				`plugin main bundle (${file.name}) calls require() — the plugin main process is self-contained; use the ResourceAPI instead`,
+			)
+		}
 	}
 }

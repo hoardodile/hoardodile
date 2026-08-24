@@ -41,6 +41,7 @@ import { SectionLabel } from "@hoardodile/ui/components/section-label"
 import { Switch } from "@hoardodile/ui/components/switch"
 import { toast } from "@hoardodile/ui/components/toast"
 import {
+	Archive,
 	ChatRound,
 	ChatRoundLine,
 	Database,
@@ -131,6 +132,7 @@ const permissionMeta: Record<
 	danmaku: { icon: ChatRoundLine },
 	message: { icon: ChatRound },
 	imageHashes: { icon: Gallery },
+	container: { icon: Archive },
 }
 
 /**

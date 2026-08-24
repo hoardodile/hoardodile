@@ -524,7 +524,8 @@
 			"searchMeta": "検索メタデータ",
 			"danmaku": "弾幕",
 			"message": "メッセージ",
-			"imageHashes": "画像ハッシュ"
+			"imageHashes": "画像ハッシュ",
+			"container": "コンテナ"
 		}
 	},
 	"overview": {

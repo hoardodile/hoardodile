@@ -89,7 +89,7 @@ from memory or old docs.
 ```bash
 hoardodile plugin build           # bundle manifest + client + server hooks into dist/
 hoardodile plugin build --watch   # rebuild on change
-hoardodile plugin run detect .    # run a hook through the worker sandbox
+hoardodile plugin run detect .    # run a hook through the capability sandbox
 hoardodile plugin bench detect .  # measure hook latency vs a baseline
 hoardodile plugin dev             # watch-build + workbench (http://127.0.0.1:5199)
 ```

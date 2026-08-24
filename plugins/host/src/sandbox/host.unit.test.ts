@@ -8,22 +8,24 @@ import {
 } from "./host.ts"
 
 /**
- * Deterministic lifecycle tests: a scripted fake Worker lets us hit race
- * windows (stale messages, concurrent loads) that real worker threads only
- * reproduce flakily. Only this file sees the mock.
+ * Deterministic lifecycle tests: a scripted fake ChildProcess lets us hit
+ * race windows (stale messages, concurrent loads) that real forked
+ * processes only reproduce flakily. Only this file sees the mock — the
+ * real `spawn` probe answers the first permission-flag candidate so the
+ * sandbox never actually starts a process here.
  */
 const mocks = vi.hoisted(() => {
-	class FakeWorker {
-		static instances: FakeWorker[] = []
+	class FakeChild {
+		static instances: FakeChild[] = []
 		private readonly listeners = new Map<
 			string,
 			((...args: unknown[]) => void)[]
 		>()
-		readonly posted: unknown[] = []
-		terminated = false
+		readonly sent: unknown[] = []
+		killed = false
 
 		constructor(..._args: unknown[]) {
-			FakeWorker.instances.push(this)
+			FakeChild.instances.push(this)
 		}
 
 		on(event: string, fn: (...args: unknown[]) => void): this {
@@ -37,23 +39,35 @@ const mocks = vi.hoisted(() => {
 			for (const fn of this.listeners.get(event) ?? []) fn(...args)
 		}
 
-		postMessage(msg: unknown): void {
-			this.posted.push(msg)
+		send(msg: unknown): void {
+			this.sent.push(msg)
 		}
 
-		terminate(): Promise<number> {
-			this.terminated = true
-			return Promise.resolve(0)
+		kill(): void {
+			this.killed = true
+		}
+
+		ref(): this {
+			return this
 		}
 
 		unref(): this {
 			return this
 		}
 	}
-	return { FakeWorker }
+	return { FakeChild }
 })
 
-vi.mock("node:worker_threads", () => ({ Worker: mocks.FakeWorker }))
+vi.mock("node:child_process", () => ({
+	fork: (...args: unknown[]) => new mocks.FakeChild(...args),
+	spawn: (...args: unknown[]) => {
+		const child = new mocks.FakeChild(...args)
+		// The permission-flag probe resolves as soon as the listeners are
+		// attached — report the first candidate as accepted.
+		queueMicrotask(() => child.emit("exit", 0))
+		return child
+	},
+}))
 
 function unitConfig(overrides: Partial<PluginSandboxConfig> = {}) {
 	return {
@@ -62,10 +76,10 @@ function unitConfig(overrides: Partial<PluginSandboxConfig> = {}) {
 	} satisfies PluginSandboxConfig
 }
 
-function lastWorker(): InstanceType<typeof mocks.FakeWorker> {
-	const worker = mocks.FakeWorker.instances.at(-1)
-	if (worker === undefined) throw new Error("no worker spawned")
-	return worker
+function lastChild(): InstanceType<typeof mocks.FakeChild> {
+	const child = mocks.FakeChild.instances.at(-1)
+	if (child === undefined) throw new Error("no sandbox child spawned")
+	return child
 }
 
 function createStubApi(overrides: Partial<ResourceAPI> = {}): ResourceAPI {
@@ -93,11 +107,11 @@ function flush(): Promise<void> {
 	return new Promise((resolve) => setTimeout(resolve, 0))
 }
 
-describe("plugin sandbox lifecycle (fake worker)", () => {
+describe("plugin sandbox lifecycle (fake child process)", () => {
 	let sandbox: PluginSandbox | undefined
 
 	beforeEach(() => {
-		mocks.FakeWorker.instances.length = 0
+		mocks.FakeChild.instances.length = 0
 	})
 
 	afterEach(async () => {
@@ -106,7 +120,7 @@ describe("plugin sandbox lifecycle (fake worker)", () => {
 		vi.restoreAllMocks()
 	})
 
-	test("a plugin that fails to load has its worker terminated", async () => {
+	test("a plugin that fails to load has its sandbox child terminated", async () => {
 		vi.spyOn(console, "error").mockImplementation(() => {})
 		sandbox = createPluginSandbox(unitConfig())
 		const load = sandbox.loadPlugin({
@@ -114,30 +128,33 @@ describe("plugin sandbox lifecycle (fake worker)", () => {
 			mainPath: "/plugins/bad/main.js",
 			eager: true,
 		})
-		const worker = lastWorker()
-		worker.emit("message", {
+		// The fork happens after the (mocked) permission-flag probe settles.
+		await flush()
+		const child = lastChild()
+		child.emit("message", {
 			type: "loaded",
 			ok: false,
 			error: { name: "Error", message: "import exploded" },
 		})
 		await expect(load).resolves.toBeUndefined()
-		expect(worker.terminated).toBe(true)
+		expect(child.killed).toBe(true)
 	})
 
-	test("messages from a stale worker are ignored", async () => {
+	test("messages from a stale child are ignored", async () => {
 		vi.spyOn(console, "error").mockImplementation(() => {})
 		sandbox = createPluginSandbox(unitConfig())
-		// Unload mid-load: the first worker's waiter rejects, load returns
-		// undefined, and the worker is terminated.
+		// Unload mid-load: the first child's waiter rejects, load returns
+		// undefined, and the child is terminated.
 		const first = sandbox.loadPlugin({
 			id: "p",
 			mainPath: "/p/main.js",
 			eager: true,
 		})
-		const stale = lastWorker()
+		await flush()
+		const stale = lastChild()
 		sandbox.unloadPlugin("p")
 		await expect(first).resolves.toBeUndefined()
-		expect(stale.terminated).toBe(true)
+		expect(stale.killed).toBe(true)
 
 		// Respawn for the same id.
 		const second = sandbox.loadPlugin({
@@ -145,11 +162,12 @@ describe("plugin sandbox lifecycle (fake worker)", () => {
 			mainPath: "/p/main.js",
 			eager: true,
 		})
-		const current = lastWorker()
+		await flush()
+		const current = lastChild()
 		expect(current).not.toBe(stale)
 
-		// The stale worker's late "loaded" must not resolve the new spawn's
-		// load waiter — the second load stays pending until ITS worker loads.
+		// The stale child's late "loaded" must not resolve the new spawn's
+		// load waiter — the second load stays pending until ITS child loads.
 		let secondSettled = false
 		void second.then(() => {
 			secondSettled = true
@@ -162,7 +180,7 @@ describe("plugin sandbox lifecycle (fake worker)", () => {
 		const plugin = await second
 		if (plugin === undefined) throw new Error("plugin load failed")
 
-		// A stale "result" must not resolve a pending call on the new worker.
+		// A stale "result" must not resolve a pending call on the new child.
 		const detect = plugin.detect(createStubApi())
 		// Let invoke() register the pending call before delivering results.
 		await flush()
@@ -189,33 +207,34 @@ describe("plugin sandbox lifecycle (fake worker)", () => {
 			mainPath: "/p/old.js",
 			eager: true,
 		})
-		const w1 = lastWorker()
+		await flush()
+		const c1 = lastChild()
 
 		// Second load for the same id while the first is still in flight:
-		// the old worker is NOT torn down until the new bundle loads — a
-		// failed reload must never strand the previous worker.
+		// the old child is NOT torn down until the new bundle loads — a
+		// failed reload must never strand the previous child.
 		const second = sandbox.loadPlugin({
 			id: "p",
 			mainPath: "/p/new.js",
 			eager: true,
 		})
 		await flush()
-		expect(w1.terminated).toBe(false)
-		const w2 = lastWorker()
-		expect(w2).not.toBe(w1)
+		expect(c1.killed).toBe(false)
+		const c2 = lastChild()
+		expect(c2).not.toBe(c1)
 
 		// Both bundles load; the newer state owns the id and retires the
-		// previous worker only then.
-		w1.emit("message", { type: "loaded", ok: true, hooks: ["detect"] })
+		// previous child only then.
+		c1.emit("message", { type: "loaded", ok: true, hooks: ["detect"] })
 		await first
-		w2.emit("message", { type: "loaded", ok: true, hooks: ["detect"] })
+		c2.emit("message", { type: "loaded", ok: true, hooks: ["detect"] })
 		const plugin = await second
 		if (plugin === undefined) throw new Error("plugin load failed")
-		expect(w1.terminated).toBe(true)
+		expect(c1.killed).toBe(true)
 
 		const detect = plugin.detect(createStubApi())
 		await flush()
-		w2.emit("message", {
+		c2.emit("message", {
 			type: "result",
 			callId: 1,
 			ok: true,
@@ -223,12 +242,12 @@ describe("plugin sandbox lifecycle (fake worker)", () => {
 		})
 		await expect(detect).resolves.toEqual({ ok: true })
 
-		// The newer state is still tracked — dispose terminates its worker.
+		// The newer state is still tracked — dispose terminates its child.
 		await sandbox.disposeAll()
-		expect(w2.terminated).toBe(true)
+		expect(c2.killed).toBe(true)
 	})
 
-	test("a failed reload keeps the previous worker alive and serving", async () => {
+	test("a failed reload keeps the previous child alive and serving", async () => {
 		vi.spyOn(console, "error").mockImplementation(() => {})
 		sandbox = createPluginSandbox(unitConfig())
 		const first = sandbox.loadPlugin({
@@ -236,34 +255,36 @@ describe("plugin sandbox lifecycle (fake worker)", () => {
 			mainPath: "/p/old.js",
 			eager: true,
 		})
-		const w1 = lastWorker()
-		w1.emit("message", { type: "loaded", ok: true, hooks: ["detect"] })
+		await flush()
+		const c1 = lastChild()
+		c1.emit("message", { type: "loaded", ok: true, hooks: ["detect"] })
 		await expect(first).resolves.toBeDefined()
 
 		// Reload with a bundle that fails to import: the load rejects, the
-		// previous worker must survive and keep answering hooks.
+		// previous child must survive and keep answering hooks.
 		const reload = sandbox.loadPlugin({
 			id: "p",
 			mainPath: "/p/broken.js",
 			eager: true,
 		})
-		const w2 = lastWorker()
-		expect(w2).not.toBe(w1)
-		expect(w1.terminated).toBe(false)
+		await flush()
+		const c2 = lastChild()
+		expect(c2).not.toBe(c1)
+		expect(c1.killed).toBe(false)
 
-		w2.emit("message", {
+		c2.emit("message", {
 			type: "loaded",
 			ok: false,
 			error: { name: "Error", message: "import exploded" },
 		})
 		const restored = await reload
 		if (restored === undefined) throw new Error("reload should fall back")
-		expect(w1.terminated).toBe(false)
+		expect(c1.killed).toBe(false)
 
-		// The restored definition still routes through the old worker.
+		// The restored definition still routes through the old child.
 		const detect = restored.detect(createStubApi())
 		await flush()
-		w1.emit("message", {
+		c1.emit("message", {
 			type: "result",
 			callId: 1,
 			ok: true,

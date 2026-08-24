@@ -129,4 +129,5 @@ directly.
   stray bad file (a `.pdf`-named text file next to a real PDF).
 - **`runPluginHook` / `createDirectoryResourceAPI`** in
   `@hoardodile/host` (devDependency only) run hooks through the same
-  worker sandbox the server uses — the exact production execution path.
+  capability sandbox the server uses — the exact production execution
+  path.

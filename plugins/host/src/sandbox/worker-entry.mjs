@@ -1,11 +1,40 @@
 /**
- * Plugin sandbox worker entry. Plain ESM JS on purpose: worker threads do NOT
- * get vite-node/vitest transforms, so this file must stay dependency-free
- * (no workspace TS imports). Keep HOOK_NAMES / API_METHOD_NAMES in sync with
- * protocol.ts.
+ * Plugin sandbox entry — the main script of the per-plugin child process.
+ * Plain ESM JS on purpose: sandbox files do NOT get vite-node/vitest
+ * transforms, so they must stay dependency-free (no workspace TS imports).
+ * Keep HOOK_NAMES / API_METHOD_NAMES in sync with protocol.ts.
+ *
+ * The child runs under the Node permission model (no fs write, no child
+ * processes, no native addons; fs reads limited to the plugin directory
+ * and the sandbox entry itself) and this entry adds three layers before
+ * the plugin bundle is ever imported:
+ *
+ *  1. Startup self-check — proves the permission model is actually active
+ *     (the host probes the flag name, but a restricted process must also
+ *     verify the restriction). Fail-closed: exit(1) when the model is off.
+ *  2. Module policy gate — `registerHooks` (synchronous, main-thread, no
+ *     worker grant needed) installs a resolve hook so every later import
+ *     (`node:fs`, `node:http`, bare packages, ...) is denied; only
+ *     `node:url`, files under the plugin dir and the entry itself may
+ *     load. A follow-up self-check proves the gate is actually armed.
+ *  3. Global scrub — `fetch`/`WebSocket`/`EventSource` throw and
+ *     `process.env` is emptied, so ambient network/env capability never
+ *     exists even without an import.
+ *
+ * The plugin's own data access goes through the RPC below (`process.send`
+ * of `api` requests); the host executes every call in its own process.
  */
+import { writeFileSync } from "node:fs"
+import { registerHooks } from "node:module"
+import { tmpdir } from "node:os"
+import { join } from "node:path"
 import { pathToFileURL } from "node:url"
-import { parentPort } from "node:worker_threads"
+
+if (process.send === undefined) {
+	throw new Error(
+		"worker-entry must run as a forked child process with an IPC channel",
+	)
+}
 
 const HOOK_NAMES = [
 	"detect",
@@ -34,10 +63,154 @@ const API_METHOD_NAMES = [
 
 const LOG_METHOD_NAMES = new Set(["logInfo", "logWarn", "logError"])
 
-if (parentPort === null) {
-	throw new Error("worker-entry must run inside a worker thread")
+const pluginDir = process.argv[2]
+if (typeof pluginDir !== "string" || pluginDir.length === 0) {
+	process.stderr.write("[plugin-sandbox] missing plugin directory argument\n")
+	process.exit(1)
 }
-const port = parentPort
+
+/** Absolute cap for one hook result crossing the IPC boundary. */
+const MAX_RESULT_BYTES =
+	Number(process.env.HOARDODILE_PLUGIN_MAX_RESULT_BYTES) || 256 * 1024 * 1024
+
+/** Cap on `log*` messages per hook invocation (log spam resets the watchdog). */
+const MAX_LOGS_PER_HOOK =
+	Number(process.env.HOARDODILE_PLUGIN_MAX_LOGS_PER_HOOK) || 1000
+
+/** Cap on ResourceAPI calls per hook invocation. */
+const MAX_API_CALLS_PER_HOOK =
+	Number(process.env.HOARDODILE_PLUGIN_MAX_API_CALLS_PER_HOOK) || 100000
+
+// Per-invocation budgets: reset at the start of every hook so a burst in
+// one hook never counts against the next (they fail the hook, like the
+// result cap — a runaway log/RPC loop must not pin the host CPU).
+let logCount = 0
+let apiCallCount = 0
+
+// -- layer 1: startup self-check (fail-closed) --
+
+function permissionModelActive() {
+	const probePath = join(
+		tmpdir(),
+		`hoardodile-sandbox-probe-${process.pid}-${Date.now()}`,
+	)
+	const api = process.permission
+	if (api !== undefined && typeof api.has === "function") {
+		try {
+			// No fs-write grant exists at all, so a write must be denied.
+			return api.has("fs.write", probePath) === false
+		} catch {
+			// Unsupported probe shape — fall through to the write probe.
+		}
+	}
+	try {
+		writeFileSync(probePath, "probe")
+		return false
+	} catch {
+		return true
+	}
+}
+
+if (!permissionModelActive()) {
+	process.stderr.write(
+		"[plugin-sandbox] startup self-check failed: the Node permission model is not active in this process — refusing to run untrusted plugin code. Check the Node version and that the sandbox flags reached the child.\n",
+	)
+	process.exit(1)
+}
+
+// -- layer 2: module policy gate (before any plugin code can import) --
+
+if (typeof registerHooks !== "function") {
+	process.stderr.write(
+		"[plugin-sandbox] startup self-check failed: this Node build has no module.registerHooks — refusing to run plugin code unsandboxed.\n",
+	)
+	process.exit(1)
+}
+
+/** Case-insensitive comparison on Windows (drive letters, case folds). */
+function normalizePath(value) {
+	return process.platform === "win32" ? value.toLowerCase() : value
+}
+
+/** On-disk path → its canonical `file://` URL, in Node's own encoding. */
+function toFileUrl(path) {
+	const posix = path.replace(/\\/g, "/")
+	const root = posix.startsWith("/") ? `file://${posix}` : `file:///${posix}`
+	// pathToFileURL percent-encodes these; encodeURI leaves them alone.
+	return encodeURI(root).replace(/#/g, "%23").replace(/\?/g, "%3F")
+}
+
+const pluginDirPrefix = normalizePath(toFileUrl(pluginDir) + "/")
+const entryUrl = normalizePath(import.meta.url)
+
+/**
+ * The only modules a sandbox may load: `node:url` (bootstrap), files under
+ * the plugin directory (the bundle is a single self-contained ESM file)
+ * and the entry itself. Everything else — every other `node:` builtin,
+ * bare package names, `data:`/`blob:` URLs, absolute paths outside the
+ * plugin dir — is denied. The Node permission model stays the second,
+ * OS-level layer underneath.
+ */
+function isAllowedModule(url) {
+	if (url === "node:url") return true
+	if (!url.startsWith("file:")) return false
+	const normalized = normalizePath(url)
+	if (normalized === entryUrl) return true
+	return normalized.startsWith(pluginDirPrefix)
+}
+
+registerHooks({
+	resolve(specifier, _context, nextResolve) {
+		// Resolve first, then validate the FINAL destination — a relative
+		// specifier like `../outside.js` only reveals its target after the
+		// parent URL is folded in. Hooks must stay synchronous
+		// (registerHooks does not support async hooks).
+		const result = nextResolve(specifier, _context)
+		if (isAllowedModule(result.url)) return result
+		throw new Error(
+			`[plugin-sandbox] module denied by policy: ${specifier} → ${result.url}`,
+		)
+	},
+})
+
+// -- layer 2a: prove the policy gate is armed --
+// A builtin the entry never imported (node:http): its import is not a
+// permission-model operation, so a success means the plugin would run
+// with full module access — only the gate above can deny it. (`node:fs`
+// is already loaded by a top-level import, which would bypass the hook.)
+try {
+	await import("node:http")
+	process.stderr.write(
+		"[plugin-sandbox] startup self-check failed: module policy gate is not active in this process\n",
+	)
+	process.exit(1)
+} catch {
+	// Denied as expected — the gate is live.
+}
+
+// -- layer 3: global scrub --
+
+function disabled(name) {
+	return () => {
+		throw new Error(
+			`[plugin-sandbox] ${name} is disabled inside the plugin sandbox — use the ResourceAPI instead`,
+		)
+	}
+}
+
+for (const name of ["fetch", "WebSocket", "EventSource"]) {
+	try {
+		Object.defineProperty(globalThis, name, {
+			value: disabled(name),
+			writable: true,
+			configurable: true,
+		})
+	} catch {
+		// A non-configurable global stays; the module path to it is still denied.
+	}
+}
+
+process.env = {}
 
 /** @type {Record<string, unknown> | undefined} */
 let plugin
@@ -68,16 +241,22 @@ function deserializeError(err) {
 	return e
 }
 
-function transferListOf(value) {
-	if (
-		value instanceof Uint8Array &&
-		value.byteOffset === 0 &&
-		value.byteLength === value.buffer.byteLength &&
-		value.buffer instanceof ArrayBuffer
-	) {
-		return [value.buffer]
+function send(message) {
+	try {
+		process.send(message)
+	} catch {
+		// The channel closed (host gone or killed us) — nothing to deliver.
 	}
-	return []
+}
+
+/** Approximate serialized size of a value crossing to the host. */
+function approxByteSize(value) {
+	if (value instanceof Uint8Array) return value.byteLength
+	try {
+		return JSON.stringify(value).length * 2
+	} catch {
+		return Infinity
+	}
 }
 
 function buildResourceApiProxy(callId) {
@@ -85,9 +264,17 @@ function buildResourceApiProxy(callId) {
 	for (const name of API_METHOD_NAMES) {
 		if (LOG_METHOD_NAMES.has(name)) {
 			// Fire-and-forget: the contract types these as sync void, so the
-			// proxy must not hand the plugin a promise to await.
+			// proxy must not hand the plugin a promise to await. A thrown
+			// budget error propagates into the plugin's hook — the hook
+			// fails loudly instead of spamming forever.
 			api[name] = (message, data) => {
-				port.postMessage({
+				logCount += 1
+				if (logCount > MAX_LOGS_PER_HOOK) {
+					throw new Error(
+						`[plugin-sandbox] log budget exceeded (${MAX_LOGS_PER_HOOK} per hook)`,
+					)
+				}
+				send({
 					type: "log",
 					callId,
 					method: name,
@@ -97,12 +284,18 @@ function buildResourceApiProxy(callId) {
 			continue
 		}
 		api[name] = (...args) => {
+			apiCallCount += 1
+			if (apiCallCount > MAX_API_CALLS_PER_HOOK) {
+				return Promise.reject(
+					new Error(
+						`[plugin-sandbox] API call budget exceeded (${MAX_API_CALLS_PER_HOOK} per hook) — batch with statFiles or reduce per-file fan-out`,
+					),
+				)
+			}
 			const apiCallId = nextApiCallId++
 			return new Promise((resolve, reject) => {
 				pendingApi.set(apiCallId, { resolve, reject })
-				// Never transfer here: transfer would neuter the plugin's own
-				// buffer (e.g. setCover data the plugin reuses after the call).
-				port.postMessage({ type: "api", callId, apiCallId, method: name, args })
+				send({ type: "api", callId, apiCallId, method: name, args })
 			})
 		}
 	}
@@ -126,9 +319,9 @@ async function handleLoad(mainPath) {
 		const hooks = HOOK_NAMES.filter((h) => typeof def[h] === "function")
 		plugin = def
 		detectPayload = undefined
-		port.postMessage({ type: "loaded", ok: true, hooks })
+		send({ type: "loaded", ok: true, hooks })
 	} catch (err) {
-		port.postMessage({ type: "loaded", ok: false, error: serializeError(err) })
+		send({ type: "loaded", ok: false, error: serializeError(err) })
 	}
 }
 
@@ -137,6 +330,8 @@ async function handleInvoke(callId, hook) {
 		if (plugin === undefined) throw new Error("plugin not loaded")
 		const fn = plugin[hook]
 		if (typeof fn !== "function") throw new Error(`plugin has no hook ${hook}`)
+		logCount = 0
+		apiCallCount = 0
 		const value = await fn(buildResourceApiProxy(callId))
 		// Keep the payload of a successful detect for the next hooks —
 		// the one-pass classification every other hook can build on. A
@@ -147,12 +342,14 @@ async function handleInvoke(callId, hook) {
 		} else if (hook === "detect") {
 			detectPayload = undefined
 		}
-		port.postMessage(
-			{ type: "result", callId, ok: true, value },
-			transferListOf(value),
-		)
+		if (approxByteSize(value) > MAX_RESULT_BYTES) {
+			throw new Error(
+				`[plugin-sandbox] hook result exceeds ${MAX_RESULT_BYTES} bytes — return a smaller payload or read large files by byte range`,
+			)
+		}
+		send({ type: "result", callId, ok: true, value })
 	} catch (err) {
-		port.postMessage({
+		send({
 			type: "result",
 			callId,
 			ok: false,
@@ -165,7 +362,7 @@ function isRecord(value) {
 	return value !== null && typeof value === "object" && !Array.isArray(value)
 }
 
-port.on("message", (msg) => {
+process.on("message", (msg) => {
 	if (msg === null || typeof msg !== "object") return
 	switch (msg.type) {
 		case "load":
@@ -186,4 +383,10 @@ port.on("message", (msg) => {
 			return
 		}
 	}
+})
+
+// The host is the process lifetime: when it goes away (crash, shutdown,
+// tree-kill), the IPC channel closes and this child must not linger.
+process.on("disconnect", () => {
+	process.exit(0)
 })

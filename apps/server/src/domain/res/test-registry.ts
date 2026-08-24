@@ -21,6 +21,7 @@ export const TEST_BUILTIN_MANIFEST = {
 		imageHashes: true,
 		preferences: false,
 		node: false,
+		container: false,
 	},
 }
 

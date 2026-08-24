@@ -25,6 +25,12 @@ export const pluginPermissions = z.object({
 	message: z.boolean().default(false),
 	/** Produce content hashes for duplicate detection / image similarity. */
 	imageHashes: z.boolean().default(false),
+	/**
+	 * List and extract archive (zip/tar/7z/…) entries. The only API
+	 * surface with a write side effect (the host's extraction cache), so
+	 * it is denied by default.
+	 */
+	container: z.boolean().default(false),
 })
 export type PluginPermissions = z.infer<typeof pluginPermissions>
 

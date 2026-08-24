@@ -115,8 +115,10 @@ function copyMigrationSqlPlugin(): Plugin {
 }
 
 /**
- * Copy the untransformed plugin worker entry next to the server chunks so
- * `workerEntryUrlFromModule` can find it after `@hoardodile/host` is inlined.
+ * Copy the untransformed plugin sandbox entry next to the server chunks so
+ * `workerEntryUrlFromModule` can find it after `@hoardodile/host` is
+ * inlined. The module policy hook lives inside the entry, so one file is
+ * enough.
  */
 function copyWorkerEntryPlugin(): Plugin {
 	return {

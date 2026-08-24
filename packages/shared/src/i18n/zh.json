@@ -524,7 +524,8 @@
 			"searchMeta": "搜索元数据",
 			"danmaku": "弹幕",
 			"message": "留言",
-			"imageHashes": "图片哈希"
+			"imageHashes": "图片哈希",
+			"container": "容器"
 		}
 	},
 	"overview": {

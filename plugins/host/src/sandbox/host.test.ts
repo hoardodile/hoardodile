@@ -1,15 +1,37 @@
+import { copyFileSync, mkdtempSync } from "node:fs"
+import { tmpdir } from "node:os"
+import { join } from "node:path"
 import { fileURLToPath } from "node:url"
+import type { PluginPermissions } from "@hoardodile/sdk-types"
 import { afterEach, describe, expect, test, vi } from "vitest"
 import type { ResourceAPI } from "../types.ts"
 import {
 	createPluginSandbox,
 	DEFAULT_SANDBOX_CONFIG,
+	PLUGIN_MAX_API_CALLS_PER_HOOK,
+	PLUGIN_MAX_LOGS_PER_HOOK,
+	PLUGIN_MAX_RESULT_BYTES,
 	type PluginSandbox,
 	type PluginSandboxConfig,
 } from "./host.ts"
 
 function fixture(name: string): string {
 	return fileURLToPath(new URL(`./fixtures/${name}`, import.meta.url))
+}
+
+function noPermissions(): PluginPermissions {
+	return {
+		sourceMeta: false,
+		searchMeta: false,
+		danmaku: false,
+		message: false,
+		imageHashes: false,
+		container: false,
+	}
+}
+
+function containerPermissions(): PluginPermissions {
+	return { ...noPermissions(), container: true }
 }
 
 function fastConfig(overrides: Partial<PluginSandboxConfig> = {}) {
@@ -350,5 +372,148 @@ describe("plugin sandbox", () => {
 		// The window slides clean — the next call gets a fresh worker again.
 		nowSpy.mockReturnValue(1_000_000 + 301)
 		await expect(plugin.detect(createStubApi())).rejects.toThrow(/exited/i)
+	})
+
+	// -- capability boundary --
+
+	test("static node: imports are denied by the module policy — load fails closed", async () => {
+		vi.spyOn(console, "error").mockImplementation(() => {})
+		sandbox = createPluginSandbox()
+		await expect(
+			sandbox.loadPlugin({
+				id: "hostile",
+				mainPath: fixture("hostile-plugin.mjs"),
+				eager: true,
+			}),
+		).resolves.toBeUndefined()
+	})
+
+	test("computed dynamic node: imports are denied inside a hook", async () => {
+		sandbox = createPluginSandbox()
+		const plugin = await sandbox.loadPlugin({
+			id: "hostile-dynamic",
+			mainPath: fixture("hostile-dynamic-plugin.mjs"),
+			eager: true,
+		})
+		if (plugin === undefined) throw new Error("plugin load failed")
+		await expect(plugin.detect(createStubApi())).rejects.toThrow(
+			/denied by policy/,
+		)
+	})
+
+	test("the fetch global is scrubbed inside the sandbox", async () => {
+		sandbox = createPluginSandbox()
+		const plugin = await sandbox.loadPlugin({
+			id: "fetch",
+			mainPath: fixture("fetch-plugin.mjs"),
+			eager: true,
+		})
+		if (plugin === undefined) throw new Error("plugin load failed")
+		await expect(plugin.detect(createStubApi())).rejects.toThrow(
+			/fetch is disabled/i,
+		)
+	})
+
+	test("oversized hook results are rejected instead of cloned into the host", async () => {
+		sandbox = createPluginSandbox(fastConfig({ maxResultBytes: 1024 }))
+		const plugin = await sandbox.loadPlugin({
+			id: "huge",
+			mainPath: fixture("huge-result-plugin.mjs"),
+			eager: true,
+		})
+		if (plugin === undefined) throw new Error("plugin load failed")
+		await expect(plugin.detect(createStubApi())).rejects.toThrow(/exceeds/)
+	})
+
+	test("an unknown permission flag fails closed: plugins refuse to load", async () => {
+		vi.spyOn(console, "error").mockImplementation(() => {})
+		sandbox = createPluginSandbox({
+			...DEFAULT_SANDBOX_CONFIG,
+			permissionFlag: "--definitely-not-a-permission-flag",
+		})
+		await expect(
+			sandbox.loadPlugin({
+				id: "noline",
+				mainPath: fixture("echo-plugin.mjs"),
+				eager: true,
+			}),
+		).resolves.toBeUndefined()
+	})
+
+	test("a plugin dir whose path contains spaces loads and runs", async () => {
+		const dir = mkdtempSync(join(tmpdir(), "hoardodile sandbox space "))
+		copyFileSync(fixture("echo-plugin.mjs"), join(dir, "main.js"))
+		sandbox = createPluginSandbox()
+		const plugin = await sandbox.loadPlugin({
+			id: "spacey",
+			mainPath: join(dir, "main.js"),
+			eager: true,
+		})
+		if (plugin === undefined) throw new Error("plugin load failed")
+		await expect(plugin.detect(createStubApi())).resolves.toEqual({ ok: true })
+	})
+
+	test("the default budgets are exported and wired into the config", () => {
+		expect(DEFAULT_SANDBOX_CONFIG.maxResultBytes).toBe(PLUGIN_MAX_RESULT_BYTES)
+		expect(PLUGIN_MAX_RESULT_BYTES).toBe(256 * 1024 * 1024)
+		expect(DEFAULT_SANDBOX_CONFIG.maxLogsPerHook).toBe(PLUGIN_MAX_LOGS_PER_HOOK)
+		expect(DEFAULT_SANDBOX_CONFIG.maxApiCallsPerHook).toBe(
+			PLUGIN_MAX_API_CALLS_PER_HOOK,
+		)
+	})
+
+	test("container API methods are denied without the manifest permission", async () => {
+		sandbox = createPluginSandbox()
+		const plugin = await sandbox.loadPlugin({
+			id: "container-denied",
+			mainPath: fixture("container-plugin.mjs"),
+			eager: true,
+			permissions: noPermissions(),
+		})
+		if (plugin === undefined) throw new Error("plugin load failed")
+		await expect(plugin.detect(createStubApi())).rejects.toThrow(
+			/container permission denied/,
+		)
+	})
+
+	test("container API methods run when the manifest grants it", async () => {
+		sandbox = createPluginSandbox()
+		const plugin = await sandbox.loadPlugin({
+			id: "container-allowed",
+			mainPath: fixture("container-plugin.mjs"),
+			eager: true,
+			permissions: containerPermissions(),
+		})
+		if (plugin === undefined) throw new Error("plugin load failed")
+		await expect(plugin.detect(createStubApi())).resolves.toEqual({
+			ok: true,
+			entries: 0,
+		})
+	})
+
+	test("a log flood exceeds the per-hook budget and fails the hook", async () => {
+		sandbox = createPluginSandbox(fastConfig({ maxLogsPerHook: 10 }))
+		const plugin = await sandbox.loadPlugin({
+			id: "flood-log",
+			mainPath: fixture("flood-log-plugin.mjs"),
+			eager: true,
+		})
+		if (plugin === undefined) throw new Error("plugin load failed")
+		await expect(plugin.detect(createStubApi())).rejects.toThrow(
+			/log budget exceeded/,
+		)
+	})
+
+	test("an API-call flood exceeds the per-hook budget and fails the hook", async () => {
+		sandbox = createPluginSandbox(fastConfig({ maxApiCallsPerHook: 10 }))
+		const plugin = await sandbox.loadPlugin({
+			id: "flood-api",
+			mainPath: fixture("flood-api-plugin.mjs"),
+			eager: true,
+		})
+		if (plugin === undefined) throw new Error("plugin load failed")
+		await expect(plugin.detect(createStubApi())).rejects.toThrow(
+			/API call budget exceeded/,
+		)
 	})
 })

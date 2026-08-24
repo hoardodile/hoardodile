@@ -34,6 +34,7 @@ function manifestFor(id: PluginManifestId, name: string) {
 			danmaku: false,
 			message: false,
 			imageHashes: false,
+			container: false,
 		},
 	}
 }

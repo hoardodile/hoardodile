@@ -314,6 +314,7 @@ export async function createFileStubHooks(): Promise<BenchHooks> {
 				danmaku: false,
 				message: false,
 				imageHashes: false,
+				container: false,
 			},
 		},
 		enabled: true,

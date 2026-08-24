@@ -32,6 +32,7 @@ function manifestFor(
 			danmaku: false,
 			message: false,
 			imageHashes: false,
+			container: false,
 			...permissions,
 		},
 	}

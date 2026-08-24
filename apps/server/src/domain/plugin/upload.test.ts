@@ -1,16 +1,16 @@
-﻿import {
+import {
 	existsSync,
 	mkdirSync,
 	mkdtempSync,
 	readdirSync,
 	rmSync,
 } from "node:fs"
-import { writeFile } from "node:fs/promises"
+import { mkdir, symlink, writeFile } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { Readable } from "node:stream"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
-import { buildPluginUploads } from "./upload.ts"
+import { buildPluginUploads, findSymlinkEntry } from "./upload.ts"
 
 const PLUGIN_ID = "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
 
@@ -92,6 +92,46 @@ describe("buildPluginUploads", () => {
 		).rejects.toThrow("manifest.json")
 		expect(readdirSync(pluginsDir)).toEqual([])
 		expect(readdirSync(stagingRoot)).toEqual([])
+	})
+
+	test("rejects a plugin zip containing a symbolic link", async () => {
+		const uploads = uploadsWith(async (_source, destDir) => {
+			await writeFile(join(destDir, "manifest.json"), MANIFEST)
+			await mkdir(join(destDir, "assets"))
+			// Windows junctions need no elevation; POSIX uses a plain link.
+			if (process.platform === "win32") {
+				await symlink(
+					join(destDir, "assets"),
+					join(destDir, "assets-link"),
+					"junction",
+				)
+			} else {
+				await symlink(join(destDir, "assets"), join(destDir, "assets-link"))
+			}
+		})
+
+		await expect(
+			uploads.installFromZip(Readable.from(["zip-bytes"])),
+		).rejects.toThrow("symbolic link")
+		expect(readdirSync(pluginsDir)).toEqual([])
+		expect(readdirSync(stagingRoot)).toEqual([])
+	})
+
+	test("findSymlinkEntry reports the first link and tolerates plain trees", async () => {
+		const clean = join(root, "clean")
+		const nested = join(clean, "a", "b")
+		await mkdir(nested, { recursive: true })
+		await writeFile(join(nested, "x.txt"), "x")
+		expect(await findSymlinkEntry(clean)).toBeUndefined()
+
+		const linked = join(root, "linked")
+		await mkdir(join(linked, "a"), { recursive: true })
+		if (process.platform === "win32") {
+			await symlink(join(linked, "a"), join(linked, "a-link"), "junction")
+		} else {
+			await symlink(join(linked, "a"), join(linked, "a-link"))
+		}
+		expect(await findSymlinkEntry(linked)).toMatch(/a-link/)
 	})
 })
 

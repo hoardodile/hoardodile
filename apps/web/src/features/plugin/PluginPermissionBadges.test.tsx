@@ -14,6 +14,7 @@ describe("grantedPermissionKeys", () => {
 				danmaku: true,
 				message: false,
 				imageHashes: false,
+				container: false,
 			}),
 		).toEqual(["sourceMeta", "danmaku"])
 	})
@@ -26,6 +27,7 @@ describe("grantedPermissionKeys", () => {
 				danmaku: false,
 				message: false,
 				imageHashes: false,
+				container: false,
 			}),
 		).toEqual([])
 	})
@@ -41,6 +43,7 @@ describe("PluginPermissionBadges", () => {
 					danmaku: false,
 					message: true,
 					imageHashes: false,
+					container: false,
 				}}
 			/>,
 		)
@@ -60,6 +63,7 @@ describe("PluginPermissionBadges", () => {
 					danmaku: false,
 					message: false,
 					imageHashes: false,
+					container: false,
 				}}
 			/>,
 		)

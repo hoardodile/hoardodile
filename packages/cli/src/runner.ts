@@ -89,6 +89,7 @@ export function resolvePluginTarget(opts: {
 				danmaku: false,
 				message: false,
 				imageHashes: false,
+				container: false,
 			},
 		}
 	}

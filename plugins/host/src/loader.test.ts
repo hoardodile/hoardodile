@@ -44,6 +44,7 @@ function buildManifest(
 			danmaku: false,
 			message: false,
 			imageHashes: false,
+			container: false,
 		},
 		...overrides,
 	}

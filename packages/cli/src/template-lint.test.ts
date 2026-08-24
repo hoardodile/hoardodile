@@ -86,6 +86,7 @@ describe("manifestTemplates", () => {
 				danmaku: false,
 				message: false,
 				imageHashes: false,
+				container: false,
 			},
 			ui: {
 				card: {
@@ -129,6 +130,7 @@ describe("lintManifestTemplates", () => {
 				danmaku: false,
 				message: false,
 				imageHashes: false,
+				container: false,
 			},
 			i18n: { en: { present: "Present" } },
 			ui: {

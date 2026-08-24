@@ -6,13 +6,14 @@ benchmarking content plugins against the real host implementation:
 ```bash
 hoardodile plugin create           # scaffold a new plugin (via create-hoardodile-plugin)
 hoardodile plugin build            # build a plugin into dist/ (--watch to rebuild)
-hoardodile plugin run detect .     # run a hook through the worker sandbox
+hoardodile plugin run detect .     # run a hook through the capability sandbox
 hoardodile plugin bench detect .   # measure hook latency, compare vs a baseline
 hoardodile plugin dev              # watch-build + workbench at http://127.0.0.1:5199
 ```
 
-`run`/`bench` execute hooks through `@hoardodile/host`'s worker sandbox,
-hook strategy and real probe implementations — the exact execution path
+`run`/`bench` execute hooks through `@hoardodile/host`'s capability
+sandbox (restricted child process + module policy), hook strategy and
+real probe implementations — the exact execution path
 the server uses — so what you test is what runs in production.
 `bench` writes JSON reports (machine fingerprint, peak RSS, warmup
 count); `--warmup N` tunes the discarded warmup runs, `--compare`

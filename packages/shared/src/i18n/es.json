@@ -524,7 +524,8 @@
 			"searchMeta": "Metadatos de búsqueda",
 			"danmaku": "Danmaku",
 			"message": "Mensajes",
-			"imageHashes": "Hashes de imagen"
+			"imageHashes": "Hashes de imagen",
+			"container": "Contenedores"
 		}
 	},
 	"overview": {

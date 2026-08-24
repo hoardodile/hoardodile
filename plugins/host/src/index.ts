@@ -1,9 +1,10 @@
 /**
  * @hoardodile/host — the plugin runtime host: plugin loading,
- * worker-thread sandbox, hook invocation strategy, ResourceAPI builders,
- * probe caching, and capability gating. The server, the CLI, and future
- * shells (desktop, MCP) all consume this same implementation so that
- * "what you test is what runs in production".
+ * capability-sandboxed child processes (Node permission model + module
+ * policy), hook invocation strategy, ResourceAPI builders, probe caching,
+ * and capability gating. The server, the CLI, and future shells (desktop,
+ * MCP) all consume this same implementation so that "what you test is
+ * what runs in production".
  *
  * This root entry is the app-side runtime surface — the plugin
  * authoring API lives in `@hoardodile/sdk-server` (which re-exports the
@@ -107,6 +108,9 @@ export {
 	createPluginSandbox,
 	DEFAULT_SANDBOX_CONFIG,
 	PLUGIN_HOOK_HARD_TIMEOUT_MS,
+	PLUGIN_MAX_API_CALLS_PER_HOOK,
+	PLUGIN_MAX_LOGS_PER_HOOK,
+	PLUGIN_MAX_RESULT_BYTES,
 	PLUGIN_WATCHDOG_TIMEOUT_MS,
 	PLUGIN_WORKER_MAX_OLD_SPACE_MB,
 	PLUGIN_WORKER_MAX_RESPAWNS,

@@ -4,7 +4,8 @@
 	"description": "Builtin file tree plugin for unknown file types",
 	"version": "0.0.0",
 	"permissions": {
-		"sourceMeta": true
+		"sourceMeta": true,
+		"container": true
 	},
 	"i18n": {
 		"name": {

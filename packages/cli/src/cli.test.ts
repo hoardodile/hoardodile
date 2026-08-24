@@ -85,6 +85,7 @@ describe("resolvePluginTarget", () => {
 			danmaku: false,
 			message: false,
 			imageHashes: false,
+			container: false,
 		})
 	})
 

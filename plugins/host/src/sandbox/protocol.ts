@@ -1,8 +1,10 @@
 /**
- * Wire protocol between the plugin sandbox host (main thread) and the worker
- * entry (`worker-entry.mjs`). The worker file is plain JS without access to
- * workspace TS sources, so it keeps its own copy of the method/hook name
- * lists — keep the two in sync (enforced by `protocol.test.ts`).
+ * Wire protocol between the plugin sandbox host (server process) and the
+ * sandbox child entry (`worker-entry.mjs`), which runs as a forked child
+ * process with structured-clone IPC. The entry file is plain JS without
+ * access to workspace TS sources, so it keeps its own copy of the
+ * method/hook name lists — keep the two in sync (enforced by
+ * `protocol.test.ts`).
  */
 
 /**
@@ -117,22 +119,4 @@ export function deserializeError(err: SerializedError): Error {
 	e.name = err.name
 	if (err.stack !== undefined) e.stack = err.stack
 	return e
-}
-
-/**
- * Transfer list for a message payload: zero-copy when a Uint8Array wholly
- * owns its ArrayBuffer. Only used for host→worker `readFile` results and
- * worker→host hook results — never for worker→host API args, because
- * transfer neuters the sender's buffer (a plugin may reuse it).
- */
-export function transferListOf(value: unknown): ArrayBuffer[] {
-	if (
-		value instanceof Uint8Array &&
-		value.byteOffset === 0 &&
-		value.byteLength === value.buffer.byteLength &&
-		value.buffer instanceof ArrayBuffer
-	) {
-		return [value.buffer]
-	}
-	return []
 }

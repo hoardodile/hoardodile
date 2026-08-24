@@ -7,12 +7,13 @@ const PERMISSION_KEYS = [
 	"danmaku",
 	"message",
 	"imageHashes",
+	"container",
 ] as const satisfies readonly (keyof PluginPermissions)[]
 
 /**
  * The manifest permissions a plugin actually declared, in stable order.
- * These are host-integration feature flags, NOT a capability sandbox —
- * see the install confirmation dialog copy.
+ * Mostly host-integration feature flags; `container` is additionally
+ * enforced by the sandbox (listContainer/extractArchive gate).
  */
 export function grantedPermissionKeys(
 	permissions: PluginPermissions,

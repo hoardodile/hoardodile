@@ -24,6 +24,7 @@ function registryWithDanmakuPermission(granted: boolean): PluginRegistry {
 					danmaku: granted,
 					message: false,
 					imageHashes: false,
+					container: false,
 				},
 			},
 			enabled: true,

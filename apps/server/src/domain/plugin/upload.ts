@@ -1,6 +1,6 @@
-﻿import { randomUUID } from "node:crypto"
+import { randomUUID } from "node:crypto"
 import { existsSync, readFileSync } from "node:fs"
-import { cp, mkdir, rename, rm } from "node:fs/promises"
+import { cp, mkdir, readdir, rename, rm } from "node:fs/promises"
 import { join } from "node:path"
 import { pluginManifest as pluginManifestSchema } from "@hoardodile/sdk-types/schema"
 import { invalid } from "@hoardodile/shared"
@@ -92,6 +92,16 @@ export function buildPluginUploads(deps: PluginUploadsDeps): PluginUploads {
 			}
 
 			const { id } = result.data
+
+			const symlink = await findSymlinkEntry(stagingDir)
+			if (symlink !== undefined) {
+				throw invalid(
+					"plugin.upload_symlink",
+					"plugin zip must not contain symbolic links",
+					{ path: symlink },
+				)
+			}
+
 			await commit(stagingDir, id)
 			return id
 		} catch (err) {
@@ -115,6 +125,27 @@ export async function moveDir(src: string, dest: string): Promise<void> {
 		await cp(src, dest, { recursive: true })
 		await rm(src, { recursive: true, force: true })
 	}
+}
+
+/**
+ * Return the first symbolic link under `root`, or `undefined` when the
+ * tree contains none. A plugin's sandbox fs-read grant is prefix-based on
+ * its own directory; a symlink inside that directory could alias an
+ * outside path, so installs reject them up front.
+ */
+export async function findSymlinkEntry(
+	root: string,
+): Promise<string | undefined> {
+	const entries = await readdir(root, { withFileTypes: true })
+	for (const entry of entries) {
+		const path = join(root, entry.name)
+		if (entry.isSymbolicLink()) return path
+		if (entry.isDirectory()) {
+			const nested = await findSymlinkEntry(path)
+			if (nested !== undefined) return nested
+		}
+	}
+	return undefined
 }
 
 function isExdev(err: unknown): boolean {

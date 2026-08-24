@@ -1,4 +1,8 @@
-import { Worker } from "node:worker_threads"
+import { type ChildProcess, fork, spawn } from "node:child_process"
+import { tmpdir } from "node:os"
+import { dirname, resolve, sep } from "node:path"
+import { fileURLToPath } from "node:url"
+import type { PluginPermissions } from "@hoardodile/sdk-types"
 import type { PluginDefinition, ResourceAPI } from "../types.ts"
 import { createCallTimers, type PendingCall } from "./call-timers.ts"
 import {
@@ -10,27 +14,48 @@ import {
 	LOG_METHOD_NAMES,
 	type SerializedError,
 	serializeError,
-	transferListOf,
 	type WorkerMessage,
 } from "./protocol.ts"
 import { createSandboxedPlugin } from "./sandboxed-plugin.ts"
 
 /**
- * Kill a plugin worker when an invocation neither returns nor shows
- * resource-API activity for this long. Hooks that keep calling the API
- * reset the watchdog continuously and never trip it; time spent inside a
- * host-side API call does not count as inactivity.
+ * Kill a plugin sandbox process when an invocation neither returns nor
+ * shows resource-API activity for this long. Hooks that keep calling the
+ * API reset the watchdog continuously and never trip it; time spent inside
+ * a host-side API call does not count as inactivity.
  */
 export const PLUGIN_WATCHDOG_TIMEOUT_MS = 60_000
 
 /** Absolute cap for a single plugin hook invocation, regardless of activity. */
 export const PLUGIN_HOOK_HARD_TIMEOUT_MS = 30 * 60_000
 
-/** V8 old-generation memory cap per plugin worker, in MiB. */
+/** V8 old-generation memory cap per plugin sandbox process, in MiB. */
 export const PLUGIN_WORKER_MAX_OLD_SPACE_MB = 512
 
 /**
- * Max worker spawns per plugin within {@link PLUGIN_WORKER_RESPAWN_WINDOW_MS}
+ * Absolute cap for one hook result crossing the IPC boundary back to the
+ * host. Exceeding it turns the hook into an error instead of letting a
+ * hostile bundle clone a giant payload into the host process.
+ */
+export const PLUGIN_MAX_RESULT_BYTES = 256 * 1024 * 1024
+
+/** Cap on `log*` messages per hook invocation (see {@link PluginSandboxConfig}). */
+export const PLUGIN_MAX_LOGS_PER_HOOK = 1_000
+
+/** Cap on ResourceAPI calls per hook invocation (see {@link PluginSandboxConfig}). */
+export const PLUGIN_MAX_API_CALLS_PER_HOOK = 100_000
+
+/**
+ * ResourceAPI methods gated by the manifest `container` permission — the
+ * only API surface with a write side effect (the extraction cache).
+ */
+const CONTAINER_METHODS: ReadonlySet<ApiMethodName> = new Set([
+	"listContainer",
+	"extractArchive",
+])
+
+/**
+ * Max sandbox spawns per plugin within {@link PLUGIN_WORKER_RESPAWN_WINDOW_MS}
  * before the plugin is degraded. It recovers automatically once the crash
  * window slides clean, or immediately on disable/rescan.
  */
@@ -41,24 +66,45 @@ export const PLUGIN_WORKER_RESPAWN_WINDOW_MS = 60_000
 
 export type PluginSandboxConfig = {
 	/**
-	 * Kill the worker when an invocation neither returns nor shows API
-	 * activity for this long. Long-running hooks that keep calling the
+	 * Kill the sandbox process when an invocation neither returns nor shows
+	 * API activity for this long. Long-running hooks that keep calling the
 	 * resource API reset the watchdog continuously and never trip it;
 	 * time spent inside a host-side API call does not count as inactivity.
 	 */
 	readonly watchdogMs: number
 	/** Absolute per-invocation cap, regardless of activity. */
 	readonly hardTimeoutMs: number
-	/** V8 old-generation cap per worker; exceeding it aborts the worker. */
+	/** V8 old-generation cap per sandbox process; exceeding it aborts it. */
 	readonly maxOldSpaceMb: number
 	/**
-	 * Max worker spawns per plugin within {@link respawnWindowMs} before the
+	 * Max sandbox spawns per plugin within {@link respawnWindowMs} before the
 	 * plugin is degraded (all invocations reject). The plugin recovers
 	 * automatically once the crash window slides clean; `unloadPlugin`
 	 * (disable or rescan) resets the budget immediately.
 	 */
 	readonly maxRespawns: number
 	readonly respawnWindowMs: number
+	/** Absolute cap for one hook result returning to the host. */
+	readonly maxResultBytes: number
+	/**
+	 * Cap on `log*` messages per hook invocation; exceeding it fails the
+	 * hook (log messages reset the watchdog, so a log flood would
+	 * otherwise stay alive until the hard timeout).
+	 */
+	readonly maxLogsPerHook: number
+	/**
+	 * Cap on ResourceAPI calls per hook invocation; exceeding it fails the
+	 * hook. Sized generously so large per-file scans (hashBytes over tens
+	 * of thousands of files) keep working — the cap bounds a runaway RPC
+	 * fan-out that would otherwise pin the host's CPU.
+	 */
+	readonly maxApiCallsPerHook: number
+	/**
+	 * Permission-model flag to pass to the sandbox child, or `undefined` to
+	 * probe the running Node for the first accepted name. Tests override
+	 * this to exercise the fail-closed path.
+	 */
+	readonly permissionFlag?: string
 }
 
 export const DEFAULT_SANDBOX_CONFIG: PluginSandboxConfig = {
@@ -67,16 +113,19 @@ export const DEFAULT_SANDBOX_CONFIG: PluginSandboxConfig = {
 	maxOldSpaceMb: PLUGIN_WORKER_MAX_OLD_SPACE_MB,
 	maxRespawns: PLUGIN_WORKER_MAX_RESPAWNS,
 	respawnWindowMs: PLUGIN_WORKER_RESPAWN_WINDOW_MS,
+	maxResultBytes: PLUGIN_MAX_RESULT_BYTES,
+	maxLogsPerHook: PLUGIN_MAX_LOGS_PER_HOOK,
+	maxApiCallsPerHook: PLUGIN_MAX_API_CALLS_PER_HOOK,
 }
 
 export type PluginSandbox = {
 	/**
-	 * Register and load a plugin bundle. With `eager` the worker stays
-	 * alive; without it the hook list is probed and the worker immediately
-	 * idles (it respawns lazily on first invocation — disabled plugins
-	 * still serve their bound resources without holding a worker).
+	 * Register and load a plugin bundle. With `eager` the sandbox process
+	 * stays alive; without it the hook list is probed and the process
+	 * immediately idles (it respawns lazily on first invocation — disabled
+	 * plugins still serve their bound resources without holding a process).
 	 *
-	 * Reloading an already-registered id keeps the previous worker alive
+	 * Reloading an already-registered id keeps the previous process alive
 	 * until the new bundle loads successfully — a failed reload returns
 	 * the previous definition instead of stranding a disposed registry.
 	 *
@@ -88,19 +137,25 @@ export type PluginSandbox = {
 		readonly id: string
 		readonly mainPath: string
 		readonly eager: boolean
+		/**
+		 * Manifest permissions the sandbox enforces on every API call
+		 * (e.g. the `container` gate). Absent keys count as denied here,
+		 * so a caller that omits this opts into the strictest view.
+		 */
+		readonly permissions?: PluginPermissions
 	}) => Promise<PluginDefinition | undefined>
 	/**
-	 * Terminate the plugin's worker (if any) and reset its respawn budget.
-	 * The hook list stays known; the next invocation lazily respawns.
+	 * Terminate the plugin's sandbox process (if any) and reset its respawn
+	 * budget. The hook list stays known; the next invocation lazily respawns.
 	 */
 	readonly unloadPlugin: (id: string) => void
 	/**
 	 * Terminate and forget every plugin whose id is not in `keepIds`.
-	 * Registered ids keep their workers — used by the loader after a
+	 * Registered ids keep their processes — used by the loader after a
 	 * successful reload to free plugins that left the registry.
 	 */
 	readonly disposeExcept: (keepIds: ReadonlySet<string>) => Promise<void>
-	/** Terminate every worker and forget all plugins. Pending invocations reject. */
+	/** Terminate every process and forget all plugins. Pending invocations reject. */
 	readonly disposeAll: () => Promise<void>
 }
 
@@ -112,7 +167,8 @@ type LoadWaiter = {
 type PluginState = {
 	readonly id: string
 	readonly mainPath: string
-	worker: Worker | undefined
+	readonly permissions: PluginPermissions | undefined
+	child: ChildProcess | undefined
 	hooks: readonly HookName[] | undefined
 	loading: Promise<void> | undefined
 	loadWaiter: LoadWaiter | undefined
@@ -120,6 +176,44 @@ type PluginState = {
 	respawnTimes: number[]
 	degraded: boolean
 	disposed: boolean
+}
+
+/**
+ * Flag names the Node permission model accepted over its life: it was
+ * introduced as `--experimental-permission` and stabilized under
+ * `--permission`. Probe the running binary once and reuse the verdict.
+ */
+const PERMISSION_FLAG_CANDIDATES = ["--permission", "--experimental-permission"]
+
+let permissionFlagPromise: Promise<string | undefined> | undefined
+
+async function resolvePermissionFlag(): Promise<string | undefined> {
+	permissionFlagPromise ??= probePermissionFlag()
+	return permissionFlagPromise
+}
+
+/**
+ * Spawn a probe child for each candidate flag name and keep the first one
+ * the runtime accepts. A flag the runtime does not know makes `node` exit
+ * non-zero before running the script, so an `exit 0` verdict is the proof.
+ */
+async function probePermissionFlag(): Promise<string | undefined> {
+	for (const flag of PERMISSION_FLAG_CANDIDATES) {
+		if (await acceptsFlag(flag)) return flag
+	}
+	return undefined
+}
+
+function acceptsFlag(flag: string): Promise<boolean> {
+	return new Promise((resolveProbe) => {
+		const probe = spawn(
+			process.execPath,
+			[flag, `--allow-fs-read=${tmpdir()}`, "-e", "process.exit(0)"],
+			{ stdio: "ignore", timeout: 10_000 },
+		)
+		probe.on("exit", (code) => resolveProbe(code === 0))
+		probe.on("error", () => resolveProbe(false))
+	})
 }
 
 export function createPluginSandbox(
@@ -136,12 +230,14 @@ export function createPluginSandbox(
 		id: string
 		mainPath: string
 		eager: boolean
+		permissions?: PluginPermissions
 	}): Promise<PluginDefinition | undefined> {
 		const previous = states.get(opts.id)
 		const state: PluginState = {
 			id: opts.id,
 			mainPath: opts.mainPath,
-			worker: undefined,
+			permissions: opts.permissions,
+			child: undefined,
 			hooks: undefined,
 			loading: undefined,
 			loadWaiter: undefined,
@@ -160,7 +256,7 @@ export function createPluginSandbox(
 			// state — only act when the map still owns it.
 			if (states.get(opts.id) !== state) return undefined
 			if (previous !== undefined) {
-				// The previous worker never stopped being healthy — restore
+				// The previous process never stopped being healthy — restore
 				// it so a failed reload can't strand a disposed registry.
 				previous.disposed = false
 				states.set(opts.id, previous)
@@ -172,15 +268,15 @@ export function createPluginSandbox(
 			states.delete(opts.id)
 			return undefined
 		}
-		// The new bundle loaded: retire the previous worker only now —
+		// The new bundle loaded: retire the previous process only now —
 		// in-flight invocations against it settle normally, and a failed
 		// reload above never killed it in the first place.
 		if (previous !== undefined) {
 			previous.disposed = true
-			await teardownWorker(previous)
+			await teardownChild(previous)
 		}
 		if (!opts.eager) {
-			void teardownWorker(state)
+			void teardownChild(state)
 		}
 		return createSandboxedPlugin(state.hooks ?? ["detect"], (hook, api) =>
 			invoke(state, hook, api),
@@ -190,7 +286,7 @@ export function createPluginSandbox(
 	function unloadPlugin(id: string): void {
 		const state = states.get(id)
 		if (state === undefined) return
-		teardownWorker(state)
+		teardownChild(state)
 		state.respawnTimes = []
 		state.degraded = false
 	}
@@ -199,7 +295,7 @@ export function createPluginSandbox(
 		const tasks: Promise<void>[] = []
 		for (const state of states.values()) {
 			state.disposed = true
-			tasks.push(teardownWorker(state))
+			tasks.push(teardownChild(state))
 		}
 		states.clear()
 		await Promise.all(tasks)
@@ -211,15 +307,36 @@ export function createPluginSandbox(
 			if (keepIds.has(id)) continue
 			state.disposed = true
 			states.delete(id)
-			tasks.push(teardownWorker(state))
+			tasks.push(teardownChild(state))
 		}
 		await Promise.all(tasks)
 	}
 
-	// -- worker lifecycle --
+	// -- child lifecycle --
+
+	/**
+	 * Keep the sandbox child referenced only while it has work pending
+	 * (loading or an in-flight invocation); idle children must not hold
+	 * the host process open, but an unref'd child in a host with nothing
+	 * else running (one-shot CLI, dist smoke) would otherwise let the
+	 * process exit before a slow sandbox boot answered.
+	 */
+	function syncRef(state: PluginState): void {
+		const child = state.child
+		if (child === undefined) return
+		if (
+			state.loading !== undefined ||
+			state.loadWaiter !== undefined ||
+			state.pending.size > 0
+		) {
+			child.ref()
+		} else {
+			child.unref()
+		}
+	}
 
 	function ensureLoaded(state: PluginState): Promise<void> {
-		if (state.worker !== undefined) return Promise.resolve()
+		if (state.child !== undefined) return Promise.resolve()
 		state.loading ??= spawnAndLoad(state).finally(() => {
 			state.loading = undefined
 		})
@@ -234,12 +351,20 @@ export function createPluginSandbox(
 		if (state.respawnTimes.length >= config.maxRespawns) {
 			state.degraded = true
 			throw new Error(
-				`plugin ${state.id} unavailable: worker respawned ${config.maxRespawns} times within ${config.respawnWindowMs}ms`,
+				`plugin ${state.id} unavailable: sandbox respawned ${config.maxRespawns} times within ${config.respawnWindowMs}ms`,
 			)
 		}
 		state.respawnTimes.push(now)
 
-		// Resolve the worker entry through the package's own exports map
+		const permissionFlag =
+			config.permissionFlag ?? (await resolvePermissionFlag())
+		if (permissionFlag === undefined) {
+			throw new Error(
+				`plugin ${state.id} unavailable: this Node build has no permission-model flag (tried ${PERMISSION_FLAG_CANDIDATES.map((f) => `"${f}"`).join(", ")}); refusing to run plugin code unsandboxed`,
+			)
+		}
+
+		// Resolve the sandbox entry through the package's own exports map
 		// (`@hoardodile/host/worker-entry`) when that package is installed.
 		// The sandbox module also gets inlined into the server bundle, where
 		// there is no `@hoardodile/host` on disk — then we fall back to
@@ -247,74 +372,119 @@ export function createPluginSandbox(
 		// Kept out of a `new URL()` literal so Vite does not detect a browser
 		// worker here: it would bundle worker-entry.mjs with node: builtins
 		// shimmed out and rewrite the URL to an unusable /assets/ path. The
-		// entry ships untransformed and must run as plain ESM in a worker thread.
-		const worker = new Worker(new URL(resolveWorkerEntryUrl()), {
-			resourceLimits: { maxOldGenerationSizeMb: config.maxOldSpaceMb },
-		})
-		// The sandbox must never hold the process open on its own.
-		worker.unref()
-		state.worker = worker
+		// entry ships untransformed and must run as plain ESM in a child
+		// process.
+		const entryPath = fileURLToPath(resolveWorkerEntryUrl())
+		const pluginDir = dirname(state.mainPath)
 
-		worker.on("message", (msg: WorkerMessage) =>
-			handleMessage(state, worker, msg),
+		// The child's grants are minimal: one fs-read allowlist (its own
+		// directory, plus the entry file it must load), a memory cap, and
+		// nothing else — no fs write, no child processes, no worker
+		// threads, no native addons. The module policy hook (registered
+		// inside the entry via `registerHooks`) closes the remaining
+		// surface: nothing outside the plugin directory and no `node:`
+		// builtins except `node:url` can be imported.
+		const child = fork(entryPath, [pluginDir, entryPath], {
+			execArgv: [
+				permissionFlag,
+				`--allow-fs-read=${resolve(pluginDir)}${sep}`,
+				`--allow-fs-read=${entryPath}`,
+				`--max-old-space-size=${config.maxOldSpaceMb}`,
+			],
+			serialization: "advanced",
+			// Child stderr is inherited (self-check failures must surface);
+			// plugin console output is dropped — logs flow over the RPC.
+			stdio: ["ignore", "ignore", "inherit", "ipc"],
+			env: {
+				...process.env,
+				HOARDODILE_PLUGIN_MAX_RESULT_BYTES: String(config.maxResultBytes),
+				HOARDODILE_PLUGIN_MAX_LOGS_PER_HOOK: String(config.maxLogsPerHook),
+				HOARDODILE_PLUGIN_MAX_API_CALLS_PER_HOOK: String(
+					config.maxApiCallsPerHook,
+				),
+			},
+		})
+		// The sandbox must never hold the process open on its own — but
+		// while a load/invocation is pending the child is referenced (see
+		// syncRef) so a short-lived host cannot exit mid-boot.
+		child.unref()
+		state.child = child
+		syncRef(state)
+
+		child.on("message", (msg: WorkerMessage) =>
+			handleMessage(state, child, msg),
 		)
-		worker.on("messageerror", (err: unknown) =>
-			failWorker(state, worker, asError(err)),
-		)
-		worker.on("error", (err: unknown) =>
-			failWorker(state, worker, asError(err)),
-		)
-		worker.on("exit", (code) => {
-			if (state.worker === worker) {
-				failWorker(
+		child.on("error", (err: unknown) => failChild(state, child, asError(err)))
+		child.on("exit", (code) => {
+			if (state.child === child) {
+				failChild(
 					state,
-					worker,
+					child,
 					new Error(`plugin ${state.id} worker exited (code ${code})`),
 				)
 			}
 		})
 
-		const loaded = new Promise<void>((resolve, reject) => {
-			state.loadWaiter = { resolve, reject }
+		const loaded = new Promise<void>((resolveLoaded, reject) => {
+			state.loadWaiter = { resolve: resolveLoaded, reject }
 		})
-		worker.postMessage({ type: "load", mainPath: state.mainPath })
+		try {
+			child.send({ type: "load", mainPath: state.mainPath } satisfies {
+				type: "load"
+				mainPath: string
+			})
+		} catch (err) {
+			// The channel never opened (spawn failed hard) — the waiter
+			// would hang forever; tear the child down and fail the load.
+			await teardownChild(state, asError(err))
+			throw err
+		}
 		try {
 			await loaded
 		} catch (err) {
 			// A plugin whose main.js throws at import reports `loaded: ok:false`
-			// and keeps idling — terminate the worker so it never outlives
-			// its owning state (failWorker already covered error/exit).
-			await teardownWorker(state)
+			// and keeps idling — terminate the child so it never outlives
+			// its owning state (failChild already covered error/exit).
+			await teardownChild(state)
 			throw err
 		} finally {
 			state.loadWaiter = undefined
 		}
+		// Loaded and (for eager plugins) alive: an idle sandbox must not
+		// hold the host open, but it stays referenced while invocations
+		// are in flight.
+		syncRef(state)
 	}
 
 	/**
-	 * Terminate the worker without touching the respawn budget. Rejects
+	 * Terminate the child without touching the respawn budget. Rejects
 	 * the load waiter and every pending call with `err` (or the standard
-	 * "worker stopped" error) and clears the worker slot; a no-op when
-	 * there is no worker.
+	 * "worker stopped" error) and clears the child slot; a no-op when
+	 * there is no child.
 	 */
-	function teardownWorker(state: PluginState, err?: Error): Promise<void> {
-		const worker = state.worker
-		state.worker = undefined
+	function teardownChild(state: PluginState, err?: Error): Promise<void> {
+		const child = state.child
+		state.child = undefined
 		state.loading = undefined
 		const stopErr = err ?? new Error(`plugin ${state.id} worker stopped`)
 		state.loadWaiter?.reject(stopErr)
 		state.loadWaiter = undefined
 		rejectAllPending(state, stopErr)
-		if (worker === undefined) return Promise.resolve()
-		return worker.terminate().then(
-			() => {},
-			() => {},
-		)
+		if (child === undefined) return Promise.resolve()
+		// SIGTERM on POSIX, TerminateProcess on Windows. Pending calls were
+		// already rejected; stale messages can no longer resolve anything
+		// because the slot is cleared.
+		child.kill()
+		return Promise.resolve()
 	}
 
-	function failWorker(state: PluginState, worker: Worker, err: Error): void {
-		if (state.worker !== worker) return // stale event from a replaced worker
-		void teardownWorker(state, err)
+	function failChild(
+		state: PluginState,
+		child: ChildProcess,
+		err: Error,
+	): void {
+		if (state.child !== child) return // stale event from a replaced child
+		void teardownChild(state, err)
 	}
 
 	function rejectAllPending(state: PluginState, err: Error): void {
@@ -346,25 +516,31 @@ export function createPluginSandbox(
 				state.degraded = false
 			} else {
 				throw new Error(
-					`plugin ${state.id} unavailable: worker crashed repeatedly`,
+					`plugin ${state.id} unavailable: sandbox crashed repeatedly`,
 				)
 			}
 		}
 		await ensureLoaded(state)
-		const worker = state.worker
-		if (worker === undefined) {
-			throw new Error(`plugin ${state.id} worker unavailable`)
+		const child = state.child
+		if (child === undefined) {
+			throw new Error(`plugin ${state.id} sandbox unavailable`)
 		}
 
 		const callId = nextCallId++
-		return new Promise((resolve, reject) => {
-			const call: PendingCall = { api, resolve, reject, apiInFlight: 0 }
+		return new Promise((resolveCall, reject) => {
+			const call: PendingCall = {
+				api,
+				resolve: resolveCall,
+				reject,
+				apiInFlight: 0,
+			}
 			state.pending.set(callId, call)
+			syncRef(state)
 			timers.armWatchdog(
 				call,
 				failCall(
 					state,
-					worker,
+					child,
 					callId,
 					`hung: no activity for ${config.watchdogMs}ms`,
 				),
@@ -373,19 +549,20 @@ export function createPluginSandbox(
 				call,
 				failCall(
 					state,
-					worker,
+					child,
 					callId,
 					`exceeded hard timeout ${config.hardTimeoutMs}ms`,
 				),
 			)
 			try {
-				worker.postMessage({
+				child.send({
 					type: "invoke",
 					callId,
 					hook,
 				} satisfies InvokeRequest)
 			} catch (err) {
 				state.pending.delete(callId)
+				syncRef(state)
 				timers.clearCallTimers(call)
 				reject(err instanceof Error ? err : new Error(String(err)))
 			}
@@ -394,14 +571,14 @@ export function createPluginSandbox(
 
 	function failCall(
 		state: PluginState,
-		worker: Worker,
+		child: ChildProcess,
 		callId: number,
 		reason: string,
 	): () => void {
 		return () =>
-			failWorker(
+			failChild(
 				state,
-				worker,
+				child,
 				new Error(`plugin ${state.id} ${reason} (call ${callId})`),
 			)
 	}
@@ -410,12 +587,12 @@ export function createPluginSandbox(
 
 	function handleMessage(
 		state: PluginState,
-		worker: Worker,
+		child: ChildProcess,
 		msg: WorkerMessage,
 	): void {
-		// Stale worker from a replaced spawn: its messages must never
-		// resolve the current worker's load waiter or pending calls.
-		if (state.worker !== worker) return
+		// Stale child from a replaced spawn: its messages must never
+		// resolve the current child's load waiter or pending calls.
+		if (state.child !== child) return
 		if (msg === null || typeof msg !== "object") return
 		switch (msg.type) {
 			case "loaded": {
@@ -437,6 +614,7 @@ export function createPluginSandbox(
 				const call = state.pending.get(msg.callId)
 				if (call === undefined) return
 				state.pending.delete(msg.callId)
+				syncRef(state)
 				timers.clearCallTimers(call)
 				if (msg.ok) {
 					call.resolve(msg.value)
@@ -457,7 +635,7 @@ export function createPluginSandbox(
 				call.apiInFlight += 1
 				timers.pauseWatchdog(call)
 				void dispatchApi(
-					worker,
+					child,
 					state,
 					msg.callId,
 					msg.apiCallId,
@@ -475,7 +653,7 @@ export function createPluginSandbox(
 						call,
 						failCall(
 							state,
-							worker,
+							child,
 							msg.callId,
 							`hung: no activity for ${config.watchdogMs}ms`,
 						),
@@ -488,7 +666,7 @@ export function createPluginSandbox(
 	}
 
 	async function dispatchApi(
-		worker: Worker,
+		child: ChildProcess,
 		state: PluginState,
 		callId: number,
 		apiCallId: number,
@@ -501,12 +679,13 @@ export function createPluginSandbox(
 			value?: unknown,
 			error?: SerializedError,
 		): void => {
-			// The worker may have died while the API call was in flight.
-			if (state.worker !== worker) return
-			worker.postMessage(
-				{ type: "apiResult", apiCallId, ok, value, error },
-				ok ? transferListOf(value) : [],
-			)
+			// The child may have died while the API call was in flight.
+			if (state.child !== child) return
+			try {
+				child.send({ type: "apiResult", apiCallId, ok, value, error })
+			} catch {
+				// Channel closed — nothing to deliver.
+			}
 		}
 		try {
 			if (!isApiMethod(method) || LOG_METHOD_NAMES.has(method)) {
@@ -516,7 +695,20 @@ export function createPluginSandbox(
 				})
 				return
 			}
-			// RPC boundary: the worker-side proxy is generated from the same
+			// Manifest permission gate: the container surface is the only
+			// API with a write side effect, so it is denied unless the
+			// plugin's manifest declared `container`.
+			if (
+				CONTAINER_METHODS.has(method) &&
+				state.permissions?.container !== true
+			) {
+				respond(false, undefined, {
+					name: "Error",
+					message: `container permission denied for plugin ${state.id} — declare "container": true in the manifest to use ${method}()`,
+				})
+				return
+			}
+			// RPC boundary: the child-side proxy is generated from the same
 			// method list, so args always arrive in contract order.
 			const fn = call.api[method] as (...a: readonly unknown[]) => unknown
 			respond(true, await fn(...args))
@@ -531,7 +723,7 @@ export function createPluginSandbox(
 					call,
 					failCall(
 						state,
-						worker,
+						child,
 						callId,
 						`hung: no activity for ${config.watchdogMs}ms`,
 					),
@@ -541,7 +733,7 @@ export function createPluginSandbox(
 	}
 
 	/**
-	 * Plugin log sink. The worker-side proxy forwards log calls here, where
+	 * Plugin log sink. The child-side proxy forwards log calls here, where
 	 * the owning plugin id is known — ResourceAPI.log* stay no-ops because a
 	 * shared API instance (e.g. one detect pass fanning out to every plugin)
 	 * cannot attribute a log line to the plugin that emitted it.
