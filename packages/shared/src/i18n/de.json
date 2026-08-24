@@ -495,7 +495,7 @@
 		"appearanceDescription": "Wähle eine Farbe und ob dieses Plugin an Ressourcenkarten angeheftet wird.",
 		"reset": "Zurücksetzen",
 		"clear": "Leeren",
-		"resetPluginPref": "Einstellungen zurücksetzen",
+		"resetPluginPref": "Einstellungen wiederherstellen",
 		"resetPluginPrefConfirmTitle": "Einstellungen für {{name}} zurücksetzen?",
 		"resetPluginPrefConfirmDescription": "Dies löscht alle gespeicherten Einstellungen für dieses Plugin. Nach dem Neustart verwendet das Plugin seine Standardwerte. Dies kann nicht rückgängig gemacht werden.",
 		"resetPluginPrefSuccess": "Einstellungen für {{name}} wurden zurückgesetzt",

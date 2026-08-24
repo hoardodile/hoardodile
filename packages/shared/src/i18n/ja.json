@@ -495,7 +495,7 @@
 		"appearanceDescription": "色と、このプラグインをリソースカードにピン留めするかを選択します。",
 		"reset": "リセット",
 		"clear": "クリア",
-		"resetPluginPref": "設定をリセット",
+		"resetPluginPref": "設定を復元",
 		"resetPluginPrefConfirmTitle": "{{name}} の設定をリセットしますか？",
 		"resetPluginPrefConfirmDescription": "このプラグインの保存済み設定をすべて削除します。再起動後、プラグインは既定値を使用します。これは元に戻せません。",
 		"resetPluginPrefSuccess": "{{name}} の設定をリセットしました",

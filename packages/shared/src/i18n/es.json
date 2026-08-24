@@ -495,7 +495,7 @@
 		"appearanceDescription": "Elige un color y si quieres fijar este complemento a las tarjetas de recursos.",
 		"reset": "Restablecer",
 		"clear": "Limpiar",
-		"resetPluginPref": "Restablecer ajustes",
+		"resetPluginPref": "Restaurar ajustes",
 		"resetPluginPrefConfirmTitle": "¿Restablecer los ajustes de {{name}}?",
 		"resetPluginPrefConfirmDescription": "Esto eliminará todos los ajustes guardados de este complemento. El complemento usará sus valores predeterminados tras reiniciar. Esto no se puede deshacer.",
 		"resetPluginPrefSuccess": "Los ajustes de {{name}} se han restablecido",

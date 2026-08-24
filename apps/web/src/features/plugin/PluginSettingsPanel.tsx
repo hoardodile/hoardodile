@@ -53,14 +53,13 @@ import {
 	ListVertical,
 	Magnifier,
 	MenuDots,
-	Palette,
 	Pin,
 	PlugCircle,
 	Refresh,
 	Restart,
+	Sun,
 	TestTube,
 	TrashBinMinimalistic,
-	UndoRightRound,
 	Upload,
 	Widget2,
 } from "@hoardodile/ui/icons/registry"
@@ -532,18 +531,29 @@ export function FilePluginPill() {
 	)
 }
 
+/** Icon marks shown before the grant set folds into a "+N" chip — leaving
+    room for the dev/missing state badges on the same row. */
+const PERMISSION_MARKS_VISIBLE = 3
+
 /** Declared permissions as bare icon marks — tooltips carry the full
     names. Search metadata also counts the plugin's own sub-categories;
     its chip opens them as a popover. Shared by the row and grid-card
-    layouts. */
-function PermissionMarks({ p }: { p: PluginRowData }) {
+    layouts; beyond {@link PERMISSION_MARKS_VISIBLE} the rest fold into a
+    "+N" chip so neither a row nor a narrow card can overflow. */
+export function PermissionMarks({
+	p,
+}: {
+	p: { readonly manifest: PluginManifest; readonly id: string }
+}) {
 	const { t, i18n } = useTranslation()
 	const granted = grantedPermissionKeys(p.manifest.permissions)
 	if (granted.length === 0) return null
 	const kinds = p.manifest.ui?.search?.kinds ?? []
+	const visible = granted.slice(0, PERMISSION_MARKS_VISIBLE)
+	const overflowed = granted.slice(PERMISSION_MARKS_VISIBLE)
 	return (
 		<div className="flex shrink-0 items-center gap-1">
-			{granted.map((key) => {
+			{visible.map((key) => {
 				const meta = permissionMeta[key]
 				const kindCount = key === "searchMeta" ? kinds.length : 0
 				if (kindCount === 0) {
@@ -591,6 +601,16 @@ function PermissionMarks({ p }: { p: PluginRowData }) {
 					</Popover>
 				)
 			})}
+			{overflowed.length > 0 ? (
+				<span
+					title={overflowed
+						.map((key) => t(`plugins.permissions.${key}`))
+						.join(", ")}
+					className="flex size-5 items-center justify-center rounded-full bg-muted text-tiny tabular-nums text-muted-foreground"
+				>
+					+{overflowed.length}
+				</span>
+			) : null}
 		</div>
 	)
 }
@@ -674,11 +694,11 @@ function SortablePluginRow(props: {
 				</span>
 			</div>
 			<IconTile icon={pluginIcons[p.id] ?? PlugCircle} />
-			<div className="flex shrink-0 items-center gap-2">
-				<span className="text-ui font-medium">
+			<div className="flex min-w-0 shrink-0 items-center gap-2">
+				<span className="truncate text-ui font-medium">
 					{resolveManifestName(p.manifest, i18n.language)}
 				</span>
-				<span className="font-mono text-tiny text-muted-foreground">
+				<span className="shrink-0 font-mono text-tiny text-muted-foreground">
 					v{p.manifest.version}
 				</span>
 				<StateBadges p={p} />
@@ -742,10 +762,10 @@ function PluginCard(props: {
 			</p>
 			{/* Badges ride the bottom row — the header meta line is too narrow
 			    to hold them next to the version. */}
-			<div className="flex items-center gap-1">
+			<div className="flex min-w-0 items-center gap-1.5 overflow-hidden">
 				<PermissionMarks p={p} />
 				<StateBadges p={p} />
-				<span className="ml-auto">
+				<span className="ml-auto shrink-0">
 					<PluginRowActions plugin={p} onSaveAppearance={onSaveAppearance} />
 				</span>
 			</div>
@@ -805,6 +825,7 @@ function PluginRowActions(props: {
 
 	const resetConfirm = useConfirmDialog<"pref" | "cache">()
 	const [appearanceOpen, setAppearanceOpen] = useState(false)
+	const [uninstallOpen, setUninstallOpen] = useState(false)
 
 	function handleResetPref() {
 		resetConfirm.open("pref")
@@ -830,16 +851,16 @@ function PluginRowActions(props: {
 						</Button>
 					}
 				/>
-				<DropdownMenuContent align="end">
+				<DropdownMenuContent align="end" className="w-44">
 					<DropdownMenuItem onClick={() => setAppearanceOpen(true)}>
-						<Palette className="size-4" />
+						<Icon icon={Sun} />
 						{t("plugins.appearance")}
 					</DropdownMenuItem>
 					<DropdownMenuItem
 						onClick={handleResetPref}
 						disabled={prefResetMut.isPending}
 					>
-						<Icon icon={UndoRightRound} />
+						<Icon icon={Restart} />
 						{t("plugins.resetPluginPref")}
 					</DropdownMenuItem>
 					<DropdownMenuItem
@@ -849,11 +870,15 @@ function PluginRowActions(props: {
 						<Icon icon={Eraser} />
 						{t("plugins.clearPluginCache")}
 					</DropdownMenuItem>
-					<PluginUninstall
-						pluginId={plugin.id}
-						pluginName={resolveManifestName(plugin.manifest, i18n.language)}
-						canUninstall={!plugin.builtin && !plugin.dev}
-					/>
+					{!plugin.builtin && !plugin.dev ? (
+						<DropdownMenuItem
+							onClick={() => setUninstallOpen(true)}
+							className="text-destructive"
+						>
+							<Icon icon={TrashBinMinimalistic} />
+							{t("plugins.uninstall")}
+						</DropdownMenuItem>
+					) : null}
 				</DropdownMenuContent>
 			</DropdownMenu>
 
@@ -904,6 +929,16 @@ function PluginRowActions(props: {
 						cacheClearMut.mutate({ pluginId: plugin.id })
 					}
 				}}
+			/>
+
+			{/* The uninstall confirmation must sit OUTSIDE the dropdown
+			    content — Radix unmounts the menu on item select, which
+			    would instantly close a dialog rendered inside it. */}
+			<PluginUninstallDialog
+				pluginId={plugin.id}
+				pluginName={resolveManifestName(plugin.manifest, i18n.language)}
+				open={uninstallOpen}
+				onOpenChange={setUninstallOpen}
 			/>
 		</>
 	)
@@ -1003,23 +1038,24 @@ function reorderListByIds(
 }
 
 /**
- * Uninstall entry for a plugin row's menu: a destructive confirm dialog
- * with a live usage count, then permanently removes the plugin (disk
- * directory + settings row). Resources bound to it keep working through
- * the builtin fallback and revert automatically once the plugin is
- * reinstalled. Builtin and dev plugins cannot be uninstalled.
+ * Uninstall confirmation for a plugin row: a destructive dialog with a
+ * live usage count, then permanently removes the plugin (disk directory +
+ * settings row). Resources bound to it keep working through the builtin
+ * fallback and revert automatically once the plugin is reinstalled.
+ * Rendered by `PluginRowActions` OUTSIDE the dropdown — a dialog inside
+ * the menu content is unmounted the moment an item is selected.
  */
-function PluginUninstall(props: {
+function PluginUninstallDialog(props: {
 	readonly pluginId: string
 	readonly pluginName: string
-	readonly canUninstall: boolean
+	readonly open: boolean
+	readonly onOpenChange: (open: boolean) => void
 }) {
 	const { t } = useTranslation()
 	const qc = useQueryClient()
-	const [open, setOpen] = useState(false)
 	const usageQuery = useQuery({
 		...pluginUsageCountQueryOptions(props.pluginId),
-		enabled: open,
+		enabled: props.open,
 	})
 	const uninstallMut = useMutation({
 		...pluginUninstallMutation(),
@@ -1040,36 +1076,25 @@ function PluginUninstall(props: {
 	const usageCount = usageQuery.data ?? 0
 
 	return (
-		<>
-			{props.canUninstall ? (
-				<DropdownMenuItem
-					onClick={() => setOpen(true)}
-					className="text-destructive"
-				>
-					<Icon icon={TrashBinMinimalistic} />
-					{t("plugins.uninstall")}
-				</DropdownMenuItem>
-			) : null}
-			<ConfirmDialog
-				open={open}
-				onOpenChange={setOpen}
-				title={t("plugins.uninstallConfirmTitle", { name: props.pluginName })}
-				description={
-					usageCount > 0
-						? t("plugins.uninstallConfirmDescription", {
-								name: props.pluginName,
-								count: usageCount,
-							})
-						: t("plugins.uninstallConfirmNoUsage", {
-								name: props.pluginName,
-							})
-				}
-				confirmLabel={t("plugins.uninstall")}
-				pendingLabel={t("common.working")}
-				isPending={uninstallMut.isPending}
-				destructive
-				onConfirm={() => uninstallMut.mutate({ id: props.pluginId })}
-			/>
-		</>
+		<ConfirmDialog
+			open={props.open}
+			onOpenChange={props.onOpenChange}
+			title={t("plugins.uninstallConfirmTitle", { name: props.pluginName })}
+			description={
+				usageCount > 0
+					? t("plugins.uninstallConfirmDescription", {
+							name: props.pluginName,
+							count: usageCount,
+						})
+					: t("plugins.uninstallConfirmNoUsage", {
+							name: props.pluginName,
+						})
+			}
+			confirmLabel={t("plugins.uninstall")}
+			pendingLabel={t("common.working")}
+			isPending={uninstallMut.isPending}
+			destructive
+			onConfirm={() => uninstallMut.mutate({ id: props.pluginId })}
+		/>
 	)
 }

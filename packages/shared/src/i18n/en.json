@@ -495,7 +495,7 @@
 		"appearanceDescription": "Choose a color and whether to pin this plugin to resource cards.",
 		"reset": "Reset",
 		"clear": "Clear",
-		"resetPluginPref": "Reset settings",
+		"resetPluginPref": "Restore settings",
 		"resetPluginPrefConfirmTitle": "Reset settings for {{name}}?",
 		"resetPluginPrefConfirmDescription": "This will delete all saved settings for this plugin. The plugin will use its default values after restart. This cannot be undone.",
 		"resetPluginPrefSuccess": "Settings for {{name}} have been reset",
