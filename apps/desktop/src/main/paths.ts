@@ -1,4 +1,4 @@
-import { existsSync } from "node:fs"
+import { existsSync, readdirSync } from "node:fs"
 import { dirname, join } from "node:path"
 
 export type SidecarLayout = {
@@ -16,7 +16,30 @@ export type SidecarLayout = {
 	readonly webRoot: string | undefined
 }
 
-const SEED_PLUGIN_IDS = ["gallery", "pdf"] as const
+/**
+ * Discover the official plugins that ship next to the app: every one-level
+ * subdirectory carrying a `manifest.json` (packaged layout), or its `dist`
+ * subdirectory (workspace layout). The sidecar never hardcodes which
+ * official plugins exist — whatever is bundled becomes a seed. `file` is
+ * the builtin fallback (wired through BUILTIN_PATH, never seeded) and
+ * `template` the scaffolder scaffold; both are skipped.
+ */
+export function discoverSeedPluginDirs(
+	pluginsRoot: string,
+	distRel?: "dist",
+): string[] {
+	const out: string[] = []
+	if (!existsSync(pluginsRoot)) return out
+	for (const name of readdirSync(pluginsRoot, { withFileTypes: true })) {
+		if (!name.isDirectory()) continue
+		if (name.name === "file" || name.name === "template") continue
+		const dir = join(pluginsRoot, name.name)
+		const pluginDir = distRel === "dist" ? join(dir, distRel) : dir
+		if (!existsSync(join(pluginDir, "manifest.json"))) continue
+		out.push(pluginDir)
+	}
+	return out.sort()
+}
 
 export function packagedLayout(resourcesPath: string): SidecarLayout {
 	const serverDir = join(resourcesPath, "server")
@@ -27,7 +50,7 @@ export function packagedLayout(resourcesPath: string): SidecarLayout {
 		serverArgs: ["--enable-source-maps", join(serverDir, "main.js")],
 		cwd: serverDir,
 		builtinPath: join(pluginsDir, "file"),
-		seedPluginPaths: SEED_PLUGIN_IDS.map((id) => join(pluginsDir, id)),
+		seedPluginPaths: discoverSeedPluginDirs(pluginsDir),
 		webRoot: undefined,
 	}
 }
@@ -46,8 +69,9 @@ export function workspaceLayout(options: {
 		serverArgs: [viteNodeCli, "src/main.ts"],
 		cwd: serverRoot,
 		builtinPath: join(workspaceRoot, "plugins", "file", "dist"),
-		seedPluginPaths: SEED_PLUGIN_IDS.map((id) =>
-			join(workspaceRoot, "plugins", id, "dist"),
+		seedPluginPaths: discoverSeedPluginDirs(
+			join(workspaceRoot, "plugins"),
+			"dist",
 		),
 		webRoot: existsSync(join(webDist, "index.html")) ? webDist : undefined,
 	}

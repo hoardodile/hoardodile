@@ -29,6 +29,8 @@ function isPackagedRuntime(): boolean {
 	return process.env.HOARDODILE_PACKAGED === "1"
 }
 
+export { isPackagedRuntime }
+
 /**
  * Resolve the @hoardodile/server package root from this module's URL. Works both
  * when running vite-node against src/ and when the server is bundled to dist/

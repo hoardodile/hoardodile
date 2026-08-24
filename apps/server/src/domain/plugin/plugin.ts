@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs"
 import { rm } from "node:fs/promises"
 import { join } from "node:path"
 import {
@@ -11,6 +12,7 @@ import { assertSafeSegment, writeVersioned } from "@hoardodile/host/hoard"
 import type { FastifyInstance, FastifyPluginAsync } from "fastify"
 import fp from "fastify-plugin"
 import "src/infra/fastify-augment.ts"
+import { isPackagedRuntime } from "src/config/env.ts"
 import { createPluginService } from "./service.ts"
 import { createPluginSettingsStore } from "./settings-store.ts"
 
@@ -70,6 +72,26 @@ async function pluginDomainImpl(app: FastifyInstance): Promise<void> {
 					force: true,
 				})
 			})
+		},
+		// On a packaged runtime the bundled official plugins live in the
+		// SEED_PLUGIN_PATHS directories themselves — removing a plugin also
+		// removes its bundled source, so a restart cannot resurrect it
+		// (until an app update re-ships the package). Plain servers keep
+		// the admin's seed sources untouched and re-import on restart.
+		removeSeedSource: async (id) => {
+			if (!isPackagedRuntime()) return
+			for (const dir of app.env.SEED_PLUGIN_PATHS) {
+				try {
+					const manifest = JSON.parse(
+						readFileSync(join(dir, "manifest.json"), "utf-8"),
+					) as { id?: unknown }
+					if (manifest.id === id) {
+						await rm(dir, { recursive: true, force: true })
+					}
+				} catch {
+					// Not a seed source for this id (or unreadable) — skip.
+				}
+			}
 		},
 	})
 	// Record every discovered plugin so a later disk removal shows up in

@@ -76,6 +76,8 @@ describe("plugin service uninstall", () => {
 	let loader: PluginLoader
 	let sandbox: PluginSandbox
 	let svc: PluginService
+	let prepareDisk: (() => Promise<void>) | undefined
+	let removeSeedSource: ((id: string) => Promise<void>) | undefined
 
 	function registryWith(entries: readonly ReturnType<typeof entryFor>[]) {
 		registry = buildRegistry(entries)
@@ -84,7 +86,15 @@ describe("plugin service uninstall", () => {
 			rescan: vi.fn(async () => {}),
 		} as unknown as PluginLoader
 		sandbox = { unloadPlugin: vi.fn() } as unknown as PluginSandbox
-		svc = createPluginService({ db: dbh.db, loader, sandbox })
+		prepareDisk = vi.fn(async () => {})
+		removeSeedSource = vi.fn(async () => {})
+		svc = createPluginService({
+			db: dbh.db,
+			loader,
+			sandbox,
+			prepareDisk,
+			removeSeedSource,
+		})
 	}
 
 	function seedSettingsRow(id: PluginManifestId): void {
@@ -226,6 +236,11 @@ describe("plugin service uninstall", () => {
 		expect(row).toBeUndefined()
 		expect(sandbox.unloadPlugin).toHaveBeenCalledWith(PLUGIN_ID)
 		expect(loader.rescan).toHaveBeenCalled()
+		// The removal stays removed for the session — no immediate re-seed
+		// — while the (optional) seed-source cleanup runs for packaged
+		// runtimes.
+		expect(removeSeedSource).toHaveBeenCalledWith(PLUGIN_ID)
+		expect(prepareDisk).not.toHaveBeenCalled()
 	})
 
 	test("a missing plugin is uninstalled without touching the filesystem", async () => {
