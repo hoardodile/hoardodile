@@ -172,6 +172,8 @@ describe("AppShell sidebar", () => {
 		expect(sidebar?.querySelector('a[href="/resources"]')).not.toBeNull()
 		expect(sidebar?.querySelector('a[href="/messages"]')).not.toBeNull()
 		expect(sidebar?.querySelector('a[href="/settings"]')).not.toBeNull()
+		// Feedback & About is the second footer row, straight to the About tab.
+		expect(sidebar?.querySelector('a[href="/settings/about"]')).not.toBeNull()
 		// The storage strip is the shell's way to Settings → Data.
 		await waitFor(() => {
 			expect(container.querySelector('a[href="/settings/data"]')).not.toBeNull()

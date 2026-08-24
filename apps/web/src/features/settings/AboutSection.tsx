@@ -5,13 +5,18 @@ import type {
 import { Button } from "@hoardodile/ui/components/button"
 import { Icon } from "@hoardodile/ui/components/icon"
 import { MetaChip } from "@hoardodile/ui/components/meta-chip"
-import { InfoCircle, Link, RefreshCircle } from "@hoardodile/ui/icons/registry"
+import {
+	Global,
+	InfoCircle,
+	Link,
+	RefreshCircle,
+} from "@hoardodile/ui/icons/registry"
 import { cn } from "@hoardodile/ui/lib/utils"
 import type { ReactNode } from "react"
 import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { ExternalLink } from "@/components/common/ExternalLink"
-import { APP_REPOSITORY_URL, APP_VERSION } from "@/lib/appInfo"
+import { APP_REPOSITORY_URL, APP_VERSION, APP_WEBSITE_URL } from "@/lib/appInfo"
 import { getDesktopBridge } from "@/lib/desktop"
 import { checkForUpdate, type UpdateCheckResult } from "./checkUpdates"
 import { SettingsSection } from "./SettingsSection"
@@ -202,22 +207,51 @@ function AboutFrame(props: {
 			<div>
 				<div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
 					<div className="min-w-0">
-						<div className="flex items-center gap-2.5">
-							<span className="text-xl font-bold text-foreground">
-								hoardodile
-							</span>
-							<MetaChip>v{APP_VERSION}</MetaChip>
+						<div className="flex items-start gap-3">
+							<img
+								src="/logo.png"
+								alt=""
+								width={48}
+								height={48}
+								className="size-12 shrink-0 rounded-xl object-cover"
+								decoding="async"
+							/>
+							<div className="min-w-0">
+								<div className="flex items-center gap-2.5">
+									<span className="text-xl font-bold text-foreground">
+										hoardodile
+									</span>
+									<MetaChip>v{APP_VERSION}</MetaChip>
+								</div>
+								<p className="mt-1.5 text-xs leading-5 text-muted-foreground">
+									{t("me.about.tagline")}
+								</p>
+							</div>
 						</div>
-						<p className="mt-1.5 text-xs leading-5 text-muted-foreground">
-							{t("me.about.tagline")}
-						</p>
-						<ExternalLink
-							href={APP_REPOSITORY_URL}
-							className="mt-2 inline-flex items-center gap-1.5 text-xs text-secondary-foreground hover:text-foreground"
-						>
-							<Icon icon={Link} />
-							{APP_REPOSITORY_URL}
-						</ExternalLink>
+						<div className="mt-3 flex flex-col gap-1.5">
+							<ExternalLink
+								href={APP_WEBSITE_URL}
+								data-testid="me-about-website"
+								className="inline-flex items-center gap-1.5 text-xs text-secondary-foreground hover:text-foreground"
+							>
+								<Icon icon={Global} />
+								{t("me.about.website")}
+								<span className="text-muted-foreground">
+									· {shortUrl(APP_WEBSITE_URL)}
+								</span>
+							</ExternalLink>
+							<ExternalLink
+								href={APP_REPOSITORY_URL}
+								data-testid="me-about-repository"
+								className="inline-flex items-center gap-1.5 text-xs text-secondary-foreground hover:text-foreground"
+							>
+								<Icon icon={Link} />
+								{t("me.about.repository")}
+								<span className="text-muted-foreground">
+									· {shortUrl(APP_REPOSITORY_URL)}
+								</span>
+							</ExternalLink>
+						</div>
 					</div>
 					{props.action}
 				</div>
@@ -225,4 +259,9 @@ function AboutFrame(props: {
 			</div>
 		</SettingsSection>
 	)
+}
+
+/** URL without the protocol — a quiet hint next to an external link row. */
+function shortUrl(url: string): string {
+	return url.replace(/^https?:\/\//, "")
 }

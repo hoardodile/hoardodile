@@ -7,6 +7,7 @@ import {
 	Gallery,
 	HamburgerMenu,
 	HomeAngle,
+	InfoCircle,
 	Settings,
 	UndoRightRound,
 	UsersGroupRounded,
@@ -415,11 +416,26 @@ function SidebarContent(props: SidebarContentProps) {
 							to="/settings"
 							icon={Settings}
 							label={t("appShell.nav.me")}
+							active={
+								isRouteActive({
+									pathname: props.pathname,
+									to: "/settings",
+								}) &&
+								// The Feedback & About row owns the About tab —
+								// one highlight per destination.
+								!props.pathname.startsWith("/settings/about")
+							}
+							alert={syncAlert}
+							onNavigate={props.onNavigate}
+						/>
+						<NavRow
+							to="/settings/about"
+							icon={InfoCircle}
+							label={t("appShell.nav.feedbackAbout")}
 							active={isRouteActive({
 								pathname: props.pathname,
-								to: "/settings",
+								to: "/settings/about",
 							})}
-							alert={syncAlert}
 							onNavigate={props.onNavigate}
 						/>
 					</nav>
@@ -592,7 +608,13 @@ function useNavCounts(): NavCounts {
 	}
 }
 
-type NavPath = "/" | "/resources" | "/characters" | "/messages" | "/settings"
+type NavPath =
+	| "/"
+	| "/resources"
+	| "/characters"
+	| "/messages"
+	| "/settings"
+	| "/settings/about"
 
 type NavRowProps = {
 	readonly to: NavPath

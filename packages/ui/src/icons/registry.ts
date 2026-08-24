@@ -49,6 +49,7 @@ import { BookmarkIcon as BookmarkBoldWeight } from "@solar-icons/react/bold/book
 import { BookmarkCircleIcon as BookmarkCircleBoldWeight } from "@solar-icons/react/bold/bookmark-circle"
 import { BoxIcon as BoxBoldWeight } from "@solar-icons/react/bold/box"
 import { BranchingPathsUpIcon as BranchingPathsUpBoldWeight } from "@solar-icons/react/bold/branching-paths-up"
+import { BugIcon as BugBoldWeight } from "@solar-icons/react/bold/bug"
 import { CalendarDateIcon as CalendarDateBoldWeight } from "@solar-icons/react/bold/calendar-date"
 import { ChatRoundIcon as ChatRoundBoldWeight } from "@solar-icons/react/bold/chat-round"
 import { ChatRoundDotsIcon as ChatRoundDotsBoldWeight } from "@solar-icons/react/bold/chat-round-dots"
@@ -132,6 +133,7 @@ import { ReorderIcon as ReorderBoldWeight } from "@solar-icons/react/bold/reorde
 import { RepeatIcon as RepeatBoldWeight } from "@solar-icons/react/bold/repeat"
 import { ReplyIcon as ReplyBoldWeight } from "@solar-icons/react/bold/reply"
 import { RestartIcon as RestartBoldWeight } from "@solar-icons/react/bold/restart"
+import { RocketIcon as RocketBoldWeight } from "@solar-icons/react/bold/rocket"
 import { RouteIcon as RouteBoldWeight } from "@solar-icons/react/bold/route"
 import { ScaleIcon as ScaleBoldWeight } from "@solar-icons/react/bold/scale"
 import { ServerIcon as ServerBoldWeight } from "@solar-icons/react/bold/server"
@@ -188,6 +190,7 @@ import { BookmarkIcon as BookmarkBoldDuotone } from "@solar-icons/react/bold-duo
 import { BookmarkCircleIcon as BookmarkCircleBoldDuotone } from "@solar-icons/react/bold-duotone/bookmark-circle"
 import { BoxIcon as BoxBoldDuotone } from "@solar-icons/react/bold-duotone/box"
 import { BranchingPathsUpIcon as BranchingPathsUpBoldDuotone } from "@solar-icons/react/bold-duotone/branching-paths-up"
+import { BugIcon as BugBoldDuotone } from "@solar-icons/react/bold-duotone/bug"
 import { CalendarDateIcon as CalendarDateBoldDuotone } from "@solar-icons/react/bold-duotone/calendar-date"
 import { ChatRoundIcon as ChatRoundBoldDuotone } from "@solar-icons/react/bold-duotone/chat-round"
 import { ChatRoundDotsIcon as ChatRoundDotsBoldDuotone } from "@solar-icons/react/bold-duotone/chat-round-dots"
@@ -271,6 +274,7 @@ import { ReorderIcon as ReorderBoldDuotone } from "@solar-icons/react/bold-duoto
 import { RepeatIcon as RepeatBoldDuotone } from "@solar-icons/react/bold-duotone/repeat"
 import { ReplyIcon as ReplyBoldDuotone } from "@solar-icons/react/bold-duotone/reply"
 import { RestartIcon as RestartBoldDuotone } from "@solar-icons/react/bold-duotone/restart"
+import { RocketIcon as RocketBoldDuotone } from "@solar-icons/react/bold-duotone/rocket"
 import { RouteIcon as RouteBoldDuotone } from "@solar-icons/react/bold-duotone/route"
 import { ScaleIcon as ScaleBoldDuotone } from "@solar-icons/react/bold-duotone/scale"
 import { ServerIcon as ServerBoldDuotone } from "@solar-icons/react/bold-duotone/server"
@@ -327,6 +331,7 @@ import { BookmarkIcon as BookmarkLinear } from "@solar-icons/react/linear/bookma
 import { BookmarkCircleIcon as BookmarkCircleLinear } from "@solar-icons/react/linear/bookmark-circle"
 import { BoxIcon as BoxLinear } from "@solar-icons/react/linear/box"
 import { BranchingPathsUpIcon as BranchingPathsUpLinear } from "@solar-icons/react/linear/branching-paths-up"
+import { BugIcon as BugLinear } from "@solar-icons/react/linear/bug"
 import { CalendarDateIcon as CalendarDateLinear } from "@solar-icons/react/linear/calendar-date"
 import { ChatRoundIcon as ChatRoundLinear } from "@solar-icons/react/linear/chat-round"
 import { ChatRoundDotsIcon as ChatRoundDotsLinear } from "@solar-icons/react/linear/chat-round-dots"
@@ -409,6 +414,7 @@ import { ReorderIcon as ReorderLinear } from "@solar-icons/react/linear/reorder"
 import { RepeatIcon as RepeatLinear } from "@solar-icons/react/linear/repeat"
 import { ReplyIcon as ReplyLinear } from "@solar-icons/react/linear/reply"
 import { RestartIcon as RestartLinear } from "@solar-icons/react/linear/restart"
+import { RocketIcon as RocketLinear } from "@solar-icons/react/linear/rocket"
 import { RouteIcon as RouteLinear } from "@solar-icons/react/linear/route"
 import { ScaleIcon as ScaleLinear } from "@solar-icons/react/linear/scale"
 import { ServerIcon as ServerLinear } from "@solar-icons/react/linear/server"
@@ -539,6 +545,11 @@ export const BranchingPathsUp = createIcon({
 	bold: BranchingPathsUpBoldWeight,
 	boldDuotone: BranchingPathsUpBoldDuotone,
 	linear: BranchingPathsUpLinear,
+})
+export const Bug = createIcon({
+	bold: BugBoldWeight,
+	boldDuotone: BugBoldDuotone,
+	linear: BugLinear,
 })
 export const CalendarDate = createIcon({
 	bold: CalendarDateBoldWeight,
@@ -954,6 +965,11 @@ export const Restart = createIcon({
 	bold: RestartBoldWeight,
 	boldDuotone: RestartBoldDuotone,
 	linear: RestartLinear,
+})
+export const Rocket = createIcon({
+	bold: RocketBoldWeight,
+	boldDuotone: RocketBoldDuotone,
+	linear: RocketLinear,
 })
 export const Route = createIcon({
 	bold: RouteBoldWeight,
