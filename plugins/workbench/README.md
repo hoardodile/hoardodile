@@ -44,6 +44,11 @@ and the `languageChanged` push to the mounted iframe. Shared option names
 (palette/icon style/language) come from the app catalogs; the workbench's
 own copy lives in the `workbench` namespace of `@hoardodile/i18n`.
 
+Manual acceptance after an i18n change (`hoardodile plugin dev`): switch
+through all five languages and check that (1) the workbench chrome
+follows immediately, (2) the plugin iframe switches without a reload,
+(3) plugin strings the bundle lacks fall back to English.
+
 Theme, palette, icon style, language and font changes are pushed to the
 mounted iframe (theme/fonts/language pushes) without a reload — the same
 protocol the app's theme broadcast uses. A plugin built against a

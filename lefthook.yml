@@ -18,3 +18,5 @@ pre-commit:
       run: node scripts/guard-external-links.mjs --staged
     - name: protected-deps-guard
       run: node scripts/guard-protected-deps.mjs
+    - name: i18n-wrapper-guard
+      run: node scripts/guard-i18n-wrappers.mjs --staged
