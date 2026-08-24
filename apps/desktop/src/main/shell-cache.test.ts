@@ -67,12 +67,16 @@ describe("platformCacheBase", () => {
 
 describe("resolveUpdaterCacheDir", () => {
 	it("follows the electron-builder formula: <appName-lowercase>-updater", () => {
+		const platformBase = String.raw`C:\Users\demo\AppData\Local`
+		// The formula is about the directory name — the join separator is
+		// the host platform's, so build the expectation the same way the
+		// implementation does (a hardcoded backslash form broke POSIX).
 		expect(
 			resolveUpdaterCacheDir({
-				platformBase: String.raw`C:\Users\demo\AppData\Local`,
+				platformBase,
 				appName: "hoardodile",
 			}),
-		).toBe(String.raw`C:\Users\demo\AppData\Local\hoardodile-updater`)
+		).toBe(join(platformBase, "hoardodile-updater"))
 	})
 
 	it("appends under a POSIX cache base", () => {
