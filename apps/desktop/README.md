@@ -2,7 +2,17 @@
 
 Thin cross-platform Electron shell around the existing Fastify app. The shell MUST do as little as possible: Fastify, Drizzle, plugins, native addons, and media binaries stay on a real Node 24 sidecar. Electron owns tray, one window, the first-run wizard, env injection, graceful stop, and the updater. UI tokens, palettes, and layout live in `DESIGN.md`.
 
-Release matrix: **Windows x64** (NSIS + portable zip), **Linux x64** (AppImage), **macOS arm64** (dmg + zip). macOS x64 and signing/notarization are future work.
+Release matrix: **Windows x64** (NSIS + portable zip), **Linux x64** (AppImage), **macOS arm64** (dmg + zip). macOS x64 and signing/notarization are future work. **32-bit targets are intentionally not built** — see [32-bit machines](#32-bit-machines).
+
+## 32-bit machines
+
+The desktop app requires a 64-bit OS. Three hard facts make 32-bit windows/linux builds a dead end:
+
+- **Electron 44 removed the 32-bit Windows (ia32) builds** ([electron/electron#52326](https://github.com/electron/electron/pull/52326)) — staying on the last ia32-capable major would freeze 32-bit users on an Electron version that stops receiving security updates (no LTS exists).
+- **Node.js 24 has no official 32-bit builds at all** ([v24.19.0 dist](https://nodejs.org/dist/v24.19.0/SHASUMS256.txt): win-x64/arm64, linux-x64/arm64/ppc64le/s390x only) and the sidecar must run a real Node 24 (ABI 137) for its native modules.
+- **better-sqlite3 (v13+) ships no ia32 prebuilds**, and 32-bit processes are capped at ~4 GB of address space — an unfriendly limit for an archival workload (media library, thumbnails, PDF/plugin rendering).
+
+Old or low-spec machines are served by the product itself: **run the self-hosted Web version (or the Docker image) and open it in the browser** — no 32-bit ceiling, no desktop shell needed. The resource-update channel keeps arch a first-class citizen (asset names, `process.arch`, the matrix tables in `scripts/lib/resource-pack-targets.mjs` and `src/main/resource-support.ts`), so if the ecosystem ever brings 32-bit back, the incremental cost is a matrix entry plus a runtime with matching native builds — not a redesign.
 
 ## Process model
 
