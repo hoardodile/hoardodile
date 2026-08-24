@@ -90,6 +90,55 @@ const { useTranslation } = createPluginTranslation({ en: {…}, zh: {…} })
 const { t } = useTranslation()
 ```
 
+### Advanced i18n — assemble react-i18next yourself
+
+The official wrapper is a convenience, not a straitjacket. For full
+control (custom namespaces, plurals/ordinals, `<Trans>`, custom
+`interpolation.format`, lazy-loaded catalogs, i18next-parser extraction)
+assemble your own instance. The only hoardodile dependency is the host
+**language notification** — the initial value from the plugin context and
+the `languageChanged` push; everything else is plain `i18next` +
+`react-i18next`:
+
+```ts
+// src/i18n.ts — apart from the host language notification, no @hoardodile package
+import i18next from "i18next"
+import { initReactI18next, useTranslation } from "react-i18next"
+import { ensureHostBridge, getPluginContext } from "@hoardodile/sdk-web"
+
+const AVAILABLE = ["en", "zh"] // your bundle's languages
+function normalize(raw: string | undefined): string {
+  const base = raw?.toLowerCase().split("-")[0]
+  return base !== undefined && (AVAILABLE as string[]).includes(base) ? base : "en"
+}
+
+export const i18n = i18next.createInstance()
+void i18n.use(initReactI18next).init({
+  resources: {
+    en: { translation: { /* …, plus `_one`/`_other` plural pairs */ } },
+    zh: { translation: { /* … */ } },
+  },
+  lng: normalize(getPluginContext()?.language ?? navigator.language),
+  fallbackLng: "en",
+  interpolation: { escapeValue: false },
+  // Everything else is wide open here: keyPrefix, pluralSeparator,
+  // interpolation.format, Trans components, async backends, extraction…
+})
+
+// The wire payload is a bare language-code string (see HostPushes table).
+ensureHostBridge().subscribe("languageChanged", (language) => {
+  void i18n.changeLanguage(normalize(language))
+})
+
+export { useTranslation }
+```
+
+Trade-offs: with the wrapper you get zero-config ui chrome localization
+and English fallback for free; a hand-rolled instance only owns your own
+strings — if you keep `@hoardodile/ui` components with chrome copy, load
+the `ui` namespace (optionally from `@hoardodile/i18n/catalogs/ui`) and
+subscribe the same way.
+
 Plus `useCacheWriter`, `useExtractProgress`, `useVisibility`.
 
 ### `usePref` — encode before you compare

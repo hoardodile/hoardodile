@@ -24,11 +24,9 @@ import { Settings } from "@hoardodile/ui/icons/registry"
 import { cn } from "@hoardodile/ui/lib/utils"
 import type { KeyboardEvent as ReactKeyboardEvent } from "react"
 import { useEffect, useState } from "react"
+import { useTranslation } from "react-i18next"
 import {
 	CUSTOM_VIEWPORT_DEFAULT,
-	ICON_STYLE_LABELS,
-	LANGUAGE_LABELS,
-	PALETTE_LABELS,
 	VIEWPORT_MAX_PX,
 	VIEWPORT_MIN_PX,
 	VIEWPORT_PRESETS,
@@ -36,37 +34,6 @@ import {
 	WORKBENCH_LANGUAGES,
 	type WorkbenchConfig,
 } from "../config.ts"
-
-const THEME_MODE_OPTIONS = [
-	{ value: "system", label: "System" },
-	{ value: "light", label: "Light" },
-	{ value: "dark", label: "Dark" },
-] as const
-
-const PALETTE_OPTIONS = pluginThemePalettes.map((palette) => ({
-	value: palette,
-	label: PALETTE_LABELS[palette],
-}))
-
-const ICON_STYLE_OPTIONS = (["duotone", "grayscale", "linear"] as const).map(
-	(style) => ({ value: style, label: ICON_STYLE_LABELS[style] }),
-)
-
-const LANGUAGE_OPTIONS = [
-	{ value: "system", label: "System" },
-	...WORKBENCH_LANGUAGES.map((code) => ({
-		value: code,
-		label: LANGUAGE_LABELS[code],
-	})),
-]
-
-const VIEWPORT_OPTIONS = [
-	...VIEWPORT_PRESETS.map((preset) => ({
-		value: preset.id,
-		label: `${preset.label}${preset.width === null ? "" : ` ${preset.width}×${preset.height}`}`,
-	})),
-	{ value: "custom", label: "Custom" },
-]
 
 function clampViewportSize(value: number): number {
 	return Math.min(VIEWPORT_MAX_PX, Math.max(VIEWPORT_MIN_PX, value))
@@ -83,6 +50,10 @@ export function ConfigPopover(props: {
 	readonly onChange: (patch: Partial<WorkbenchConfig>) => void
 }) {
 	const { config, onChange } = props
+	// Shared catalog keys (theme/icon/language option names) come from the
+	// default namespace; the workbench's own copy from the workbench ns.
+	const { t } = useTranslation()
+	const { t: tw } = useTranslation("workbench")
 	const viewport = config.viewport
 	const viewportIsFill = viewport.width === null || viewport.height === null
 	const viewportDims = {
@@ -98,6 +69,39 @@ export function ConfigPopover(props: {
 		setDraft(null)
 	}, [viewport.width, viewport.height])
 	const draftDims = draft ?? viewportDims
+
+	const themeModeOptions = [
+		{ value: "system", label: t("theme.mode.system") },
+		{ value: "light", label: t("theme.mode.light") },
+		{ value: "dark", label: t("theme.mode.dark") },
+	] as const
+
+	const paletteOptions = pluginThemePalettes.map((palette) => ({
+		value: palette,
+		label: t(`theme.palette.${palette}`),
+	}))
+
+	const iconStyleOptions = (["duotone", "grayscale", "linear"] as const).map(
+		(style) => ({ value: style, label: t(`icons.style.${style}`) }),
+	)
+
+	const languageOptions = [
+		{ value: "system", label: tw("popover.system") },
+		...WORKBENCH_LANGUAGES.map((code) => ({
+			value: code,
+			label: t(`language.${code}`),
+		})),
+	]
+
+	const viewportOptions = [
+		...VIEWPORT_PRESETS.map((preset) => ({
+			value: preset.id,
+			label: `${tw(`viewport.${preset.id}`)}${
+				preset.width === null ? "" : ` ${preset.width}×${preset.height}`
+			}`,
+		})),
+		{ value: "custom", label: tw("popover.custom") },
+	]
 
 	function commitViewportDims(): void {
 		if (draft === null) return
@@ -136,99 +140,96 @@ export function ConfigPopover(props: {
 								<Button
 									variant="outline"
 									size="sm"
-									aria-label="Iframe settings"
+									aria-label={tw("popover.settingsAria")}
 								>
 									<Icon icon={Settings} className="text-secondary-foreground" />
-									Configure
+									{tw("popover.configure")}
 								</Button>
 							}
 						/>
 					}
 				/>
-				<TooltipContent>Iframe settings — applied live</TooltipContent>
+				<TooltipContent>{tw("popover.tooltip")}</TooltipContent>
 			</Tooltip>
 			<PopoverContent align="end" className="w-80">
 				<PopoverHeader>
-					<PopoverTitle>Iframe settings</PopoverTitle>
-					<PopoverDescription>
-						Live updates without reloading the plugin; defaults match the main
-						app.
-					</PopoverDescription>
+					<PopoverTitle>{tw("popover.title")}</PopoverTitle>
+					<PopoverDescription>{tw("popover.description")}</PopoverDescription>
 				</PopoverHeader>
 
-				<SectionLabel>Appearance</SectionLabel>
+				<SectionLabel>{tw("popover.sectionAppearance")}</SectionLabel>
 				<div className="flex flex-col gap-3">
 					<div className="flex items-center justify-between gap-3">
-						<Label className="text-xs">Mode</Label>
+						<Label className="text-xs">{t("theme.modeLabel")}</Label>
 						<PillTabs
 							value={config.themeMode}
-							items={THEME_MODE_OPTIONS}
+							items={themeModeOptions}
 							onChange={(value) => onChange({ themeMode: value })}
 						/>
 					</div>
 					<div className="flex items-center justify-between gap-3">
-						<Label className="text-xs">Palette</Label>
+						<Label className="text-xs">{t("theme.paletteLabel")}</Label>
 						<DropdownSelect
 							value={config.palette}
 							onValueChange={(value) =>
 								onChange({ palette: value as WorkbenchConfig["palette"] })
 							}
-							options={PALETTE_OPTIONS}
-							aria-label="Palette"
+							options={paletteOptions}
+							aria-label={t("theme.paletteLabel")}
 						/>
 					</div>
 				</div>
 
 				<Separator />
 
-				<SectionLabel>Icons</SectionLabel>
+				<SectionLabel>{tw("popover.sectionIcons")}</SectionLabel>
 				<div className="flex items-center justify-between gap-3">
-					<Label className="text-xs">Style</Label>
+					<Label className="text-xs">{tw("popover.style")}</Label>
 					<DropdownSelect
 						value={config.iconStyle}
 						onValueChange={(value) =>
 							onChange({ iconStyle: value as WorkbenchConfig["iconStyle"] })
 						}
-						options={ICON_STYLE_OPTIONS}
-						aria-label="Icon style"
+						options={iconStyleOptions}
+						aria-label={tw("popover.style")}
 					/>
 				</div>
 
 				<Separator />
 
-				<SectionLabel>Language</SectionLabel>
+				<SectionLabel>{tw("popover.sectionLanguage")}</SectionLabel>
 				<div className="flex items-center justify-between gap-3">
-					<Label className="text-xs">UI language</Label>
+					<Label className="text-xs">{tw("popover.uiLanguage")}</Label>
 					<DropdownSelect
 						value={config.language}
 						onValueChange={(value) => onChange({ language: value })}
-						options={LANGUAGE_OPTIONS}
-						aria-label="Language"
+						options={languageOptions}
+						aria-label={tw("popover.sectionLanguage")}
 					/>
 				</div>
 
 				<Separator />
 
-				<SectionLabel>Font</SectionLabel>
+				<SectionLabel>{tw("popover.sectionFont")}</SectionLabel>
 				<div className="flex flex-col gap-2">
-					<Label className="text-xs">Font family</Label>
+					<Label className="text-xs">{tw("popover.fontFamily")}</Label>
 					<Input
 						value={config.fontFamily}
 						onChange={(event) => onChange({ fontFamily: event.target.value })}
-						placeholder="App default (system stack)"
-						aria-label="Font family"
+						placeholder={tw("popover.fontFamilyPlaceholder")}
+						aria-label={tw("popover.fontFamily")}
 					/>
 					<p className="text-xs text-muted-foreground">
-						Leave empty for the app default system stack.
+						{tw("popover.fontFamilyHint")}
 					</p>
 				</div>
 
 				<Separator />
 
-				<SectionLabel>Viewport</SectionLabel>
+				<SectionLabel>{tw("popover.sectionViewport")}</SectionLabel>
 				<div className="flex flex-col gap-2">
 					<div className="flex items-center justify-between gap-3">
-						<Label className="text-xs">Size</Label>
+						<Label className="text-xs">{tw("popover.size")}</Label>
 						<DropdownSelect
 							value={viewportPresetId(viewport)}
 							onValueChange={(value) => {
@@ -252,8 +253,8 @@ export function ConfigPopover(props: {
 									})
 								}
 							}}
-							options={VIEWPORT_OPTIONS}
-							aria-label="Viewport size"
+							options={viewportOptions}
+							aria-label={tw("popover.size")}
 						/>
 					</div>
 					<div className="flex items-center gap-2">
@@ -270,7 +271,7 @@ export function ConfigPopover(props: {
 							}
 							onBlur={commitViewportDims}
 							onKeyDown={commitOnEnter}
-							aria-label="Viewport width"
+							aria-label={tw("popover.viewportWidth")}
 						/>
 						<span className="text-xs text-muted-foreground">×</span>
 						<Input
@@ -286,7 +287,7 @@ export function ConfigPopover(props: {
 							}
 							onBlur={commitViewportDims}
 							onKeyDown={commitOnEnter}
-							aria-label="Viewport height"
+							aria-label={tw("popover.viewportHeight")}
 						/>
 						<span className="text-xs text-muted-foreground">px</span>
 					</div>

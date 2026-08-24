@@ -104,7 +104,6 @@ export function pushPresentation(
 		iconStyle: p.iconStyle,
 	})
 	mounted.host.push(win, hostPushKeys.fontsChanged, p.fonts)
-	mounted.host.push(win, hostPushKeys.languageChanged, {
-		language: p.language,
-	})
+	// Bare language code on the wire — see protocol.ts `languageChanged`.
+	mounted.host.push(win, hostPushKeys.languageChanged, p.language)
 }

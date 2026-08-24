@@ -88,44 +88,27 @@ export const WORKBENCH_LANGUAGES = SUPPORTED_LANGUAGES
 export type WorkbenchLanguage = SupportedLanguage
 export const resolveWorkbenchLanguage = resolveSystemLanguage
 
-export const PALETTE_LABELS: Readonly<Record<PluginThemePalette, string>> = {
-	// Labels match `theme.palette.*` in the app's i18n catalogs.
-	mono: "Mono",
-	sage: "Sage",
-	parchment: "Parchment",
-	azure: "Azure",
-	hoardodile: "Hoardodile",
-}
-
-export const ICON_STYLE_LABELS: Readonly<Record<WorkbenchIconStyle, string>> = {
-	duotone: "Duotone",
-	grayscale: "Grayscale",
-	linear: "Linear",
-}
-
-export const LANGUAGE_LABELS: Readonly<Record<WorkbenchLanguage, string>> = {
-	en: "English",
-	zh: "中文",
-	ja: "日本語",
-	de: "Deutsch",
-	es: "Español",
-}
+/**
+ * Palette / icon-style / language display names come straight from the
+ * shared catalogs (`theme.palette.*`, `icons.style.*`, `language.*`) —
+ * no mirrored label constants; components read them via `useTranslation`.
+ */
 
 export type ViewportPreset = {
 	/** Preset id: `"fill"` or a named dimension set. */
 	readonly id: "fill" | "phone" | "tablet" | "small" | "wide"
-	readonly label: string
 	readonly width: number | null
 	readonly height: number | null
 }
 
-/** Dev-tool presets; the default (`fill`) follows the app preview. */
+/** Dev-tool presets; the default (`fill`) follows the app preview.
+ *  Display names come from the `workbench` catalog (`workbench.viewport.*`). */
 export const VIEWPORT_PRESETS: readonly ViewportPreset[] = [
-	{ id: "fill", label: "Fill", width: null, height: null },
-	{ id: "phone", label: "Phone", width: 375, height: 667 },
-	{ id: "tablet", label: "Tablet", width: 768, height: 1024 },
-	{ id: "small", label: "Small", width: 800, height: 600 },
-	{ id: "wide", label: "Wide", width: 1200, height: 800 },
+	{ id: "fill", width: null, height: null },
+	{ id: "phone", width: 375, height: 667 },
+	{ id: "tablet", width: 768, height: 1024 },
+	{ id: "small", width: 800, height: 600 },
+	{ id: "wide", width: 1200, height: 800 },
 ]
 
 /** Custom-size fallback used when switching from Fill to custom (px). */
@@ -143,9 +126,14 @@ export function resolveWorkbenchTheme(
 }
 
 /**
- * Display line for the viewport, e.g. `"Fill"` or `"900×700"`. */
-export function describeViewport(viewport: WorkbenchViewport): string {
-	if (viewport.width === null || viewport.height === null) return "Fill"
+ * Display line for the viewport, e.g. `"Fill"` or `"900×700"`.
+ * `fillLabel` carries the localized fill copy (or the English default).
+ */
+export function describeViewport(
+	viewport: WorkbenchViewport,
+	fillLabel = "Fill",
+): string {
+	if (viewport.width === null || viewport.height === null) return fillLabel
 	return `${viewport.width}×${viewport.height}`
 }
 

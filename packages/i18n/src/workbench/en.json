@@ -1,0 +1,45 @@
+{
+	"toolbar": {
+		"plugin": "plugin",
+		"reloadAria": "Reload plugin",
+		"reloadHint": "Reload — re-mount with the current build",
+		"resource": "Resource"
+	},
+	"popover": {
+		"configure": "Configure",
+		"settingsAria": "Iframe settings",
+		"title": "Iframe settings",
+		"tooltip": "Iframe settings — applied live",
+		"description": "Live updates without reloading the plugin; defaults match the main app.",
+		"sectionAppearance": "Appearance",
+		"sectionIcons": "Icons",
+		"sectionLanguage": "Language",
+		"sectionFont": "Font",
+		"sectionViewport": "Viewport",
+		"mode": "Mode",
+		"palette": "Palette",
+		"style": "Style",
+		"uiLanguage": "UI language",
+		"fontFamily": "Font family",
+		"fontFamilyPlaceholder": "App default (system stack)",
+		"fontFamilyHint": "Leave empty for the app default system stack.",
+		"size": "Size",
+		"viewportWidth": "Viewport width",
+		"viewportHeight": "Viewport height",
+		"custom": "Custom",
+		"system": "System"
+	},
+	"viewport": {
+		"fill": "Fill",
+		"phone": "Phone",
+		"tablet": "Tablet",
+		"small": "Small",
+		"wide": "Wide"
+	},
+	"app": {
+		"loading": "loading…",
+		"failedTitle": "Workbench failed to start",
+		"noResources": "No resources",
+		"noResourcesHint": "pass --data <dir> or --storage <hoardodile-root>"
+	}
+}

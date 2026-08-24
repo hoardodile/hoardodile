@@ -2,6 +2,7 @@ import { decideDownloadConsent } from "@hoardodile/host-web"
 import { applyTheme } from "@hoardodile/sdk-web"
 import { PluginDownloadConsentDialog } from "@hoardodile/ui/components/plugin-download-consent"
 import { useEffect, useMemo, useRef, useState } from "react"
+import { useTranslation } from "react-i18next"
 import { Stage } from "./components/Stage.tsx"
 import { Toolbar } from "./components/Toolbar.tsx"
 import {
@@ -200,6 +201,7 @@ export function App() {
 	const patchConfig = (patch: Partial<WorkbenchConfig>) => {
 		setConfig((prev) => ({ ...prev, ...patch }))
 	}
+	const { t: tw } = useTranslation("workbench")
 
 	return (
 		<div className="flex h-full flex-col">
@@ -207,8 +209,11 @@ export function App() {
 				manifest={manifest}
 				resources={resources}
 				resource={resource}
-				status={context === null ? "loading…" : describeContext(context)}
-				viewportLabel={describeViewport(config.viewport)}
+				// describeContext output stays English on purpose: it is a
+				// developer diagnostic line (scripts/smoke-published.mjs
+				// asserts "detect ok").
+				status={context === null ? tw("app.loading") : describeContext(context)}
+				viewportLabel={describeViewport(config.viewport, tw("viewport.fill"))}
 				config={config}
 				onConfigChange={patchConfig}
 				onSelect={setSelectedId}
@@ -219,7 +224,7 @@ export function App() {
 					viewport={config.viewport}
 					loading={false}
 					frameRef={frameRef}
-					emptyTitle="Workbench failed to start"
+					emptyTitle={tw("app.failedTitle")}
 					emptyDescription={bootstrapError}
 				/>
 			) : resource === undefined ? (
@@ -227,8 +232,8 @@ export function App() {
 					viewport={config.viewport}
 					loading={false}
 					frameRef={frameRef}
-					emptyTitle="No resources"
-					emptyDescription="pass --data <dir> or --storage <hoardodile-root>"
+					emptyTitle={tw("app.noResources")}
+					emptyDescription={tw("app.noResourcesHint")}
 				/>
 			) : (
 				<Stage

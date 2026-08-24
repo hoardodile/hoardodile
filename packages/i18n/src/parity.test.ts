@@ -1,9 +1,10 @@
 /**
  * @vitest-environment node
  *
- * Guardrails that keep the i18n catalogs in lockstep — both the app
- * `translation` namespace (`src/catalogs/*.json`) and the shared `ui`
- * namespace (`src/ui/*.json`). These caught real regressions
+ * Guardrails that keep the i18n catalogs in lockstep — the app
+ * `translation` namespace (`src/catalogs/*.json`), the shared `ui`
+ * namespace (`src/ui/*.json`) and the workbench namespace
+ * (`src/workbench/*.json`). These caught real regressions
  * historically (dead `_plural` keys under i18next v4, a missing zh
  * mirror, and the desktop shell's hardcoded ternaries), so they are
  * intentionally strict: a new key must be registered in every language
@@ -15,6 +16,7 @@
  */
 import { describe, expect, it } from "vitest"
 import { UI_CATALOGS } from "./catalogs/ui.ts"
+import { WORKBENCH_CATALOGS } from "./catalogs/workbench.ts"
 import { CATALOGS } from "./catalogs.ts"
 
 type FlatEntry = { key: string; value: string }
@@ -169,4 +171,5 @@ function checkCatalogLockstep(
 describe("i18n catalog parity", () => {
 	checkCatalogLockstep(CATALOGS)
 	checkCatalogLockstep(UI_CATALOGS)
+	checkCatalogLockstep(WORKBENCH_CATALOGS)
 })

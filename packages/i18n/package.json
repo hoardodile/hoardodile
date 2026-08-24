@@ -45,6 +45,11 @@
 			"types": "./dist/catalogs/ui.d.ts",
 			"development": "./src/catalogs/ui.ts",
 			"default": "./dist/catalogs/ui.js"
+		},
+		"./workbench": {
+			"types": "./dist/catalogs/workbench.d.ts",
+			"development": "./src/catalogs/workbench.ts",
+			"default": "./dist/catalogs/workbench.js"
 		}
 	},
 	"files": [

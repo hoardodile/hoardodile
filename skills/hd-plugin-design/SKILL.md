@@ -51,7 +51,9 @@ What the helpers do:
   stylesheets once and points `--font-app` at the inherited family;
   an empty family (manifest `ui.inheritFont: false`) removes the
   variable so the plugin keeps its own fonts.
-- `language` selects your locale bundle (`createPluginTranslation`).
+- `language` selects your locale bundle — the official
+  `createPluginTranslation` wrapper or your own react-i18next assembly
+  (advanced pattern in `references/client.md`).
 
 So: import `@hoardodile/ui/theme.css`, render through the SDK, and the
 whole token vocabulary below just works — light/dark, palette hue via

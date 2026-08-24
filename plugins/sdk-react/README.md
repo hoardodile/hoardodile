@@ -23,7 +23,11 @@ pnpm add @hoardodile/sdk-react
 - **`createPluginTranslation(bundles)`** — `useTranslation()` backed by
   the shared `@hoardodile/i18n` catalogs and the host's language pushes;
   `@hoardodile/ui` chrome is localized for free in every supported host
-  language
+  language. Want full control over the i18n stack (namespaces, plurals,
+  `Trans`, custom format, lazy backends)? Assemble your own
+  react-i18next instance instead — the only hoardodile piece is the
+  `languageChanged` notification from `@hoardodile/sdk-web` (see the
+  advanced pattern in `skills/hd-plugin/references/client.md`).
 - **`StubPluginAPIProvider`** — render-test fixture
 
 ## Quick start

@@ -8,6 +8,7 @@ import {
 } from "@hoardodile/ui/components/tooltip"
 import { Refresh } from "@hoardodile/ui/icons/registry"
 import { useEffect, useState } from "react"
+import { useTranslation } from "react-i18next"
 import type { WorkbenchConfig } from "../config.ts"
 import type { WorkbenchManifest, WorkbenchResource } from "../context.ts"
 import { ConfigPopover } from "./ConfigPopover.tsx"
@@ -30,10 +31,13 @@ export function Toolbar(props: {
 	readonly onReload: () => void
 }) {
 	const { manifest, resources, resource, status, viewportLabel, config } = props
+	const { t: tw } = useTranslation("workbench")
 
 	return (
 		<header className="flex h-nav shrink-0 items-center gap-3 border-b border-border px-4">
-			<span className="text-ui text-muted-foreground">plugin</span>
+			<span className="text-ui text-muted-foreground">
+				{tw("toolbar.plugin")}
+			</span>
 			<span
 				id="plugin-name"
 				className="min-w-0 truncate text-ui text-secondary-foreground"
@@ -64,16 +68,14 @@ export function Toolbar(props: {
 						<Button
 							variant="ghost"
 							size="icon-sm"
-							aria-label="Reload plugin"
+							aria-label={tw("toolbar.reloadAria")}
 							onClick={props.onReload}
 						>
 							<Icon icon={Refresh} />
 						</Button>
 					}
 				/>
-				<TooltipContent>
-					Reload — re-mount with the current build
-				</TooltipContent>
+				<TooltipContent>{tw("toolbar.reloadHint")}</TooltipContent>
 			</Tooltip>
 			<ConfigPopover config={config} onChange={props.onConfigChange} />
 		</header>
@@ -93,6 +95,7 @@ function ResourcePicker(props: {
 	readonly className?: string
 }) {
 	const { resource, resources, onSelect } = props
+	const { t: tw } = useTranslation("workbench")
 	const [coverFailed, setCoverFailed] = useState(false)
 
 	// A fresh element per resource: an error from the previous id must
@@ -119,7 +122,7 @@ function ResourcePicker(props: {
 					value={resource.id}
 					onValueChange={onSelect}
 					options={resources.map((r) => ({ value: r.id, label: r.name }))}
-					aria-label="Resource"
+					aria-label={tw("toolbar.resource")}
 					triggerClassName="max-w-64"
 				/>
 			</span>

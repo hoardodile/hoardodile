@@ -1,0 +1,45 @@
+{
+	"toolbar": {
+		"plugin": "プラグイン",
+		"reloadAria": "プラグインを再読み込み",
+		"reloadHint": "再読み込み — 現在のビルドで再マウント",
+		"resource": "リソース"
+	},
+	"popover": {
+		"configure": "設定",
+		"settingsAria": "iframe 設定",
+		"title": "iframe 設定",
+		"tooltip": "iframe 設定 — ライブ反映",
+		"description": "プラグインを再読み込みせずに即時更新。デフォルトはメインアプリと一致します。",
+		"sectionAppearance": "外観",
+		"sectionIcons": "アイコン",
+		"sectionLanguage": "言語",
+		"sectionFont": "フォント",
+		"sectionViewport": "ビューポート",
+		"mode": "モード",
+		"palette": "パレット",
+		"style": "スタイル",
+		"uiLanguage": "UI 言語",
+		"fontFamily": "フォントファミリー",
+		"fontFamilyPlaceholder": "アプリ既定（システムフォント）",
+		"fontFamilyHint": "空欄ならアプリ既定のシステムフォントを使用します。",
+		"size": "サイズ",
+		"viewportWidth": "ビューポート幅",
+		"viewportHeight": "ビューポート高さ",
+		"custom": "カスタム",
+		"system": "システム"
+	},
+	"viewport": {
+		"fill": "フィル",
+		"phone": "フォン",
+		"tablet": "タブレット",
+		"small": "小",
+		"wide": "ワイド"
+	},
+	"app": {
+		"loading": "読み込み中…",
+		"failedTitle": "ワークベンチを起動できませんでした",
+		"noResources": "リソースがありません",
+		"noResourcesHint": "--data <dir> または --storage <hoardodile-root> を指定してください"
+	}
+}

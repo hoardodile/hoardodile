@@ -3,7 +3,9 @@ import { createRoot, type Root } from "react-dom/client"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { createPluginTranslation } from "./i18n.ts"
 
-type LanguagePush = { language: string }
+// The wire payload is a bare string; the legacy object shape must keep
+// working, so the mock accepts both.
+type LanguagePush = string | { language: string }
 
 const mocks = vi.hoisted(() => ({
 	contextLanguage: { value: "en" as string | undefined },
@@ -89,13 +91,27 @@ describe("createPluginTranslation", () => {
 		const probe = renderProbe()
 		expect(probe.text()).toBe("Hello")
 
+		// The real wire payload is a bare language-code string.
+		act(() => {
+			for (const handler of mocks.pushHandlers) {
+				handler("zh")
+			}
+		})
+		expect(probe.text()).toBe("你好")
+		expect(probe.current().language).toBe("zh")
+		probe.unmount()
+	})
+
+	it("still accepts the legacy object-shaped language push", () => {
+		mocks.contextLanguage.value = "en"
+		const probe = renderProbe()
+
 		act(() => {
 			for (const handler of mocks.pushHandlers) {
 				handler({ language: "zh" })
 			}
 		})
 		expect(probe.text()).toBe("你好")
-		expect(probe.current().language).toBe("zh")
 		probe.unmount()
 	})
 

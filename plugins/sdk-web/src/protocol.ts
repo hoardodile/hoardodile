@@ -298,7 +298,13 @@ export type HostPushes = {
 		readonly iconStyle: PluginIconStyle
 	}
 	fontsChanged: PluginFonts
-	languageChanged: { readonly language: string }
+	/**
+	 * The wire payload is a bare language-code string: it predates the
+	 * typed protocol table and must stay stable for already-installed
+	 * plugin builds (see `pushLanguageChanged` in apps/web — do not wrap
+	 * it in an object).
+	 */
+	languageChanged: string
 	prefsChanged: { readonly key: string; readonly value?: string }
 	/**
 	 * A plugin+resource cache entry changed. With data, carries the single

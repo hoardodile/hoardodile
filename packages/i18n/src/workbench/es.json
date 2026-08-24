@@ -1,0 +1,45 @@
+{
+	"toolbar": {
+		"plugin": "plugin",
+		"reloadAria": "Recargar plugin",
+		"reloadHint": "Recargar — volver a montar con la compilación actual",
+		"resource": "Recurso"
+	},
+	"popover": {
+		"configure": "Configurar",
+		"settingsAria": "Ajustes del iframe",
+		"title": "Ajustes del iframe",
+		"tooltip": "Ajustes del iframe — se aplican en vivo",
+		"description": "Actualización en vivo sin recargar el plugin; los valores predeterminados coinciden con la app principal.",
+		"sectionAppearance": "Apariencia",
+		"sectionIcons": "Iconos",
+		"sectionLanguage": "Idioma",
+		"sectionFont": "Fuente",
+		"sectionViewport": "Viewport",
+		"mode": "Modo",
+		"palette": "Paleta",
+		"style": "Estilo",
+		"uiLanguage": "Idioma de la interfaz",
+		"fontFamily": "Familia tipográfica",
+		"fontFamilyPlaceholder": "Predeterminado de la app (pila del sistema)",
+		"fontFamilyHint": "Déjalo vacío para la pila del sistema predeterminada de la app.",
+		"size": "Tamaño",
+		"viewportWidth": "Ancho del viewport",
+		"viewportHeight": "Alto del viewport",
+		"custom": "Personalizado",
+		"system": "Sistema"
+	},
+	"viewport": {
+		"fill": "Llenar",
+		"phone": "Teléfono",
+		"tablet": "Tableta",
+		"small": "Pequeño",
+		"wide": "Ancho"
+	},
+	"app": {
+		"loading": "Cargando…",
+		"failedTitle": "No se pudo iniciar el workbench",
+		"noResources": "Sin recursos",
+		"noResourcesHint": "pasa --data <dir> o --storage <hoardodile-root>"
+	}
+}

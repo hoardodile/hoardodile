@@ -1,0 +1,45 @@
+{
+	"toolbar": {
+		"plugin": "Plugin",
+		"reloadAria": "Plugin neu laden",
+		"reloadHint": "Neu laden — mit dem aktuellen Build neu einbinden",
+		"resource": "Ressource"
+	},
+	"popover": {
+		"configure": "Konfigurieren",
+		"settingsAria": "Iframe-Einstellungen",
+		"title": "Iframe-Einstellungen",
+		"tooltip": "Iframe-Einstellungen — live übernommen",
+		"description": "Live-Aktualisierung ohne Neuladen des Plugins; die Standardwerte entsprechen der Haupt-App.",
+		"sectionAppearance": "Erscheinungsbild",
+		"sectionIcons": "Symbole",
+		"sectionLanguage": "Sprache",
+		"sectionFont": "Schriftart",
+		"sectionViewport": "Ansichtsfenster",
+		"mode": "Modus",
+		"palette": "Palette",
+		"style": "Stil",
+		"uiLanguage": "UI-Sprache",
+		"fontFamily": "Schriftfamilie",
+		"fontFamilyPlaceholder": "App-Standard (System-Schriftstapel)",
+		"fontFamilyHint": "Leer lassen für den App-Standard-System-Schriftstapel.",
+		"size": "Größe",
+		"viewportWidth": "Ansichtsfensterbreite",
+		"viewportHeight": "Ansichtsfensterhöhe",
+		"custom": "Benutzerdefiniert",
+		"system": "System"
+	},
+	"viewport": {
+		"fill": "Ausfüllen",
+		"phone": "Telefon",
+		"tablet": "Tablet",
+		"small": "Klein",
+		"wide": "Breit"
+	},
+	"app": {
+		"loading": "Wird geladen…",
+		"failedTitle": "Workbench konnte nicht gestartet werden",
+		"noResources": "Keine Ressourcen",
+		"noResourcesHint": "--data <dir> oder --storage <hoardodile-root> übergeben"
+	}
+}

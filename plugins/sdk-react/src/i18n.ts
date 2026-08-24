@@ -69,12 +69,14 @@ export function createPluginTranslation(bundles: Record<string, RawBundle>): {
 		if (subscribed) return
 		subscribed = true
 		ensureHostBridge().subscribe("languageChanged", (data) => {
-			void instance.changeLanguage(
-				resolveLocale(
-					String((data as { language: string }).language),
-					availableLangs,
-				),
-			)
+			// The wire payload is a bare language-code string (predates the
+			// typed protocol table); accept the legacy object shape too so
+			// plugins compiled against either contract keep switching.
+			const language =
+				typeof data === "string"
+					? data
+					: String((data as { language?: string }).language ?? "")
+			void instance.changeLanguage(resolveLocale(language, availableLangs))
 		})
 	}
 

@@ -1,0 +1,45 @@
+{
+	"toolbar": {
+		"plugin": "插件",
+		"reloadAria": "重新加载插件",
+		"reloadHint": "重新加载——用当前构建重新挂载",
+		"resource": "资源"
+	},
+	"popover": {
+		"configure": "配置",
+		"settingsAria": "iframe 设置",
+		"title": "iframe 设置",
+		"tooltip": "iframe 设置——实时生效",
+		"description": "无需重载插件即可即时更新；默认值与主应用一致。",
+		"sectionAppearance": "外观",
+		"sectionIcons": "图标",
+		"sectionLanguage": "语言",
+		"sectionFont": "字体",
+		"sectionViewport": "视口",
+		"mode": "模式",
+		"palette": "调色板",
+		"style": "样式",
+		"uiLanguage": "界面语言",
+		"fontFamily": "字体系列",
+		"fontFamilyPlaceholder": "应用默认（系统字体栈）",
+		"fontFamilyHint": "留空则使用应用默认的系统字体栈。",
+		"size": "尺寸",
+		"viewportWidth": "视口宽度",
+		"viewportHeight": "视口高度",
+		"custom": "自定义",
+		"system": "系统"
+	},
+	"viewport": {
+		"fill": "填充",
+		"phone": "手机",
+		"tablet": "平板",
+		"small": "小",
+		"wide": "宽"
+	},
+	"app": {
+		"loading": "加载中…",
+		"failedTitle": "工作台启动失败",
+		"noResources": "没有资源",
+		"noResourcesHint": "传入 --data <dir> 或 --storage <hoardodile-root>"
+	}
+}

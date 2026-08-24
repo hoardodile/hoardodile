@@ -38,6 +38,12 @@ the plugin exactly as it ships):
 | Font family | Empty (app system stack) | the app's unset font pref |
 | Viewport | Fill (the app preview surface) | the preview dialog |
 
+The workbench chrome itself is localized in the same five official
+languages (en/zh/ja/de/es): the chosen language drives both the chrome
+and the `languageChanged` push to the mounted iframe. Shared option names
+(palette/icon style/language) come from the app catalogs; the workbench's
+own copy lives in the `workbench` namespace of `@hoardodile/i18n`.
+
 Theme, palette, icon style, language and font changes are pushed to the
 mounted iframe (theme/fonts/language pushes) without a reload — the same
 protocol the app's theme broadcast uses. A plugin built against a

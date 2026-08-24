@@ -13,6 +13,7 @@ export default defineConfig({
 		"src/react.ts",
 		"src/catalogs.ts",
 		"src/catalogs/ui.ts",
+		"src/catalogs/workbench.ts",
 	],
 	format: ["esm"],
 	dts: true,
