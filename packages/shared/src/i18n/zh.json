@@ -288,7 +288,7 @@
 		"about": {
 			"title": "关于",
 			"description": "你运行的是什么，以及它从何而来。",
-			"tagline": "隐私优先的自托管个人媒体与文档归档应用。",
+			"tagline": "面向自托管用户的现代数字囤积工具。",
 			"repository": "GitHub 仓库",
 			"website": "官网",
 			"bugTitle": "报告 Bug",

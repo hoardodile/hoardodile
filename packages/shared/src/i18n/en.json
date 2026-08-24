@@ -288,7 +288,7 @@
 		"about": {
 			"title": "About",
 			"description": "What you're running and where it comes from.",
-			"tagline": "Privacy-first, self-hosted archiving app for personal media and documents.",
+			"tagline": "A modern digital hoarding tool for self-hosted archivists.",
 			"repository": "GitHub repository",
 			"website": "Website",
 			"bugTitle": "Report a bug",

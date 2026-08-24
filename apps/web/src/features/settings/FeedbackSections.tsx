@@ -1,4 +1,5 @@
 import { buttonVariants } from "@hoardodile/ui/components/button"
+import { Icon } from "@hoardodile/ui/components/icon"
 import { Bug, Rocket } from "@hoardodile/ui/icons/registry"
 import { useTranslation } from "react-i18next"
 import { ExternalLink } from "@/components/common/ExternalLink"
@@ -24,6 +25,7 @@ export function BugReportSection() {
 				data-testid="me-feedback-bug"
 				className={buttonVariants({ variant: "secondary" })}
 			>
+				<Icon icon={Bug} />
 				{t("me.about.bugAction")}
 			</ExternalLink>
 		</SettingsSection>
@@ -45,6 +47,7 @@ export function FeatureRequestSection() {
 				data-testid="me-feedback-feature"
 				className={buttonVariants({ variant: "secondary" })}
 			>
+				<Icon icon={Rocket} />
 				{t("me.about.featureAction")}
 			</ExternalLink>
 		</SettingsSection>
