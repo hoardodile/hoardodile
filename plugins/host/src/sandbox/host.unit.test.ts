@@ -1,3 +1,5 @@
+import { tmpdir } from "node:os"
+import { join, resolve, sep } from "node:path"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import type { ResourceAPI } from "../types.ts"
 import {
@@ -302,7 +304,7 @@ describe("plugin sandbox lifecycle (fake child process)", () => {
 	})
 
 	test("spawn passes the asset vault dir as an extra read grant and argv", async () => {
-		const vaultDir = "C:\\vaults\\p"
+		const vaultDir = join(tmpdir(), "vaults", "p")
 		sandbox = createPluginSandbox(unitConfig({ assetVaultDir: vaultDir }))
 		const plugin = sandbox.loadPlugin({
 			id: "vault-grant",
@@ -317,9 +319,11 @@ describe("plugin sandbox lifecycle (fake child process)", () => {
 			{ execArgv: string[] },
 		]
 		expect(spawnArgs.at(2)).toBe(vaultDir)
-		expect(spawnOpts.execArgv.includes(`--allow-fs-read=${vaultDir}\\`)).toBe(
-			true,
-		)
+		// host.ts grants `${resolve(assetVaultDir)}${sep}` — the asserts
+		// mirror it so POSIX (sep "/") and Windows (sep "\\") both hold.
+		expect(
+			spawnOpts.execArgv.includes(`--allow-fs-read=${resolve(vaultDir)}${sep}`),
+		).toBe(true)
 		child.emit("message", { type: "loaded", ok: true, hooks: ["detect"] })
 		await expect(plugin).resolves.toBeDefined()
 	})

@@ -135,9 +135,28 @@ async function main() {
 			}
 			// The sandboxed capture is what makes the workbench faithful,
 			// so assert both halves: the hook verdict in the log, and the
-			// resource the page will actually open.
-			if (!devLog.includes("detect ok")) {
-				throw new Error(`dev detect did not pass:\n${devLog.slice(-2000)}`)
+			// resource the page will actually open. The capture finishes
+			// after the workbench comes up (first watch build + sandbox
+			// boot), so poll the log instead of checking it once.
+			const detectDone = new Promise((resolveDone) => {
+				const started = Date.now()
+				const poll = () => {
+					if (devLog.includes("detect ok")) {
+						resolveDone(true)
+						return
+					}
+					if (devExited !== null || Date.now() - started > 30_000) {
+						resolveDone(false)
+						return
+					}
+					setTimeout(poll, 500)
+				}
+				poll()
+			})
+			if (!(await detectDone)) {
+				throw new Error(
+					`dev detect did not pass${devExited !== null ? ` (dev exited ${devExited})` : ""}:\n${devLog.slice(-2000)}`,
+				)
 			}
 			const listed = await fetch(
 				"http://127.0.0.1:5199/api/workbench/resources",

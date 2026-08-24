@@ -1,7 +1,7 @@
 import { mkdtempSync } from "node:fs"
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises"
 import { tmpdir } from "node:os"
-import { join } from "node:path"
+import { join, resolve } from "node:path"
 import { afterEach, describe, expect, test } from "vitest"
 import {
 	commitVaultFile,
@@ -31,12 +31,15 @@ afterEach(async () => {
 })
 
 describe("parsePluginVaultDest (isolation)", () => {
-	const dir = "C:\\vaults\\p"
+	// Portability: the fixture dir must be a real absolute path on every
+	// OS — a hardcoded Windows drive path broke the POSIX runners.
+	const dir = join(tmpdir(), "vaults", "p")
 
 	test("accepts nested relative destinations", () => {
 		expect(parsePluginVaultDest(dir, "runtime/live2d.min.js")).toEqual({
 			rel: "runtime/live2d.min.js",
-			abs: join(dir, "runtime", "live2d.min.js"),
+			// assertInside returns `resolve(candidate)`.
+			abs: resolve(dir, "runtime", "live2d.min.js"),
 		})
 	})
 
