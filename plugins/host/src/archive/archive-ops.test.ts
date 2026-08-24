@@ -1,5 +1,5 @@
-﻿import { createWriteStream, existsSync, mkdtempSync, rmSync } from "node:fs"
-import { mkdir, readFile } from "node:fs/promises"
+import { createWriteStream, existsSync, mkdtempSync, rmSync } from "node:fs"
+import { mkdir, readFile, writeFile } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { Readable } from "node:stream"
@@ -8,7 +8,11 @@ import { deflateRawSync } from "node:zlib"
 import { afterEach, describe, expect, test, vi } from "vitest"
 import yazl from "yazl"
 import * as sevenZip from "./7z.ts"
-import { assertExtractedTree, extractArchiveInto } from "./extract.ts"
+import {
+	assertExtractedTree,
+	extractArchiveInto,
+	normalizeExtractedTree,
+} from "./extract.ts"
 import { listArchiveEntries, validateArchiveBudget } from "./listing.ts"
 import { streamStoredZip } from "./pack.ts"
 import {
@@ -568,5 +572,68 @@ describe("streamStoredZip", () => {
 		}
 		expect(await readEntryContent(out, "empty.bin")).toEqual(Buffer.alloc(0))
 		expect(await readEntryContent(out, "data.bin")).toEqual(Buffer.from("data"))
+	})
+})
+
+describe("normalizeExtractedTree", () => {
+	test("renames macOS %XX-escaped legacy names to the decoded listing name", async () => {
+		const root = tempRoot()
+		const dest = join(root, "out")
+		await mkdir(dest, { recursive: true })
+		// macOS stores 7-Zip's raw legacy byte 0x82 as the valid-UTF-8
+		// `%82` escape; the listing decoder still reports `café.jpg`.
+		await writeFile(join(dest, "caf%82.jpg"), "x")
+		await normalizeExtractedTree(dest, {
+			legacyZipNames: true,
+			expectedNames: ["café.jpg"],
+		})
+		expect(await readFile(join(dest, "caf\u00e9.jpg"), "utf8")).toBe("x")
+	})
+
+	test("leaves a literal %XX name the listing never decoded alone", async () => {
+		const root = tempRoot()
+		const dest = join(root, "out")
+		await mkdir(dest, { recursive: true })
+		// A file genuinely named `report%82.jpg`: the recovered name
+		// `reporté.jpg` must not be in the listing, so no rename fires.
+		await writeFile(join(dest, "report%82.jpg"), "x")
+		await normalizeExtractedTree(dest, {
+			legacyZipNames: true,
+			expectedNames: ["report%82.jpg"],
+		})
+		expect(await readFile(join(dest, "report%82.jpg"), "utf8")).toBe("x")
+	})
+
+	test("never clobbers an entry that already owns the decoded name", async () => {
+		const root = tempRoot()
+		const dest = join(root, "out")
+		await mkdir(dest, { recursive: true })
+		// The same archive carries both the escaped shape and the real
+		// decoded entry — the real one wins and the escaped one stays.
+		await writeFile(join(dest, "caf%82.jpg"), "escaped")
+		await writeFile(join(dest, "caf\u00e9.jpg"), "real")
+		await normalizeExtractedTree(dest, {
+			legacyZipNames: true,
+			expectedNames: ["café.jpg"],
+		})
+		expect(await readFile(join(dest, "caf\u00e9.jpg"), "utf8")).toBe("real")
+		expect(await readFile(join(dest, "caf%82.jpg"), "utf8")).toBe("escaped")
+	})
+
+	test("renames %XX-escaped names under nested directories", async () => {
+		const root = tempRoot()
+		const dest = join(root, "out")
+		await mkdir(join(dest, "caf%82dir"), { recursive: true })
+		await writeFile(join(dest, "caf%82dir", "note%82.txt"), "x")
+		// A real `-slt` listing reports the folder entry as well (with a
+		// trailing slash), so the expected set carries both paths.
+		await normalizeExtractedTree(dest, {
+			legacyZipNames: true,
+			expectedNames: ["cafédir/", "cafédir/noteé.txt"],
+		})
+		expect(
+			await readFile(join(dest, "caf\u00e9dir", "note\u00e9.txt"), "utf8"),
+		).toBe("x")
+		expect(existsSync(join(dest, "caf%82dir"))).toBe(false)
 	})
 })

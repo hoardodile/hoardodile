@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto"
-import { createWriteStream } from "node:fs"
+import { createWriteStream, existsSync } from "node:fs"
 import {
 	chmod,
 	lstat,
@@ -215,8 +215,13 @@ async function extractViaSevenZip(
 		await extractSevenZipInto(tempPath, root)
 		// 7-Zip writes legacy zip names verbatim on POSIX and restores
 		// entries' mode bits, which can strip the app's own access; fix
-		// both up before the tree is re-walked or probed below.
-		await normalizeExtractedTree(root, { legacyZipNames: format === "zip" })
+		// both up before the tree is re-walked or probed below. The
+		// listing's decoded names are the ground truth the legacy-rename
+		// pass matches against (see `renameLegacyZipNames`).
+		await normalizeExtractedTree(root, {
+			legacyZipNames: format === "zip",
+			expectedNames: entries.map((e) => e.name),
+		})
 		// Post-hoc bomb re-check: the listing sizes are advisory; count
 		// what actually landed (and refuse symlinks — 7-Zip creates them
 		// from zip/tar entries carrying unix link modes).
@@ -281,34 +286,61 @@ export async function assertExtractedTree(
  * tree is re-walked by {@link assertExtractedTree} or probed for the
  * manifest. For zip archives, entries whose on-disk names are not valid
  * UTF-8 are renamed to their cp437-decoded form (7-Zip writes the raw
- * bytes verbatim on POSIX); every entry gets owner permissions OR'd in
- * so the app can always read, serve and clean up what it extracted
- * (zip/tar entries can carry mode bits that strip owner access). Never
- * follows symlinks — refusal stays with {@link assertExtractedTree}.
- * Windows is unaffected: names are already decoded and mode bits are
- * ignored there.
+ * bytes verbatim on POSIX, and macOS stores those bytes `%XX`-escaped —
+ * see {@link renameLegacyZipNames} for both shapes); every entry gets
+ * owner permissions OR'd in so the app can always read, serve and clean
+ * up what it extracted (zip/tar entries can carry mode bits that strip
+ * owner access). Never follows symlinks — refusal stays with
+ * {@link assertExtractedTree}. Windows is unaffected: names are already
+ * decoded and mode bits are ignored there.
  */
 export async function normalizeExtractedTree(
 	root: string,
-	opts: { readonly legacyZipNames: boolean },
+	opts: {
+		readonly legacyZipNames: boolean
+		/**
+		 * Decoded listing names (forward-slash, relative) of the archive
+		 * being extracted. The disambiguator for the macOS `%XX`-escaped
+		 * name shape: an escaped name is valid UTF-8, so validity alone
+		 * cannot tell `caf%82.jpg` (a legacy cp437 `café.jpg` after
+		 * macOS escaping) apart from a file literally named
+		 * `report%82.jpg` — only the listing's decoded name settles it.
+		 */
+		readonly expectedNames?: readonly string[]
+	},
 ): Promise<void> {
 	if (opts.legacyZipNames) {
-		await renameLegacyZipNames(Buffer.from(root), root)
+		const expected = opts.expectedNames
+			? new Set(opts.expectedNames.map((n) => n.replace(/\/+$/, "")))
+			: undefined
+		await renameLegacyZipNames(Buffer.from(root), root, root, expected)
 	}
 	await makeReadable(root)
 }
 
 /**
- * Rename every entry bottom-up whose raw name bytes are not valid UTF-8
- * to their cp437-decoded form. 7-Zip on POSIX writes legacy zip names
- * verbatim, so the decoded name is what the rest of the pipeline
- * (listing, manifest, browser paths) expects. Children are renamed
- * before their parents so a raw-named directory never orphans the
- * descendant paths it holds.
+ * Rename every entry whose name does not match its decoded listing
+ * form. Legacy zip names can land on disk in two shapes:
+ *
+ *  - raw bytes, when the archive name is not valid UTF-8 (7-Zip's POSIX
+ *    and Windows builds pass/write them verbatim);
+ *  - `%XX`-escaped bytes, when macOS's UTF-8 filesystem layer stores the
+ *    raw names from the first shape (`XNU`'s `vfs_utfconv.c` converts an
+ *    illegal byte to `%` + two hex digits while normalizing), so the name
+ *    becomes valid UTF-8 on disk.
+ *
+ * Both are renamed to the cp437-decoded name the listing reported.
+ * Directories move before their descendants (children are then renamed
+ * under the decoded prefix — never into a missing parent), a rename
+ * never clobbers an existing entry, and the `%XX` shape only wins when
+ * the recovered name matches a decoded listing path at the same position
+ * — a file genuinely named `report%82.jpg` therefore stays untouched.
  */
 async function renameLegacyZipNames(
 	rawRoot: Buffer,
 	decodedRoot: string,
+	root: string,
+	expected: ReadonlySet<string> | undefined,
 ): Promise<void> {
 	const entries = await readdir(rawRoot, {
 		withFileTypes: true,
@@ -317,13 +349,90 @@ async function renameLegacyZipNames(
 	for (const entry of entries) {
 		const childRaw = Buffer.concat([rawRoot, Buffer.from(sep), entry.name])
 		const decoded = decodeLegacyZipName(entry.name)
+		const target = legacyRenameTarget(
+			entry.name,
+			decoded,
+			decodedRoot,
+			root,
+			expected,
+		)
 		if (entry.isDirectory()) {
-			await renameLegacyZipNames(childRaw, `${decodedRoot}/${decoded}`)
+			if (target !== undefined && !existsSync(target)) {
+				await rename(childRaw, target)
+			}
+			// Recurse into wherever the directory now lives so the
+			// descendants' renames land under the decoded prefix.
+			await renameLegacyZipNames(
+				Buffer.from(target ?? childRaw),
+				target ?? `${decodedRoot}/${decoded}`,
+				root,
+				expected,
+			)
+			continue
 		}
-		if (decoded !== entry.name.toString("utf8")) {
-			await rename(childRaw, `${decodedRoot}/${decoded}`)
-		}
+		if (target === undefined || existsSync(target)) continue
+		await rename(childRaw, target)
 	}
+}
+
+/**
+ * The decoded path an extracted entry should be renamed to, or
+ * `undefined` when the on-disk name already satisfies the decoded
+ * convention (or cannot be decided safely).
+ */
+function legacyRenameTarget(
+	rawName: Buffer,
+	decoded: string,
+	decodedRoot: string,
+	root: string,
+	expected: ReadonlySet<string> | undefined,
+): string | undefined {
+	const utf8Name = rawName.toString("utf8")
+	if (decoded !== utf8Name) {
+		// Raw bytes are not valid UTF-8: 7-Zip wrote the legacy name
+		// verbatim and the fs layer stored it byte-for-byte (Linux,
+		// Windows). Decode as cp437, matching the listing.
+		return `${decodedRoot}/${decoded}`
+	}
+	// The name IS valid UTF-8 — but macOS may have escaped raw legacy
+	// bytes into `%XX` (see the function doc). Recover the original
+	// bytes and re-decode; only the listing's blessing keeps a literal
+	// `report%82.jpg` from being renamed to `reporté.jpg`.
+	const raw = unescapePercentEscapes(rawName)
+	if (raw === undefined) return undefined
+	const recovered = decodeLegacyZipName(raw)
+	if (recovered === utf8Name || expected === undefined) return undefined
+	const rel =
+		decodedRoot === root
+			? recovered
+			: `${decodedRoot.slice(root.length + 1)}/${recovered}`
+	return expected.has(rel) ? `${decodedRoot}/${recovered}` : undefined
+}
+
+/**
+ * Expand the `%XX` sequences a macOS UTF-8 filesystem writes for illegal
+ * filename bytes back to their original byte values. Returns `undefined`
+ * when the name contains no `%XX` sequence (nothing to recover). Only
+ * sequences whose bytes are illegal as UTF-8 matter to the caller —
+ * legitimate `%XX` substrings simply survive as decoded characters and
+ * fail the listing match.
+ */
+function unescapePercentEscapes(name: Buffer): Buffer | undefined {
+	const text = name.toString("latin1")
+	if (!text.includes("%")) return undefined
+	const out: number[] = []
+	let changed = false
+	for (let i = 0; i < text.length; i++) {
+		const hex = i + 2 < text.length ? text.slice(i + 1, i + 3) : undefined
+		if (text[i] === "%" && hex !== undefined && /^[0-9a-fA-F]{2}$/.test(hex)) {
+			out.push(Number.parseInt(hex, 16))
+			changed = true
+			i += 2
+			continue
+		}
+		out.push(text.charCodeAt(i))
+	}
+	return changed ? Buffer.from(out) : undefined
 }
 
 /**
