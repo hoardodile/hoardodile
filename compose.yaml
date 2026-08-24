@@ -1,0 +1,22 @@
+services:
+  # The image CMD sources /app/channels.env (written at build time by
+  # scripts/stage-runtime.mjs) so BUILTIN_PATH / SEED_PLUGIN_PATHS always
+  # match the bundled plugins inside the image.
+  hoardodile:
+    build: .
+    image: hoardodile:latest
+    ports:
+      - "${HOARDODILE_PORT:-3000}:3000"
+    volumes:
+      # Persistent library storage. `docker compose down -v` DELETES it;
+      # bind-mount `./data:/data` instead if you prefer an inspectable dir.
+      - hoardodile-data:/data
+    environment:
+      # Plain HTTP front: the browser gets a session cookie over http, so
+      # the secure flag must stay off. Behind a TLS-terminating reverse
+      # proxy set FORCE_HTTPS=true and remove this line.
+      SESSION_SECURE_COOKIE: "false"
+    restart: unless-stopped
+
+volumes:
+  hoardodile-data:

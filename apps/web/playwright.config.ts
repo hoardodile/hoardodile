@@ -11,6 +11,14 @@ const devPorts: { spa: number } = JSON.parse(
 const webPort = Number(process.env.WEB_PORT ?? devPorts.spa)
 const serverPort = Number(process.env.SERVER_PORT ?? 3001)
 const serverHost = "127.0.0.1"
+// External-server mode: point the whole suite (claim.setup included) at an
+// already-running instance — used to verify the Docker image on release
+// tags. No local server is booted and the external storage is never wiped.
+const externalBaseUrl = process.env.E2E_EXTERNAL_BASE_URL
+const baseUrl = externalBaseUrl ?? `http://127.0.0.1:${webPort}`
+if (externalBaseUrl !== undefined) {
+	process.env.E2E_SERVER_PORT = new URL(externalBaseUrl).port || "80"
+}
 // Ephemeral file per test run; wiped before the server boots so the web
 // setup flow starts from an unconfigured server.
 const dbPath = resolve(import.meta.dirname, ".playwright", "app-e2e.sqlite3")
@@ -46,6 +54,7 @@ process.env.E2E_WEB_PORT = String(webPort)
 // we only want to wipe the storage once, before webServer boots. The first
 // test that reaches the login page claims the instance via the web setup.
 function prepareStorage() {
+	if (externalBaseUrl !== undefined) return
 	if (process.env.E2E_STORAGE_PREPARED === "1") return
 	rmSync(dbPath, { force: true })
 	rmSync(`${dbPath}-wal`, { force: true })
@@ -66,7 +75,7 @@ export default defineConfig({
 	workers: 1,
 	reporter: process.env.CI ? [["list"], ["html"]] : [["list"]],
 	use: {
-		baseURL: `http://127.0.0.1:${webPort}`,
+		baseURL: baseUrl,
 		trace: "retain-on-failure",
 		screenshot: "only-on-failure",
 	},
@@ -81,39 +90,45 @@ export default defineConfig({
 			use: { ...devices["Desktop Chrome"] },
 		},
 	],
-	webServer: [
-		{
-			command: `pnpm -F @hoardodile/server exec vite-node src/main.ts`,
-			cwd: repoRoot,
-			url: `http://${serverHost}:${serverPort}/health`,
-			reuseExistingServer: false,
-			timeout: 60_000,
-			stdout: "pipe",
-			stderr: "pipe",
-			env: {
-				NODE_ENV: "development",
-				HOST: serverHost,
-				PORT: String(serverPort),
-				LOG_LEVEL: "warn",
-				DATABASE_URL: dbPath,
-				SESSION_COOKIE_NAME: "app_session_e2e",
-				SESSION_SECURE_COOKIE: "false",
-				STORAGE_ROOT: storageRoot,
-				RESTART_ON_RESTORE: "false",
-				DEV_PLUGIN_PATHS: devPluginDirs.join(","),
-			},
-		},
-		{
-			command: `pnpm -F @hoardodile/web exec vite --host 127.0.0.1 --port ${webPort} --strictPort`,
-			cwd: repoRoot,
-			url: `http://127.0.0.1:${webPort}`,
-			reuseExistingServer: false,
-			timeout: 60_000,
-			stdout: "pipe",
-			stderr: "pipe",
-			env: {
-				VITE_SERVER_URL: `http://${serverHost}:${serverPort}`,
-			},
-		},
-	],
+	// External-server mode (E2E_EXTERNAL_BASE_URL): the instance is
+	// already running (Docker image verification) — no webServer entries.
+	...(externalBaseUrl === undefined
+		? {
+				webServer: [
+					{
+						command: `pnpm -F @hoardodile/server exec vite-node src/main.ts`,
+						cwd: repoRoot,
+						url: `http://${serverHost}:${serverPort}/health`,
+						reuseExistingServer: false,
+						timeout: 60_000,
+						stdout: "pipe",
+						stderr: "pipe",
+						env: {
+							NODE_ENV: "development",
+							HOST: serverHost,
+							PORT: String(serverPort),
+							LOG_LEVEL: "warn",
+							DATABASE_URL: dbPath,
+							SESSION_COOKIE_NAME: "app_session_e2e",
+							SESSION_SECURE_COOKIE: "false",
+							STORAGE_ROOT: storageRoot,
+							RESTART_ON_RESTORE: "false",
+							DEV_PLUGIN_PATHS: devPluginDirs.join(","),
+						},
+					},
+					{
+						command: `pnpm -F @hoardodile/web exec vite --host 127.0.0.1 --port ${webPort} --strictPort`,
+						cwd: repoRoot,
+						url: `http://127.0.0.1:${webPort}`,
+						reuseExistingServer: false,
+						timeout: 60_000,
+						stdout: "pipe",
+						stderr: "pipe",
+						env: {
+							VITE_SERVER_URL: `http://${serverHost}:${serverPort}`,
+						},
+					},
+				],
+			}
+		: {}),
 })

@@ -1,0 +1,18 @@
+# Keep the Docker build context lean and deterministic: everything needed
+# is regenerated inside the image (pnpm install + turbo build + staging).
+node_modules
+**/node_modules
+**/dist
+.git
+.turbo
+# CI cache dirs (actions/cache restores them into the workspace)
+.cache
+tmp
+temp
+apps/desktop
+apps/web/e2e
+apps/web/playwright-report
+apps/web/test-results
+.env
+.env.*
+*.log
