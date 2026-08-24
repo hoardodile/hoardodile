@@ -8,8 +8,7 @@ import {
 	APP_WEBSITE_URL,
 } from "@/lib/appInfo"
 import { AboutSection } from "./AboutSection"
-import { DeveloperSection } from "./DeveloperSection"
-import { FeedbackSection } from "./FeedbackSection"
+import { BugReportSection, FeatureRequestSection } from "./FeedbackSections"
 
 const openSpy = vi.spyOn(window, "open").mockImplementation(() => null)
 const openExternalMock = vi.fn()
@@ -32,21 +31,21 @@ function renderAboutSections() {
 	return render(
 		<>
 			<AboutSection />
-			<FeedbackSection />
-			<DeveloperSection />
+			<BugReportSection />
+			<FeatureRequestSection />
 		</>,
 	)
 }
 
 describe("Settings → About", () => {
-	test("renders identity, feedback and developer blocks with the expected links", () => {
+	test("renders the About block and one section per feedback destination", () => {
 		bridgeMock.mockReturnValue(undefined)
 		renderAboutSections()
 
 		expect(screen.getByTestId("me-section-about")).toBeInTheDocument()
-		expect(screen.getByTestId("me-section-feedback")).toBeInTheDocument()
-		expect(screen.getByTestId("me-section-developer")).toBeInTheDocument()
-		// Identity: logo, update check, website and repository rows.
+		expect(screen.getByTestId("me-section-bug")).toBeInTheDocument()
+		expect(screen.getByTestId("me-section-feature")).toBeInTheDocument()
+		// Identity: logo, update check, website / repository / developer rows.
 		expect(document.querySelector('img[src="/logo.png"]')).not.toBeNull()
 		expect(screen.getByTestId("me-about-check-update")).toBeInTheDocument()
 		expect(screen.getByTestId("me-about-website").getAttribute("href")).toBe(
@@ -55,17 +54,16 @@ describe("Settings → About", () => {
 		expect(screen.getByTestId("me-about-repository").getAttribute("href")).toBe(
 			APP_REPOSITORY_URL,
 		)
-		// Feedback: one card per issue template.
+		expect(screen.getByTestId("me-about-developer").getAttribute("href")).toBe(
+			APP_DEVELOPER_URL,
+		)
+		// Feedback: one action per issue template.
 		expect(screen.getByTestId("me-feedback-bug").getAttribute("href")).toBe(
 			APP_ISSUES_BUG_URL,
 		)
 		expect(screen.getByTestId("me-feedback-feature").getAttribute("href")).toBe(
 			APP_ISSUES_FEATURE_URL,
 		)
-		// Developer: profile link.
-		expect(
-			screen.getByTestId("me-developer-profile").getAttribute("href"),
-		).toBe(APP_DEVELOPER_URL)
 	})
 
 	test("a browser click opens each link in a new tab", () => {
@@ -92,7 +90,7 @@ describe("Settings → About", () => {
 			"_blank",
 			"noopener,noreferrer",
 		)
-		fireEvent.click(screen.getByTestId("me-developer-profile"))
+		fireEvent.click(screen.getByTestId("me-about-developer"))
 		expect(openSpy).toHaveBeenCalledWith(
 			APP_DEVELOPER_URL,
 			"_blank",
@@ -105,15 +103,15 @@ describe("Settings → About", () => {
 		bridgeMock.mockReturnValue({ openExternal: openExternalMock })
 		render(
 			<>
-				<FeedbackSection />
-				<DeveloperSection />
+				<BugReportSection />
+				<FeatureRequestSection />
 			</>,
 		)
 
 		fireEvent.click(screen.getByTestId("me-feedback-bug"))
-		fireEvent.click(screen.getByTestId("me-developer-profile"))
+		fireEvent.click(screen.getByTestId("me-feedback-feature"))
 		expect(openExternalMock).toHaveBeenNthCalledWith(1, APP_ISSUES_BUG_URL)
-		expect(openExternalMock).toHaveBeenNthCalledWith(2, APP_DEVELOPER_URL)
+		expect(openExternalMock).toHaveBeenNthCalledWith(2, APP_ISSUES_FEATURE_URL)
 		expect(openSpy).not.toHaveBeenCalled()
 	})
 })

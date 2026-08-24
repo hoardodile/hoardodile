@@ -6,8 +6,10 @@ import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { AboutSection } from "@/features/settings/AboutSection"
 import { ConnectionsSection } from "@/features/settings/ConnectionsSection"
-import { DeveloperSection } from "@/features/settings/DeveloperSection"
-import { FeedbackSection } from "@/features/settings/FeedbackSection"
+import {
+	BugReportSection,
+	FeatureRequestSection,
+} from "@/features/settings/FeedbackSections"
 import { LicensesDialog } from "@/features/settings/LicensesDialog"
 import { SettingsSection } from "@/features/settings/SettingsSection"
 import {
@@ -33,9 +35,9 @@ function AboutSettingsRoute() {
 		<SettingsSheet>
 			<AboutSection />
 			<SectionDivider />
-			<FeedbackSection />
+			<BugReportSection />
 			<SectionDivider />
-			<DeveloperSection />
+			<FeatureRequestSection />
 			<SectionDivider />
 			<SettingsSection
 				icon={Scale}

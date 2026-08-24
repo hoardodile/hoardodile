@@ -10,13 +10,20 @@ import {
 	InfoCircle,
 	Link,
 	RefreshCircle,
+	User,
 } from "@hoardodile/ui/icons/registry"
 import { cn } from "@hoardodile/ui/lib/utils"
 import type { ReactNode } from "react"
 import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { ExternalLink } from "@/components/common/ExternalLink"
-import { APP_REPOSITORY_URL, APP_VERSION, APP_WEBSITE_URL } from "@/lib/appInfo"
+import {
+	APP_DEVELOPER_NAME,
+	APP_DEVELOPER_URL,
+	APP_REPOSITORY_URL,
+	APP_VERSION,
+	APP_WEBSITE_URL,
+} from "@/lib/appInfo"
 import { getDesktopBridge } from "@/lib/desktop"
 import { checkForUpdate, type UpdateCheckResult } from "./checkUpdates"
 import { SettingsSection } from "./SettingsSection"
@@ -249,6 +256,17 @@ function AboutFrame(props: {
 								{t("me.about.repository")}
 								<span className="text-muted-foreground">
 									· {shortUrl(APP_REPOSITORY_URL)}
+								</span>
+							</ExternalLink>
+							<ExternalLink
+								href={APP_DEVELOPER_URL}
+								data-testid="me-about-developer"
+								className="inline-flex items-center gap-1.5 text-xs text-secondary-foreground hover:text-foreground"
+							>
+								<Icon icon={User} />
+								{t("me.about.developerTitle")}
+								<span className="text-muted-foreground">
+									· {APP_DEVELOPER_NAME}
 								</span>
 							</ExternalLink>
 						</div>
