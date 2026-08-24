@@ -17,6 +17,10 @@ concurrency:
 jobs:
   check:
     strategy:
+      # One failing platform leg must not cancel the rest — each runner
+      # finishes and reports its own result (same as the desktop/release
+      # matrices); the workflow only fails once every leg has spoken.
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-14]
     runs-on: ${{ matrix.os }}
@@ -56,10 +60,12 @@ jobs:
         # 0xC0000142 — re-run once via the follow-up step below; a real
         # failure fails again there instead of being masked.
         continue-on-error: true
-        run: pnpm exec turbo run test --concurrency=2
+        # --continue: one failing package must not stop the remaining
+        # packages' tests from running and reporting.
+        run: pnpm exec turbo run test --concurrency=2 --continue
       - name: Test (retry)
         if: steps.test.outcome == 'failure'
-        run: pnpm exec turbo run test --concurrency=2
+        run: pnpm exec turbo run test --concurrency=2 --continue
       # Published SDK d.ts must not reference node (browser-facing entries).
       - name: Guard node pollution in SDK d.ts
         run: node scripts/guard-node-pollution.mjs
