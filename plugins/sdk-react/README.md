@@ -59,9 +59,3 @@ The imperative API surface (`WebPluginAPI`) and the wire protocol live in
 `@hoardodile/sdk-web`; this package composes them into the reactive API
 React components see. Shared message/danmaku/anchor types come from
 `@hoardodile/sdk-types`.
-
-## Docs
-
-- [Plugin development](https://docs.hoardodile.com/plugin-development/) —
-  hooks, anchor jumps, position persistence
-- [Plugins overview](https://docs.hoardodile.com/plugins/)

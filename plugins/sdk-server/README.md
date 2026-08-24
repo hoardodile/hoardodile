@@ -65,10 +65,3 @@ MIT. The plugin contract, the SDK packages and the plugin code you write
 are all permissive — a plugin built with this SDK is an independent
 work and can be released under any license (MIT, GPL, proprietary, or
 none at all).
-
-## Docs
-
-- [Plugin development](https://docs.hoardodile.com/plugin-development/) —
-  anatomy, hooks, the dev loop
-- [Plugins overview](https://docs.hoardodile.com/plugins/)
-- [Getting started](https://docs.hoardodile.com/getting-started/)

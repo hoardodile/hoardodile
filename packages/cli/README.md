@@ -35,8 +35,3 @@ pnpm add -D @hoardodile/cli
 
 MIT. Terminal dev tooling — not part of the SDK closure and never
 imported by plugin code.
-
-## Docs
-
-- [Plugin development](https://docs.hoardodile.com/plugin-development/)
-- [Plugins overview](https://docs.hoardodile.com/plugins/)

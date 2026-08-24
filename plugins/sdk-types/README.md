@@ -57,9 +57,3 @@ message/danmaku shapes; `@hoardodile/sdk-web` re-exports the wire types
 its consumers need — you rarely import this package directly in plugin
 code. Reach for `/schema` only when you need a runtime validator (app
 code, tooling).
-
-## Docs
-
-- [Plugin development](https://docs.hoardodile.com/plugin-development/) —
-  the manifest contract and the anchor schema
-- [Plugins overview](https://docs.hoardodile.com/plugins/)

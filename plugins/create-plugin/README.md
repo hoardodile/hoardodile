@@ -31,9 +31,4 @@ pnpm test     # unit tests against the fixture API
 pnpm build    # dist/ — zip its contents (manifest at the zip root) and upload
 ```
 
-## Docs
-
-- [Plugin development](https://docs.hoardodile.com/plugin-development/)
-- [Getting started](https://docs.hoardodile.com/getting-started/)
-
 MIT License.

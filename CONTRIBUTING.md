@@ -50,5 +50,3 @@ Common commands:
 ## License
 
 By contributing, you agree that your contributions are licensed under the [GPL-3.0](LICENSE).
-
-The project documentation and support: <https://docs.hoardodile.com>

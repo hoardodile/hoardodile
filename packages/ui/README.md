@@ -68,7 +68,3 @@ export function Picker({ open, onClose }) {
 and plugin iframes consume. The plugin iframe applies the host theme via
 `applyTheme` from `@hoardodile/sdk-web` — palette classes like
 `theme-parchment` are defined here.
-
-## Docs
-
-- [Plugin development](https://docs.hoardodile.com/plugin-development/)

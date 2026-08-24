@@ -106,9 +106,3 @@ GET /api/resources/:id/frame/:token/:name/:ms  video seek frame
 The routing lives in one module (`scripts/mounts.mjs`) shared by the
 vite dev server and the published standalone server, so a route can
 never exist in only one of them.
-
-## Docs
-
-- [Plugin development](https://docs.hoardodile.com/plugin-development/) —
-  the dev loop
-- [Getting started](https://docs.hoardodile.com/getting-started/)

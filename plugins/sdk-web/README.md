@@ -45,8 +45,3 @@ The wire protocol is the contract, defined once in `@hoardodile/sdk-types`
 and re-exported here for a single import root. The browser-side *host*
 runtime (`@hoardodile/host-web`) consumes this protocol — it never
 redefines it.
-
-## Docs
-
-- [Plugin development](https://docs.hoardodile.com/plugin-development/)
-- [Plugins overview](https://docs.hoardodile.com/plugins/)

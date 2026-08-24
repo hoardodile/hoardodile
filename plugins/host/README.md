@@ -71,8 +71,3 @@ regression and warns on cross-machine baselines.
 MIT. This package is the terminal runtime (consumed by the GPL-3.0 app
 server and by plugin dev tooling); it is not part of the SDK closure and
 plugin code never links it.
-
-## Docs
-
-- [Plugin development](https://docs.hoardodile.com/plugin-development/)
-- [Plugins overview](https://docs.hoardodile.com/plugins/)

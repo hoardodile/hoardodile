@@ -29,7 +29,3 @@ pnpm add @hoardodile/host-web
 | ----- | -------- |
 | `@hoardodile/host-web` | Browser-safe router + mock (no node imports) |
 | `@hoardodile/host-web/node` | Node file backends (directory-backed mock storage) |
-
-## Docs
-
-- [Plugin development](https://docs.hoardodile.com/plugin-development/)
