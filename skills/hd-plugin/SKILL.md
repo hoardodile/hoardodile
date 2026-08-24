@@ -1,7 +1,7 @@
 ---
 name: hd-plugin
 description: Author hoardodile content plugins — manifest, server hooks, iframe client, and the plugin toolchain. Use when building, extending, or debugging a hoardodile plugin, adding a new resource format, or wiring detect/sourceMeta/searchMeta/coverLocal/listFiles/imageHashes.
-license: GPL-3.0
+license: MIT
 metadata:
   author: hoardodile
   version: "1.0.0"
@@ -67,7 +67,11 @@ lives in `references/`.
    baselines (`bench-detect.json`).
 7. **Publish.** Zip `dist/` with `manifest.json` at the zip root and
    upload in **Settings → Plugins**; the app validates, installs, and
-   rescans.
+   rescans. To ship a plugin with the app itself, keep it under
+   `plugins/<slug>/` — the desktop build list and the runtime seed
+   discovery are both directory-driven
+   (`scripts/lib/plugin-channels.mjs`), so building the dist is all it
+   takes to bundle and seed it.
 
 ## SDK Closure
 

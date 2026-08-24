@@ -1,7 +1,7 @@
 ---
 name: hd-plugin-design
 description: The hoardodile plugin design system — how a plugin iframe follows the host's theme, palettes, typography, icons and motion via @hoardodile/ui. Use when building or reshaping any hoardodile plugin UI, choosing tokens instead of raw values, or checking a plugin against the design contract.
-license: GPL-3.0
+license: MIT
 metadata:
   author: hoardodile
   version: "1.0.0"
