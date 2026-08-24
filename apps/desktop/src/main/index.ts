@@ -1,4 +1,4 @@
-import { existsSync } from "node:fs"
+import { existsSync, readFileSync } from "node:fs"
 import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
 import type { SupportedLanguage } from "@hoardodile/i18n"
@@ -43,6 +43,9 @@ import {
 	type SidecarLayout,
 	workspaceLayout,
 } from "./paths.ts"
+import { resourceUpdateSupport } from "./resource-support.ts"
+import { startResourceChannel } from "./resource-updater.ts"
+import { recoverAtBoot } from "./resources-swap.ts"
 import {
 	clearShellCache,
 	getShellCacheSize,
@@ -61,7 +64,11 @@ import {
 	trayIconPath,
 	windowIconPath,
 } from "./tray.ts"
-import { startUpdater, type UpdaterHandle } from "./updater.ts"
+import {
+	startUpdateManager,
+	type UpdateManagerHandle,
+} from "./update-manager.ts"
+import { startFullUpdater } from "./updater.ts"
 import { isHttpReachable } from "./urls.ts"
 import {
 	createDesktopWindow,
@@ -83,7 +90,7 @@ type Runtime = {
 	window: BrowserWindow | undefined
 	wizard: BrowserWindow | undefined
 	tray: Tray | undefined
-	updater: UpdaterHandle | undefined
+	updater: UpdateManagerHandle | undefined
 	crashed: boolean
 	updateReady: boolean
 	quitting: boolean
@@ -152,6 +159,8 @@ function broadcastUpdate(runtime: Runtime, state: DesktopUpdateState): void {
 			{
 				crashed: runtime.crashed,
 				updateReady: runtime.updateReady,
+				updateReadyResources:
+					state.status === "ready" && state.channel === "resources",
 				lanUrl: lanTrayUrl(runtime),
 			},
 			trayStrings(runtime.language),
@@ -252,6 +261,33 @@ function updaterCacheDir(): string {
 function updaterCacheClearable(runtime: Runtime): boolean {
 	const state = runtime.updater?.status() ?? { status: "idle" }
 	return state.status !== "downloading" && state.status !== "ready"
+}
+
+/**
+ * The resources-version marker every installer and resource pack ships
+ * at `resources/resources-version.json`: which payload tree is on disk
+ * RIGHT NOW. Once the sidecar is up we cannot tell from the code, so
+ * this is the reconciliation source of truth at boot.
+ */
+function readResourcesMarker(
+	resourcesRoot: string,
+): { version: string } | undefined {
+	try {
+		const raw: unknown = JSON.parse(
+			readFileSync(join(resourcesRoot, "resources-version.json"), "utf8"),
+		)
+		if (
+			typeof raw === "object" &&
+			raw !== null &&
+			!Array.isArray(raw) &&
+			typeof (raw as Record<string, unknown>).version === "string"
+		) {
+			return { version: (raw as { version: string }).version }
+		}
+	} catch {
+		// no marker (pre-resource-channel installs): leave reconciliation alone
+	}
+	return undefined
 }
 
 /**
@@ -597,6 +633,7 @@ function trayStrings(language: SupportedLanguage | undefined) {
 		copyLanAddress: catalog.desktopShell.tray.copyLanAddress,
 		restartServer: catalog.desktopShell.tray.restartServer,
 		updateReady: catalog.desktopShell.tray.updateReady,
+		updateReadyResources: catalog.desktopShell.tray.updateReadyResources,
 		quit: catalog.desktopShell.tray.quit,
 		tooltipServerStopped: catalog.desktopShell.tray.tooltipServerStopped,
 		tooltipUpdateReady: catalog.desktopShell.tray.tooltipUpdateReady,
@@ -846,7 +883,8 @@ async function boot(): Promise<void> {
 		},
 		defaultLibraryPath: () => runtime.defaultLibraryPath,
 		updateStatus: () => runtime.updater?.status() ?? { status: "idle" },
-		checkUpdates: () => runtime.updater?.check() ?? Promise.resolve(),
+		checkUpdates: () => runtime.updater?.check(true) ?? Promise.resolve(),
+		applyUpdate: () => runtime.updater?.apply() ?? Promise.resolve(),
 		async quitAndInstall() {
 			runtime.quitting = true
 			await runtime.sidecar?.stop()
@@ -879,6 +917,25 @@ async function boot(): Promise<void> {
 
 	applyLoginItem(runtime.config)
 
+	// Resource-swap crash recovery + shipped-tree reconciliation. Must
+	// run before the sidecar spawns: recoverAtBoot may re-roll the tree.
+	if (app.isPackaged) {
+		const recovered = recoverAtBoot(process.resourcesPath)
+		if (recovered !== "none") {
+			console.log(`[desktop] resource swap recovered at boot: ${recovered}`)
+		}
+		const marker = readResourcesMarker(process.resourcesPath)
+		if (
+			marker !== undefined &&
+			marker.version !== runtime.config.resourceVersion
+		) {
+			// A full installer replaced the tree (or a rollback restored an
+			// older one): the marker wins.
+			runtime.config = { ...runtime.config, resourceVersion: marker.version }
+			persist(runtime)
+		}
+	}
+
 	try {
 		runtime.sidecar = await spawnSidecar(runtime)
 	} catch (err) {
@@ -895,11 +952,18 @@ async function boot(): Promise<void> {
 		runtime.crashed = true
 	}
 
-	// Test-only hook for the Playwright e2e suite (apps/desktop/e2e):
+	// Test-only hooks for the Playwright e2e suite (apps/desktop/e2e):
 	// headless Linux CI has no StatusNotifier/DBus service behind the
 	// tray, and the updater must never poll in a test. Both are optional
 	// at runtime — every consumer guards with `?.` / `!== undefined`.
-	if (!isShellExtrasDisabled()) {
+	// HOARDODILE_RESOURCE_FEED_BASE keeps the updater (and only the
+	// updater) alive against a fixture feed: the tray is skipped in that
+	// mode too (it cannot exist headless), but the resource channel runs
+	// the real check→apply path.
+	const extrasDisabled = isShellExtrasDisabled()
+	const trayDisabled =
+		extrasDisabled || process.env.HOARDODILE_RESOURCE_FEED_BASE !== undefined
+	if (!trayDisabled) {
 		runtime.tray = createAppTray(
 			trayIconPath(
 				app.isPackaged ? process.resourcesPath : runtime.desktopRoot,
@@ -911,21 +975,76 @@ async function boot(): Promise<void> {
 			},
 			trayStrings(runtime.language),
 		)
-		runtime.updater = startUpdater({
-			enabled: runtime.config.autoUpdate && !runtime.portable,
+	}
+	if (!extrasDisabled) {
+		// Channels emit through `forward`, which is rebound to the
+		// manager's notify once it exists (creation is synchronous, so
+		// no emission can be lost).
+		let forward: (state: DesktopUpdateState) => void = () => {}
+		const full = startFullUpdater({
 			portable: runtime.portable,
 			dev: !app.isPackaged,
-			onReady() {
-				runtime.updateReady = true
-				broadcastUpdate(
-					runtime,
-					runtime.updater?.status() ?? { status: "idle" },
-				)
+			onState: (state) => forward(state),
+		})
+		const support = resourceUpdateSupport({
+			packaged: app.isPackaged,
+			portable: runtime.portable,
+			platform: process.platform,
+			resourcesRoot: process.resourcesPath,
+		})
+		const resource = support.available
+			? startResourceChannel({
+					enabled: runtime.config.autoUpdate && !runtime.portable,
+					dev: !app.isPackaged,
+					support,
+					resourcesRoot: process.resourcesPath,
+					cacheDir: updaterCacheDir(),
+					appVersion: app.getVersion(),
+					electronVersion: process.versions.electron,
+					platform: process.platform,
+					arch: process.arch,
+					getResourceVersion: () => runtime.config.resourceVersion,
+					setResourceVersion: (version) => {
+						runtime.config = {
+							...runtime.config,
+							resourceVersion: version,
+						}
+						persist(runtime)
+					},
+					stopSidecar: async () => {
+						await runtime.sidecar?.stop()
+					},
+					startSidecar: async () => {
+						runtime.sidecar = await spawnSidecar(runtime)
+					},
+					watchSidecarCrash: (listener) => {
+						const handle = runtime.sidecar
+						return handle === undefined ? () => {} : handle.onCrash(listener)
+					},
+					reloadWindow: async () => {
+						const win = runtime.window
+						if (win !== undefined && !win.isDestroyed()) {
+							win.webContents.reload()
+							return
+						}
+						await openAppWindow(runtime)
+					},
+					emit: (state) => forward(state),
+				})
+			: undefined
+		runtime.updater = startUpdateManager({
+			enabled: runtime.config.autoUpdate && !runtime.portable,
+			dev: !app.isPackaged,
+			full,
+			resource,
+			onState(state) {
+				runtime.updateReady = state.status === "ready"
+				broadcastUpdate(runtime, state)
 			},
 		})
-		runtime.updater.onStatus((state) => {
-			broadcastUpdate(runtime, state)
-		})
+		forward = (state) => {
+			runtime.updater?.notify(state)
+		}
 	}
 
 	const hiddenLaunch =

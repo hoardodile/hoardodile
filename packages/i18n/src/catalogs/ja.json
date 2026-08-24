@@ -298,6 +298,9 @@
 			"updateError": "更新の確認に失敗しました。後でもう一度お試しください。",
 			"downloading": "ダウンロード中… {{percent}}%",
 			"updateReady": "バージョン {{version}} のインストール準備が完了しました。",
+			"updateReadyResources": "リソース v{{version}} の適用準備が完了しました。",
+			"applyResources": "適用する",
+			"resourcesVersion": "リソース v{{version}}",
 			"restartToUpdate": "再起動",
 			"portableHint": "ポータブル版は GitHub から新しい zip をダウンロードして更新します。"
 		},
@@ -364,7 +367,13 @@
 				"quit": "アプリを終了"
 			},
 			"updateBanner": "バージョン {{version}} のインストール準備が完了しました。",
+			"updateBannerResources": "リソース v{{version}} の適用準備が完了しました。",
 			"updateBannerRestart": "再起動",
+			"updateBannerApply": "適用する",
+			"updateApplying": "リソース更新を適用しています…",
+			"updatePhaseStopping": "ローカルサーバーを停止しています…",
+			"updatePhaseSwapping": "サーバーファイルを置き換えています…",
+			"updatePhaseStarting": "ローカルサーバーを起動しています…",
 			"shellCache": {
 				"title": "シェルキャッシュ",
 				"description": "アプリウィンドウ自体のディスク上のキャッシュ — HTTP レスポンス、コンパイル済みコード、GPU シェーダー — とダウンロード済みの更新。クリアしても Cookie、設定、オフラインデータには一切触れず、アプリはすぐにローカルサーバーから再取得します。インストール準備が完了したダウンロード済み更新はそのまま残ります。",
@@ -2107,6 +2116,7 @@
 			"copyLanAddress": "LAN アドレスをコピー",
 			"restartServer": "サーバーを再起動",
 			"updateReady": "更新準備完了 — 開いて再起動",
+			"updateReadyResources": "リソース更新準備完了 — 開いて適用",
 			"quit": "終了",
 			"tooltipServerStopped": "hoardodile — サーバー停止",
 			"tooltipUpdateReady": "hoardodile — 更新準備完了",

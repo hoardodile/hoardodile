@@ -1,123 +1,78 @@
 import type { DesktopUpdateState } from "@hoardodile/shared/desktop"
 import { autoUpdater } from "electron-updater"
 
-export type UpdaterHandle = {
-	status: () => DesktopUpdateState
-	onStatus: (listener: (state: DesktopUpdateState) => void) => () => void
-	check: () => Promise<void>
-	quitAndInstall: () => void
-	setEnabled: (enabled: boolean) => void
-	dispose: () => void
+/**
+ * The full-update channel: electron-updater against GitHub Releases.
+ * Owns no cadence and no shared state — the update manager drives check()
+ * on its schedule and funnels every state emission (tagged `channel:
+ * "full"`) through the manager's notify.
+ */
+
+export type FullUpdaterHandle = {
+	readonly check: () => Promise<void>
+	readonly quitAndInstall: () => void
+	readonly setEnabled: (enabled: boolean) => void
+	readonly dispose: () => void
 }
 
-const BOOT_DELAY_MS = 15_000
-const INTERVAL_MS = 24 * 60 * 60 * 1000
-
-export function startUpdater(options: {
-	readonly enabled: boolean
+export function startFullUpdater(options: {
 	readonly portable: boolean
-	/** Unpackaged (dev) runs: electron-updater skips anyway, so never poll. */
 	readonly dev: boolean
-	readonly onReady: () => void
-}): UpdaterHandle {
-	let state: DesktopUpdateState = { status: "idle" }
-	const listeners = new Set<(state: DesktopUpdateState) => void>()
+	readonly onState: (state: DesktopUpdateState) => void
+}): FullUpdaterHandle {
+	const { portable, dev, onState } = options
 
-	function emit(next: DesktopUpdateState): void {
-		state = next
-		for (const listener of listeners) listener(state)
-	}
-
-	function subscribe(listener: (next: DesktopUpdateState) => void): () => void {
-		listeners.add(listener)
-		return () => {
-			listeners.delete(listener)
-		}
-	}
-
-	if (options.portable) {
+	if (portable) {
+		// portable: GitHub zip only, no quitAndInstall, never auto-updates.
 		return {
-			status: () => state,
-			onStatus: subscribe,
 			async check() {
-				emit({ status: "idle" })
+				onState({ status: "latest" })
 			},
-			quitAndInstall() {
-				// portable: GitHub zip only
-			},
-			setEnabled() {
-				// portable never auto-updates
-			},
-			dispose() {
-				listeners.clear()
-			},
+			quitAndInstall() {},
+			setEnabled() {},
+			dispose() {},
 		}
 	}
 
 	autoUpdater.autoInstallOnAppQuit = false
 	autoUpdater.autoRunAppAfterInstall = true
-	autoUpdater.autoDownload = options.enabled
+	autoUpdater.autoDownload = true
 
 	autoUpdater.on("checking-for-update", () => {
-		emit({ status: "checking" })
+		onState({ status: "checking", channel: "full" })
 	})
 	autoUpdater.on("update-available", () => {
-		emit({ status: "downloading", percent: 0 })
+		onState({ status: "downloading", channel: "full", percent: 0 })
 	})
 	autoUpdater.on("update-not-available", () => {
-		emit({ status: "latest" })
+		onState({ status: "latest" })
 	})
 	autoUpdater.on("download-progress", (progress) => {
-		emit({
+		onState({
 			status: "downloading",
+			channel: "full",
 			percent: progress.percent,
 		})
 	})
 	autoUpdater.on("update-downloaded", (info) => {
-		emit({ status: "ready", version: info.version })
-		options.onReady()
+		onState({ status: "ready", channel: "full", version: info.version })
 	})
 	autoUpdater.on("error", (err) => {
-		emit({ status: "error", message: err.message })
+		onState({ status: "error", message: err.message })
 	})
 
-	const timers: NodeJS.Timeout[] = []
-
-	function clearTimers(): void {
-		for (const timer of timers) clearTimeout(timer)
-		timers.length = 0
-	}
-
-	function scheduleBackgroundChecks(): void {
-		// Unpackaged runs can never download updates; polling would only
-		// print the "application is not packed" skip line on every boot.
-		if (options.dev) return
-		clearTimers()
-		timers.push(
-			setTimeout(() => {
-				void autoUpdater.checkForUpdates().catch(() => undefined)
-			}, BOOT_DELAY_MS),
-		)
-		timers.push(
-			setInterval(() => {
-				void autoUpdater.checkForUpdates().catch(() => undefined)
-			}, INTERVAL_MS),
-		)
-	}
-
-	if (options.enabled) scheduleBackgroundChecks()
-
 	return {
-		status: () => state,
-		onStatus: subscribe,
 		async check() {
+			// Unpackaged runs can never download updates; skip silently
+			// (electron-updater would print the skip line on every boot).
+			if (dev) return
 			const previous = autoUpdater.autoDownload
 			autoUpdater.autoDownload = true
 			try {
 				await autoUpdater.checkForUpdates()
 			} catch (err) {
 				const message = err instanceof Error ? err.message : String(err)
-				emit({ status: "error", message })
+				onState({ status: "error", message })
 			} finally {
 				autoUpdater.autoDownload = previous
 			}
@@ -127,13 +82,9 @@ export function startUpdater(options: {
 		},
 		setEnabled(enabled) {
 			autoUpdater.autoDownload = enabled
-			if (enabled) scheduleBackgroundChecks()
-			else clearTimers()
 		},
 		dispose() {
-			clearTimers()
 			autoUpdater.removeAllListeners()
-			listeners.clear()
 		},
 	}
 }

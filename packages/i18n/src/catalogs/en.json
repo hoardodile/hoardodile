@@ -298,6 +298,9 @@
 			"updateError": "Update check failed. Please try again later.",
 			"downloading": "Downloading… {{percent}}%",
 			"updateReady": "Version {{version}} is ready to install.",
+			"updateReadyResources": "Resources v{{version}} are ready to apply.",
+			"applyResources": "Apply",
+			"resourcesVersion": "Resources v{{version}}",
 			"restartToUpdate": "Restart",
 			"portableHint": "Portable builds update by downloading a new zip from GitHub."
 		},
@@ -364,7 +367,13 @@
 				"quit": "Quit the app"
 			},
 			"updateBanner": "Version {{version}} is ready to install.",
+			"updateBannerResources": "Resources v{{version}} are ready to apply.",
 			"updateBannerRestart": "Restart",
+			"updateBannerApply": "Apply",
+			"updateApplying": "Applying resources update…",
+			"updatePhaseStopping": "Stopping the local server…",
+			"updatePhaseSwapping": "Replacing server files…",
+			"updatePhaseStarting": "Starting the local server…",
 			"shellCache": {
 				"title": "Shell cache",
 				"description": "On-disk caches of the app window itself — HTTP responses, compiled code and GPU shaders — plus any downloaded update. Clearing never touches cookies, your preferences or offline data, and the app re-fetches from the local server right away. A downloaded update that is ready to install stays untouched.",
@@ -2107,6 +2116,7 @@
 			"copyLanAddress": "Copy LAN address",
 			"restartServer": "Restart server",
 			"updateReady": "Update ready — Open to restart",
+			"updateReadyResources": "Resources update ready — Open to apply",
 			"quit": "Quit",
 			"tooltipServerStopped": "hoardodile — server stopped",
 			"tooltipUpdateReady": "hoardodile — update ready",

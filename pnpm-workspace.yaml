@@ -37,6 +37,7 @@ catalog:
   react-use: ^17.6.1
   '@solar-icons/react': ^2.1.0
   tailwindcss: ^4.3.3
+  tar: ^7.4.3
   tsup: ^8.5.1
   typescript: ^7.0.2
   vite: ^8.2.2

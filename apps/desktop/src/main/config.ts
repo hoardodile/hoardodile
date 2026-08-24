@@ -20,6 +20,8 @@ export type DesktopConfig = {
 	/** What closing the app window does: ask, hide to tray, or quit the app. */
 	closeAction: CloseAction
 	autoUpdate: boolean
+	/** Version of the applied resource payload (server tree), `null` when still on the installer's tree. */
+	resourceVersion: string | null
 }
 
 const storedConfigSchema = z.object({
@@ -34,6 +36,7 @@ const storedConfigSchema = z.object({
 	startInTray: z.boolean(),
 	closeAction: z.enum(["ask", "tray", "quit"]),
 	autoUpdate: z.boolean(),
+	resourceVersion: z.string().nullable(),
 })
 
 export function defaultDesktopConfig(
@@ -57,6 +60,9 @@ export function defaultDesktopConfig(
 		// notarized builds exist. Windows (verifyUpdateCodeSignature:
 		// false) and Linux AppImage updates do not need a certificate.
 		autoUpdate: process.platform !== "darwin",
+		// No resource layer had been applied yet — the shipped tree is the
+		// installer's. Set once the first resource update lands.
+		resourceVersion: null,
 	}
 }
 
@@ -84,6 +90,7 @@ export function parseDesktopConfig(
 		startInTray: parsed.data.startInTray ?? defaults.startInTray,
 		closeAction: parsed.data.closeAction ?? defaults.closeAction,
 		autoUpdate: parsed.data.autoUpdate ?? defaults.autoUpdate,
+		resourceVersion: parsed.data.resourceVersion ?? defaults.resourceVersion,
 	}
 }
 

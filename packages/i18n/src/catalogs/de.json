@@ -298,6 +298,9 @@
 			"updateError": "Die Update-Prüfung ist fehlgeschlagen. Bitte versuche es später erneut.",
 			"downloading": "Herunterladen… {{percent}}%",
 			"updateReady": "Version {{version}} ist zum Installieren bereit.",
+			"updateReadyResources": "Ressourcen v{{version}} sind zum Anwenden bereit.",
+			"applyResources": "Anwenden",
+			"resourcesVersion": "Ressourcen v{{version}}",
 			"restartToUpdate": "Neu starten",
 			"portableHint": "Portable Versionen werden aktualisiert, indem du ein neues ZIP von GitHub herunterlädst."
 		},
@@ -364,7 +367,13 @@
 				"quit": "App beenden"
 			},
 			"updateBanner": "Version {{version}} ist zum Installieren bereit.",
+			"updateBannerResources": "Ressourcen v{{version}} sind zum Anwenden bereit.",
 			"updateBannerRestart": "Neu starten",
+			"updateBannerApply": "Anwenden",
+			"updateApplying": "Ressourcen-Update wird angewendet…",
+			"updatePhaseStopping": "Lokaler Server wird beendet…",
+			"updatePhaseSwapping": "Serverdateien werden ersetzt…",
+			"updatePhaseStarting": "Lokaler Server wird gestartet…",
 			"shellCache": {
 				"title": "Shell-Cache",
 				"description": "Laufwerksbasierte Caches des App-Fensters selbst — HTTP-Antworten, kompilierter Code und GPU-Shader — sowie etwaige heruntergeladene Updates. Das Leeren berührt nie Cookies, deine Einstellungen oder Offline-Daten, und die App lädt sofort vom lokalen Server neu. Ein heruntergeladenes, installationsbereites Update bleibt unberührt.",
@@ -2107,6 +2116,7 @@
 			"copyLanAddress": "LAN-Adresse kopieren",
 			"restartServer": "Server neu starten",
 			"updateReady": "Update bereit — Öffnen zum Neustart",
+			"updateReadyResources": "Ressourcen-Update bereit — Öffnen zum Anwenden",
 			"quit": "Beenden",
 			"tooltipServerStopped": "hoardodile — Server gestoppt",
 			"tooltipUpdateReady": "hoardodile — Update bereit",

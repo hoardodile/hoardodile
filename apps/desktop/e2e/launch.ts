@@ -37,6 +37,12 @@ export type DesktopHarness = {
  * HOARDODILE_E2E=1 (the shell then skips tray + updater — headless CI has
  * no StatusNotifier service and tests must never poll the update feed).
  *
+ * `feedBase` switches to the resource-update mode: the updater starts
+ * (no HOARDODILE_E2E), the tray stays off, and the resource channel
+ * points at the fixture feed — the real check→download→apply path runs
+ * against a local HTTP server. `autoUpdate` is forced on so the boot
+ * check fires on schedule.
+ *
  * `writeConfig` false reuses the profile as the app left it (persisted
  * desktop.json + session cookies), which is what the relaunch check needs.
  */
@@ -45,6 +51,7 @@ export async function launchDesktop(
 		readonly userDataDir?: string
 		readonly libraryDir?: string
 		readonly writeConfig?: boolean
+		readonly feedBase?: string
 	} = {},
 ): Promise<DesktopHarness> {
 	const userDataDir =
@@ -70,7 +77,7 @@ export async function launchDesktop(
 					autoStart: false,
 					startInTray: false,
 					closeAction: "quit",
-					autoUpdate: false,
+					autoUpdate: options.feedBase !== undefined,
 				},
 				null,
 				"\t",
@@ -87,7 +94,10 @@ export async function launchDesktop(
 		],
 		env: {
 			...process.env,
-			HOARDODILE_E2E: "1",
+			...(options.feedBase === undefined ? { HOARDODILE_E2E: "1" } : {}),
+			...(options.feedBase !== undefined
+				? { HOARDODILE_RESOURCE_FEED_BASE: options.feedBase }
+				: {}),
 			// The wizard defaults to Documents/hoardodile; pin Documents to
 			// the throwaway library so its path is deterministic.
 			HOARDODILE_E2E_DOCUMENTS: libraryDir,
@@ -125,7 +135,8 @@ function persistedPort(userDataDir: string): number {
 	throw new Error(`no persisted port in ${join(userDataDir, "desktop.json")}`)
 }
 
-function resolveExecutablePath(): string {
+/** The packaged binary the harness launches (also used by the fixture setup). */
+export function resolveExecutablePath(): string {
 	const explicit = process.env.DESKTOP_E2E_EXECUTABLE
 	if (explicit !== undefined && explicit.length > 0) return explicit
 	const releaseRoot = join(repoRoot, "apps", "desktop", "release")

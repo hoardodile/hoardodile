@@ -49,6 +49,7 @@ export type IpcHost = {
 	defaultLibraryPath: () => string
 	updateStatus: () => DesktopUpdateState
 	checkUpdates: () => Promise<void>
+	applyUpdate: () => Promise<void>
 	quitAndInstall: () => Promise<void>
 	openExternal: (url: string) => void
 }
@@ -85,6 +86,7 @@ export function registerIpc(host: IpcHost): void {
 	})
 	ipcMain.handle(IPC.updatesStatus, () => host.updateStatus())
 	ipcMain.handle(IPC.updatesCheck, () => host.checkUpdates())
+	ipcMain.handle(IPC.updatesApply, () => host.applyUpdate())
 	ipcMain.handle(IPC.updatesQuitAndInstall, () => host.quitAndInstall())
 	ipcMain.handle(IPC.pickLibraryFolder, (event) =>
 		host.pickLibraryFolder(windowFrom(event)),
@@ -125,6 +127,7 @@ export function registerIpc(host: IpcHost): void {
 			closeAction: config.closeAction,
 			autoUpdate: config.autoUpdate,
 			portable: host.portable(),
+			resourceVersion: config.resourceVersion,
 		}
 	})
 	ipcMain.on(IPC.configSync, (event) => {

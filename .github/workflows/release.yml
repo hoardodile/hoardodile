@@ -16,7 +16,10 @@ name: Release
 #   - macos-latest: CSC_LINK / CSC_KEY_PASSWORD (codesign),
 #     APPLE_ID / APPLE_APP_SPECIFIC_PASSWORD / APPLE_TEAM_ID (notarization)
 # electron-builder then emits latest-mac.yml / latest-linux.yml per
-# platform automatically; no code change needed.
+# platform automatically; no code change needed. The resource pack follows
+# the same matrix — every runner builds + verifies its pack, only the
+# platforms marked in scripts/lib/resource-pack-targets.mjs (`PACK_UPLOAD`)
+# attach it to the draft.
 
 on:
   push:

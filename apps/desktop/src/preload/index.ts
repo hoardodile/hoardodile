@@ -57,18 +57,30 @@ function isUpdateState(value: unknown): value is DesktopUpdateState {
 	if (!isRecord(value) || typeof value.status !== "string") return false
 	switch (value.status) {
 		case "idle":
-		case "checking":
 		case "latest":
 			return true
+		case "checking":
+			return isChannel(value.channel)
 		case "downloading":
-			return typeof value.percent === "number"
+			return isChannel(value.channel) && typeof value.percent === "number"
 		case "ready":
-			return typeof value.version === "string"
+			return isChannel(value.channel) && typeof value.version === "string"
+		case "applying":
+			return (
+				value.channel === "resources" &&
+				(value.phase === "stopping" ||
+					value.phase === "swapping" ||
+					value.phase === "starting")
+			)
 		case "error":
 			return typeof value.message === "string"
 		default:
 			return false
 	}
+}
+
+function isChannel(value: unknown): value is "resources" | "full" {
+	return value === "resources" || value === "full"
 }
 
 function isValidPort(value: unknown): value is number {
@@ -180,6 +192,9 @@ const bridge: HoardodileDesktopBridge = {
 		async check() {
 			await invokeUnknown(IPC.updatesCheck)
 		},
+		async apply() {
+			await invokeUnknown(IPC.updatesApply)
+		},
 		async quitAndInstall() {
 			await invokeUnknown(IPC.updatesQuitAndInstall)
 		},
@@ -212,6 +227,8 @@ const bridge: HoardodileDesktopBridge = {
 			closeAction: isCloseAction(raw.closeAction) ? raw.closeAction : "ask",
 			autoUpdate: raw.autoUpdate === true,
 			portable: raw.portable === true,
+			resourceVersion:
+				typeof raw.resourceVersion === "string" ? raw.resourceVersion : null,
 		} satisfies DesktopShellConfig
 	},
 	async setConfig(patch) {

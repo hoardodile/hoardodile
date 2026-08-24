@@ -19,6 +19,8 @@ export type TrayHandlers = {
 export type TrayFlags = {
 	readonly crashed: boolean
 	readonly updateReady: boolean
+	/** Set when the ready update is the resource channel (apply, no app restart). */
+	readonly updateReadyResources?: boolean | undefined
 	/** LAN share URL; `undefined` disables the copy menu item. */
 	readonly lanUrl?: string | undefined
 }
@@ -29,6 +31,7 @@ export type TrayStrings = {
 	readonly copyLanAddress: string
 	readonly restartServer: string
 	readonly updateReady: string
+	readonly updateReadyResources: string
 	readonly quit: string
 	readonly tooltipServerStopped: string
 	readonly tooltipUpdateReady: string
@@ -77,7 +80,12 @@ export function rebuildTrayMenu(
 		})
 	}
 	if (flags.updateReady) {
-		items.push({ label: strings.updateReady, enabled: false })
+		items.push({
+			label: flags.updateReadyResources
+				? strings.updateReadyResources
+				: strings.updateReady,
+			enabled: false,
+		})
 	}
 	items.push(
 		{ type: "separator" },

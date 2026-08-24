@@ -1,4 +1,5 @@
-import { fireEvent, render, screen } from "@testing-library/react"
+import type { DesktopUpdateState } from "@hoardodile/shared/desktop"
+import { fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { afterEach, describe, expect, test, vi } from "vitest"
 import {
 	APP_DEVELOPER_URL,
@@ -125,4 +126,116 @@ describe("Settings → About", () => {
 		expect(openExternalMock).toHaveBeenNthCalledWith(2, APP_ISSUES_FEATURE_URL)
 		expect(openSpy).not.toHaveBeenCalled()
 	})
+
+	test("surfaces a resource-channel error in the desktop About block", async () => {
+		bridgeMock.mockReturnValue(
+			desktopBridge({ status: "error", message: "boom" }),
+		)
+		render(<AboutSection />)
+		await waitFor(() =>
+			expect(screen.getByTestId("me-about-update-error")).toBeInTheDocument(),
+		)
+	})
+
+	test("applies a ready resource update through the bridge", async () => {
+		const applied = vi.fn(async () => {})
+		bridgeMock.mockReturnValue(
+			desktopBridge(
+				{ status: "ready", channel: "resources", version: "9.9.9" },
+				{ resourceVersion: "9.9.9", apply: applied },
+			),
+		)
+		render(<AboutSection />)
+		const restart = await screen.findByTestId("me-about-restart")
+		expect(restart).toHaveTextContent("Apply")
+		expect(
+			await screen.findByTestId("me-about-resources-version"),
+		).toHaveTextContent("Resources v9.9.9")
+		fireEvent.click(restart)
+		await waitFor(() => expect(applied).toHaveBeenCalledTimes(1))
+	})
 })
+
+function desktopBridge(
+	state: DesktopUpdateState,
+	extras: {
+		readonly resourceVersion?: string | null
+		readonly apply?: () => Promise<void>
+	} = {},
+) {
+	const quitAndInstall = vi.fn(async () => {})
+	return {
+		isDesktop: true,
+		platform: "desktop",
+		minimize() {},
+		toggleMaximize() {},
+		close() {},
+		retryLoad() {},
+		openExternal: openExternalMock,
+		registerAppRoutes() {},
+		async isMaximized() {
+			return false
+		},
+		onMaximizedChange() {
+			return () => undefined
+		},
+		updates: {
+			portable: false,
+			async status() {
+				return state
+			},
+			onStatus() {
+				return () => undefined
+			},
+			async check() {},
+			apply: extras.apply ?? (async () => {}),
+			quitAndInstall,
+		},
+		async pickLibraryFolder() {
+			return undefined
+		},
+		async relaunch() {},
+		async getConfig() {
+			return {
+				libraryPath: "",
+				sharedFolderRoot: "",
+				sharedFolderEnabled: false,
+				port: 3000,
+				lanEnabled: false,
+				autoStart: false,
+				startInTray: false,
+				closeAction: "ask",
+				autoUpdate: false,
+				portable: false,
+				resourceVersion: extras.resourceVersion ?? null,
+			}
+		},
+		async setConfig() {},
+		async setCloseAction() {},
+		async closeWithAction() {},
+		setLanguage() {},
+		async getLanguage() {
+			return "en"
+		},
+		async changeLibraryFolder() {},
+		async setSharedFolderRoot() {},
+		async setSharedFolderEnabled() {},
+		async getLanInfo() {
+			return { enabled: false, port: 3000, preferredPort: 3000, addresses: [] }
+		},
+		async setLanEnabled() {
+			return { ok: true }
+		},
+		async setLanPort() {},
+		async getShellCacheSize() {
+			return 0
+		},
+		async clearShellCache() {
+			return 0
+		},
+		async completeWizard() {},
+		async getWizardDefaults() {
+			return { libraryPath: "" }
+		},
+	}
+}

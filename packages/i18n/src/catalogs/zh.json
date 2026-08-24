@@ -298,6 +298,9 @@
 			"updateError": "检查更新失败，请稍后重试。",
 			"downloading": "正在下载… {{percent}}%",
 			"updateReady": "版本 {{version}} 已就绪，可以安装。",
+			"updateReadyResources": "资源 v{{version}} 已就绪，可以应用。",
+			"applyResources": "应用",
+			"resourcesVersion": "资源 v{{version}}",
 			"restartToUpdate": "重启",
 			"portableHint": "便携版请从 GitHub 下载新的压缩包来更新。"
 		},
@@ -364,7 +367,13 @@
 				"quit": "退出应用"
 			},
 			"updateBanner": "版本 {{version}} 已就绪，可以安装。",
+			"updateBannerResources": "资源 v{{version}} 已就绪，可以应用。",
 			"updateBannerRestart": "重启",
+			"updateBannerApply": "应用",
+			"updateApplying": "正在应用资源更新…",
+			"updatePhaseStopping": "正在停止本地服务…",
+			"updatePhaseSwapping": "正在替换服务文件…",
+			"updatePhaseStarting": "正在启动本地服务…",
 			"shellCache": {
 				"title": "Shell 缓存",
 				"description": "应用窗口自身的磁盘缓存——HTTP 响应、编译代码与 GPU 着色器——以及已下载的更新包。清理不会影响 cookies、你的偏好或离线数据，应用会立即从本地服务器重新获取。已就绪待安装的更新包会保留。",
@@ -2107,6 +2116,7 @@
 			"copyLanAddress": "复制局域网地址",
 			"restartServer": "重启服务器",
 			"updateReady": "更新已就绪——重启以完成",
+			"updateReadyResources": "资源更新已就绪——打开以应用",
 			"quit": "退出",
 			"tooltipServerStopped": "hoardodile —— 服务器已停止",
 			"tooltipUpdateReady": "hoardodile —— 更新已就绪",

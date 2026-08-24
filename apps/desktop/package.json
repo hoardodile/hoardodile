@@ -15,13 +15,13 @@
 	"scripts": {
 		"dev": "node scripts/dev.mjs",
 		"build": "node scripts/build.mjs",
-		"package": "pnpm build && node scripts/stage-resources.mjs && electron-builder --config electron-builder.config.mjs --win --x64 --publish never && node scripts/verify-package.mjs && node ../../scripts/verify-feed.mjs",
-		"package:publish": "pnpm build && node scripts/stage-resources.mjs && electron-builder --config electron-builder.config.mjs --win --x64 --publish always && node scripts/verify-package.mjs && node ../../scripts/verify-feed.mjs",
+		"package": "pnpm build && node scripts/stage-resources.mjs && electron-builder --config electron-builder.config.mjs --win --x64 --publish never && node scripts/verify-package.mjs && node scripts/build-resources-pack.mjs --platform win && node ../../scripts/verify-resources-pack.mjs --platform win && node ../../scripts/verify-feed.mjs",
+		"package:publish": "pnpm build && node scripts/stage-resources.mjs && electron-builder --config electron-builder.config.mjs --win --x64 --publish always && node scripts/verify-package.mjs && node scripts/build-resources-pack.mjs --platform win && node ../../scripts/verify-resources-pack.mjs --platform win && node scripts/upload-resources-pack.mjs && node ../../scripts/verify-feed.mjs",
 		"package:dir": "pnpm build && node scripts/stage-resources.mjs && electron-builder --config electron-builder.config.mjs --dir --publish never && node scripts/verify-package.mjs",
-		"package:linux": "pnpm build && node scripts/stage-resources.mjs --target linux && electron-builder --config electron-builder.config.mjs --linux --x64 --publish never && node scripts/verify-package.mjs --platform linux && node ../../scripts/verify-feed.mjs --platform linux",
-		"package:publish:linux": "pnpm build && node scripts/stage-resources.mjs --target linux && electron-builder --config electron-builder.config.mjs --linux --x64 --publish always && node scripts/verify-package.mjs --platform linux && node ../../scripts/verify-feed.mjs --platform linux",
-		"package:mac": "pnpm build && node scripts/stage-resources.mjs --target mac --arch arm64 && electron-builder --config electron-builder.config.mjs --mac --arm64 --publish never && node scripts/verify-package.mjs --platform mac && node ../../scripts/verify-feed.mjs --platform mac",
-		"package:publish:mac": "pnpm build && node scripts/stage-resources.mjs --target mac --arch arm64 && electron-builder --config electron-builder.config.mjs --mac --arm64 --publish always && node scripts/verify-package.mjs --platform mac && node ../../scripts/verify-feed.mjs --platform mac",
+		"package:linux": "pnpm build && node scripts/stage-resources.mjs --target linux && electron-builder --config electron-builder.config.mjs --linux --x64 --publish never && node scripts/verify-package.mjs --platform linux && node scripts/build-resources-pack.mjs --platform linux && node ../../scripts/verify-resources-pack.mjs --platform linux && node ../../scripts/verify-feed.mjs --platform linux",
+		"package:publish:linux": "pnpm build && node scripts/stage-resources.mjs --target linux && electron-builder --config electron-builder.config.mjs --linux --x64 --publish always && node scripts/verify-package.mjs --platform linux && node scripts/build-resources-pack.mjs --platform linux && node ../../scripts/verify-resources-pack.mjs --platform linux && node scripts/upload-resources-pack.mjs --platform linux && node ../../scripts/verify-feed.mjs --platform linux",
+		"package:mac": "pnpm build && node scripts/stage-resources.mjs --target mac --arch arm64 && electron-builder --config electron-builder.config.mjs --mac --arm64 --publish never && node scripts/verify-package.mjs --platform mac && node scripts/build-resources-pack.mjs --platform mac && node ../../scripts/verify-resources-pack.mjs --platform mac && node ../../scripts/verify-feed.mjs --platform mac",
+		"package:publish:mac": "pnpm build && node scripts/stage-resources.mjs --target mac --arch arm64 && electron-builder --config electron-builder.config.mjs --mac --arm64 --publish always && node scripts/verify-package.mjs --platform mac && node scripts/build-resources-pack.mjs --platform mac && node ../../scripts/verify-resources-pack.mjs --platform mac && node scripts/upload-resources-pack.mjs --platform mac && node ../../scripts/verify-feed.mjs --platform mac",
 		"lint": "tsc --noEmit",
 		"test": "vitest run --maxWorkers=2",
 		"test:e2e": "playwright test"
@@ -36,6 +36,7 @@
 		"react": "catalog:",
 		"react-dom": "catalog:",
 		"react-i18next": "catalog:",
+		"tar": "catalog:",
 		"zod": "catalog:"
 	},
 	"devDependencies": {

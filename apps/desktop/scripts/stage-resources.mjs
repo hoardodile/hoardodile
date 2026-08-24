@@ -20,9 +20,21 @@
  * check is `scripts/verify-package.mjs`.
  */
 
-import { copyFileSync, existsSync, mkdirSync, rmSync } from "node:fs"
+import { spawnSync } from "node:child_process"
+import {
+	copyFileSync,
+	existsSync,
+	mkdirSync,
+	readFileSync,
+	rmSync,
+	writeFileSync,
+} from "node:fs"
 import { dirname, join, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
+import {
+	normalizeTarget,
+	resolvePackTarget,
+} from "../../../scripts/lib/resource-pack-targets.mjs"
 import { stageRuntime } from "../../../scripts/stage-runtime.mjs"
 import { installNodeDist } from "./lib/node-dist.mjs"
 
@@ -32,22 +44,18 @@ const destRoot = join(desktopRoot, "extra-resources")
 
 const args = parseArgs(process.argv.slice(2))
 const target = normalizeTarget(args.target ?? process.platform)
-const arch = args.arch ?? process.arch
-if (target !== "win32" && target !== "linux" && target !== "darwin") {
+const resolved = resolvePackTarget(target, args.arch)
+if (resolved === undefined) {
 	throw new Error(`unsupported --target ${target} (win32 | linux | darwin)`)
 }
+const arch = resolved.arch
 if (target === "win32" && process.platform !== "win32") {
 	throw new Error(
 		"Windows packaging must run on Windows (the sidecar runtime is process.execPath).",
 	)
 }
-// v1 release matrix; verify-package.mjs enforces the same set.
-const SUPPORTED = { win32: ["x64"], linux: ["x64"], darwin: ["arm64"] }
-if (!SUPPORTED[target]?.includes(arch)) {
-	throw new Error(
-		`unsupported ${target}-${arch} (v1 supports: win32-x64, linux-x64, darwin-arm64)`,
-	)
-}
+// The matrix lives in scripts/lib/resource-pack-targets.mjs (shared with
+// build-resources-pack.mjs and verify-resources-pack.mjs).
 
 rmSync(destRoot, { recursive: true, force: true })
 mkdirSync(destRoot, { recursive: true })
@@ -68,10 +76,39 @@ console.log(`staged node runtime: ${nodePath}`)
 
 copyFile(join(desktopRoot, "resources", "icon.png"), join(destRoot, "icon.png"))
 copyFile(join(desktopRoot, "resources", "tray.png"), join(destRoot, "tray.png"))
+writeResourcesMarker(destRoot, nodePath, { platform: target, arch })
 
 console.log(
 	`staged extra-resources at ${destRoot} (${slugs.length} seed plugins, target ${target}-${arch})`,
 )
+
+/**
+ * The resources-version marker travels with both the installer and the
+ * resource pack: the shell reads it at boot to reconcile
+ * `desktop.json.resourceVersion` after a full install replaced the tree.
+ * Keep the field names in sync with the client-side reader
+ * (apps/desktop/src/main/resource-updater.ts).
+ */
+function writeResourcesMarker(destRoot, nodePath, info) {
+	const rootPkg = JSON.parse(
+		readFileSync(join(workspaceRoot, "package.json"), "utf8"),
+	)
+	const nodeVersion = spawnSync(nodePath, ["--version"], {
+		encoding: "utf8",
+	}).stdout.trim()
+	const marker = {
+		schema: 1,
+		version: rootPkg.version,
+		nodeVersion,
+		platform: info.platform,
+		arch: info.arch,
+	}
+	writeFileSync(
+		join(destRoot, "resources-version.json"),
+		`${JSON.stringify(marker, null, "\t")}\n`,
+		"utf8",
+	)
+}
 
 function copyRunningNode(destDir) {
 	mkdirSync(destDir, { recursive: true })
@@ -98,11 +135,4 @@ function parseArgs(argv) {
 		throw new Error(`unknown argument: ${arg}`)
 	}
 	return out
-}
-
-/** Accept the same aliases as verify-package.mjs: `mac` → `darwin`, `win` → `win32`. */
-function normalizeTarget(value) {
-	if (value === "mac" || value === "darwin") return "darwin"
-	if (value === "win" || value === "win32") return "win32"
-	return value
 }

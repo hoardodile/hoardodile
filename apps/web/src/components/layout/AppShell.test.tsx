@@ -540,6 +540,7 @@ function installDesktopBridge() {
 				return () => undefined
 			},
 			async check() {},
+			async apply() {},
 			async quitAndInstall() {},
 		},
 		async pickLibraryFolder() {
@@ -558,6 +559,7 @@ function installDesktopBridge() {
 				closeAction: "ask",
 				autoUpdate: false,
 				portable: false,
+				resourceVersion: null,
 			}
 		},
 		async setConfig() {},

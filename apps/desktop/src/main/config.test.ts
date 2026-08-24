@@ -35,6 +35,7 @@ describe("parseDesktopConfig", () => {
 		expect(parsed.closeAction).toBe("ask")
 		expect(parsed.sharedFolderRoot).toBe("C:/docs")
 		expect(parsed.sharedFolderEnabled).toBe(false)
+		expect(parsed.resourceVersion).toBeNull()
 	})
 
 	it("keeps a persisted port, library path, and shared folder", () => {
@@ -76,6 +77,21 @@ describe("parseDesktopConfig", () => {
 			"C:/docs",
 		)
 		expect(parsed.sharedFolderEnabled).toBe(true)
+	})
+
+	it("keeps a persisted resourceVersion (and accepts null explicitly)", () => {
+		const parsed = parseDesktopConfig(
+			{ resourceVersion: "1.2.0" },
+			"C:/lib",
+			"C:/docs",
+		)
+		expect(parsed.resourceVersion).toBe("1.2.0")
+		const explicitNull = parseDesktopConfig(
+			{ resourceVersion: null },
+			"C:/lib",
+			"C:/docs",
+		)
+		expect(explicitNull.resourceVersion).toBeNull()
 	})
 })
 

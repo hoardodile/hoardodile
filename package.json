@@ -90,6 +90,7 @@
 		"lint-staged": "^17.3.0",
 		"npm-run-all2": "^9.0.3",
 		"release-it": "^21.0.2",
+		"tar": "catalog:",
 		"turbo": "^2.10.11",
 		"typescript": "catalog:",
 		"vite": "catalog:",

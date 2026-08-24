@@ -34,6 +34,7 @@ function installBridge(
 				return () => undefined
 			},
 			async check() {},
+			async apply() {},
 			async quitAndInstall() {},
 		},
 		async pickLibraryFolder() {
@@ -52,6 +53,7 @@ function installBridge(
 				closeAction: "ask",
 				autoUpdate: false,
 				portable: false,
+				resourceVersion: null,
 			}
 		},
 		async setConfig() {},
@@ -128,6 +130,7 @@ describe("LanSharingSection", () => {
 					closeAction: "ask",
 					autoUpdate: false,
 					portable: false,
+					resourceVersion: null,
 				}
 			},
 			async getLanInfo() {
@@ -227,6 +230,7 @@ describe("LanSharingSection", () => {
 					closeAction: "ask",
 					autoUpdate: false,
 					portable: false,
+					resourceVersion: null,
 				}
 			},
 			async getLanInfo() {
@@ -330,6 +334,7 @@ describe("LanSharingSection", () => {
 					closeAction: "ask",
 					autoUpdate: false,
 					portable: false,
+					resourceVersion: null,
 				}
 			},
 			async getLanInfo() {
@@ -384,6 +389,7 @@ describe("LanSharingSection", () => {
 					closeAction: "ask",
 					autoUpdate: false,
 					portable: false,
+					resourceVersion: null,
 				}
 			},
 			async getLanInfo() {

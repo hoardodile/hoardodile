@@ -1,4 +1,5 @@
 import type {
+	DesktopShellConfig,
 	DesktopUpdateState,
 	HoardodileDesktopBridge,
 } from "@hoardodile/shared/desktop"
@@ -114,10 +115,17 @@ function DesktopAboutSection(props: {
 	const { desktop } = props
 	const { t } = useTranslation()
 	const [state, setState] = useState<DesktopUpdateState>({ status: "idle" })
+	const [shellConfig, setShellConfig] = useState<DesktopShellConfig | null>(
+		null,
+	)
 
 	useEffect(() => {
 		void desktop.updates.status().then(setState)
 		return desktop.updates.onStatus(setState)
+	}, [desktop])
+
+	useEffect(() => {
+		void desktop.getConfig().then(setShellConfig)
 	}, [desktop])
 
 	if (desktop.updates.portable) {
@@ -137,6 +145,8 @@ function DesktopAboutSection(props: {
 	}
 
 	const busy = state.status === "checking" || state.status === "downloading"
+	const resourcesReady =
+		state.status === "ready" && state.channel === "resources"
 
 	return (
 		<AboutFrame
@@ -147,12 +157,18 @@ function DesktopAboutSection(props: {
 					onClick={() => {
 						void desktop.updates.check()
 					}}
-					disabled={busy}
+					disabled={busy || state.status === "applying"}
 					data-testid="me-about-check-update"
 				>
 					<RefreshCircle className={cn("size-4", busy && "animate-spin")} />
 					{t("me.about.checkUpdate")}
 				</Button>
+			}
+			resourcesVersion={
+				shellConfig?.resourceVersion !== null &&
+				shellConfig?.resourceVersion !== APP_VERSION
+					? (shellConfig?.resourceVersion ?? null)
+					: null
 			}
 		>
 			{state.status === "checking" ? (
@@ -175,22 +191,44 @@ function DesktopAboutSection(props: {
 			{state.status === "ready" ? (
 				<div className="mt-3 flex flex-wrap items-center gap-3">
 					<p className="text-tiny" data-testid="me-about-outdated">
-						{t("me.about.updateReady", { version: state.version })}
+						{resourcesReady
+							? t("me.about.updateReadyResources", {
+									version: state.version,
+								})
+							: t("me.about.updateReady", { version: state.version })}
 					</p>
 					<Button
 						size="sm"
 						className="[-webkit-app-region:no-drag]"
 						onClick={() => {
-							void desktop.updates.quitAndInstall()
+							void (resourcesReady
+								? desktop.updates.apply()
+								: desktop.updates.quitAndInstall())
 						}}
 						data-testid="me-about-restart"
 					>
-						{t("me.about.restartToUpdate")}
+						{resourcesReady
+							? t("me.about.applyResources")
+							: t("me.about.restartToUpdate")}
 					</Button>
 				</div>
 			) : null}
+			{state.status === "applying" ? (
+				<p className="mt-3 text-tiny text-muted-foreground">
+					{t(
+						state.phase === "stopping"
+							? "me.desktop.updatePhaseStopping"
+							: state.phase === "swapping"
+								? "me.desktop.updatePhaseSwapping"
+								: "me.desktop.updatePhaseStarting",
+					)}
+				</p>
+			) : null}
 			{state.status === "error" ? (
-				<p className="mt-3 text-tiny text-destructive">
+				<p
+					className="mt-3 text-tiny text-destructive"
+					data-testid="me-about-update-error"
+				>
 					{t("me.about.updateError")}
 				</p>
 			) : null}
@@ -201,6 +239,8 @@ function DesktopAboutSection(props: {
 function AboutFrame(props: {
 	readonly action?: ReactNode
 	readonly children?: ReactNode
+	/** Set when the applied resource payload differs from the shell version. */
+	readonly resourcesVersion?: string | null
 }) {
 	const { t } = useTranslation()
 	return (
@@ -229,6 +269,16 @@ function AboutFrame(props: {
 										hoardodile
 									</span>
 									<MetaChip>v{APP_VERSION}</MetaChip>
+									{props.resourcesVersion !== undefined &&
+									props.resourcesVersion !== null ? (
+										<span data-testid="me-about-resources-version">
+											<MetaChip>
+												{t("me.about.resourcesVersion", {
+													version: props.resourcesVersion,
+												})}
+											</MetaChip>
+										</span>
+									) : null}
 								</div>
 								<p className="mt-1.5 text-xs leading-5 text-muted-foreground">
 									{t("me.about.tagline")}

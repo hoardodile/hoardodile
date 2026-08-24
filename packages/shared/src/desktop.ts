@@ -6,11 +6,31 @@
 
 import type { SupportedLanguage } from "@hoardodile/i18n"
 
+/**
+ * Which update channel a state belongs to. `resources` replaces the
+ * versioned server payload in place (no restart of the shell); `full`
+ * is the electron-updater installer path.
+ */
+export type DesktopUpdateChannel = "resources" | "full"
+
 export type DesktopUpdateState =
 	| { readonly status: "idle" }
-	| { readonly status: "checking" }
-	| { readonly status: "downloading"; readonly percent: number }
-	| { readonly status: "ready"; readonly version: string }
+	| { readonly status: "checking"; readonly channel: DesktopUpdateChannel }
+	| {
+			readonly status: "downloading"
+			readonly channel: DesktopUpdateChannel
+			readonly percent: number
+	  }
+	| {
+			readonly status: "ready"
+			readonly channel: DesktopUpdateChannel
+			readonly version: string
+	  }
+	| {
+			readonly status: "applying"
+			readonly channel: "resources"
+			readonly phase: "stopping" | "swapping" | "starting"
+	  }
 	| { readonly status: "latest" }
 	| { readonly status: "error"; readonly message: string }
 
@@ -27,6 +47,12 @@ export type DesktopShellConfig = {
 	readonly closeAction: DesktopCloseAction
 	readonly autoUpdate: boolean
 	readonly portable: boolean
+	/**
+	 * Version of the applied resource payload (server tree) when it differs
+	 * from the shell's own app version — `null` when the shipped tree is
+	 * still the installer's (or untracked yet).
+	 */
+	readonly resourceVersion: string | null
 }
 
 export type LanAddress = {
@@ -88,6 +114,9 @@ export type HoardodileDesktopBridge = {
 		status: () => Promise<DesktopUpdateState>
 		onStatus: (listener: (state: DesktopUpdateState) => void) => () => void
 		check: () => Promise<void>
+		/** Apply the ready resource update: stop the sidecar, swap, restart. */
+		apply: () => Promise<void>
+		/** Install the ready full update via electron-updater (restarts the app). */
 		quitAndInstall: () => Promise<void>
 	}
 	pickLibraryFolder: () => Promise<string | undefined>
