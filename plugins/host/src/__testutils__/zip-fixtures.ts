@@ -29,6 +29,12 @@ export type ZipEntryInput = {
 	readonly method?: number
 	/** Set the general-purpose encryption bit (bit 0). */
 	readonly encrypted?: boolean
+	/**
+	 * Write the name as raw latin1 bytes without the UTF-8 flag (bit 11) —
+	 * the legacy cp437 shape 7-Zip decodes. Name chars above U+00FF are
+	 * truncated to their low byte, exactly like a pre-UTF-8 zipper.
+	 */
+	readonly legacyName?: boolean
 }
 
 /** Minimal zip writer: STORED or DEFLATE entries, UTF-8 names. */
@@ -37,9 +43,14 @@ export function makeZip(entries: readonly ZipEntryInput[]): Buffer {
 	const records: Buffer[] = []
 	let offset = 0
 	for (const entry of entries) {
-		const name = Buffer.from(entry.name, "utf8")
+		const name =
+			entry.legacyName === true
+				? Buffer.from(entry.name, "latin1")
+				: Buffer.from(entry.name, "utf8")
 		const method = entry.method ?? 0
-		const flags = 0x0800 | (entry.encrypted === true ? 0x1 : 0)
+		const flags =
+			(entry.legacyName === true ? 0 : 0x0800) |
+			(entry.encrypted === true ? 0x1 : 0)
 		const raw =
 			method === 8
 				? deflateRawSync(Buffer.from(entry.data))

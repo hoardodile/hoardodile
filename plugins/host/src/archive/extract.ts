@@ -359,11 +359,15 @@ async function renameLegacyZipNames(
 		if (entry.isDirectory()) {
 			if (target !== undefined && !existsSync(target)) {
 				await rename(childRaw, target)
+				await renameLegacyZipNames(Buffer.from(target), target, root, expected)
+				continue
 			}
-			// Recurse into wherever the directory now lives so the
-			// descendants' renames land under the decoded prefix.
+			// Either no rename applies, or the decoded target already
+			// exists (a real entry owns the decoded name) — the raw
+			// directory itself stays, but its descendants must still be
+			// renamed under the decoded prefix.
 			await renameLegacyZipNames(
-				Buffer.from(target ?? childRaw),
+				childRaw,
 				target ?? `${decodedRoot}/${decoded}`,
 				root,
 				expected,

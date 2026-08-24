@@ -171,6 +171,28 @@ describe.skipIf(!sevenZipAvailable)("createArchiveExtractor", () => {
 		).rejects.toThrow(/unsafe path/)
 	})
 
+	it("decodes legacy cp437 entry names on disk and in the manifest", async () => {
+		// Name stored as raw latin1 bytes (0x82 = cp437 é, no UTF-8 flag).
+		// 7-Zip writes the raw bytes on POSIX (macOS stores them %XX-
+		// escaped), so the legacy rename must reconcile disk with the
+		// decoded listing — the manifest and probe paths read the decoded
+		// name.
+		const legacy = makeZip([
+			{
+				name: "caf\u0082.jpg",
+				data: Uint8Array.from([1, 2, 3]),
+				legacyName: true,
+			},
+		])
+		const result = await extractor({ "legacy.zip": legacy }).extract(
+			"legacy.zip",
+		)
+		expect(result.entries.map((e) => e.path)).toEqual(["caf\u00e9.jpg"])
+		expect(readFileSync(join(cacheDir, "legacy.zip", "caf\u00e9.jpg"))).toEqual(
+			Buffer.from([1, 2, 3]),
+		)
+	})
+
 	it("single-flights concurrent extraction", async () => {
 		const ex = extractor({ "book.cbz": bookCbz })
 		const [a, b] = await Promise.all([

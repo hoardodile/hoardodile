@@ -1,4 +1,4 @@
-﻿import { randomUUID } from "node:crypto"
+import { randomUUID } from "node:crypto"
 import { mkdir, readFile, rename, rm, stat, writeFile } from "node:fs/promises"
 import { join } from "node:path"
 import type { MediaKind } from "@hoardodile/sdk-types"
@@ -224,7 +224,14 @@ export function createArchiveExtractor(
 			// 7-Zip writes legacy zip names verbatim on POSIX and restores
 			// mode bits that can strip app access; fix both before the tree
 			// is re-walked (symlink scan) or read for the manifest below.
-			await normalizeExtractedTree(root, { legacyZipNames: format === "zip" })
+			// The listing's decoded names are the ground truth the legacy
+			// rename pass matches against — on macOS the raw bytes land
+			// `%XX`-escaped, and the manifest below must serve the decoded
+			// paths (see `renameLegacyZipNames` in extract.ts).
+			await normalizeExtractedTree(root, {
+				legacyZipNames: format === "zip",
+				expectedNames: entries.map((e) => e.name),
+			})
 			await assertExtractedTree(root, deps.maxBytes)
 			deps.onProgress?.({ done: files.length, total: files.length })
 			const manifest = await buildManifest(
