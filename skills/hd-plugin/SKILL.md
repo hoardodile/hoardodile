@@ -44,8 +44,11 @@ lives in `references/`.
    `references/tooling.md`.
 2. **Manifest.** New random UUID for `id` — never reuse one from a
    template. Declare `permissions` honestly (each flag exposes host data
-   or UI hooks) and i18n labels for every user-visible string.
-   `references/manifest.md`.
+   or UI hooks; `container: true` additionally unlocks
+   `listContainer`/`extractArchive`, which the sandbox denies
+   otherwise). The server `main.js` runs in a capability sandbox — its
+   only privileged interface is the `ResourceAPI` RPC, so never reach
+   for `node:` builtins. `references/manifest.md`.
 3. **Server side.** `src/main.ts` exports `definePlugin<MySchema>()`.
    `detect` is required and should classify once — the match payload is
    handed to every other hook as `api.context.detect`, so `sourceMeta`

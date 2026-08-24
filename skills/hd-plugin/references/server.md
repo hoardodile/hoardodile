@@ -5,6 +5,16 @@ The server part of a plugin is a single module (bundled to
 `@hoardodile/sdk-server`. All hook functions live here; the host calls
 them with a `ResourceAPI` and never invokes a factory.
 
+**Capability sandbox.** The bundle runs in a dedicated restricted child
+process: Node's permission model (fs reads limited to the plugin's own
+directory, no write/child-process/native-addon grants) plus a module
+policy hook that denies every `node:` builtin except `node:url` and
+anything outside the plugin dir — and a scrubbed global surface
+(`fetch`/`WebSocket` throw, `process.env` is empty). The only privileged
+interface is the `ResourceAPI` RPC; per-hook budgets bound log messages
+(1000) and API calls (100k). `listContainer`/`extractArchive` need
+`"container": true` in the manifest, enforced host-side.
+
 ```ts
 import { definePlugin } from "@hoardodile/sdk-server"
 import type { MySchema } from "./shared"
