@@ -3,7 +3,12 @@ import { Icon } from "@hoardodile/ui/components/icon"
 import { Bug, Rocket } from "@hoardodile/ui/icons/registry"
 import { useTranslation } from "react-i18next"
 import { ExternalLink } from "@/components/common/ExternalLink"
-import { APP_ISSUES_BUG_URL, APP_ISSUES_FEATURE_URL } from "@/lib/appInfo"
+import {
+	APP_ISSUES_BUG_DESKTOP_URL,
+	APP_ISSUES_BUG_SELFHOSTED_URL,
+	APP_ISSUES_FEATURE_URL,
+} from "@/lib/appInfo"
+import { isHoardodileDesktop } from "@/lib/desktop"
 import { SettingsSection } from "./SettingsSection"
 
 /**
@@ -12,6 +17,12 @@ import { SettingsSection } from "./SettingsSection"
  */
 export function BugReportSection() {
 	const { t } = useTranslation()
+	// A bridge is only present in the Electron shell: route the report to
+	// the template matching how the reporter runs the app (the desktop
+	// bundles its own server, so a browser visitor is self-hosted).
+	const href = isHoardodileDesktop()
+		? APP_ISSUES_BUG_DESKTOP_URL
+		: APP_ISSUES_BUG_SELFHOSTED_URL
 	return (
 		<SettingsSection
 			icon={Bug}
@@ -21,7 +32,7 @@ export function BugReportSection() {
 			data-testid="me-section-bug"
 		>
 			<ExternalLink
-				href={APP_ISSUES_BUG_URL}
+				href={href}
 				data-testid="me-feedback-bug"
 				className={buttonVariants({ variant: "secondary" })}
 			>

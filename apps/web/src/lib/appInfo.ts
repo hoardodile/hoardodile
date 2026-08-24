@@ -17,8 +17,9 @@ export const APP_WEBSITE_URL = "https://www.hoardodile.com"
 export const APP_DEVELOPER_URL = "https://github.com/wooloo26"
 export const APP_DEVELOPER_NAME = "wooloo26"
 
-/** Feedback destinations — the repo's issue templates. */
-export const APP_ISSUES_BUG_URL = `${APP_REPOSITORY_URL}/issues/new?template=bug_report.yml`
+/** Feedback destinations — the repo's issue templates (bug is split per deployment context). */
+export const APP_ISSUES_BUG_DESKTOP_URL = `${APP_REPOSITORY_URL}/issues/new?template=bug_report_desktop.yml`
+export const APP_ISSUES_BUG_SELFHOSTED_URL = `${APP_REPOSITORY_URL}/issues/new?template=bug_report_selfhosted.yml`
 export const APP_ISSUES_FEATURE_URL = `${APP_REPOSITORY_URL}/issues/new?template=feature_request.yml`
 
 /** GitHub API endpoint for the latest release (CORS-open, no token needed). */

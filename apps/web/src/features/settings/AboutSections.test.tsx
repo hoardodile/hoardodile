@@ -2,7 +2,8 @@ import { fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, describe, expect, test, vi } from "vitest"
 import {
 	APP_DEVELOPER_URL,
-	APP_ISSUES_BUG_URL,
+	APP_ISSUES_BUG_DESKTOP_URL,
+	APP_ISSUES_BUG_SELFHOSTED_URL,
 	APP_ISSUES_FEATURE_URL,
 	APP_REPOSITORY_URL,
 	APP_WEBSITE_URL,
@@ -19,6 +20,7 @@ const { bridgeMock } = vi.hoisted(() => ({
 
 vi.mock("@/lib/desktop", () => ({
 	getDesktopBridge: () => bridgeMock(),
+	isHoardodileDesktop: () => bridgeMock()?.isDesktop === true,
 }))
 
 afterEach(() => {
@@ -57,9 +59,9 @@ describe("Settings → About", () => {
 		expect(screen.getByTestId("me-about-developer").getAttribute("href")).toBe(
 			APP_DEVELOPER_URL,
 		)
-		// Feedback: one action per issue template.
+		// Feedback: one action per issue template (browser → self-hosted form).
 		expect(screen.getByTestId("me-feedback-bug").getAttribute("href")).toBe(
-			APP_ISSUES_BUG_URL,
+			APP_ISSUES_BUG_SELFHOSTED_URL,
 		)
 		expect(screen.getByTestId("me-feedback-feature").getAttribute("href")).toBe(
 			APP_ISSUES_FEATURE_URL,
@@ -80,7 +82,7 @@ describe("Settings → About", () => {
 		)
 		fireEvent.click(screen.getByTestId("me-feedback-bug"))
 		expect(openSpy).toHaveBeenCalledWith(
-			APP_ISSUES_BUG_URL,
+			APP_ISSUES_BUG_SELFHOSTED_URL,
 			"_blank",
 			"noopener,noreferrer",
 		)
@@ -99,18 +101,27 @@ describe("Settings → About", () => {
 		expect(openExternalMock).not.toHaveBeenCalled()
 	})
 
-	test("a desktop click routes through the shell instead of window.open", () => {
-		bridgeMock.mockReturnValue({ openExternal: openExternalMock })
+	test("a desktop click routes to the desktop form through the shell", () => {
+		bridgeMock.mockReturnValue({
+			isDesktop: true,
+			openExternal: openExternalMock,
+		})
 		render(
 			<>
 				<BugReportSection />
 				<FeatureRequestSection />
 			</>,
 		)
+		expect(screen.getByTestId("me-feedback-bug").getAttribute("href")).toBe(
+			APP_ISSUES_BUG_DESKTOP_URL,
+		)
 
 		fireEvent.click(screen.getByTestId("me-feedback-bug"))
 		fireEvent.click(screen.getByTestId("me-feedback-feature"))
-		expect(openExternalMock).toHaveBeenNthCalledWith(1, APP_ISSUES_BUG_URL)
+		expect(openExternalMock).toHaveBeenNthCalledWith(
+			1,
+			APP_ISSUES_BUG_DESKTOP_URL,
+		)
 		expect(openExternalMock).toHaveBeenNthCalledWith(2, APP_ISSUES_FEATURE_URL)
 		expect(openSpy).not.toHaveBeenCalled()
 	})
