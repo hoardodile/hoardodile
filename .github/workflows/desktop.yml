@@ -1,0 +1,157 @@
+name: "Desktop & Docker"
+
+# Cross-platform desktop gates + automated Docker verification.
+#
+#   pull_request (paths) — three-OS matrix: build the packaged app unpacked
+#     (package:dir) and drive it with the Playwright launch smoke, plus
+#     docker build + compose smoke.
+#   push tags v*         — the same matrix (release quality gate) plus the
+#     full web e2e suite against the container (E2E_EXTERNAL_BASE_URL).
+#     The actual artifact publishing stays in release.yml.
+#   workflow_dispatch    — manual re-run of the full matrix; like a tag it
+#     also runs the container e2e (for CI debugging).
+#
+# A tag push never hits the paths filter on purpose: tagged builds must
+# always run the full matrix.
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "apps/desktop/**"
+      - "apps/server/**"
+      - "apps/web/src/**"
+      - "plugins/**"
+      - "packages/host/**"
+      - "scripts/**"
+      - "Dockerfile"
+      - ".dockerignore"
+      - "compose.yaml"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/*.yml"
+  push:
+    tags: ["v*"]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  package-e2e:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-14, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Cache turbo build cache
+        uses: actions/cache@v6
+        with:
+          path: .turbo
+          key: turbo-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: turbo-${{ runner.os }}-
+      - name: Build
+        run: pnpm build
+      - name: Cache staged Node runtime
+        uses: actions/cache@v6
+        with:
+          path: tmp/node-dist
+          key: node-dist-24
+      - name: Cache electron-builder downloads
+        uses: actions/cache@v6
+        with:
+          path: .cache/electron-builder
+          key: eb-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: eb-${{ runner.os }}-
+      - name: Package unpacked app
+        # package:dir = stage-resources → electron-builder --dir →
+        # verify-package (natives + sandbox probe + asar guard). No
+        # installers, no feed. The cache env redirects electron-builder's
+        # download cache into the actions/cache path above (a future
+        # electron-builder dropping the env var just misses the cache).
+        run: pnpm -F @hoardodile/desktop package:dir
+        env:
+          ELECTRON_BUILDER_CACHE: ${{ github.workspace }}/.cache/electron-builder
+      - name: Install Linux test dependencies
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y xvfb
+      - name: Playwright launch smoke (Linux, under xvfb)
+        if: runner.os == 'Linux'
+        run: xvfb-run -a pnpm -F @hoardodile/desktop test:e2e
+      - name: Playwright launch smoke
+        if: runner.os != 'Linux'
+        run: pnpm -F @hoardodile/desktop test:e2e
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v6
+        with:
+          name: desktop-playwright-${{ matrix.os }}
+          path: |
+            apps/desktop/.playwright-desktop
+            apps/desktop/release/builder-effective-config.yaml
+          if-no-files-found: ignore
+
+  docker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+      - name: Install dependencies (web e2e on tags/dispatch)
+        run: pnpm install --frozen-lockfile
+      - name: Cache turbo build cache
+        uses: actions/cache@v6
+        with:
+          path: .turbo
+          key: turbo-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: turbo-${{ runner.os }}-
+      - name: Build (web e2e on tags/dispatch needs the plugin dists)
+        if: github.event_name != 'pull_request'
+        run: pnpm build
+      - name: Build image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          load: true
+          tags: hoardodile:ci
+          cache-from: type=gha,scope=hoardodile
+          cache-to: type=gha,mode=max,scope=hoardodile
+      - name: Compose smoke (health / SPA / migrations / persistence)
+        run: node scripts/docker-smoke.mjs --skip-build
+      - name: Boot the stack for the full e2e suite
+        if: github.event_name != 'pull_request'
+        run: docker compose --project-name hd-smoke -f compose.yaml up -d
+        env:
+          HOARDODILE_PORT: "3873"
+      - name: Install Playwright browser
+        if: github.event_name != 'pull_request'
+        run: pnpm -F @hoardodile/web exec playwright install --with-deps chromium
+      - name: Run the web e2e suite against the container
+        if: github.event_name != 'pull_request'
+        run: pnpm -F @hoardodile/web test:e2e
+        env:
+          E2E_EXTERNAL_BASE_URL: http://127.0.0.1:3873
+      - name: Tear down the stack
+        if: github.event_name != 'pull_request' && always()
+        run: docker compose --project-name hd-smoke -f compose.yaml down -v --remove-orphans
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v6
+        with:
+          name: docker-playwright
+          path: apps/web/playwright-report
+          if-no-files-found: ignore

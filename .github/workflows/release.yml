@@ -11,12 +11,10 @@ name: Release
 #   NODE_AUTH_TOKEN  npm registry token for the SDK release set
 #   (release-it itself needs a local GITHUB_TOKEN on the dev machine)
 #
-# Future platform expansions (needs the Phase B porting work, see
-# apps/desktop/README.md): add the matching runners to the desktop job
+# Future platform expansions: add the matching runners to the desktop job
 # matrix and the macOS signing/notarization secrets:
 #   - macos-latest: CSC_LINK / CSC_KEY_PASSWORD (codesign),
 #     APPLE_ID / APPLE_APP_SPECIFIC_PASSWORD / APPLE_TEAM_ID (notarization)
-#   - ubuntu-latest: no signing required (AppImage + deb, sha512 checks)
 # electron-builder then emits latest-mac.yml / latest-linux.yml per
 # platform automatically; no code change needed.
 
@@ -57,10 +55,23 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
           NPM_CONFIG_REGISTRY: https://registry.npmjs.org
 
+  # One job per release platform, all attaching to the same draft Release.
+  # Commits on a macos-14 (arm64) runner produce the mac-arm64 artifacts;
+  # macOS x64 is a future matrix entry (needs cross-arch optional-dep
+  # staging, see apps/desktop/README.md).
   desktop:
-    # Windows x64 only for v0.1; see the matrix notes above for mac/linux.
-    runs-on: windows-latest
-    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            script: package:publish
+          - os: ubuntu-latest
+            script: package:publish:linux
+          - os: macos-14
+            script: package:publish:mac
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
@@ -72,11 +83,26 @@ jobs:
         run: node scripts/check-tag-version.mjs
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+      - name: Cache turbo build cache
+        uses: actions/cache@v6
+        with:
+          path: .turbo
+          key: turbo-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: turbo-${{ runner.os }}-
       - name: Build
         run: pnpm build
+      - name: Cache electron-builder downloads
+        uses: actions/cache@v6
+        with:
+          path: .cache/electron-builder
+          key: eb-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: eb-${{ runner.os }}-
       - name: Package and publish to the GitHub Release
         # The chain runs stage-resources → electron-builder(always) →
-        # verify-package → verify-feed; publish fails if either check fails.
-        run: pnpm -F @hoardodile/desktop package:publish
+        # verify-package (natives + sandbox probe + asar guard) →
+        # verify-feed; publish fails if either check fails. Per-platform
+        # scripts pick the right --target/--platform arguments.
+        run: pnpm -F @hoardodile/desktop ${{ matrix.script }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ELECTRON_BUILDER_CACHE: ${{ github.workspace }}/.cache/electron-builder

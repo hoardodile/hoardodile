@@ -24,6 +24,10 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
+      # Lint the workflow YAML/expressions before anything else installs —
+      # a broken workflow only surfaces after a push otherwise.
+      - name: Lint workflow files
+        uses: raven-actions/actionlint@v2
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7
         with:
@@ -31,6 +35,12 @@ jobs:
           cache: pnpm
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+      - name: Cache turbo build cache
+        uses: actions/cache@v6
+        with:
+          path: .turbo
+          key: turbo-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: turbo-${{ runner.os }}-
       # BlockNote + the diff-machinery pins must never drift silently.
       - name: Guard protected dependencies
         run: node scripts/guard-protected-deps.mjs
@@ -83,6 +93,12 @@ jobs:
           cache: pnpm
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+      - name: Cache turbo build cache
+        uses: actions/cache@v6
+        with:
+          path: .turbo
+          key: turbo-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: turbo-${{ runner.os }}-
       - name: Build
         run: pnpm build
       - name: Smoke test published SDK closure
@@ -101,6 +117,12 @@ jobs:
           cache: pnpm
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+      - name: Cache turbo build cache
+        uses: actions/cache@v6
+        with:
+          path: .turbo
+          key: turbo-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: turbo-${{ runner.os }}-
       - name: Build
         run: pnpm build
       - name: Cache Playwright browsers
