@@ -2,6 +2,7 @@ import { Button } from "@hoardodile/ui/components/button"
 import { Icon } from "@hoardodile/ui/components/icon"
 import { Add } from "@hoardodile/ui/icons/actions"
 import { HamburgerMenu } from "@hoardodile/ui/icons/registry"
+import { useTranslation } from "react-i18next"
 import { ChipButton } from "./chip-button"
 import { SearchField } from "./search-field"
 
@@ -16,12 +17,12 @@ export type PanelToolbarProps = {
 	readonly onToggleUnused: () => void
 	/** Add button — opens the shared create dialog. */
 	readonly onAdd: () => void
-	/** Add button label. */
-	readonly addLabel: string
-	/** Unused chip label. */
-	readonly unusedLabel: string
-	/** Reorder chip label. */
-	readonly reorderLabel: string
+	/** Add button label — defaults to the shared "Add" copy. */
+	readonly addLabel?: string
+	/** Unused chip label — defaults to the shared "Unused" copy. */
+	readonly unusedLabel?: string
+	/** Reorder chip label — defaults to the shared "Reorder" copy. */
+	readonly reorderLabel?: string
 	/** Forwarded to the filter field's `maxLength` (e.g. the query limit). */
 	readonly maxLength?: number
 	readonly testIds?: {
@@ -55,6 +56,10 @@ export function PanelToolbar(props: PanelToolbarProps) {
 		maxLength,
 		testIds,
 	} = props
+	const { t } = useTranslation("ui", { useSuspense: false })
+	const resolvedAddLabel = addLabel ?? t("panelToolbar.add")
+	const resolvedUnusedLabel = unusedLabel ?? t("panelToolbar.unused")
+	const resolvedReorderLabel = reorderLabel ?? t("panelToolbar.reorder")
 	return (
 		<div className="flex flex-wrap items-center justify-between gap-3">
 			<SearchField
@@ -73,7 +78,7 @@ export function PanelToolbar(props: PanelToolbarProps) {
 						onClick={onToggleUnused}
 						testId={testIds?.unused}
 					>
-						{unusedLabel} · {unusedCount}
+						{resolvedUnusedLabel} · {unusedCount}
 					</ChipButton>
 				) : null}
 				<ChipButton
@@ -82,11 +87,11 @@ export function PanelToolbar(props: PanelToolbarProps) {
 					onClick={onToggleReorder}
 					testId={testIds?.reorder}
 				>
-					{reorderLabel}
+					{resolvedReorderLabel}
 				</ChipButton>
 				<Button variant="secondary" onClick={onAdd} data-testid={testIds?.add}>
 					<Icon icon={Add} />
-					{addLabel}
+					{resolvedAddLabel}
 				</Button>
 			</div>
 		</div>

@@ -24,8 +24,8 @@ const MAX_USER_PRESETS = 20
 /**
  * The app-wired {@link ColorPicker} shell from
  * `@hoardodile/ui/components/color-picker`: my-presets persistence
- * (`prefSync`), the tag-chip special-style surfaces and the localized
- * labels live here; the picker itself stays generic.
+ * (`prefSync`) and the tag-chip special-style surfaces live here; the
+ * picker's chrome copy comes from the shared `ui` catalog.
  */
 export function ColorPicker(props: ColorPickerProps) {
 	const { value, onChange, specialStyles = true, placeholder, testId } = props
@@ -77,13 +77,6 @@ export function ColorPicker(props: ColorPickerProps) {
 			}
 			placeholder={placeholder}
 			testId={testId}
-			labels={{
-				clear: t("common.colorPicker.clear"),
-				addPreset: t("common.colorPicker.addPreset"),
-				removePresetAria: (color) =>
-					t("common.colorPicker.removePresetAria", { color }),
-				customSwatch: t("common.colorPicker.customSwatch"),
-			}}
 		/>
 	)
 }

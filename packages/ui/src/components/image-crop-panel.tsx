@@ -9,21 +9,9 @@ import { toast } from "@hoardodile/ui/components/toast"
 import { Gallery, RefreshCircle, Upload } from "@hoardodile/ui/icons/registry"
 import { cn } from "@hoardodile/ui/lib/utils"
 import { useCallback, useEffect, useId, useRef, useState } from "react"
+import { useTranslation } from "react-i18next"
 import type { CroppedImage } from "./image-cropper"
 import { ImageCropper } from "./image-cropper"
-
-/** Localized chrome labels. */
-export type ImageCropPanelLabels = {
-	readonly saving: string
-	readonly remove: string
-	readonly save: string
-	readonly pickHint: string
-	readonly reselect: string
-	readonly previewLabel: string
-	readonly previewAlt: string
-	readonly showPreview: string
-	readonly saveFailed: string
-}
 
 export type ImageCropPanelProps = {
 	readonly aspect?: number
@@ -95,8 +83,6 @@ export type ImageCropPanelProps = {
 	 * is hidden and the parent only needs the final crop at form-submit time.
 	 */
 	readonly autoSaveOnCrop?: boolean
-	/** Localized chrome labels. */
-	readonly labels: ImageCropPanelLabels
 }
 
 /**
@@ -127,8 +113,8 @@ export function ImageCropPanel(props: ImageCropPanelProps) {
 		cropStageClassName,
 		hideActionButton = false,
 		autoSaveOnCrop = false,
-		labels,
 	} = props
+	const { t } = useTranslation("ui", { useSuspense: false })
 	const footerSlot = useDialogFooterActions()
 	const previewWidth = previewWidthProp ?? cropStageWidth ?? 200
 	const previewHeight = previewHeightProp ?? cropStageHeight ?? 200
@@ -154,8 +140,8 @@ export function ImageCropPanel(props: ImageCropPanelProps) {
 	const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(
 		undefined,
 	)
-	const callbacksRef = useRef({ onSave, onSaved, onSavingChange, labels })
-	callbacksRef.current = { onSave, onSaved, onSavingChange, labels }
+	const callbacksRef = useRef({ onSave, onSaved, onSavingChange, t })
+	callbacksRef.current = { onSave, onSaved, onSavingChange, t }
 
 	useEffect(
 		function syncInitialSrc() {
@@ -174,7 +160,7 @@ export function ImageCropPanel(props: ImageCropPanelProps) {
 				autoSaveTimerRef.current = setTimeout(() => {
 					render()
 						.then(async (cropped) => {
-							const { onSave, onSaved, onSavingChange, labels } =
+							const { onSave, onSaved, onSavingChange, t } =
 								callbacksRef.current
 							try {
 								setSaving(true)
@@ -184,7 +170,7 @@ export function ImageCropPanel(props: ImageCropPanelProps) {
 							} catch (err) {
 								const msg = err instanceof Error ? err.message : String(err)
 								toast.add({
-									title: msg || labels.saveFailed,
+									title: msg || t("imageCrop.saveFailed"),
 									type: "error",
 								})
 							} finally {
@@ -193,10 +179,10 @@ export function ImageCropPanel(props: ImageCropPanelProps) {
 							}
 						})
 						.catch((err) => {
-							const { labels } = callbacksRef.current
+							const { t } = callbacksRef.current
 							const msg = err instanceof Error ? err.message : String(err)
 							toast.add({
-								title: msg || labels.saveFailed,
+								title: msg || t("imageCrop.saveFailed"),
 								type: "error",
 							})
 						})
@@ -264,7 +250,7 @@ export function ImageCropPanel(props: ImageCropPanelProps) {
 		} catch (err) {
 			const msg = err instanceof Error ? err.message : String(err)
 			toast.add({
-				title: msg || labels.saveFailed,
+				title: msg || t("imageCrop.saveFailed"),
 				type: "error",
 			})
 		} finally {
@@ -284,10 +270,10 @@ export function ImageCropPanel(props: ImageCropPanelProps) {
 			data-testid="image-crop-save"
 		>
 			{saving
-				? labels.saving
+				? t("imageCrop.saving")
 				: imageSrc === undefined
-					? labels.remove
-					: labels.save}
+					? t("imageCrop.remove")
+					: t("imageCrop.save")}
 		</Button>
 	)
 
@@ -344,7 +330,7 @@ export function ImageCropPanel(props: ImageCropPanelProps) {
 								}
 							>
 								<Upload className="size-5" />
-								<p className="text-sm">{labels.pickHint}</p>
+								<p className="text-sm">{t("imageCrop.pickHint")}</p>
 							</button>
 						) : (
 							<div
@@ -361,7 +347,7 @@ export function ImageCropPanel(props: ImageCropPanelProps) {
 											}
 								}
 							>
-								{labels.pickHint}
+								{t("imageCrop.pickHint")}
 							</div>
 						)
 					) : (
@@ -413,7 +399,7 @@ export function ImageCropPanel(props: ImageCropPanelProps) {
 							className="text-muted-foreground text-xs"
 						>
 							<RefreshCircle className="mr-1 h-3.5 w-3.5" />
-							{labels.reselect}
+							{t("imageCrop.reselect")}
 						</Button>
 					) : null}
 				</div>
@@ -431,12 +417,12 @@ export function ImageCropPanel(props: ImageCropPanelProps) {
 									previewRadiusClass,
 								)}
 								data-testid="image-crop-preview"
-								title={labels.previewLabel}
+								title={t("imageCrop.previewLabel")}
 							>
 								{previewDataUrl !== undefined ? (
 									<img
 										src={previewDataUrl}
-										alt={labels.previewAlt}
+										alt={t("imageCrop.previewAlt")}
 										className="max-h-full max-w-full object-cover"
 									/>
 								) : (
@@ -460,7 +446,7 @@ export function ImageCropPanel(props: ImageCropPanelProps) {
 						htmlFor={previewToggleId}
 						className="text-muted-foreground cursor-pointer text-sm font-normal"
 					>
-						{labels.showPreview}
+						{t("imageCrop.showPreview")}
 					</Label>
 				</div>
 			) : null}

@@ -40,11 +40,7 @@
 		"searchIncludeIntro": "紹介文を検索に含める",
 		"underline": "下線",
 		"colorPicker": {
-			"clear": "色をクリア",
-			"customColor": "カスタムカラー",
-			"customSwatch": "カスタム色を選択",
-			"addPreset": "マイプリセットに追加",
-			"removePresetAria": "プリセット {{color}} を削除"
+			"customColor": "カスタムカラー"
 		}
 	},
 	"entityMeta": {
@@ -92,11 +88,7 @@
 	},
 	"font": {
 		"label": "フォント",
-		"description": "画面とリスト — ドキュメントは読み味を保ちます。",
-		"inherit": "グローバルフォントを継承",
-		"inheritedHint": "現在グローバルフォント設定を継承しています",
-		"addCustom": "フォント名を入力して Enter を押すと追加…",
-		"selected": "フォールバック順 — ドラッグで並べ替え"
+		"description": "画面とリスト — ドキュメントは読み味を保ちます。"
 	},
 	"dateTime": {
 		"description": "日付の表示形式 — 現在: {{preview}}。",
@@ -1897,14 +1889,6 @@
 		"virtual": {
 			"label": "仮想"
 		}
-	},
-	"imageCrop": {
-		"pickHint": "クリックまたはドロップ",
-		"reselect": "再アップロード",
-		"showPreview": "プレビューを表示",
-		"previewLabel": "プレビュー",
-		"previewAlt": "切り抜きプレビュー",
-		"saveFailed": "保存に失敗しました"
 	},
 	"imageEdit": {
 		"confirmDeleteTitle": "画像を削除しますか？",

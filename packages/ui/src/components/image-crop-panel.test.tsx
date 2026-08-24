@@ -1,5 +1,6 @@
-import { render, screen, waitFor, within } from "@testing-library/react"
+import { screen, waitFor, within } from "@testing-library/react"
 import { describe, expect, it, vi } from "vitest"
+import { renderWithI18n } from "../test/i18n"
 import { AppDialog } from "./app-dialog"
 import { ImageCropPanel } from "./image-crop-panel"
 
@@ -8,19 +9,8 @@ const TALL_IMAGE_SRC =
 
 describe("ImageCropPanel", () => {
 	it("constrains the image within the provided crop stage bounds", async () => {
-		render(
+		renderWithI18n(
 			<ImageCropPanel
-				labels={{
-					saving: "Saving",
-					remove: "Remove",
-					save: "Save",
-					pickHint: "Click or drop",
-					reselect: "Re-upload",
-					previewLabel: "Preview",
-					previewAlt: "Cropped preview",
-					showPreview: "Show preview",
-					saveFailed: "Save failed",
-				}}
 				initialSrc={TALL_IMAGE_SRC}
 				cropStageWidth={260}
 				cropStageHeight={500}
@@ -37,19 +27,8 @@ describe("ImageCropPanel", () => {
 	})
 
 	it("uses default bounds when crop stage dimensions are omitted", async () => {
-		render(
+		renderWithI18n(
 			<ImageCropPanel
-				labels={{
-					saving: "Saving",
-					remove: "Remove",
-					save: "Save",
-					pickHint: "Click or drop",
-					reselect: "Re-upload",
-					previewLabel: "Preview",
-					previewAlt: "Cropped preview",
-					showPreview: "Show preview",
-					saveFailed: "Save failed",
-				}}
 				initialSrc={TALL_IMAGE_SRC}
 				hideActionButton
 				onSave={vi.fn()}
@@ -64,19 +43,8 @@ describe("ImageCropPanel", () => {
 	})
 
 	it("keeps the crop stage wrapper within the effective bounds", async () => {
-		const { container } = render(
+		const { container } = renderWithI18n(
 			<ImageCropPanel
-				labels={{
-					saving: "Saving",
-					remove: "Remove",
-					save: "Save",
-					pickHint: "Click or drop",
-					reselect: "Re-upload",
-					previewLabel: "Preview",
-					previewAlt: "Cropped preview",
-					showPreview: "Show preview",
-					saveFailed: "Save failed",
-				}}
 				initialSrc={TALL_IMAGE_SRC}
 				cropStageWidth={200}
 				cropStageHeight={200}
@@ -101,19 +69,8 @@ describe("ImageCropPanel", () => {
 	})
 
 	it("does not render the live preview when hidden", async () => {
-		render(
+		renderWithI18n(
 			<ImageCropPanel
-				labels={{
-					saving: "Saving",
-					remove: "Remove",
-					save: "Save",
-					pickHint: "Click or drop",
-					reselect: "Re-upload",
-					previewLabel: "Preview",
-					previewAlt: "Cropped preview",
-					showPreview: "Show preview",
-					saveFailed: "Save failed",
-				}}
 				initialSrc={TALL_IMAGE_SRC}
 				hideActionButton
 				hidePreview
@@ -126,19 +83,8 @@ describe("ImageCropPanel", () => {
 	})
 
 	it("stretches the stage to fill its parent width when filling", async () => {
-		const { container } = render(
+		const { container } = renderWithI18n(
 			<ImageCropPanel
-				labels={{
-					saving: "Saving",
-					remove: "Remove",
-					save: "Save",
-					pickHint: "Click or drop",
-					reselect: "Re-upload",
-					previewLabel: "Preview",
-					previewAlt: "Cropped preview",
-					showPreview: "Show preview",
-					saveFailed: "Save failed",
-				}}
 				initialSrc={TALL_IMAGE_SRC}
 				cropStageWidth={13}
 				cropStageHeight={25}
@@ -161,7 +107,7 @@ describe("ImageCropPanel", () => {
 	})
 
 	it("renders the save button on the same footer row as the dialog's cancel", async () => {
-		render(
+		renderWithI18n(
 			<AppDialog
 				open
 				title="Cover"
@@ -173,17 +119,6 @@ describe("ImageCropPanel", () => {
 				}
 			>
 				<ImageCropPanel
-					labels={{
-						saving: "Saving",
-						remove: "Remove",
-						save: "Save",
-						pickHint: "Click or drop",
-						reselect: "Re-upload",
-						previewLabel: "Preview",
-						previewAlt: "Cropped preview",
-						showPreview: "Show preview",
-						saveFailed: "Save failed",
-					}}
 					initialSrc={TALL_IMAGE_SRC}
 					onSave={vi.fn()}
 				/>
@@ -206,22 +141,8 @@ describe("ImageCropPanel", () => {
 	})
 
 	it("renders the action button as an inline panel row outside a dialog", () => {
-		const { container } = render(
-			<ImageCropPanel
-				labels={{
-					saving: "Saving",
-					remove: "Remove",
-					save: "Save",
-					pickHint: "Click or drop",
-					reselect: "Re-upload",
-					previewLabel: "Preview",
-					previewAlt: "Cropped preview",
-					showPreview: "Show preview",
-					saveFailed: "Save failed",
-				}}
-				onClear={vi.fn()}
-				onSave={vi.fn()}
-			/>,
+		const { container } = renderWithI18n(
+			<ImageCropPanel onClear={vi.fn()} onSave={vi.fn()} />,
 		)
 
 		expect(screen.getByTestId("image-crop-frame")).toBeInTheDocument()
@@ -232,19 +153,8 @@ describe("ImageCropPanel", () => {
 	})
 
 	it("hides the action button when hideActionButton is set", async () => {
-		render(
+		renderWithI18n(
 			<ImageCropPanel
-				labels={{
-					saving: "Saving",
-					remove: "Remove",
-					save: "Save",
-					pickHint: "Click or drop",
-					reselect: "Re-upload",
-					previewLabel: "Preview",
-					previewAlt: "Cropped preview",
-					showPreview: "Show preview",
-					saveFailed: "Save failed",
-				}}
 				initialSrc={TALL_IMAGE_SRC}
 				hideActionButton
 				onSave={vi.fn()}

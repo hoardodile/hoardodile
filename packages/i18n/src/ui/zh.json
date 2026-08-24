@@ -47,5 +47,40 @@
 		"mobileSidebarDescription": "显示移动端侧边栏。",
 		"sidebar": "侧边栏",
 		"breadcrumb": "面包屑"
+	},
+	"dialog": {
+		"cancel": "取消"
+	},
+	"confirmByTyping": {
+		"prompt": "请输入“<name>{{name}}</name>”以确认"
+	},
+	"colorPicker": {
+		"clear": "清除颜色",
+		"addPreset": "添加到我的预设",
+		"removePresetAria": "移除预设 {{color}}",
+		"customSwatch": "选取自定义颜色"
+	},
+	"fontPicker": {
+		"inherit": "继承主字体",
+		"inheritedHint": "当前继承全局字体设置",
+		"addCustom": "按名称添加字体，回车确认…",
+		"selected": "回退顺序——拖拽调整",
+		"description": "界面与列表——文档保持其阅读音色。"
+	},
+	"imageCrop": {
+		"saving": "保存中…",
+		"remove": "移除",
+		"save": "保存",
+		"pickHint": "点击或拖入",
+		"reselect": "重新上传",
+		"previewLabel": "预览",
+		"previewAlt": "预览图片",
+		"showPreview": "显示预览",
+		"saveFailed": "保存失败"
+	},
+	"panelToolbar": {
+		"add": "添加",
+		"unused": "未使用",
+		"reorder": "排序"
 	}
 }

@@ -6,6 +6,7 @@ import type {
 } from "@hoardodile/schemas"
 import { MAX_NAME_LENGTH } from "@hoardodile/schemas"
 import { Button } from "@hoardodile/ui/components/button"
+import { ConfirmDialog } from "@hoardodile/ui/components/confirm-dialog"
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -39,7 +40,6 @@ import {
 	useState,
 } from "react"
 import { useTranslation } from "react-i18next"
-import { ConfirmDialog } from "@/components/common/ConfirmDialog"
 import {
 	createDocumentNodeMutation,
 	invalidateDocuments,

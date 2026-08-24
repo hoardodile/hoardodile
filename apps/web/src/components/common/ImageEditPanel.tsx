@@ -1,8 +1,11 @@
+import { ConfirmDialog } from "@hoardodile/ui/components/confirm-dialog"
+import {
+	ImageCropPanel,
+	type ImageCropPanelProps,
+} from "@hoardodile/ui/components/image-crop-panel"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useImageDelete } from "@/hooks/useImageDelete"
-import { ConfirmDialog } from "./ConfirmDialog"
-import { ImageCropPanel, type ImageCropPanelProps } from "./ImageCropPanel"
 
 export type ImageEditPanelProps = ImageCropPanelProps & {
 	/** DELETE endpoint URL. When omitted the remove button is hidden. */

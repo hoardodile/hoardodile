@@ -1,12 +1,12 @@
 import type { AppRouter } from "@hoardodile/server/router"
 import { Button } from "@hoardodile/ui/components/button"
+import { ConfirmByTypingDialog } from "@hoardodile/ui/components/confirm-by-typing-dialog"
 import { toast } from "@hoardodile/ui/components/toast"
 import { Check, Cross } from "@hoardodile/ui/icons/marks"
 import { TrashBinMinimalistic } from "@hoardodile/ui/icons/registry"
 import { isTRPCClientError, type TRPCClientError } from "@trpc/client"
 import { forwardRef, useCallback, useImperativeHandle, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { ConfirmByTypingDialog } from "./ConfirmByTypingDialog"
 
 export type DeleteEntityButtonHandle = Readonly<{
 	beginDelete(): void

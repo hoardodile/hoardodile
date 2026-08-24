@@ -40,11 +40,7 @@
 		"searchIncludeIntro": "搜索简介",
 		"underline": "下划线",
 		"colorPicker": {
-			"clear": "清除颜色",
-			"customColor": "自定义颜色",
-			"customSwatch": "选取自定义颜色",
-			"addPreset": "添加到我的预设",
-			"removePresetAria": "移除预设 {{color}}"
+			"customColor": "自定义颜色"
 		}
 	},
 	"entityMeta": {
@@ -92,11 +88,7 @@
 	},
 	"font": {
 		"label": "字体",
-		"description": "界面与列表——文档保持其阅读音色。",
-		"inherit": "继承主字体",
-		"inheritedHint": "当前继承全局字体设置",
-		"addCustom": "按名称添加字体，回车确认…",
-		"selected": "回退顺序——拖拽调整"
+		"description": "界面与列表——文档保持其阅读音色。"
 	},
 	"dateTime": {
 		"description": "日期如何呈现——现在：{{preview}}。",
@@ -1897,14 +1889,6 @@
 		"virtual": {
 			"label": "虚拟"
 		}
-	},
-	"imageCrop": {
-		"pickHint": "点击或拖入",
-		"reselect": "重新上传",
-		"showPreview": "显示预览",
-		"previewLabel": "预览",
-		"previewAlt": "预览图片",
-		"saveFailed": "保存失败"
 	},
 	"imageEdit": {
 		"confirmDeleteTitle": "移除图片？",

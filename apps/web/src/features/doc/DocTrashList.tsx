@@ -1,6 +1,7 @@
 import type { DocNode } from "@hoardodile/schemas"
 import { MAX_PAGE_SIZE } from "@hoardodile/schemas"
 import { Button } from "@hoardodile/ui/components/button"
+import { ConfirmByTypingDialog } from "@hoardodile/ui/components/confirm-by-typing-dialog"
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -20,7 +21,6 @@ import { useQuery } from "@tanstack/react-query"
 import { Link } from "@tanstack/react-router"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
-import { ConfirmByTypingDialog } from "@/components/common/ConfirmByTypingDialog"
 import {
 	docSearchQueryOptions,
 	hardDeleteDocumentMutation,

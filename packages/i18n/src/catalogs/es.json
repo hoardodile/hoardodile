@@ -40,11 +40,7 @@
 		"searchIncludeIntro": "Buscar en la introducción",
 		"underline": "Subrayado",
 		"colorPicker": {
-			"clear": "Quitar color",
-			"customColor": "Color personalizado",
-			"customSwatch": "Elegir un color personalizado",
-			"addPreset": "Añadir a mis preajustes",
-			"removePresetAria": "Quitar preajuste {{color}}"
+			"customColor": "Color personalizado"
 		}
 	},
 	"entityMeta": {
@@ -92,11 +88,7 @@
 	},
 	"font": {
 		"label": "Fuente",
-		"description": "Interfaz y listas; los documentos conservan su voz de lectura.",
-		"inherit": "Heredar la fuente global",
-		"inheritedHint": "Ahora estás heredando la configuración de fuente global",
-		"addCustom": "Añade una fuente por nombre y pulsa Intro…",
-		"selected": "Orden de reserva — arrastra para reordenar"
+		"description": "Interfaz y listas; los documentos conservan su voz de lectura."
 	},
 	"dateTime": {
 		"description": "Cómo se leen las fechas — ahora mismo: {{preview}}.",
@@ -1897,14 +1889,6 @@
 		"virtual": {
 			"label": "virtual"
 		}
-	},
-	"imageCrop": {
-		"pickHint": "Haz clic o suelta",
-		"reselect": "Volver a subir",
-		"showPreview": "Mostrar vista previa",
-		"previewLabel": "Vista previa",
-		"previewAlt": "Vista previa recortada",
-		"saveFailed": "Falló el guardado"
 	},
 	"imageEdit": {
 		"confirmDeleteTitle": "¿Quitar la imagen?",

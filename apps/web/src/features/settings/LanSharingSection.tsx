@@ -4,6 +4,7 @@ import type {
 	LanInfo,
 } from "@hoardodile/shared/desktop"
 import { Button } from "@hoardodile/ui/components/button"
+import { ConfirmDialog } from "@hoardodile/ui/components/confirm-dialog"
 import { Icon } from "@hoardodile/ui/components/icon"
 import { Input } from "@hoardodile/ui/components/input"
 import { Spinner } from "@hoardodile/ui/components/spinner"
@@ -18,7 +19,6 @@ import {
 import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import QRCode from "react-qr-code"
-import { ConfirmDialog } from "@/components/common/ConfirmDialog"
 import { getDesktopBridge } from "@/lib/desktop"
 import { SettingsSection } from "./SettingsSection"
 import { SectionDivider } from "./SettingsSheet"

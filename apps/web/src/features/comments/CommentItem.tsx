@@ -1,5 +1,6 @@
 import type { Comment, CommentVote } from "@hoardodile/schemas"
 import { Badge } from "@hoardodile/ui/components/badge"
+import { ConfirmDialog } from "@hoardodile/ui/components/confirm-dialog"
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -21,7 +22,6 @@ import { cn } from "@hoardodile/ui/lib/utils"
 import { useQuery } from "@tanstack/react-query"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
-import { ConfirmDialog } from "@/components/common/ConfirmDialog"
 import { CharChipsPicker } from "@/features/char/components/CharChipsPicker"
 import {
 	addCommentVoteMutation,

@@ -1,18 +1,8 @@
 import { Cross } from "@hoardodile/ui/icons/marks"
 import { Bookmark, Palette } from "@hoardodile/ui/icons/registry"
 import { cn } from "@hoardodile/ui/lib/utils"
-import type { ReactNode } from "react"
-
-export type ColorPickerLabels = {
-	/** Aria label for the value pill's clear button. */
-	readonly clear: string
-	/** Aria label for the pin-to-presets bookmark. */
-	readonly addPreset: string
-	/** Aria label for a user preset's remove button. */
-	readonly removePresetAria: (color: string) => string
-	/** Aria/title for the custom swatch (the OS picker input). */
-	readonly customSwatch: string
-}
+import { type ReactNode } from "react"
+import { useTranslation } from "react-i18next"
 
 export type ColorPickerProps = {
 	readonly value: string
@@ -35,8 +25,6 @@ export type ColorPickerProps = {
 	) => ReactNode
 	readonly placeholder?: string
 	readonly testId?: string
-	/** Localized chrome labels. */
-	readonly labels: ColorPickerLabels
 }
 
 /**
@@ -59,8 +47,8 @@ export function ColorPicker(props: ColorPickerProps) {
 		renderSpecialStyle,
 		placeholder,
 		testId,
-		labels,
 	} = props
+	const { t } = useTranslation("ui", { useSuspense: false })
 
 	const hasColor = value !== ""
 	const isSpecial = specialStyles.includes(value)
@@ -99,7 +87,7 @@ export function ColorPicker(props: ColorPickerProps) {
 						<button
 							type="button"
 							onClick={() => onChange("")}
-							aria-label={labels.clear}
+							aria-label={t("colorPicker.clear")}
 							className="flex size-5 shrink-0 cursor-pointer items-center justify-center rounded-sm border-0 bg-transparent p-0 text-muted-foreground hover:text-foreground"
 							data-testid={testId !== undefined ? `${testId}-clear` : undefined}
 						>
@@ -111,7 +99,7 @@ export function ColorPicker(props: ColorPickerProps) {
 					<button
 						type="button"
 						onClick={onAddPreset}
-						aria-label={labels.addPreset}
+						aria-label={t("colorPicker.addPreset")}
 						className="flex size-5 shrink-0 cursor-pointer items-center justify-center rounded-sm border-0 bg-transparent p-0 text-muted-foreground hover:bg-muted hover:text-foreground"
 						data-testid={
 							testId !== undefined ? `${testId}-add-preset` : undefined
@@ -149,7 +137,7 @@ export function ColorPicker(props: ColorPickerProps) {
 							<button
 								type="button"
 								onClick={() => onRemovePreset(index)}
-								aria-label={labels.removePresetAria(color)}
+								aria-label={t("colorPicker.removePresetAria", { color })}
 								className={cn(
 									"absolute -top-1 -right-1 flex size-3.5 cursor-pointer items-center justify-center rounded-full border border-border bg-background p-0 text-muted-foreground hover:text-foreground",
 									index === userPresets.length - 1
@@ -166,7 +154,7 @@ export function ColorPicker(props: ColorPickerProps) {
 				    filled; the real color input underneath opens the OS
 				    picker. */}
 				<span
-					title={labels.customSwatch}
+					title={t("colorPicker.customSwatch")}
 					className={cn(
 						"relative ml-2 flex size-5 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-full",
 						isCustom ? "" : "border border-dashed border-border-strong",
@@ -181,7 +169,7 @@ export function ColorPicker(props: ColorPickerProps) {
 						className="absolute inset-0 cursor-pointer opacity-0"
 						data-testid={testId !== undefined ? `${testId}-input` : undefined}
 						title={placeholder}
-						aria-label={labels.customSwatch}
+						aria-label={t("colorPicker.customSwatch")}
 					/>
 				</span>
 			</span>

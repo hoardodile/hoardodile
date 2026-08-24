@@ -47,5 +47,40 @@
 		"mobileSidebarDescription": "Muestra la barra lateral móvil.",
 		"sidebar": "Barra lateral",
 		"breadcrumb": "Migaja de pan"
+	},
+	"dialog": {
+		"cancel": "Cancelar"
+	},
+	"confirmByTyping": {
+		"prompt": "Escribe «<name>{{name}}</name>» para confirmar"
+	},
+	"colorPicker": {
+		"clear": "Quitar color",
+		"addPreset": "Añadir a mis preajustes",
+		"removePresetAria": "Quitar preajuste {{color}}",
+		"customSwatch": "Elegir un color personalizado"
+	},
+	"fontPicker": {
+		"inherit": "Heredar la fuente global",
+		"inheritedHint": "Ahora estás heredando la configuración de fuente global",
+		"addCustom": "Añade una fuente por nombre y pulsa Intro…",
+		"selected": "Orden de reserva — arrastra para reordenar",
+		"description": "Interfaz y listas; los documentos conservan su voz de lectura."
+	},
+	"imageCrop": {
+		"saving": "Guardando…",
+		"remove": "Quitar",
+		"save": "Guardar",
+		"pickHint": "Haz clic o suelta",
+		"reselect": "Volver a subir",
+		"previewLabel": "Vista previa",
+		"previewAlt": "Vista previa recortada",
+		"showPreview": "Mostrar vista previa",
+		"saveFailed": "Falló el guardado"
+	},
+	"panelToolbar": {
+		"add": "Añadir",
+		"unused": "Sin usar",
+		"reorder": "Reordenar"
 	}
 }

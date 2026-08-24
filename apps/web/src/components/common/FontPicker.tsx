@@ -31,8 +31,8 @@ export type FontPickerProps = {
 /**
  * The app-wired {@link FontPicker} shell from
  * `@hoardodile/ui/components/font-picker`: the font registry (presets,
- * system/extra tags, CSS loading) and the localized labels live here;
- * the picker itself stays generic.
+ * system/extra tags, CSS loading) lives here; the picker's chrome copy
+ * comes from the shared `ui` catalog.
  */
 export function FontPicker(props: FontPickerProps) {
 	const { t } = useTranslation()
@@ -161,13 +161,6 @@ export function FontPicker(props: FontPickerProps) {
 			previewFamily={buildFontFamily(value)}
 			data-testid={testId}
 			aria-label={ariaLabel}
-			labels={{
-				inherit: t("font.inherit"),
-				inheritedHint: t("font.inheritedHint"),
-				addCustom: t("font.addCustom"),
-				selected: t("font.selected"),
-				description: t("font.description"),
-			}}
 		/>
 	)
 }

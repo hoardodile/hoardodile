@@ -1,4 +1,5 @@
 import type { ResCard as ResCardData } from "@hoardodile/schemas"
+import { ConfirmByTypingDialog } from "@hoardodile/ui/components/confirm-by-typing-dialog"
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -27,7 +28,6 @@ import { type QueryClient, useQueryClient } from "@tanstack/react-query"
 import { Link } from "@tanstack/react-router"
 import { useCallback, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { ConfirmByTypingDialog } from "@/components/common/ConfirmByTypingDialog"
 import { ResCollectionsDialog } from "@/features/col/ResColsDialog"
 import { useSaveMutation } from "@/hooks/useSaveMutation"
 import { useToastMutation } from "@/hooks/useToastMutation"

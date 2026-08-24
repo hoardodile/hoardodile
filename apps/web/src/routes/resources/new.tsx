@@ -18,6 +18,7 @@ import {
 	FormLabel,
 	FormMessage,
 } from "@hoardodile/ui/components/form"
+import { ImageCropPanel } from "@hoardodile/ui/components/image-crop-panel"
 import type { CroppedImage } from "@hoardodile/ui/components/image-cropper"
 import { Input } from "@hoardodile/ui/components/input"
 import { Label } from "@hoardodile/ui/components/label"
@@ -39,7 +40,6 @@ import { useForm } from "react-hook-form"
 import { useTranslation } from "react-i18next"
 import { z } from "zod"
 import { DualTagPicker } from "@/components/common/DualTagPicker"
-import { ImageCropPanel } from "@/components/common/ImageCropPanel"
 import { CharChipsPicker } from "@/features/char"
 import {
 	attachResourceToCollectionMutation,

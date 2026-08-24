@@ -1,6 +1,6 @@
+import { ConfirmByTypingDialog } from "@hoardodile/ui/components/confirm-by-typing-dialog"
 import { Eraser } from "@hoardodile/ui/icons/registry"
 import { useTranslation } from "react-i18next"
-import { ConfirmByTypingDialog } from "@/components/common/ConfirmByTypingDialog"
 import { useConfirmDialog } from "@/components/common/useConfirmDialog"
 import { DangerRow } from "@/features/settings/DangerRow"
 import { clearAllTraceMutation, traceKeys } from "@/features/trace/api"

@@ -1,9 +1,9 @@
 import { Button } from "@hoardodile/ui/components/button"
+import { ConfirmDialog } from "@hoardodile/ui/components/confirm-dialog"
 import { BranchingPathsUp, DangerTriangle } from "@hoardodile/ui/icons/registry"
 import { cn } from "@hoardodile/ui/lib/utils"
 import { memo, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { ConfirmDialog } from "@/components/common/ConfirmDialog"
 import { useDateFormatter } from "@/features/settings/datePrefs"
 
 export type ConflictBannerProps = {

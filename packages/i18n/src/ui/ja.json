@@ -47,5 +47,40 @@
 		"mobileSidebarDescription": "モバイルサイドバーを表示します。",
 		"sidebar": "サイドバー",
 		"breadcrumb": "パンくず"
+	},
+	"dialog": {
+		"cancel": "キャンセル"
+	},
+	"confirmByTyping": {
+		"prompt": "確認するには「<name>{{name}}</name>」と入力してください"
+	},
+	"colorPicker": {
+		"clear": "色をクリア",
+		"addPreset": "マイプリセットに追加",
+		"removePresetAria": "プリセット {{color}} を削除",
+		"customSwatch": "カスタム色を選択"
+	},
+	"fontPicker": {
+		"inherit": "グローバルフォントを継承",
+		"inheritedHint": "現在グローバルフォント設定を継承しています",
+		"addCustom": "フォント名を入力して Enter を押すと追加…",
+		"selected": "フォールバック順 — ドラッグで並べ替え",
+		"description": "画面とリスト — ドキュメントは読み味を保ちます。"
+	},
+	"imageCrop": {
+		"saving": "保存中…",
+		"remove": "削除",
+		"save": "保存",
+		"pickHint": "クリックまたはドロップ",
+		"reselect": "再アップロード",
+		"previewLabel": "プレビュー",
+		"previewAlt": "切り抜きプレビュー",
+		"showPreview": "プレビューを表示",
+		"saveFailed": "保存に失敗しました"
+	},
+	"panelToolbar": {
+		"add": "追加",
+		"unused": "未使用",
+		"reorder": "並べ替え"
 	}
 }

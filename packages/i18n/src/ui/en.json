@@ -47,5 +47,40 @@
 		"mobileSidebarDescription": "Displays the mobile sidebar.",
 		"sidebar": "Sidebar",
 		"breadcrumb": "breadcrumb"
+	},
+	"dialog": {
+		"cancel": "Cancel"
+	},
+	"confirmByTyping": {
+		"prompt": "Type \"<name>{{name}}</name>\" to confirm"
+	},
+	"colorPicker": {
+		"clear": "Clear color",
+		"addPreset": "Add to my presets",
+		"removePresetAria": "Remove preset {{color}}",
+		"customSwatch": "Pick a custom color"
+	},
+	"fontPicker": {
+		"inherit": "Inherit global font",
+		"inheritedHint": "Currently inheriting the global font setting",
+		"addCustom": "Add a font by name, press Enter…",
+		"selected": "Fallback order — drag to rearrange",
+		"description": "Chrome and lists — documents keep their reading voice."
+	},
+	"imageCrop": {
+		"saving": "Saving…",
+		"remove": "Remove",
+		"save": "Save",
+		"pickHint": "Click or drop",
+		"reselect": "Re-upload",
+		"previewLabel": "Preview",
+		"previewAlt": "Cropped preview",
+		"showPreview": "Show preview",
+		"saveFailed": "Save failed"
+	},
+	"panelToolbar": {
+		"add": "Add",
+		"unused": "Unused",
+		"reorder": "Reorder"
 	}
 }

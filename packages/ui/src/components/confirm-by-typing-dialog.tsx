@@ -1,7 +1,8 @@
 import { AppDialog } from "@hoardodile/ui/components/app-dialog"
 import { Button } from "@hoardodile/ui/components/button"
 import { Input } from "@hoardodile/ui/components/input"
-import type { ReactNode } from "react"
+import { type ReactNode } from "react"
+import { Trans, useTranslation } from "react-i18next"
 
 export type ConfirmByTypingDialogProps = Readonly<{
 	open: boolean
@@ -10,6 +11,10 @@ export type ConfirmByTypingDialogProps = Readonly<{
 	description: string
 	/** Exact string the user must type to enable the confirm button. */
 	expectedInput: string
+	/**
+	 * The target name rendered in bold inside the one-line confirm prompt.
+	 */
+	targetName: string
 	confirmLabel: string
 	pendingLabel: string
 	pending: boolean
@@ -21,11 +26,12 @@ export type ConfirmByTypingDialogProps = Readonly<{
 	onConfirm(): void
 	/**
 	 * The one-line confirm prompt (rendered below the description) —
-	 * "Type <name>…</name> to confirm" with the target name bolded.
+	 * defaults to the shared "Type <name>…</name> to confirm" copy with
+	 * the target name bolded.
 	 */
-	prompt: ReactNode
-	/** Cancel button label. */
-	cancelLabel: ReactNode
+	prompt?: ReactNode
+	/** Cancel button label — defaults to the shared "Cancel" copy. */
+	cancelLabel?: ReactNode
 	inputTestId?: string
 	confirmTestId?: string
 	/** Forwarded to the dialog content (e.g. theme scope classes). */
@@ -55,12 +61,14 @@ export function ConfirmByTypingDialog(props: ConfirmByTypingDialogProps) {
 		typed,
 		onTypedChange,
 		onConfirm,
+		targetName,
 		prompt,
 		cancelLabel,
 		inputTestId,
 		confirmTestId,
 		contentClassName,
 	} = props
+	const { t } = useTranslation("ui", { useSuspense: false })
 	const canConfirm = !pending && typed === expectedInput
 	function handleOpenChange(next: boolean) {
 		if (pending && !next) return
@@ -81,7 +89,7 @@ export function ConfirmByTypingDialog(props: ConfirmByTypingDialogProps) {
 						onClick={() => onOpenChange(false)}
 						disabled={pending}
 					>
-						{cancelLabel}
+						{cancelLabel ?? t("dialog.cancel")}
 					</Button>
 					<Button
 						variant={destructive ? "destructive" : "default"}
@@ -95,7 +103,20 @@ export function ConfirmByTypingDialog(props: ConfirmByTypingDialogProps) {
 			}
 		>
 			<div className="flex flex-col gap-1.5">
-				<span className="text-xs text-muted-foreground">{prompt}</span>
+				<span className="text-xs text-muted-foreground">
+					{prompt ?? (
+						<Trans
+							ns="ui"
+							i18nKey="confirmByTyping.prompt"
+							values={{ name: targetName }}
+							components={{
+								name: (
+									<span className="font-semibold text-foreground" />
+								),
+							}}
+						/>
+					)}
+				</span>
 				<Input
 					autoFocus
 					value={typed}

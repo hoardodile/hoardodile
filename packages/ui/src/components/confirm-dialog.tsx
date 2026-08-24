@@ -1,6 +1,7 @@
 import { AppDialog } from "@hoardodile/ui/components/app-dialog"
 import { Button } from "@hoardodile/ui/components/button"
-import type { ReactNode } from "react"
+import { type ReactNode } from "react"
+import { useTranslation } from "react-i18next"
 
 export type ConfirmDialogProps = Readonly<{
 	open: boolean
@@ -10,8 +11,8 @@ export type ConfirmDialogProps = Readonly<{
 	body?: ReactNode
 	confirmLabel: ReactNode
 	pendingLabel?: ReactNode
-	/** Cancel button label. */
-	cancelLabel: ReactNode
+	/** Cancel button label; defaults to the shared "Cancel" copy. */
+	cancelLabel?: ReactNode
 	isPending: boolean
 	destructive?: boolean
 	confirmDisabled?: boolean
@@ -53,6 +54,7 @@ export function ConfirmDialog(props: ConfirmDialogProps) {
 		suppressAutoFocus,
 		lockWhilePending = true,
 	} = props
+	const { t } = useTranslation("ui", { useSuspense: false })
 	function handleOpenChange(next: boolean) {
 		if (lockWhilePending && isPending && !next) return
 		onOpenChange(next)
@@ -65,7 +67,7 @@ export function ConfirmDialog(props: ConfirmDialogProps) {
 				disabled={isPending}
 				data-testid={cancelTestId}
 			>
-				{cancelLabel}
+				{cancelLabel ?? t("dialog.cancel")}
 			</Button>
 			<Button
 				variant={destructive ? "destructive" : "default"}

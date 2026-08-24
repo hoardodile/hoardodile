@@ -47,5 +47,40 @@
 		"mobileSidebarDescription": "Zeigt die mobile Seitenleiste.",
 		"sidebar": "Seitenleiste",
 		"breadcrumb": "Breadcrumb"
+	},
+	"dialog": {
+		"cancel": "Abbrechen"
+	},
+	"confirmByTyping": {
+		"prompt": "Tippe „<name>{{name}}</name>“ ein, um zu bestätigen"
+	},
+	"colorPicker": {
+		"clear": "Farbe entfernen",
+		"addPreset": "Zu meinen Presets hinzufügen",
+		"removePresetAria": "Preset {{color}} entfernen",
+		"customSwatch": "Benutzerdefinierte Farbe wählen"
+	},
+	"fontPicker": {
+		"inherit": "Globale Schriftart übernehmen",
+		"inheritedHint": "Übernimmt derzeit die globale Schriftarteinstellung",
+		"addCustom": "Schriftart per Name hinzufügen, Eingabetaste drücken…",
+		"selected": "Fallback-Reihenfolge — zum Sortieren ziehen",
+		"description": "Oberfläche und Listen — Dokumente behalten ihre Lesestimme."
+	},
+	"imageCrop": {
+		"saving": "Speichern…",
+		"remove": "Entfernen",
+		"save": "Speichern",
+		"pickHint": "Klicken oder ablegen",
+		"reselect": "Erneut hochladen",
+		"previewLabel": "Vorschau",
+		"previewAlt": "Zugeschnittene Vorschau",
+		"showPreview": "Vorschau anzeigen",
+		"saveFailed": "Speichern fehlgeschlagen"
+	},
+	"panelToolbar": {
+		"add": "Hinzufügen",
+		"unused": "Ungenutzt",
+		"reorder": "Neu ordnen"
 	}
 }

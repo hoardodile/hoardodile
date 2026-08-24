@@ -5,6 +5,7 @@ import type {
 } from "@hoardodile/schemas"
 import { MAX_NAME_LENGTH } from "@hoardodile/schemas"
 import { Button } from "@hoardodile/ui/components/button"
+import { ConfirmDialog } from "@hoardodile/ui/components/confirm-dialog"
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -36,7 +37,6 @@ import {
 } from "react"
 import { useTranslation } from "react-i18next"
 import { AddGridPill } from "@/components/common/AddGridPill"
-import { ConfirmDialog } from "@/components/common/ConfirmDialog"
 import { useConfirmDialog } from "@/components/common/useConfirmDialog"
 import { TagChip } from "@/features/tags/TagChip"
 import { TagChipLink } from "@/features/tags/TagChipLink"

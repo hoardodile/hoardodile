@@ -2,6 +2,7 @@ import type { Character, CharCard as CharCardData } from "@hoardodile/schemas"
 import { AppDialog } from "@hoardodile/ui/components/app-dialog"
 import { Button } from "@hoardodile/ui/components/button"
 import { Checkbox } from "@hoardodile/ui/components/checkbox"
+import { ConfirmByTypingDialog } from "@hoardodile/ui/components/confirm-by-typing-dialog"
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -30,7 +31,6 @@ import { useQueryClient } from "@tanstack/react-query"
 import { Link } from "@tanstack/react-router"
 import { memo, type ReactElement, useCallback, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { ConfirmByTypingDialog } from "@/components/common/ConfirmByTypingDialog"
 import { DualTagPicker } from "@/components/common/DualTagPicker"
 import { SelectionDiffPanel } from "@/components/common/SelectionDiffPanel"
 import { useDateFormatter } from "@/features/settings/datePrefs"

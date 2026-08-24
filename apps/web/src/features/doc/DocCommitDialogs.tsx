@@ -1,11 +1,11 @@
 import { MAX_COMMIT_MESSAGE_LENGTH } from "@hoardodile/schemas"
 import { AppDialog } from "@hoardodile/ui/components/app-dialog"
 import { Button } from "@hoardodile/ui/components/button"
+import { ConfirmDialog } from "@hoardodile/ui/components/confirm-dialog"
 import { Textarea } from "@hoardodile/ui/components/textarea"
 import { PenNewRound, UndoRightRound } from "@hoardodile/ui/icons/registry"
 import { cn } from "@hoardodile/ui/lib/utils"
 import { useTranslation } from "react-i18next"
-import { ConfirmDialog } from "@/components/common/ConfirmDialog"
 import { useDocTheme } from "@/features/doc/hooks/useDocPrefs"
 
 type CommitDialogProps = Readonly<{

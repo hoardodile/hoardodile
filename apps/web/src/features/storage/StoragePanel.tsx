@@ -1,4 +1,5 @@
 import { Button } from "@hoardodile/ui/components/button"
+import { ConfirmDialog } from "@hoardodile/ui/components/confirm-dialog"
 import { Icon } from "@hoardodile/ui/components/icon"
 import { MetaChip } from "@hoardodile/ui/components/meta-chip"
 import { Progress } from "@hoardodile/ui/components/progress"
@@ -20,7 +21,6 @@ import {
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { type ReactNode, useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { ConfirmDialog } from "@/components/common/ConfirmDialog"
 import { charKeys } from "@/features/char"
 import { resKeys } from "@/features/res"
 import { resListCardsQueryOptions } from "@/features/res/api"

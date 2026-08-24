@@ -21,14 +21,7 @@ import { Cross } from "@hoardodile/ui/icons/marks"
 import { SortVertical } from "@hoardodile/ui/icons/registry"
 import { cn } from "@hoardodile/ui/lib/utils"
 import { type ReactNode, useState } from "react"
-
-export type FontPickerLabels = {
-	readonly inherit: string
-	readonly inheritedHint: string
-	readonly addCustom: string
-	readonly selected: string
-	readonly description: string
-}
+import { useTranslation } from "react-i18next"
 
 export type FontPickerProps = {
 	readonly value: readonly string[]
@@ -58,8 +51,6 @@ export type FontPickerProps = {
 	readonly previewFamily?: string
 	readonly "data-testid"?: string
 	readonly "aria-label"?: string
-	/** Localized chrome labels. */
-	readonly labels: FontPickerLabels
 }
 
 /**
@@ -83,8 +74,8 @@ export function FontPicker(props: FontPickerProps) {
 		previewFamily,
 		"data-testid": testId,
 		"aria-label": ariaLabel,
-		labels,
 	} = props
+	const { t } = useTranslation("ui", { useSuspense: false })
 
 	const [customInput, setCustomInput] = useState("")
 
@@ -130,15 +121,15 @@ export function FontPicker(props: FontPickerProps) {
 					<Switch
 						checked={inherit}
 						onCheckedChange={onInheritChange}
-						aria-label={labels.inherit}
+						aria-label={t("fontPicker.inherit")}
 					/>
-					<span className="text-sm">{labels.inherit}</span>
+					<span className="text-sm">{t("fontPicker.inherit")}</span>
 				</div>
 			)}
 
 			{inherit && (
 				<p className="text-xs text-muted-foreground">
-					{labels.inheritedHint}
+					{t("fontPicker.inheritedHint")}
 					{inheritedFonts !== undefined && inheritedFonts.length > 0 && (
 						<span className="ml-1" style={{ fontFamily: inheritedFamily }}>
 							({inheritedFonts.join(" → ")})
@@ -156,14 +147,14 @@ export function FontPicker(props: FontPickerProps) {
 				value={customInput}
 				onChange={(e) => setCustomInput(e.target.value)}
 				onKeyDown={handleCustomKeyDown}
-				placeholder={labels.addCustom}
-				aria-label={ariaLabel ?? labels.addCustom}
+				placeholder={t("fontPicker.addCustom")}
+				aria-label={ariaLabel ?? t("fontPicker.addCustom")}
 			/>
 
 			{/* Selected font chips with drag sorting */}
 			{value.length > 0 && (
 				<div className="flex flex-col gap-2">
-					<p className="text-xs text-muted-foreground">{labels.selected}</p>
+					<p className="text-xs text-muted-foreground">{t("fontPicker.selected")}</p>
 					<DndContext
 						sensors={sensors}
 						collisionDetection={closestCenter}
@@ -196,7 +187,7 @@ export function FontPicker(props: FontPickerProps) {
 					className="text-lg text-foreground"
 					style={{ fontFamily: previewFamily }}
 				>
-					{labels.description}
+					{t("fontPicker.description")}
 				</div>
 				{value.length > 0 && (
 					<div className="mt-2 text-tiny text-muted-foreground">

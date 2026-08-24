@@ -1,5 +1,7 @@
+import { MAX_SEARCH_QUERY_LENGTH } from "@hoardodile/schemas"
 import { ManagementEmpty } from "@hoardodile/ui/components/management-empty"
 import { ManagementSkeleton } from "@hoardodile/ui/components/management-skeleton"
+import { PanelToolbar } from "@hoardodile/ui/components/panel-toolbar"
 import { SortableChipList } from "@hoardodile/ui/components/sortable-chip-list"
 import { Pin } from "@hoardodile/ui/icons/registry"
 import { useQuery } from "@tanstack/react-query"
@@ -12,7 +14,6 @@ import {
 import { EntityCard, Meta } from "@/components/common/EntityCard"
 import { EntityMetaEditDialog } from "@/components/common/EntityMetaEditDialog"
 import { matchesNameQuery } from "@/components/common/entityFilter"
-import { PanelToolbar } from "@/components/common/PanelToolbar"
 import { TagChip } from "@/features/tags/TagChip"
 import { useDeleteMutation } from "@/hooks/useDeleteMutation"
 import { useReorderMutation } from "@/hooks/useReorderMutation"
@@ -66,6 +67,7 @@ export function RelationshipTypeManagerPanel() {
 				placeholder={t("relationshipTypes.panel.filterPlaceholder")}
 				query={query}
 				onQuery={setQuery}
+				maxLength={MAX_SEARCH_QUERY_LENGTH}
 				reorder={reorderMode}
 				onToggleReorder={() => setReorderMode((value) => !value)}
 				unusedCount={unusedCount}

@@ -1,6 +1,7 @@
 import { useSortable } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
 import type { Category, CatKind } from "@hoardodile/schemas"
+import { MAX_SEARCH_QUERY_LENGTH } from "@hoardodile/schemas"
 import { Button } from "@hoardodile/ui/components/button"
 import {
 	DropdownMenuItem,
@@ -9,6 +10,7 @@ import {
 import { DropdownSelect } from "@hoardodile/ui/components/dropdown-select"
 import { Icon } from "@hoardodile/ui/components/icon"
 import { ManagementEmpty } from "@hoardodile/ui/components/management-empty"
+import { PanelToolbar } from "@hoardodile/ui/components/panel-toolbar"
 import { PillTabs } from "@hoardodile/ui/components/pill-tabs"
 import { Skeleton } from "@hoardodile/ui/components/skeleton"
 import { SortableChipList } from "@hoardodile/ui/components/sortable-chip-list"
@@ -35,7 +37,6 @@ import {
 import { EntityCard, Meta } from "@/components/common/EntityCard"
 import { EntityMetaEditDialog } from "@/components/common/EntityMetaEditDialog"
 import { matchesNameQuery } from "@/components/common/entityFilter"
-import { PanelToolbar } from "@/components/common/PanelToolbar"
 import {
 	catListWithCountsQueryOptions,
 	createCategoryMutation,
@@ -278,6 +279,7 @@ export function CatsAndTagsPanel() {
 							})}
 							query={tagSearchQuery}
 							onQuery={setTagSearchQuery}
+							maxLength={MAX_SEARCH_QUERY_LENGTH}
 							reorder={reorderMode}
 							onToggleReorder={() => setReorderMode((value) => !value)}
 							unusedCount={unusedCount}

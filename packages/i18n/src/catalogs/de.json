@@ -40,11 +40,7 @@
 		"searchIncludeIntro": "Einführung durchsuchen",
 		"underline": "Unterstreichen",
 		"colorPicker": {
-			"clear": "Farbe entfernen",
-			"customColor": "Benutzerdefinierte Farbe",
-			"customSwatch": "Benutzerdefinierte Farbe wählen",
-			"addPreset": "Zu meinen Presets hinzufügen",
-			"removePresetAria": "Preset {{color}} entfernen"
+			"customColor": "Benutzerdefinierte Farbe"
 		}
 	},
 	"entityMeta": {
@@ -92,11 +88,7 @@
 	},
 	"font": {
 		"label": "Schriftart",
-		"description": "Oberfläche und Listen — Dokumente behalten ihre Lesestimme.",
-		"inherit": "Globale Schriftart übernehmen",
-		"inheritedHint": "Übernimmt derzeit die globale Schriftarteinstellung",
-		"addCustom": "Schriftart per Name hinzufügen, Eingabetaste drücken…",
-		"selected": "Fallback-Reihenfolge — zum Sortieren ziehen"
+		"description": "Oberfläche und Listen — Dokumente behalten ihre Lesestimme."
 	},
 	"dateTime": {
 		"description": "Wie Datumsangaben gelesen werden — gerade jetzt: {{preview}}.",
@@ -1897,14 +1889,6 @@
 		"virtual": {
 			"label": "virtuell"
 		}
-	},
-	"imageCrop": {
-		"pickHint": "Klicken oder ablegen",
-		"reselect": "Erneut hochladen",
-		"showPreview": "Vorschau anzeigen",
-		"previewLabel": "Vorschau",
-		"previewAlt": "Zugeschnittene Vorschau",
-		"saveFailed": "Speichern fehlgeschlagen"
 	},
 	"imageEdit": {
 		"confirmDeleteTitle": "Bild entfernen?",

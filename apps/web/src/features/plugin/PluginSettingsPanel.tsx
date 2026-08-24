@@ -18,6 +18,7 @@ import { CSS } from "@dnd-kit/utilities"
 import type { PluginManifest, PluginPermissions } from "@hoardodile/sdk-types"
 import { AppDialog } from "@hoardodile/ui/components/app-dialog"
 import { Button } from "@hoardodile/ui/components/button"
+import { ConfirmDialog } from "@hoardodile/ui/components/confirm-dialog"
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -75,7 +76,6 @@ import {
 } from "react"
 import { useTranslation } from "react-i18next"
 import { ColorPicker } from "@/components/common/ColorPicker"
-import { ConfirmDialog } from "@/components/common/ConfirmDialog"
 import { SearchField } from "@/components/common/SearchField"
 import { useConfirmDialog } from "@/components/common/useConfirmDialog"
 import {
