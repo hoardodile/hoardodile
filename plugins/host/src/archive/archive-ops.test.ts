@@ -590,6 +590,21 @@ describe("normalizeExtractedTree", () => {
 		expect(await readFile(join(dest, "caf\u00e9.jpg"), "utf8")).toBe("x")
 	})
 
+	test("renames 7-Zip escape-plane legacy names to the decoded listing name", async () => {
+		const root = tempRoot()
+		const dest = join(root, "out")
+		await mkdir(dest, { recursive: true })
+		// 7-Zip represents a legacy byte b it cannot show as UTF-8 with
+		// the escape-plane character U+EF00+b; some platform builds write
+		// that character verbatim as the file name instead of the raw byte.
+		await writeFile(join(dest, "caf\uef82.jpg"), "x")
+		await normalizeExtractedTree(dest, {
+			legacyZipNames: true,
+			expectedNames: ["café.jpg"],
+		})
+		expect(await readFile(join(dest, "caf\u00e9.jpg"), "utf8")).toBe("x")
+	})
+
 	test("leaves a literal %XX name the listing never decoded alone", async () => {
 		const root = tempRoot()
 		const dest = join(root, "out")

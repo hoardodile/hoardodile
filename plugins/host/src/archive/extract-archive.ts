@@ -10,7 +10,11 @@ import {
 	listSevenZipEntries,
 	resolveSevenZipPath,
 } from "./7z.ts"
-import { assertExtractedTree, normalizeExtractedTree } from "./extract.ts"
+import {
+	assertExtractedTree,
+	decodeZipNames,
+	normalizeExtractedTree,
+} from "./extract.ts"
 import {
 	type ContainerFormat,
 	SNIFF_WINDOW_BYTES,
@@ -215,28 +219,38 @@ export function createArchiveExtractor(
 					{ archiveName },
 				)
 			}
+			// 7-Zip's text listing drops invalid-UTF-8 bytes on POSIX, so
+			// for zip archives the decoded names come from the archive
+			// itself (yauzl): the manifest, the probes and the legacy-name
+			// renames below all agree on them.
+			const decoded =
+				format === "zip"
+					? await decodeZipNames(
+							tempPath,
+							files.map((e) => ({ name: e.name, sizeBytes: e.sizeBytes })),
+						)
+					: undefined
+			const materialized = decoded?.files ?? files
 			// Pre-validate every path from the listing â€” 7-Zip itself
 			// warns-and-skips unsafe names instead of failing.
-			for (const entry of files) sanitizeExtractPath(entry.name)
+			for (const entry of materialized) sanitizeExtractPath(entry.name)
 			const root = join(deps.cacheDir, archiveName)
 			await mkdir(root, { recursive: true })
 			await extractSevenZipInto(tempPath, root)
 			// 7-Zip writes legacy zip names verbatim on POSIX and restores
 			// mode bits that can strip app access; fix both before the tree
 			// is re-walked (symlink scan) or read for the manifest below.
-			// The listing's decoded names are the ground truth the legacy
-			// rename pass matches against — on macOS the raw bytes land
-			// `%XX`-escaped, and the manifest below must serve the decoded
-			// paths (see `renameLegacyZipNames` in extract.ts).
+			// The decoded names are the ground truth the legacy rename pass
+			// matches against (see `renameLegacyZipNames` in extract.ts).
 			await normalizeExtractedTree(root, {
 				legacyZipNames: format === "zip",
-				expectedNames: entries.map((e) => e.name),
+				expectedNames: decoded?.paths,
 			})
 			await assertExtractedTree(root, deps.maxBytes)
 			deps.onProgress?.({ done: files.length, total: files.length })
 			const manifest = await buildManifest(
 				archiveName,
-				files.map((e) => ({ name: e.name, sizeBytes: e.sizeBytes })),
+				materialized.map((e) => ({ name: e.name, sizeBytes: e.sizeBytes })),
 			)
 			await writeManifest(markerPath, archiveName, manifest)
 			// The manifest now serves listings (and materialized virtual

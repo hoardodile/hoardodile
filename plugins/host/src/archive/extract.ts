@@ -27,7 +27,7 @@ import {
 } from "./format.ts"
 import { listingBudgetExceeded } from "./listing.ts"
 import { decodeLegacyZipName } from "./name-decode.ts"
-import { normalizeZipError } from "./zip-entries.ts"
+import { listZipEntries, normalizeZipError } from "./zip-entries.ts"
 
 /**
  * Whole-archive extraction. Every supported format (zip, tar, 7z, rar,
@@ -216,11 +216,19 @@ async function extractViaSevenZip(
 		// 7-Zip writes legacy zip names verbatim on POSIX and restores
 		// entries' mode bits, which can strip the app's own access; fix
 		// both up before the tree is re-walked or probed below. The
-		// listing's decoded names are the ground truth the legacy-rename
-		// pass matches against (see `renameLegacyZipNames`).
+		// decoded names of the archive itself are the ground truth the
+		// legacy-rename pass matches against (see `renameLegacyZipNames`)
+		// — 7-Zip's text listing loses the invalid bytes on POSIX.
+		const decoded =
+			format === "zip"
+				? await decodeZipNames(
+						tempPath,
+						files.map((e) => ({ name: e.name, sizeBytes: e.sizeBytes })),
+					)
+				: undefined
 		await normalizeExtractedTree(root, {
 			legacyZipNames: format === "zip",
-			expectedNames: entries.map((e) => e.name),
+			expectedNames: decoded?.paths,
 		})
 		// Post-hoc bomb re-check: the listing sizes are advisory; count
 		// what actually landed (and refuse symlinks — 7-Zip creates them
@@ -319,6 +327,48 @@ export async function normalizeExtractedTree(
 }
 
 /**
+ * Decoded names of a zip archive — the ground truth for legacy (cp437)
+ * entry names. 7-Zip's text listing drops the bytes that are not valid
+ * UTF-8 in the archive: its console conversion removes the escape points
+ * on POSIX, so the reported name loses the character entirely. The zip
+ * itself is authoritative, so names come from yauzl (`decodeStrings`
+ * decodes non-UTF-8 names as cp437). Directory entries are absent from
+ * that listing, so every ancestor directory of a file path is added to
+ * `paths` for the rename pass. Falls back to the 7-Zip-listing names when
+ * the zip cannot be parsed a second time — extraction then proceeds
+ * exactly as before.
+ */
+export async function decodeZipNames(
+	zipPath: string,
+	fallback: readonly { readonly name: string; readonly sizeBytes: number }[],
+): Promise<{
+	readonly files: readonly {
+		readonly name: string
+		readonly sizeBytes: number
+	}[]
+	readonly paths: readonly string[]
+}> {
+	try {
+		const records = await listZipEntries(zipPath)
+		const files = records.map((e) => ({
+			name: e.name,
+			sizeBytes: e.uncompressedSize,
+		}))
+		const paths = new Set<string>()
+		for (const file of files) {
+			const segments = file.name.split("/")
+			for (let i = 1; i < segments.length; i++) {
+				paths.add(segments.slice(0, i).join("/"))
+			}
+			paths.add(file.name)
+		}
+		return { files, paths: [...paths] }
+	} catch {
+		return { files: fallback, paths: fallback.map((e) => e.name) }
+	}
+}
+
+/**
  * Rename every entry whose name does not match its decoded listing
  * form. Legacy zip names can land on disk in two shapes:
  *
@@ -326,15 +376,17 @@ export async function normalizeExtractedTree(
  *    and Windows builds pass/write them verbatim);
  *  - `%XX`-escaped bytes, when macOS's UTF-8 filesystem layer stores the
  *    raw names from the first shape (`XNU`'s `vfs_utfconv.c` converts an
- *    illegal byte to `%` + two hex digits while normalizing), so the name
- *    becomes valid UTF-8 on disk.
+ *    illegal byte to `%` + two hex digits while normalizing);
+ *  - 7-Zip escape-plane characters (U+EF00+byte), the round-trip form
+ *    for an illegal byte written without the byte-level conversion.
  *
- * Both are renamed to the cp437-decoded name the listing reported.
- * Directories move before their descendants (children are then renamed
- * under the decoded prefix — never into a missing parent), a rename
- * never clobbers an existing entry, and the `%XX` shape only wins when
- * the recovered name matches a decoded listing path at the same position
- * — a file genuinely named `report%82.jpg` therefore stays untouched.
+ * The last two are valid UTF-8 on disk and are reconciled against the
+ * decoded names of the archive itself (see {@link decodeZipNames}) — the
+ * only lossless source, since 7-Zip's text listing drops those bytes on
+ * POSIX. A rename never clobbers an existing entry, and either escaped
+ * shape only wins when the recovered name matches a decoded listing path
+ * at the same position — a file genuinely named `report%82.jpg` (or with
+ * a private-use character) therefore stays untouched.
  */
 async function renameLegacyZipNames(
 	rawRoot: Buffer,
@@ -398,11 +450,12 @@ function legacyRenameTarget(
 		// Windows). Decode as cp437, matching the listing.
 		return `${decodedRoot}/${decoded}`
 	}
-	// The name IS valid UTF-8 — but macOS may have escaped raw legacy
-	// bytes into `%XX` (see the function doc). Recover the original
-	// bytes and re-decode; only the listing's blessing keeps a literal
+	// The name IS valid UTF-8 — but the raw legacy bytes may have been
+	// re-encoded on the way to disk (macOS `%XX` escapes, or 7-Zip's
+	// escape-plane characters U+EF00+byte). Recover the original bytes and
+	// re-decode; only the listing's blessing keeps a literal
 	// `report%82.jpg` from being renamed to `reporté.jpg`.
-	const raw = unescapePercentEscapes(rawName)
+	const raw = recoverRawLegacyName(rawName)
 	if (raw === undefined) return undefined
 	const recovered = decodeLegacyZipName(raw)
 	if (recovered === utf8Name || expected === undefined) return undefined
@@ -411,6 +464,36 @@ function legacyRenameTarget(
 			? recovered
 			: `${decodedRoot.slice(root.length + 1)}/${recovered}`
 	return expected.has(rel) ? `${decodedRoot}/${recovered}` : undefined
+}
+
+/**
+ * The original archive bytes of an on-disk name that carried a legacy
+ * cp437 byte, and `undefined` when the name has no mangle at all. Two
+ * transient shapes exist for a raw byte `b`:
+ *
+ *  - `%XX` hex escapes: macOS's UTF-8 filesystem layer stores illegal
+ *    filename bytes that way (`XNU`'s `vfs_utfconv.c`);
+ *  - the escape-plane character U+EF00+b: 7-Zip's internal representation
+ *    for a byte it cannot show as UTF-8, written verbatim when the name
+ *    is encoded without the byte-level round-trip.
+ *
+ * Either shape maps back to exactly one byte per source byte.
+ */
+function recoverRawLegacyName(name: Buffer): Buffer | undefined {
+	const escaped = unescapePercentEscapes(name)
+	if (escaped !== undefined) return escaped
+	const text = name.toString("utf8")
+	const out: number[] = []
+	for (const ch of text) {
+		const code = ch.codePointAt(0) ?? 0
+		if (code >= 0xef80 && code <= 0xefff) {
+			out.push(code - 0xef00)
+			continue
+		}
+		if (code > 0x7f) return undefined // mixed with real text — not a mangle
+		out.push(code)
+	}
+	return out.length === text.length ? Buffer.from(out) : undefined
 }
 
 /**
