@@ -27,11 +27,16 @@ function noPermissions(): PluginPermissions {
 		message: false,
 		imageHashes: false,
 		container: false,
+		download: false,
 	}
 }
 
 function containerPermissions(): PluginPermissions {
 	return { ...noPermissions(), container: true }
+}
+
+function downloadPermissions(): PluginPermissions {
+	return { ...noPermissions(), download: true }
 }
 
 function fastConfig(overrides: Partial<PluginSandboxConfig> = {}) {
@@ -75,6 +80,12 @@ function createStubApi(overrides: Partial<ResourceAPI> = {}): ResourceAPI {
 		computeImageHashes: async () => undefined,
 		listContainer: async () => ({ entries: [] }),
 		extractArchive: async () => ({ entries: [] }),
+		download: async () => {
+			throw new Error("stub: download not configured")
+		},
+		statAsset: async () => undefined,
+		readAsset: async () => new Uint8Array(),
+		deleteAsset: async () => ({ existed: false }),
 		...overrides,
 	}
 }
@@ -489,6 +500,70 @@ describe("plugin sandbox", () => {
 			ok: true,
 			entries: 0,
 		})
+	})
+
+	test("asset API methods are denied without the manifest download permission", async () => {
+		sandbox = createPluginSandbox()
+		const plugin = await sandbox.loadPlugin({
+			id: "asset-denied",
+			mainPath: fixture("asset-plugin.mjs"),
+			eager: true,
+			permissions: noPermissions(),
+		})
+		if (plugin === undefined) throw new Error("plugin load failed")
+		await expect(plugin.detect(createStubApi())).rejects.toThrow(
+			/download permission denied/,
+		)
+	})
+
+	test("asset API methods route to the wired handler with the owning plugin id", async () => {
+		const seen: unknown[] = []
+		sandbox = createPluginSandbox(
+			fastConfig({
+				pluginAssets: {
+					download: async (pluginId, request) => {
+						seen.push([pluginId, request])
+						return {
+							path: request.dest,
+							sizeBytes: 3,
+							sha256: "a".repeat(64),
+							cached: false,
+						}
+					},
+					statAsset: async (pluginId, path) => {
+						seen.push([pluginId, path])
+						return undefined
+					},
+					readAsset: async () => new Uint8Array([1]),
+					deleteAsset: async () => ({ existed: true }),
+				},
+			}),
+		)
+		const plugin = await sandbox.loadPlugin({
+			id: "asset-allowed",
+			mainPath: fixture("asset-plugin.mjs"),
+			eager: true,
+			permissions: downloadPermissions(),
+		})
+		if (plugin === undefined) throw new Error("plugin load failed")
+		await expect(plugin.detect(createStubApi())).resolves.toEqual({
+			ok: true,
+			stat: undefined,
+			downloaded: {
+				path: "runtime/a.mjs",
+				sizeBytes: 3,
+				sha256: "a".repeat(64),
+				cached: false,
+			},
+		})
+		expect(seen[0]).toEqual(["asset-allowed", "runtime/a.mjs"])
+		expect(seen[1]).toEqual([
+			"asset-allowed",
+			{
+				url: "https://example.com/runtime/a.mjs",
+				dest: "runtime/a.mjs",
+			},
+		])
 	})
 
 	test("a log flood exceeds the per-hook budget and fails the hook", async () => {

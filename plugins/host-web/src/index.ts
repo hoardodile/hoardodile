@@ -7,6 +7,17 @@
  * it. Node file backends live in `@hoardodile/host-web/node`.
  */
 
+export {
+	closeDownloadConsent,
+	type DownloadConsentEntry,
+	decideDownloadConsent,
+	enqueueDownloadConsent,
+	getDownloadConsentSnapshot,
+	rehydrateDownloadConsent,
+	requestDownloadConsent,
+	resetDownloadConsent,
+	subscribeDownloadConsent,
+} from "./consent/consent-store.ts"
 export { anchorData, requestSchemas } from "./host-core/request-schemas.ts"
 export {
 	createHostRouter,
@@ -26,6 +37,7 @@ export {
 	type MockHost,
 	type MockHostLogger,
 	type MockHostOptions,
+	type PluginAssetVaultMock,
 } from "./mock/host.ts"
 export {
 	createMockDanmakuStore,

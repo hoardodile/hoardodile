@@ -1,4 +1,9 @@
-import type { DanmakuListFilter } from "@hoardodile/sdk-types"
+import type {
+	DanmakuListFilter,
+	PluginAssetDeleteResult,
+	PluginDownloadRequest,
+	PluginDownloadResult,
+} from "@hoardodile/sdk-types"
 import {
 	type HostPush,
 	type HostResponse,
@@ -68,6 +73,26 @@ export type MockHostOptions = {
 	readonly onPrefChanged?: (key: string, value: string) => void
 	/** Called after a plugin writes a cache entry. */
 	readonly onCacheChanged?: (resId: string, key: string, value: string) => void
+	/**
+	 * Plugin asset vault implementation (workbench only). Absent → the
+	 * asset methods answer `UNAVAILABLE` (tests, jsdom hosts). The real
+	 * app routes these through its server pipeline via tRPC — the mock
+	 * never talks to it.
+	 */
+	readonly assetVault?: PluginAssetVaultMock
+}
+
+/**
+ * The workbench-side plugin asset vault: the mock hands `download` and
+ * `deleteAsset` to the host app's implementation (consent dialog + dev
+ * server fetch + local vault), mirroring the server pipeline's
+ * request/result vocabulary.
+ */
+export type PluginAssetVaultMock = {
+	readonly download: (
+		request: PluginDownloadRequest,
+	) => Promise<PluginDownloadResult>
+	readonly deleteAsset: (path: string) => Promise<PluginAssetDeleteResult>
 }
 
 export type MockHost = {
@@ -224,6 +249,29 @@ export function createMockHost(opts: MockHostOptions): MockHost {
 				pushToSource(ctx.source, invalidatePushKeys[params.target])
 			},
 		),
+
+		// Without a wired asset vault the offline host answers
+		// UNAVAILABLE — the exact vocabulary a plugin sees from a generic
+		// mock. The workbench passes `assetVault` to run the real flow
+		// (consent dialog + dev-server download into a local vault).
+		defineHandler(
+			pluginMethods.download,
+			requestSchemas[pluginMethods.download],
+			async (_ctx, params) => {
+				const vault = opts.assetVault
+				if (vault === undefined) throw unavailableAssetError("download")
+				return vault.download(params)
+			},
+		),
+		defineHandler(
+			pluginMethods.deleteAsset,
+			requestSchemas[pluginMethods.deleteAsset],
+			async (_ctx, params) => {
+				const vault = opts.assetVault
+				if (vault === undefined) throw unavailableAssetError("deleteAsset")
+				return vault.deleteAsset(params.path)
+			},
+		),
 	]
 
 	const router = createHostRouter(handlers, {
@@ -310,4 +358,13 @@ function matchesDanmakuFilter(
 		if (value !== undefined && data[key] !== value) return false
 	}
 	return true
+}
+
+/** Machine-readable asset-error rejection (the shared vocabulary). */
+function unavailableAssetError(method: string): Error {
+	const err = new Error(
+		`${method}() is unavailable in the offline host — plugin asset downloads need the app server runtime`,
+	)
+	err.name = "UNAVAILABLE"
+	return err
 }

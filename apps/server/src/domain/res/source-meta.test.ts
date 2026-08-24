@@ -130,6 +130,18 @@ function createTestResourceAPI(dir: string): ResourceAPI {
 		async extractArchive() {
 			return { entries: [] }
 		},
+		async download() {
+			throw new Error("stub: download not configured")
+		},
+		async statAsset() {
+			return undefined
+		},
+		async readAsset() {
+			return new Uint8Array()
+		},
+		async deleteAsset() {
+			return { existed: false }
+		},
 	}
 }
 

@@ -5,6 +5,9 @@ import type {
 	DanmakuMode,
 	FileStats,
 	Message,
+	PluginAssetDeleteResult,
+	PluginDownloadRequest,
+	PluginDownloadResult,
 	PluginSchema,
 } from "@hoardodile/sdk-types"
 import type { ImageVariantSpec } from "@hoardodile/sdk-types/image-variant"
@@ -138,6 +141,34 @@ export type WebPluginAPI<TSchema extends PluginSchema = PluginSchema> = {
 	 * a flood of decode requests.
 	 */
 	readonly resolveFrameUrl: (filename: string, timeMs: number) => string
+
+	/** Plugin asset vault. */
+	/**
+	 * User-consented download into the plugin's own asset vault: when the
+	 * destination already exists the host answers `cached: true` (no
+	 * dialog, no network); otherwise the host asks the user (shared
+	 * consent dialog, URL shown verbatim) and downloads on approval.
+	 * Rejections carry a machine-readable `err.name`
+	 * (`DENIED` / `UNAVAILABLE` / `POLICY`).
+	 */
+	readonly download: (
+		request: PluginDownloadRequest,
+	) => Promise<PluginDownloadResult>
+	/**
+	 * Resolve the tokenized URL of a file in the plugin's own vault
+	 * (`/api/plugin-assets/<pluginId>/<token>/<path>`). Use it to load a
+	 * downloaded runtime or asset from inside the sandboxed iframe, e.g.
+	 * `<script src={api.resolveAssetUrl("runtime/live2d.min.js")} />`
+	 * (served with an exact JS MIME + `nosniff`, so classic scripts,
+	 * module imports and `fetch` all work).
+	 */
+	readonly resolveAssetUrl: (path: string) => string
+	/**
+	 * Remove a vault file (idempotent: an absent file answers
+	 * `{ existed: false }`). The plugin decides the vault's lifecycle —
+	 * no user consent, nothing leaves the host.
+	 */
+	readonly deleteAsset: (path: string) => Promise<PluginAssetDeleteResult>
 
 	/** Messages. */
 	readonly listMessages: () => Promise<readonly Message[]>

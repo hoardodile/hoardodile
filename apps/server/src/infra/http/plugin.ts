@@ -8,6 +8,7 @@ import { charFilesPlugin } from "./char-files.ts"
 import { charThumbsPlugin } from "./char-thumbs.ts"
 import { coversPlugin } from "./covers.ts"
 import { imageSearchPlugin } from "./image-search.ts"
+import { pluginAssetsPlugin } from "./plugin-assets.ts"
 import { pluginUploadPlugin } from "./plugin-upload.ts"
 
 import { resFilesPlugin } from "./res-files.ts"
@@ -33,46 +34,65 @@ async function protectedHttpPluginImpl(app: FastifyInstance): Promise<void> {
 		// Sandboxed plugin iframes have an opaque origin ("null") and cannot
 		// send SameSite=strict cookies. Accept session tokens embedded
 		// in the path (/files/<token>/, /frame/<token>/, /extracted/<token>/,
-		// /extract-progress/<token>/). Same-origin pages use cookies and
-		// don't need a token.
+		// /extract-progress/<token>/, /plugin-assets/<id>/<token>/).
+		// Same-origin pages use cookies and don't need a token.
 		//
 		// NOTE: this route-family regex must stay in sync with the same
 		// `(?:files|frame|extracted|extract-progress)` token paths in
 		// `apps/web/src/sw.ts` and `plugins/workbench/scripts/mounts.mjs`.
-		// Token-based auth is only honoured for GET/HEAD /files/ and
-		// /frame/ routes - plugin iframes have no business hitting other
-		// endpoints. The regex must run against the path alone: req.url
-		// includes the query string, which would otherwise let a crafted
-		// query (?x=/files/<token>/) smuggle token auth into any route.
-		// Tokens are additionally scoped to a single resource id, which
-		// must match the route's :id param - a leaked token then only
-		// exposes that one resource, and routes without :id (e.g. trash
+		// Token-based auth is only honoured for GET/HEAD /files/,
+		// /frame/ and /plugin-assets/ routes - plugin iframes have no
+		// business hitting other endpoints. The regex must run against
+		// the path alone: req.url includes the query string, which would
+		// otherwise let a crafted query (?x=/files/<token>/) smuggle
+		// token auth into any route. Tokens are additionally scoped to a
+		// single resource or plugin (kind + id), which must match the
+		// route's :id param - a leaked token then only exposes that one
+		// resource/plugin vault, and routes without root id (e.g. trash
 		// file previews, a cookie-authenticated app feature) are not
 		// token-authenticated at all.
 		const pathname = req.url.split("?", 1)[0] ?? ""
 		const pathMatch =
 			req.method === "GET" || req.method === "HEAD"
 				? pathname.match(
-						/\/(?:files|frame|extracted|extract-progress)\/([A-Za-z0-9_.-]+)\//,
+						/\/(?:files|frame|extracted|extract-progress|plugin-assets\/[A-Za-z0-9_.-]+)\/([A-Za-z0-9_.-]+)\//,
 					)
 				: null
 		if (pathMatch !== null) {
 			const pathToken = pathMatch[1]
 			if (pathToken !== undefined && pathToken.length > 0) {
 				const verified = await app.sessions.verifyToken(pathToken)
-				const routeResId = (
+				const routeId = (
 					req.params as Record<string, string | undefined> | undefined
 				)?.id
-				if (verified !== undefined && verified.resId === routeResId) {
-					const wildcard = (req.params as Record<string, string> | undefined)?.[
-						"*"
-					]
-					if (wildcard !== undefined) {
-						const slashIdx = wildcard.indexOf("/")
-						if (slashIdx >= 0) {
-							;(req.params as Record<string, string>)["*"] = wildcard.slice(
-								slashIdx + 1,
-							)
+				// `plugin-assets/<id>/<token>` puts the id BEFORE the token
+				// (pluginId/assetToken), every other family is /<token>/.
+				const isAssetVault = pathname.includes("/plugin-assets/")
+				const scopeMatches =
+					verified !== undefined &&
+					routeId !== undefined &&
+					(isAssetVault
+						? verified.scope.kind === "plugin" && verified.scope.id === routeId
+						: verified.scope.kind === "res" && verified.scope.id === routeId)
+				if (scopeMatches) {
+					// The res file families embed the token INSIDE the
+					// wildcard (`/:id/files/<token>/<path>` resolves as
+					// `*` = "files/<token>/<path>"), so the token segment
+					// must be stripped for the route handler. The
+					// plugin-assets route declares `:token` as its own
+					// parameter — its wildcard already IS the vault-relative
+					// path and must never be truncated.
+					if (!isAssetVault) {
+						const wildcard = (
+							req.params as Record<string, string> | undefined
+						)?.["*"]
+						if (wildcard !== undefined) {
+							const slashIdx = wildcard.indexOf("/")
+							if (slashIdx >= 0) {
+								;(req.params as Record<string, string>)["*"] = wildcard.slice(
+									slashIdx + 1,
+								)
+							}
 						}
 					}
 					return
@@ -155,6 +175,7 @@ async function protectedHttpPluginImpl(app: FastifyInstance): Promise<void> {
 	await app.register(resUploadPreviewPlugin)
 	await app.register(uploadPreviewsPlugin)
 	await app.register(pluginUploadPlugin)
+	await app.register(pluginAssetsPlugin)
 	await app.register(coversPlugin)
 	await app.register(imageSearchPlugin)
 	await app.register(cacheAdminPlugin)

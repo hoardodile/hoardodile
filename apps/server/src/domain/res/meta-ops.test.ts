@@ -155,6 +155,18 @@ describe("buildResMetaOps cover meta", () => {
 			async listContainer() {
 				return { entries: [] }
 			},
+			async download() {
+				throw new Error("stub: download not configured")
+			},
+			async statAsset() {
+				return undefined
+			},
+			async readAsset() {
+				return new Uint8Array()
+			},
+			async deleteAsset() {
+				return { existed: false }
+			},
 		}
 		return buildResMetaOps({
 			repo: repo as never,
@@ -230,6 +242,18 @@ describe("buildResMetaOps cover meta", () => {
 			async listContainer() {
 				return { entries: [] }
 			},
+			async download() {
+				throw new Error("stub: download not configured")
+			},
+			async statAsset() {
+				return undefined
+			},
+			async readAsset() {
+				return new Uint8Array()
+			},
+			async deleteAsset() {
+				return { existed: false }
+			},
 		}
 		const ops = buildResMetaOps({
 			repo: {
@@ -290,6 +314,18 @@ describe("buildResMetaOps cover meta", () => {
 			},
 			async listContainer() {
 				return { entries: [] }
+			},
+			async download() {
+				throw new Error("stub: download not configured")
+			},
+			async statAsset() {
+				return undefined
+			},
+			async readAsset() {
+				return new Uint8Array()
+			},
+			async deleteAsset() {
+				return { existed: false }
 			},
 		}
 		const ops = buildResMetaOps({
@@ -447,6 +483,18 @@ describe("buildResMetaOps cover meta", () => {
 			async listContainer() {
 				return { entries: [] }
 			},
+			async download() {
+				throw new Error("stub: download not configured")
+			},
+			async statAsset() {
+				return undefined
+			},
+			async readAsset() {
+				return new Uint8Array()
+			},
+			async deleteAsset() {
+				return { existed: false }
+			},
 		}
 		const ops = buildResMetaOps({
 			repo: repo as never,
@@ -534,6 +582,18 @@ describe("buildResMetaOps global rebuild concurrency", () => {
 			async listContainer() {
 				return { entries: [] }
 			},
+			async download() {
+				throw new Error("stub: download not configured")
+			},
+			async statAsset() {
+				return undefined
+			},
+			async readAsset() {
+				return new Uint8Array()
+			},
+			async deleteAsset() {
+				return { existed: false }
+			},
 		}
 		const ops = buildResMetaOps({
 			repo: {
@@ -600,6 +660,18 @@ function mockApi(): ResourceAPI {
 		},
 		async extractArchive() {
 			return { entries: [] }
+		},
+		async download() {
+			throw new Error("stub: download not configured")
+		},
+		async statAsset() {
+			return undefined
+		},
+		async readAsset() {
+			return new Uint8Array()
+		},
+		async deleteAsset() {
+			return { existed: false }
 		},
 	}
 }
@@ -1003,6 +1075,12 @@ describe("hashes unit", () => {
 			computeImageHashes: async () => undefined,
 			listContainer: async () => ({ entries: [] }),
 			extractArchive: async () => ({ entries: [] }),
+			download: async () => {
+				throw new Error("stub: download not configured")
+			},
+			statAsset: async () => undefined,
+			readAsset: async () => new Uint8Array(),
+			deleteAsset: async () => ({ existed: false }),
 		}
 	}
 

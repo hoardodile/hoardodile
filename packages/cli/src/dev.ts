@@ -351,6 +351,10 @@ export async function executeDev(opts: DevOptions): Promise<number> {
 	const server = await serveWorkbench({
 		pluginDir: distDir,
 		port: opts.port,
+		// User-consented dev downloads land in the plugin's own scratch
+		// vault, next to the extraction cache — never in the read-only
+		// storage root or the data dir.
+		vaultRoot: join(pluginDir, ".hoardodile", "vault"),
 		providers: {
 			resources: () => source?.list() ?? [],
 			files: source === undefined ? undefined : createFileProvider(source),

@@ -6,6 +6,8 @@ export default defineConfig({
 		"image-variant": "src/image-variant.ts",
 		"media-exts": "src/media-exts.ts",
 		plugin: "src/plugin.ts",
+		"plugin-asset-limits": "src/plugin-asset-limits.ts",
+		"plugin-capabilities": "src/plugin-capabilities.ts",
 		resource: "src/resource.ts",
 		result: "src/result.ts",
 		schema: "src/schema.ts",

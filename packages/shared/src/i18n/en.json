@@ -517,7 +517,7 @@
 		"clearAllPluginCacheConfirmDescription": "This will delete every plugin's cached data including resume positions. This cannot be undone.",
 		"installConfirmTitle": "Install this plugin?",
 		"install": "Install",
-		"installConfirmRisk": "Third-party plugins run server-side code in a restricted sandbox: their main process can only read the files of the resources the host exposes to it and cannot touch your filesystem, run programs, or make network requests. The declared permissions above toggle host features. Only install plugins from sources you trust.",
+		"installConfirmRisk": "Third-party plugins run server-side code in a restricted sandbox: their main process can only read the files of the resources the host exposes to it and cannot touch your filesystem, run programs, or make network requests — except user-approved downloads: a plugin declaring the Downloads permission can fetch a URL of your choosing after you confirm it (one dialog per download, restricted to the plugin's own folder). The declared permissions above toggle host features. Only install plugins from sources you trust.",
 		"uploadInvalidPlugin": "Not a valid plugin package (missing or invalid manifest.json).",
 		"permissions": {
 			"sourceMeta": "Source metadata",
@@ -525,8 +525,21 @@
 			"danmaku": "Danmaku",
 			"message": "Messages",
 			"imageHashes": "Image hashes",
-			"container": "Containers"
+			"container": "Containers",
+			"download": "Downloads"
 		}
+	},
+	"pluginDownload": {
+		"eyebrow": "Plugin download",
+		"title": "Download this file?",
+		"description": "{{pluginName}} wants to download a file into its own storage folder. The file is fetched from the URL below and stored only inside the plugin's folder.",
+		"urlLabel": "URL",
+		"destLabel": "Destination",
+		"sizeLabel": "Size",
+		"unknownSize": "unknown",
+		"deny": "Deny",
+		"allow": "Allow",
+		"remember": "Remember for this session (no more prompts from this plugin)"
 	},
 	"overview": {
 		"usageHistory": {

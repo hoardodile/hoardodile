@@ -5,11 +5,20 @@ import {
 	mkdirSync,
 	readdirSync,
 	readFileSync,
+	renameSync,
 	rmSync,
 	statSync,
 } from "node:fs"
 import { join } from "node:path"
 import type { PluginManifest } from "@hoardodile/sdk-types"
+
+/**
+ * The host-reserved plugin subdirectory a seed never touches: downloaded
+ * vault assets live there (see `VersionPaths.pluginVaultDir`) and the
+ * tree comparison below must ignore them, or the presence of a vault
+ * would mark every seeded plugin as changed on every boot.
+ */
+const VAULT_DIR_NAME = "vault"
 
 /**
  * Copy the configured plugin directories into `pluginsDir` so discovery
@@ -46,6 +55,11 @@ export function seedPlugins(
  * Returns false (and copies nothing) when the directory is not a valid
  * plugin. An existing destination that already matches the source tree
  * is left untouched.
+ *
+ * The host-managed `vault/` subdirectory is never part of the seed: it
+ * is skipped in both the tree comparison and the copy, and stashed
+ * aside during a replacement — reseeding (the update channel of bundled
+ * plugins) preserves the plugin's downloaded assets.
  */
 function copyPluginDir(srcDir: string, pluginsDir: string): boolean {
 	const id = readManifestId(srcDir)
@@ -55,10 +69,30 @@ function copyPluginDir(srcDir: string, pluginsDir: string): boolean {
 		return true
 	}
 	if (existsSync(dstDir)) {
+		const vaultDir = join(dstDir, VAULT_DIR_NAME)
+		const stashDir = join(pluginsDir, `.vault-${id}-${Date.now()}`)
+		const hasVault = existsSync(vaultDir)
+		if (hasVault) {
+			// Same-volume rename: the vault leaves the tree before the
+			// replacement lands, then comes back — a crash in between can
+			// at worst strand the stash as a dot-directory (skipped by
+			// discovery, version copies and the sync tooling).
+			renameSync(vaultDir, stashDir)
+		}
 		rmSync(dstDir, { recursive: true, force: true })
+		mkdirSync(dstDir, { recursive: true })
+		for (const f of readdirSync(srcDir)) {
+			if (f === VAULT_DIR_NAME) continue
+			cpSync(join(srcDir, f), join(dstDir, f), { recursive: true })
+		}
+		if (existsSync(stashDir)) {
+			renameSync(stashDir, join(dstDir, VAULT_DIR_NAME))
+		}
+		return true
 	}
 	mkdirSync(dstDir, { recursive: true })
 	for (const f of readdirSync(srcDir)) {
+		if (f === VAULT_DIR_NAME) continue
 		cpSync(join(srcDir, f), join(dstDir, f), { recursive: true })
 	}
 	return true
@@ -109,6 +143,9 @@ function walkFiles(
 ): void {
 	const entries = readdirSync(absDir, { withFileTypes: true })
 	for (const entry of entries) {
+		// Root-level host-reserved vault directory: never fingerprinted,
+		// never copied — see {@link VAULT_DIR_NAME}.
+		if (relDir.length === 0 && entry.name === VAULT_DIR_NAME) continue
 		const rel = relDir.length === 0 ? entry.name : `${relDir}/${entry.name}`
 		const abs = join(absDir, entry.name)
 		if (entry.isDirectory()) {

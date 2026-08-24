@@ -17,6 +17,14 @@ import type { PluginIframeContext } from "@hoardodile/sdk-web"
 export type WorkbenchManifest = {
 	readonly id: string
 	readonly name: string
+	/**
+	 * Manifest capabilities that gate mock behavior. The dev server
+	 * serves the plugin's real manifest; absence means the workbench
+	 * treats the permission as not granted (matching app semantics).
+	 */
+	readonly permissions?: {
+		readonly download?: boolean
+	}
 }
 
 export type WorkbenchResource = {
@@ -164,6 +172,10 @@ export function buildContext(
 		initialPrefs: ctx.state?.prefs ?? {},
 		initialCache: ctx.state?.cache ?? {},
 		fileToken: "",
+		// Dev-only placeholder: the workbench's `/api/plugin-assets/…`
+		// route accepts any token (the app issues HMAC-scoped ones; the
+		// workbench vault is local scratch).
+		assetToken: "workbench",
 	}
 }
 

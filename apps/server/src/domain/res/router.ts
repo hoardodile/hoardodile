@@ -184,7 +184,10 @@ export function buildResourceRouter(deps: ResourceRouterDeps) {
 				if (session === undefined) {
 					throw new TRPCError({ code: "UNAUTHORIZED" })
 				}
-				const token = await sessions.createToken(86400, input.resId)
+				const token = await sessions.createToken(86400, {
+					kind: "res",
+					id: input.resId,
+				})
 				return token.sealed
 			}),
 	})

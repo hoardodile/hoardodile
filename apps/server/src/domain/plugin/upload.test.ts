@@ -117,6 +117,20 @@ describe("buildPluginUploads", () => {
 		expect(readdirSync(stagingRoot)).toEqual([])
 	})
 
+	test("rejects a plugin zip containing a top-level reserved `vault` entry", async () => {
+		const uploads = uploadsWith(async (_source, destDir) => {
+			await writeFile(join(destDir, "manifest.json"), MANIFEST)
+			await mkdir(join(destDir, "vault"))
+			await writeFile(join(destDir, "vault", "x.mjs"), "x")
+		})
+
+		await expect(
+			uploads.installFromZip(Readable.from(["zip-bytes"])),
+		).rejects.toThrow("vault")
+		expect(readdirSync(pluginsDir)).toEqual([])
+		expect(readdirSync(stagingRoot)).toEqual([])
+	})
+
 	test("findSymlinkEntry reports the first link and tolerates plain trees", async () => {
 		const clean = join(root, "clean")
 		const nested = join(clean, "a", "b")

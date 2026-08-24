@@ -444,6 +444,8 @@ async function registerTrpcSurface(app: FastifyInstance): Promise<void> {
 		pluginService: app.pluginService,
 		pluginLoader: app.pluginLoader,
 		pluginHooks: app.pluginHooks,
+		pluginAssetService: app.pluginAssetService,
+		pluginAssetConsent: app.pluginAssetConsent,
 		backupService: app.backupService,
 		versionService: app.versionService,
 		thumbService: app.thumbService,

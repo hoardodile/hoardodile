@@ -1,4 +1,4 @@
-import type { PluginIframeContext } from "@hoardodile/sdk-web"
+﻿import type { PluginIframeContext } from "@hoardodile/sdk-web"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import type { PoolClaimedEntry } from "./iframe-pool"
 import {
@@ -9,7 +9,7 @@ import {
 
 // The pool is mocked: every claim hands back a controllable slot mirroring
 // the pool's onReady contract (fires at most once, replays synchronously
-// to late subscribers) — the same mock shape slot-transition.test.ts used.
+// to late subscribers) â€” the same mock shape slot-transition.test.ts used.
 const claimMock = vi.fn()
 
 vi.mock("./iframe-pool", () => ({
@@ -73,6 +73,7 @@ function makeContext(resId: string): PluginIframeContext {
 		initialPrefs: {},
 		initialCache: {},
 		fileToken: "tok",
+		assetToken: "",
 	}
 }
 
@@ -130,7 +131,7 @@ describe("createPreviewWindow", () => {
 		])
 
 		expect(claimMock).toHaveBeenCalledTimes(3)
-		// Focused claim: no ackTimeoutMs override — the pool's user-facing
+		// Focused claim: no ackTimeoutMs override â€” the pool's user-facing
 		// 300ms default applies. Neighbors get the 5s background window.
 		expect(claimMock).toHaveBeenNthCalledWith(1, {
 			pluginId: "p-a",
@@ -280,7 +281,7 @@ describe("createPreviewWindow", () => {
 		expect(window.getSnapshot().presentedResId).toBe("r-a")
 
 		// Focus moves to r-b (not in the window): r-a falls out of the
-		// wanted set but stays claimed and presented — the user keeps
+		// wanted set but stays claimed and presented â€” the user keeps
 		// seeing it while r-b readies.
 		const b = queueClaim()
 		window.focus(makeItem("r-b", "p-b"), [])

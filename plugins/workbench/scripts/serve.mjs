@@ -48,7 +48,18 @@ export function serveWorkbench(opts) {
 	const providers =
 		opts.snapshot === undefined ? base : { ...base, snapshot: opts.snapshot }
 
-	const mounts = createWorkbenchMounts({ pluginDir, providers })
+	// Plugin asset vault: the dev server performs the user-consented
+	// downloads (browser fetch would hit CORS) into this local scratch
+	// root. The CLI passes `<pluginDir>/.hoardodile/vault`; the
+	// standalone default sits next to the data dir.
+	const vaultRoot =
+		opts.vaultRoot ?? join(resolve(dataDir ?? "."), ".workbench-vault")
+
+	const mounts = createWorkbenchMounts({
+		pluginDir,
+		providers,
+		vault: vaultRoot,
+	})
 
 	const server = createServer((req, res) => {
 		void (async () => {

@@ -1,4 +1,4 @@
-import type { PluginIframeContext } from "@hoardodile/sdk-web"
+﻿import type { PluginIframeContext } from "@hoardodile/sdk-web"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { claim, setPoolContainer } from "./iframe-pool"
 
@@ -75,7 +75,7 @@ describe("iframe-pool", () => {
 		})
 
 		// Acks only route to an entry once its window is registered, which
-		// happens on iframe load — fire it before dispatching the ack.
+		// happens on iframe load â€” fire it before dispatching the ack.
 		function loadIframe(iframe: HTMLIFrameElement): void {
 			iframe.dispatchEvent(new Event("load"))
 		}
@@ -264,7 +264,7 @@ describe("iframe-pool", () => {
 			)
 		}
 
-		// Runs the prerender pipeline by hand: claim, paint, ack, release —
+		// Runs the prerender pipeline by hand: claim, paint, ack, release â€”
 		// the entry goes back into the pool with lastAckedResId set.
 		function primeEntry(pluginId: string, resId: string): HTMLIFrameElement {
 			const slot = claim({ pluginId, resId })
@@ -362,6 +362,7 @@ describe("iframe-pool", () => {
 				initialPrefs: {},
 				initialCache: {},
 				fileToken: "",
+				assetToken: "",
 			}
 			first.postContext(ctx)
 			first.release()
@@ -395,7 +396,7 @@ describe("iframe-pool", () => {
 
 			// Re-parenting an iframe reloads its document in real browsers;
 			// the second load event is the pool's only signal. The fresh
-			// document has painted nothing, so the ack memory must go —
+			// document has painted nothing, so the ack memory must go â€”
 			// otherwise a later claim would be primed onto a blank page.
 			loadIframe(iframe)
 

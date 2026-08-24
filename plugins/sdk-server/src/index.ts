@@ -27,7 +27,12 @@ export type {
 	ImageInfo,
 	Logger,
 	MediaKind,
+	PluginAssetDeleteResult,
+	PluginAssetError,
+	PluginAssetErrorName,
 	PluginDefinition,
+	PluginDownloadRequest,
+	PluginDownloadResult,
 	ProbeResult,
 	ReadFileRange,
 	ResourceAPI,
@@ -45,8 +50,10 @@ export {
 	isErr,
 	isMissed,
 	isOk,
+	isPluginAssetError,
 	matchResult,
 	ok,
+	pluginAssetError,
 	stubLogger,
 } from "@hoardodile/sdk-types"
 export type { Detector } from "./detectors.ts"

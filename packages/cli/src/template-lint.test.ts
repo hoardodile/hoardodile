@@ -87,6 +87,7 @@ describe("manifestTemplates", () => {
 				message: false,
 				imageHashes: false,
 				container: false,
+				download: false,
 			},
 			ui: {
 				card: {
@@ -131,6 +132,7 @@ describe("lintManifestTemplates", () => {
 				message: false,
 				imageHashes: false,
 				container: false,
+				download: false,
 			},
 			i18n: { en: { present: "Present" } },
 			ui: {

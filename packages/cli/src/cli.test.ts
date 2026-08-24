@@ -86,6 +86,7 @@ describe("resolvePluginTarget", () => {
 			message: false,
 			imageHashes: false,
 			container: false,
+			download: false,
 		})
 	})
 

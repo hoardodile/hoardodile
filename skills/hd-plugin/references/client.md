@@ -123,6 +123,31 @@ one-shot flag.
 | `fonts` | The host font family + preset stylesheet paths, unless `ui.inheritFont: false`. `applyFonts`/`applyTheme` in `@hoardodile/sdk-web` wire it — `createPluginRoot` calls them for you; bare sdk-web consumers call them from the push subscribers. |
 | `initialPrefs`, `initialCache` | Plugin-scoped prefs/cache seeded from the server. |
 | `fileToken` | Short-lived token for resource-file URLs. |
+| `assetToken` | Short-lived token for the plugin's **own vault** URLs (`resolveAssetUrl`); `""` when the manifest lacks the `download` permission. |
+
+## Plugin asset vault (client side)
+
+The same user-consented downloads as `main.js` — one server pipeline,
+one dialog:
+
+- `download({ url, dest, sha256?, reason? }): Promise<{ path, sizeBytes, sha256, cached }>`
+  — cached destinations resolve with **no dialog and no network**;
+  otherwise the web app asks (URL shown verbatim; "remember for this
+  session" skips further prompts). Rejections carry `err.name`:
+  `DENIED` / `UNAVAILABLE` / `POLICY`. Gated by the manifest `download`
+  permission.
+- `resolveAssetUrl(path)` — URL of a vault file (JS served with an exact
+  MIME + `nosniff`; only HTML is demoted to an attachment). Load a
+  runtime with `<script src={api.resolveAssetUrl("runtime/live2d.min.js")} />`
+  (classic scripts need no CORS), a module import, or `fetch`→Blob for
+  something else; `Cache-Control: private, no-cache` so re-downloads are
+  never served stale.
+- `deleteAsset(path)` — idempotent vault removal (the plugin decides its
+  own lifecycle; no consent, nothing leaves the host).
+- The vault lives at `<plugin-dir>/vault/` (synced, snapshotted,
+  deleted on uninstall, kept across updates) and `vault/` in a zip is
+  rejected at install. The offline mock host, the workbench and
+  read-only archive mode answer `UNAVAILABLE`.
 
 Host pushes (keys from `@hoardodile/sdk-web`'s `hostPushKeys`):
 `context`, `visibility`, `themeChanged`, `fontsChanged`,

@@ -7,6 +7,12 @@
  */
 import type { MediaKind } from "./media-exts.ts"
 import { extToMime, mimeToKind } from "./media-exts.ts"
+import type {
+	PluginAssetDeleteResult,
+	PluginDownloadRequest,
+	PluginDownloadResult,
+} from "./plugin-asset.ts"
+import { pluginAssetError } from "./plugin-asset.ts"
 import type { ReadFileRange } from "./read-range.ts"
 import type { Result } from "./result.ts"
 
@@ -357,6 +363,39 @@ export type ResourceAPI<TSchema extends PluginSchema = PluginSchema> = {
 	 */
 	readonly extractArchive: (filename: string) => Promise<ArchiveExtraction>
 	/**
+	 * Ensure a remote asset exists in the plugin's own vault: when
+	 * `dest` is already present the host answers `cached: true` without
+	 * any dialog and without touching the network; otherwise the host
+	 * asks the user (the web app shows the consent dialog with the URL
+	 * verbatim) and downloads on approval. The file always lands inside
+	 * `<plugin-dir>/vault/` — `dest` is vault-relative and can never
+	 * reach the plugin's bundled files.
+	 *
+	 * Gated by the manifest `download` permission; rejections carry a
+	 * machine-readable {@link PluginAssetErrorName} in `err.name`
+	 * (`DENIED` / `UNAVAILABLE` / `POLICY`).
+	 */
+	readonly download: (
+		request: PluginDownloadRequest,
+	) => Promise<PluginDownloadResult>
+	/**
+	 * Byte size of a vault file, or `undefined` when absent. The cheap
+	 * presence check on top of which `download` resolves cached hits.
+	 */
+	readonly statAsset: (
+		path: string,
+	) => Promise<{ readonly sizeBytes: number } | undefined>
+	/** Read a vault file's bytes (bounded by the same cap as {@link readFile}). */
+	readonly readAsset: (path: string) => Promise<Uint8Array>
+	/**
+	 * Remove a vault file; idempotent (absent files answer
+	 * `{ existed: false }`). The plugin decides the vault's own
+	 * lifecycle — e.g. cleaning stale layouts after a plugin update.
+	 * No user consent is required: nothing leaves the host. Directories
+	 * and paths outside the vault are rejected (`POLICY`).
+	 */
+	readonly deleteAsset: (path: string) => Promise<PluginAssetDeleteResult>
+	/**
 	 * Session context injected by the host. `detect` carries the payload
 	 * the plugin's `detect` hook returned on its last successful match
 	 * (worker-session scope): the one-pass classification every other
@@ -562,6 +601,19 @@ export type ResourceAPIFixtureConfig<
 	 * names reject, mirroring the host's "not a supported archive" error.
 	 */
 	readonly extractions?: Readonly<Record<string, ArchiveExtraction>>
+	/**
+	 * Vault file contents keyed by vault-relative path, backing
+	 * `statAsset` / `readAsset` / `deleteAsset` in the fixture.
+	 */
+	readonly assetFiles?: Readonly<Record<string, string | Uint8Array>>
+	/**
+	 * Handler for `download`. Absent means the hosted runtime has no
+	 * consent channel — `download` rejects with `UNAVAILABLE`, exactly
+	 * like the CLI, workbench and offline mock hosts.
+	 */
+	readonly downloadHandler?: (
+		request: PluginDownloadRequest,
+	) => Promise<PluginDownloadResult>
 	/**
 	 * Container addressing for the fixture: maps a virtual path
 	 * (`outer!inner`) to stat/sniff/probe results, so hooks that browse
@@ -792,9 +844,51 @@ export function createResourceAPIFixture<
 			}
 			return configured
 		},
+		async download(request) {
+			if (config.downloadHandler === undefined) {
+				throw pluginAssetError(
+					"UNAVAILABLE",
+					"ResourceAPIFixture: no download handler configured",
+				)
+			}
+			return config.downloadHandler(request)
+		},
+		async statAsset(path) {
+			const content = resolveValue(path, config.assetFiles, undefined)
+			if (content === undefined) return undefined
+			return { sizeBytes: fixtureContentBytes(content).byteLength }
+		},
+		async readAsset(path) {
+			const content = resolveValue(path, config.assetFiles, undefined)
+			if (content === undefined) {
+				throw new Error(`ResourceAPIFixture: no vault file "${path}"`)
+			}
+			return fixtureContentBytes(content)
+		},
+		async deleteAsset(path) {
+			const table = config.assetFiles
+			if (table === undefined || !Object.hasOwn(table, path)) {
+				return { existed: false }
+			}
+			// Fixture config is immutable in spirit — a delete is simulated
+			// by copying with the entry removed, so the next call sees it gone.
+			const next: Record<string, string | Uint8Array> = {}
+			for (const [key, value] of Object.entries(table)) {
+				if (key !== path) next[key] = value
+			}
+			config = { ...config, assetFiles: next }
+			return { existed: true }
+		},
 	}
 
 	return { api, setConfig }
+}
+
+/** Convert a fixture content entry (string or bytes) to `Uint8Array`. */
+function fixtureContentBytes(content: string | Uint8Array): Uint8Array {
+	return typeof content === "string"
+		? new TextEncoder().encode(content)
+		: content
 }
 
 /** Return a minimal {@link Logger} for tests. */

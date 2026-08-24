@@ -54,6 +54,15 @@ export type FileToken = {
 	readonly expiresAt: number
 }
 
+/**
+ * What a stateless file token is bound to. `res` tokens authorize one
+ * resource's file routes; `plugin` tokens authorize one plugin's asset
+ * vault — a leaked token never exposes anything beyond its scope.
+ */
+export type TokenScope =
+	| { readonly kind: "res"; readonly id: string }
+	| { readonly kind: "plugin"; readonly id: string }
+
 export type SessionStore = {
 	/** Issue a brand-new sealed session. */
 	create(ttlSeconds: number, now?: number): Promise<IssuedSession>
@@ -75,20 +84,25 @@ export type SessionStore = {
 	 * expected to overwrite the previous cookie with the new sealed value.
 	 */
 	rotate(ttlSeconds: number, now?: number): Promise<IssuedSession>
-	/** Issue a 24 h stateless HMAC-signed token for plugin iframes. */
+	/**
+	 * Issue a 24 h stateless HMAC-signed token bound to one scope
+	 * (a resource or a plugin).
+	 */
 	createToken(
 		ttlSeconds: number,
-		resId: string,
+		scope: TokenScope,
 		now?: number,
 	): Promise<FileToken>
 	/**
-	 * Verify a session token. Returns the session id and the resource the
+	 * Verify a session token. Returns the session id and the scope the
 	 * token is bound to if valid, otherwise `undefined`.
 	 */
 	verifyToken(
 		sealed: string | undefined,
 		now?: number,
-	): Promise<{ readonly sessionId: string; readonly resId: string } | undefined>
+	): Promise<
+		{ readonly sessionId: string; readonly scope: TokenScope } | undefined
+	>
 }
 
 export type SessionStoreOptions = {
@@ -102,20 +116,20 @@ export function deriveTokenKey(password: string): Buffer {
 }
 
 /**
- * Create a stateless HMAC-signed token bound to a single resource. The
- * token embeds its own expiry and is self-authenticating — no server-side
+ * Create a stateless HMAC-signed token bound to one scope. The token
+ * embeds its own expiry and is self-authenticating — no server-side
  * storage needed.
  */
 export function createToken(
 	tokenKey: Buffer,
 	ttlSeconds: number,
-	resId: string,
+	scope: TokenScope,
 	now: number = Date.now(),
 ): FileToken {
 	const randomId = randomBytes(8).toString("base64url")
 	const expiresAt = now + ttlSeconds * 1000
 	const expiry = expiresAt.toString(36)
-	const payload = `${randomId}.${expiry}.${resId}`
+	const payload = `${randomId}.${expiry}.${scope.kind}.${scope.id}`
 	const hmac = createHmac("sha256", tokenKey)
 		.update(payload)
 		.digest()
@@ -125,31 +139,32 @@ export function createToken(
 }
 
 /**
- * Verify an HMAC-signed token. Returns `{ sessionId: "ok", resId }` when
+ * Verify an HMAC-signed token. Returns `{ sessionId: "ok", scope }` when
  * valid, or `undefined` when missing, expired, or tampered. The returned
- * `resId` is the resource the token is scoped to — callers must compare
- * it against the resource the request actually targets.
+ * scope is what the token is bound to — callers must compare it against
+ * the resource/plugin the request actually targets.
  */
 export function verifyToken(
 	tokenKey: Buffer,
 	sealed: string | undefined,
 	now: number = Date.now(),
-): { readonly sessionId: string; readonly resId: string } | undefined {
+): { readonly sessionId: string; readonly scope: TokenScope } | undefined {
 	if (sealed === undefined || sealed === "") return undefined
 	const parts = sealed.split(".")
-	if (parts.length !== 4) return undefined
-	const [randomId, expiryStr, resId, sig] = parts as (string | undefined)[]
+	if (parts.length !== 5) return undefined
+	const [randomId, expiryStr, kind, id, sig] = parts as (string | undefined)[]
 	if (
 		randomId === undefined ||
 		expiryStr === undefined ||
-		resId === undefined ||
-		sig === undefined
+		id === undefined ||
+		sig === undefined ||
+		(kind !== "res" && kind !== "plugin")
 	) {
 		return undefined
 	}
 	const expiry = parseInt(expiryStr, 36)
 	if (!Number.isFinite(expiry) || expiry <= now) return undefined
-	const payload = `${randomId}.${expiryStr}.${resId}`
+	const payload = `${randomId}.${expiryStr}.${kind}.${id}`
 	const expectedSig = createHmac("sha256", tokenKey)
 		.update(payload)
 		.digest()
@@ -161,7 +176,7 @@ export function verifyToken(
 	) {
 		return undefined
 	}
-	return { sessionId: "ok", resId }
+	return { sessionId: "ok", scope: { kind, id } }
 }
 
 /**
@@ -252,8 +267,8 @@ export function createSessionStore(opts: SessionStoreOptions): SessionStore {
 		read,
 		touch,
 		rotate,
-		createToken: (ttlSeconds, resId, now) =>
-			Promise.resolve(createToken(tokenKey, ttlSeconds, resId, now)),
+		createToken: (ttlSeconds, scope, now) =>
+			Promise.resolve(createToken(tokenKey, ttlSeconds, scope, now)),
 		verifyToken: (sealed, now) =>
 			Promise.resolve(verifyToken(tokenKey, sealed, now)),
 	}

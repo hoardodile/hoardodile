@@ -12,6 +12,7 @@ import { buildResourceCollectionRouter } from "src/domain/col/router.ts"
 import { buildCommentRouter } from "src/domain/comment/router.ts"
 import { buildDanmakuRouter } from "src/domain/danmaku/router.ts"
 import { buildDocumentRouter } from "src/domain/doc/router.ts"
+import { buildPluginAssetRouter } from "src/domain/plugin/asset-router.ts"
 import { buildPluginRouter } from "src/domain/plugin/router.ts"
 import {
 	buildAsyncPreferenceRouter,
@@ -94,6 +95,10 @@ export function buildDomainRouter(services: RouterServices) {
 					services.pluginPrefService.removeAllByPlugin(pluginId)
 					services.cacheService.removeAllByPlugin(pluginId)
 				},
+			}),
+			pluginAsset: buildPluginAssetRouter({
+				service: services.pluginAssetService,
+				consent: services.pluginAssetConsent,
 			}),
 			systemPreference: buildSystemPreferenceRouter(services.systemPrefService),
 			asyncPreference: buildAsyncPreferenceRouter(services.asyncPrefService),

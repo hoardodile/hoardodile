@@ -1,7 +1,13 @@
 import { readFileSync } from "node:fs"
 import { fileURLToPath } from "node:url"
 import { describe, expect, test } from "vitest"
-import { API_METHOD_NAMES, HOOK_NAMES, LOG_METHOD_NAMES } from "./protocol.ts"
+import {
+	API_METHOD_NAMES,
+	deserializeError,
+	HOOK_NAMES,
+	LOG_METHOD_NAMES,
+	serializeError,
+} from "./protocol.ts"
 
 /**
  * worker-entry.mjs is plain JS without access to workspace TS sources, so it
@@ -48,5 +54,32 @@ describe("protocol ↔ worker-entry name lists", () => {
 		expect(
 			extractStringList(workerEntrySource, "LOG_METHOD_NAMES").sort(),
 		).toEqual([...LOG_METHOD_NAMES].sort())
+	})
+})
+
+describe("error code over the sandbox IPC", () => {
+	test("the asset vocabulary round-trips via `code` (name restored verbatim)", () => {
+		const denied = new Error("declined")
+		denied.name = "DENIED"
+		const serialized = serializeError(denied)
+		expect(serialized.code).toBe("DENIED")
+		const restored = deserializeError(serialized)
+		expect(restored.name).toBe("DENIED")
+		expect(restored.message).toBe("declined")
+	})
+
+	test("plain errors carry no code and keep their own name", () => {
+		const serialized = serializeError(new TypeError("boom"))
+		expect(serialized.code).toBeUndefined()
+		expect(deserializeError(serialized).name).toBe("TypeError")
+	})
+
+	test("an explicit wire code wins over the legacy name field", () => {
+		const restored = deserializeError({
+			name: "SomeOldName",
+			code: "POLICY",
+			message: "nope",
+		})
+		expect(restored.name).toBe("POLICY")
 	})
 })

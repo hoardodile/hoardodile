@@ -106,6 +106,16 @@ hoardodile plugin dev             # watch-build + workbench (http://127.0.0.1:51
   `coverLocal`) from the real sandbox and feeds them to the iframe — the
   same context the app would push. Its render cache lives in the
   workdir's `.hoardodile/` (gitignore it). No hoardodile server needed.
+- **Plugin asset downloads in the workbench** work the same way as the
+  app: the same consent dialog (Allow / Deny / remember-this-session),
+  backed by the dev server instead of tRPC. Declare `"download": true`
+  in the manifest; on `download()` the dialog appears, and on approval
+  the dev server fetches the URL into `<pluginDir>/.hoardodile/vault/<id>/…`
+  (never in `--data` or the read-only `--storage` library) and serves it
+  at `/api/plugin-assets/<id>/<token>/<path>` — the token is dev-only and
+  not verified, so `resolveAssetUrl` works unmodified. The same policy
+  subset applies: http(s) only, ≤5 redirects, `WORKBENCH_VAULT_MAX_BYTES`
+  cap (default 200 MiB), optional sha256 pin, atomic write.
 
 ## Test data and fixtures
 

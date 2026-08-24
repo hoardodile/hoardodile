@@ -217,6 +217,34 @@ export type StorageContextReloadedEvent = {
 	type: "storageContextReloaded"
 }
 
+/**
+ * Emitted when a plugin asks to download into its own asset vault and the
+ * host needs the user's consent. The web app shows the shared consent
+ * dialog from this event (URL shown verbatim); any connected tab may
+ * answer via the `pluginAsset.decide` procedure. `sizeBytes` is present
+ * when a cheap HEAD probe succeeded at request time.
+ */
+export type PluginDownloadRequestedEvent = {
+	type: "pluginDownloadRequested"
+	ticketId: string
+	pluginId: string
+	pluginName: string
+	url: string
+	dest: string
+	sizeBytes?: number
+	reason?: string
+}
+
+/**
+ * Emitted when a consent ticket was resolved (decided, timed out, or the
+ * broker was disposed). Every tab closes the matching dialog entry —
+ * the dialog can appear in several tabs at once, the answer lives in one.
+ */
+export type PluginDownloadResolvedEvent = {
+	type: "pluginDownloadResolved"
+	ticketId: string
+}
+
 export const resource = z.object({
 	id,
 	name: z.string().min(1).max(MAX_NAME_LENGTH),

@@ -33,6 +33,7 @@ function manifestFor(
 			message: false,
 			imageHashes: false,
 			container: false,
+			download: false,
 			...permissions,
 		},
 	}
@@ -126,6 +127,12 @@ function createAPI(files: readonly string[]): ResourceAPI {
 		computeImageHashes: async () => undefined,
 		listContainer: async () => ({ entries: [] }),
 		extractArchive: async () => ({ entries: [] }),
+		download: async () => {
+			throw new Error("stub: download not configured")
+		},
+		statAsset: async () => undefined,
+		readAsset: async () => new Uint8Array(),
+		deleteAsset: async () => ({ existed: false }),
 	}
 }
 

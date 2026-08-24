@@ -1,4 +1,6 @@
+import { decideDownloadConsent } from "@hoardodile/host-web"
 import { applyTheme } from "@hoardodile/sdk-web"
+import { PluginDownloadConsentDialog } from "@hoardodile/ui/components/plugin-download-consent"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { Stage } from "./components/Stage.tsx"
 import { Toolbar } from "./components/Toolbar.tsx"
@@ -10,6 +12,7 @@ import {
 	saveWorkbenchConfig,
 	type WorkbenchConfig,
 } from "./config.ts"
+import { useDownloadConsentEntry } from "./consent-bridge.ts"
 import {
 	buildContext,
 	describeContext,
@@ -61,6 +64,7 @@ export function App() {
 	const [systemDark, setSystemDark] = useState(readSystemDark)
 	const frameRef = useRef<HTMLDivElement | null>(null)
 	const mountedRef = useRef<Mounted | null>(null)
+	const consentEntry = useDownloadConsentEntry()
 
 	// Bootstrap: the plugin manifest first, then the resource list. A dev
 	// server without the route (or without a captured snapshot yet) still
@@ -226,6 +230,11 @@ export function App() {
 					frameRef={frameRef}
 				/>
 			)}
+			<PluginDownloadConsentDialog
+				entry={consentEntry}
+				onDeny={(ticketId) => decideDownloadConsent(ticketId, false)}
+				onAllow={(ticketId) => decideDownloadConsent(ticketId, true)}
+			/>
 		</div>
 	)
 }

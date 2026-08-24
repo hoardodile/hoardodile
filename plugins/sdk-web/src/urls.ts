@@ -46,3 +46,21 @@ export function buildFrameUrl(
 	const time = String(Math.max(0, Math.round(timeMs)))
 	return `/api/resources/${resId}/frame/${encodeURIComponent(token)}/${encodeURIComponent(filename)}/${time}`
 }
+
+/**
+ * Build the URL of a file in the plugin's own asset vault. The host
+ * serves it via the tokenized `/api/plugin-assets/:id/:token/:path`
+ * route (see `apps/server/src/infra/http/plugin-assets.ts`): `token` is
+ * the plugin-scoped asset token from the iframe context — vault files
+ * are host data, so they are served fresh (`no-cache`), never through
+ * the service worker.
+ */
+export function buildAssetUrl(
+	pluginId: string,
+	path: string,
+	token: string,
+): string {
+	return `/api/plugin-assets/${encodeURIComponent(pluginId)}/${encodeURIComponent(
+		token,
+	)}/${encodeURIComponent(path)}`
+}

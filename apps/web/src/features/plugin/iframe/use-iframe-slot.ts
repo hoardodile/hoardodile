@@ -297,6 +297,8 @@ export type PreviewInitResult = {
 	readonly prefs: Record<string, string>
 	readonly cache: Record<string, string>
 	readonly fileToken: string
+	/** Plugin-scoped asset-vault token (empty when the manifest lacks `download`). */
+	readonly assetToken: string
 }
 
 /**
@@ -341,6 +343,7 @@ export function buildPluginIframeContext(
 		initialPrefs: init?.prefs ?? {},
 		initialCache: init?.cache ?? {},
 		fileToken: init?.fileToken ?? "",
+		assetToken: init?.assetToken ?? "",
 	}
 }
 

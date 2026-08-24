@@ -31,6 +31,13 @@ export const pluginPermissions = z.object({
 	 * it is denied by default.
 	 */
 	container: z.boolean().default(false),
+	/**
+	 * The plugin asset vault: user-consented downloads into the plugin's
+	 * own `vault/` directory plus the vault read/delete methods. Denied
+	 * by default — every download needs this capability AND the user's
+	 * per-request approval.
+	 */
+	download: z.boolean().default(false),
 })
 export type PluginPermissions = z.infer<typeof pluginPermissions>
 

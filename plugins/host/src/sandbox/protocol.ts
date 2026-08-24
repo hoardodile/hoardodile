@@ -13,6 +13,7 @@
  * point.
  */
 import { HOOK_NAMES, type HookName } from "@hoardodile/sdk-types"
+import { PLUGIN_ASSET_ERROR_NAMES } from "@hoardodile/sdk-types/plugin-asset-limits"
 
 export { HOOK_NAMES, type HookName }
 
@@ -31,6 +32,10 @@ export const API_METHOD_NAMES = [
 	"computeImageHashes",
 	"listContainer",
 	"extractArchive",
+	"download",
+	"statAsset",
+	"readAsset",
+	"deleteAsset",
 ] as const
 
 export type ApiMethodName = (typeof API_METHOD_NAMES)[number]
@@ -46,6 +51,12 @@ export type SerializedError = {
 	readonly name: string
 	readonly message: string
 	readonly stack?: string
+	/**
+	 * Machine-readable plugin error code (`DENIED`/`UNAVAILABLE`/`POLICY`)
+	 * carried verbatim on the wire — the single field the host side reads
+	 * to restore the plugin-facing `err.name`.
+	 */
+	readonly code?: string
 }
 
 // -- host → worker --
@@ -109,14 +120,28 @@ export type WorkerMessage =
 
 export function serializeError(err: unknown): SerializedError {
 	if (err instanceof Error) {
-		return { name: err.name, message: err.message, stack: err.stack }
+		return {
+			name: err.name,
+			message: err.message,
+			stack: err.stack,
+			// The vocabulary errors carry their code in `name`; the wire
+			// keeps an explicit `code` field so the receiving side never
+			// re-parses or re-derives it.
+			code: isAssetErrorName(err.name) ? err.name : undefined,
+		}
 	}
 	return { name: "Error", message: String(err) }
 }
 
 export function deserializeError(err: SerializedError): Error {
 	const e = new Error(err.message)
-	e.name = err.name
+	// `code` is authoritative when present (the vocabulary survived);
+	// `name` falls back for plain host errors.
+	e.name = err.code ?? err.name
 	if (err.stack !== undefined) e.stack = err.stack
 	return e
+}
+
+function isAssetErrorName(name: string): boolean {
+	return (PLUGIN_ASSET_ERROR_NAMES as readonly string[]).includes(name)
 }

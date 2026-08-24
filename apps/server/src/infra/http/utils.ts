@@ -162,3 +162,36 @@ export function extToContentType(ext: string): string {
 			return "application/octet-stream"
 	}
 }
+
+/**
+ * Content type for a served object path, extending {@link extToContentType}
+ * with the script/config/font types plugin files need. Shared by the
+ * plugin-asset route (`/api/plugins/:id/*`) and the plugin asset vault
+ * route (`/api/plugin-assets/:id/:token/*`) so the two never disagree.
+ */
+export function servedFileContentType(ext: string | undefined): string {
+	if (ext === undefined) return "application/octet-stream"
+	const known = extToContentType(ext)
+	if (known !== "application/octet-stream") return known
+	switch (ext) {
+		case "html":
+			return "text/html"
+		case "js":
+		case "mjs":
+		case "ts":
+		case "tsx":
+			return "text/javascript"
+		case "css":
+			return "text/css"
+		case "json":
+			return "application/json"
+		case "svg":
+			return "image/svg+xml"
+		case "woff":
+			return "font/woff"
+		case "woff2":
+			return "font/woff2"
+		default:
+			return "application/octet-stream"
+	}
+}

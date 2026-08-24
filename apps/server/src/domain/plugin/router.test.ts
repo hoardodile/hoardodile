@@ -12,6 +12,7 @@ describe("plugin router previewInitContext", () => {
 			getAssetVersion: vi.fn((id: string) =>
 				id === PLUGIN_ID ? "1700000000000" : undefined,
 			),
+			supportsCapability: vi.fn(() => false),
 			update: vi.fn(),
 			reorder: vi.fn(),
 			rescan: vi.fn(async () => undefined),
@@ -51,10 +52,15 @@ describe("plugin router previewInitContext", () => {
 			read: vi.fn(async (sealed: string | undefined) =>
 				sealed === "valid-cookie" ? { id: "session-1" } : undefined,
 			),
-			createToken: vi.fn(async (ttlSeconds: number, resId: string) => ({
-				sealed: `token:${ttlSeconds}:${resId}`,
-				expiresAt: 0,
-			})),
+			createToken: vi.fn(
+				async (
+					ttlSeconds: number,
+					scope: { readonly kind: "res" | "plugin"; readonly id: string },
+				) => ({
+					sealed: `token:${ttlSeconds}:${scope.kind}:${scope.id}`,
+					expiresAt: 0,
+				}),
+			),
 		}
 		return { service, prefs, cache, sessions, usage, cleanupPluginData }
 	}
@@ -92,12 +98,14 @@ describe("plugin router previewInitContext", () => {
 		expect(result).toEqual({
 			prefs: { theme: "dark", scale: "1.5" },
 			cache: { page: "3" },
-			fileToken: `token:86400:${RES_ID}`,
+			fileToken: `token:86400:res:${RES_ID}`,
+			// The mock registry has no manifest, so no vault token is issued.
+			assetToken: "",
 			assetVersion: "1700000000000",
 		})
 		expect(deps.prefs.listByPlugin).toHaveBeenCalledWith(PLUGIN_ID)
 		expect(deps.cache.listForRes).toHaveBeenCalledWith(PLUGIN_ID, RES_ID)
-		expect(deps.sessions.createToken).toHaveBeenCalledWith(86400, RES_ID)
+		expect(deps.sessions.createToken).toHaveBeenCalledTimes(1)
 		expect(deps.service.getAssetVersion).toHaveBeenCalledWith(PLUGIN_ID)
 	})
 

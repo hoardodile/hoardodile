@@ -1,3 +1,4 @@
+import { isPluginAssetError } from "@hoardodile/sdk-types"
 import { isDomainError } from "@hoardodile/shared"
 import { initTRPC, TRPCError } from "@trpc/server"
 import { toTRPCError } from "src/config/errors.ts"
@@ -11,7 +12,10 @@ import type { AppContext } from "./context.ts"
  *
  * The error formatter enriches the wire payload with any `DomainError`
  * attached as `cause`, so the web client can branch on `kind` and `details`
- * without reparsing the message.
+ * without reparsing the message; plugin asset errors surface their
+ * machine-readable name (`DENIED` / `UNAVAILABLE` / `POLICY`) the same
+ * way, so the iframe handler can forward it to plugin code via
+ * `err.name`.
  */
 const t = initTRPC.context<AppContext>().create({
 	errorFormatter({ shape, error }) {
@@ -22,6 +26,22 @@ const t = initTRPC.context<AppContext>().create({
 				data: {
 					...shape.data,
 					domain: cause.toPayload(),
+				},
+			}
+		}
+		if (
+			isPluginAssetError(cause, "DENIED") ||
+			isPluginAssetError(cause, "UNAVAILABLE") ||
+			isPluginAssetError(cause, "POLICY")
+		) {
+			return {
+				...shape,
+				data: {
+					...shape.data,
+					// `errorCode` is the unified field; `assetError` stays
+					// as the legacy alias so older web builds keep working.
+					errorCode: cause.name,
+					assetError: cause.name,
 				},
 			}
 		}

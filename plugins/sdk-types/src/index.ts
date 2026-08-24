@@ -44,6 +44,7 @@ export type {
 	PluginPermissions,
 	SearchKind,
 } from "./manifest.ts"
+export * from "./plugin-asset.ts"
 export * from "./plugin-definition.ts"
 export * from "./read-range.ts"
 export * from "./result.ts"

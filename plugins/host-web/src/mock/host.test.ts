@@ -30,6 +30,7 @@ function buildContext(
 		initialPrefs: {},
 		initialCache: {},
 		fileToken: "",
+		assetToken: "",
 		...overrides,
 	}
 }

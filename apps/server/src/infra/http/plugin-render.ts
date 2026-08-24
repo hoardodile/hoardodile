@@ -4,7 +4,7 @@ import { join, normalize } from "node:path"
 import { MOBILE_INITIAL_SCALE } from "@hoardodile/ui/viewport"
 import type { FastifyInstance, FastifyPluginAsync, FastifyReply } from "fastify"
 import { assertInside } from "src/infra/storage/paths.ts"
-import { extToContentType } from "./utils.ts"
+import { servedFileContentType } from "./utils.ts"
 
 /**
  * Serves any file from a plugin's directory. Supports nested paths.
@@ -52,6 +52,20 @@ async function servePluginFile(
 	}
 
 	const sanitized = normalize(filePath).replace(/^(\.\.(\/|\\|$))+/g, "")
+	// The host-managed `vault/` subdirectory has exactly one sanctioned
+	// reader — the tokenized plugin-assets route (fresh cache, no
+	// immutable headers). Serving it here would hand vault files out
+	// unauthenticated with one-year caching. (`normalize` folds slashes
+	// into backslashes on Windows, so check both spellings.)
+	if (
+		sanitized === "vault" ||
+		sanitized.startsWith("vault/") ||
+		sanitized.startsWith("vault\\")
+	) {
+		return reply.status(403).type("application/json").send({
+			error: "forbidden",
+		})
+	}
 	const fullPath = join(entry.diskPath, sanitized)
 
 	try {
@@ -70,7 +84,7 @@ async function servePluginFile(
 	}
 
 	const ext = filePath.split(".").pop()?.toLowerCase()
-	const contentType = getContentType(ext)
+	const contentType = servedFileContentType(ext)
 	const isDevelopment = app.env.NODE_ENV === "development"
 	const cacheControl =
 		entry.dev === true || isDevelopment
@@ -106,9 +120,10 @@ async function servePluginFile(
 }
 
 /**
- * Wraps plugin-provided body content in a full HTML shell.
- * The shell injects the postMessage listener that receives {@link PluginIframeContext}
- * from the host and dispatches a `context-ready` CustomEvent.
+ * Wraps plugin-provided body content in a full HTML shell. The shell
+ * injects the postMessage listener that receives
+ * {@link PluginIframeContext} from the host and dispatches a
+ * `context-ready` CustomEvent.
  */
 function wrapHtml(body: string): string {
 	return [
@@ -125,33 +140,6 @@ function wrapHtml(body: string): string {
 		"</body>",
 		"</html>",
 	].join("")
-}
-
-function getContentType(ext: string | undefined): string {
-	if (ext === undefined) return "application/octet-stream"
-	const image = extToContentType(ext)
-	if (image !== "application/octet-stream") return image
-	switch (ext) {
-		case "html":
-			return "text/html"
-		case "js":
-		case "mjs":
-		case "ts":
-		case "tsx":
-			return "text/javascript"
-		case "css":
-			return "text/css"
-		case "json":
-			return "application/json"
-		case "svg":
-			return "image/svg+xml"
-		case "woff":
-			return "font/woff"
-		case "woff2":
-			return "font/woff2"
-		default:
-			return "application/octet-stream"
-	}
 }
 
 export const pluginRenderPlugin = pluginFilesImpl satisfies FastifyPluginAsync

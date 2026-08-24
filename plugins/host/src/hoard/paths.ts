@@ -156,6 +156,14 @@ export type VersionPaths = {
 	 * `manifest.id`. The builtin `file` plugin is not stored here.
 	 */
 	plugins(): string
+	/**
+	 * Host-managed plugin asset vault of an installed plugin:
+	 * `<root>/versions/<v>/plugins/<id>/vault`. Downloads land here
+	 * (user-consented, vault-confined); the directory is host-owned,
+	 * reserved against plugin zips (upload rejects a shipped `vault/`),
+	 * and its lifecycle follows the plugin's own directory.
+	 */
+	pluginVaultDir(id: string): string
 }
 
 export type LocalPaths = {
@@ -350,6 +358,8 @@ export function createStoragePaths(
 				join(vRoot, kind, assertSafeSegment(id), ".deleted"),
 			document: (id) => join(vRoot, "documents", assertSafeSegment(id)),
 			plugins: () => join(vRoot, "plugins"),
+			pluginVaultDir: (id) =>
+				join(vRoot, "plugins", assertSafeSegment(id), "vault"),
 		}
 	}
 

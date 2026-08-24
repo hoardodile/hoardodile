@@ -1,6 +1,7 @@
 import { type Dirent, existsSync, readdirSync, statSync } from "node:fs"
 import { readdir, stat } from "node:fs/promises"
 import { join } from "node:path"
+import { sumDirSizes } from "@hoardodile/host/hoard"
 import type { StorageOverview, StoragePluginUsage } from "@hoardodile/schemas"
 import { fileStats as fileStatsSchema } from "@hoardodile/schemas"
 import { eq, isNull } from "drizzle-orm"
@@ -252,12 +253,12 @@ function fileSizeOrZero(path: string): number {
 }
 
 /**
- * Recursive byte size of a directory tree. Symbolic links are skipped so
- * cycles cannot hang the walk and linked-out files are not double counted.
- * Missing/transient entries are ignored.
+ * Recursive byte size of a directory tree — the shared host walk
+ * (symlinks skipped so cycles cannot hang the walk and linked-out files
+ * are not double counted; missing/transient entries ignored).
  */
 async function dirSize(root: string): Promise<number> {
-	return (await dirSizeWithSubtree(root, "")).total
+	return sumDirSizes(root)
 }
 
 /**

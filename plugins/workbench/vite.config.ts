@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs"
-import { resolve } from "node:path"
+import { join, resolve } from "node:path"
 import babel from "@rolldown/plugin-babel"
 import tailwindcss from "@tailwindcss/vite"
 import react, { reactCompilerPreset } from "@vitejs/plugin-react"
@@ -53,7 +53,17 @@ function workbenchMountsPlugin(): Plugin {
 					? {}
 					: { snapshot: fileSnapshot(snapshotFile) }),
 			}
-			const mounts = createWorkbenchMounts({ pluginDir, providers })
+			const mounts = createWorkbenchMounts({
+				pluginDir,
+				providers,
+				// The dev vault lives with the plugin's other workbench
+				// scratch (`.hoardodile/extract`): user-consented dev
+				// downloads never touch the data or storage root.
+				vault:
+					pluginDir === undefined
+						? undefined
+						: join(pluginDir, ".hoardodile", "vault"),
+			})
 			const middleware: Connect.NextHandleFunction = (req, res, next) => {
 				void (async () => {
 					for (const mount of mounts) {

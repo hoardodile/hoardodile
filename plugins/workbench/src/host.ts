@@ -5,6 +5,7 @@ import {
 	type MockHost,
 } from "@hoardodile/host-web"
 import { hostPushKeys, type PluginIframeContext } from "@hoardodile/sdk-web"
+import { createAssetVault } from "./consent-bridge.ts"
 import {
 	createHttpFileBackend,
 	type IframePresentation,
@@ -41,6 +42,7 @@ export function mountIframe(opts: {
 		danmaku: createMockDanmakuStore(ctx.state?.danmaku ?? []),
 		prefs: ctx.state?.prefs,
 		cache: ctx.state?.cache,
+		assetVault: createAssetVault(manifest),
 	})
 
 	container.replaceChildren()

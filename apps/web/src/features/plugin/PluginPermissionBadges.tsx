@@ -8,6 +8,7 @@ const PERMISSION_KEYS = [
 	"message",
 	"imageHashes",
 	"container",
+	"download",
 ] as const satisfies readonly (keyof PluginPermissions)[]
 
 /**

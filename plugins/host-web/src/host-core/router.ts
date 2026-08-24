@@ -216,11 +216,18 @@ export function createHostRouter(
 				respond({ type: "response", id: msg.id, ok: true, data })
 			})
 			.catch((err) => {
+				const errorName =
+					err instanceof Error && err.name !== "Error" ? err.name : undefined
 				respond({
 					type: "response",
 					id: msg.id,
 					ok: false,
 					error: err instanceof Error ? err.message : String(err),
+					// Machine-readable plugin error code (`DENIED`/…)
+					// travels as `errorCode`; `errorName` is the legacy
+					// alias (same value) so older SDK builds keep working.
+					errorCode: errorName,
+					errorName,
 				})
 			})
 	}

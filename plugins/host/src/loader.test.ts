@@ -45,6 +45,7 @@ function buildManifest(
 			message: false,
 			imageHashes: false,
 			container: false,
+			download: false,
 		},
 		...overrides,
 	}

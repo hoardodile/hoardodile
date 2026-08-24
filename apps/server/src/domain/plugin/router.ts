@@ -48,7 +48,9 @@ export type PluginRouterDeps = {
 		read(sealed: string | undefined): Promise<unknown>
 		createToken(
 			ttlSeconds: number,
-			resId: string,
+			scope:
+				| { readonly kind: "res"; readonly id: string }
+				| { readonly kind: "plugin"; readonly id: string },
 		): Promise<{ readonly sealed: string }>
 	}
 	/** Live resources bound to a content plugin (for uninstall confirmation). */
@@ -107,16 +109,36 @@ export function buildPluginRouter(deps: PluginRouterDeps) {
 				if (session === undefined) {
 					throw new TRPCError({ code: "UNAUTHORIZED" })
 				}
-				const token = await sessions.createToken(
-					FILE_TOKEN_TTL_SECONDS,
-					input.resId,
+				const token = await sessions.createToken(FILE_TOKEN_TTL_SECONDS, {
+					kind: "res",
+					id: input.resId,
+				})
+				// The asset vault token is plugin-scoped and issued only when
+				// the manifest grants the `download` permission — a plugin
+				// with no vault has nothing to fetch (least privilege).
+				// O(1) registry lookup, live across rescans.
+				// Note: permission is checked at ISSUANCE only; a revoked
+				// permission keeps an already-issued token valid for its
+				// remaining TTL (matching session.ts's wording — 24h,
+				// reload the preview to re-issue).
+				const assetToken = service.supportsCapability(
+					input.pluginId,
+					"download",
 				)
+					? (
+							await sessions.createToken(FILE_TOKEN_TTL_SECONDS, {
+								kind: "plugin",
+								id: input.pluginId,
+							})
+						).sealed
+					: ""
 				return {
 					prefs: toKeyValueRecord(prefs.listByPlugin(input.pluginId)),
 					cache: toKeyValueRecord(
 						cache.listForRes(input.pluginId, input.resId),
 					),
 					fileToken: token.sealed,
+					assetToken,
 					assetVersion: service.getAssetVersion(input.pluginId),
 				}
 			}),

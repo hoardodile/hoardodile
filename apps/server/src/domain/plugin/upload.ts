@@ -102,6 +102,15 @@ export function buildPluginUploads(deps: PluginUploadsDeps): PluginUploads {
 				)
 			}
 
+			const reserved = await findReservedEntry(stagingDir, "vault")
+			if (reserved) {
+				throw invalid(
+					"plugin.upload_reserved_entry",
+					"plugin zip must not contain a top-level `vault` entry — the plugin asset vault is host-managed",
+					{ path: reserved },
+				)
+			}
+
 			await commit(stagingDir, id)
 			return id
 		} catch (err) {
@@ -144,6 +153,22 @@ export async function findSymlinkEntry(
 			const nested = await findSymlinkEntry(path)
 			if (nested !== undefined) return nested
 		}
+	}
+	return undefined
+}
+
+/**
+ * Return the first top-level entry named `name`, or `undefined`. Used to
+ * reject host-reserved entry names (the plugin asset vault) — a shipped
+ * `vault/` would mix plugin files with host-managed download storage.
+ */
+export async function findReservedEntry(
+	root: string,
+	name: string,
+): Promise<string | undefined> {
+	const entries = await readdir(root, { withFileTypes: true })
+	for (const entry of entries) {
+		if (entry.name === name) return entry.name
 	}
 	return undefined
 }

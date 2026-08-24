@@ -90,6 +90,7 @@ export function resolvePluginTarget(opts: {
 				message: false,
 				imageHashes: false,
 				container: false,
+				download: false,
 			},
 		}
 	}

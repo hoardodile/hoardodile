@@ -4,6 +4,12 @@ import { createRootRouteWithContext, Outlet } from "@tanstack/react-router"
 import { useEffect } from "react"
 import { useTranslation } from "react-i18next"
 import { AppShell } from "@/components/layout/AppShell"
+import {
+	closeDownloadConsent,
+	enqueueDownloadConsent,
+	rehydrateDownloadConsent,
+} from "@/features/plugin/download/consent-store"
+import { DownloadConsentDialog } from "@/features/plugin/download/DownloadConsentDialog"
 import { useAutoLogout } from "@/features/privacy/useAutoLogout"
 import { notifyImageHashesReady } from "@/features/res/api/dup-toast"
 import { handleResourceMetaUpdated } from "@/features/res/api/sse-handler"
@@ -12,6 +18,7 @@ import { isHoardodileDesktop } from "@/lib/desktop"
 import type { SseEvent } from "@/lib/sse"
 import { connectEventSource } from "@/lib/sse"
 import type { TRPC } from "@/trpc/client"
+import { trpcQuery } from "@/trpc/factory"
 
 export type RouterContext = {
 	queryClient: QueryClient
@@ -40,6 +47,14 @@ export async function handleSseEvent(
 		// persisted client state and reload so the app starts fresh against
 		// the new storage context.
 		void hardResetAndReload(reloadingMessage)
+		return
+	}
+	if (evt.type === "pluginDownloadRequested") {
+		enqueueDownloadConsent(evt)
+		return
+	}
+	if (evt.type === "pluginDownloadResolved") {
+		closeDownloadConsent(evt.ticketId)
 	}
 }
 
@@ -52,6 +67,13 @@ function RootComponent() {
 			return connectEventSource(queryClient, {
 				onEvent: (evt) =>
 					handleSseEvent(queryClient, evt, t("dataHistory.reloading")),
+				// Broadcasts can be lost while the stream is down — repull
+				// the broker's pending tickets so dialogs reappear.
+				onReconnect: () => {
+					void trpcQuery("pluginAsset", "listPending")
+						.then((pending) => rehydrateDownloadConsent(pending))
+						.catch(() => {})
+				},
 			})
 		},
 		[queryClient, t],
@@ -63,6 +85,7 @@ function RootComponent() {
 			<AppShell>
 				<Outlet />
 			</AppShell>
+			<DownloadConsentDialog />
 			<Toaster />
 		</div>
 	)

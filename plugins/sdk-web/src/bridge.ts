@@ -8,7 +8,7 @@ import type {
 	RequestInput,
 	RequestOutput,
 } from "./protocol.ts"
-import { PROTOCOL_VERSION } from "./protocol.ts"
+import { PROTOCOL_VERSION, pluginRequestTimeouts } from "./protocol.ts"
 
 // ── Host bridge ──────────────────────────────────────────────────────────
 
@@ -80,7 +80,15 @@ export function ensureHostBridge(): Host {
 				if (msg.ok) {
 					entry.resolve(msg.data)
 				} else {
-					entry.reject(new Error(msg.error ?? "Unknown error"))
+					const err = new Error(msg.error ?? "Unknown error")
+					// Preserve the machine-readable code (e.g. the asset
+					// DENIED/UNAVAILABLE/POLICY vocabulary) so plugin code
+					// can branch on `err.name` across the bridge.
+					const code = msg.errorCode ?? msg.errorName
+					if (code !== undefined && code.length > 0) {
+						err.name = code
+					}
+					entry.reject(err)
 				}
 			} else if (msg.type === "push") {
 				const handlers = subscribers.get(msg.key)
@@ -99,12 +107,19 @@ export function ensureHostBridge(): Host {
 		...args: RequestInput<K> extends void ? [] : [RequestInput<K>]
 	): Promise<RequestOutput<K>> {
 		const id = nextId++
-		const params = args[0]
+		const input = args[0] as RequestInput<K> | undefined
+		// Per-method timeouts are declared in the protocol meta
+		// (`pluginRequestTimeouts`, e.g. downloads waiting on the consent
+		// dialog) — callers never pass one.
+		const timeoutMs =
+			(pluginRequestTimeouts as Partial<Record<string, number>>)[method] ??
+			REQUEST_TIMEOUT_MS
+		const params = input
 		return new Promise((resolve, reject) => {
 			const timeoutId = setTimeout(() => {
 				pending.delete(id)
 				reject(new Error(`Request timed out: ${String(method)}`))
-			}, REQUEST_TIMEOUT_MS)
+			}, timeoutMs)
 			pending.set(id, {
 				resolve: resolve as (value: unknown) => void,
 				reject,

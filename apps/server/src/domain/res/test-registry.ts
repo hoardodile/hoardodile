@@ -22,6 +22,7 @@ export const TEST_BUILTIN_MANIFEST = {
 		preferences: false,
 		node: false,
 		container: false,
+		download: false,
 	},
 }
 

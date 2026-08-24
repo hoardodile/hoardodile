@@ -326,6 +326,48 @@ const envSchema = z
 			.positive()
 			.default(PLUGIN_WORKER_MAX_OLD_SPACE_MB),
 		/**
+		 * Per-file cap for one user-consented plugin asset download, in
+		 * bytes. The download stream is aborted as soon as the cap is
+		 * crossed, so a hostile server cannot push an unbounded body.
+		 */
+		PLUGIN_DOWNLOAD_MAX_BYTES: z.coerce
+			.number()
+			.int()
+			.positive()
+			.default(200 * 1024 * 1024),
+		/**
+		 * Cumulative cap for one plugin's asset vault, in bytes. A
+		 * misbehaving plugin cannot fill the disk; re-downloads replace
+		 * their target and never count the old bytes twice.
+		 */
+		PLUGIN_DOWNLOAD_MAX_TOTAL_BYTES: z.coerce
+			.number()
+			.int()
+			.positive()
+			.default(1024 * 1024 * 1024),
+		/**
+		 * How long a pending consent ticket stays open, in ms. No answer
+		 * within this window auto-denies (`DENIED`) and tells every tab to
+		 * close its dialog entry.
+		 */
+		PLUGIN_DOWNLOAD_CONSENT_TIMEOUT_MS: z.coerce
+			.number()
+			.int()
+			.positive()
+			.default(120_000),
+		/**
+		 * Allow plugin downloads to reach private / loopback / link-local
+		 * addresses (e.g. a plugin pulling from a LAN NAS). Off by default:
+		 * the downloader blocks the RFC1918/ranges at resolve time and
+		 * pins connections to vetted public addresses instead.
+		 */
+		PLUGIN_DOWNLOAD_ALLOW_PRIVATE: z
+			.union([z.boolean(), z.enum(["true", "false", "1", "0"])])
+			.transform((v) =>
+				typeof v === "boolean" ? v : v === "true" || v === "1",
+			)
+			.default(false),
+		/**
 		 * When true, the background scheduler takes an automatic snapshot of
 		 * the live DB once per local day (with a catch-up run at boot when
 		 * the newest snapshot is stale) into

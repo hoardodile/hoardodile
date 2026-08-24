@@ -1,4 +1,6 @@
 import type {
+	PluginDownloadRequestedEvent,
+	PluginDownloadResolvedEvent,
 	ResourceMetaUpdatedEvent,
 	StorageContextReloadedEvent,
 } from "@hoardodile/schemas"
@@ -11,7 +13,11 @@ const INITIAL_RECONNECT_MS = 1_000
 const MAX_RECONNECT_MS = 30_000
 const LEADER_HEARTBEAT_MS = 5_000
 
-export type SseEvent = ResourceMetaUpdatedEvent | StorageContextReloadedEvent
+export type SseEvent =
+	| ResourceMetaUpdatedEvent
+	| StorageContextReloadedEvent
+	| PluginDownloadRequestedEvent
+	| PluginDownloadResolvedEvent
 
 type SseBroadcastMessage =
 	| { readonly type: "connected"; readonly reconnect: boolean }
@@ -93,6 +99,13 @@ export async function streamSse(
 
 export type ConnectEventSourceOptions = {
 	readonly onEvent?: (event: SseEvent) => void
+	/**
+	 * Fired once per reconnected stream (leader and follower tabs alike).
+	 * Listeners rehydrate ephemeral server state that broadcasts may have
+	 * missed while the connection was down — e.g. pending plugin download
+	 * consent tickets (`pluginAsset.listPending`).
+	 */
+	readonly onReconnect?: () => void
 }
 
 function supportsWebLocks(): boolean {
@@ -152,6 +165,7 @@ export function connectEventSource(
 				document.documentElement.dataset.sseConnected = "1"
 				if (msg.reconnect) {
 					void queryClient.invalidateQueries()
+					options?.onReconnect?.()
 				}
 				break
 			case "disconnected":
@@ -195,6 +209,7 @@ export function connectEventSource(
 					}
 					if (reconnect) {
 						void queryClient.invalidateQueries()
+						options?.onReconnect?.()
 					}
 				},
 				onmessage: (msg) => {

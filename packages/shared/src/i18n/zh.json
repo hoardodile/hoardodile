@@ -517,7 +517,7 @@
 		"clearAllPluginCacheConfirmDescription": "这将删除所有插件的缓存数据，包括阅读进度。此操作无法撤销。",
 		"installConfirmTitle": "安装这个插件？",
 		"install": "安装",
-		"installConfirmRisk": "第三方插件的服务端代码在受限沙箱中运行：其主进程只能读取宿主展示给它的资源文件，无法访问你的文件系统、执行程序或发起网络请求。上方声明的权限是宿主功能开关。请只安装来源可信的插件。",
+		"installConfirmRisk": "第三方插件的服务端代码在受限沙箱中运行：其主进程只能读取宿主展示给它的资源文件，无法访问你的文件系统、执行程序或发起网络请求——除了经你确认的下载：声明了“下载”权限的插件可以在你逐次确认后从你选定的 URL 抓取文件（每次下载一个对话框，且只能存入插件自身文件夹）。上方声明的权限是宿主功能开关。请只安装来源可信的插件。",
 		"uploadInvalidPlugin": "不是有效的插件包（缺失或非法的 manifest.json）。",
 		"permissions": {
 			"sourceMeta": "来源元数据",
@@ -525,8 +525,21 @@
 			"danmaku": "弹幕",
 			"message": "留言",
 			"imageHashes": "图片哈希",
-			"container": "容器"
+			"container": "容器",
+			"download": "下载"
 		}
+	},
+	"pluginDownload": {
+		"eyebrow": "插件下载",
+		"title": "下载这个文件？",
+		"description": "{{pluginName}} 想下载一个文件到它自己的存储目录。文件将从下面的链接获取，且只会保存到插件自身的文件夹内。",
+		"urlLabel": "链接",
+		"destLabel": "目标路径",
+		"sizeLabel": "大小",
+		"unknownSize": "未知",
+		"deny": "拒绝",
+		"allow": "允许",
+		"remember": "本会话记住（不再向此插件询问）"
 	},
 	"overview": {
 		"usageHistory": {

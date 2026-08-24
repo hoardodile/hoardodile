@@ -413,16 +413,23 @@ describe("buildPluginIframeContext", () => {
 	it("merges the init payload and falls back to empty values", () => {
 		const withInit = buildPluginIframeContext({
 			...base,
-			init: { prefs: { a: "1" }, cache: { b: "2" }, fileToken: "tok" },
+			init: {
+				prefs: { a: "1" },
+				cache: { b: "2" },
+				fileToken: "tok",
+				assetToken: "atok",
+			},
 		})
 		expect(withInit.initialPrefs).toEqual({ a: "1" })
 		expect(withInit.initialCache).toEqual({ b: "2" })
 		expect(withInit.fileToken).toBe("tok")
+		expect(withInit.assetToken).toBe("atok")
 
 		const withoutInit = buildPluginIframeContext(base)
 		expect(withoutInit.initialPrefs).toEqual({})
 		expect(withoutInit.initialCache).toEqual({})
 		expect(withoutInit.fileToken).toBe("")
+		expect(withoutInit.assetToken).toBe("")
 	})
 })
 

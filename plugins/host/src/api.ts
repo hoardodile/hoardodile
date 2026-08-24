@@ -4,7 +4,7 @@ import type {
 	ImageHashKind,
 	PluginSchema,
 } from "@hoardodile/sdk-types"
-import { fileTypeFromName } from "@hoardodile/sdk-types"
+import { fileTypeFromName, pluginAssetError } from "@hoardodile/sdk-types"
 import { MIME_FFMPEG_INPUT_FORMAT } from "@hoardodile/sdk-types/media-exts"
 import { PLUGIN_READ_FILE_MAX_BYTES } from "@hoardodile/sdk-types/plugin"
 import type { ArchiveEntry, NestedCdCache } from "./archive/index.ts"
@@ -395,7 +395,35 @@ export function createPluginResourceAPI<
 		computeImageHashes: computeImageHashesScoped,
 		listContainer: (filename) => listContainerScoped(filename, extractor),
 		extractArchive: (filename) => extractArchiveScoped(filename, extractor),
+		// The plugin vault is a sandbox-level capability: the sandbox host
+		// intercepts these method names and routes them to the wired
+		// plugin-asset service with the owning plugin id (see
+		// sandbox/host.ts). In-process hosts (directory API, contract
+		// fixtures, dev runner) have no consent channel, so the methods
+		// answer UNAVAILABLE — exactly like the CLI and the workbench.
+		download: async () => {
+			throw pluginAssetError(
+				"UNAVAILABLE",
+				"download() — this host has no plugin asset service; only the app server host can download into the plugin vault",
+			)
+		},
+		statAsset: async () => {
+			throw unavailableAsset("statAsset")
+		},
+		readAsset: async () => {
+			throw unavailableAsset("readAsset")
+		},
+		deleteAsset: async () => {
+			throw unavailableAsset("deleteAsset")
+		},
 	}
+}
+
+function unavailableAsset(method: string): Error {
+	return pluginAssetError(
+		"UNAVAILABLE",
+		`${method}() — this host has no plugin asset vault; only the app server host manages vault files`,
+	)
 }
 
 /**

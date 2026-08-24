@@ -12,6 +12,8 @@ export {
 	streamStoredZip,
 	validateArchiveBudget,
 } from "../archive/index.ts"
+export type { DirSizeOptions } from "./dir-size.ts"
+export { sumDirSizes } from "./dir-size.ts"
 export {
 	naturalSort,
 	ORDER_MANIFEST_NAME,
@@ -34,6 +36,19 @@ export {
 	imageVariantKey,
 	RESOURCE_DATA_DIR_NAME,
 } from "./paths.ts"
+export {
+	commitVaultFile,
+	discardVaultTempFile,
+	PluginVaultPathError,
+	parsePluginVaultDest,
+	type VaultCommitResult,
+	vaultFileSha256,
+	vaultReadFile,
+	vaultRemoveFile,
+	vaultStatFile,
+	vaultTempFile,
+	vaultTotalSize,
+} from "./plugin-vault.ts"
 export type { OccupiedNames } from "./sanitize.ts"
 export {
 	createOccupiedNames,

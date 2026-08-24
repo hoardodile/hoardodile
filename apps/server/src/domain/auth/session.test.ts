@@ -77,19 +77,37 @@ describe("session store (iron-session)", () => {
 		)
 	})
 
-	test("createToken round-trips through verifyToken with its resId", async () => {
-		const token = await store.createToken(86_400, "res-1", 1_000)
+	test("createToken round-trips through verifyToken with its scope", async () => {
+		const token = await store.createToken(
+			86_400,
+			{ kind: "res", id: "res-1" },
+			1_000,
+		)
 		const verified = await store.verifyToken(token.sealed, 1_000)
 		expect(verified).toBeDefined()
-		expect(verified?.resId).toBe("res-1")
+		expect(verified?.scope).toEqual({ kind: "res", id: "res-1" })
 	})
 
-	test("createToken produces four dot-separated parts", async () => {
-		const token = await store.createToken(86_400, "res-1", 1_000)
+	test("createPluginToken-like plugin scopes round-trip independently", async () => {
+		const token = await store.createToken(
+			86_400,
+			{ kind: "plugin", id: "p-1" },
+			1_000,
+		)
+		const verified = await store.verifyToken(token.sealed, 1_000)
+		expect(verified?.scope).toEqual({ kind: "plugin", id: "p-1" })
+	})
+
+	test("createToken produces five dot-separated parts", async () => {
+		const token = await store.createToken(
+			86_400,
+			{ kind: "res", id: "res-1" },
+			1_000,
+		)
 		const parts = token.sealed.split(".")
-		expect(parts.length).toBe(4)
+		expect(parts.length).toBe(5)
 		expect(parts[0]!.length).toBeGreaterThanOrEqual(8)
-		expect(parts[3]!.length).toBeGreaterThanOrEqual(8)
+		expect(parts[4]!.length).toBeGreaterThanOrEqual(8)
 	})
 
 	test("verifyToken rejects unknown tokens", async () => {
@@ -97,33 +115,60 @@ describe("session store (iron-session)", () => {
 	})
 
 	test("verifyToken rejects tampered tokens", async () => {
-		const token = await store.createToken(86_400, "res-1", 1_000)
+		const token = await store.createToken(
+			86_400,
+			{ kind: "res", id: "res-1" },
+			1_000,
+		)
 		const parts = token.sealed.split(".")
-		const sig = parts[3]!
+		const sig = parts[4]!
 		// Flip the first signature char to one that is guaranteed different —
 		// a fixed replacement is a no-op whenever the random HMAC happens to
 		// start with it (~1/64), which made this test flaky.
 		const flipped = sig.startsWith("x") ? "y" : "x"
-		const tampered = `${parts[0]!}.${parts[1]!}.${parts[2]!}.${flipped}${sig.slice(1)}`
+		const tampered = `${parts[0]!}.${parts[1]!}.${parts[2]!}.${parts[3]!}.${flipped}${sig.slice(1)}`
 		expect(await store.verifyToken(tampered, 1_000)).toBeUndefined()
 	})
 
-	test("verifyToken rejects tokens with a swapped resId", async () => {
-		const token = await store.createToken(86_400, "res-1", 1_000)
+	test("verifyToken rejects tokens with a swapped scope id", async () => {
+		const token = await store.createToken(
+			86_400,
+			{ kind: "res", id: "res-1" },
+			1_000,
+		)
 		const parts = token.sealed.split(".")
-		const swapped = `${parts[0]!}.${parts[1]!}.res-2.${parts[3]!}`
+		const swapped = `${parts[0]!}.${parts[1]!}.${parts[2]!}.res-2.${parts[4]!}`
 		expect(await store.verifyToken(swapped, 1_000)).toBeUndefined()
 	})
 
-	test("verifyToken rejects legacy three-part tokens", async () => {
-		const token = await store.createToken(86_400, "res-1", 1_000)
+	test("verifyToken rejects tokens with an unknown scope kind", async () => {
+		const token = await store.createToken(
+			86_400,
+			{ kind: "res", id: "res-1" },
+			1_000,
+		)
 		const parts = token.sealed.split(".")
-		const legacy = `${parts[0]!}.${parts[1]!}.${parts[3]!}`
+		const swapped = `${parts[0]!}.${parts[1]!}.weird.${parts[3]!}.${parts[4]!}`
+		expect(await store.verifyToken(swapped, 1_000)).toBeUndefined()
+	})
+
+	test("verifyToken rejects legacy four-part tokens", async () => {
+		const token = await store.createToken(
+			86_400,
+			{ kind: "res", id: "res-1" },
+			1_000,
+		)
+		const parts = token.sealed.split(".")
+		const legacy = `${parts[0]!}.${parts[1]!}.${parts[4]!}`
 		expect(await store.verifyToken(legacy, 1_000)).toBeUndefined()
 	})
 
 	test("verifyToken rejects expired tokens", async () => {
-		const token = await store.createToken(1, "res-1", 1_000)
+		const token = await store.createToken(
+			1,
+			{ kind: "res", id: "res-1" },
+			1_000,
+		)
 		expect(await store.verifyToken(token.sealed, 1_000 + 2_000)).toBeUndefined()
 	})
 })

@@ -36,11 +36,15 @@ not wired, and the plugin's calls are rejected by the bridge.
 | `message` | Read/create anchored messages for the resource. |
 | `imageHashes` | `imageHashes` results participate in duplicate detection. |
 | `container` | `listContainer`/`extractArchive` (archive entries) work; the sandbox denies these APIs without it. |
+| `download` | The plugin asset vault: `download`/`statAsset`/`readAsset`/`deleteAsset` work (both sides of the plugin), *and* every download needs your per-file approval in the shared dialog. Denied by default. |
 
 The gallery manifest shows the typical media-plugin set:
 `{ "sourceMeta": true, "searchMeta": true, "danmaku": true, "message": true, "imageHashes": true }`.
 A read-only viewer may ship only `sourceMeta`; the builtin file plugin adds
-`"container": true` for archive listing.
+`"container": true` for archive listing. A plugin that ships a runtime it
+cannot bundle (licensing) declares `"download": true` and fetches it on
+first use — the user sees the exact URL in the consent dialog, and the
+file always lands in the plugin's own `vault/` folder.
 
 ## i18n
 

@@ -2,7 +2,13 @@ import { type ChildProcess, fork, spawn } from "node:child_process"
 import { tmpdir } from "node:os"
 import { dirname, resolve, sep } from "node:path"
 import { fileURLToPath } from "node:url"
-import type { PluginPermissions } from "@hoardodile/sdk-types"
+import type {
+	PluginAssetDeleteResult,
+	PluginDownloadRequest,
+	PluginDownloadResult,
+	PluginPermissions,
+} from "@hoardodile/sdk-types"
+import { CAPABILITY_BY_METHOD } from "@hoardodile/sdk-types/plugin-capabilities"
 import type { PluginDefinition, ResourceAPI } from "../types.ts"
 import { createCallTimers, type PendingCall } from "./call-timers.ts"
 import {
@@ -17,6 +23,29 @@ import {
 	type WorkerMessage,
 } from "./protocol.ts"
 import { createSandboxedPlugin } from "./sandboxed-plugin.ts"
+
+/**
+ * The plugin asset handler: the host-side implementation of the
+ * `download`/`statAsset`/`readAsset`/`deleteAsset` ResourceAPI methods,
+ * bound to the plugin id (the sandbox knows which plugin issued the
+ * call). Wired by the app server; hosts without a consent channel (CLI,
+ * workbench) omit it and the methods answer `UNAVAILABLE`.
+ */
+export type PluginAssetHandler = {
+	readonly download: (
+		pluginId: string,
+		request: PluginDownloadRequest,
+	) => Promise<PluginDownloadResult>
+	readonly statAsset: (
+		pluginId: string,
+		path: string,
+	) => Promise<{ readonly sizeBytes: number } | undefined>
+	readonly readAsset: (pluginId: string, path: string) => Promise<Uint8Array>
+	readonly deleteAsset: (
+		pluginId: string,
+		path: string,
+	) => Promise<PluginAssetDeleteResult>
+}
 
 /**
  * Kill a plugin sandbox process when an invocation neither returns nor
@@ -46,12 +75,22 @@ export const PLUGIN_MAX_LOGS_PER_HOOK = 1_000
 export const PLUGIN_MAX_API_CALLS_PER_HOOK = 100_000
 
 /**
- * ResourceAPI methods gated by the manifest `container` permission — the
- * only API surface with a write side effect (the extraction cache).
+ * Sandbox-gated ResourceAPI methods, read from the single capability
+ * table (`@hoardodile/sdk-types/plugin-capabilities`) — a permission
+ * declared there is enforced here automatically, and a sandbox method
+ * listed there but not declared by the manifest is denied with the
+ * capability's own name.
+ *
+ * The asset surface (the `download` capability) is additionally
+ * intercepted before touching the ResourceAPI instance: its
+ * implementation comes from the wired {@link PluginAssetHandler}, which
+ * knows the owning plugin id.
  */
-const CONTAINER_METHODS: ReadonlySet<ApiMethodName> = new Set([
-	"listContainer",
-	"extractArchive",
+const ASSET_METHODS = new Set<ApiMethodName>([
+	"download",
+	"statAsset",
+	"readAsset",
+	"deleteAsset",
 ])
 
 /**
@@ -105,6 +144,22 @@ export type PluginSandboxConfig = {
 	 * this to exercise the fail-closed path.
 	 */
 	readonly permissionFlag?: string
+	/**
+	 * Host-managed plugin vault directory (`<plugin-dir>/vault/`, or the
+	 * versioned-storage vault for dev plugins). When set, the child gets
+	 * an extra fs-read grant and the module policy gate allows loading
+	 * files from it — downloaded runtimes (JS/WASM) importable from the
+	 * vault are the point of the asset API. A function form lets one
+	 * shared sandbox resolve the path per plugin (disk vs dev plugins
+	 * store their vault differently).
+	 */
+	readonly assetVaultDir?: string | ((pluginId: string) => string | undefined)
+	/**
+	 * Plugin asset handler wired by the app server. Absent → the asset
+	 * methods answer `UNAVAILABLE` (CLI, workbench, tests without a
+	 * consent channel).
+	 */
+	readonly pluginAssets?: PluginAssetHandler
 }
 
 export const DEFAULT_SANDBOX_CONFIG: PluginSandboxConfig = {
@@ -378,32 +433,46 @@ export function createPluginSandbox(
 		const pluginDir = dirname(state.mainPath)
 
 		// The child's grants are minimal: one fs-read allowlist (its own
-		// directory, plus the entry file it must load), a memory cap, and
-		// nothing else — no fs write, no child processes, no worker
-		// threads, no native addons. The module policy hook (registered
-		// inside the entry via `registerHooks`) closes the remaining
-		// surface: nothing outside the plugin directory and no `node:`
-		// builtins except `node:url` can be imported.
-		const child = fork(entryPath, [pluginDir, entryPath], {
-			execArgv: [
-				permissionFlag,
-				`--allow-fs-read=${resolve(pluginDir)}${sep}`,
-				`--allow-fs-read=${entryPath}`,
-				`--max-old-space-size=${config.maxOldSpaceMb}`,
-			],
-			serialization: "advanced",
-			// Child stderr is inherited (self-check failures must surface);
-			// plugin console output is dropped — logs flow over the RPC.
-			stdio: ["ignore", "ignore", "inherit", "ipc"],
-			env: {
-				...process.env,
-				HOARDODILE_PLUGIN_MAX_RESULT_BYTES: String(config.maxResultBytes),
-				HOARDODILE_PLUGIN_MAX_LOGS_PER_HOOK: String(config.maxLogsPerHook),
-				HOARDODILE_PLUGIN_MAX_API_CALLS_PER_HOOK: String(
-					config.maxApiCallsPerHook,
-				),
+		// directory, plus the entry file it must load, plus the host-managed
+		// asset vault when one is wired), a memory cap, and nothing else —
+		// no fs write, no child processes, no worker threads, no native
+		// addons. The module policy hook (registered inside the entry via
+		// `registerHooks`) closes the remaining surface: nothing outside the
+		// plugin directory (and the vault) and no `node:` builtins except
+		// `node:url` can be imported.
+		const fsReadGrants = [`${resolve(pluginDir)}${sep}`, entryPath]
+		const assetVaultDir =
+			typeof config.assetVaultDir === "function"
+				? config.assetVaultDir(state.id)
+				: config.assetVaultDir
+		if (assetVaultDir !== undefined) {
+			fsReadGrants.push(`${resolve(assetVaultDir)}${sep}`)
+		}
+		const child = fork(
+			entryPath,
+			[pluginDir, entryPath, assetVaultDir].filter(
+				(v): v is string => v !== undefined,
+			),
+			{
+				execArgv: [
+					permissionFlag,
+					...fsReadGrants.map((p) => `--allow-fs-read=${p}`),
+					`--max-old-space-size=${config.maxOldSpaceMb}`,
+				],
+				serialization: "advanced",
+				// Child stderr is inherited (self-check failures must surface);
+				// plugin console output is dropped — logs flow over the RPC.
+				stdio: ["ignore", "ignore", "inherit", "ipc"],
+				env: {
+					...process.env,
+					HOARDODILE_PLUGIN_MAX_RESULT_BYTES: String(config.maxResultBytes),
+					HOARDODILE_PLUGIN_MAX_LOGS_PER_HOOK: String(config.maxLogsPerHook),
+					HOARDODILE_PLUGIN_MAX_API_CALLS_PER_HOOK: String(
+						config.maxApiCallsPerHook,
+					),
+				},
 			},
-		})
+		)
 		// The sandbox must never hold the process open on its own — but
 		// while a load/invocation is pending the child is referenced (see
 		// syncRef) so a short-lived host cannot exit mid-boot.
@@ -695,17 +764,49 @@ export function createPluginSandbox(
 				})
 				return
 			}
-			// Manifest permission gate: the container surface is the only
-			// API with a write side effect, so it is denied unless the
-			// plugin's manifest declared `container`.
+			// Manifest permission gate, read from the single capability
+			// table: every sandbox-gated method maps to its capability
+			// and is denied unless the manifest declared it. The asset
+			// surface then routes to the wired handler with the owning
+			// plugin id — the ResourceAPI instance itself has no plugin
+			// identity (a shared API serves every plugin's hooks).
+			const capability = CAPABILITY_BY_METHOD.get(method)
 			if (
-				CONTAINER_METHODS.has(method) &&
-				state.permissions?.container !== true
+				capability !== undefined &&
+				state.permissions?.[capability] !== true
 			) {
 				respond(false, undefined, {
-					name: "Error",
-					message: `container permission denied for plugin ${state.id} — declare "container": true in the manifest to use ${method}()`,
+					name: "POLICY",
+					code: "POLICY",
+					message: `${capability} permission denied for plugin ${state.id} — declare "${capability}": true in the manifest to use ${method}()`,
 				})
+				return
+			}
+			if (ASSET_METHODS.has(method)) {
+				const handler = config.pluginAssets
+				if (handler === undefined) {
+					respond(false, undefined, {
+						name: "UNAVAILABLE",
+						code: "UNAVAILABLE",
+						message: `${method}() is unavailable on this host — plugin asset downloads need the app server runtime`,
+					})
+					return
+				}
+				// RPC boundary: the child-side proxy forwards args verbatim,
+				// so the contract order is guaranteed (request object for
+				// `download`, string path for the rest).
+				if (method === "download") {
+					respond(
+						true,
+						await handler.download(state.id, args[0] as PluginDownloadRequest),
+					)
+				} else if (method === "statAsset") {
+					respond(true, await handler.statAsset(state.id, args[0] as string))
+				} else if (method === "readAsset") {
+					respond(true, await handler.readAsset(state.id, args[0] as string))
+				} else {
+					respond(true, await handler.deleteAsset(state.id, args[0] as string))
+				}
 				return
 			}
 			// RPC boundary: the child-side proxy is generated from the same

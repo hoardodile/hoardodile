@@ -101,6 +101,7 @@ export {
 	type PluginProbeCache,
 } from "./probe-cache.ts"
 export type {
+	PluginAssetHandler,
 	PluginSandbox,
 	PluginSandboxConfig,
 } from "./sandbox/host.ts"

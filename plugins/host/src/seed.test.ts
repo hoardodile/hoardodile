@@ -67,4 +67,36 @@ describe("seedPlugins", () => {
 			"new\n",
 		)
 	})
+
+	test("the host-managed vault survives a reseeding replacement", () => {
+		writePlugin(join(seedDir, "plugin"), "old")
+		seedPlugins(pluginsDir, [join(seedDir, "plugin")])
+		// The plugin downloaded an asset into its vault.
+		const vaultDir = join(pluginsDir, PLUGIN_ID, "vault")
+		mkdirSync(vaultDir, { recursive: true })
+		writeFileSync(join(vaultDir, "runtime.mjs"), "export const x = 1\n")
+		// Session 2: the source changed (an app update) → the tree is
+		// replaced, the vault must stay (vault files are host data).
+		writePlugin(join(seedDir, "plugin"), "new")
+		seedPlugins(pluginsDir, [join(seedDir, "plugin")])
+		expect(
+			readFileSync(
+				join(pluginsDir, PLUGIN_ID, "vault", "runtime.mjs"),
+				"utf-8",
+			),
+		).toBe("export const x = 1\n")
+	})
+
+	test("an unchanged tree with a vault is left untouched (fingerprint ignores vault)", () => {
+		writePlugin(join(seedDir, "plugin"), "same")
+		seedPlugins(pluginsDir, [join(seedDir, "plugin")])
+		const vaultDir = join(pluginsDir, PLUGIN_ID, "vault")
+		mkdirSync(vaultDir, { recursive: true })
+		writeFileSync(join(vaultDir, "runtime.mjs"), "export const x = 1\n")
+		const before = statSync(join(pluginsDir, PLUGIN_ID, "main.js")).mtimeMs
+		seedPlugins(pluginsDir, [join(seedDir, "plugin")])
+		expect(statSync(join(pluginsDir, PLUGIN_ID, "main.js")).mtimeMs).toBe(
+			before,
+		)
+	})
 })

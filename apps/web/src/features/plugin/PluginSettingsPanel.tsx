@@ -45,6 +45,7 @@ import {
 	ChatRound,
 	ChatRoundLine,
 	Database,
+	Download,
 	Eraser,
 	File,
 	Gallery,
@@ -132,6 +133,7 @@ const permissionMeta: Record<
 	message: { icon: ChatRound },
 	imageHashes: { icon: Gallery },
 	container: { icon: Archive },
+	download: { icon: Download },
 }
 
 /**

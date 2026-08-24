@@ -10,6 +10,7 @@ const ALL_GRANTED: PluginPermissions = {
 	message: true,
 	imageHashes: true,
 	container: true,
+	download: true,
 }
 
 function manifestWith(permissions: PluginPermissions): PluginManifest {
@@ -38,34 +39,36 @@ function renderMarks(
 describe("PermissionMarks", () => {
 	it("folds grants beyond three into a +N chip", () => {
 		renderMarks(ALL_GRANTED)
-		expect(screen.getByText("+3")).toBeInTheDocument()
+		expect(screen.getByText("+4")).toBeInTheDocument()
 		// The first three grants keep their per-icon tooltips; the folded
-		// three enumerate in the chip's tooltip.
+		// four enumerate in the chip's tooltip.
 		expect(screen.getByTitle("Source metadata")).toBeInTheDocument()
 		expect(screen.getByTitle("Search metadata")).toBeInTheDocument()
 		expect(screen.getByTitle("Danmaku")).toBeInTheDocument()
 		expect(
-			screen.getByTitle("Messages, Image hashes, Containers"),
+			screen.getByTitle("Messages, Image hashes, Containers, Downloads"),
 		).toBeInTheDocument()
 	})
 
-	it("folds five grants into a +2 chip", () => {
+	it("folds five grants into a +3 chip", () => {
 		renderMarks({
 			...ALL_GRANTED,
 			container: false,
 		})
-		expect(screen.getByText("+2")).toBeInTheDocument()
-		expect(screen.getByTitle("Messages, Image hashes")).toBeInTheDocument()
+		expect(screen.getByText("+3")).toBeInTheDocument()
+		expect(
+			screen.getByTitle("Messages, Image hashes, Downloads"),
+		).toBeInTheDocument()
 	})
 
-	it("folds four grants into a +1 chip", () => {
+	it("folds four grants into a +2 chip", () => {
 		renderMarks({
 			...ALL_GRANTED,
 			danmaku: false,
 			container: false,
 		})
-		expect(screen.getByText("+1")).toBeInTheDocument()
-		expect(screen.getByTitle("Image hashes")).toBeInTheDocument()
+		expect(screen.getByText("+2")).toBeInTheDocument()
+		expect(screen.getByTitle("Image hashes, Downloads")).toBeInTheDocument()
 	})
 
 	it("renders every mark without a chip when three or fewer are granted", () => {
@@ -74,6 +77,7 @@ describe("PermissionMarks", () => {
 			danmaku: false,
 			message: false,
 			container: false,
+			download: false,
 		})
 		expect(screen.queryByText(/^\+\d$/)).not.toBeInTheDocument()
 		expect(screen.getByTitle("Source metadata")).toBeInTheDocument()
@@ -89,6 +93,7 @@ describe("PermissionMarks", () => {
 			message: false,
 			imageHashes: false,
 			container: false,
+			download: false,
 		})
 		expect(container).toBeEmptyDOMElement()
 	})

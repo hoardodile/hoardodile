@@ -1,5 +1,8 @@
 import type {
 	FileStats,
+	PluginAssetDeleteResult,
+	PluginDownloadRequest,
+	PluginDownloadResult,
 	ReadFileRange,
 	SearchMeta,
 	SerializedFileList,
@@ -83,6 +86,15 @@ export type PluginIframeContext = {
 	 * without a session cookie (null-origin iframe cannot send SameSite cookies).
 	 */
 	readonly fileToken: string
+	/**
+	 * Short-lived token for the plugin's own asset vault URLs
+	 * (`/api/plugin-assets/<pluginId>/<token>/<path>`), issued only when
+	 * the plugin's manifest declares the `download` permission. Empty
+	 * string otherwise — `resolveAssetUrl` throws on the empty token
+	 * (never builds a malformed `/…//path` URL); check the permission
+	 * before relying on vault URLs.
+	 */
+	readonly assetToken: string
 }
 
 /** Wire request from plugin (iframe) to host. */
@@ -111,6 +123,19 @@ export type HostResponse = {
 	readonly ok: boolean
 	readonly data?: unknown
 	readonly error?: string
+	/**
+	 * Optional machine-readable plugin error code (e.g. the asset
+	 * `DENIED` / `UNAVAILABLE` / `POLICY` vocabulary) so the bridge can
+	 * reject with an Error carrying the code — plugin code branches on
+	 * `err.name` across the postMessage boundary.
+	 */
+	readonly errorCode?: string
+	/**
+	 * Legacy alias of {@link errorCode} (same value) kept for host
+	 * builds predating the unified field. The bridge reads
+	 * `errorCode ?? errorName`.
+	 */
+	readonly errorName?: string
 }
 
 /** Wire push event from host to plugin. */
@@ -186,6 +211,8 @@ export type PluginRequests = {
 			readonly range?: ReadFileRange
 		}
 		readonly output: ArrayBuffer
+		// Timeout: see {@link pluginRequestTimeouts.readFile} (large files
+		// stream through the host process before the bytes arrive).
 	}
 	listMessages: {
 		readonly input: undefined
@@ -234,6 +261,29 @@ export type PluginRequests = {
 		/** Request the host to invalidate cached data for a target. */
 		readonly input: { readonly target: InvalidateTarget }
 		readonly output: undefined
+	}
+	/**
+	 * User-consented download into the plugin's own asset vault (see
+	 * `@hoardodile/sdk-types/plugin-asset`). The host asks the user with
+	 * the shared consent dialog; cached destinations resolve without any
+	 * dialog. Rejections carry a machine-readable `err.name`
+	 * (`DENIED` / `UNAVAILABLE` / `POLICY`).
+	 *
+	 * Timeout: {@link pluginRequestTimeouts.download} — the client-side
+	 * ceiling for the whole flow (consent dialog + transfer), declared in
+	 * the protocol meta rather than ad hoc at the call site.
+	 */
+	download: {
+		readonly input: PluginDownloadRequest
+		readonly output: PluginDownloadResult
+	}
+	/**
+	 * Remove a vault file (idempotent); the plugin decides its own vault
+	 * lifecycle — no user consent, nothing leaves the host.
+	 */
+	deleteAsset: {
+		readonly input: { readonly path: string }
+		readonly output: PluginAssetDeleteResult
 	}
 }
 
@@ -326,6 +376,10 @@ export const pluginMethods = {
 	// Cache invalidation
 	invalidate: "invalidate",
 
+	// Plugin asset vault
+	download: "download",
+	deleteAsset: "deleteAsset",
+
 	// Logging — must match the PluginRequests keys exactly,
 	// otherwise plugin log calls are silently swallowed.
 	logInfo: "logInfo",
@@ -340,6 +394,12 @@ export const invalidatePushKeys = {
 	messages: hostPushKeys.messagesInvalidate,
 	danmaku: hostPushKeys.danmakuInvalidate,
 } as const satisfies Record<InvalidateTarget, keyof HostPushes>
+
+/** Per-method bridge timeouts (ms), mirroring the entries above. */
+export const pluginRequestTimeouts = {
+	readFile: 120_000,
+	download: 300_000,
+} as const satisfies Partial<Record<keyof PluginRequests, number>>
 
 /** Resolves to `T` only when `T` is `true`; otherwise a compile error. */
 type AssertTrue<T extends true> = T
@@ -360,6 +420,9 @@ export type _PluginRequestsCoveredByMethods = AssertTrue<
 /**
  * Type-safe host bridge. The runtime still serialises messages as plain
  * postMessage objects; this contract gives compile-time guarantees to callers.
+ *
+ * Per-method timeouts are declared on the protocol table entries
+ * (`timeoutMs`) — the bridge reads them, callers never pass one.
  */
 export type Host = {
 	request<K extends keyof PluginRequests>(

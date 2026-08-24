@@ -7,6 +7,7 @@ import type {
 	PluginSandbox,
 } from "@hoardodile/host"
 import type { PluginManifest, PluginManifestId } from "@hoardodile/sdk-types"
+import type { PluginCapabilityKey } from "@hoardodile/sdk-types/plugin-capabilities"
 import { eq } from "drizzle-orm"
 import type { SqliteDb } from "src/infra/db/connection.ts"
 import { contentPlugins } from "./schema.ts"
@@ -69,6 +70,15 @@ export type PluginService = {
 	 * plugin is unknown or has no on-disk index.html.
 	 */
 	getAssetVersion(id: PluginManifestId): string | undefined
+	/**
+	 * Whether the current registry entry grants a capability (O(1) lookup,
+	 * live after rescans). The single source behind per-permission
+	 * decisions (e.g. asset-token issuance).
+	 */
+	supportsCapability(
+		id: PluginManifestId,
+		capability: PluginCapabilityKey,
+	): boolean
 	update(
 		id: PluginManifestId,
 		settings: {
@@ -151,6 +161,16 @@ export function createPluginService(deps: PluginServiceDeps): PluginService {
 	function getAssetVersion(id: PluginManifestId): string | undefined {
 		const registry = loader.getRegistry()
 		return assetVersionsOf(registry).get(id)
+	}
+
+	function supportsCapability(
+		id: PluginManifestId,
+		capability: PluginCapabilityKey,
+	): boolean {
+		return (
+			loader.getRegistry().getById(id)?.manifest.permissions[capability] ===
+			true
+		)
 	}
 
 	/**
@@ -343,6 +363,7 @@ export function createPluginService(deps: PluginServiceDeps): PluginService {
 	return {
 		listAll,
 		getAssetVersion,
+		supportsCapability,
 		update,
 		reorder,
 		rescan,

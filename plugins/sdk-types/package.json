@@ -38,6 +38,16 @@
 			"development": "./src/plugin.ts",
 			"default": "./dist/plugin.js"
 		},
+		"./plugin-asset-limits": {
+			"types": "./dist/plugin-asset-limits.d.ts",
+			"development": "./src/plugin-asset-limits.ts",
+			"default": "./dist/plugin-asset-limits.js"
+		},
+		"./plugin-capabilities": {
+			"types": "./dist/plugin-capabilities.d.ts",
+			"development": "./src/plugin-capabilities.ts",
+			"default": "./dist/plugin-capabilities.js"
+		},
 		"./resource": {
 			"types": "./dist/resource.d.ts",
 			"development": "./src/resource.ts",

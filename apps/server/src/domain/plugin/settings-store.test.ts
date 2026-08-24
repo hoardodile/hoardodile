@@ -20,6 +20,7 @@ function buildManifest(): PluginManifest {
 			message: false,
 			imageHashes: false,
 			container: false,
+			download: false,
 		},
 	}
 }

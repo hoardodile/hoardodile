@@ -4,6 +4,9 @@ import type {
 	DanmakuListFilter,
 	DanmakuMode,
 	Message,
+	PluginAssetDeleteResult,
+	PluginDownloadRequest,
+	PluginDownloadResult,
 	PluginSchema,
 } from "@hoardodile/sdk-types"
 import { ensureHostBridge } from "./bridge.ts"
@@ -23,7 +26,12 @@ import {
 	snapshotCacheEntries,
 } from "./stores.ts"
 import type { FileUrlVariant, WebPluginAPI } from "./types.ts"
-import { buildFileUrl, buildFrameUrl, resolveFilesBaseUrl } from "./urls.ts"
+import {
+	buildAssetUrl,
+	buildFileUrl,
+	buildFrameUrl,
+	resolveFilesBaseUrl,
+} from "./urls.ts"
 
 // ── Pure helpers ─────────────────────────────────────────────────────────
 
@@ -209,6 +217,27 @@ export function createIframeHostAPI<
 		return host.request("invalidate", { target })
 	}
 
+	function download(
+		request: PluginDownloadRequest,
+	): Promise<PluginDownloadResult> {
+		// The protocol table declares the 5-minute ceiling (consent dialog
+		// + transfer) — the bridge reads it; no per-call override here.
+		return host.request("download", request)
+	}
+
+	function resolveAssetUrl(path: string): string {
+		if (ctx.assetToken.length === 0) {
+			throw new Error(
+				'resolveAssetUrl() — the plugin has no asset token: declare "download": true in the manifest and reload the preview',
+			)
+		}
+		return buildAssetUrl(ctx.pluginId, path, ctx.assetToken)
+	}
+
+	function deleteAsset(path: string): Promise<PluginAssetDeleteResult> {
+		return host.request("deleteAsset", { path })
+	}
+
 	function onAnchorJump(cb: (anchor: AnchorData) => void): () => void {
 		return host.subscribe("anchorJump", cb)
 	}
@@ -232,6 +261,9 @@ export function createIframeHostAPI<
 		extractProgressUrl,
 		resolveBaseUrl,
 		resolveFrameUrl,
+		download,
+		resolveAssetUrl,
+		deleteAsset,
 		listMessages,
 		createMessage,
 		listDanmaku,

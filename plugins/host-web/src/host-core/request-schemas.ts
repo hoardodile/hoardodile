@@ -56,6 +56,20 @@ export const requestSchemas = {
 	[pluginMethods.invalidate]: z.object({
 		target: z.enum(["resource", "resources", "messages", "danmaku"]),
 	}),
+	// The URL is length-capped but not URI-validated here: the host parses
+	// it server-side and answers with a machine-readable POLICY error.
+	[pluginMethods.download]: z.object({
+		url: z.string().min(1).max(2048),
+		dest: z.string().min(1).max(256),
+		sha256: z
+			.string()
+			.regex(/^[0-9a-f]{64}$/)
+			.optional(),
+		reason: z.string().max(200).optional(),
+	}),
+	[pluginMethods.deleteAsset]: z.object({
+		path: z.string().min(1).max(256),
+	}),
 	[pluginMethods.logInfo]: z.object({
 		message: z.string(),
 		data: z.record(z.string(), z.unknown()).optional(),

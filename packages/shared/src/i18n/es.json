@@ -517,7 +517,7 @@
 		"clearAllPluginCacheConfirmDescription": "Esto eliminará los datos en caché de todos los complementos, incluidas las posiciones de reanudación. Esto no se puede deshacer.",
 		"installConfirmTitle": "¿Instalar este complemento?",
 		"install": "Instalar",
-		"installConfirmRisk": "Los complementos de terceros ejecutan código del servidor en una sandbox restringida: su proceso principal solo puede leer los archivos de los recursos que el host le expone, y no puede tocar tu sistema de archivos, ejecutar programas ni hacer solicitudes de red. Los permisos declarados arriba activan funciones del host. Instala solo complementos de fuentes de confianza.",
+		"installConfirmRisk": "Los complementos de terceros ejecutan código del servidor en una sandbox restringida: su proceso principal solo puede leer los archivos de los recursos que el host le expone, y no puede tocar tu sistema de archivos, ejecutar programas ni hacer solicitudes de red, excepto descargas aprobadas por ti: un complemento con el permiso «Descargas» puede obtener una URL que tú confirmes (un diálogo por descarga, guardada solo en su propia carpeta). Los permisos declarados arriba activan funciones del host. Instala solo complementos de fuentes de confianza.",
 		"uploadInvalidPlugin": "No es un paquete de complemento válido (falta o no es válido manifest.json).",
 		"permissions": {
 			"sourceMeta": "Metadatos de origen",
@@ -525,8 +525,21 @@
 			"danmaku": "Danmaku",
 			"message": "Mensajes",
 			"imageHashes": "Hashes de imagen",
-			"container": "Contenedores"
+			"container": "Contenedores",
+			"download": "Descargas"
 		}
+	},
+	"pluginDownload": {
+		"eyebrow": "Descarga de plugin",
+		"title": "¿Descargar este archivo?",
+		"description": "{{pluginName}} quiere descargar un archivo a su propia carpeta de almacenamiento. El archivo se obtiene desde la URL siguiente y solo se guarda dentro de la carpeta del plugin.",
+		"urlLabel": "URL",
+		"destLabel": "Destino",
+		"sizeLabel": "Tamaño",
+		"unknownSize": "desconocido",
+		"deny": "Rechazar",
+		"allow": "Permitir",
+		"remember": "Recordar para esta sesión (sin más avisos de este plugin)"
 	},
 	"overview": {
 		"usageHistory": {

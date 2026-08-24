@@ -77,6 +77,11 @@ export function createWebPluginAPI(
 		extractProgressUrl: () => "/extract-progress/",
 		resolveBaseUrl: () => "/files/",
 		resolveFrameUrl: (filename, timeMs) => `/frame/${filename}/${timeMs}`,
+		download: async () => {
+			throw new Error("download stub not overridden")
+		},
+		resolveAssetUrl: (path) => `/plugin-assets/p-test/./${path}`,
+		deleteAsset: async () => ({ existed: false }),
 		listMessages: async () => [],
 		createMessage: async () => {
 			throw new Error("createMessage stub not overridden")

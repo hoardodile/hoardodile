@@ -59,6 +59,10 @@ const API_METHOD_NAMES = [
 	"computeImageHashes",
 	"listContainer",
 	"extractArchive",
+	"download",
+	"statAsset",
+	"readAsset",
+	"deleteAsset",
 ]
 
 const LOG_METHOD_NAMES = new Set(["logInfo", "logWarn", "logError"])
@@ -68,6 +72,13 @@ if (typeof pluginDir !== "string" || pluginDir.length === 0) {
 	process.stderr.write("[plugin-sandbox] missing plugin directory argument\n")
 	process.exit(1)
 }
+
+// Optional third argument: the host-managed plugin vault directory
+// (`<plugin-dir>/vault/` for disk plugins; for dev plugins it lives under
+// the versioned storage instead of the dev directory). Passed so the
+// module policy gate allows loading downloaded runtimes from the vault
+// even when it sits outside the plugin directory.
+const assetVaultDir = process.argv[3]
 
 /** Absolute cap for one hook result crossing the IPC boundary. */
 const MAX_RESULT_BYTES =
@@ -141,22 +152,33 @@ function toFileUrl(path) {
 }
 
 const pluginDirPrefix = normalizePath(toFileUrl(pluginDir) + "/")
+const assetVaultPrefix =
+	typeof assetVaultDir === "string" && assetVaultDir.length > 0
+		? normalizePath(toFileUrl(assetVaultDir) + "/")
+		: undefined
 const entryUrl = normalizePath(import.meta.url)
 
 /**
  * The only modules a sandbox may load: `node:url` (bootstrap), files under
- * the plugin directory (the bundle is a single self-contained ESM file)
- * and the entry itself. Everything else — every other `node:` builtin,
- * bare package names, `data:`/`blob:` URLs, absolute paths outside the
- * plugin dir — is denied. The Node permission model stays the second,
- * OS-level layer underneath.
+ * the plugin directory (the bundle is a single self-contained ESM file),
+ * the host-managed plugin vault (downloaded runtimes — see the asset API
+ * contract; read-only by the permission model, and the vault contents are
+ * data the plugin itself requested under user consent), and the entry
+ * itself. Everything else — every other `node:` builtin, bare package
+ * names, `data:`/`blob:` URLs, absolute paths outside the plugin dir —
+ * is denied. The Node permission model stays the second, OS-level layer
+ * underneath.
  */
 function isAllowedModule(url) {
 	if (url === "node:url") return true
 	if (!url.startsWith("file:")) return false
 	const normalized = normalizePath(url)
 	if (normalized === entryUrl) return true
-	return normalized.startsWith(pluginDirPrefix)
+	if (normalized.startsWith(pluginDirPrefix)) return true
+	if (assetVaultPrefix !== undefined) {
+		return normalized.startsWith(assetVaultPrefix)
+	}
+	return false
 }
 
 registerHooks({

@@ -85,8 +85,33 @@ Container addressing `outer!inner` reads inside a zip/tar entry
 | `computeImageHashes(path, kinds)` | `sha256`/`dhash`/`phash` in one pass (animated → first frame); `undefined` when not a decodable image. |
 | `listContainer(filename)` | Container (zip/tar) listing without materializing — cheap. |
 | `extractArchive(filename)` | Materialize a container into the host's extraction cache so the browser can serve inner files over URLs. Idempotent (re-lists from the manifest), budget-checked, rejects when unsupported; writes `local/cache`, writable in every view mode. |
+| `download({ url, dest, sha256?, reason? })` | **User-consented download into the plugin's own vault** (`versions/<v>/plugins/<id>/vault/`): if `dest` already exists the host answers `cached: true` (no dialog, no network); otherwise the web app asks the user (URL shown verbatim) and fetches on approval. Rejections carry `err.name`: `DENIED` (declined/timeout), `UNAVAILABLE` (no client attached, read-only archive, CLI/workbench), `POLICY` (no `download` permission, URL/dest not allowed, hash mismatch). Optional `sha256` pins the bytes (SRI-style); `reason` is shown in the dialog. Gated by the manifest `download` permission. |
+| `statAsset(path)` / `readAsset(path)` | Inspect/read a vault file (byte-size check, bounded read). Same permission gate; `statAsset` is the cheap presence check. |
+| `deleteAsset(path)` | Remove a vault file — the plugin decides the vault's lifecycle (e.g. stale layouts after an update). Idempotent (`{ existed: false }`), no consent needed, nothing leaves the host. |
 | `context` | `{ detect }` — the last successful match payload. |
 | `logInfo(logWarn / logError)` | Plugin-scoped structured logging. |
+
+### The vault (downloaded assets)
+
+- Location: `<plugin-dir>/vault/` under the active archive version — synced
+  with the library, snapshotted per version, deleted with the plugin on
+  uninstall; updates and restarts **keep** it. The zip is reserved: a
+  plugin package containing a top-level `vault/` entry is rejected at
+  install.
+- Isolation: `dest` is vault-relative only (download **and** delete share
+  the same path rules) — no absolute paths, no `..`, no drive letters,
+  nothing outside the vault, so a download can never overwrite the
+  plugin's own bundled files. Bad paths fail with `POLICY` before any
+  network request.
+- The sandbox module gate allows importing the downloaded files from the
+  vault (fs-read only; no writes): a runtime fetched at runtime is just
+  plugin code inside the existing sandbox. Use a **variable** specifier so
+  the bundler does not inline it:
+  `const src = new URL("./vault/runtime.mjs", import.meta.url).href; await import(src)` —
+  and prefer `.mjs` (the plugin dir has no `package.json` type field).
+- Available everywhere main runs: the plugin CLI answers `UNAVAILABLE`
+  (`runPluginHook` has no client to consent), and so does the workbench /
+  read-only archive mode.
 
 Sniffed types carry `source: "magic" | "extension"` — content beats
 extension names when a signature exists. Prefer `sniff` → `probe`

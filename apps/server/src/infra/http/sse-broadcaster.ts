@@ -1,10 +1,16 @@
 import type { SSESource } from "@fastify/sse"
 import type {
+	PluginDownloadRequestedEvent,
+	PluginDownloadResolvedEvent,
 	ResourceMetaUpdatedEvent,
 	StorageContextReloadedEvent,
 } from "@hoardodile/schemas"
 
-export type SseEvent = ResourceMetaUpdatedEvent | StorageContextReloadedEvent
+export type SseEvent =
+	| ResourceMetaUpdatedEvent
+	| StorageContextReloadedEvent
+	| PluginDownloadRequestedEvent
+	| PluginDownloadResolvedEvent
 
 export type SseConnection = {
 	send(source: SSESource): Promise<void> | void
@@ -14,6 +20,12 @@ export type SseConnection = {
 export type SseBroadcaster = {
 	addConnection(conn: SseConnection): () => void
 	broadcast(event: SseEvent): void
+	/**
+	 * Number of live SSE connections. A plugin download consent cannot be
+	 * answered without a connected web client, so this is what the consent
+	 * broker checks before creating a ticket (fast `UNAVAILABLE` otherwise).
+	 */
+	connectionCount(): number
 }
 
 export function createSseBroadcaster(): SseBroadcaster {
@@ -40,5 +52,9 @@ export function createSseBroadcaster(): SseBroadcaster {
 		}
 	}
 
-	return { addConnection, broadcast }
+	function connectionCount(): number {
+		return connections.size
+	}
+
+	return { addConnection, broadcast, connectionCount }
 }

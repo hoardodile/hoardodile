@@ -1,20 +1,24 @@
 import type { PluginManifest } from "@hoardodile/sdk-types"
+import type {
+	PluginCapabilityGate,
+	PluginCapabilityKey,
+} from "@hoardodile/sdk-types/plugin-capabilities"
+import { PLUGIN_CAPABILITY_GATES } from "@hoardodile/sdk-types/plugin-capabilities"
 import type { PluginRegistryEntry } from "./api-types.ts"
 
 /**
- * Capabilities a plugin manifest can declare, mirroring the keys of
- * `pluginPermissions` in `@hoardodile/sdk-types`. The guard enforces
- * that a plugin only touches API surfaces its manifest granted it.
+ * Capabilities a plugin manifest can declare — derived from the single
+ * {@link PLUGIN_CAPABILITY_GATES} table (which is itself keyed by the
+ * manifest's `PluginPermissions` keys), so the guard can never drift.
  */
-export type PluginCapability =
-	| "sourceMeta"
-	| "searchMeta"
-	| "danmaku"
-	| "message"
-	| "imageHashes"
+export type PluginCapability = PluginCapabilityKey
+
+/** Gate metadata a consumer may want (e.g. for tooltips). */
+export type { PluginCapabilityGate }
 
 /**
- * Permission checks against a plugin's declared manifest permissions.
+ * Permission checks against a plugin's declared manifest permissions,
+ * reading the capability vocabulary from the shared gates table.
  * The server uses these before routing any plugin-scoped work so a
  * manifest that does not declare a capability cannot trigger it.
  */
@@ -65,3 +69,5 @@ export function createCapabilityGuard(): CapabilityGuard {
 
 	return { check, require, filter }
 }
+
+export { PLUGIN_CAPABILITY_GATES }

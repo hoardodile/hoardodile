@@ -79,6 +79,6 @@ Drizzle migration pitfalls: split add+drop into two `db:generate` runs; `ADD COL
 
 ## Guardrails
 
-- No telemetry or external calls — the only authorized external request is the user-triggered update check (desktop `autoUpdate` may fetch GitHub Release artifacts while the tray is alive).
+- No telemetry or external calls — the only authorized network requests are the user-triggered update check (desktop `autoUpdate` may fetch GitHub Release artifacts while the tray is alive) and user-consented plugin downloads (the plugin asset API: every download requires the shared consent dialog in the web UI, and the file lands only inside the plugin's own `vault/` folder).
 - No git mutations unless explicitly asked.
 - **Ask the user before modifying AGENTS.md.**

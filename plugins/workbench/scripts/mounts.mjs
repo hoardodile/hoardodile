@@ -21,7 +21,18 @@
  *       …?size=preview                             preview variant
  *   GET /api/resources/:id/frame/:token/:name/:ms  video seek frame
  */
-import { existsSync, readdirSync, readFileSync, statSync } from "node:fs"
+
+import { createHash } from "node:crypto"
+import {
+	existsSync,
+	mkdirSync,
+	readdirSync,
+	readFileSync,
+	renameSync,
+	rmSync,
+	statSync,
+	writeFileSync,
+} from "node:fs"
 import { join, resolve, sep } from "node:path"
 
 export function contentTypeOf(path) {
@@ -455,6 +466,265 @@ export function createWorkbenchMounts(opts) {
 	}
 	if (providers.cover !== undefined) mounts.push(coverMount(providers.cover))
 	if (providers.frame !== undefined) mounts.push(frameMount(providers.frame))
+	if (opts.vault !== undefined) {
+		mounts.push(pluginAssetsMount(opts.vault))
+		mounts.push(workbenchVaultMount(opts.vault))
+	}
 	mounts.push(workbenchApiMount(providers))
 	return mounts
+}
+
+// ── Plugin asset vault (workbench dev) ────────────────────────────────────
+
+const ASSET_URL_RE = /^\/api\/plugin-assets\/([^/]+)\/(?:[^/]*)\/(.+)$/
+const VAULT_DOWNLOAD_PATH = "/api/workbench/vault/download"
+const VAULT_DELETE_PATH = "/api/workbench/vault/delete"
+
+/**
+ * Dev-only mirror of the server's plugin asset pipeline, in the plain
+ * dependency-free module the standalone workbench ships:
+ *
+ * - `GET /api/plugin-assets/:id/:token/*` serves the local vault
+ *   (token accepted verbatim — dev; the app issues HMAC-scoped ones).
+ *   `nosniff`, `access-control-allow-origin: *` (opaque-origin iframe),
+ *   HTML demoted to an attachment, `no-store` cache.
+ * - policy mirrors the server where it matters: http(s) only, no URL
+ *   userinfo, ≤5 redirects, size cap (`WORKBENCH_VAULT_MAX_BYTES`,
+ *   default 200 MiB), optional sha256 pin, atomic temp→rename write,
+ *   dest confined to the plugin's vault directory.
+ */
+function pluginAssetsMount(vaultRoot) {
+	return async (req, res) => {
+		const url = new URL(req.url ?? "/", "http://workbench.local")
+		const match = url.pathname.match(ASSET_URL_RE)
+		if (match === null) return false
+		const abs = vaultFile(
+			vaultRoot,
+			decodeURIComponent(match[1] ?? ""),
+			decodeURIComponent(match[2] ?? ""),
+		)
+		if (abs === undefined) {
+			res.statusCode = 403
+			res.end("forbidden")
+			return true
+		}
+		let info
+		try {
+			info = statSync(abs)
+		} catch {
+			info = undefined
+		}
+		if (info === undefined || !info.isFile()) {
+			notFound(res)
+			return true
+		}
+		res.setHeader("x-content-type-options", "nosniff")
+		res.setHeader("access-control-allow-origin", "*")
+		res.setHeader("cache-control", "no-store")
+		const ext = `.${abs.slice(abs.lastIndexOf(".") + 1).toLowerCase()}`
+		const isHtml = ext === ".html" || ext === ".htm"
+		res.setHeader(
+			"content-type",
+			isHtml ? "application/octet-stream" : contentTypeOf(abs),
+		)
+		if (isHtml) {
+			res.setHeader("content-disposition", "attachment")
+		}
+		res.end(readFileSync(abs))
+		return true
+	}
+}
+
+function workbenchVaultMount(vaultRoot) {
+	return async (req, res) => {
+		const url = new URL(req.url ?? "/", "http://workbench.local")
+		if (
+			url.pathname === VAULT_DOWNLOAD_PATH &&
+			(req.method === "POST" || req.method === "PUT")
+		) {
+			await handleVaultDownload(
+				req,
+				res,
+				vaultRoot,
+				url.searchParams.get("force") === "1",
+			)
+			return true
+		}
+		if (url.pathname === VAULT_DELETE_PATH && req.method === "POST") {
+			const body = await readJsonBody(req)
+			const { pluginId, path } = body ?? {}
+			if (typeof pluginId !== "string" || typeof path !== "string") {
+				sendJson(res, { error: "pluginId and path are required" })
+				return true
+			}
+			const abs = vaultFile(vaultRoot, pluginId, path)
+			if (abs === undefined || !validVaultDest(path)) {
+				res.statusCode = 403
+				res.end("forbidden")
+				return true
+			}
+			let existed = false
+			try {
+				existed = statSync(abs).isFile()
+			} catch {
+				existed = false
+			}
+			if (existed) rmSync(abs)
+			sendJson(res, { existed })
+			return true
+		}
+		return false
+	}
+}
+
+async function handleVaultDownload(req, res, vaultRoot, force) {
+	const body = await readJsonBody(req)
+	const { pluginId, url, dest, sha256 } = body ?? {}
+	if (
+		typeof pluginId !== "string" ||
+		typeof url !== "string" ||
+		typeof dest !== "string"
+	) {
+		sendJson(res, { error: "pluginId, url and dest are required" })
+		return
+	}
+	const abs = vaultFile(vaultRoot, pluginId, dest)
+	if (abs === undefined || !validVaultDest(dest)) {
+		res.statusCode = 403
+		res.end("forbidden")
+		return
+	}
+
+	// Cache-first: an existing destination resolves without consent;
+	// without `force` a miss answers `missing` (the page then asks the
+	// user and re-issues with `force`).
+	let existing
+	try {
+		const info = statSync(abs)
+		existing = info.isFile() ? { path: dest, sizeBytes: info.size } : undefined
+	} catch {
+		existing = undefined
+	}
+	if (existing !== undefined) {
+		sendJson(res, {
+			status: "cached",
+			path: existing.path,
+			sizeBytes: existing.sizeBytes,
+			sha256: sha256File(abs),
+		})
+		return
+	}
+	if (!force) {
+		sendJson(res, { status: "missing" })
+		return
+	}
+
+	const maxBytes =
+		Number(process.env.WORKBENCH_VAULT_MAX_BYTES) || 200 * 1024 * 1024
+	try {
+		const fetched = await fetchWithPolicy(url, maxBytes)
+		if (sha256 !== undefined && fetched.sha256 !== sha256) {
+			throw new Error(
+				`sha256 mismatch: expected ${sha256}, got ${fetched.sha256}`,
+			)
+		}
+		mkdirSync(resolve(abs, ".."), { recursive: true })
+		const tmp = `${abs}.tmp-${Date.now()}`
+		writeFileSync(tmp, fetched.bytes)
+		renameSync(tmp, abs)
+		sendJson(res, {
+			status: "downloaded",
+			path: dest,
+			sizeBytes: fetched.bytes.length,
+			sha256: fetched.sha256,
+		})
+	} catch (err) {
+		sendJson(res, {
+			status: "error",
+			error: err instanceof Error ? err.message : String(err),
+		})
+	}
+}
+
+/** A vault file path under `<root>/<pluginId>/<dest>`, or undefined. */
+function vaultFile(vaultRoot, pluginId, dest) {
+	if (typeof pluginId !== "string" || pluginId.length === 0) return undefined
+	return safeJoin(resolve(vaultRoot), `${pluginId}/${dest}`)
+}
+
+/** Dev mirror of the server's dest rules: no empty/`.`, no `..`, no separators inside a segment. */
+function validVaultDest(dest) {
+	return (
+		typeof dest === "string" &&
+		dest.length > 0 &&
+		dest
+			.split("/")
+			.every(
+				(s) =>
+					s.length > 0 &&
+					s !== "." &&
+					s !== ".." &&
+					!s.includes("\\") &&
+					!s.includes(":"),
+			)
+	)
+}
+
+/** Fetch with the dev-policy subset: http(s), no userinfo, ≤5 redirects, size cap. */
+async function fetchWithPolicy(rawUrl, maxBytes) {
+	let url = new URL(rawUrl)
+	function vet(next) {
+		if (next.protocol !== "http:" && next.protocol !== "https:") {
+			throw new Error(`unsupported scheme: ${next.protocol}`)
+		}
+		if (next.username.length > 0 || next.password.length > 0) {
+			throw new Error("URLs must not embed credentials")
+		}
+		return next
+	}
+	vet(url)
+	for (let hop = 0; hop <= 5; hop++) {
+		const response = await fetch(url, { redirect: "manual" })
+		if (response.status >= 300 && response.status < 400) {
+			const location = response.headers.get("location")
+			if (location === null)
+				throw new Error("redirect without a Location header")
+			url = vet(new URL(location, url))
+			continue
+		}
+		if (response.status < 200 || response.status >= 300) {
+			throw new Error(`HTTP ${response.status} from ${url.href}`)
+		}
+		if (response.body === null) throw new Error("empty response body")
+		const hash = createHash("sha256")
+		const chunks = []
+		let seen = 0
+		for await (const chunk of response.body) {
+			seen += chunk.length
+			if (seen > maxBytes) {
+				throw new Error(`response exceeds the ${maxBytes}-byte cap`)
+			}
+			hash.update(chunk)
+			chunks.push(chunk)
+		}
+		const bytes = Buffer.concat(chunks)
+		return { bytes, sha256: hash.digest("hex") }
+	}
+	throw new Error("more than 5 redirects")
+}
+
+function sha256File(path) {
+	return createHash("sha256").update(readFileSync(path)).digest("hex")
+}
+
+async function readJsonBody(req) {
+	const chunks = []
+	for await (const chunk of req) chunks.push(chunk)
+	const raw = Buffer.concat(chunks).toString("utf-8")
+	if (raw.trim().length === 0) return undefined
+	try {
+		return JSON.parse(raw)
+	} catch {
+		return undefined
+	}
 }

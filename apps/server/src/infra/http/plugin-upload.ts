@@ -1,4 +1,4 @@
-﻿import { createReadStream, createWriteStream, existsSync } from "node:fs"
+import { createReadStream, createWriteStream, existsSync } from "node:fs"
 import { mkdir, rm } from "node:fs/promises"
 import { join } from "node:path"
 import { Transform } from "node:stream"
@@ -19,10 +19,26 @@ async function pluginUploadPluginImpl(app: FastifyInstance): Promise<void> {
 			await writeVersioned(app.paths, app.readOnly, async (latest) => {
 				const destDir = join(latest.plugins(), assertSafeSegment(id))
 				await mkdir(latest.plugins(), { recursive: true })
+				// The host-managed vault survives a plugin update: move it
+				// aside (host-local staging), swap the tree, move it back.
+				// A crash in between strands the vault in the staging root,
+				// which startup cleanup reclaims — the plugin re-fetches.
+				const vaultDir = join(destDir, "vault")
+				const stashDir = join(
+					app.paths.local.uploadStagingRoot(),
+					`plugin-vault-${id}-${Date.now()}`,
+				)
+				const hasVault = existsSync(vaultDir)
+				if (hasVault) {
+					await moveDir(vaultDir, stashDir)
+				}
 				if (existsSync(destDir)) {
 					await rm(destDir, { recursive: true, force: true })
 				}
 				await moveDir(stagingDir, destDir)
+				if (existsSync(stashDir)) {
+					await moveDir(stashDir, join(destDir, "vault"))
+				}
 			})
 		},
 		extractArchive: extractArchiveInto,

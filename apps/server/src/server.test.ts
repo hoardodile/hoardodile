@@ -4,6 +4,7 @@ import {
 	mkdirSync,
 	mkdtempSync,
 	readdirSync,
+	readFileSync,
 	rmSync,
 	writeFileSync,
 } from "node:fs"
@@ -233,7 +234,10 @@ describe("server", () => {
 	})
 
 	test("path token authenticates GET file routes, even with a query string", async () => {
-		const { sealed } = await built.app.sessions.createToken(86_400, "res-1")
+		const { sealed } = await built.app.sessions.createToken(86_400, {
+			kind: "res",
+			id: "res-1",
+		})
 		const res = await built.app.inject({
 			method: "GET",
 			url: `/api/resources/res-1/files/${sealed}/foo.png?download=1`,
@@ -245,7 +249,10 @@ describe("server", () => {
 	})
 
 	test("path token scoped to one resource is rejected for another", async () => {
-		const { sealed } = await built.app.sessions.createToken(86_400, "res-1")
+		const { sealed } = await built.app.sessions.createToken(86_400, {
+			kind: "res",
+			id: "res-1",
+		})
 		const res = await built.app.inject({
 			method: "GET",
 			url: `/api/resources/res-2/files/${sealed}/foo.png`,
@@ -255,7 +262,10 @@ describe("server", () => {
 	})
 
 	test("path token in the query string is not honoured on GET routes", async () => {
-		const { sealed } = await built.app.sessions.createToken(86_400, "res-1")
+		const { sealed } = await built.app.sessions.createToken(86_400, {
+			kind: "res",
+			id: "res-1",
+		})
 		const res = await built.app.inject({
 			method: "GET",
 			url: `/api/cache/trash?x=/files/${sealed}/`,
@@ -265,7 +275,10 @@ describe("server", () => {
 	})
 
 	test("path token in the query string is not honoured on write routes", async () => {
-		const { sealed } = await built.app.sessions.createToken(86_400, "res-1")
+		const { sealed } = await built.app.sessions.createToken(86_400, {
+			kind: "res",
+			id: "res-1",
+		})
 		for (const url of [
 			`/api/plugin-upload?x=/files/${sealed}/`,
 			`/api/resources/res-1/cover?x=/frame/${sealed}/`,
@@ -1038,6 +1051,66 @@ describe("plugin asset security headers", () => {
 		expect(res.headers["content-security-policy"]).toBeUndefined()
 		expect(res.headers["x-content-type-options"]).toBe("nosniff")
 	})
+
+	test("the `vault` subdirectory is never served by the plugin-asset route", async () => {
+		const vaultDir = join(root, "versions", "1", "plugins", PLUGIN_ID, "vault")
+		mkdirSync(vaultDir, { recursive: true })
+		writeFileSync(join(vaultDir, "runtime.mjs"), "export const x = 1\n")
+		const res = await built.app.inject({
+			method: "GET",
+			url: `/api/plugins/${PLUGIN_ID}/vault/runtime.mjs`,
+			remoteAddress: "127.0.0.1",
+		})
+		expect(res.statusCode).toBe(403)
+	})
+
+	test("GET /api/plugin-assets/:id/:token/* validates the token scope", async () => {
+		const vaultDir = join(root, "versions", "1", "plugins", PLUGIN_ID, "vault")
+		mkdirSync(vaultDir, { recursive: true })
+		writeFileSync(join(vaultDir, "runtime.mjs"), "export const x = 1\n")
+		const token = await built.app.sessions.createToken(86_400, {
+			kind: "plugin",
+			id: PLUGIN_ID,
+		})
+		const res = await built.app.inject({
+			method: "GET",
+			url: `/api/plugin-assets/${PLUGIN_ID}/${token.sealed}/runtime.mjs`,
+			remoteAddress: "127.0.0.1",
+		})
+		expect(res.statusCode).toBe(200)
+		expect(res.headers["content-type"]).toBe("text/javascript")
+		expect(res.headers["x-content-type-options"]).toBe("nosniff")
+		expect(res.headers["cache-control"]).toBe("private, no-cache")
+		// A res-scoped token must not open the plugin vault.
+		const wrongToken = await built.app.sessions.createToken(86_400, {
+			kind: "res",
+			id: PLUGIN_ID,
+		})
+		const wrong = await built.app.inject({
+			method: "GET",
+			url: `/api/plugin-assets/${PLUGIN_ID}/${wrongToken.sealed}/runtime.mjs`,
+			remoteAddress: "127.0.0.1",
+		})
+		expect(wrong.statusCode).toBe(401)
+	})
+
+	test("nested vault paths keep every segment (no preHandler truncation)", async () => {
+		const vaultDir = join(root, "versions", "1", "plugins", PLUGIN_ID, "vault")
+		mkdirSync(join(vaultDir, "runtime"), { recursive: true })
+		writeFileSync(join(vaultDir, "runtime", "live2d.min.js"), "window.L2D=1;\n")
+		const token = await built.app.sessions.createToken(86_400, {
+			kind: "plugin",
+			id: PLUGIN_ID,
+		})
+		const res = await built.app.inject({
+			method: "GET",
+			url: `/api/plugin-assets/${PLUGIN_ID}/${token.sealed}/runtime/live2d.min.js`,
+			remoteAddress: "127.0.0.1",
+		})
+		expect(res.statusCode).toBe(200)
+		expect(res.headers["content-type"]).toBe("text/javascript")
+		expect(res.body).toBe("window.L2D=1;\n")
+	})
 })
 
 describe("plugin seeding", () => {
@@ -1712,6 +1785,58 @@ describe("plugin upload limits", () => {
 		})
 		expect(res.statusCode).toBe(400)
 		expect(res.json().kind).toBe("resource.archive_too_large")
+	})
+
+	test("re-uploading (updating) a plugin keeps its asset vault", async () => {
+		const cookie = await loginCookie()
+		const baseManifest = {
+			id: "22222222-2222-4222-8222-222222222222",
+			name: "update-test",
+			description: "update test plugin",
+			version: "1.0.0",
+			permissions: { download: true },
+		}
+		function pluginZip(version: string) {
+			return buildZip([
+				[
+					"manifest.json",
+					Buffer.from(JSON.stringify({ ...baseManifest, version })),
+				],
+				["main.js", Buffer.from("export default {}\n")],
+			])
+		}
+		const firstPayload = multipartZip(await pluginZip("1.0.0"))
+		const first = await built.app.inject({
+			method: "POST",
+			url: "/api/plugin-upload",
+			remoteAddress: "127.0.0.1",
+			headers: { cookie, "content-type": firstPayload.contentType },
+			payload: firstPayload.payload,
+		})
+		expect(first.statusCode).toBe(200)
+
+		// The host wrote a downloaded asset into the plugin's vault.
+		const vaultDir = join(
+			built.app.paths.latest.plugins(),
+			baseManifest.id,
+			"vault",
+		)
+		mkdirSync(vaultDir, { recursive: true })
+		writeFileSync(join(vaultDir, "runtime.mjs"), "vault-data")
+
+		// Update: same id, new version, vault must survive the swap.
+		const secondPayload = multipartZip(await pluginZip("2.0.0"))
+		const second = await built.app.inject({
+			method: "POST",
+			url: "/api/plugin-upload",
+			remoteAddress: "127.0.0.1",
+			headers: { cookie, "content-type": secondPayload.contentType },
+			payload: secondPayload.payload,
+		})
+		expect(second.statusCode).toBe(200)
+		expect(readFileSync(join(vaultDir, "runtime.mjs"), "utf-8")).toBe(
+			"vault-data",
+		)
 	})
 })
 

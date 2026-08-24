@@ -22,9 +22,11 @@ const mocks = vi.hoisted(() => {
 			((...args: unknown[]) => void)[]
 		>()
 		readonly sent: unknown[] = []
+		readonly args: unknown[]
 		killed = false
 
-		constructor(..._args: unknown[]) {
+		constructor(...args: unknown[]) {
+			this.args = args
 			FakeChild.instances.push(this)
 		}
 
@@ -98,6 +100,12 @@ function createStubApi(overrides: Partial<ResourceAPI> = {}): ResourceAPI {
 		computeImageHashes: async () => undefined,
 		listContainer: async () => ({ entries: [] }),
 		extractArchive: async () => ({ entries: [] }),
+		download: async () => {
+			throw new Error("stub: download not configured")
+		},
+		statAsset: async () => undefined,
+		readAsset: async () => new Uint8Array(),
+		deleteAsset: async () => ({ existed: false }),
 		...overrides,
 	}
 }
@@ -291,5 +299,28 @@ describe("plugin sandbox lifecycle (fake child process)", () => {
 			value: { ok: true },
 		})
 		await expect(detect).resolves.toEqual({ ok: true })
+	})
+
+	test("spawn passes the asset vault dir as an extra read grant and argv", async () => {
+		const vaultDir = "C:\\vaults\\p"
+		sandbox = createPluginSandbox(unitConfig({ assetVaultDir: vaultDir }))
+		const plugin = sandbox.loadPlugin({
+			id: "vault-grant",
+			mainPath: "/p/main.js",
+			eager: true,
+		})
+		await flush()
+		const child = lastChild()
+		const [, spawnArgs, spawnOpts] = child.args as [
+			string,
+			string[],
+			{ execArgv: string[] },
+		]
+		expect(spawnArgs.at(2)).toBe(vaultDir)
+		expect(spawnOpts.execArgv.includes(`--allow-fs-read=${vaultDir}\\`)).toBe(
+			true,
+		)
+		child.emit("message", { type: "loaded", ok: true, hooks: ["detect"] })
+		await expect(plugin).resolves.toBeDefined()
 	})
 })
