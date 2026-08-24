@@ -4,39 +4,31 @@ Privacy-first, self-hosted archiving app. pnpm monorepo: Fastify + tRPC server, 
 
 ## Commands
 
-Prerequisites: Node.js 24, pnpm via corepack, then `pnpm install`. Copy `.env.example` to `.env` for local defaults.
+Prerequisites: Node.js 24, pnpm (corepack), `pnpm install`; copy `.env.example` to `.env`.
 
-- `pnpm dev` — web (Vite HMR) + backend (`vite-node --watch`) + plugin watchers; `HOST`, `PORT`, `STORAGE_ROOT` from env.
-- `pnpm build` — turbo build (plugins, web, server); server embeds web dist + Drizzle migrations.
-- `pnpm lint` / `pnpm format` — biome + tsc / format. Turbo `lint`/`test` build first (published-package `default` exports point at `dist/`).
-- Tests for a changed package: `turbo run test --concurrency=2 --filter=<package>` (e.g. `@hoardodile/web`).
-- `pnpm db:generate` — regenerate Drizzle migrations.
-- `pnpm desktop` — Electron shell; dev loop (`apps/desktop/scripts/dev.mjs`: never starts or owns the SPA and never waits for it — resolves `HOARDODILE_WEB_URL` or the default port and launches regardless; when `pnpm dev`'s Vite is absent the shell window shows its own Retry page (start `pnpm dev`, press Retry); starts the wizard on a free port; tree-kills the sidecar on exit), production windows load the sidecar-served SPA. Packaging is per-platform: `desktop:package` = Windows x64 (NSIS + portable zip), `desktop:package:linux` = AppImage, `desktop:package:mac` = arm64 dmg + zip; each runs the shared `scripts/stage-runtime.mjs` (server dist + builtin `file` + every seed plugin, the set per `scripts/lib/plugin-channels.mjs`) into `extraResources`, stages the sidecar Node runtime (`apps/desktop/scripts/lib/node-dist.mjs` — Windows reuses the running Node, linux/macOS download a pinned sha256-verified nodejs.org dist), then `verify-package.mjs` (per-platform native deps, sandbox probe, asar-no-node_modules guard) and yml-driven `scripts/verify-feed.mjs` (per-platform feed). Given electron-builder drops a `node_modules` at the root of an extraResources copy, keep the staged server below the copy root; the shell asar is self-contained (`!node_modules/**` is on purpose). `package:dir` = unpacked build for the Playwright launch smoke (`test:e2e`, `apps/desktop/e2e/`, needs `package:dir` first; Linux CI runs it under `xvfb-run`). `desktop:release` = manual fallback for the tag-triggered `release.yml` publish path (needs `GH_TOKEN`).
-- `pnpm docker:smoke` — automated Docker verification (`scripts/docker-smoke.mjs`, compose-driven): build → health → SPA served → migrations landed → volume persistence; the `docker` job in `desktop.yml` also runs the full web e2e suite against the container on tags (`E2E_EXTERNAL_BASE_URL`, see `apps/web/playwright.config.ts`).
-- `pnpm seed` — fill an **empty** storage root with demo data (use `--storage <dir>` to preview against a live storage root; admin password `demo`, labeled on the login page). Refuses existing libraries and packaged (`HOARDODILE_PACKAGED=1`) runtimes; dev-only tooling, not a product feature. `pnpm seed:screenshots` — isolated Fastify `:3010` + Vite `:5174`, writes PNGs to `tmp/demo-screenshots`.
-- `pnpm -F @hoardodile/server reset` / `reset:dev` — remove admin password (web setup form reclaims the instance).
+- `pnpm dev` — web (Vite HMR) + backend (`vite-node --watch`) + plugin watchers.
+- `pnpm build` — turbo build (plugins, web, server); `pnpm lint` / `pnpm format` — biome + tsc; `pnpm test` — turbo test. Lint/test need `pnpm build` first (published-package `default` exports point at `dist/`).
+- One package: `turbo run test --concurrency=2 --filter=<package>`; `pnpm db:generate` — regenerate Drizzle migrations.
+- `pnpm desktop` — Electron dev shell; packaging per platform (`desktop:package` = Windows x64 NSIS+zip, `:linux` = AppImage, `:mac` = arm64 dmg+zip): stages the server runtime via shared `scripts/stage-runtime.mjs` (seed plugin set per `scripts/lib/plugin-channels.mjs`) plus a Node 24 sidecar runtime, then self-checks (`verify-package.mjs` natives/sandbox/asar guard, yml-driven `verify-feed.mjs`); `package:dir` + `test:e2e` = packaged Playwright launch smoke. Details: `apps/desktop/README.md`.
+- `pnpm docker:smoke` — compose-driven health/SPA/persistence check; the `docker` CI job also runs the web e2e against the container (`E2E_EXTERNAL_BASE_URL`).
+- `pnpm seed` — demo data only (refuses non-empty libraries and `HOARDODILE_PACKAGED=1` runtimes; admin password `demo`); `pnpm -F @hoardodile/server reset` / `reset:dev` — drop the admin password.
 - `hoardodile plugin <create|build|run|bench|dev>` — plugin CLI; scaffold via `pnpm dlx create-hoardodile-plugin <name>`.
 
-Server has no CLI flags; config from env vars validated in `apps/server/src/config/env.ts`.
+Server config: env vars only, validated in `apps/server/src/config/env.ts` — no CLI flags.
 
-## Coding guidelines
+## Coding rules
 
-- Elegance beats brevity; no over-engineering or speculative abstractions. Deduplicate code; collapse functions with >4 parameters into a single options object.
-- Prefer type inference; use type guards / assertion functions / `satisfies` instead of `as`. Avoid arrow functions assigned to `let`/`const`.
-- React Compiler is enabled; plain-function component calls outside React render need `"use no memo"`.
-- Check `DESIGN.md` before designing or reshaping any UI.
-- Links outside the SPA must go through `ExternalLink` (`apps/web/src/components/common/ExternalLink.tsx` → `openExternalUrl`); bare `target="_blank"` anchors, literal external `href`s and stray `window.open` calls are blocked by `scripts/guard-external-links.mjs` (pre-commit). On desktop the shell additionally lets a same-origin navigation replace the app window only for SPA routes registered at boot (`registerAppRoutes`, patterns from `routeTree.gen.ts`); every other URL opens in the OS browser — see `apps/desktop/src/main/urls.ts`.
-- Never edit non-ASCII files (i18n JSON, docs) via PowerShell `Get-Content`/`Set-Content` string replacement — the ANSI round-trip corrupts UTF-8. Use the edit tool, or `[System.IO.File]::ReadAllText`/`WriteAllText` at most.
+- Elegance beats brevity; no speculative abstractions; deduplicate; functions with >4 parameters become one options object. Prefer type guards / assertion functions / `satisfies` over `as`; plain-function component calls outside React render need `"use no memo"`. Check `DESIGN.md` before reshaping any UI.
+- Links outside the SPA must go through `ExternalLink` (pre-commit guard); on desktop, same-origin SPA-route navigations stay in-window, every other URL opens in the OS browser (`apps/desktop/src/main/urls.ts`).
+- Never edit non-ASCII files (i18n JSON, docs) via PowerShell string replacement — use the edit tool.
 
 ## Dependencies
 
-- Runtime deps live in the package that uses them; shared versions use `catalog:` in `pnpm-workspace.yaml`. Check existing deps first (`es-toolkit`, `dayjs` via `@hoardodile/shared/dayjs`).
-- `apps/server` ships a production `node_modules` — runtime imports must be in `dependencies`.
-- SDK closure (`@hoardodile/{ui,sdk-*}`) must not import outside itself (enforced by `sdks:pack`); terminal packages (`cli`, `host`, `host-web`, `workbench`) are never imported by plugin code. SSOT: `scripts/lib/sdk-closure.mjs` (closure = 5, release set = 9).
-- SDK + `host` / `host-web` ship `src` alongside `dist` — never drop it from `files`; `@hoardodile/cli`, `workbench`, `create-plugin` are dist-only.
-- Pinned: `@blocknote/*` 0.51.4 (plus `@handlewithcare/prosemirror-suggest-changes` 0.1.8) — the doc diff feature depends on BlockNote internals that 0.52+ removed; `@videojs/react` 10.0.0-beta.25 (gallery player prerelease, API churns between betas); the 10 tsup-built packages pin `typescript: 5.9.3` (do not bump them to catalog TypeScript 7). All of these are enforced by `scripts/guard-protected-deps.mjs` (pre-commit + CI) and excluded from `deps:update`; an intentional bump must follow the checklist in `apps/web/src/features/doc/README.md`.
+- Runtime deps live in the package that uses them; shared versions via `catalog:` in `pnpm-workspace.yaml`; `apps/server` ships a production `node_modules`.
+- SDK closure (`@hoardodile/{ui,sdk-*}`) must not import outside itself (`sdks:pack`); terminal packages (`cli`, `host`, `host-web`, `workbench`) are never imported by plugin code; `host`/`host-web` and the SDKs ship `src` alongside `dist`.
+- Pinned by `scripts/guard-protected-deps.mjs` (pre-commit + CI): `@blocknote/*` 0.51.4 (+ `@handlewithcare/prosemirror-suggest-changes` 0.1.8), `@videojs/react` 10.0.0-beta.25, `typescript: 5.9.3` in the tsup-built packages — an intentional bump must follow the checklist in `apps/web/src/features/doc/README.md`.
 
-## Project structure
+## Structure
 
 ```
 apps/
@@ -62,40 +54,31 @@ scripts/       Root dev/license/guard/version scripts
 
 ## Architecture
 
-- **Domain-driven:** `schema.ts` → `repo.ts` → `service.ts` → `router.ts` (+ often Fastify `plugin.ts`); services are `create*Service(deps)` factories.
-- **Plugins:** `manifest.json` + server `main.js` (`definePlugin()`) + sandboxed iframe client. Contract in `@hoardodile/sdk-types`; `plugins/host/src/hooks.ts` is the ONLY way to invoke plugin hooks; `apps/server/src/domain/plugin/` is a thin consumer. Authoring details: `plugins/template` + `packages/cli/README.md`.
-- **Storage:** layout authority `createStoragePaths` in `plugins/host/src/hoard/paths.ts` (`writeVersioned`, staging, sanitize). Resource content is bare files under `versions/<v>/resources/<id>/data/`; metadata dotfiles (`.cover.*`, `.deleted`, `.order`) stay at the resource root. Live DB is `{STORAGE_ROOT}/app.sqlite`; `versions/<v>/` are frozen syncable partitions; `local/` is host-only (cache, trash, upload staging). `apps/server/src/infra/storage/` is thin (bootstrap, `stageViewCloneDb`, paths re-export).
-- **Write safety:** writes under `versions/<v>/` go through `writeVersioned` targeting the latest version (enforced by `scripts/guard-versions.mjs` over `apps/server/src` + `plugins/host/src`, exempting the `hoard/` definition site; exemptions need `// write-guard-exempt`).
-- **Tags:** identity = `(category, name)`, globally unique; logic in `domain/tag/` (dedupe.ts, merge.ts, rules.ts); search expands, rendering collapses via `tag/filter.ts` + `tag/collapse.ts`.
-- **Sync:** per-device state snapshots in `domain/sync/` (never real sync software); reminders via pref `sync.remindDays`.
-- **Privacy:** `apps/web/src/features/privacy/` — `performSignOut` in `privacySignOut.ts` is the only sign-out path; session TTL via `domain/auth/ttl.ts` (pref `auth.sessionIdleTimeoutSeconds`, env fallback 7 days).
-- **Trace vs usage:** append-only `user_actions` in `domain/trace/` (services stay trace-agnostic via optional `onUserAction`); browsing exposure is a separate `domain/usage/` (`usage_sessions`) — do not mix.
+- Domain-driven: `schema.ts` → `repo.ts` → `service.ts` → `router.ts` (+ often Fastify `plugin.ts`); services are `create*Service(deps)` factories.
+- Plugins: `manifest.json` + server `main.js` (`definePlugin()`) + sandboxed iframe client; `plugins/host/src/hooks.ts` is the ONLY way to invoke plugin hooks (workers run under the Node permission model). Authoring: `plugins/template` + `packages/cli/README.md`.
+- Storage: layout authority `createStoragePaths` (`plugins/host/src/hoard/paths.ts`); writes under `versions/<v>/` go through `writeVersioned` targeting the latest version (`scripts/guard-versions.mjs`; exemptions need `// write-guard-exempt`); live DB `{STORAGE_ROOT}/app.sqlite`, `versions/<v>/` frozen, `local/` host-only.
+- Tags: identity `(category, name)`, globally unique. Sync: per-device snapshots in `domain/sync/`. Privacy: `performSignOut` (`apps/web/src/features/privacy/`) is the only sign-out path. Trace (`user_actions`) and usage (`usage_sessions`) are separate domains — never mix.
 
 ## Testing
 
-- Vitest at `src/**/*.test.{ts,tsx}` (server: node; web/plugins: jsdom); pure-logic web tests carry `@vitest-environment node`; bench runs manually: `pnpm -F @hoardodile/server test:bench`.
-- E2E: Playwright (`apps/web/e2e/` + the desktop launch smoke, see `package:dir` / `test:e2e` above), critical-path smoke only; prefer Vitest + Testing Library; select by `data-testid`/role.
+- Vitest at `src/**/*.test.{ts,tsx}` (server: node; web/plugins: jsdom); bench runs manually.
+- E2E: Playwright critical-path smoke only (`apps/web/e2e/` + the desktop launch smoke); prefer Vitest + Testing Library; select by `data-testid`/role.
 
 ## Generated files — never hand-edit
 
-- `apps/web/src/routeTree.gen.ts`, `apps/web/public/licenses.json`, `apps/web/public/LICENSE`
-- `apps/server/src/infra/db/migrations/`, `CHANGELOG.md`, `pnpm-lock.yaml`
-- `plugins/create-plugin/src/sdk-deps.gen.ts` (`scripts/gen-sdk-deps.mjs`)
-- `plugins/create-plugin/src/template/` — synced from `plugins/template`; edit the source template, not the embedded copy.
+`apps/web/src/routeTree.gen.ts`, `apps/web/public/{licenses.json,LICENSE}`, `apps/server/src/infra/db/migrations/`, `CHANGELOG.md`, `pnpm-lock.yaml`, `plugins/create-plugin/src/sdk-deps.gen.ts`, `plugins/create-plugin/src/template/` (edit the source `plugins/template`).
 
-Drizzle migration pitfalls: split add+drop into two `db:generate` runs (no-TTY rename prompt); `ADD COLUMN` silently drops FK actions like `ON DELETE CASCADE` — verify the SQL.
+Drizzle migration pitfalls: split add+drop into two `db:generate` runs; `ADD COLUMN` silently drops FK actions like `ON DELETE CASCADE` — verify the SQL.
 
 ## Commits & releases
 
-- Conventional Commits (`type(scope): subject`; scope = workspace package name); one cohesive unit per commit.
-- Lefthook: `commit-msg` verifies commit messages; `pre-commit` = lint-staged + `pnpm lint` + `version:check` + versioned-write guard. CI runs `turbo run test --concurrency=2`.
-- **Before committing:** `pnpm format` → `pnpm lint` → `turbo run test --concurrency=2 --filter=<changed packages>`, all green — verification gates the commit, not the end of a session.
-- **Never merge, rebase, push, or delete branches.**
-- One app version owned by root `package.json`, synced by `pnpm release`; release flow = `pnpm release <version>` (bump/tag/push + **draft** GitHub Release, `GITHUB_TOKEN`) → `release.yml` on the tag publishes npm (10 packages, `NODE_AUTH_TOKEN`) + the per-platform desktop installers (Windows NSIS, Linux AppImage, macOS dmg/zip) to that draft (`GH_TOKEN`) → a human publishes the draft (updater sees it then). Recover from a failed run via Re-run jobs, or `pnpm -r publish` / `pnpm -F @hoardodile/desktop package:publish`. Never re-run `pnpm release` for an already-tagged version; **never hand-edit a `version` field**.
-- Pre-1.0: breaking changes allowed, but flag them to the user first.
+- Conventional Commits (`type(scope): subject`; scope = workspace package name); one cohesive unit per commit; pre-commit = lint-staged + `pnpm lint` + version/versioned-write guards.
+- **Before committing:** `pnpm format` → `pnpm lint` → `turbo run test --concurrency=2 --filter=<changed packages>`, all green.
+- **Never merge, rebase, push, or delete branches.** Never hand-edit a `version` field; never re-run `pnpm release` for an already-tagged version.
+- Release: `pnpm release <version>` (bump/tag/push + **draft** GitHub Release) → tag-triggered `release.yml` publishes npm + the per-platform desktop installers → a human publishes the draft (updater sees it then). Pre-1.0: breaking changes allowed, but flag them to the user first.
 
 ## Guardrails
 
-- No telemetry or external calls — the only authorized external request is the user-triggered update check (Settings → About). Desktop, when `autoUpdate` is on, may check and download GitHub Release artifacts while the tray is alive. Web stays click-to-check.
+- No telemetry or external calls — the only authorized external request is the user-triggered update check (desktop `autoUpdate` may fetch GitHub Release artifacts while the tray is alive).
 - No git mutations unless explicitly asked.
 - **Ask the user before modifying AGENTS.md.**
