@@ -92,6 +92,16 @@ export async function buildPlugin(
 		const result = await build({
 			root: dir,
 			plugins: [react()],
+			// The server bundle runs inside the permission-model sandbox,
+			// which grants fs-read to the plugin dir only and lets the module
+			// policy gate load nothing outside it — the bundle must be one
+			// self-contained ESM file. Vite's default externalizes
+			// node_modules dependencies, which is exactly what an installed
+			// (tarball/npm) plugin hits: its `main.js` would keep bare
+			// `@hoardodile/*` imports whose resolution the sandbox denies.
+			// Inline everything instead (workspace plugins already ended up
+			// inlined via source resolution — this makes both cases uniform).
+			ssr: { noExternal: true },
 			build: {
 				ssr: mainEntry,
 				outDir,
@@ -107,11 +117,11 @@ export async function buildPlugin(
 				watch: watchMode ? {} : null,
 			},
 		})
-		assertNoNodeBuiltinImports(join(outDir))
+		assertSelfContainedServerBundle(join(outDir))
 		if (watchMode && isWatcher(result)) {
 			result.on("event", (event) => {
 				if (event.code === "END") {
-					assertNoNodeBuiltinImports(join(outDir))
+					assertSelfContainedServerBundle(join(outDir))
 					console.log(`[watch] ${manifest.id} server rebuilt`)
 				} else if (event.code === "ERROR") {
 					console.error(`[watch] ${manifest.id} server error:`, event.error)
@@ -157,14 +167,16 @@ function lintTemplates(manifest: PluginManifest): void {
 }
 
 /**
- * Fail the build when the server bundle references Node builtins. The
+ * Fail the build when the server bundle is not self-contained. The
  * plugin main process runs in a capability sandbox whose only privileged
- * interface is the host's ResourceAPI RPC, so `node:` imports and
- * `require` never have a legitimate home in a bundle (the Vite SSR build
- * inlines the SDK closure). The runtime module policy enforces the same
- * rule independently — this check is an early, friendly error.
+ * interface is the host's ResourceAPI RPC: its fs-read grant is the
+ * plugin dir, and its module policy gate allows no bare imports — so
+ * `node:` imports, `require` and any specifier that must resolve outside
+ * the bundle never have a legitimate home in it. (The Vite SSR build
+ * inlines the SDK closure via `ssr.noExternal`; this check is an early,
+ * friendly error if that ever regresses.)
  */
-function assertNoNodeBuiltinImports(outDir: string): void {
+function assertSelfContainedServerBundle(outDir: string): void {
 	for (const file of readdirSync(outDir, { withFileTypes: true })) {
 		if (!file.isFile() || !file.name.endsWith(".js")) continue
 		const source = readFileSync(join(outDir, file.name), "utf-8")
@@ -178,6 +190,15 @@ function assertNoNodeBuiltinImports(outDir: string): void {
 		if (/\brequire\s*\(/.test(source)) {
 			throw new Error(
 				`plugin main bundle (${file.name}) calls require() — the plugin main process is self-contained; use the ResourceAPI instead`,
+			)
+		}
+		// Bare specifiers (anything that is not a relative/absolute path)
+		// resolve through node_modules — outside the sandbox's fs-read
+		// grant. The build keeps them only when a dependency was left
+		// external, which can never load in the sandbox.
+		if (/(?:from\s*["']|import\s*\(\s*["'])(?![./])/.test(source)) {
+			throw new Error(
+				`plugin main bundle (${file.name}) leaves a bare import unresolved — the SDK closure must be inlined; the plugin sandbox cannot load node_modules`,
 			)
 		}
 	}
