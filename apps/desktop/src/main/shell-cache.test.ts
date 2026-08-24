@@ -1,11 +1,12 @@
 import { mkdir, mkdtemp, readdir, rm, writeFile } from "node:fs/promises"
-import { tmpdir } from "node:os"
+import { homedir, tmpdir } from "node:os"
 import { join } from "node:path"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import {
 	clearShellCache,
 	dirSize,
 	getShellCacheSize,
+	platformCacheBase,
 	resolveUpdaterCacheDir,
 	type ShellCacheSession,
 } from "./shell-cache"
@@ -47,14 +48,41 @@ afterEach(async () => {
 	)
 })
 
+describe("platformCacheBase", () => {
+	it("mirrors electron-updater's getAppCacheDir per platform", () => {
+		expect(
+			platformCacheBase("win32", {
+				LOCALAPPDATA: String.raw`C:\Users\demo\AppData\Local`,
+			}),
+		).toBe(String.raw`C:\Users\demo\AppData\Local`)
+		expect(platformCacheBase("darwin", {})).toBe(
+			join(homedir(), "Library", "Caches"),
+		)
+		expect(platformCacheBase("linux", { XDG_CACHE_HOME: "/tmp/xdg" })).toBe(
+			"/tmp/xdg",
+		)
+		expect(platformCacheBase("linux", {})).toBe(join(homedir(), ".cache"))
+	})
+})
+
 describe("resolveUpdaterCacheDir", () => {
 	it("follows the electron-builder formula: <appName-lowercase>-updater", () => {
 		expect(
 			resolveUpdaterCacheDir({
-				localAppData: String.raw`C:\Users\demo\AppData\Local`,
+				platformBase: String.raw`C:\Users\demo\AppData\Local`,
 				appName: "hoardodile",
 			}),
 		).toBe(String.raw`C:\Users\demo\AppData\Local\hoardodile-updater`)
+	})
+
+	it("appends under a POSIX cache base", () => {
+		const base = "/home/demo/.cache"
+		expect(
+			resolveUpdaterCacheDir({
+				platformBase: base,
+				appName: "hoardodile",
+			}),
+		).toBe(join(base, "hoardodile-updater"))
 	})
 })
 

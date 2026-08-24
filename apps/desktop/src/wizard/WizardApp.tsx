@@ -143,6 +143,7 @@ function WizardForm(props: {
 				</div>
 				<div className="mt-auto flex justify-end">
 					<Button
+						data-testid="wizard-continue"
 						className="[-webkit-app-region:no-drag]"
 						disabled={busy || libraryPath.length === 0}
 						onClick={() => {

@@ -24,7 +24,9 @@ describe("parseDesktopConfig", () => {
 	it("fills defaults for an empty object", () => {
 		const parsed = parseDesktopConfig({}, "C:/lib", "C:/docs")
 		expect(parsed).toEqual(defaultDesktopConfig("C:/lib", "C:/docs"))
-		expect(parsed.autoUpdate).toBe(true)
+		// Off by default on macOS (unsigned builds can't verify updates);
+		// everywhere else auto-update is the default.
+		expect(parsed.autoUpdate).toBe(process.platform !== "darwin")
 		expect(parsed.autoStart).toBe(false)
 		expect(parsed.startInTray).toBe(false)
 		expect(parsed.port).toBe(3000)

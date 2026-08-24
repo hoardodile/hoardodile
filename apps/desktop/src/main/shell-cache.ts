@@ -1,5 +1,6 @@
 import { readdir, rm, stat } from "node:fs/promises"
-import { join, win32 } from "node:path"
+import { homedir } from "node:os"
+import { join } from "node:path"
 import type { Session } from "electron"
 
 /**
@@ -43,16 +44,31 @@ export async function dirSize(dir: string | undefined): Promise<number> {
 }
 
 /**
+ * electron-updater's cache base — a mirror of its `getAppCacheDir`
+ * (AppAdapter.js): Windows `%LOCALAPPDATA%`, macOS `~/Library/Caches`,
+ * Linux `$XDG_CACHE_HOME` or `~/.cache`. Electron has no `cache` path
+ * getter, so the shell computes the same directories itself.
+ */
+export function platformCacheBase(
+	platform: NodeJS.Platform,
+	inherited: NodeJS.ProcessEnv = process.env,
+): string {
+	if (platform === "win32") {
+		return inherited.LOCALAPPDATA ?? join(homedir(), "AppData", "Local")
+	}
+	if (platform === "darwin") return join(homedir(), "Library", "Caches")
+	return inherited.XDG_CACHE_HOME ?? join(homedir(), ".cache")
+}
+
+/**
  * electron-updater's cache dir name formula — `sanitizedName.toLowerCase()
- * + "-updater"` — under the platform cache base (`%LOCALAPPDATA%` on
- * Windows; the desktop shell is Windows-only).
+ * + "-updater"` — under {@link platformCacheBase}.
  */
 export function resolveUpdaterCacheDir(options: {
-	readonly localAppData: string | undefined
+	readonly platformBase: string
 	readonly appName: string
 }): string {
-	const base = options.localAppData ?? ""
-	return win32.join(base, `${options.appName.toLowerCase()}-updater`)
+	return join(options.platformBase, `${options.appName.toLowerCase()}-updater`)
 }
 
 /** Delete the updater download cache; electron-updater recreates it on demand. */

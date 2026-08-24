@@ -15,6 +15,9 @@ allowBuilds:
   lefthook: true
 catalog:
   '@playwright/test': ^1.62.1
+  # Electron e2e driving (`_electron`); keep in lockstep with
+  # @playwright/test above.
+  playwright: 1.62.1
   '@rolldown/plugin-babel': ^0.2.3
   '@tailwindcss/vite': ^4.3.3
   '@testing-library/jest-dom': ^7.0.1

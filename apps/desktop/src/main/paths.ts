@@ -47,7 +47,13 @@ export function packagedLayout(resourcesPath: string): SidecarLayout {
 	const pluginsDir = join(resourcesPath, "plugins")
 	return {
 		packaged: true,
-		nodePath: join(resourcesPath, "node", "node.exe"),
+		// The staged runtime is `node.exe` on Windows and `node` elsewhere
+		// (see node-dist.mjs for how each gets there).
+		nodePath: join(
+			resourcesPath,
+			"node",
+			process.platform === "win32" ? "node.exe" : "node",
+		),
 		serverArgs: ["--enable-source-maps", join(serverDir, "main.js")],
 		cwd: serverDir,
 		builtinPath: join(pluginsDir, "file"),

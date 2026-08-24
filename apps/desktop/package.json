@@ -3,7 +3,7 @@
 	"version": "0.0.0",
 	"private": true,
 	"license": "GPL-3.0-only",
-	"description": "Windows Electron shell around the hoardodile Fastify sidecar.",
+	"description": "Cross-platform Electron shell around the hoardodile Fastify sidecar.",
 	"author": "wooloo26",
 	"type": "module",
 	"main": "./out/main/index.js",
@@ -17,8 +17,14 @@
 		"build": "node scripts/build.mjs",
 		"package": "pnpm build && node scripts/stage-resources.mjs && electron-builder --config electron-builder.config.mjs --win --x64 --publish never && node scripts/verify-package.mjs && node ../../scripts/verify-feed.mjs",
 		"package:publish": "pnpm build && node scripts/stage-resources.mjs && electron-builder --config electron-builder.config.mjs --win --x64 --publish always && node scripts/verify-package.mjs && node ../../scripts/verify-feed.mjs",
+		"package:dir": "pnpm build && node scripts/stage-resources.mjs && electron-builder --config electron-builder.config.mjs --dir --publish never && node scripts/verify-package.mjs",
+		"package:linux": "pnpm build && node scripts/stage-resources.mjs --target linux && electron-builder --config electron-builder.config.mjs --linux --x64 --publish never && node scripts/verify-package.mjs --platform linux && node ../../scripts/verify-feed.mjs --platform linux",
+		"package:publish:linux": "pnpm build && node scripts/stage-resources.mjs --target linux && electron-builder --config electron-builder.config.mjs --linux --x64 --publish always && node scripts/verify-package.mjs --platform linux && node ../../scripts/verify-feed.mjs --platform linux",
+		"package:mac": "pnpm build && node scripts/stage-resources.mjs --target mac --arch arm64 && electron-builder --config electron-builder.config.mjs --mac --arm64 --publish never && node scripts/verify-package.mjs --platform mac && node ../../scripts/verify-feed.mjs --platform mac",
+		"package:publish:mac": "pnpm build && node scripts/stage-resources.mjs --target mac --arch arm64 && electron-builder --config electron-builder.config.mjs --mac --arm64 --publish always && node scripts/verify-package.mjs --platform mac && node ../../scripts/verify-feed.mjs --platform mac",
 		"lint": "tsc --noEmit",
-		"test": "vitest run --maxWorkers=2"
+		"test": "vitest run --maxWorkers=2",
+		"test:e2e": "playwright test"
 	},
 	"dependencies": {
 		"@hoardodile/shared": "workspace:*",
@@ -30,6 +36,7 @@
 		"zod": "catalog:"
 	},
 	"devDependencies": {
+		"@playwright/test": "catalog:",
 		"@tailwindcss/vite": "catalog:",
 		"@types/node": "catalog:",
 		"@types/react": "catalog:",
@@ -37,6 +44,7 @@
 		"@vitejs/plugin-react": "catalog:",
 		"electron": "^43.4.1",
 		"electron-builder": "^26.15.3",
+		"playwright": "catalog:",
 		"tailwindcss": "catalog:",
 		"typescript": "catalog:",
 		"vite": "catalog:",

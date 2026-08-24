@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 /**
- * Verify the packaged sidecar actually ships its native dependencies, and
- * that the packaged plugin sandbox still boots with its permission model
- * and module policy active (see {@link verifySandboxProbe}).
+ * Verify the packaged sidecar actually ships its native dependencies, that
+ * the packaged plugin sandbox still boots with its permission model and
+ * module policy active (see {@link verifySandboxProbe}), and that the
+ * shell asar carries no node_modules tree ({@link checkAsarHasNoNodeModules}).
  *
  * electron-builder drops a `node_modules` that sits at the root of an
  * extraResources copy (see electron-builder.config.mjs), so the server that
@@ -16,11 +17,19 @@
  * Add new externalized natives here when they are introduced.
  *
  * Usage:
- *   node scripts/verify-package.mjs            # after electron-builder ran
+ *   node scripts/verify-package.mjs                        # host platform
+ *   node scripts/verify-package.mjs --platform mac         # darwin arm64
+ *   node scripts/verify-package.mjs --platform linux       # linux x64
  */
 
-import { fork, spawn } from "node:child_process"
-import { existsSync, mkdtempSync, rmSync } from "node:fs"
+import { fork, spawn, spawnSync } from "node:child_process"
+import {
+	existsSync,
+	mkdtempSync,
+	readFileSync,
+	rmSync,
+	statSync,
+} from "node:fs"
 import { createRequire } from "node:module"
 import { tmpdir } from "node:os"
 import { dirname, join, resolve, sep } from "node:path"
@@ -29,11 +38,64 @@ import { assertCopiedMediaBins } from "../../server/scripts/assert-media-bins.mj
 
 const desktopRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..")
 
+/**
+ * The v1 release matrix: win32-x64, linux-x64, darwin-arm64. `resourcesRel`
+ * is the electron-builder resources path relative to `release/` (the .app
+ * bundle on macOS) and the file names are the platform-truth of the staged
+ * natives (7-Zip is `7z.exe`/`7zz`, ffmpeg-static is `ffmpeg.exe`/`ffmpeg`).
+ */
+const LAYOUTS = {
+	"win32-x64": {
+		releaseDir: "win-unpacked",
+		resourcesRel: "resources",
+		nodeFile: "node.exe",
+		sqlitePrebuild: "win32-x64.node",
+		sharpDir: "@img/sharp-win32-x64",
+		argonDir: "@node-rs/argon2-win32-x64-msvc",
+		ffmpeg: "ffmpeg.exe",
+		ffprobe: "ffprobe.exe",
+		sevenZip: "bin/win32-x64/7z.exe",
+	},
+	"linux-x64": {
+		releaseDir: "linux-unpacked",
+		resourcesRel: "resources",
+		nodeFile: "node",
+		sqlitePrebuild: "linux-x64.node",
+		sharpDir: "@img/sharp-linux-x64",
+		argonDir: "@node-rs/argon2-linux-x64-gnu",
+		ffmpeg: "ffmpeg",
+		ffprobe: "ffprobe",
+		sevenZip: "bin/linux-x64/7zz",
+	},
+	"darwin-arm64": {
+		releaseDir: "mac-arm64",
+		resourcesRel: "Hoardodile.app/Contents/Resources",
+		nodeFile: "node",
+		sqlitePrebuild: "darwin-arm64.node",
+		sharpDir: "@img/sharp-darwin-arm64",
+		argonDir: "@node-rs/argon2-darwin-arm64",
+		ffmpeg: "ffmpeg",
+		ffprobe: "ffprobe",
+		sevenZip: "bin/darwin-arm64/7zz",
+	},
+}
+
+const args = parseArgs(process.argv.slice(2))
+const platform = normalizePlatform(args.platform ?? process.platform)
+const arch = args.arch ?? process.arch
+const layout = LAYOUTS[`${platform}-${arch}`]
+if (layout === undefined) {
+	console.error(
+		`unsupported verify target ${platform}-${arch}; supported: ${Object.keys(LAYOUTS).join(", ")}`,
+	)
+	process.exit(1)
+}
+
 const serverDir = resolve(
 	desktopRoot,
 	"release",
-	"win-unpacked",
-	"resources",
+	layout.releaseDir,
+	layout.resourcesRel,
 	"server",
 )
 const nativeRoot = join(serverDir, "node_modules")
@@ -49,15 +111,23 @@ const RESOLVABLE_NATIVES = [
 
 /** Files (relative to nativeRoot) the runtime needs in addition to resolution. */
 const REQUIRED_FILES = [
-	"better-sqlite3/prebuilds/win32-x64.node",
-	"@img/sharp-win32-x64",
-	"@node-rs/argon2-win32-x64-msvc",
-	"ffmpeg-static/ffmpeg.exe",
-	"@derhuerst/ffprobe-static/ffprobe.exe",
-	"@hoardodile/7z-bin/bin/win32-x64/7z.exe",
+	`better-sqlite3/prebuilds/${layout.sqlitePrebuild}`,
+	layout.sharpDir,
+	layout.argonDir,
+	`ffmpeg-static/${layout.ffmpeg}`,
+	`@derhuerst/ffprobe-static/${layout.ffprobe}`,
+	`@hoardodile/7z-bin/${layout.sevenZip}`,
 ]
 
 function main() {
+	if (!existsSync(serverDir)) {
+		console.error(
+			`packaged sidecar missing: ${serverDir}\n` +
+				"Run electron-builder first (should have produced a release/ " +
+				"directory for this platform).",
+		)
+		process.exit(1)
+	}
 	if (!existsSync(nativeRoot)) {
 		console.error(
 			`sidecar native deps missing: ${nativeRoot}\n` +
@@ -83,6 +153,17 @@ function main() {
 		}
 	}
 
+	checkNodeRuntime(layout, missing)
+
+	const asarPath = resolve(
+		desktopRoot,
+		"release",
+		layout.releaseDir,
+		layout.resourcesRel,
+		"app.asar",
+	)
+	checkAsarHasNoNodeModules(asarPath, missing)
+
 	if (missing.length > 0) {
 		console.error("packaged sidecar is missing native dependencies:")
 		for (const entry of missing) {
@@ -95,6 +176,79 @@ function main() {
 	console.log(
 		`verified sidecar natives in ${serverDir} (${RESOLVABLE_NATIVES.length} packages, media bins ok)`,
 	)
+}
+
+/**
+ * The staged Node runtime itself: presence (it is the sidecar, so a
+ * missing binary is a broken installer), the executable bit on POSIX, and
+ * a valid signature on macOS (ad-hoc signed in stage-resources.mjs).
+ */
+function checkNodeRuntime(layout, missing) {
+	const nodeDir = resolve(
+		desktopRoot,
+		"release",
+		layout.releaseDir,
+		layout.resourcesRel,
+		"node",
+	)
+	const nodePath = join(nodeDir, layout.nodeFile)
+	if (!existsSync(nodePath)) {
+		missing.push(`node/${layout.nodeFile}`)
+		return
+	}
+	if (platform !== "win32") {
+		const mode = statSync(nodePath).mode
+		if ((mode & 0o111) === 0)
+			missing.push(`node/${layout.nodeFile} not executable`)
+	}
+	if (platform === "darwin") {
+		const res = spawnSync("codesign", ["--verify", "--strict", nodePath], {
+			stdio: "ignore",
+			timeout: 30_000,
+		})
+		if (res.error !== undefined || res.status !== 0) {
+			missing.push(`node binary failed codesign --verify (${nodePath})`)
+		}
+	}
+}
+
+/**
+ * The shell bundle is self-contained (vite ssr noExternal; only "electron"
+ * and node builtins stay external), so the asar must never carry a
+ * node_modules tree. electron-builder's default dependency collection
+ * would walk the pnpm store and asar-copy it; `files` excludes it, and
+ * this guard turns a dropped negation back into a hard failure instead of
+ * a silently bloated installer.
+ */
+function checkAsarHasNoNodeModules(asarPath, missing) {
+	if (!existsSync(asarPath)) {
+		missing.push(`app.asar missing (${asarPath})`)
+		return
+	}
+	const file = readFileSync(asarPath)
+	const headerLength = file.readUInt32LE(12)
+	if (headerLength <= 0 || 16 + headerLength > file.length) {
+		missing.push(`app.asar header unreadable (${asarPath})`)
+		return
+	}
+	const header = JSON.parse(file.toString("utf8", 16, 16 + headerLength))
+	const offenders = []
+	collectNodeModules(header.files, "", offenders)
+	for (const path of offenders) missing.push(`app.asar contains ${path}`)
+}
+
+function collectNodeModules(filesNode, prefix, offenders) {
+	if (!isRecord(filesNode)) return
+	for (const [name, entry] of Object.entries(filesNode)) {
+		const path = `${prefix}${name}`
+		if (name === "node_modules") offenders.push(path)
+		if (isRecord(entry?.files))
+			collectNodeModules(entry.files, `${path}/`, offenders)
+	}
+}
+
+function isRecord(value) {
+	return typeof value === "object" && value !== null && !Array.isArray(value)
 }
 
 /**
@@ -185,6 +339,27 @@ function acceptsFlag(flag) {
 		probe.on("exit", (code) => resolveProbe(code === 0))
 		probe.on("error", () => resolveProbe(false))
 	})
+}
+
+function parseArgs(argv) {
+	const out = {}
+	for (let index = 0; index < argv.length; index++) {
+		const arg = argv[index]
+		if (arg === "--platform" || arg === "--arch") {
+			const key = arg.slice(2)
+			out[key] = argv[++index]
+			if (out[key] === undefined) throw new Error(`${arg} needs a value`)
+			continue
+		}
+		throw new Error(`unknown argument: ${arg}`)
+	}
+	return out
+}
+
+function normalizePlatform(value) {
+	if (value === "win") return "win32"
+	if (value === "mac" || value === "darwin") return "darwin"
+	return value
 }
 
 await main()

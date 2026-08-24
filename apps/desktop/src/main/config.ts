@@ -51,7 +51,12 @@ export function defaultDesktopConfig(
 		autoStart: false,
 		startInTray: false,
 		closeAction: "ask",
-		autoUpdate: true,
+		// macOS is still shipped unsigned in this phase: electron-updater
+		// refuses an unsigned download there, so auto-update must stay off
+		// (the Settings page still runs a click-to-check) until signed &
+		// notarized builds exist. Windows (verifyUpdateCodeSignature:
+		// false) and Linux AppImage updates do not need a certificate.
+		autoUpdate: process.platform !== "darwin",
 	}
 }
 

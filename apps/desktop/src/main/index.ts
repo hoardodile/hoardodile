@@ -45,6 +45,7 @@ import {
 import {
 	clearShellCache,
 	getShellCacheSize,
+	platformCacheBase,
 	resolveUpdaterCacheDir,
 } from "./shell-cache.ts"
 import {
@@ -102,6 +103,11 @@ function desktopRootFromMain(): string {
 
 function isPortableBuild(): boolean {
 	if (!app.isPackaged) return false
+	if (process.platform !== "win32") {
+		// AppImages and .app bundles are "installed" shapes: portable
+		// (no updater) is a Windows zip concept.
+		return false
+	}
 	if (process.env.PORTABLE_EXECUTABLE_DIR !== undefined) return true
 	const uninstaller = join(
 		dirname(process.execPath),
@@ -230,10 +236,10 @@ function lanInfo(runtime: Runtime): LanInfo {
 	}
 }
 
-/** electron-updater's download cache dir (`%LOCALAPPDATA%/<app>-updater`). */
+/** electron-updater's download cache dir (platform cache base, see shell-cache.ts). */
 function updaterCacheDir(): string {
 	return resolveUpdaterCacheDir({
-		localAppData: process.env.LOCALAPPDATA,
+		platformBase: platformCacheBase(process.platform),
 		appName: app.getName(),
 	})
 }
@@ -715,7 +721,11 @@ function runWizard(runtime: Runtime): Promise<DesktopWizardResult> {
 		const win = createDesktopWindow({
 			preloadPath: preloadPath(runtime.desktopRoot),
 			kind: "wizard",
-			url: target.url.length > 0 ? target.url : "about:blank",
+			// `target.url` is "" on packaged runs so loadWindow falls
+			// through to the built wizard file — never substitute
+			// "about:blank" here, that URL is non-empty and would keep
+			// the wizard permanently blank.
+			url: target.url,
 			wizardFile: target.wizardFile,
 			iconPath: runtime.iconPath,
 		})
@@ -884,28 +894,38 @@ async function boot(): Promise<void> {
 		runtime.crashed = true
 	}
 
-	runtime.tray = createAppTray(
-		trayIconPath(app.isPackaged ? process.resourcesPath : runtime.desktopRoot),
-		trayHandlers(runtime),
-		{
-			crashed: runtime.crashed,
-			updateReady: runtime.updateReady,
-		},
-		trayStrings(runtime.language),
-	)
-
-	runtime.updater = startUpdater({
-		enabled: runtime.config.autoUpdate && !runtime.portable,
-		portable: runtime.portable,
-		dev: !app.isPackaged,
-		onReady() {
-			runtime.updateReady = true
-			broadcastUpdate(runtime, runtime.updater?.status() ?? { status: "idle" })
-		},
-	})
-	runtime.updater.onStatus((state) => {
-		broadcastUpdate(runtime, state)
-	})
+	// Test-only hook for the Playwright e2e suite (apps/desktop/e2e):
+	// headless Linux CI has no StatusNotifier/DBus service behind the
+	// tray, and the updater must never poll in a test. Both are optional
+	// at runtime — every consumer guards with `?.` / `!== undefined`.
+	if (!isShellExtrasDisabled()) {
+		runtime.tray = createAppTray(
+			trayIconPath(
+				app.isPackaged ? process.resourcesPath : runtime.desktopRoot,
+			),
+			trayHandlers(runtime),
+			{
+				crashed: runtime.crashed,
+				updateReady: runtime.updateReady,
+			},
+			trayStrings(runtime.language),
+		)
+		runtime.updater = startUpdater({
+			enabled: runtime.config.autoUpdate && !runtime.portable,
+			portable: runtime.portable,
+			dev: !app.isPackaged,
+			onReady() {
+				runtime.updateReady = true
+				broadcastUpdate(
+					runtime,
+					runtime.updater?.status() ?? { status: "idle" },
+				)
+			},
+		})
+		runtime.updater.onStatus((state) => {
+			broadcastUpdate(runtime, state)
+		})
+	}
 
 	const hiddenLaunch =
 		process.argv.includes(HIDDEN_SWITCH) ||
@@ -919,6 +939,38 @@ async function boot(): Promise<void> {
 		await openAppWindow(runtime)
 	}
 }
+
+/**
+ * Test-only switch for the Playwright e2e suite (apps/desktop/e2e): skip
+ * tray + updater so a headless CI run neither needs a StatusNotifier/DBus
+ * service nor polls the update feed. Every consumer already tolerates a
+ * missing tray/updater (`undefined` guards).
+ */
+function isShellExtrasDisabled(): boolean {
+	return process.env.HOARDODILE_E2E === "1"
+}
+
+/**
+ * Test-only: `--user-data-dir=<dir>` (VS Code / Chromium convention)
+ * points the whole app — config, session cookies, caches — at a
+ * throwaway profile, so e2e runs are hermetic. Must run before
+ * `requestSingleInstanceLock` and `whenReady`. `HOARDODILE_E2E_DOCUMENTS`
+ * additionally pins the wizard's default library folder (Documents).
+ */
+function applyUserDataDirArg(): void {
+	const prefix = "--user-data-dir="
+	const arg = process.argv.find((entry) => entry.startsWith(prefix))
+	if (arg === undefined) return
+	const dir = arg.slice(prefix.length)
+	if (dir.length === 0) return
+	app.setPath("userData", dir)
+	const documents = process.env.HOARDODILE_E2E_DOCUMENTS
+	if (documents !== undefined && documents.length > 0) {
+		app.setPath("documents", documents)
+	}
+}
+
+applyUserDataDirArg()
 
 const gotLock = app.requestSingleInstanceLock()
 if (!gotLock) {

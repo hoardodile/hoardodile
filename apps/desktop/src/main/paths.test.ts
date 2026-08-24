@@ -90,7 +90,13 @@ describe("packagedLayout", () => {
 	it("points the sidecar at extraResources trees and discovers seeds", () => {
 		const layout = packagedLayout(resources)
 		expect(layout.packaged).toBe(true)
-		expect(layout.nodePath).toBe(join(resources, "node", "node.exe"))
+		expect(layout.nodePath).toBe(
+			join(
+				resources,
+				"node",
+				process.platform === "win32" ? "node.exe" : "node",
+			),
+		)
 		expect(layout.serverArgs).toEqual([
 			"--enable-source-maps",
 			join(resources, "server", "main.js"),

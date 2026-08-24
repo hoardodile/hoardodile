@@ -50,3 +50,6 @@ coverage
 apps/desktop/extra-resources/
 apps/desktop/release/
 apps/desktop/out/
+
+# Desktop Playwright output
+apps/desktop/.playwright-desktop/

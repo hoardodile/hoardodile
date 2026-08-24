@@ -22,7 +22,13 @@ const config = {
 	directories: {
 		output: "release",
 	},
-	files: ["out/**"],
+	// The shell bundles everything it imports (vite ssr noExternal; only
+	// "electron" and node builtins stay external) — the app itself needs
+	// no node_modules. Without this negation electron-builder walks the
+	// pnpm store and asar-copies the whole production dependency tree
+	// (tens of thousands of files) that the runtime never reads. The
+	// sidecar's deps live in extraResources/server, never in the asar.
+	files: ["out/**", "!node_modules/**"],
 	// One entry for the whole staged tree, never per-resource: electron-builder
 	// drops a `node_modules` that sits at the ROOT of an extraResources copy
 	// (app-builder-lib filter: relative === "node_modules" is excluded), but
@@ -42,6 +48,30 @@ const config = {
 			{ target: "nsis", arch: ["x64"] },
 			{ target: "zip", arch: ["x64"] },
 		],
+	},
+	mac: {
+		icon: "resources/icon.png",
+		// No certificate in this phase: electron-builder ad-hoc signs the
+		// arm64 bundle so macOS accepts it (notarization comes with a
+		// real identity later). The shell's `autoUpdate` default is OFF on
+		// macOS until signed & notarized builds exist — see config.ts.
+		identity: null,
+		category: "public.app-category.productivity",
+		target: [
+			{ target: "dmg", arch: ["arm64"] },
+			// The zip is electron-updater's macOS update artifact.
+			{ target: "zip", arch: ["arm64"] },
+		],
+		// biome-ignore lint/suspicious/noTemplateCurlyInString: electron-builder packer tokens
+		artifactName: "${productName}-${version}-${arch}.${ext}",
+	},
+	linux: {
+		icon: "resources/icon.png",
+		category: "Utility",
+		executableName: "hoardodile",
+		target: ["AppImage"],
+		// biome-ignore lint/suspicious/noTemplateCurlyInString: electron-builder packer tokens
+		artifactName: "${productName}-${version}-${arch}.${ext}",
 	},
 	nsis: {
 		oneClick: false,
