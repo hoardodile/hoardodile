@@ -1,4 +1,5 @@
 import { type ChildProcess, fork, spawn } from "node:child_process"
+import { realpathSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { dirname, resolve, sep } from "node:path"
 import { fileURLToPath } from "node:url"
@@ -431,6 +432,14 @@ export function createPluginSandbox(
 		// process.
 		const entryPath = fileURLToPath(resolveWorkerEntryUrl())
 		const pluginDir = dirname(state.mainPath)
+		// The ESM loader passes every module path through realpathSync under
+		// `--permission`, so the grants must use the canonical on-disk form —
+		// a plugin dir reached through a symlink (macOS `/tmp`→`/private/tmp`,
+		// WSL paths, junctions) would otherwise resolve outside its own grant
+		// and fail to load with ERR_ACCESS_DENIED.
+		const realEntryPath = realPathOrResolve(entryPath)
+		const realPluginDir = realPathOrResolve(pluginDir)
+		const realMainPath = realPathOrResolve(state.mainPath)
 
 		// The child's grants are minimal: one fs-read allowlist (its own
 		// directory, plus the entry file it must load, plus the host-managed
@@ -440,17 +449,19 @@ export function createPluginSandbox(
 		// `registerHooks`) closes the remaining surface: nothing outside the
 		// plugin directory (and the vault) and no `node:` builtins except
 		// `node:url` can be imported.
-		const fsReadGrants = [`${resolve(pluginDir)}${sep}`, entryPath]
+		const fsReadGrants = [`${realPluginDir}${sep}`, realEntryPath]
 		const assetVaultDir =
 			typeof config.assetVaultDir === "function"
 				? config.assetVaultDir(state.id)
 				: config.assetVaultDir
-		if (assetVaultDir !== undefined) {
-			fsReadGrants.push(`${resolve(assetVaultDir)}${sep}`)
+		const realVaultDir =
+			assetVaultDir === undefined ? undefined : realPathOrResolve(assetVaultDir)
+		if (realVaultDir !== undefined) {
+			fsReadGrants.push(`${realVaultDir}${sep}`)
 		}
 		const child = fork(
-			entryPath,
-			[pluginDir, entryPath, assetVaultDir].filter(
+			realEntryPath,
+			[realPluginDir, realEntryPath, realVaultDir].filter(
 				(v): v is string => v !== undefined,
 			),
 			{
@@ -498,7 +509,7 @@ export function createPluginSandbox(
 			state.loadWaiter = { resolve: resolveLoaded, reject }
 		})
 		try {
-			child.send({ type: "load", mainPath: state.mainPath } satisfies {
+			child.send({ type: "load", mainPath: realMainPath } satisfies {
 				type: "load"
 				mainPath: string
 			})
@@ -869,6 +880,22 @@ function isApiMethod(name: unknown): name is ApiMethodName {
 
 function asError(value: unknown): Error {
 	return value instanceof Error ? value : new Error(String(value))
+}
+
+/**
+ * The canonical on-disk form of a path, falling back to the resolved form
+ * when the file does not exist yet (a just-built bundle, a not-yet-created
+ * vault). Node's permission model checks the path the ESM loader resolved
+ * through `realpathSync`, so a plugin dir reached via a symlink must be
+ * granted and passed in its canonical form — otherwise the module resolves
+ * outside its own grant and the sandbox refuses to load it.
+ */
+function realPathOrResolve(path: string): string {
+	try {
+		return realpathSync(path)
+	} catch {
+		return resolve(path)
+	}
 }
 
 /**
