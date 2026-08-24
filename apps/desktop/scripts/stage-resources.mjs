@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 /**
  * Copy the sidecar tree into extra-resources/ for electron-builder:
- * node.exe, apps/server/dist, official plugin dists.
+ * node.exe, apps/server/dist, seed plugin dists (every plugin dir under
+ * `plugins/<slug>/dist` with a manifest, see
+ * lib/plugin-channels.mjs — nothing here names a plugin).
  *
  * Keep the whole staged tree under one extraResources entry
  * (electron-builder.config.mjs): electron-builder drops a `node_modules`
@@ -12,6 +14,7 @@
 import { copyFileSync, cpSync, existsSync, mkdirSync, rmSync } from "node:fs"
 import { dirname, join, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
+import { findSeedPluginDists } from "../../../scripts/lib/plugin-channels.mjs"
 import { assertCopiedMediaBins } from "../../server/scripts/assert-media-bins.mjs"
 
 const desktopRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..")
@@ -46,13 +49,20 @@ const serverDest = join(destRoot, "server")
 copyDir(serverDist, serverDest)
 assertCopiedMediaBins(join(serverDest, "node_modules"))
 
-const plugins = [
-	["file", join(workspaceRoot, "plugins", "file", "dist")],
-	["gallery", join(workspaceRoot, "plugins", "gallery", "dist")],
-	["pdf", join(workspaceRoot, "plugins", "pdf", "dist")],
-]
-for (const [id, src] of plugins) {
-	copyDir(src, join(destRoot, "plugins", id))
+// The builtin fallback (file) is staged separately — it is the one plugin
+// that is never a seed, served through BUILTIN_PATH instead.
+copyDir(
+	join(workspaceRoot, "plugins", "file", "dist"),
+	join(destRoot, "plugins", "file"),
+)
+
+const seedDists = findSeedPluginDists(workspaceRoot)
+if (seedDists.length === 0) {
+	throw new Error("no seed plugin dists found under plugins/*/dist")
+}
+for (const dist of seedDists) {
+	const slug = dist.split(/[/\\]/).at(-2) ?? "plugin"
+	copyDir(dist, join(destRoot, "plugins", slug))
 }
 
 const nodeDestDir = join(destRoot, "node")
@@ -62,4 +72,6 @@ copyFile(process.execPath, join(nodeDestDir, "node.exe"))
 copyFile(join(desktopRoot, "resources", "icon.png"), join(destRoot, "icon.png"))
 copyFile(join(desktopRoot, "resources", "tray.png"), join(destRoot, "tray.png"))
 
-console.log(`staged extra-resources at ${destRoot}`)
+console.log(
+	`staged extra-resources at ${destRoot} (${String(seedDists.length)} seed plugins)`,
+)

@@ -1,6 +1,6 @@
 /**
  * Single source of truth for the versioned release manifests: the in-repo
- * plugin manifests (file builtin + official seeds) and the published
+ * plugin manifests (file builtin + seed plugins) and the published
  * package.json files that must all carry the app version from the root
  * package.json.
  *
@@ -9,7 +9,7 @@
  * same pattern as `scripts/lib/sdk-closure.mjs`.
  */
 
-/** In-repo plugin manifests (file builtin + official seeds, not published). */
+/** In-repo plugin manifests (file builtin + seed plugins, not published). */
 export const PLUGIN_MANIFESTS = [
 	"plugins/file/manifest.json",
 	"plugins/gallery/manifest.json",

@@ -43,7 +43,7 @@ export type PluginServiceDeps = {
 	 * Seed the latest version's plugin directory. Called before every
 	 * {@link PluginService.rescan} (except the one at the end of
 	 * uninstall — a removal must stay removed for the session; the seed
-	 * env re-imports official plugins on the next restart only).
+	 * env re-imports seeded plugins on the next restart only).
 	 */
 	readonly prepareDisk?: () => Promise<void>
 	/**
@@ -53,10 +53,10 @@ export type PluginServiceDeps = {
 	 */
 	readonly removeInstalledDir?: (id: PluginManifestId) => Promise<void>
 	/**
-	 * Delete the plugin's seed-source directory (the bundled official
-	 * plugin copy on a packaged runtime). Called after the installed copy
-	 * is removed, so a seeded official plugin that is uninstalled on
-	 * desktop stays uninstalled — the boot-time seed has no source left.
+	 * Delete the plugin's seed-source directory (the bundled seed plugin
+	 * copy on a packaged runtime). Called after the installed copy is
+	 * removed, so a seed plugin that is uninstalled on desktop stays
+	 * uninstalled — the boot-time seed has no source left.
 	 */
 	readonly removeSeedSource?: (id: PluginManifestId) => Promise<void>
 }
@@ -332,7 +332,7 @@ export function createPluginService(deps: PluginServiceDeps): PluginService {
 			}
 		}
 		// A packaged runtime also drops the bundled seed source, so a
-		// removed official plugin does not reappear on restart.
+		// removed seed plugin does not reappear on restart.
 		await deps.removeSeedSource?.(id)
 
 		db.delete(contentPlugins).where(eq(contentPlugins.id, id)).run()

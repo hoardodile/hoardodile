@@ -73,7 +73,7 @@ async function pluginDomainImpl(app: FastifyInstance): Promise<void> {
 				})
 			})
 		},
-		// On a packaged runtime the bundled official plugins live in the
+		// On a packaged runtime the bundled seed plugins live in the
 		// SEED_PLUGIN_PATHS directories themselves — removing a plugin also
 		// removes its bundled source, so a restart cannot resurrect it
 		// (until an app update re-ships the package). Plain servers keep

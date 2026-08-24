@@ -17,12 +17,13 @@ export type SidecarLayout = {
 }
 
 /**
- * Discover the official plugins that ship next to the app: every one-level
+ * Discover the seed plugins that ship next to the app: every one-level
  * subdirectory carrying a `manifest.json` (packaged layout), or its `dist`
- * subdirectory (workspace layout). The sidecar never hardcodes which
- * official plugins exist — whatever is bundled becomes a seed. `file` is
- * the builtin fallback (wired through BUILTIN_PATH, never seeded) and
- * `template` the scaffolder scaffold; both are skipped.
+ * subdirectory (workspace layout). The shell never names which plugins
+ * exist — whatever is bundled becomes a seed. `file` is the builtin
+ * fallback (wired through BUILTIN_PATH, never seeded) and `template` the
+ * scaffolder scaffold; both are excluded — keep the exclusion set in sync
+ * with `scripts/lib/plugin-channels.mjs`.
  */
 export function discoverSeedPluginDirs(
 	pluginsRoot: string,

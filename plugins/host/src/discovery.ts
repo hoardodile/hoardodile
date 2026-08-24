@@ -12,18 +12,8 @@ import type { PluginSettingsStore } from "./settings-store.ts"
  */
 const DEFAULT_PLUGIN_PINNED = true
 
-/**
- * Default priorities for in-repo seed plugin ids.
- * Used when there is no DB row yet (first install / clean state).
- * Users can still override via drag-and-drop reorder.
- */
-const OFFICIAL_PLUGIN_PRIORITY: Record<string, number> = {
-	"665cfbdd-1db6-48f5-9d53-1008b8cb84c3": 200, // gallery
-}
-
-function getDefaultPriority(pluginId: PluginManifestId): number {
-	return OFFICIAL_PLUGIN_PRIORITY[pluginId] ?? 100
-}
+/** Default first-install priority — reorderable from the UI afterwards. */
+const DEFAULT_PLUGIN_PRIORITY = 100
 
 export type PluginDiscoveryDeps = {
 	/** Directory of the mandatory builtin plugin (`manifest.json` at its root). */
@@ -186,7 +176,7 @@ function discoverDevPlugins(
 			diskPath: resolved,
 			source: "dev",
 			enabled: true,
-			priority: row?.priority ?? getDefaultPriority(manifest.id),
+			priority: row?.priority ?? DEFAULT_PLUGIN_PRIORITY,
 			pinned: row?.pinned ?? DEFAULT_PLUGIN_PINNED,
 			color: row?.color ?? "",
 		})
@@ -213,7 +203,7 @@ function discoverDiskPlugins(
 
 		const row = settings.get(manifest.id)
 		const enabled = row?.enabled ?? true
-		const priority = row?.priority ?? getDefaultPriority(manifest.id)
+		const priority = row?.priority ?? DEFAULT_PLUGIN_PRIORITY
 		const pinned = row?.pinned ?? DEFAULT_PLUGIN_PINNED
 		const color = row?.color ?? ""
 

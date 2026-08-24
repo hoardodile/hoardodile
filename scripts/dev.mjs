@@ -2,7 +2,7 @@ import { execSync, spawn } from "node:child_process"
 import { existsSync, readFileSync, statSync } from "node:fs"
 import { basename, join, resolve } from "node:path"
 import process from "node:process"
-
+import { readPluginId } from "./lib/plugin-channels.mjs"
 import { killTree } from "./lib/process.mjs"
 import { WORKSPACE_ROOT } from "./lib/workspace.mjs"
 
@@ -118,9 +118,33 @@ function buildServices(selectedPlugins) {
 		.split(",")
 		.map((s) => s.trim())
 		.filter((s) => s.length > 0)
-	const devPluginPaths = dedupePluginDirsById([
+	let devPluginPaths = dedupePluginDirsById([
 		...new Set([...devPlugins.map((pl) => pl.distPath), ...extraDevPaths]),
 	])
+
+	// The seed channel wins over dev paths: when a plugin's dist is ALSO
+	// listed in an explicitly configured SEED_PLUGIN_PATHS, it loads as an
+	// installed seed instead of a dev plugin — a dev plugin cannot be
+	// uninstalled, and a seeded plugin must show the uninstall action. Its
+	// watch script keeps rebuilding dist; a server restart refreshes the
+	// seeded copy.
+	const explicitSeeds = process.env.SEED_PLUGIN_PATHS
+	if (explicitSeeds !== undefined && explicitSeeds.trim().length > 0) {
+		const seedIds = new Set()
+		for (const dir of explicitSeeds
+			.split(",")
+			.map((s) => s.trim())
+			.filter((s) => s.length > 0)) {
+			const id = readPluginId(dir)
+			if (id !== undefined) seedIds.add(id)
+		}
+		if (seedIds.size > 0) {
+			devPluginPaths = devPluginPaths.filter((dir) => {
+				const id = readPluginId(dir)
+				return id === undefined || !seedIds.has(id)
+			})
+		}
+	}
 
 	const serverEnv = {
 		STORAGE_ROOT:

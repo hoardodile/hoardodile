@@ -30,6 +30,7 @@ import { setTimeout as delay } from "node:timers/promises"
 import { fileURLToPath } from "node:url"
 import getPort from "get-port"
 import { build, createServer } from "vite"
+import { findSeedPluginDists } from "../../../scripts/lib/plugin-channels.mjs"
 
 setDefaultResultOrder("ipv4first")
 
@@ -75,9 +76,11 @@ async function main() {
 }
 
 /**
- * The sidecar loads the builtin file plugin and the seeded gallery from
- * workspace dists; without them the server aborts at startup and the app
- * just lands in the tray's crashed state. Fail fast with the fix instead.
+ * The sidecar loads the builtin file plugin and every seed plugin dist
+ * from the workspace; without the builtin the server aborts at startup
+ * and the app just lands in the tray's crashed state. Fail fast with the
+ * fix instead. Seed dists are discovered generically — nothing here names
+ * a plugin.
  */
 function ensurePluginDists() {
 	const builtin = resolve(
@@ -92,22 +95,10 @@ function ensurePluginDists() {
 			`builtin plugin dist missing (${builtin}) — run \`pnpm build:pkgs\` first`,
 		)
 	}
-	const gallery = resolve(
-		workspaceRoot,
-		"plugins",
-		"gallery",
-		"dist",
-		"manifest.json",
-	)
-	if (!existsSync(gallery)) {
+	const seeds = findSeedPluginDists(workspaceRoot)
+	if (seeds.length === 0) {
 		console.warn(
-			"[desktop] gallery dist missing — run `pnpm build:pkgs` to preview the gallery",
-		)
-	}
-	const pdf = resolve(workspaceRoot, "plugins", "pdf", "dist", "manifest.json")
-	if (!existsSync(pdf)) {
-		console.warn(
-			"[desktop] pdf dist missing — run `pnpm build:pkgs` to preview the PDF reader",
+			"[desktop] no seed plugin dists found — run `pnpm build:pkgs` to ship them",
 		)
 	}
 }
