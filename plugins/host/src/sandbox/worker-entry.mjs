@@ -145,10 +145,12 @@ function normalizePath(value) {
 
 /** On-disk path → its canonical `file://` URL, in Node's own encoding. */
 function toFileUrl(path) {
-	const posix = path.replace(/\\/g, "/")
-	const root = posix.startsWith("/") ? `file://${posix}` : `file:///${posix}`
-	// pathToFileURL percent-encodes these; encodeURI leaves them alone.
-	return encodeURI(root).replace(/#/g, "%23").replace(/\?/g, "%3F")
+	// pathToFileURL is what the ESM loader uses for these paths, so the
+	// gate prefixes MUST use its exact encoding — encodeURI leaves `~`
+	// unescaped, which mismatched the loader's `%7E` (Temp dirs on
+	// Windows runners are the short name, e.g. RUNNER~1) and made every
+	// plugin under such a path look like it was outside the plugin dir.
+	return pathToFileURL(path).href
 }
 
 const pluginDirPrefix = normalizePath(toFileUrl(pluginDir) + "/")
