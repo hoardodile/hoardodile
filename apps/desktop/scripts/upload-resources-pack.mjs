@@ -63,9 +63,17 @@ if (layerFiles.length === 0) {
 }
 
 const tag = `v${version}`
-const result = spawnSync("gh", ["release", "upload", tag, ...files], {
-	stdio: "inherit",
-})
+// --clobber: a re-release (or a rerun after a partial failure) must replace
+// the existing layer assets, not fail on them — electron-builder's own
+// uploader already overwrites (it deletes + re-uploads), only these
+// pack assets use `gh release upload`, which refuses same-name uploads.
+const result = spawnSync(
+	"gh",
+	["release", "upload", "--clobber", tag, ...files],
+	{
+		stdio: "inherit",
+	},
+)
 if (result.status !== 0) {
 	console.error(
 		`[upload-resources-pack] gh release upload failed (exit ${String(result.status)})`,
