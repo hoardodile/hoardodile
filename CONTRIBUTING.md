@@ -44,8 +44,34 @@ Common commands:
 - Before designing or reshaping any UI, check [DESIGN.md](DESIGN.md).
 - Writes under `versions/<v>/` must go through `writeVersioned` (enforced by a pre-commit guard).
 - Terminal packages (`cli`, `host`, `host-web`, `workbench`) are never imported by plugin code.
-- Generated files — `routeTree.gen.ts`, migrations, `pnpm-lock.yaml`, `CHANGELOG.md`, embedded plugin templates — are never hand-edited.
+- Generated files — `routeTree.gen.ts` (regenerated before every web build/lint/test), migrations, `pnpm-lock.yaml`, `CHANGELOG.md`, embedded plugin templates — are never hand-edited. The third-party notices (`apps/web/public/licenses.json`, `LICENSE`) are committed and regenerated via `node scripts/generate-licenses.mjs` when dependencies change.
 - Further conventions live in [AGENTS.md](AGENTS.md).
+
+## Releasing
+
+Releases are driven from a local release-it run plus a tag-triggered Actions workflow. The release must run from `main` and be clean.
+
+```bash
+pnpm release 0.1.1     # bump + changelog + commit + tag + push, then a draft Release
+```
+
+- `pnpm release` (scripts/release.mjs) provisions `GITHUB_TOKEN` from `gh auth token` when unset — without a token release-it falls back to web mode and the draft is later auto-created by CI (empty body; the `release-draft` job fixes that).
+- The tag push triggers `.github/workflows/release.yml`: the `release-draft` job creates/fills the draft from the newest `CHANGELOG.md` section, the `npm` job publishes the SDK set, and the desktop matrix builds and attaches the installers + update feeds to the same draft.
+- **A human publishes the draft** on GitHub — electron-updater only sees published releases, so the draft is the review gate.
+
+### npm Trusted Publishing (one-time setup)
+
+The `npm` job publishes through npm Trusted Publishing (OIDC) — no registry token lives in Actions. Each published package needs one trust relationship (npm ≥ 11.11, by an account that owns the `@hoardodile` scope; the CLI asks for a 2FA code once per package — there is no web-UI route for this, the Access Tokens page only creates tokens):
+
+```bash
+npm trust github @hoardodile/i18n --file release.yml --repo hoardodile/hoardodile --allow-publish
+```
+
+One command per published package (list: `scripts/lib/release-packages.mjs`). `--file` takes the workflow file name only, never a path; `--allow-publish` is required (the default is trust without publishing permission); no `--environment` is used. Verify with `npm trust list`. Note the trust extends to anyone with write access to this repository — i.e. the maintainers.
+
+### Re-running an existing version
+
+`workflow_dispatch` on release.yml (input `version`) re-runs the same pipeline on a fixed branch without touching the tag — used to complete a release whose tag predates a pipeline fix. Everything is idempotent: the draft is not re-created, already-published npm versions are skipped, and existing assets are clobbered.
 
 ## License
 

@@ -7,7 +7,8 @@
  * in `apps/desktop/src/main/resource-support.ts`; keep the two in sync.
  *
  * Adding a platform later is one entry here plus the matching runner in
- * `.github/workflows/release.yml` — no script changes.
+ * `.github/workflows/release.yml` (which runs the shared
+ * `.github/actions/desktop-package` action) — no script changes.
  */
 
 export const RESOURCE_PACK_TARGETS = {

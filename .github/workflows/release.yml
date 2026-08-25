@@ -7,42 +7,18 @@ name: Release
 # reviews the draft on GitHub and clicks Publish — electron-updater only
 # sees published releases, so the draft is the review gate.
 #
-# The `release-draft` job additionally owns the draft: it creates it (or
-# fills an empty body / normalizes the title) with the latest changelog
-# section, so a web-fallback release-it or a manual rerun never leaves the
-# release without notes. `workflow_dispatch` (input `version`) re-runs the
-# same pipeline against a fixed branch without touching the tag — used to
-# complete a release whose tag predates a pipeline fix.
+# The `release-draft` job owns the draft via scripts/ensure-release-draft.mjs
+# (creates it, fills an empty body, normalizes the title — idempotent), so a
+# web-fallback release-it or a manual rerun never leaves the release without
+# notes. `workflow_dispatch` (input `version`) re-runs the same pipeline
+# against a fixed branch without touching the tag — used to complete a
+# release whose tag predates a pipeline fix.
 #
-# Secrets (Settings → Secrets and variables → Actions): none for npm —
-# publishing uses npm Trusted Publishing (OIDC), so no registry token
-# lives in Actions. One-time npm-side setup (npm >= 11.11, by an account
-# that owns the @hoardodile scope; the CLI asks for a 2FA code once per
-# package — there is no web-UI route for this, the Access Tokens page
-# only creates tokens):
-#
-#   npm trust github @hoardodile/i18n --file release.yml --repo hoardodile/hoardodile --allow-publish
-#
-# One command per published package (list: scripts/lib/release-packages.mjs).
-# `--file` takes the workflow FILE NAME only, never a path; `--allow-publish`
-# is required (the default is trust without publishing permission); no
-# `--environment` is used. Verify with `npm trust list`. The npm job then
-# requests an OIDC id-token (`id-token: write`) that npm verifies against
-# these per-package trust relationships, and publishes with provenance
-# attestations. Note the trust extends to anyone with write access to this
-# repository — i.e. the maintainers.
-# (release-it itself needs a local GITHUB_TOKEN on the dev machine —
-#   `pnpm release` provisions it from `gh auth token` via scripts/release.mjs.)
-#
-# Future platform expansions: add the matching runners to the desktop job
-# matrix and the macOS signing/notarization secrets:
-#   - macos-latest: CSC_LINK / CSC_KEY_PASSWORD (codesign),
-#     APPLE_ID / APPLE_APP_SPECIFIC_PASSWORD / APPLE_TEAM_ID (notarization)
-# electron-builder then emits latest-mac.yml / latest-linux.yml per
-# platform automatically; no code change needed. The resource pack follows
-# the same matrix — every runner builds + verifies its pack, only the
-# platforms marked in scripts/lib/resource-pack-targets.mjs (`PACK_UPLOAD`)
-# attach it to the draft.
+# Full operational docs (local flow, npm Trusted Publishing one-time setup,
+# dispatch usage): CONTRIBUTING.md → "Releasing". The npm job publishes via
+# OIDC (no registry token in Actions); the desktop matrix is driven by
+# scripts/lib/resource-pack-targets.mjs (`PACK_UPLOAD`) and the shared
+# ./.github/actions/desktop-package action.
 
 on:
   push:
@@ -68,39 +44,12 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v7
-      - name: Resolve release version
-        id: version
-        shell: bash
-        run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            VERSION="${{ inputs.version }}"
-          else
-            VERSION="$(node -p 'require("./package.json").version')"
-          fi
-          echo "version=${VERSION}" >> "${GITHUB_OUTPUT}"
       - name: Create or update the draft release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          VERSION="${{ steps.version.outputs.version }}"
-          TAG="v${VERSION}"
-          if ! git ls-remote --tags origin "refs/tags/${TAG}" | grep -q .; then
-            echo "::error::tag ${TAG} does not exist on origin — nothing to release"
-            exit 1
-          fi
-          node scripts/latest-release-notes.mjs > release-notes.md
-          if ! gh release view "${TAG}" --repo hoardodile/hoardodile > /dev/null 2>&1; then
-            gh release create "${TAG}" --repo hoardodile/hoardodile --draft --title "${TAG}" --notes-file release-notes.md
-            echo "created draft ${TAG} with release notes"
-          elif [ -z "$(gh release view "${TAG}" --repo hoardodile/hoardodile --json body --jq .body)" ]; then
-            gh release edit "${TAG}" --repo hoardodile/hoardodile --title "${TAG}" --notes-file release-notes.md
-            echo "filled empty body of draft ${TAG}"
-          else
-            gh release edit "${TAG}" --repo hoardodile/hoardodile --title "${TAG}"
-            echo "draft ${TAG} already has notes; title normalized"
-          fi
+        run: >-
+          node scripts/ensure-release-draft.mjs
+          ${{ github.event_name == 'workflow_dispatch' && format('--version {0}', inputs.version) || '' }}
 
   # Publishes the SDK release set to npm. Trusted publishing (OIDC): the
   # id-token replaces registry credentials; provenance is requested explicitly.
@@ -114,19 +63,18 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup-pnpm
-      - name: Verify tag matches the unified version (tag push)
+      # Dispatch runs validate the version + tag in ensure-release-draft.mjs
+      # (a branch checkout has no local tag to check).
+      - name: Verify tag matches the unified version
         if: github.event_name == 'push'
         run: node scripts/check-tag-version.mjs
-      - name: Verify tag matches the unified version (manual dispatch)
-        if: github.event_name == 'workflow_dispatch'
-        run: node scripts/check-tag-version.mjs --tag "v${{ inputs.version }}"
       - name: Build
         run: pnpm build
       # Same guard as CI: a build that regenerates a committed artifact
-      # differently (routeTree, licenses) would dirty the tree and make the
-      # publish git checks fail — fail fast, before publishing.
+      # differently would dirty the tree and make the publish git checks
+      # fail — fail fast, before publishing.
       - name: Check generated files in sync
-        run: git diff --exit-code -- apps/web/src/routeTree.gen.ts apps/web/public/licenses.json apps/web/public/LICENSE
+        run: node scripts/check-generated-files.mjs
       - name: Verify SDK closure packs
         run: pnpm sdks:pack
       - name: Check third-party notices
@@ -135,8 +83,6 @@ jobs:
         run: pnpm version:check
       - name: Audit production dependencies
         run: pnpm audit --prod --audit-level high
-      - name: Report working tree state before publish
-        run: git status --porcelain
       - name: Publish SDK release set
         # Idempotent: skips versions already on the registry, so a manual
         # re-run of an already-released version only re-attaches artifacts
@@ -164,26 +110,16 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup-pnpm
-      - name: Verify tag matches the unified version (tag push)
+      - name: Verify tag matches the unified version
         if: github.event_name == 'push'
         run: node scripts/check-tag-version.mjs
-      - name: Verify tag matches the unified version (manual dispatch)
-        if: github.event_name == 'workflow_dispatch'
-        run: node scripts/check-tag-version.mjs --tag "v${{ inputs.version }}"
-      - name: Build
-        run: pnpm build
-      - name: Cache electron-builder downloads
-        uses: actions/cache@v6
-        with:
-          path: .cache/electron-builder
-          key: eb-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
-          restore-keys: eb-${{ runner.os }}-
-      - name: Package and publish to the GitHub Release
+      - name: Build and publish the installers
         # The chain runs stage-resources → electron-builder(always) →
         # verify-package (natives + sandbox probe + asar guard) →
         # verify-feed; publish fails if either check fails. Per-platform
         # scripts pick the right --target/--platform arguments.
-        run: pnpm -F @hoardodile/desktop ${{ matrix.script }}
+        uses: ./.github/actions/desktop-package
+        with:
+          script: ${{ matrix.script }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ELECTRON_BUILDER_CACHE: ${{ github.workspace }}/.cache/electron-builder

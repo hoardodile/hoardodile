@@ -35,16 +35,31 @@ function publishedVersion(packageName) {
 }
 
 function publish(packageName) {
-	// shell: true so `pnpm` resolves through the .cmd shim on Windows too
-	// (this also runs standalone on dev machines).
 	execFileSync(
 		"pnpm",
 		["publish", "--filter", packageName, "--config.provenance=true"],
-		{ stdio: "inherit", shell: true },
+		{ stdio: "inherit" },
 	)
 }
 
+function reportWorkingTree() {
+	// pnpm's publish git check refuses a dirty tree; print what is dirty so
+	// a failing run is diagnosable at a glance.
+	try {
+		const status = execFileSync("git", ["status", "--porcelain"], {
+			encoding: "utf8",
+		})
+		if (status.trim() !== "") {
+			console.log("working tree is dirty before publish:")
+			process.stdout.write(status)
+		}
+	} catch {
+		// git unavailable — pnpm's own check reports it
+	}
+}
+
 async function main() {
+	reportWorkingTree()
 	let published = 0
 	let skipped = 0
 	for (const manifestPath of PUBLISHED_PACKAGE_MANIFESTS) {

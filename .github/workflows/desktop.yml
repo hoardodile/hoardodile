@@ -53,28 +53,18 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup-pnpm
-      - name: Build
-        run: pnpm build
       - name: Cache staged Node runtime
         uses: actions/cache@v6
         with:
           path: tmp/node-dist
           key: node-dist-24
-      - name: Cache electron-builder downloads
-        uses: actions/cache@v6
-        with:
-          path: .cache/electron-builder
-          key: eb-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
-          restore-keys: eb-${{ runner.os }}-
-      - name: Package unpacked app
+      - name: Build and package the unpacked app
         # package:dir = stage-resources → electron-builder --dir →
         # verify-package (natives + sandbox probe + asar guard). No
-        # installers, no feed. The cache env redirects electron-builder's
-        # download cache into the actions/cache path above (a future
-        # electron-builder dropping the env var just misses the cache).
-        run: pnpm -F @hoardodile/desktop package:dir
-        env:
-          ELECTRON_BUILDER_CACHE: ${{ github.workspace }}/.cache/electron-builder
+        # installers, no feed.
+        uses: ./.github/actions/desktop-package
+        with:
+          script: package:dir
       - name: Install Linux test dependencies
         if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y xvfb
