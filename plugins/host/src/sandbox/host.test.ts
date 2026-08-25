@@ -1,4 +1,4 @@
-import { copyFileSync, mkdtempSync } from "node:fs"
+import { copyFileSync, mkdirSync, mkdtempSync, rmSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { fileURLToPath } from "node:url"
@@ -149,6 +149,31 @@ describe("plugin sandbox", () => {
 			files: ["a.jpg", "b.jpg"],
 			archive: false,
 		})
+	})
+
+	test("loads a plugin whose path has escaped, spaced and mixed-case segments", async () => {
+		// The sandbox spans symlinked roots (macOS /tmp), 8.3 short names
+		// (Windows runner temp dirs, e.g. RUNNER~1), spaces and casing —
+		// the gate's URL encoding and the fs-read grants must agree with
+		// the ESM loader's canonical form for all of them.
+		const root = mkdtempSync(join(tmpdir(), "hoardodile Sandbox Space~A-"))
+		const pluginDir = join(root, "Plugin")
+		mkdirSync(pluginDir, { recursive: true })
+		copyFileSync(fixture("echo-plugin.mjs"), join(pluginDir, "main.js"))
+		try {
+			sandbox = createPluginSandbox()
+			const plugin = await sandbox.loadPlugin({
+				id: "escaped",
+				mainPath: join(pluginDir, "main.js"),
+				eager: true,
+			})
+			if (plugin === undefined) throw new Error("plugin load failed")
+			await expect(plugin.detect(createStubApi())).resolves.toEqual({
+				ok: true,
+			})
+		} finally {
+			rmSync(root, { recursive: true, force: true })
+		}
 	})
 
 	test("50 concurrent invocations each keep their own ResourceAPI binding", async () => {
