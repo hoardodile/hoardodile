@@ -17,5 +17,4 @@ Copy the closest match; read the smaller ones before the bigger ones.
   tests, `testdata/` + `detect:smoke` loop.
 - Redo: the `id` (always a new UUID), the detection logic, the iframe
   UI, the i18n labels.
-- Do not ship: template `ids`, machine-specific tarball paths, real
-  sample data in `testdata/`.
+- Do not ship: template `ids`, real sample data in `testdata/`.

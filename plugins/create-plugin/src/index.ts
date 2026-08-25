@@ -12,8 +12,8 @@
  *   create-hoardodile-plugin my-plugin --tarballs ../hoardodile/tmp/sdks
  *
  * `--tarballs <dir>` rewires the SDK deps to packed tarballs plus a
- * pnpm-workspace.yaml with the cross-package overrides — the supported
- * way to consume the SDK before (and instead of) npm publication.
+ * pnpm-workspace.yaml with the cross-package overrides — used by the
+ * release smoke test and for offline installs.
  */
 import { spawn } from "node:child_process"
 import {

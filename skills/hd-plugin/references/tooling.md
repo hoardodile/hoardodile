@@ -2,36 +2,21 @@
 
 ## Getting the SDK (bootstrap)
 
-`@hoardodile/*` are **not published to npm yet** (verified against the
-registry). Until they are, build them from a hoardodile checkout:
-
-```bash
-git clone https://github.com/hoardodile/hoardodile.git
-cd hoardodile
-corepack enable && pnpm install
-pnpm sdks:pack          # writes tmp/sdks/*.tgz
-```
-
-Then point your plugin at the tarballs the same way
-`create-hoardodile-plugin --tarballs <dir>` does — a local
-`pnpm-workspace.yaml`:
-
-```yaml
-packages:
-  - "."
-overrides:
-  "@hoardodile/sdk-types": "file:../hoardodile/tmp/sdks/hoardodile-sdk-types-0.0.0.tgz"
-  "@hoardodile/sdk-server": "file:../hoardodile/tmp/sdks/hoardodile-sdk-server-0.0.0.tgz"
-  "@hoardodile/sdk-react": "file:../hoardodile/tmp/sdks/hoardodile-sdk-react-0.0.0.tgz"
-  "@hoardodile/ui": "file:../hoardodile/tmp/sdks/hoardodile-ui-0.0.0.tgz"
-```
-
-Never commit machine-specific paths. Once `@hoardodile/*` are on the
-registry, everything above collapses to:
+The `@hoardodile/*` release set is on npm (0.0.0): the SDK closure
+(`sdk-{types,web,react,server}`, `ui`, `i18n`) plus the terminal
+packages (`cli`, `host`, `host-web`, `workbench`) and the
+`create-plugin` scaffolder. Install from the registry directly — no
+tarballs, no `file:` overrides:
 
 ```bash
 pnpm dlx create-hoardodile-plugin <name>   # or: hoardodile plugin create <name>
 ```
+
+- Requires Node ≥ 24 (the scaffolder's `engines`).
+- The scaffolder rewrites every `@hoardodile/*` spec to
+  `^<its own version>` (prerelease suffixes dropped) and installs from
+  the registry. A 0.x caret is effectively pinned — bump the spec to
+  adopt a newer SDK release.
 
 ## Project anatomy (from the template plugin)
 

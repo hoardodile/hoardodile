@@ -12,7 +12,7 @@ points.
 # installs the published @hoardodile/* SDK packages from npm
 create-hoardodile-plugin my-plugin
 
-# pre-release / offline: consume the packed tarballs instead
+# offline / self-contained: consume the packed tarballs instead
 create-hoardodile-plugin my-plugin --tarballs ../hoardodile/tmp/sdks
 ```
 

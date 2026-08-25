@@ -4,7 +4,7 @@ description: Author hoardodile content plugins — manifest, server hooks, ifram
 license: MIT
 metadata:
   author: hoardodile
-  version: "1.0.0"
+  version: "1.1.0"
 ---
 
 # Hoardodile Plugin Development
@@ -35,12 +35,10 @@ lives in `references/`.
 
 ## Workflow
 
-1. **Get the SDK.** `@hoardodile/*` packages are not on npm yet; with a
-   hoardodile checkout run `pnpm install && pnpm sdks:pack` (writes
-   `tmp/sdks/*.tgz`), then point your plugin at the tarballs via a
-   `pnpm-workspace.yaml` with `overrides` — or scaffold with
-   `create-hoardodile-plugin --tarballs <dir>`. Once published:
-   `pnpm dlx create-hoardodile-plugin <name>`. Full details:
+1. **Get the SDK.** The `@hoardodile/*` release set is on npm
+   (0.0.0) — `pnpm dlx create-hoardodile-plugin <name>` scaffolds a
+   plugin prewired to the published SDK. Registry install only — no
+   tarballs or `file:` overrides. Full details:
    `references/tooling.md`.
 2. **Manifest.** New random UUID for `id` — never reuse one from a
    template. Declare `permissions` honestly (each flag exposes host data
@@ -115,6 +113,5 @@ types from the root entry.
   `plugins/sdk-types/src/plugin-definition.ts` (hooks, definitions,
   fixtures) — the authoritative reference behind `references/server.md`.
 - Plugin UI: `@hoardodile/ui` (see `hd-plugin-design`).
-- `references/tooling.md` carries the npm-publication status and the
-  tarball bootstrap; trust `@hoardodile/*` on the registry once it is
-  published.
+- `references/tooling.md` covers the registry bootstrap, the plugin
+  CLI/workbench toolchain and the test/deploy loop.
