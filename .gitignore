@@ -28,13 +28,6 @@ lefthook-local.yml
 .tanstack
 .playwright
 
-# TanStack Router generated route tree
-apps/web/src/routeTree.gen.ts
-
-# Generated third-party license artifacts
-apps/web/public/licenses.json
-apps/web/public/LICENSE
-
 # Playwright
 apps/web/test-results
 apps/web/playwright-report
