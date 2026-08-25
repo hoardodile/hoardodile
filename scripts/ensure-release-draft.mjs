@@ -41,7 +41,9 @@ function run(command, shellArgs, { capture = false, readOnly = false } = {}) {
 			stdio: capture ? ["ignore", "pipe", "inherit"] : "inherit",
 		}).trim()
 	} catch (error) {
-		if (capture) throw error
+		const detail = error.stdout || error.stderr || error.message
+		if (capture) throw new Error(`${command} ${shellArgs.join(" ")}: ${detail}`)
+		console.error(`${command} ${shellArgs.join(" ")} failed: ${detail}`)
 		process.exit(error.status ?? 1)
 	}
 }
