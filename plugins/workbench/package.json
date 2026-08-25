@@ -1,6 +1,6 @@
 {
 	"name": "@hoardodile/workbench",
-	"version": "0.0.0",
+	"version": "0.1.0",
 	"license": "MIT",
 	"description": "Offline dev workbench for hoardodile content plugins.",
 	"keywords": [

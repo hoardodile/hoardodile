@@ -1,6 +1,6 @@
 {
 	"name": "@hoardodile/host",
-	"version": "0.0.0",
+	"version": "0.1.0",
 	"license": "MIT",
 	"description": "hoardodile plugin runtime host: sandbox, hook strategy, ResourceAPI, containers and the test runner.",
 	"keywords": [
