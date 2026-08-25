@@ -453,19 +453,6 @@
 			]
 		},
 		{
-			"license": "GPL-3.0",
-			"packages": [
-				{
-					"name": "@hoardodile/7z-bin",
-					"version": "1.1.0",
-					"license": "GPL-3.0",
-					"repository": "https://github.com/wooloo26/7z-bin",
-					"publisher": "",
-					"copyright": ""
-				}
-			]
-		},
-		{
 			"license": "GPL-3.0-or-later",
 			"packages": [
 				{
@@ -1301,62 +1288,6 @@
 					"repository": "",
 					"publisher": "",
 					"copyright": "Copyright (c) 2025 Handle with Care Collective"
-				},
-				{
-					"name": "@hoardodile/host",
-					"version": "0.1.0",
-					"license": "MIT",
-					"repository": "https://github.com/hoardodile/hoardodile",
-					"publisher": "",
-					"copyright": "Copyright (c) 2026 Wooloo <ayan0312000@gmail.com>"
-				},
-				{
-					"name": "@hoardodile/host-web",
-					"version": "0.1.0",
-					"license": "MIT",
-					"repository": "https://github.com/hoardodile/hoardodile",
-					"publisher": "",
-					"copyright": "Copyright (c) 2026 Wooloo <ayan0312000@gmail.com>"
-				},
-				{
-					"name": "@hoardodile/i18n",
-					"version": "0.1.0",
-					"license": "MIT",
-					"repository": "https://github.com/hoardodile/hoardodile",
-					"publisher": "",
-					"copyright": ""
-				},
-				{
-					"name": "@hoardodile/sdk-server",
-					"version": "0.1.0",
-					"license": "MIT",
-					"repository": "https://github.com/hoardodile/hoardodile",
-					"publisher": "",
-					"copyright": "Copyright (c) 2026 Wooloo <ayan0312000@gmail.com>"
-				},
-				{
-					"name": "@hoardodile/sdk-types",
-					"version": "0.1.0",
-					"license": "MIT",
-					"repository": "https://github.com/hoardodile/hoardodile",
-					"publisher": "",
-					"copyright": "Copyright (c) 2026 Wooloo <ayan0312000@gmail.com>"
-				},
-				{
-					"name": "@hoardodile/sdk-web",
-					"version": "0.1.0",
-					"license": "MIT",
-					"repository": "https://github.com/hoardodile/hoardodile",
-					"publisher": "",
-					"copyright": "Copyright (c) 2026 Wooloo <ayan0312000@gmail.com>"
-				},
-				{
-					"name": "@hoardodile/ui",
-					"version": "0.1.0",
-					"license": "MIT",
-					"repository": "https://github.com/hoardodile/hoardodile",
-					"publisher": "",
-					"copyright": "Copyright (c) 2026 Wooloo <ayan0312000@gmail.com>"
 				},
 				{
 					"name": "@hono/node-server",

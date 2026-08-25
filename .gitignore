@@ -28,6 +28,11 @@ lefthook-local.yml
 .tanstack
 .playwright
 
+# Generated before every web build/lint/test (scripts/gen-route-tree.mjs,
+# plus the vite plugin during dev/build) — never committed: a route change
+# regenerates it deterministically.
+apps/web/src/routeTree.gen.ts
+
 # Playwright
 apps/web/test-results
 apps/web/playwright-report
