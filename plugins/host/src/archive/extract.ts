@@ -349,7 +349,7 @@ export async function decodeZipNames(
 	readonly paths: readonly string[]
 }> {
 	try {
-		const records = await listZipEntries(zipPath)
+		const records = await listZipEntries(zipPath, { dataOffsets: false })
 		const files = records.map((e) => ({
 			name: e.name,
 			sizeBytes: e.uncompressedSize,

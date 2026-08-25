@@ -75,23 +75,30 @@ export async function createFileArchiveSource(
  * The listing goes through yauzl over the {@link ArchiveSource} (via its
  * random-access-reader bridge); yauzl handles ZIP64 and validates entry
  * names while parsing. The `dataOffset` for byte-range access is
- * resolved from each local file header afterwards.
+ * resolved from each local file header afterwards — callers that only
+ * need names and sizes (e.g. the legacy-name decode truth) pass
+ * `{ dataOffsets: false }` so the per-entry random reads are skipped and
+ * `dataOffset` is left at 0.
  *
  * @throws DomainError `resource.archive_open_failed` when the zip cannot
  *   be parsed.
  */
 export async function listZipEntriesFromSource(
 	source: ArchiveSource,
+	opts: { readonly dataOffsets?: boolean } = {},
 ): Promise<readonly ZipEntry[]> {
 	const zipfile = await openZipFromSource(source)
 	const records: ZipEntry[] = []
 	try {
 		for await (const entry of zipfile.eachEntry()) {
 			if (entry.fileName.endsWith("/")) continue
-			const dataOffset = await resolveDataOffsetFromSource(
-				source,
-				entry.relativeOffsetOfLocalHeader,
-			)
+			const dataOffset =
+				opts.dataOffsets === false
+					? 0
+					: await resolveDataOffsetFromSource(
+							source,
+							entry.relativeOffsetOfLocalHeader,
+						)
 			records.push({
 				name: entry.fileName,
 				compressionMethod: entry.compressionMethod,
@@ -123,8 +130,9 @@ export async function listZipEntriesFromSource(
 /** Read the central directory of the zip at `zipPath`. */
 export async function listZipEntries(
 	zipPath: string,
+	opts: { readonly dataOffsets?: boolean } = {},
 ): Promise<readonly ZipEntry[]> {
-	return listZipEntriesFromSource(await createFileArchiveSource(zipPath))
+	return listZipEntriesFromSource(await createFileArchiveSource(zipPath), opts)
 }
 
 /**
