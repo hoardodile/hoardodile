@@ -14,17 +14,18 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
+env:
+  TURBO_TELEMETRY_DISABLED: "1"
+
 jobs:
-  check:
-    strategy:
-      # One failing platform leg must not cancel the rest — each runner
-      # finishes and reports its own result (same as the desktop/release
-      # matrices); the workflow only fails once every leg has spoken.
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-14]
-    runs-on: ${{ matrix.os }}
-    # Bound a wedged job instead of letting it stall until the runner dies.
+  # Repo-level gates that do not depend on the OS: workflow linting, the
+  # static guards, the shared build and every publish-closure check. Runs
+  # once per push — the OS matrix below only builds, lints and tests.
+  repo-checks:
+    runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
@@ -32,19 +33,7 @@ jobs:
       # a broken workflow only surfaces after a push otherwise.
       - name: Lint workflow files
         uses: raven-actions/actionlint@v2
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 24
-          cache: pnpm
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-      - name: Cache turbo build cache
-        uses: actions/cache@v6
-        with:
-          path: .turbo
-          key: turbo-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
-          restore-keys: turbo-${{ runner.os }}-
+      - uses: ./.github/actions/setup-pnpm
       # BlockNote + the diff-machinery pins must never drift silently.
       - name: Guard protected dependencies
         run: node scripts/guard-protected-deps.mjs
@@ -52,28 +41,12 @@ jobs:
       # built from join()/resolve()/sep (or exempted with path-guard-exempt).
       - name: Guard portable test paths
         run: node scripts/guard-portable-tests.mjs
-      # Build first so that generated files (e.g. apps/web/src/routeTree.gen.ts)
-      # exist before the type-only lint and tests run.
       - name: Build
         run: pnpm build
-      # The web build rewrites apps/web/src/routeTree.gen.ts; on a cache-miss
-      # the regenerated file must equal the committed one.
+      # The web build rewrites apps/web/src/routeTree.gen.ts; the
+      # regenerated file must equal the committed one.
       - name: Check generated files in sync
         run: git diff --exit-code -- apps/web/src/routeTree.gen.ts
-      - name: Lint
-        run: pnpm lint
-      - name: Test
-        id: test
-        # Windows runners intermittently crash vitest child processes with
-        # 0xC0000142 — re-run once via the follow-up step below; a real
-        # failure fails again there instead of being masked.
-        continue-on-error: true
-        # --continue: one failing package must not stop the remaining
-        # packages' tests from running and reporting.
-        run: pnpm exec turbo run test --concurrency=2 --continue
-      - name: Test (retry)
-        if: steps.test.outcome == 'failure'
-        run: pnpm exec turbo run test --concurrency=2 --continue
       # Published SDK d.ts must not reference node (browser-facing entries).
       - name: Guard node pollution in SDK d.ts
         run: node scripts/guard-node-pollution.mjs
@@ -91,52 +64,68 @@ jobs:
       - name: Check version sync
         run: pnpm version:check
 
+  # Biome + tsc across the workspace — OS-independent, one leg is enough.
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup-pnpm
+      - name: Lint
+        run: pnpm lint
+
+  # The OS matrix: build once per platform and run the full test suite.
+  test:
+    strategy:
+      # One failing platform leg must not cancel the rest — each runner
+      # finishes and reports its own result (same as the desktop/release
+      # matrices); the workflow only fails once every leg has spoken.
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-14]
+    runs-on: ${{ matrix.os }}
+    # Bound a wedged job instead of letting it stall until the runner dies.
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup-pnpm
+      - name: Build
+        run: pnpm build
+      - name: Test
+        id: test
+        # Windows runners intermittently crash vitest child processes with
+        # 0xC0000142 — re-run once via the follow-up step below; a real
+        # failure fails again there instead of being masked.
+        continue-on-error: true
+        # --continue: one failing package must not stop the remaining
+        # packages' tests from running and reporting.
+        run: pnpm exec turbo run test --concurrency=2 --continue
+      - name: Test (retry)
+        if: steps.test.outcome == 'failure'
+        run: pnpm exec turbo run test --concurrency=2 --continue
+
+  # Acceptance gate for every release: the published SDK closure must
+  # install, build, test and run outside this workspace (scaffold +
+  # standalone tsc/build/test/detect + dev loop). Own job: it re-packs the
+  # tarballs and runs a full standalone install, slower than the matrix.
   smoke:
     runs-on: ubuntu-latest
-    # The published SDK closure must install, build, test and run outside
-    # this workspace (scaffold + standalone tsc/build/test/detect + dev
-    # loop) — acceptance gate for every release. Own job: it re-packs the
-    # tarballs and runs a full standalone install, slower than check.
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v7
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 24
-          cache: pnpm
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-      - name: Cache turbo build cache
-        uses: actions/cache@v6
-        with:
-          path: .turbo
-          key: turbo-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
-          restore-keys: turbo-${{ runner.os }}-
+      - uses: ./.github/actions/setup-pnpm
       - name: Build
         run: pnpm build
       - name: Smoke test published SDK closure
         run: pnpm smoke:published
 
+  # Smoke suite only — keep it fast enough to run on every push/PR.
   e2e:
     runs-on: ubuntu-latest
-    # Smoke suite only — keep it fast enough to run on every push/PR.
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 24
-          cache: pnpm
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-      - name: Cache turbo build cache
-        uses: actions/cache@v6
-        with:
-          path: .turbo
-          key: turbo-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
-          restore-keys: turbo-${{ runner.os }}-
+      - uses: ./.github/actions/setup-pnpm
       - name: Build
         run: pnpm build
       - name: Cache Playwright browsers
@@ -156,3 +145,4 @@ jobs:
           name: playwright-report
           path: apps/web/playwright-report
           if-no-files-found: ignore
+          retention-days: 7
