@@ -7,7 +7,7 @@ Privacy-first, self-hosted archiving app. pnpm monorepo: Fastify + tRPC server, 
 Prerequisites: Node.js 24, pnpm (corepack), `pnpm install`; copy `.env.example` to `.env`.
 
 - `pnpm dev` — web (Vite HMR) + backend (`vite-node --watch`) + plugin watchers.
-- `pnpm build` — turbo build (plugins, web, server); `pnpm lint` / `pnpm format` — biome + tsc; `pnpm test` — turbo test. Lint/test need `pnpm build` first (published-package `default` exports point at `dist/`).
+- `pnpm build` — turbo build (plugins, web, server); `pnpm lint` / `pnpm format` — biome + tsc; `pnpm test` — turbo test. Lint/test need `pnpm build` first (published-package `default` exports point at `dist/`). Generated artifacts (`apps/web/src/routeTree.gen.ts`, `apps/web/public/{licenses.json,LICENSE}`) are committed and guarded by CI — after changing `apps/web/src/routes/**`, rebuild the web package so the route tree stays in sync.
 - One package: `turbo run test --concurrency=2 --filter=<package>`; `pnpm db:generate` — regenerate Drizzle migrations.
 - `pnpm desktop` — Electron dev shell; packaging per platform (`desktop:package` = Windows x64 NSIS+zip, `:linux` = AppImage, `:mac` = arm64 dmg+zip): stages the server runtime via shared `scripts/stage-runtime.mjs` (seed plugin set per `scripts/lib/plugin-channels.mjs`) plus a Node 24 sidecar runtime, then self-checks (`verify-package.mjs` natives/sandbox/asar guard, yml-driven `verify-feed.mjs`); `package:dir` + `test:e2e` = packaged Playwright launch smoke. Details: `apps/desktop/README.md`.
 - `pnpm docker:smoke` — compose-driven health/SPA/persistence check; the `docker` CI job also runs the web e2e against the container (`E2E_EXTERNAL_BASE_URL`).
@@ -64,6 +64,7 @@ scripts/       Root dev/license/guard/version scripts
 
 - Vitest at `src/**/*.test.{ts,tsx}` (server: node; web/plugins: jsdom); bench runs manually.
 - E2E: Playwright critical-path smoke only (`apps/web/e2e/` + the desktop launch smoke); prefer Vitest + Testing Library; select by `data-testid`/role.
+- Expected filesystem paths in tests must be built from `join()`/`resolve()`/`sep` (the implementation's own primitives), never from drive-letter/backslash literals — Windows-behavior cases are exempted with `// path-guard-exempt` (enforced by `scripts/guard-portable-tests.mjs`, pre-commit + CI).
 
 ## Generated files — never hand-edit
 
