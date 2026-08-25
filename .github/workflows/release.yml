@@ -47,6 +47,8 @@ jobs:
         run: pnpm licenses:check
       - name: Check version sync
         run: pnpm version:check
+      - name: Audit production dependencies
+        run: pnpm audit --prod --audit-level high
       - name: Publish SDK release set
         run: pnpm -r publish
         env:
