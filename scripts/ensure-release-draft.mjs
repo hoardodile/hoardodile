@@ -36,10 +36,12 @@ function run(command, shellArgs, { capture = false, readOnly = false } = {}) {
 		return ""
 	}
 	try {
-		return execFileSync(command, shellArgs, {
+		const output = execFileSync(command, shellArgs, {
 			encoding: "utf8",
 			stdio: capture ? ["ignore", "pipe", "inherit"] : "inherit",
-		}).trim()
+		})
+		// Inherited stdio yields no stdout (null); only capture mode reads it.
+		return capture ? output.trim() : ""
 	} catch (error) {
 		const detail = error.stdout || error.stderr || error.message
 		if (capture) throw new Error(`${command} ${shellArgs.join(" ")}: ${detail}`)
