@@ -29,6 +29,13 @@ on:
         description: "Release version (must match package.json and the v<version> tag), e.g. 0.1.0"
         required: true
 
+# Same-version runs (tag push vs manual dispatch) must not interleave —
+# parallel legs would race on the draft assets and npm. Queue them; a
+# running release is never cancelled mid-publish.
+concurrency:
+  group: release-${{ github.event_name == 'workflow_dispatch' && format('v{0}', inputs.version) || github.ref_name }}
+  cancel-in-progress: false
+
 permissions:
   contents: write
 
@@ -70,11 +77,6 @@ jobs:
         run: node scripts/check-tag-version.mjs
       - name: Build
         run: pnpm build
-      # Same guard as CI: a build that regenerates a committed artifact
-      # differently would dirty the tree and make the publish git checks
-      # fail — fail fast, before publishing.
-      - name: Check generated files in sync
-        run: node scripts/check-generated-files.mjs
       - name: Verify SDK closure packs
         run: pnpm sdks:pack
       - name: Check third-party notices
@@ -100,11 +102,11 @@ jobs:
       matrix:
         include:
           - os: windows-latest
-            script: package:publish
+            platform: win
           - os: ubuntu-latest
-            script: package:publish:linux
+            platform: linux
           - os: macos-14
-            script: package:publish:mac
+            platform: mac
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     steps:
@@ -114,12 +116,14 @@ jobs:
         if: github.event_name == 'push'
         run: node scripts/check-tag-version.mjs
       - name: Build and publish the installers
-        # The chain runs stage-resources → electron-builder(always) →
-        # verify-package (natives + sandbox probe + asar guard) →
-        # verify-feed; publish fails if either check fails. Per-platform
-        # scripts pick the right --target/--platform arguments.
+        # The chain (scripts/package.mjs) runs stage-resources →
+        # electron-builder(always) → verify-package (natives + sandbox probe
+        # + asar guard) → resource pack → upload → verify-feed; it fails if
+        # any check fails. Targets/flags derive from the shared
+        # resource-pack-targets table.
         uses: ./.github/actions/desktop-package
         with:
-          script: ${{ matrix.script }}
+          mode: publish
+          platform: ${{ matrix.platform }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

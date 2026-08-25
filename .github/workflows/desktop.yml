@@ -59,12 +59,12 @@ jobs:
           path: tmp/node-dist
           key: node-dist-24
       - name: Build and package the unpacked app
-        # package:dir = stage-resources → electron-builder --dir →
+        # dir mode = stage-resources → electron-builder --dir →
         # verify-package (natives + sandbox probe + asar guard). No
         # installers, no feed.
         uses: ./.github/actions/desktop-package
         with:
-          script: package:dir
+          mode: dir
       - name: Install Linux test dependencies
         if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y xvfb

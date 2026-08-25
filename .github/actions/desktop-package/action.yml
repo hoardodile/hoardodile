@@ -1,16 +1,19 @@
 name: "Package the desktop app"
 description: >
   The shared build + electron-builder chain used by the desktop quality gate
-  (package:dir, unpacked) and the release job (package:publish*, installers
-  + feed + resource pack). The cache env redirects electron-builder's
-  download cache into the actions/cache path above (a future electron-builder
-  dropping the env var just misses the cache).
+  and the release job, driven by apps/desktop/scripts/package.mjs (mode dir =
+  unpacked app; mode publish = installers + resource pack + draft upload +
+  feed verification). The cache env redirects electron-builder's download
+  cache into the actions/cache path above (a future electron-builder dropping
+  the env var just misses the cache).
 inputs:
-  script:
-    description: >
-      The @hoardodile/desktop script to run: package:dir (unpacked, no
-      publish) or package:publish / package:publish:linux / package:publish:mac.
+  mode:
+    description: "dir | publish (see scripts/package.mjs)."
     required: true
+  platform:
+    description: "win | linux | mac (defaults to the runner's host platform)."
+    required: false
+    default: ""
 runs:
   using: "composite"
   steps:
@@ -25,6 +28,9 @@ runs:
         restore-keys: eb-${{ runner.os }}-
     - name: Package
       shell: bash
-      run: pnpm -F @hoardodile/desktop ${{ inputs.script }}
+      run: >-
+        pnpm -F @hoardodile/desktop package
+        --mode ${{ inputs.mode }}
+        ${{ inputs.platform != '' && format('--platform {0}', inputs.platform) || '' }}
       env:
         ELECTRON_BUILDER_CACHE: ${{ github.workspace }}/.cache/electron-builder
