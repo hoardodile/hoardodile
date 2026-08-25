@@ -994,8 +994,8 @@ importers:
         specifier: ^5.3.0
         version: 5.3.0(supports-color@7.2.0)
       '@hoardodile/7z-bin':
-        specifier: ^1.1.0
-        version: 1.1.0
+        specifier: ^1.1.1
+        version: 1.1.1
       ffmpeg-static:
         specifier: 'catalog:'
         version: 5.3.0(supports-color@7.2.0)
@@ -2860,8 +2860,8 @@ packages:
       react: '*'
       react-dom: '*'
 
-  '@hoardodile/7z-bin@1.1.0':
-    resolution: {integrity: sha512-IsCdruyfBoJM+88ZB01wIlaLe/KP9HIrpLAOMpAXS8La8xLE+rqzd9srBNFU/TcY2IVDNJHoBU/Sc9dKc1Cf+A==}
+  '@hoardodile/7z-bin@1.1.1':
+    resolution: {integrity: sha512-XUwfOHxNpj7FWu6Nip3CTI4Zd3tI78agIlQ7B5r5P+zvOSbJyyClEnlzp0DYXC3kdO+hpq9nBs5tHY85N7skig==}
     engines: {node: '>=18'}
 
   '@hono/node-server@2.1.1':
@@ -11532,7 +11532,7 @@ snapshots:
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
 
-  '@hoardodile/7z-bin@1.1.0':
+  '@hoardodile/7z-bin@1.1.1':
     optional: true
 
   '@hono/node-server@2.1.1(hono@4.13.3)':
