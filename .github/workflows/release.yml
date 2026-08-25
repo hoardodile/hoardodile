@@ -138,7 +138,10 @@ jobs:
       - name: Report working tree state before publish
         run: git status --porcelain
       - name: Publish SDK release set
-        run: pnpm -r publish --config.provenance=true
+        # Idempotent: skips versions already on the registry, so a manual
+        # re-run of an already-released version only re-attaches artifacts
+        # instead of failing on "version already exists".
+        run: node scripts/publish-release-set.mjs
 
   # One job per release platform, all attaching to the same draft Release.
   # Commits on a macos-14 (arm64) runner produce the mac-arm64 artifacts;
