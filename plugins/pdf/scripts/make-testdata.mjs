@@ -58,7 +58,7 @@ function buildPdf(pages) {
 		offset += Buffer.byteLength(body, "latin1")
 	}
 	const xrefStart = offset
-	let xref = "xref\n0 " + (objects.length + 1) + "\n0000000000 65535 f \n"
+	let xref = `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`
 	for (let i = 1; i < offsets.length; i++) {
 		xref += `${String(offsets[i]).padStart(10, "0")} 00000 n \n`
 	}

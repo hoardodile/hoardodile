@@ -21,8 +21,12 @@
 				"$TURBO_DEFAULT$",
 				"$TURBO_ROOT$/biome.json",
 				"!.turbo/**",
-				"!public/**",
-				"!e2e/**"
+				// public holds generated static assets, not tsc inputs, so
+				// changes there must not invalidate the lint cache.
+				// e2e must NOT be excluded: web/desktop tsconfig include
+				// `e2e/**/*.ts`, so a cache hit on an e2e-only change would
+				// replay stale tsc results and mask new type errors.
+				"!public/**"
 			]
 		},
 		"test": {

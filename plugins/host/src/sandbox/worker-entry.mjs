@@ -153,10 +153,10 @@ function toFileUrl(path) {
 	return pathToFileURL(path).href
 }
 
-const pluginDirPrefix = normalizePath(toFileUrl(pluginDir) + "/")
+const pluginDirPrefix = normalizePath(`${toFileUrl(pluginDir)}/`)
 const assetVaultPrefix =
 	typeof assetVaultDir === "string" && assetVaultDir.length > 0
-		? normalizePath(toFileUrl(assetVaultDir) + "/")
+		? normalizePath(`${toFileUrl(assetVaultDir)}/`)
 		: undefined
 const entryUrl = normalizePath(import.meta.url)
 

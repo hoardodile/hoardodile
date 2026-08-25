@@ -171,7 +171,7 @@ async function manifestFor(
 	)
 	let serverDistLayer = {
 		name: "server-dist",
-		identity: serverDistIdentity ?? "sha256:" + "0".repeat(64),
+		identity: serverDistIdentity ?? `sha256:${"0".repeat(64)}`,
 		payload: await buildLayerTar(fixture, "server-dist", "server"),
 	}
 	if (serverDistSha256 !== undefined) {

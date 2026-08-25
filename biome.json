@@ -44,7 +44,8 @@
 				"noStaticElementInteractions": "off"
 			},
 			"style": {
-				"noNonNullAssertion": "off"
+				"noNonNullAssertion": "off",
+				"useTemplate": "error"
 			},
 			"suspicious": {
 				"noArrayIndexKey": "off",
