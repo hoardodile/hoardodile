@@ -36,6 +36,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   package-e2e:
     strategy:
@@ -46,19 +49,7 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v7
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 24
-          cache: pnpm
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-      - name: Cache turbo build cache
-        uses: actions/cache@v6
-        with:
-          path: .turbo
-          key: turbo-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
-          restore-keys: turbo-${{ runner.os }}-
+      - uses: ./.github/actions/setup-pnpm
       - name: Build
         run: pnpm build
       - name: Cache staged Node runtime
@@ -92,32 +83,21 @@ jobs:
         run: pnpm -F @hoardodile/desktop test:e2e
       - name: Upload Playwright report
         if: failure()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: desktop-playwright-${{ matrix.os }}
           path: |
             apps/desktop/.playwright-desktop
             apps/desktop/release/builder-effective-config.yaml
           if-no-files-found: ignore
+          retention-days: 7
 
   docker:
     runs-on: ubuntu-latest
     timeout-minutes: 40
     steps:
       - uses: actions/checkout@v7
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 24
-          cache: pnpm
-      - name: Install dependencies (web e2e on tags/dispatch)
-        run: pnpm install --frozen-lockfile
-      - name: Cache turbo build cache
-        uses: actions/cache@v6
-        with:
-          path: .turbo
-          key: turbo-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
-          restore-keys: turbo-${{ runner.os }}-
+      - uses: ./.github/actions/setup-pnpm
       - name: Build (web e2e on tags/dispatch needs the plugin dists)
         if: github.event_name != 'pull_request'
         run: pnpm build
@@ -150,8 +130,9 @@ jobs:
         run: docker compose --project-name hd-smoke -f compose.yaml down -v --remove-orphans
       - name: Upload Playwright report
         if: failure()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: docker-playwright
           path: apps/web/playwright-report
           if-no-files-found: ignore
+          retention-days: 7

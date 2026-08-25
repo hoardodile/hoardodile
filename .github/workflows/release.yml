@@ -34,16 +34,11 @@ jobs:
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v7
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v7
+      - uses: ./.github/actions/setup-pnpm
         with:
-          node-version: 24
-          cache: pnpm
           registry-url: https://registry.npmjs.org
       - name: Verify tag matches the unified version
         run: node scripts/check-tag-version.mjs
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
       - name: Build
         run: pnpm build
       - name: Verify SDK closure packs
@@ -77,21 +72,9 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v7
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 24
-          cache: pnpm
+      - uses: ./.github/actions/setup-pnpm
       - name: Verify tag matches the unified version
         run: node scripts/check-tag-version.mjs
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-      - name: Cache turbo build cache
-        uses: actions/cache@v6
-        with:
-          path: .turbo
-          key: turbo-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
-          restore-keys: turbo-${{ runner.os }}-
       - name: Build
         run: pnpm build
       - name: Cache electron-builder downloads

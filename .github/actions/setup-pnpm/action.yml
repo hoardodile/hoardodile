@@ -1,0 +1,31 @@
+name: "Setup pnpm"
+description: "Corepack pnpm, Node from .nvmrc, frozen install and the turbo build cache — the setup every job needs."
+
+inputs:
+  install:
+    description: "Run pnpm install --frozen-lockfile."
+    required: false
+    default: "true"
+  registry-url:
+    description: "npm registry for setup-node (publishing jobs only)."
+    required: false
+
+runs:
+  using: "composite"
+  steps:
+    - uses: pnpm/action-setup@v6
+    - uses: actions/setup-node@v7
+      with:
+        node-version-file: .nvmrc
+        cache: pnpm
+        registry-url: ${{ inputs.registry-url }}
+    - name: Install dependencies
+      if: inputs.install == 'true'
+      shell: bash
+      run: pnpm install --frozen-lockfile
+    - name: Cache turbo build cache
+      uses: actions/cache@v6
+      with:
+        path: .turbo
+        key: turbo-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+        restore-keys: turbo-${{ runner.os }}-
