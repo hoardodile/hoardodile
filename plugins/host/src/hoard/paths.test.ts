@@ -9,6 +9,7 @@ import {
 	imageVariantKey,
 } from "./paths.ts"
 
+// path-guard-exempt: platform branch, each literal matches its own OS.
 const ROOT = process.platform === "win32" ? "C:\\data\\app" : "/data/app"
 
 describe("createStoragePaths", () => {

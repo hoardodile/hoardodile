@@ -50,11 +50,12 @@ afterEach(async () => {
 
 describe("platformCacheBase", () => {
 	it("mirrors electron-updater's getAppCacheDir per platform", () => {
+		// path-guard-exempt: the win32 case IS the behavior under test.
 		expect(
 			platformCacheBase("win32", {
-				LOCALAPPDATA: String.raw`C:\Users\demo\AppData\Local`,
+				LOCALAPPDATA: String.raw`C:\Users\demo\AppData\Local`, // path-guard-exempt: win32 behavior under test
 			}),
-		).toBe(String.raw`C:\Users\demo\AppData\Local`)
+		).toBe(String.raw`C:\Users\demo\AppData\Local`) // path-guard-exempt: win32 behavior under test
 		expect(platformCacheBase("darwin", {})).toBe(
 			join(homedir(), "Library", "Caches"),
 		)
@@ -67,7 +68,8 @@ describe("platformCacheBase", () => {
 
 describe("resolveUpdaterCacheDir", () => {
 	it("follows the electron-builder formula: <appName-lowercase>-updater", () => {
-		const platformBase = String.raw`C:\Users\demo\AppData\Local`
+		// path-guard-exempt: the win32 cache base is the behavior under test.
+		const platformBase = String.raw`C:\Users\demo\AppData\Local` // path-guard-exempt: win32 behavior under test
 		// The formula is about the directory name — the join separator is
 		// the host platform's, so build the expectation the same way the
 		// implementation does (a hardcoded backslash form broke POSIX).

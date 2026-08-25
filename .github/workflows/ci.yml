@@ -48,10 +48,18 @@ jobs:
       # BlockNote + the diff-machinery pins must never drift silently.
       - name: Guard protected dependencies
         run: node scripts/guard-protected-deps.mjs
+      # Tests must not hardcode Windows path literals — expectations are
+      # built from join()/resolve()/sep (or exempted with path-guard-exempt).
+      - name: Guard portable test paths
+        run: node scripts/guard-portable-tests.mjs
       # Build first so that generated files (e.g. apps/web/src/routeTree.gen.ts)
       # exist before the type-only lint and tests run.
       - name: Build
         run: pnpm build
+      # The web build rewrites apps/web/src/routeTree.gen.ts; on a cache-miss
+      # the regenerated file must equal the committed one.
+      - name: Check generated files in sync
+        run: git diff --exit-code -- apps/web/src/routeTree.gen.ts
       - name: Lint
         run: pnpm lint
       - name: Test

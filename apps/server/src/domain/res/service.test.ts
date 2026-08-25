@@ -358,6 +358,7 @@ describe("resource service", () => {
 		const under = await svc.create({ name: "a_b pair" })
 		await svc.create({ name: "axb pair" })
 		const winPath = await svc.create({
+			// path-guard-exempt: fixture data, not a filesystem path expectation.
 			name: "C:\\app\\x.png",
 		})
 

@@ -52,6 +52,7 @@ describe("parsePluginVaultDest (isolation)", () => {
 	})
 
 	test("rejects absolute destinations and drive letters", () => {
+		// path-guard-exempt: Windows-style destinations are the behavior under test.
 		for (const dest of ["/etc/passwd", "C:\\windows\\x", "//host/share"]) {
 			expect(() => parsePluginVaultDest(dir, dest)).toThrow()
 		}
