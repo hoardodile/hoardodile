@@ -9,12 +9,21 @@ name: Release
 #
 # Secrets (Settings → Secrets and variables → Actions): none for npm —
 # publishing uses npm Trusted Publishing (OIDC), so no registry token
-# lives in Actions. One-time npm-side setup (npmjs.com → Access Tokens →
-# Trusted Publishing, by an account that owns the @hoardodile scope):
-# register the GitHub repo `hoardodile/hoardodile` with the workflow file
-# `.github/workflows/release.yml` (no environment). The npm job then
+# lives in Actions. One-time npm-side setup (npm >= 11.11, by an account
+# that owns the @hoardodile scope; the CLI asks for a 2FA code once per
+# package — there is no web-UI route for this, the Access Tokens page
+# only creates tokens):
+#
+#   npm trust github @hoardodile/i18n --file release.yml --repo hoardodile/hoardodile --allow-publish
+#
+# One command per published package (list: scripts/lib/release-packages.mjs).
+# `--file` takes the workflow FILE NAME only, never a path; `--allow-publish`
+# is required (the default is trust without publishing permission); no
+# `--environment` is used. Verify with `npm trust list`. The npm job then
 # requests an OIDC id-token (`id-token: write`) that npm verifies against
-# that registration, and publishes with provenance attestations.
+# these per-package trust relationships, and publishes with provenance
+# attestations. Note the trust extends to anyone with write access to this
+# repository — i.e. the maintainers.
 # (release-it itself needs a local GITHUB_TOKEN on the dev machine.)
 #
 # Future platform expansions: add the matching runners to the desktop job
