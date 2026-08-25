@@ -43,3 +43,26 @@ try {
 } catch {
 	console.warn("warning: could not stage manifests with git")
 }
+
+// The committed notice file (apps/web/public/licenses.json) embeds the
+// workspace package versions, so it must be regenerated with the bumped
+// manifests here (after:bump) — a release commit that keeps the old rows
+// makes the next CI build dirty the tree and fail the publish git checks.
+try {
+	execFileSync(process.execPath, ["scripts/generate-licenses.mjs"], {
+		stdio: "inherit",
+	})
+} catch (error) {
+	console.error("error: could not regenerate the license notice:", error)
+	process.exit(1)
+}
+
+try {
+	execFileSync(
+		"git",
+		["add", "apps/web/public/licenses.json", "apps/web/public/LICENSE"],
+		{ stdio: "inherit" },
+	)
+} catch {
+	console.warn("warning: could not stage license files with git")
+}

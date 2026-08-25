@@ -43,10 +43,12 @@ jobs:
         run: node scripts/guard-portable-tests.mjs
       - name: Build
         run: pnpm build
-      # The web build rewrites apps/web/src/routeTree.gen.ts; the
-      # regenerated file must equal the committed one.
+      # The web build rewrites apps/web/src/routeTree.gen.ts and the license
+      # artifacts; the regenerated files must equal the committed ones
+      # (licenses.json embeds the workspace package versions, so every
+      # version bump regenerates it).
       - name: Check generated files in sync
-        run: git diff --exit-code -- apps/web/src/routeTree.gen.ts
+        run: git diff --exit-code -- apps/web/src/routeTree.gen.ts apps/web/public/licenses.json apps/web/public/LICENSE
       # Published SDK d.ts must not reference node (browser-facing entries).
       - name: Guard node pollution in SDK d.ts
         run: node scripts/guard-node-pollution.mjs

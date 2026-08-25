@@ -1304,7 +1304,7 @@
 				},
 				{
 					"name": "@hoardodile/host",
-					"version": "0.0.0",
+					"version": "0.1.0",
 					"license": "MIT",
 					"repository": "https://github.com/hoardodile/hoardodile",
 					"publisher": "",
@@ -1312,7 +1312,7 @@
 				},
 				{
 					"name": "@hoardodile/host-web",
-					"version": "0.0.0",
+					"version": "0.1.0",
 					"license": "MIT",
 					"repository": "https://github.com/hoardodile/hoardodile",
 					"publisher": "",
@@ -1320,7 +1320,7 @@
 				},
 				{
 					"name": "@hoardodile/i18n",
-					"version": "0.0.0",
+					"version": "0.1.0",
 					"license": "MIT",
 					"repository": "https://github.com/hoardodile/hoardodile",
 					"publisher": "",
@@ -1328,7 +1328,7 @@
 				},
 				{
 					"name": "@hoardodile/sdk-server",
-					"version": "0.0.0",
+					"version": "0.1.0",
 					"license": "MIT",
 					"repository": "https://github.com/hoardodile/hoardodile",
 					"publisher": "",
@@ -1336,7 +1336,7 @@
 				},
 				{
 					"name": "@hoardodile/sdk-types",
-					"version": "0.0.0",
+					"version": "0.1.0",
 					"license": "MIT",
 					"repository": "https://github.com/hoardodile/hoardodile",
 					"publisher": "",
@@ -1344,7 +1344,7 @@
 				},
 				{
 					"name": "@hoardodile/sdk-web",
-					"version": "0.0.0",
+					"version": "0.1.0",
 					"license": "MIT",
 					"repository": "https://github.com/hoardodile/hoardodile",
 					"publisher": "",
@@ -1352,7 +1352,7 @@
 				},
 				{
 					"name": "@hoardodile/ui",
-					"version": "0.0.0",
+					"version": "0.1.0",
 					"license": "MIT",
 					"repository": "https://github.com/hoardodile/hoardodile",
 					"publisher": "",

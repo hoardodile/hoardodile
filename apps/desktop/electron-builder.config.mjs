@@ -50,7 +50,12 @@ const config = {
 		],
 	},
 	mac: {
-		icon: "resources/icon.png",
+		// Prebuilt icns (generated once via electron-builder's icon-tool from
+		// icon.png): giving the icns directly skips the png→icns conversion.
+		// The converter is a downloaded CJS script that crashes as ESM when
+		// extracted under this workspace — its nearest package.json is the
+		// repo root with "type": "module" (see .cache/electron-builder).
+		icon: "resources/icon.icns",
 		// No certificate in this phase: electron-builder ad-hoc signs the
 		// arm64 bundle so macOS accepts it (notarization comes with a
 		// real identity later). The shell's `autoUpdate` default is OFF on

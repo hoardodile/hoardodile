@@ -4,10 +4,11 @@ import {
 	copyFileSync,
 	existsSync,
 	mkdirSync,
+	readdirSync,
 	readFileSync,
 	writeFileSync,
 } from "node:fs"
-import { dirname, resolve } from "node:path"
+import { dirname, join, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 import { init } from "license-checker-rseidelsohn"
 
@@ -31,11 +32,66 @@ const CACHE_FILE = resolve(
 	"node_modules/.cache/hoardodile-licenses.json",
 )
 
+// The scan reports every installed package's version, so the cache key must
+// cover the workspace manifests too: a release version bump (root + the
+// published SDK manifests via scripts/sync-version.mjs) changes the
+// `@hoardodile/*` rows even though the lockfile, LICENSE and this script stay
+// identical. Without this, regeneration silently skipped after a bump and
+// the committed output drifted from a fresh checkout's build.
+const WORKSPACE_MANIFEST_ROOTS = ["apps", "packages", "plugins"]
+const WALK_SKIP = new Set([
+	"node_modules",
+	"dist",
+	"out",
+	"release",
+	"build",
+	"coverage",
+	".turbo",
+	"temp",
+	"tmp",
+	".cache",
+])
+
+function collectWorkspaceVersions() {
+	const versions = []
+	function walk(dir) {
+		let entries
+		try {
+			entries = readdirSync(dir, { withFileTypes: true })
+		} catch {
+			return
+		}
+		for (const entry of entries) {
+			const full = join(dir, entry.name)
+			if (entry.isDirectory()) {
+				if (!WALK_SKIP.has(entry.name)) walk(full)
+			} else if (entry.name === "package.json") {
+				try {
+					const manifest = JSON.parse(readFileSync(full, "utf8"))
+					if (
+						typeof manifest.name === "string" &&
+						typeof manifest.version === "string"
+					) {
+						versions.push(`${manifest.name}@${manifest.version}`)
+					}
+				} catch {
+					// a malformed manifest cannot drive the scan; ignore it
+				}
+			}
+		}
+	}
+	for (const root of WORKSPACE_MANIFEST_ROOTS) {
+		walk(resolve(WORKSPACE_ROOT, root))
+	}
+	return versions.sort().join("\n")
+}
+
 function computeInputHash() {
 	const hash = createHash("sha256")
 	hash.update(readFileSync(resolve(WORKSPACE_ROOT, "pnpm-lock.yaml")))
 	hash.update(readFileSync(resolve(WORKSPACE_ROOT, "LICENSE")))
 	hash.update(readFileSync(fileURLToPath(import.meta.url)))
+	hash.update(collectWorkspaceVersions())
 	return hash.digest("hex")
 }
 

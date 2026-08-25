@@ -3,9 +3,16 @@ name: Release
 # Publish flow after `pnpm release <version>` (local): release-it bumps
 # versions, commits, tags and creates a DRAFT GitHub Release; pushing the
 # tag triggers this workflow, which publishes the SDK release set to npm
-# and builds/attaches the Windows installers to the same draft. A human
-# then reviews the draft on GitHub and clicks Publish — electron-updater
-# only sees published releases, so the draft is the review gate.
+# and builds/attaches the installers to the same draft. A human then
+# reviews the draft on GitHub and clicks Publish — electron-updater only
+# sees published releases, so the draft is the review gate.
+#
+# The `release-draft` job additionally owns the draft: it creates it (or
+# fills an empty body / normalizes the title) with the latest changelog
+# section, so a web-fallback release-it or a manual rerun never leaves the
+# release without notes. `workflow_dispatch` (input `version`) re-runs the
+# same pipeline against a fixed branch without touching the tag — used to
+# complete a release whose tag predates a pipeline fix.
 #
 # Secrets (Settings → Secrets and variables → Actions): none for npm —
 # publishing uses npm Trusted Publishing (OIDC), so no registry token
@@ -24,7 +31,8 @@ name: Release
 # these per-package trust relationships, and publishes with provenance
 # attestations. Note the trust extends to anyone with write access to this
 # repository — i.e. the maintainers.
-# (release-it itself needs a local GITHUB_TOKEN on the dev machine.)
+# (release-it itself needs a local GITHUB_TOKEN on the dev machine —
+#   `pnpm release` provisions it from `gh auth token` via scripts/release.mjs.)
 #
 # Future platform expansions: add the matching runners to the desktop job
 # matrix and the macOS signing/notarization secrets:
@@ -39,12 +47,65 @@ name: Release
 on:
   push:
     tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version (must match package.json and the v<version> tag), e.g. 0.1.0"
+        required: true
 
 permissions:
   contents: write
 
 jobs:
+  # Owns the draft release, ahead of every upload: electron-builder would
+  # otherwise auto-create an empty one (name = version, no body) when a
+  # local release-it fell back to web mode or when a legacy tag is
+  # re-released. Idempotent — only creates or fills when needed.
+  release-draft:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+      - name: Resolve release version
+        id: version
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ inputs.version }}"
+          else
+            VERSION="$(node -p 'require("./package.json").version')"
+          fi
+          echo "version=${VERSION}" >> "${GITHUB_OUTPUT}"
+      - name: Create or update the draft release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="${{ steps.version.outputs.version }}"
+          TAG="v${VERSION}"
+          if ! git ls-remote --tags origin "refs/tags/${TAG}" | grep -q .; then
+            echo "::error::tag ${TAG} does not exist on origin — nothing to release"
+            exit 1
+          fi
+          node scripts/latest-release-notes.mjs > release-notes.md
+          if ! gh release view "${TAG}" --repo hoardodile/hoardodile > /dev/null 2>&1; then
+            gh release create "${TAG}" --repo hoardodile/hoardodile --draft --title "${TAG}" --notes-file release-notes.md
+            echo "created draft ${TAG} with release notes"
+          elif [ -z "$(gh release view "${TAG}" --repo hoardodile/hoardodile --json body --jq .body)" ]; then
+            gh release edit "${TAG}" --repo hoardodile/hoardodile --title "${TAG}" --notes-file release-notes.md
+            echo "filled empty body of draft ${TAG}"
+          else
+            gh release edit "${TAG}" --repo hoardodile/hoardodile --title "${TAG}"
+            echo "draft ${TAG} already has notes; title normalized"
+          fi
+
+  # Publishes the SDK release set to npm. Trusted publishing (OIDC): the
+  # id-token replaces registry credentials; provenance is requested explicitly.
   npm:
+    needs: release-draft
     runs-on: ubuntu-latest
     timeout-minutes: 25
     permissions:
@@ -53,10 +114,19 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup-pnpm
-      - name: Verify tag matches the unified version
+      - name: Verify tag matches the unified version (tag push)
+        if: github.event_name == 'push'
         run: node scripts/check-tag-version.mjs
+      - name: Verify tag matches the unified version (manual dispatch)
+        if: github.event_name == 'workflow_dispatch'
+        run: node scripts/check-tag-version.mjs --tag "v${{ inputs.version }}"
       - name: Build
         run: pnpm build
+      # Same guard as CI: a build that regenerates a committed artifact
+      # differently (routeTree, licenses) would dirty the tree and make the
+      # publish git checks fail — fail fast, before publishing.
+      - name: Check generated files in sync
+        run: git diff --exit-code -- apps/web/src/routeTree.gen.ts apps/web/public/licenses.json apps/web/public/LICENSE
       - name: Verify SDK closure packs
         run: pnpm sdks:pack
       - name: Check third-party notices
@@ -66,8 +136,6 @@ jobs:
       - name: Audit production dependencies
         run: pnpm audit --prod --audit-level high
       - name: Publish SDK release set
-        # Trusted publishing: the OIDC id-token (id-token: write) replaces
-        # registry credentials; provenance is requested explicitly.
         run: pnpm -r publish --config.provenance=true
 
   # One job per release platform, all attaching to the same draft Release.
@@ -75,6 +143,7 @@ jobs:
   # macOS x64 is a future matrix entry (needs cross-arch optional-dep
   # staging, see apps/desktop/README.md).
   desktop:
+    needs: release-draft
     strategy:
       fail-fast: false
       matrix:
@@ -90,8 +159,12 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup-pnpm
-      - name: Verify tag matches the unified version
+      - name: Verify tag matches the unified version (tag push)
+        if: github.event_name == 'push'
         run: node scripts/check-tag-version.mjs
+      - name: Verify tag matches the unified version (manual dispatch)
+        if: github.event_name == 'workflow_dispatch'
+        run: node scripts/check-tag-version.mjs --tag "v${{ inputs.version }}"
       - name: Build
         run: pnpm build
       - name: Cache electron-builder downloads

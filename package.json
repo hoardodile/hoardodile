@@ -44,7 +44,7 @@
 		"licenses:check": "node scripts/generate-licenses.mjs --check",
 		"licenses:generate": "node scripts/generate-licenses.mjs",
 		"version:check": "node scripts/check-version-sync.mjs",
-		"release": "release-it",
+		"release": "node scripts/release.mjs",
 		"postinstall": "lefthook install",
 		"seed": "pnpm -F @hoardodile/server seed",
 		"seed:screenshots": "node scripts/seed-screenshots.mjs"

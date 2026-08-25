@@ -111,8 +111,10 @@ jobs:
           push: false
           load: true
           tags: hoardodile:ci
+          # Read-only cache: the default docker driver cannot export a gha
+          # cache ("Cache export is not supported for the docker driver"),
+          # and buildx only falls over on the cache-to line.
           cache-from: type=gha,scope=hoardodile
-          cache-to: type=gha,mode=max,scope=hoardodile
       - name: Compose smoke (health / SPA / migrations / persistence)
         run: node scripts/docker-smoke.mjs --skip-build
       - name: Boot the stack for the full e2e suite
