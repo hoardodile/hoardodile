@@ -12,7 +12,8 @@ import { fileURLToPath } from "node:url"
 import { init } from "license-checker-rseidelsohn"
 
 // Resolve everything against the workspace root so the script can run from
-// any cwd (it is chained into apps/web's build/watch scripts).
+// any cwd (it is chained into apps/web's dev and build scripts; the outputs
+// are gitignored runtime assets).
 import { WORKSPACE_ROOT } from "./lib/workspace.mjs"
 
 const isCheckOnly = process.argv.includes("--check")

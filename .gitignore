@@ -33,6 +33,11 @@ lefthook-local.yml
 # regenerates it deterministically.
 apps/web/src/routeTree.gen.ts
 
+# Third-party notices generated before the web dev/build chain
+# (scripts/generate-licenses.mjs): runtime assets only, never committed.
+apps/web/public/licenses.json
+apps/web/public/LICENSE
+
 # Playwright
 apps/web/test-results
 apps/web/playwright-report

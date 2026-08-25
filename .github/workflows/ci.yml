@@ -43,12 +43,9 @@ jobs:
         run: node scripts/guard-portable-tests.mjs
       - name: Build
         run: pnpm build
-      # The web build rewrites the committed license artifacts; the
-      # regenerated files must equal the committed ones. (routeTree.gen.ts
-      # is generated fresh before every web consumer and never committed.)
-      - name: Check generated files in sync
-        run: node scripts/check-generated-files.mjs
-      # Published SDK d.ts must not reference node (browser-facing entries).
+      # Generated artifacts are never committed (routeTree regenerates
+      # before every web consumer, license notices before dev/build), so the
+      # license hook in CI is the policy gate only.
       - name: Guard node pollution in SDK d.ts
         run: node scripts/guard-node-pollution.mjs
       # The create-plugin scaffold embeds a copy of plugins/template.

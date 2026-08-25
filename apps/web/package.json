@@ -5,7 +5,7 @@
 	"license": "GPL-3.0-only",
 	"type": "module",
 	"scripts": {
-		"dev": "vite",
+		"dev": "node ../../scripts/generate-licenses.mjs && vite",
 		"build": "node scripts/gen-route-tree.mjs && node ../../scripts/generate-licenses.mjs && vite build",
 		"preview": "vite preview",
 		"lint": "node scripts/gen-route-tree.mjs && tsc --noEmit",
