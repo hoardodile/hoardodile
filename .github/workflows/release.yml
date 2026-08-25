@@ -7,9 +7,15 @@ name: Release
 # then reviews the draft on GitHub and clicks Publish — electron-updater
 # only sees published releases, so the draft is the review gate.
 #
-# Secrets (Settings → Secrets and variables → Actions):
-#   NODE_AUTH_TOKEN  npm registry token for the SDK release set
-#   (release-it itself needs a local GITHUB_TOKEN on the dev machine)
+# Secrets (Settings → Secrets and variables → Actions): none for npm —
+# publishing uses npm Trusted Publishing (OIDC), so no registry token
+# lives in Actions. One-time npm-side setup (npmjs.com → Access Tokens →
+# Trusted Publishing, by an account that owns the @hoardodile scope):
+# register the GitHub repo `hoardodile/hoardodile` with the workflow file
+# `.github/workflows/release.yml` (no environment). The npm job then
+# requests an OIDC id-token (`id-token: write`) that npm verifies against
+# that registration, and publishes with provenance attestations.
+# (release-it itself needs a local GITHUB_TOKEN on the dev machine.)
 #
 # Future platform expansions: add the matching runners to the desktop job
 # matrix and the macOS signing/notarization secrets:
@@ -32,11 +38,12 @@ jobs:
   npm:
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup-pnpm
-        with:
-          registry-url: https://registry.npmjs.org
       - name: Verify tag matches the unified version
         run: node scripts/check-tag-version.mjs
       - name: Build
@@ -50,10 +57,9 @@ jobs:
       - name: Audit production dependencies
         run: pnpm audit --prod --audit-level high
       - name: Publish SDK release set
-        run: pnpm -r publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
-          NPM_CONFIG_REGISTRY: https://registry.npmjs.org
+        # Trusted publishing: the OIDC id-token (id-token: write) replaces
+        # registry credentials; provenance is requested explicitly.
+        run: pnpm -r publish --config.provenance=true
 
   # One job per release platform, all attaching to the same draft Release.
   # Commits on a macos-14 (arm64) runner produce the mac-arm64 artifacts;
