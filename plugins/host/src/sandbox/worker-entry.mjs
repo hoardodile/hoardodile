@@ -191,8 +191,14 @@ registerHooks({
 		// (registerHooks does not support async hooks).
 		const result = nextResolve(specifier, _context)
 		if (isAllowedModule(result.url)) return result
+		// Show the allowed prefixes so a canonicalization mismatch (URL
+		// encoding, symlinked roots, casing) is diagnosable in one line.
+		const allowed =
+			assetVaultPrefix !== undefined
+				? `${pluginDirPrefix}, ${assetVaultPrefix}`
+				: pluginDirPrefix
 		throw new Error(
-			`[plugin-sandbox] module denied by policy: ${specifier} → ${result.url}`,
+			`[plugin-sandbox] module denied by policy: ${specifier} → ${result.url} (allowed: ${allowed})`,
 		)
 	},
 })
