@@ -18,29 +18,24 @@ import {
 const { version } = JSON.parse(readFileSync("package.json", "utf8"))
 const files = [...PLUGIN_MANIFESTS, ...PUBLISHED_PACKAGE_MANIFESTS]
 
-const changed = []
 for (const path of files) {
-	const manifest = JSON.parse(readFileSync(path, "utf8"))
-	if (manifest.version === version) {
+	const source = readFileSync(path, "utf8")
+	// These manifests are biome-canonical in the repo, so patch only the
+	// version value: JSON.parse + JSON.stringify would reflow arrays and
+	// need a post-format pass (which also failed silently on Windows,
+	// where `pnpm` is a .cmd shim execFileSync cannot launch).
+	const next = source.replace(/("version"\s*:\s*)"[^"]*"/, `$1"${version}"`)
+	if (next === source) {
 		console.log(`unchanged ${path} (${version})`)
 		continue
 	}
-	manifest.version = version
-	writeFileSync(path, `${JSON.stringify(manifest, null, "\t")}\n`)
-	changed.push(path)
-	console.log(`synced ${path} -> ${version}`)
-}
-
-// JSON.stringify output is not biome-canonical (arrays stay expanded);
-// reformat the touched files so the release commit still passes lint.
-if (changed.length > 0) {
-	try {
-		execFileSync("pnpm", ["exec", "biome", "check", "--write", ...changed], {
-			stdio: "inherit",
-		})
-	} catch {
-		console.warn("warning: biome formatting of synced files failed")
+	// Guard: the patch must stay valid JSON carrying the requested version.
+	const patched = JSON.parse(next)
+	if (patched.version !== version) {
+		throw new Error(`version field mismatch after syncing ${path}`)
 	}
+	writeFileSync(path, next)
+	console.log(`synced ${path} -> ${version}`)
 }
 
 try {
