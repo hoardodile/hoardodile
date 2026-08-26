@@ -20,9 +20,12 @@ export async function expectShellRendered(
 	try {
 		await expect
 			.poll(
-				() =>
-					appWin.getByTestId("app-sidebar").isVisible() ||
-					appWin.getByTestId("app-sidebar-open").isVisible(),
+				async () =>
+					// Await both sides: isVisible() returns a Promise, and a
+					// bare `a || b` on promises is always the first (truthy)
+					// promise — the drawer half would never be evaluated.
+					(await appWin.getByTestId("app-sidebar").isVisible()) ||
+					(await appWin.getByTestId("app-sidebar-open").isVisible()),
 				{ timeout },
 			)
 			.toBe(true)
