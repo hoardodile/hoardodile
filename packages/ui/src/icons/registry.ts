@@ -140,6 +140,7 @@ import { ServerIcon as ServerBoldWeight } from "@solar-icons/react/bold/server"
 import { SettingsIcon as SettingsBoldWeight } from "@solar-icons/react/bold/settings"
 import { ShareIcon as ShareBoldWeight } from "@solar-icons/react/bold/share"
 import { ShieldCheckIcon as ShieldCheckBoldWeight } from "@solar-icons/react/bold/shield-check"
+import { Shop2Icon as Shop2BoldWeight } from "@solar-icons/react/bold/shop-2"
 import { SidebarMinimalisticIcon as SidebarMinimalisticBoldWeight } from "@solar-icons/react/bold/sidebar-minimalistic"
 import { SliderHorizontalIcon as SliderHorizontalBoldWeight } from "@solar-icons/react/bold/slider-horizontal"
 import { SmartphoneIcon as SmartphoneBoldWeight } from "@solar-icons/react/bold/smartphone"
@@ -281,6 +282,7 @@ import { ServerIcon as ServerBoldDuotone } from "@solar-icons/react/bold-duotone
 import { SettingsIcon as SettingsBoldDuotone } from "@solar-icons/react/bold-duotone/settings"
 import { ShareIcon as ShareBoldDuotone } from "@solar-icons/react/bold-duotone/share"
 import { ShieldCheckIcon as ShieldCheckBoldDuotone } from "@solar-icons/react/bold-duotone/shield-check"
+import { Shop2Icon as Shop2BoldDuotone } from "@solar-icons/react/bold-duotone/shop-2"
 import { SidebarMinimalisticIcon as SidebarMinimalisticBoldDuotone } from "@solar-icons/react/bold-duotone/sidebar-minimalistic"
 import { SliderHorizontalIcon as SliderHorizontalBoldDuotone } from "@solar-icons/react/bold-duotone/slider-horizontal"
 import { SmartphoneIcon as SmartphoneBoldDuotone } from "@solar-icons/react/bold-duotone/smartphone"
@@ -421,6 +423,7 @@ import { ServerIcon as ServerLinear } from "@solar-icons/react/linear/server"
 import { SettingsIcon as SettingsLinear } from "@solar-icons/react/linear/settings"
 import { ShareIcon as ShareLinear } from "@solar-icons/react/linear/share"
 import { ShieldCheckIcon as ShieldCheckLinear } from "@solar-icons/react/linear/shield-check"
+import { Shop2Icon as Shop2Linear } from "@solar-icons/react/linear/shop-2"
 import { SidebarMinimalisticIcon as SidebarMinimalisticLinear } from "@solar-icons/react/linear/sidebar-minimalistic"
 import { SliderHorizontalIcon as SliderHorizontalLinear } from "@solar-icons/react/linear/slider-horizontal"
 import { SmartphoneIcon as SmartphoneLinear } from "@solar-icons/react/linear/smartphone"
@@ -1000,6 +1003,11 @@ export const ShieldCheck = createIcon({
 	bold: ShieldCheckBoldWeight,
 	boldDuotone: ShieldCheckBoldDuotone,
 	linear: ShieldCheckLinear,
+})
+export const Shop2 = createIcon({
+	bold: Shop2BoldWeight,
+	boldDuotone: Shop2BoldDuotone,
+	linear: Shop2Linear,
 })
 export const SidebarMinimalistic = createIcon({
 	bold: SidebarMinimalisticBoldWeight,

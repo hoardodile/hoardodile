@@ -172,6 +172,7 @@
 			"privacy": "Privacidad",
 			"archive": "Archivo",
 			"plugins": "Complementos",
+			"marketplace": "Mercado",
 			"sync": "Sincronización"
 		},
 		"section": {
@@ -522,6 +523,37 @@
 			"container": "Contenedores",
 			"download": "Descargas"
 		}
+	},
+	"marketplace": {
+		"title": "Mercado de plugins",
+		"description": "Complementos publicados como lanzamientos de GitHub, descubiertos mediante un repositorio de registro propio.",
+		"registryRepoLabel": "Dirección del repositorio de registro",
+		"registryPlaceholder": "https://github.com/me/hoardodile-plugins",
+		"setupHint": "Escribe la dirección de un repositorio de GitHub cuya raíz contenga registry.json con las direcciones de tus repositorios de plugins (una por línea). El resto —nombres, versiones, permisos, notas— se lee automáticamente de cada repositorio y sus lanzamientos.",
+		"save": "Guardar",
+		"disable": "Desactivar",
+		"saved": "El mercado usa {{repo}}",
+		"notConfiguredHint": "No hay repositorio de registro configurado: escribe uno arriba para listar los plugins publicados como lanzamientos de GitHub.",
+		"loading": "Cargando el catálogo…",
+		"loadFailed": "Error al actualizar el mercado: {{message}}",
+		"refreshedAt": "Última actualización {{time}}",
+		"refresh": "Actualizar",
+		"refreshed": "Mercado actualizado",
+		"refreshFailed": "Error al actualizar el mercado",
+		"emptyHint": "El registro no incluye plugins todavía. Añade direcciones a registry.json y actualiza.",
+		"registryErrorsTitle": "Entradas del registro que no se pudieron cargar",
+		"install": "Instalar",
+		"update": "Actualizar",
+		"updateTo": "Actualizar a v{{version}}",
+		"installed": "Instalado v{{version}}",
+		"noRelease": "Aún no hay lanzamiento de GitHub",
+		"release": "Lanzamiento",
+		"installConfirmTitle": "¿Instalar el plugin desde GitHub?",
+		"updateConfirmTitle": "¿Actualizar {{name}}?",
+		"installing": "Instalando…",
+		"installConfirmNote": "Se instalará código de servidor desde el repositorio de GitHub indicado y se ejecutará en el mismo sandbox restringido que cualquier plugin. Los permisos declarados se muestran arriba. Instala solo desde repositorios de confianza.",
+		"installSuccess": "Instalado {{name}}",
+		"updateSuccess": "{{name}} actualizado a v{{version}}"
 	},
 	"overview": {
 		"usageHistory": {

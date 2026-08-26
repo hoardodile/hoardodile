@@ -172,6 +172,7 @@
 			"privacy": "プライバシー",
 			"archive": "アーカイブ",
 			"plugins": "プラグイン",
+			"marketplace": "マーケット",
 			"sync": "同期"
 		},
 		"section": {
@@ -522,6 +523,37 @@
 			"container": "コンテナ",
 			"download": "ダウンロード"
 		}
+	},
+	"marketplace": {
+		"title": "プラグインマーケット",
+		"description": "GitHub リリースで公開されたプラグインを、自分が所有するレジストリリポジトリ経由で一覧します。",
+		"registryRepoLabel": "レジストリリポジトリのアドレス",
+		"registryPlaceholder": "https://github.com/me/hoardodile-plugins",
+		"setupHint": "ルートに registry.json（プラグインリポジトリのアドレスを1行ずつ）を持つ GitHub リポジトリを入力してください。名前・バージョン・権限・リリースノートは自動的に各リポジトリとリリースから取得されます。",
+		"save": "保存",
+		"disable": "無効化",
+		"saved": "マーケットは {{repo}} を使用します",
+		"notConfiguredHint": "レジストリリポジトリが未設定です。上の欄にアドレスを入力すると、GitHub リリースで公開されたプラグインが表示されます。",
+		"loading": "カタログを読み込み中…",
+		"loadFailed": "マーケットの更新に失敗しました: {{message}}",
+		"refreshedAt": "最終更新 {{time}}",
+		"refresh": "更新",
+		"refreshed": "マーケットを更新しました",
+		"refreshFailed": "マーケットの更新に失敗しました",
+		"emptyHint": "レジストリにプラグインがまだありません。registry.json にリポジトリを追加して更新してください。",
+		"registryErrorsTitle": "読み込めなかったレジストリ項目",
+		"install": "インストール",
+		"update": "更新",
+		"updateTo": "v{{version}} に更新",
+		"installed": "v{{version}} インストール済み",
+		"noRelease": "GitHub リリースはまだありません",
+		"release": "リリース",
+		"installConfirmTitle": "GitHub からプラグインをインストールしますか？",
+		"updateConfirmTitle": "{{name}} を更新しますか？",
+		"installing": "インストール中…",
+		"installConfirmNote": "上記の GitHub リポジトリからサーバー側コードをインストールします。他のプラグインと同じ制限付きサンドボックスで実行され、宣言された権限は上に表示されています。信頼できるリポジトリからのみインストールしてください。",
+		"installSuccess": "{{name}} をインストールしました",
+		"updateSuccess": "{{name}} を v{{version}} に更新しました"
 	},
 	"overview": {
 		"usageHistory": {

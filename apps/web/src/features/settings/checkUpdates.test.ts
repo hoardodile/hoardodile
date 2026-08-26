@@ -3,7 +3,8 @@
  */
 
 import { afterEach, describe, expect, it, vi } from "vitest"
-import { checkForUpdate, compareVersions } from "./checkUpdates"
+import { compareVersions } from "@/lib/versions"
+import { checkForUpdate } from "./checkUpdates"
 
 describe("compareVersions", () => {
 	it("returns 0 for equal versions", () => {

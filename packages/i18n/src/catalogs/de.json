@@ -172,6 +172,7 @@
 			"privacy": "Datenschutz",
 			"archive": "Archiv",
 			"plugins": "Plugins",
+			"marketplace": "Marktplatz",
 			"sync": "Sync"
 		},
 		"section": {
@@ -522,6 +523,37 @@
 			"container": "Container",
 			"download": "Downloads"
 		}
+	},
+	"marketplace": {
+		"title": "Plugin-Marktplatz",
+		"description": "Plugins, die als GitHub-Releases veröffentlicht und über ein eigenes Registry-Repository gefunden werden.",
+		"registryRepoLabel": "Adresse des Registry-Repositories",
+		"registryPlaceholder": "https://github.com/me/hoardodile-plugins",
+		"setupHint": "Gib die Adresse eines GitHub-Repositorys an, dessen registry.json im Stammverzeichnis die Plugin-Repository-Adressen auflistet (eine pro Zeile). Alles andere — Namen, Versionen, Berechtigungen, Release-Notizen — wird automatisch aus jedem Repository und seinen Releases gelesen.",
+		"save": "Speichern",
+		"disable": "Deaktivieren",
+		"saved": "Marktplatz nutzt jetzt {{repo}}",
+		"notConfiguredHint": "Kein Registry-Repository konfiguriert — trage oben eine Adresse ein, um als GitHub-Releases veröffentlichte Plugins aufzulisten.",
+		"loading": "Katalog wird geladen…",
+		"loadFailed": "Marktplatz-Aktualisierung fehlgeschlagen: {{message}}",
+		"refreshedAt": "Zuletzt aktualisiert {{time}}",
+		"refresh": "Aktualisieren",
+		"refreshed": "Marktplatz aktualisiert",
+		"refreshFailed": "Marktplatz-Aktualisierung fehlgeschlagen",
+		"emptyHint": "Das Registry enthält noch keine Plugins. Füge Repository-Adressen zu registry.json hinzu und aktualisiere.",
+		"registryErrorsTitle": "Registry-Einträge, die nicht geladen werden konnten",
+		"install": "Installieren",
+		"update": "Aktualisieren",
+		"updateTo": "Auf v{{version}} aktualisieren",
+		"installed": "v{{version}} installiert",
+		"noRelease": "Noch kein GitHub-Release",
+		"release": "Release",
+		"installConfirmTitle": "Plugin von GitHub installieren?",
+		"updateConfirmTitle": "{{name}} aktualisieren?",
+		"installing": "Installiere…",
+		"installConfirmNote": "Es wird Servercode aus dem oben genannten GitHub-Repository installiert und im selben eingeschränkten Sandbox ausgeführt wie jedes Plugin. Die deklarierten Berechtigungen sind oben aufgeführt. Installiere nur aus vertrauenswürdigen Repositories.",
+		"installSuccess": "{{name}} installiert",
+		"updateSuccess": "{{name}} auf v{{version}} aktualisiert"
 	},
 	"overview": {
 		"usageHistory": {

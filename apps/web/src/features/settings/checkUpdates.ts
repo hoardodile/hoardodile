@@ -1,5 +1,5 @@
-import { compare } from "semver"
 import { APP_RELEASES_API_URL, APP_REPOSITORY_URL } from "@/lib/appInfo"
+import { compareVersions } from "@/lib/versions"
 
 export type UpdateCheckResult =
 	| { readonly status: "latest" }
@@ -9,25 +9,6 @@ export type UpdateCheckResult =
 			readonly url: string
 	  }
 	| { readonly status: "error" }
-
-/**
- * Comparator for semver strings; a leading `v` and missing trailing
- * segments are tolerated (`v1.2` === `1.2.0`). Prerelease ordering follows
- * semver precedence (`1.0.0-alpha` < `1.0.0-alpha.1` < `1.0.0-beta` <
- * `1.0.0`). Throws on versions that are not semver at all.
- */
-export function compareVersions(a: string, b: string): number {
-	return compare(padCoreVersion(a), padCoreVersion(b), { loose: true })
-}
-
-/** Fill missing major/minor/patch segments (`1.2` → `1.2.0`), keeping any prerelease suffix. */
-function padCoreVersion(v: string): string {
-	const [first, ...rest] = v.replace(/^v/, "").split("-")
-	const segments = (first ?? "").split(".")
-	while (segments.length < 3) segments.push("0")
-	const padded = segments.join(".")
-	return rest.length > 0 ? `${padded}-${rest.join("-")}` : padded
-}
 
 /**
  * Fetch the latest GitHub release and compare it against the running

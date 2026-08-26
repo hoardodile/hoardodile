@@ -172,6 +172,7 @@
 			"privacy": "Privacy",
 			"archive": "Archive",
 			"plugins": "Plugins",
+			"marketplace": "Marketplace",
 			"sync": "Sync"
 		},
 		"section": {
@@ -522,6 +523,37 @@
 			"container": "Containers",
 			"download": "Downloads"
 		}
+	},
+	"marketplace": {
+		"title": "Plugin marketplace",
+		"description": "Plugins published as GitHub releases, discovered through a registry repo you own.",
+		"registryRepoLabel": "Registry repo address",
+		"registryPlaceholder": "https://github.com/me/hoardodile-plugins",
+		"setupHint": "Paste a GitHub repository whose root registry.json lists your plugin repository addresses (one per line). Everything else — names, versions, permissions, release notes — is read automatically from each repo and its releases.",
+		"save": "Save",
+		"disable": "Disable",
+		"saved": "Marketplace now uses {{repo}}",
+		"notConfiguredHint": "No registry repo configured — paste one above to list plugins published as GitHub releases.",
+		"loading": "Loading catalog…",
+		"loadFailed": "Marketplace refresh failed: {{message}}",
+		"refreshedAt": "Last refreshed {{time}}",
+		"refresh": "Refresh",
+		"refreshed": "Marketplace refreshed",
+		"refreshFailed": "Marketplace refresh failed",
+		"emptyHint": "The registry lists no plugins yet. Add repository addresses to registry.json and refresh.",
+		"registryErrorsTitle": "Registry entries that could not be loaded",
+		"install": "Install",
+		"update": "Update",
+		"updateTo": "Update to v{{version}}",
+		"installed": "Installed v{{version}}",
+		"noRelease": "No GitHub release yet",
+		"release": "Release",
+		"installConfirmTitle": "Install plugin from GitHub?",
+		"updateConfirmTitle": "Update {{name}}?",
+		"installing": "Installing…",
+		"installConfirmNote": "This installs server-side code from the GitHub repository above, running in the same restricted sandbox as every plugin. The declared permissions are shown above. Only install from repositories you trust.",
+		"installSuccess": "Installed {{name}}",
+		"updateSuccess": "Updated {{name}} to v{{version}}"
 	},
 	"overview": {
 		"usageHistory": {

@@ -6,6 +6,7 @@ import {
 	PlugCircle,
 	RefreshCircle,
 	ShieldCheck,
+	Shop2,
 	SliderHorizontal,
 	Star,
 	WindowFrame,
@@ -20,6 +21,7 @@ export type SettingsTabKey =
 	| "privacy"
 	| "archive"
 	| "plugins"
+	| "marketplace"
 	| "sync"
 
 export type SettingsTab = {
@@ -33,6 +35,7 @@ export type SettingsTab = {
 		| "/settings/privacy"
 		| "/settings/backups"
 		| "/settings/plugins"
+		| "/settings/marketplace"
 		| "/settings/sync"
 	readonly icon: IconType
 	readonly testId: string
@@ -89,6 +92,12 @@ export const SETTINGS_TABS: readonly SettingsTab[] = [
 		path: "/settings/plugins",
 		icon: PlugCircle,
 		testId: "me-tab-plugins",
+	},
+	{
+		key: "marketplace",
+		path: "/settings/marketplace",
+		icon: Shop2,
+		testId: "me-tab-marketplace",
 	},
 	{
 		key: "sync",

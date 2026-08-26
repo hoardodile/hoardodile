@@ -13,6 +13,7 @@ describe("settingsTabs", () => {
 			"privacy",
 			"archive",
 			"plugins",
+			"marketplace",
 			"sync",
 		])
 	})

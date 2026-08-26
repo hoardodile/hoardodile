@@ -172,6 +172,7 @@
 			"privacy": "隐私",
 			"archive": "归档",
 			"plugins": "插件",
+			"marketplace": "插件市场",
 			"sync": "同步"
 		},
 		"section": {
@@ -522,6 +523,37 @@
 			"container": "容器",
 			"download": "下载"
 		}
+	},
+	"marketplace": {
+		"title": "插件市场",
+		"description": "通过你个人注册单仓库收录的、以 GitHub Release 发布的插件。",
+		"registryRepoLabel": "注册单仓库地址",
+		"registryPlaceholder": "https://github.com/me/hoardodile-plugins",
+		"setupHint": "填写一个 GitHub 仓库地址，其根目录 registry.json 按行列出插件仓库地址。其余信息——名称、版本、权限、发布说明——都会自动从各仓库及其 Release 读取。",
+		"save": "保存",
+		"disable": "停用",
+		"saved": "插件市场已使用 {{repo}}",
+		"notConfiguredHint": "尚未配置注册单仓库——填入上方地址即可陈列以 GitHub Release 发布的插件。",
+		"loading": "正在加载目录…",
+		"loadFailed": "插件市场刷新失败：{{message}}",
+		"refreshedAt": "上次刷新 {{time}}",
+		"refresh": "刷新",
+		"refreshed": "插件市场已刷新",
+		"refreshFailed": "插件市场刷新失败",
+		"emptyHint": "注册单还没有收录任何插件。在 registry.json 中添加仓库地址后刷新即可。",
+		"registryErrorsTitle": "无法加载的注册单条目",
+		"install": "安装",
+		"update": "更新",
+		"updateTo": "更新到 v{{version}}",
+		"installed": "已安装 v{{version}}",
+		"noRelease": "尚未发布 Release",
+		"release": "Release",
+		"installConfirmTitle": "从 GitHub 安装插件？",
+		"updateConfirmTitle": "更新 {{name}}？",
+		"installing": "正在安装…",
+		"installConfirmNote": "该操作会从上述 GitHub 仓库安装服务端代码，并与所有插件一样运行在受限沙箱中。上方展示了声明的权限。请只安装你信任的仓库。",
+		"installSuccess": "已安装 {{name}}",
+		"updateSuccess": "已将 {{name}} 更新到 v{{version}}"
 	},
 	"overview": {
 		"usageHistory": {
