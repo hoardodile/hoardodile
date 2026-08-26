@@ -6,22 +6,43 @@ import { expect, type Page } from "@playwright/test"
  * `--breakpoint-sidebar` (1150px, packages/ui/src/styles/theme.css) the
  * sidebar itself shows; below it the caption-strip drawer button
  * (`app-sidebar-open`) takes its place. CI runners vary in display width
- * (the GitHub Windows session display is 1024x768, which clamps the app's
- * 1440px window), so the sidebar alone must never be asserted — assert
- * the invariant both layouts share: the claim landed in the main shell.
+ * (the GitHub Windows session display clamps the app's 1440px window),
+ * so the sidebar alone must never be asserted — assert the invariant
+ * both layouts share: the claim landed in the main shell. On failure the
+ * rethrown error carries the live viewport and element state, so a
+ * runner-shaped problem is diagnosable from the failure output alone.
  */
 export async function expectShellRendered(
 	appWin: Page,
 	options: { readonly timeout?: number } = {},
 ): Promise<void> {
-	await expect
-		.poll(
-			() =>
-				appWin.getByTestId("app-sidebar").isVisible() ||
-				appWin.getByTestId("app-sidebar-open").isVisible(),
-			{ timeout: options.timeout ?? 15_000 },
+	const timeout = options.timeout ?? 15_000
+	try {
+		await expect
+			.poll(
+				() =>
+					appWin.getByTestId("app-sidebar").isVisible() ||
+					appWin.getByTestId("app-sidebar-open").isVisible(),
+				{ timeout },
+			)
+			.toBe(true)
+	} catch (error) {
+		const state = await appWin.evaluate(() => ({
+			url: location.href,
+			width: window.innerWidth,
+			height: window.innerHeight,
+			devicePixelRatio: window.devicePixelRatio,
+			sidebarClass:
+				document.querySelector('[data-testid="app-sidebar"]')?.className ??
+				null,
+			openButton:
+				document.querySelector('[data-testid="app-sidebar-open"]') !== null,
+		}))
+		throw new Error(
+			`main shell not rendered within ${timeout}ms (${JSON.stringify(state)})`,
+			{ cause: error },
 		)
-		.toBe(true)
+	}
 }
 
 /**
