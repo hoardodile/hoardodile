@@ -50,6 +50,7 @@
 		"@vitejs/plugin-react": "catalog:",
 		"babel-plugin-react-compiler": "catalog:",
 		"citty": "^0.2.2",
+		"fflate": "^0.8.3",
 		"vite": "catalog:"
 	},
 	"devDependencies": {

@@ -24,6 +24,7 @@ import {
 import { buildPlugin } from "./build.ts"
 import { executeCreate } from "./create.ts"
 import { executeDev } from "./dev.ts"
+import { packPlugin } from "./package.ts"
 import {
 	buildCliResourceAPI,
 	CliError,
@@ -314,6 +315,31 @@ export const main = defineCommand({
 						})
 					},
 				}),
+				package: defineCommand({
+					meta: {
+						name: "package",
+						description:
+							"Build a plugin and zip dist/ into release/<id>-<version>.zip — the artifact to attach to a GitHub release for the app's plugin marketplace.",
+					},
+					args: {
+						pluginDir: {
+							type: "string",
+							description:
+								"Plugin directory (manifest.json + package.json). Defaults to the current directory.",
+						},
+						skipBuild: {
+							type: "boolean",
+							description:
+								"Do not rebuild before packaging (uses the existing dist/).",
+						},
+					},
+					async run({ args }) {
+						return executePackage({
+							dir: args.pluginDir ?? process.cwd(),
+							skipBuild: args.skipBuild === true,
+						})
+					},
+				}),
 			},
 		}),
 	},
@@ -460,6 +486,27 @@ type BuildOptions = {
 async function executeBuild(opts: BuildOptions): Promise<number> {
 	try {
 		await buildPlugin(opts.dir, { watch: opts.watch })
+		return EXIT_PASS
+	} catch (err) {
+		console.error(
+			`[hoardodile] ${err instanceof Error ? err.message : String(err)}`,
+		)
+		return EXIT_ERROR
+	}
+}
+
+type PackageOptions = {
+	readonly dir: string
+	readonly skipBuild: boolean
+}
+
+async function executePackage(opts: PackageOptions): Promise<number> {
+	try {
+		const result = await packPlugin(opts.dir, { skipBuild: opts.skipBuild })
+		console.log(`${result.id} v${result.version} → ${result.zipPath}`)
+		console.log(`checksum: ${result.sha256Path}`)
+		console.log(`registry line: ${result.registryLine}`)
+		console.log(`publish: ${result.publishHint}`)
 		return EXIT_PASS
 	} catch (err) {
 		console.error(

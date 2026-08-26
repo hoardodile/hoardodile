@@ -605,6 +605,9 @@ importers:
       citty:
         specifier: ^0.2.2
         version: 0.2.2
+      fflate:
+        specifier: ^0.8.3
+        version: 0.8.3
       vite:
         specifier: 'catalog:'
         version: 8.2.2(@types/node@26.2.0)(esbuild@0.27.7)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.12)(yaml@2.9.0)
