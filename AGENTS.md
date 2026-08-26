@@ -12,7 +12,7 @@ Prerequisites: Node.js 24, pnpm (corepack), `pnpm install`; copy `.env.example` 
 - `pnpm desktop` — Electron dev shell; packaging per platform (`desktop:package` = Windows x64 NSIS+zip, `:linux` = AppImage, `:mac` = arm64 dmg+zip): stages the server runtime via shared `scripts/stage-runtime.mjs` (seed plugin set per `scripts/lib/plugin-channels.mjs`) plus a Node 24 sidecar runtime, then self-checks (`verify-package.mjs` natives/sandbox/asar guard, yml-driven `verify-feed.mjs`); `package:dir` + `test:e2e` = packaged Playwright launch smoke. Details: `apps/desktop/README.md`.
 - `pnpm docker:smoke` — compose-driven health/SPA/persistence check; the `docker` CI job also runs the web e2e against the container (`E2E_EXTERNAL_BASE_URL`).
 - `pnpm seed` — demo data only (refuses non-empty libraries and `HOARDODILE_PACKAGED=1` runtimes; admin password `demo`); `pnpm -F @hoardodile/server reset` / `reset:dev` — drop the admin password.
-- `hoardodile plugin <create|build|run|bench|dev>` — plugin CLI; scaffold via `pnpm dlx create-hoardodile-plugin <name>`.
+- `hoardodile plugin <create|build|package|run|bench|dev>` — plugin CLI (package = zip `dist/` into `release/<id>-<version>.zip` for a GitHub release); scaffold via `pnpm dlx create-hoardodile-plugin <name>`.
 
 Server config: env vars only, validated in `apps/server/src/config/env.ts` — no CLI flags.
 
@@ -39,7 +39,7 @@ packages/
   schemas/     App-internal Zod schemas (tables live in domain/*/schema.ts)
   i18n/        Published shared catalogs + i18next factory (app `translation` + component `ui` namespaces; used by the SPA, the desktop shell and the plugin SDK)
   ui/          Published shadcn/ui
-  cli/         Developer CLI — hoardodile plugin build/run/bench/dev
+  cli/         Developer CLI — hoardodile plugin create/build/package/run/bench/dev
 plugins/
   sdk-{types,server,web,react}/  Plugin contract + authoring SDK + iframe runtime
   host/        App-side runtime host — sandbox, hooks, storage (src/hoard/ + src/media/)
@@ -81,6 +81,6 @@ Drizzle migration pitfalls: split add+drop into two `db:generate` runs; `ADD COL
 
 ## Guardrails
 
-- No telemetry or external calls — the only authorized network requests are the user-triggered update check (desktop `autoUpdate` may fetch GitHub Release artifacts while the tray is alive) and user-consented plugin downloads (the plugin asset API: every download requires the shared consent dialog in the web UI, and the file lands only inside the plugin's own `vault/` folder).
+- No telemetry or external calls — the only authorized network requests are the user-triggered update check (desktop `autoUpdate` may fetch GitHub Release artifacts while the tray is alive), user-consented plugin downloads (the plugin asset API: every download requires the shared consent dialog in the web UI, and the file lands only inside the plugin's own `vault/` folder), and the plugin marketplace's user-triggered GitHub fetches: catalog refresh (registry + per-plugin manifests via raw URLs + `releases/latest` via the API, server-side, cached 10 min, on page open or explicit refresh) and user-confirmed install/update downloads of release assets (same hardened HTTP client; GitHub release hosts only).
 - No git mutations unless explicitly asked.
 - **Ask the user before modifying AGENTS.md.**
