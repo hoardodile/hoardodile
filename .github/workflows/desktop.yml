@@ -71,9 +71,13 @@ jobs:
       - name: Playwright launch smoke (Linux, under xvfb)
         if: runner.os == 'Linux'
         run: xvfb-run -a pnpm -F @hoardodile/desktop test:e2e
+        env:
+          HOARDODILE_E2E_APP_LOG: "1"
       - name: Playwright launch smoke
         if: runner.os != 'Linux'
         run: pnpm -F @hoardodile/desktop test:e2e
+        env:
+          HOARDODILE_E2E_APP_LOG: "1"
       - name: Upload Playwright report
         if: failure()
         uses: actions/upload-artifact@v7

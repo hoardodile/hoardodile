@@ -109,6 +109,13 @@ export async function launchDesktop(
 		timeout: 90_000,
 	})
 
+	// The shell's own diagnostics (sidecar stdout, resource logs) stay
+	// invisible otherwise — surface them on demand for CI debugging.
+	if (process.env.HOARDODILE_E2E_APP_LOG === "1") {
+		app.process().stdout?.on("data", (chunk) => process.stdout.write(chunk))
+		app.process().stderr?.on("data", (chunk) => process.stderr.write(chunk))
+	}
+
 	return {
 		app,
 		userDataDir,
