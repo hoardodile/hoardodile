@@ -46,4 +46,4 @@ catalog:
   zod: ^4.4.3
   zustand: ^5.0.15
 minimumReleaseAgeExclude:
-  - '@hoardodile/7z-bin@1.1.1'
+  - '@hoardodile/7z-bin@1.1.2'
