@@ -62,6 +62,13 @@ export type ResMediaThumbProps = {
 	 */
 	readonly onPreviewRequest?: () => void
 	/**
+	 * Show the magnifying-glass preview button on touch screens (below
+	 * `md`) without a hover, mirroring the card actions trigger. Defaults
+	 * to false: the button stays hover-only, which inline BlockNote
+	 * embeds rely on so ProseMirror mousedowns are never intercepted.
+	 */
+	readonly previewButtonTouchVisible?: boolean
+	/**
 	 * Optional badge rendered as the last (lowest) item of the bottom-left
 	 * slot-badge stack, e.g. the plugin-type badge on cards. Plugin-configured
 	 * `bl` badges always stack above it.
@@ -88,6 +95,7 @@ export function ResMediaThumb(props: ResMediaThumbProps) {
 		minWidth,
 		onVideoZoomRequest,
 		onPreviewRequest,
+		previewButtonTouchVisible,
 		blTrailingBadge,
 	} = props
 	const resource = useResDisplayResource(resourceProp)
@@ -233,17 +241,23 @@ export function ResMediaThumb(props: ResMediaThumbProps) {
 				<div className="pointer-events-none absolute inset-0 rounded-xl bg-white opacity-0 transition-opacity duration-300 group-hover:opacity-20" />
 			) : null}
 			{/* Magnifying-glass preview button at top-right. Revealed on
-			    hover so it never occludes
-			    the underlying thumb area — important when the thumb is an
-			    inline BlockNote node, where a permanently-mounted button
-			    intercepts the mousedown that ProseMirror needs to start a
-			    NodeSelection. While hidden it ignores pointer events. */}
+			    hover so it never occludes the underlying thumb area —
+			    important when the thumb is an inline BlockNote node, where
+			    a permanently-mounted button intercepts the mousedown that
+			    ProseMirror needs to start a NodeSelection. While hidden it
+			    ignores pointer events. Card grids opt into
+			    `previewButtonTouchVisible` so touch screens (no hover)
+			    see the button like the actions trigger. */}
 			{onPreviewRequest !== undefined ? (
 				<button
 					type="button"
 					aria-label={name}
 					onClick={onPreviewRequest}
-					className="pointer-events-none absolute right-2 top-2 z-10 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full bg-foreground/90 text-background opacity-0 shadow-card transition-opacity duration-200 group-hover:pointer-events-auto group-hover:opacity-100 hover:bg-foreground hover:text-background"
+					className={
+						previewButtonTouchVisible
+							? "pointer-events-auto absolute right-2 top-2 z-10 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full bg-foreground/90 text-background opacity-100 shadow-card transition-opacity duration-200 focus-visible:opacity-100 md:pointer-events-none md:opacity-0 md:group-hover:pointer-events-auto md:group-hover:opacity-100 hover:bg-foreground hover:text-background"
+							: "pointer-events-none absolute right-2 top-2 z-10 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full bg-foreground/90 text-background opacity-0 shadow-card transition-opacity duration-200 group-hover:pointer-events-auto group-hover:opacity-100 hover:bg-foreground hover:text-background"
+					}
 				>
 					<MagniferZoomIn className="size-4" />
 				</button>

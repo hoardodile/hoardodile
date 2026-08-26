@@ -212,6 +212,9 @@ export const ResCard = memo(function ResCard(props: ResCardProps) {
 					onPreviewRequest={
 						isPreviewable && !isSelectMode ? openPreview : undefined
 					}
+					// Touch screens have no hover: keep the preview button
+					// always visible below `md`, like the actions trigger.
+					previewButtonTouchVisible
 					blTrailingBadge={
 						contentPluginId != null ? (
 							<PluginCornerBadge pluginId={contentPluginId} />
