@@ -1,0 +1,43 @@
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build the plugin
+        run: pnpm build
+
+      - name: Check the tag matches the manifest version
+        run: |
+          node -e "const m = require('./manifest.json'); const tag = process.env.GITHUB_REF_NAME; const expected = 'v' + m.version; if (tag !== expected) { console.error('tag ' + tag + ' does not match manifest version ' + expected); process.exit(1) }"
+
+      - name: Package the release artifacts
+        run: pnpm exec hoardodile plugin package --skip-build
+
+      - name: Publish the GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          zip=$(ls release/*.zip)
+          gh release create "$GITHUB_REF_NAME" "$zip" "$zip.sha256" --generate-notes

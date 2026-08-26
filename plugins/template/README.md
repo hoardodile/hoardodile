@@ -47,6 +47,26 @@ server uses — the exact production execution path.
 
 ## Deploying
 
-Zip the contents of `dist/` (with `manifest.json` at the zip root) and
-upload in **Settings → Plugins**. The app validates the manifest,
-installs it, and rescans.
+Publish to the marketplace with two steps:
+
+```bash
+# 1. Add the repository address to your registry repo's registry.json:
+#    { "version": 1, "plugins": ["https://github.com/<owner>/<repo>"] }
+
+# 2. Tag the release — `.github/workflows/release.yml` builds, packages
+#    (`release/<id>-<version>.zip` + `.sha256`) and publishes the GitHub
+#    release automatically. No local `gh` CLI or token needed.
+git tag v<version> && git push origin v<version>
+```
+
+The tag must match the manifest version (`v<manifest.version>`) — the
+workflow fails otherwise. Then paste the registry repo address once in
+**Settings → Marketplace**. The app reads the registry, each plugin's
+manifest and its latest release — names, versions, permissions and
+release notes come straight from GitHub, so the list never needs editing
+again. The zip asset is `<id>-<version>.zip` (produced by
+`hoardodile plugin package`); before the first release the plugin shows
+up with a "no release" state.
+
+Local installs (zip upload in **Settings → Plugins**) still work for
+private packages.
