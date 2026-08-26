@@ -45,5 +45,12 @@ catalog:
   vitest: ^4.1.11
   zod: ^4.4.3
   zustand: ^5.0.15
+# New @hoardodile/7z-bin releases are excluded from minimumReleaseAge so
+# the workspace can consume them immediately. Bump flow: temporarily list
+# BOTH the old and the new version here, run `pnpm install` (only the one
+# dependency edge re-resolves; the old version drops out of the lockfile),
+# then remove the old version from this list. Never run `pnpm clean
+# --lockfile` for this: it re-resolves the whole tree and drags in
+# unrelated dependency upgrades that would pollute the commit.
 minimumReleaseAgeExclude:
-  - '@hoardodile/7z-bin@1.1.2'
+  - '@hoardodile/7z-bin@1.1.3'
