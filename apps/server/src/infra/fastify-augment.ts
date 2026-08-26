@@ -9,9 +9,12 @@ import type { ResCollectionService } from "src/domain/col/service.ts"
 import type { CommentService } from "src/domain/comment/service.ts"
 import type { DanmakuService } from "src/domain/danmaku/service.ts"
 import type { DocService } from "src/domain/doc/service.ts"
+import type { MarketplaceService } from "src/domain/marketplace/service.ts"
 import type { PluginAssetService } from "src/domain/plugin/asset-service.ts"
 import type { ConsentBroker } from "src/domain/plugin/consent.ts"
+import type { PluginDownloader } from "src/domain/plugin/downloader.ts"
 import type { PluginService } from "src/domain/plugin/service.ts"
+import type { PluginUploads } from "src/domain/plugin/upload.ts"
 import type {
 	AsyncPrefService,
 	CacheService,
@@ -118,9 +121,15 @@ declare module "fastify" {
 		readonly pluginLoader: PluginLoader
 		readonly pluginService: PluginService
 		readonly pluginHooks: PluginHooks
+		/** Hardened HTTP client behind plugin vault downloads (and the marketplace). */
+		readonly pluginDownloader: PluginDownloader
+		/** Plugin install pipeline: extraction, manifest validation, vault-safe commit. */
+		readonly pluginUploads: PluginUploads
 		/** Plugin asset vault pipeline (download/stat/read/delete, consent-gated). */
 		readonly pluginAssetService: PluginAssetService
 		/** Consent broker behind every plugin download ticket. */
 		readonly pluginAssetConsent: ConsentBroker
+		/** GitHub-release plugin marketplace (registry repo → catalog → install). */
+		readonly marketplaceService: MarketplaceService
 	}
 }

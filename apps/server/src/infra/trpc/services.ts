@@ -8,6 +8,7 @@ import type { ResCollectionService } from "src/domain/col/service.ts"
 import type { CommentService } from "src/domain/comment/service.ts"
 import type { DanmakuService } from "src/domain/danmaku/service.ts"
 import type { DocService } from "src/domain/doc/service.ts"
+import type { MarketplaceService } from "src/domain/marketplace/service.ts"
 import type { PluginAssetService } from "src/domain/plugin/asset-service.ts"
 import type { ConsentBroker } from "src/domain/plugin/consent.ts"
 import type { PluginService } from "src/domain/plugin/service.ts"
@@ -61,6 +62,7 @@ export interface RouterServices {
 	readonly pluginHooks: PluginHooks
 	readonly pluginAssetService: PluginAssetService
 	readonly pluginAssetConsent: ConsentBroker
+	readonly marketplaceService: MarketplaceService
 	readonly sessions: SessionStore
 	/**
 	 * Absolute path to the local temp directory (`<storageRoot>/local/cache/tmp`).

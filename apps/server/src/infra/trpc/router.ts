@@ -12,6 +12,7 @@ import { buildResourceCollectionRouter } from "src/domain/col/router.ts"
 import { buildCommentRouter } from "src/domain/comment/router.ts"
 import { buildDanmakuRouter } from "src/domain/danmaku/router.ts"
 import { buildDocumentRouter } from "src/domain/doc/router.ts"
+import { buildMarketplaceRouter } from "src/domain/marketplace/router.ts"
 import { buildPluginAssetRouter } from "src/domain/plugin/asset-router.ts"
 import { buildPluginRouter } from "src/domain/plugin/router.ts"
 import {
@@ -99,6 +100,9 @@ export function buildDomainRouter(services: RouterServices) {
 			pluginAsset: buildPluginAssetRouter({
 				service: services.pluginAssetService,
 				consent: services.pluginAssetConsent,
+			}),
+			marketplace: buildMarketplaceRouter({
+				service: services.marketplaceService,
 			}),
 			systemPreference: buildSystemPreferenceRouter(services.systemPrefService),
 			asyncPreference: buildAsyncPreferenceRouter(services.asyncPrefService),

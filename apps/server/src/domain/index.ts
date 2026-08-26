@@ -10,6 +10,7 @@ import { resCollectionPlugin } from "./col/plugin.ts"
 import { commentPlugin } from "./comment/plugin.ts"
 import { danmakuPlugin } from "./danmaku/plugin.ts"
 import { docPlugin } from "./doc/plugin.ts"
+import { marketplacePlugin } from "./marketplace/plugin.ts"
 import { pluginDomain } from "./plugin/plugin.ts"
 import { prefPlugin } from "./prefs/plugin.ts"
 import { resPlugin } from "./res/plugin.ts"
@@ -39,6 +40,7 @@ async function domainPluginsImpl(app: Parameters<FastifyPluginAsync>[0]) {
 	await app.register(commentPlugin)
 	await app.register(danmakuPlugin)
 	await app.register(prefPlugin)
+	await app.register(marketplacePlugin)
 	await app.register(searchPlugin)
 	await app.register(usagePlugin)
 	await app.register(storagePlugin)

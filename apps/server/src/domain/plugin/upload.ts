@@ -6,7 +6,10 @@ import { pluginManifest as pluginManifestSchema } from "@hoardodile/sdk-types/sc
 import { invalid } from "@hoardodile/shared"
 
 export type PluginUploads = {
-	readonly installFromZip: (archive: NodeJS.ReadableStream) => Promise<string>
+	readonly installFromZip: (
+		archive: NodeJS.ReadableStream,
+		opts?: { readonly expectedId?: string },
+	) => Promise<string>
 }
 
 export type PluginUploadsDeps = {
@@ -42,6 +45,7 @@ export function buildPluginUploads(deps: PluginUploadsDeps): PluginUploads {
 
 	async function installFromZip(
 		archive: NodeJS.ReadableStream,
+		opts?: { readonly expectedId?: string },
 	): Promise<string> {
 		const stagingId = randomUUID()
 		const stagingDir = join(stagingRoot, `plugin-extract-${stagingId}`)
@@ -92,6 +96,14 @@ export function buildPluginUploads(deps: PluginUploadsDeps): PluginUploads {
 			}
 
 			const { id } = result.data
+
+			if (opts?.expectedId !== undefined && id !== opts.expectedId) {
+				throw invalid(
+					"plugin.upload_manifest_id_mismatch",
+					"plugin zip manifest id does not match the expected plugin id",
+					{ expected: opts.expectedId, actual: id },
+				)
+			}
 
 			const symlink = await findSymlinkEntry(stagingDir)
 			if (symlink !== undefined) {

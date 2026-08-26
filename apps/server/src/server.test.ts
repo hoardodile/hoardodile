@@ -1787,6 +1787,32 @@ describe("plugin upload limits", () => {
 		expect(res.json().kind).toBe("resource.archive_too_large")
 	})
 
+	test("marketplace install rejects non-GitHub hosts and unauthenticated calls", async () => {
+		const cookie = await loginCookie()
+		const payload = {
+			id: "22222222-2222-4222-8222-222222222222",
+			assetUrl: "https://evil.example.com/plugin.zip",
+		}
+		// The host allowlist is the first gate: no download is attempted.
+		const res = await built.app.inject({
+			method: "POST",
+			url: "/api/plugin-marketplace/install",
+			remoteAddress: "127.0.0.1",
+			headers: { cookie },
+			payload,
+		})
+		expect(res.statusCode).toBe(400)
+		expect(res.json().kind).toBe("marketplace.asset_host_forbidden")
+
+		const unauth = await built.app.inject({
+			method: "POST",
+			url: "/api/plugin-marketplace/install",
+			remoteAddress: "127.0.0.1",
+			payload,
+		})
+		expect(unauth.statusCode).toBe(401)
+	})
+
 	test("re-uploading (updating) a plugin keeps its asset vault", async () => {
 		const cookie = await loginCookie()
 		const baseManifest = {

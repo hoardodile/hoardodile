@@ -171,4 +171,31 @@ describe("createPluginDownloader", () => {
 		})
 		expect(() => dl.vetUrl("http://127.0.0.1:1/x")).toThrow()
 	})
+
+	test("per-call maxBytes overrides the constructor cap", async () => {
+		const base = await listen((_req, res) => {
+			res.writeHead(200)
+			res.end("x".repeat(40))
+		})
+		const dl = downloader({ maxBytes: 4 * 1024 * 1024 })
+		const target = join(tempDir(), "cap.bin")
+		// Constructor allows 4 MiB; the per-call cap of 16 bytes still trips.
+		await expect(
+			dl.fetchToFile(`${base}/big`, target, { maxBytes: 16 }),
+		).rejects.toMatchObject({ name: "POLICY" })
+	})
+
+	test("per-call headers are merged over the default request headers", async () => {
+		let seenUserAgent: string | undefined
+		const base = await listen((req, res) => {
+			seenUserAgent = req.headers["user-agent"]
+			res.writeHead(200)
+			res.end("ok")
+		})
+		const dl = downloader()
+		await dl.fetchToFile(`${base}/x`, join(tempDir(), "h.bin"), {
+			headers: { "User-Agent": "hoardodile-test" },
+		})
+		expect(seenUserAgent).toBe("hoardodile-test")
+	})
 })

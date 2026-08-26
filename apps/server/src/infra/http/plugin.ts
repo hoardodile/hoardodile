@@ -9,6 +9,7 @@ import { charThumbsPlugin } from "./char-thumbs.ts"
 import { coversPlugin } from "./covers.ts"
 import { imageSearchPlugin } from "./image-search.ts"
 import { pluginAssetsPlugin } from "./plugin-assets.ts"
+import { pluginMarketplacePlugin } from "./plugin-marketplace.ts"
 import { pluginUploadPlugin } from "./plugin-upload.ts"
 
 import { resFilesPlugin } from "./res-files.ts"
@@ -176,6 +177,7 @@ async function protectedHttpPluginImpl(app: FastifyInstance): Promise<void> {
 	await app.register(uploadPreviewsPlugin)
 	await app.register(pluginUploadPlugin)
 	await app.register(pluginAssetsPlugin)
+	await app.register(pluginMarketplacePlugin)
 	await app.register(coversPlugin)
 	await app.register(imageSearchPlugin)
 	await app.register(cacheAdminPlugin)

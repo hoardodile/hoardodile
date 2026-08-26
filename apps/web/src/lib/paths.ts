@@ -78,5 +78,9 @@ export const apiPaths = {
 
 	pluginUpload: () => "/api/plugin-upload",
 
+	pluginMarketplace: {
+		install: () => "/api/plugin-marketplace/install",
+	},
+
 	events: () => "/api/events",
 } as const

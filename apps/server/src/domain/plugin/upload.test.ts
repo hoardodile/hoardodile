@@ -84,6 +84,22 @@ describe("buildPluginUploads", () => {
 		expect(readdirSync(stagingRoot)).toEqual([])
 	})
 
+	test("rejects a zip with a manifest id that differs from the expected id", async () => {
+		const uploads = uploadsWith(async (_source, destDir) => {
+			await writeFile(join(destDir, "manifest.json"), MANIFEST)
+		})
+
+		await expect(
+			uploads.installFromZip(Readable.from(["zip-bytes"]), {
+				expectedId: "99999999-9999-4999-8999-999999999999",
+			}),
+		).rejects.toThrow("does not match the expected plugin id")
+		// Nothing was committed: the check runs before the extracted dir
+		// would ever reach `commit`.
+		expect(readdirSync(pluginsDir)).toEqual([])
+		expect(readdirSync(stagingRoot)).toEqual([])
+	})
+
 	test("rejects a zip without a root manifest.json", async () => {
 		const uploads = uploadsWith(async () => {})
 

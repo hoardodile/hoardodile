@@ -50,10 +50,19 @@ export type PluginDownloader = {
 	 * Fetch `url` into `targetPath` (a vault staging file). Resolves with
 	 * the stored bytes' size and sha256, computed from the exact bytes
 	 * written. The caller owns staging cleanup on failure.
+	 *
+	 * `opts.headers` are merged over the default request headers (needed
+	 * by hosts like `api.github.com` that require a `User-Agent`);
+	 * `opts.maxBytes` overrides the per-request cap (used for small JSON
+	 * payloads that must fail early instead of following the big default).
 	 */
 	fetchToFile(
 		url: string,
 		targetPath: string,
+		opts?: {
+			readonly headers?: Readonly<Record<string, string>>
+			readonly maxBytes?: number
+		},
 	): Promise<{ readonly sizeBytes: number; readonly sha256: string }>
 	/**
 	 * Cheap `Content-Length` probe (`undefined` when the server does not
@@ -136,12 +145,19 @@ export function createPluginDownloader(
 	async function fetchToFile(
 		rawUrl: string,
 		targetPath: string,
+		opts?: {
+			readonly headers?: Readonly<Record<string, string>>
+			readonly maxBytes?: number
+		},
 	): Promise<{ readonly sizeBytes: number; readonly sha256: string }> {
 		let url = parseHttpUrl(rawUrl)
 		assertHostAllowed(url.hostname)
 		let followed = 0
 		for (;;) {
-			const outcome = await transferOnce(url, targetPath)
+			const outcome = await transferOnce(url, targetPath, {
+				maxBytes: opts?.maxBytes ?? deps.maxBytes,
+				headers: opts?.headers,
+			})
 			if (outcome.kind === "redirect") {
 				followed += 1
 				if (followed > DEFAULT_MAX_REDIRECTS) {
@@ -194,6 +210,10 @@ export function createPluginDownloader(
 	async function transferOnce(
 		url: URL,
 		targetPath: string,
+		xfer: {
+			readonly maxBytes: number
+			readonly headers?: Readonly<Record<string, string>>
+		},
 	): Promise<
 		| {
 				readonly kind: "done"
@@ -206,6 +226,7 @@ export function createPluginDownloader(
 			const req = requestUrl(url, {
 				method: "GET",
 				timeoutMs: deps.timeoutMs,
+				headers: xfer.headers,
 				onResponse: (res) => {
 					const status = res.statusCode ?? 0
 					if (status >= 300 && status < 400) {
@@ -234,11 +255,11 @@ export function createPluginDownloader(
 					const limiter = new Transform({
 						transform(chunk: Buffer, _enc, cb) {
 							seen += chunk.length
-							if (seen > deps.maxBytes) {
+							if (seen > xfer.maxBytes) {
 								cb(
 									pluginAssetError(
 										"POLICY",
-										`plugin download exceeded the ${deps.maxBytes}-byte cap: ${url.href}`,
+										`plugin download exceeded the ${xfer.maxBytes}-byte cap: ${url.href}`,
 									),
 								)
 								return
@@ -269,6 +290,7 @@ export function createPluginDownloader(
 		opts: {
 			readonly method: "GET" | "HEAD"
 			readonly timeoutMs: number
+			readonly headers?: Readonly<Record<string, string>>
 			readonly onResponse: (res: http.IncomingMessage) => void
 		},
 	): http.ClientRequest {
@@ -284,6 +306,7 @@ export function createPluginDownloader(
 				headers: {
 					Accept: "*/*",
 					"Accept-Encoding": "identity",
+					...opts.headers,
 				},
 			},
 			opts.onResponse,

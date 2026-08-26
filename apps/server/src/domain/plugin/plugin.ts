@@ -1,5 +1,5 @@
-import { readFileSync } from "node:fs"
-import { rm } from "node:fs/promises"
+import { existsSync, readFileSync } from "node:fs"
+import { mkdir, rm } from "node:fs/promises"
 import { join } from "node:path"
 import type { PluginAssetHandler } from "@hoardodile/host"
 import {
@@ -9,7 +9,11 @@ import {
 	DEFAULT_SANDBOX_CONFIG,
 	seedPlugins,
 } from "@hoardodile/host"
-import { assertSafeSegment, writeVersioned } from "@hoardodile/host/hoard"
+import {
+	assertSafeSegment,
+	extractArchiveInto,
+	writeVersioned,
+} from "@hoardodile/host/hoard"
 import { PLUGIN_READ_FILE_MAX_BYTES } from "@hoardodile/sdk-types/plugin"
 import type { FastifyInstance, FastifyPluginAsync } from "fastify"
 import fp from "fastify-plugin"
@@ -20,6 +24,7 @@ import { createConsentBroker } from "./consent.ts"
 import { createPluginDownloader } from "./downloader.ts"
 import { createPluginService } from "./service.ts"
 import { createPluginSettingsStore } from "./settings-store.ts"
+import { buildPluginUploads, moveDir } from "./upload.ts"
 
 async function pluginDomainImpl(app: FastifyInstance): Promise<void> {
 	const builtinDir = app.env.BUILTIN_PATH
@@ -68,6 +73,43 @@ async function pluginDomainImpl(app: FastifyInstance): Promise<void> {
 		timeoutMs: 60_000,
 		allowPrivate: app.env.PLUGIN_DOWNLOAD_ALLOW_PRIVATE,
 	})
+	app.decorate("pluginDownloader", downloader)
+
+	// One upload pipeline serves both the browser's zip upload and the
+	// marketplace's URL install — the commit step (writeVersioned + vault
+	// preservation) must be identical for local and remote installs.
+	const uploads = buildPluginUploads({
+		stagingRoot: app.paths.local.uploadStagingRoot(),
+		commit: async (stagingDir, id) => {
+			await writeVersioned(app.paths, app.readOnly, async (latest) => {
+				const destDir = join(latest.plugins(), assertSafeSegment(id))
+				await mkdir(latest.plugins(), { recursive: true })
+				// The host-managed vault survives a plugin update: move it
+				// aside (host-local staging), swap the tree, move it back.
+				// A crash in between strands the vault in the staging root,
+				// which startup cleanup reclaims — the plugin re-fetches.
+				const vaultDir = join(destDir, "vault")
+				const stashDir = join(
+					app.paths.local.uploadStagingRoot(),
+					`plugin-vault-${id}-${Date.now()}`,
+				)
+				const hasVault = existsSync(vaultDir)
+				if (hasVault) {
+					await moveDir(vaultDir, stashDir)
+				}
+				if (existsSync(destDir)) {
+					await rm(destDir, { recursive: true, force: true })
+				}
+				await moveDir(stagingDir, destDir)
+				if (existsSync(stashDir)) {
+					await moveDir(stashDir, join(destDir, "vault"))
+				}
+			})
+		},
+		extractArchive: extractArchiveInto,
+		maxExtractedBytes: app.env.PLUGIN_UPLOAD_MAX_BYTES,
+	})
+	app.decorate("pluginUploads", uploads)
 
 	// The asset service is referenced through closures only — invoked at
 	// hook/tRPC time, long after `loader` initialized below.
