@@ -119,4 +119,27 @@ describe("MemoriesBlock", () => {
 		expect(screen.getByText("Last year")).toBeInTheDocument()
 		expect(screen.getByText("Three years")).toBeInTheDocument()
 	})
+
+	it("drives the strip with the pinned section's marquee chevrons", async () => {
+		const now = Date.now()
+		const year = new Date(now).getFullYear()
+		memoriesHandler.mockImplementation(() => [
+			stubResCard("res-1", "Last year", {
+				createdAt: new Date(year - 1, 0, 1).getTime(),
+			}),
+			stubResCard("res-2", "Two years", {
+				createdAt: new Date(year - 2, 0, 1).getTime(),
+			}),
+		])
+		await renderBlock()
+
+		expect(
+			await screen.findByTestId("overview-memories-block"),
+		).toBeInTheDocument()
+		expect(screen.getByRole("button", { name: "Previous" })).toBeInTheDocument()
+		expect(screen.getByRole("button", { name: "Next" })).toBeInTheDocument()
+		// The years-ago captions survive the swap to the marquee strip.
+		expect(screen.getByText("Last year on this day")).toBeInTheDocument()
+		expect(screen.getByText("2 years ago on this day")).toBeInTheDocument()
+	})
 })

@@ -1,4 +1,4 @@
-import type { RefObject } from "react"
+import type { ReactNode, RefObject } from "react"
 import type { ResCardListResult } from "@/features/res/api"
 import { ResCard } from "@/features/res/components/ResCard"
 import { Marquee, type MarqueeHandle } from "./Marquee"
@@ -11,6 +11,14 @@ export type ResCardMarqueeStripProps = {
 	readonly stripRef?: RefObject<MarqueeHandle | null>
 	/** Uniform card height; cards scale their width to the cover ratio. */
 	readonly thumbHeightPx?: number
+	/**
+	 * Optional per-card caption rendered above the card (same column, so
+	 * each card travels with its label through the marquee). Used by the
+	 * "On this day" section to keep its years-ago captions.
+	 */
+	readonly captionFor?: (
+		resource: ResCardListResult["rows"][number],
+	) => ReactNode
 	readonly skeletonCount?: number
 	readonly testId?: string
 	readonly skeletonTestId?: string
@@ -29,6 +37,7 @@ export function ResCardMarqueeStrip(props: ResCardMarqueeStripProps) {
 		emptyLabel,
 		stripRef,
 		thumbHeightPx = 240,
+		captionFor,
 		skeletonCount = 8,
 		testId,
 		skeletonTestId,
@@ -58,7 +67,14 @@ export function ResCardMarqueeStrip(props: ResCardMarqueeStripProps) {
 				<Marquee ref={stripRef}>
 					{rows.map((resource) => (
 						<div key={resource.id} className="flex items-start">
-							<ResCard resource={resource} thumbFitHeight={thumbHeightPx} />
+							{captionFor !== undefined ? (
+								<div className="flex flex-col gap-2">
+									{captionFor(resource)}
+									<ResCard resource={resource} thumbFitHeight={thumbHeightPx} />
+								</div>
+							) : (
+								<ResCard resource={resource} thumbFitHeight={thumbHeightPx} />
+							)}
 						</div>
 					))}
 				</Marquee>
