@@ -1,5 +1,34 @@
 # Changelog
 
+## [0.1.1](https://github.com/hoardodile/hoardodile/compare/v0.1.0...v0.1.1) (2026-08-26)
+
+### Features
+
+* **cli:** package plugins for GitHub releases with sha256 artifacts ([ac93856](https://github.com/hoardodile/hoardodile/commit/ac938561bc1eb8d95249e063d391b1ed58632ff5))
+* **create-plugin:** tag-triggered release workflow in the plugin template ([517892d](https://github.com/hoardodile/hoardodile/commit/517892db5e6f8ee62153a097e5c91e8d3c6e07dd))
+* **desktop:** lock-on-close sign-in, reopen continuity, LAN polish ([674cb5a](https://github.com/hoardodile/hoardodile/commit/674cb5a0f69b8dc4611bfc9dae17c14bae3224cf))
+* **desktop:** unified logo-only loading states ([dcccdda](https://github.com/hoardodile/hoardodile/commit/dcccdda25d200fb008c258c5cb399cb90aa53276))
+* **sdk-types:** batched plugin downloads with one consent dialog ([7555cc2](https://github.com/hoardodile/hoardodile/commit/7555cc25170a7bfaf82e99d1cac5dd7dc08b3cdd))
+* **server:** GitHub-release plugin marketplace ([c0b70a4](https://github.com/hoardodile/hoardodile/commit/c0b70a41606c6246d827b1612af03478c16b2f65))
+* **web:** inline first-paint splash logo, morph onto login ([1c2a71d](https://github.com/hoardodile/hoardodile/commit/1c2a71d6b52b1fc0c254da8ee6c9288920b2596d))
+* **web:** memories strip reuses the pinned-section marquee ([92d5847](https://github.com/hoardodile/hoardodile/commit/92d584793c8d45ef03608768f290de354391f19d))
+* **web:** plugin marketplace settings tab ([ef8898e](https://github.com/hoardodile/hoardodile/commit/ef8898eeb7bb566d24b800240b2555b169ce27ee))
+* **web:** resilient doc diff and detail meta dates ([0558a44](https://github.com/hoardodile/hoardodile/commit/0558a4425ae33caaff5473a5f7718b27eb9a315b))
+* **web:** show the thumb preview button on touch screens ([53a2848](https://github.com/hoardodile/hoardodile/commit/53a28480a422c39af09d4a50a3884e9091a4f8b7))
+* **web:** Solar glyph icons for manifests and templates (three weights, lazy) ([b326d94](https://github.com/hoardodile/hoardodile/commit/b326d946d3cd2534bec7c9fa2f80c6b31973142e))
+
+### Bug Fixes
+
+* **ci:** don't trim inherited stdout in ensure-release-draft ([c004642](https://github.com/hoardodile/hoardodile/commit/c004642630472d158d66d3c26188c8d332e3776c))
+* **ci:** report command errors in ensure-release-draft ([3225990](https://github.com/hoardodile/hoardodile/commit/3225990b86608c7c3a06b9ac7be6969199e112f3))
+* **desktop:** clobber existing resource-pack assets on upload ([83137fc](https://github.com/hoardodile/hoardodile/commit/83137fc0f18501b0f945598918caed209b65579e))
+* **host:** bump @hoardodile/7z-bin to 1.1.1 for Windows-safe extraction ([f5c759b](https://github.com/hoardodile/hoardodile/commit/f5c759b172f575f45df045a238eff159dfc2f74b))
+* **host:** bump @hoardodile/7z-bin to 1.1.2 (pure-JS node-tar extraction) ([4d017c0](https://github.com/hoardodile/hoardodile/commit/4d017c0d359d4801b1025c882cfb5b0d38a21fc1))
+* **root:** mark shipped bin launchers executable ([5f44845](https://github.com/hoardodile/hoardodile/commit/5f44845aae7ca584ae1dbd0bfd70c37a986d6de1))
+* **root:** repair the release pipeline for v0.1.0 ([2e0daf1](https://github.com/hoardodile/hoardodile/commit/2e0daf1c91a91984b1ceb7c45aa49c2182e88176))
+* **scripts:** import dirname in release.mjs ([b96e8ac](https://github.com/hoardodile/hoardodile/commit/b96e8ac53a99da700f169d489b417fdc74b3850d))
+* **web:** pin prosemirror-changeset to 2.4.1 to restore document diffs ([540db5e](https://github.com/hoardodile/hoardodile/commit/540db5e960ef51ad15208e987c0f0ae8b94921d2))
+
 ## 0.1.0 (2026-08-25)
 
 ### Features
