@@ -2,7 +2,7 @@
 
 ## Getting the SDK (bootstrap)
 
-The `@hoardodile/*` release set is on npm (0.0.0): the SDK closure
+The `@hoardodile/*` release set is on npm (0.1.1): the SDK closure
 (`sdk-{types,web,react,server}`, `ui`, `i18n`) plus the terminal
 packages (`cli`, `host`, `host-web`, `workbench`) and the
 `create-plugin` scaffolder. Install from the registry directly — no
@@ -94,8 +94,10 @@ hoardodile plugin dev             # watch-build + workbench (http://127.0.0.1:51
 - **Plugin asset downloads in the workbench** work the same way as the
   app: the same consent dialog (Allow / Deny / remember-this-session),
   backed by the dev server instead of tRPC. Declare `"download": true`
-  in the manifest; on `download()` the dialog appears, and on approval
-  the dev server fetches the URL into `<pluginDir>/.hoardodile/vault/<id>/…`
+  in the manifest; on `download()` (single or batched) the dialog
+  appears — one dialog per call, listing every item of a batch — and on
+  approval the dev server fetches the URLs into
+  `<pluginDir>/.hoardodile/vault/<id>/…`
   (never in `--data` or the read-only `--storage` library) and serves it
   at `/api/plugin-assets/<id>/<token>/<path>` — the token is dev-only and
   not verified, so `resolveAssetUrl` works unmodified. The same policy

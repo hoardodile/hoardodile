@@ -183,9 +183,14 @@ The same user-consented downloads as `main.js` — one server pipeline,
 one dialog:
 
 - `download({ url, dest, sha256?, reason? }): Promise<{ path, sizeBytes, sha256, cached }>`
-  — cached destinations resolve with **no dialog and no network**;
-  otherwise the web app asks (URL shown verbatim; "remember for this
-  session" skips further prompts). Rejections carry `err.name`:
+  or `download([…]): Promise<readonly { path, sizeBytes, sha256, cached }[]>`
+  — pass an **array of requests** to fetch several files under ONE
+  consent question: one dialog lists every item (URLs verbatim), the
+  batch is all-or-nothing (any failure discards all staged files and
+  rejects with the first error), results arrive in request order, and
+  the cap is 16 items per call. Cached destinations resolve with **no
+  dialog and no network**; otherwise the web app asks ("remember for
+  this session" skips further prompts). Rejections carry `err.name`:
   `DENIED` / `UNAVAILABLE` / `POLICY`. Gated by the manifest `download`
   permission.
 - `resolveAssetUrl(path)` — URL of a vault file (JS served with an exact

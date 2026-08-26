@@ -4,7 +4,7 @@ description: Author hoardodile content plugins — manifest, server hooks, ifram
 license: MIT
 metadata:
   author: hoardodile
-  version: "1.1.0"
+  version: "1.2.0"
 ---
 
 # Hoardodile Plugin Development
@@ -36,7 +36,7 @@ lives in `references/`.
 ## Workflow
 
 1. **Get the SDK.** The `@hoardodile/*` release set is on npm
-   (0.0.0) — `pnpm dlx create-hoardodile-plugin <name>` scaffolds a
+   (0.1.1) — `pnpm dlx create-hoardodile-plugin <name>` scaffolds a
    plugin prewired to the published SDK. Registry install only — no
    tarballs or `file:` overrides. Full details:
    `references/tooling.md`.
@@ -45,7 +45,9 @@ lives in `references/`.
    or UI hooks; `container: true` additionally unlocks
    `listContainer`/`extractArchive`, which the sandbox denies
    otherwise; `download: true` unlocks the user-consented asset vault —
-   every download still asks the user per file). The server `main.js`
+   every `download()` call asks via the shared consent dialog, and one
+   batched `download([…])` is a single dialog for the whole batch). The
+   server `main.js`
    runs in a capability sandbox — its only privileged interface is the
    `ResourceAPI` RPC, so never reach for `node:` builtins.
    `references/manifest.md`.
