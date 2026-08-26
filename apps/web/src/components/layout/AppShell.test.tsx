@@ -172,7 +172,11 @@ describe("AppShell sidebar", () => {
 		expect(sidebar?.querySelector('a[href="/resources"]')).not.toBeNull()
 		expect(sidebar?.querySelector('a[href="/messages"]')).not.toBeNull()
 		expect(sidebar?.querySelector('a[href="/settings"]')).not.toBeNull()
-		// Feedback & About is the second footer row, straight to the About tab.
+		// Marketplace & Feedback & About are the footer rows that own their
+		// settings tabs (straight to the Marketplace / About tab).
+		expect(
+			sidebar?.querySelector('a[href="/settings/marketplace"]'),
+		).not.toBeNull()
 		expect(sidebar?.querySelector('a[href="/settings/about"]')).not.toBeNull()
 		// The storage strip is the shell's way to Settings → Data.
 		await waitFor(() => {
@@ -283,6 +287,7 @@ describe("AppShell module menu", () => {
 		).toBeNull()
 		expect(sidebar.querySelector('a[href="/settings"]')).toBeNull()
 		expect(sidebar.querySelector('a[href="/settings/data"]')).toBeNull()
+		expect(sidebar.querySelector('a[href="/settings/marketplace"]')).toBeNull()
 		expect(sidebar.querySelector('a[href="/characters"]')).toBeNull()
 		const slot = sidebar.querySelector("[data-sidebar-slot]")
 		expect(slot).not.toBeNull()

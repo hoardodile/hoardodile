@@ -9,6 +9,7 @@ import {
 	HomeAngle,
 	InfoCircle,
 	Settings,
+	Shop2,
 	UndoRightRound,
 	UsersGroupRounded,
 } from "@hoardodile/ui/icons/registry"
@@ -421,11 +422,23 @@ function SidebarContent(props: SidebarContentProps) {
 									pathname: props.pathname,
 									to: "/settings",
 								}) &&
-								// The Feedback & About row owns the About tab —
-								// one highlight per destination.
-								!props.pathname.startsWith("/settings/about")
+								// The Marketplace and Feedback & About rows
+								// own their tabs — one highlight per
+								// destination.
+								!props.pathname.startsWith("/settings/about") &&
+								!props.pathname.startsWith("/settings/marketplace")
 							}
 							alert={syncAlert}
+							onNavigate={props.onNavigate}
+						/>
+						<NavRow
+							to="/settings/marketplace"
+							icon={Shop2}
+							label={t("appShell.nav.marketplace")}
+							active={isRouteActive({
+								pathname: props.pathname,
+								to: "/settings/marketplace",
+							})}
 							onNavigate={props.onNavigate}
 						/>
 						<NavRow
@@ -615,6 +628,7 @@ type NavPath =
 	| "/messages"
 	| "/settings"
 	| "/settings/about"
+	| "/settings/marketplace"
 
 type NavRowProps = {
 	readonly to: NavPath
