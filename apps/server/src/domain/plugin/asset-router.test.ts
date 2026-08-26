@@ -19,6 +19,7 @@ const RESULT: PluginDownloadResult = {
 
 function createCaller(opts?: { readOnly?: boolean }) {
 	const service: PluginAssetService = {
+		requestDownloads: vi.fn(async () => [RESULT]),
 		requestDownload: vi.fn(async () => RESULT),
 		statAsset: vi.fn(async () => undefined),
 		readAsset: vi.fn(async () => new Uint8Array()),
@@ -43,19 +44,33 @@ function createCaller(opts?: { readOnly?: boolean }) {
 }
 
 describe("pluginAsset router", () => {
-	test("request forwards to the service", async () => {
+	test("request forwards the batch to the service", async () => {
 		const { caller, service } = createCaller()
 		await expect(
 			caller.request({
 				pluginId: PLUGIN_ID,
+				items: [
+					{
+						url: "https://example.com/runtime.mjs",
+						dest: "runtime.mjs",
+					},
+				],
+			}),
+		).resolves.toEqual([RESULT])
+		expect(service.requestDownloads).toHaveBeenCalledWith(PLUGIN_ID, [
+			{
 				url: "https://example.com/runtime.mjs",
 				dest: "runtime.mjs",
-			}),
-		).resolves.toEqual(RESULT)
-		expect(service.requestDownload).toHaveBeenCalledWith(PLUGIN_ID, {
-			url: "https://example.com/runtime.mjs",
-			dest: "runtime.mjs",
-		})
+			},
+		])
+	})
+
+	test("request rejects an empty batch", async () => {
+		const { caller, service } = createCaller()
+		await expect(
+			caller.request({ pluginId: PLUGIN_ID, items: [] }),
+		).rejects.toBeDefined()
+		expect(service.requestDownloads).not.toHaveBeenCalled()
 	})
 
 	test("delete forwards path and deleteAsset", async () => {

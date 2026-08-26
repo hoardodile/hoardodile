@@ -148,12 +148,21 @@ export type WebPluginAPI<TSchema extends PluginSchema = PluginSchema> = {
 	 * destination already exists the host answers `cached: true` (no
 	 * dialog, no network); otherwise the host asks the user (shared
 	 * consent dialog, URL shown verbatim) and downloads on approval.
+	 *
+	 * Pass an **array of requests** to fetch several files under ONE
+	 * consent question — the dialog lists every item, and the batch is
+	 * all-or-nothing (any failure discards all staged files and rejects;
+	 * nothing is partially committed). Results arrive in request order,
+	 * capped at `PLUGIN_ASSET_BATCH_MAX_ITEMS` items per call.
 	 * Rejections carry a machine-readable `err.name`
 	 * (`DENIED` / `UNAVAILABLE` / `POLICY`).
 	 */
-	readonly download: (
+	readonly download: ((
 		request: PluginDownloadRequest,
-	) => Promise<PluginDownloadResult>
+	) => Promise<PluginDownloadResult>) &
+		((
+			requests: readonly PluginDownloadRequest[],
+		) => Promise<readonly PluginDownloadResult[]>)
 	/**
 	 * Resolve the tokenized URL of a file in the plugin's own vault
 	 * (`/api/plugin-assets/<pluginId>/<token>/<path>`). Use it to load a

@@ -20,11 +20,18 @@
 	"pluginDownload": {
 		"eyebrow": "Descarga de plugin",
 		"title": "¿Descargar este archivo?",
+		"titleMany_one": "¿Descargar este archivo?",
+		"titleMany_other": "¿Descargar estos {{count}} archivos?",
 		"description": "{{pluginName}} quiere descargar un archivo a su propia carpeta de almacenamiento. El archivo se obtiene desde la URL siguiente y solo se guarda dentro de la carpeta del plugin.",
+		"descriptionMany_one": "{{pluginName}} quiere descargar un archivo a su propia carpeta de almacenamiento. El archivo se obtiene desde la URL siguiente y solo se guarda dentro de la carpeta del plugin.",
+		"descriptionMany_other": "{{pluginName}} quiere descargar {{count}} archivos a su propia carpeta de almacenamiento. Los archivos se obtienen desde las URLs siguientes y solo se guardan dentro de la carpeta del plugin.",
 		"urlLabel": "URL",
 		"destLabel": "Destino",
 		"sizeLabel": "Tamaño",
 		"unknownSize": "desconocido",
+		"itemLabel": "Archivo {{index}}",
+		"batchNote_one": "El archivo se trata de forma conjunta: Permitir lo descarga, Rechazar no lo descarga.",
+		"batchNote_other": "Los {{count}} archivos se tratan en conjunto: Permitir descarga todos, Rechazar no descarga ninguno.",
 		"deny": "Rechazar",
 		"allow": "Permitir",
 		"remember": "Recordar para esta sesión (sin más avisos de este plugin)"

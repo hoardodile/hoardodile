@@ -16,8 +16,12 @@ function ticket(ticketId: string, dest = "runtime.mjs"): DownloadConsentEntry {
 		ticketId,
 		pluginId: "p-1",
 		pluginName: "Test",
-		url: "https://example.com/runtime.mjs",
-		dest,
+		items: [
+			{
+				url: "https://example.com/runtime.mjs",
+				dest,
+			},
+		],
 	}
 }
 
@@ -32,6 +36,20 @@ describe("download consent store", () => {
 		enqueueDownloadConsent(ticket("a1"))
 		const { queue } = getDownloadConsentSnapshot()
 		expect(queue.map((t) => t.ticketId)).toEqual(["a1", "a2"])
+	})
+
+	it("a batch entry is one queue item carrying every item", () => {
+		enqueueDownloadConsent({
+			...ticket("batch"),
+			items: [
+				{ url: "https://example.com/a.mjs", dest: "a.mjs" },
+				{ url: "https://example.com/b.mjs", dest: "b.mjs" },
+				{ url: "https://example.com/c.mjs", dest: "c.mjs" },
+			],
+		})
+		const { queue } = getDownloadConsentSnapshot()
+		expect(queue).toHaveLength(1)
+		expect(queue[0]!.items).toHaveLength(3)
 	})
 
 	it("closes a ticket by id and notifies subscribers", () => {

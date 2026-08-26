@@ -11,10 +11,14 @@ const TICKET: PluginConsentTicket = {
 	ticketId: "t-1",
 	pluginId: "p-1",
 	pluginName: "Gallery",
-	url: "https://example.com/runtime/live2d.min.js?x=1",
-	dest: "runtime/live2d.min.js",
-	sizeBytes: 2048,
-	reason: "live2d runtime",
+	items: [
+		{
+			url: "https://example.com/runtime/live2d.min.js?x=1",
+			dest: "runtime/live2d.min.js",
+			sizeBytes: 2048,
+			reason: "live2d runtime",
+		},
+	],
 }
 
 afterEach(() => {
@@ -76,6 +80,38 @@ describe("PluginDownloadConsentDialog", () => {
 		expect(
 			screen.queryByTestId("plugin-download-allow"),
 		).not.toBeInTheDocument()
+	})
+
+	it("falls back to singular copy for a single item", async () => {
+		renderDialog()
+		expect(await screen.findByText("Download this file?")).toBeInTheDocument()
+	})
+
+	it("a batch lists every item in ONE dialog with count copy", async () => {
+		renderDialog({
+			entry: {
+				...TICKET,
+				ticketId: "t-batch",
+				items: [
+					{ url: "https://example.com/a.mjs", dest: "a.mjs" },
+					{ url: "https://example.com/b.mjs", dest: "b.mjs" },
+					{ url: "https://example.com/c.mjs", dest: "c.mjs" },
+				],
+			},
+		})
+		expect(await screen.findByText("Download these 3 files?")).toBeInTheDocument()
+		expect(screen.getByTestId("plugin-download-item-0")).toHaveTextContent(
+			"https://example.com/a.mjs",
+		)
+		expect(screen.getByTestId("plugin-download-item-1")).toHaveTextContent(
+			"https://example.com/b.mjs",
+		)
+		expect(screen.getByTestId("plugin-download-item-2")).toHaveTextContent(
+			"https://example.com/c.mjs",
+		)
+		// One batch decision applies to everything.
+		await userEvent.click(screen.getByTestId("plugin-download-allow"))
+		expect(screen.queryByTestId("plugin-download-url")).not.toBeInTheDocument()
 	})
 
 	it("follows the host language via the ui catalog", async () => {

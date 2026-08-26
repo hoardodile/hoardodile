@@ -7,7 +7,10 @@ import {
 	requestDownloadConsent,
 	subscribeDownloadConsent,
 } from "@hoardodile/host-web"
-import type { PluginDownloadRequest } from "@hoardodile/sdk-types"
+import type {
+	PluginDownloadRequest,
+	PluginDownloadResult,
+} from "@hoardodile/sdk-types"
 import { useSyncExternalStore } from "react"
 import type { WorkbenchManifest } from "./context.ts"
 
@@ -16,10 +19,12 @@ import type { WorkbenchManifest } from "./context.ts"
  * dialog the app uses, with the dev server doing the actual fetch (the
  * browser has CORS; the server does not).
  *
- * Flow: cache pre-check → (miss) consent dialog → approved → dev-server
- * download into `<vaultRoot>/<pluginId>/<dest>` → result. Denials answer
- * `DENIED`; manifest without `download` answers `POLICY` — the same
- * vocabulary as the app.
+ * Flow: cache pre-check per item → (miss) ONE consent dialog listing all
+ * misses → approved → dev-server download per item into
+ * `<vaultRoot>/<pluginId>/<dest>` → results in request order. Denials
+ * answer `DENIED`; manifest without `download` answers `POLICY` — the
+ * same vocabulary as the app. Batches stop at the first failure (the dev
+ * server commits each file as it fetches, so already-done items stay).
  */
 
 /** The currently queued consent ticket, or null (one dialog at a time). */
@@ -44,36 +49,62 @@ export function createAssetVault(
 				)
 			}
 			const pluginId = manifest.id
-			const precheck = await requestDownload(pluginId, request, false)
-			if (precheck.status === "cached") {
-				return {
-					path: precheck.path,
-					sizeBytes: precheck.sizeBytes,
-					sha256: precheck.sha256,
-					cached: true,
+			const requests = Array.isArray(request) ? request : [request]
+
+			// Cache pre-check first: only the misses need the user.
+			const outcomes: Array<PluginDownloadResult | undefined> = []
+			const missIndexes: number[] = []
+			for (let i = 0; i < requests.length; i++) {
+				const precheck = await requestDownload(pluginId, requests[i]!, false)
+				if (precheck.status === "cached") {
+					outcomes[i] = {
+						path: precheck.path,
+						sizeBytes: precheck.sizeBytes,
+						sha256: precheck.sha256,
+						cached: true,
+					}
+				} else {
+					missIndexes.push(i)
 				}
 			}
-			const approved = await requestDownloadConsent({
-				ticketId: crypto.randomUUID(),
-				pluginId,
-				pluginName: manifest.name,
-				url: request.url,
-				dest: request.dest,
-				reason: request.reason,
-			})
-			if (!approved) {
-				throw assetError("DENIED", "plugin download was declined")
+
+			const downloaded = new Map<number, PluginDownloadResult>()
+			if (missIndexes.length > 0) {
+				const missRequests = missIndexes.map((i) => requests[i]!)
+				const approved = await requestDownloadConsent({
+					ticketId: crypto.randomUUID(),
+					pluginId,
+					pluginName: manifest.name,
+					items: missRequests.map((req) => ({
+						url: req.url,
+						dest: req.dest,
+						reason: req.reason,
+					})),
+				})
+				if (!approved) {
+					throw assetError("DENIED", "plugin download was declined")
+				}
+				for (const index of missIndexes) {
+					const done = await requestDownload(pluginId, requests[index]!, true)
+					if (done.status !== "downloaded") {
+						throw assetError(
+							"POLICY",
+							"workbench vault download did not finish",
+						)
+					}
+					downloaded.set(index, {
+						path: done.path,
+						sizeBytes: done.sizeBytes,
+						sha256: done.sha256,
+						cached: false,
+					})
+				}
 			}
-			const done = await requestDownload(pluginId, request, true)
-			if (done.status !== "downloaded") {
-				throw assetError("POLICY", "workbench vault download did not finish")
-			}
-			return {
-				path: done.path,
-				sizeBytes: done.sizeBytes,
-				sha256: done.sha256,
-				cached: false,
-			}
+
+			const results = requests.map(
+				(_request, i) => outcomes[i] ?? downloaded.get(i)!,
+			)
+			return Array.isArray(request) ? results : results[0]!
 		},
 		async deleteAsset(path) {
 			const res = await fetch("/api/workbench/vault/delete", {

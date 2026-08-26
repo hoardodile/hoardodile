@@ -20,11 +20,18 @@
 	"pluginDownload": {
 		"eyebrow": "Plugin-Download",
 		"title": "Diese Datei herunterladen?",
+		"titleMany_one": "Diese Datei herunterladen?",
+		"titleMany_other": "Diese {{count}} Dateien herunterladen?",
 		"description": "{{pluginName}} möchte eine Datei in seinen eigenen Speicherordner herunterladen. Die Datei wird von der unten stehenden URL geladen und nur innerhalb des Plugin-Ordners gespeichert.",
+		"descriptionMany_one": "{{pluginName}} möchte eine Datei in seinen eigenen Speicherordner herunterladen. Die Datei wird von der unten stehenden URL geladen und nur innerhalb des Plugin-Ordners gespeichert.",
+		"descriptionMany_other": "{{pluginName}} möchte {{count}} Dateien in seinen eigenen Speicherordner herunterladen. Die Dateien werden von den unten stehenden URLs geladen und nur innerhalb des Plugin-Ordners gespeichert.",
 		"urlLabel": "URL",
 		"destLabel": "Ziel",
 		"sizeLabel": "Größe",
 		"unknownSize": "unbekannt",
+		"itemLabel": "Datei {{index}}",
+		"batchNote_one": "Die Datei wird gemeinsam behandelt: Erlauben lädt sie herunter, Ablehnen nicht.",
+		"batchNote_other": "Alle {{count}} Dateien werden gemeinsam behandelt: Erlauben lädt alle herunter, Ablehnen keine.",
 		"deny": "Ablehnen",
 		"allow": "Erlauben",
 		"remember": "Für diese Sitzung merken (keine weiteren Rückfragen dieses Plugins)"

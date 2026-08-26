@@ -15,20 +15,32 @@
  */
 
 /**
+ * One item of a batch consent question: a single download's URL and
+ * vault destination, exactly as the dialog lists it.
+ */
+export type DownloadConsentItem = {
+	readonly url: string
+	readonly dest: string
+	readonly sizeBytes?: number
+	readonly reason?: string
+}
+
+/**
  * A queued consent question: the ticket shape. Structurally identical to
  * the server's `pluginDownloadRequested` SSE event minus its `type`
  * discriminator (and to `pluginAsset.listPending` rows) — declared here
  * instead of importing `@hoardodile/schemas` so the host-core package
  * stays dependency-lean.
+ *
+ * One entry = one dialog listing every item (a single download is an
+ * items array of one; a batched plugin call is one entry for the whole
+ * batch).
  */
 export type DownloadConsentEntry = {
 	readonly ticketId: string
 	readonly pluginId: string
 	readonly pluginName: string
-	readonly url: string
-	readonly dest: string
-	readonly sizeBytes?: number
-	readonly reason?: string
+	readonly items: readonly DownloadConsentItem[]
 }
 
 type State = {

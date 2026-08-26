@@ -21,12 +21,12 @@ export function createHandlers(_qc: QueryClient): HostHandlerEntry[] {
 			requestSchemas[pluginMethods.download],
 			async (ctx, params) => {
 				try {
+					// The wire accepts a single request or a batch; the
+					// server always answers with the result array, and the
+					// SDK unwraps the single case (see sdk-web runtime).
 					return await trpcMutate("pluginAsset", "request", {
 						pluginId: ctx.pluginId,
-						url: params.url,
-						dest: params.dest,
-						sha256: params.sha256,
-						reason: params.reason,
+						items: Array.isArray(params) ? params : [params],
 					})
 				} catch (err) {
 					throw withAssetErrorName(err)

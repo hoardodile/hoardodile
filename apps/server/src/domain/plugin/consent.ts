@@ -16,15 +16,24 @@
 import { randomUUID } from "node:crypto"
 import { pluginAssetError } from "@hoardodile/sdk-types"
 
-/** A pending consent question, exactly as the dialog needs to render it. */
-export type ConsentTicket = {
-	readonly ticketId: string
-	readonly pluginId: string
-	readonly pluginName: string
+/** One item of a batch consent question (a single download is a batch of one). */
+export type ConsentTicketItem = {
 	readonly url: string
 	readonly dest: string
 	readonly sizeBytes?: number
 	readonly reason?: string
+}
+
+/**
+ * A pending consent question, exactly as the dialog needs to render it:
+ * one ticket per batch — the dialog lists every item and the answer
+ * applies to the whole batch (all-or-nothing).
+ */
+export type ConsentTicket = {
+	readonly ticketId: string
+	readonly pluginId: string
+	readonly pluginName: string
+	readonly items: readonly ConsentTicketItem[]
 }
 
 export type ConsentDecision = {
@@ -46,9 +55,10 @@ export type ConsentBrokerDeps = {
 
 export type ConsentBroker = {
 	/**
-	 * Ask the user. Resolves `{ approved: true }` when granted (including
-	 * a session-remembered plugin) or `{ approved: false }` when denied
-	 * or timed out; throws `UNAVAILABLE`/`POLICY` for host-level refusals.
+	 * Ask the user (one batch question covering every item). Resolves
+	 * `{ approved: true }` when granted (including a session-remembered
+	 * plugin) or `{ approved: false }` when denied or timed out; throws
+	 * `UNAVAILABLE`/`POLICY` for host-level refusals.
 	 */
 	readonly request: (
 		ticket: Omit<ConsentTicket, "ticketId">,

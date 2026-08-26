@@ -548,12 +548,13 @@ describe("plugin sandbox", () => {
 				pluginAssets: {
 					download: async (pluginId, request) => {
 						seen.push([pluginId, request])
-						return {
-							path: request.dest,
+						const requests = Array.isArray(request) ? request : [request]
+						return requests.map((req) => ({
+							path: req.dest,
 							sizeBytes: 3,
 							sha256: "a".repeat(64),
 							cached: false,
-						}
+						}))
 					},
 					statAsset: async (pluginId, path) => {
 						seen.push([pluginId, path])
@@ -574,12 +575,27 @@ describe("plugin sandbox", () => {
 		await expect(plugin.detect(createStubApi())).resolves.toEqual({
 			ok: true,
 			stat: undefined,
+			// Single in → single result out, batch in → array out.
 			downloaded: {
 				path: "runtime/a.mjs",
 				sizeBytes: 3,
 				sha256: "a".repeat(64),
 				cached: false,
 			},
+			batched: [
+				{
+					path: "runtime/b.mjs",
+					sizeBytes: 3,
+					sha256: "a".repeat(64),
+					cached: false,
+				},
+				{
+					path: "runtime/c.mjs",
+					sizeBytes: 3,
+					sha256: "a".repeat(64),
+					cached: false,
+				},
+			],
 		})
 		expect(seen[0]).toEqual(["asset-allowed", "runtime/a.mjs"])
 		expect(seen[1]).toEqual([
@@ -588,6 +604,13 @@ describe("plugin sandbox", () => {
 				url: "https://example.com/runtime/a.mjs",
 				dest: "runtime/a.mjs",
 			},
+		])
+		expect(seen[2]).toEqual([
+			"asset-allowed",
+			[
+				{ url: "https://example.com/runtime/b.mjs", dest: "runtime/b.mjs" },
+				{ url: "https://example.com/runtime/c.mjs", dest: "runtime/c.mjs" },
+			],
 		])
 	})
 

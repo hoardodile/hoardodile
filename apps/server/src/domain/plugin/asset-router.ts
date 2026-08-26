@@ -1,15 +1,21 @@
+import { PLUGIN_ASSET_BATCH_MAX_ITEMS } from "@hoardodile/sdk-types/plugin-asset-limits"
 import { pluginManifestId } from "@hoardodile/sdk-types/schema"
 import { authedProcedure, router, writeProcedure } from "src/infra/trpc/core.ts"
 import { z } from "zod"
 import type { PluginAssetService } from "./asset-service.ts"
 import type { ConsentBroker } from "./consent.ts"
 
-const requestInput = z.object({
-	pluginId: pluginManifestId,
+const requestItem = z.object({
 	url: z.string().min(1),
 	dest: z.string().min(1),
 	sha256: z.string().optional(),
 	reason: z.string().optional(),
+})
+
+/** One batch of downloads: one consent dialog listing every item. */
+const requestInput = z.object({
+	pluginId: pluginManifestId,
+	items: z.array(requestItem).min(1).max(PLUGIN_ASSET_BATCH_MAX_ITEMS),
 })
 
 const deleteInput = z.object({
@@ -37,15 +43,12 @@ export type PluginAssetRouterDeps = {
  */
 export function buildPluginAssetRouter(deps: PluginAssetRouterDeps) {
 	return router({
-		/** User-consented download into the plugin's vault (awaits the dialog). */
-		request: writeProcedure.input(requestInput).mutation(({ input }) =>
-			deps.service.requestDownload(input.pluginId, {
-				url: input.url,
-				dest: input.dest,
-				sha256: input.sha256,
-				reason: input.reason,
-			}),
-		),
+		/** User-consented download(s) into the plugin's vault (awaits the dialog). */
+		request: writeProcedure
+			.input(requestInput)
+			.mutation(({ input }) =>
+				deps.service.requestDownloads(input.pluginId, input.items),
+			),
 		/** Idempotent vault removal (the plugin's own lifecycle decision). */
 		delete: writeProcedure
 			.input(deleteInput)

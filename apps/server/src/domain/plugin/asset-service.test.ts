@@ -68,7 +68,12 @@ function manifestWith(
 	}
 }
 
-function serviceWith(opts: { readonly manifest?: PluginManifest } = {}): {
+function serviceWith(
+	opts: {
+		readonly manifest?: PluginManifest
+		readonly maxTotalBytes?: number
+	} = {},
+): {
 	readonly service: PluginAssetService
 	readonly consent: ConsentBroker
 	readonly vaultDir: string
@@ -98,7 +103,7 @@ function serviceWith(opts: { readonly manifest?: PluginManifest } = {}): {
 		consent,
 		downloader,
 		maxFileBytes: 1_000_000,
-		maxTotalBytes: 10_000_000,
+		maxTotalBytes: opts.maxTotalBytes ?? 10_000_000,
 		maxReadAssetBytes: 1_000_000,
 	})
 	return { service, consent, vaultDir: paths.latest.pluginVaultDir(PLUGIN_ID) }
@@ -156,8 +161,13 @@ describe("createPluginAssetService", () => {
 		)
 		expect(tickets[0]).toMatchObject({
 			pluginId: PLUGIN_ID,
-			dest: "runtime/runtime.mjs",
-			reason: "live2d runtime",
+			items: [
+				{
+					url: `${base}/runtime.mjs`,
+					dest: "runtime/runtime.mjs",
+					reason: "live2d runtime",
+				},
+			],
 		})
 		consent.decide(tickets[0]!.ticketId, true)
 		const result = await decision
@@ -228,6 +238,117 @@ describe("createPluginAssetService", () => {
 		await expect(bad).rejects.toMatchObject({ name: "POLICY" })
 		expect(await service.statAsset(PLUGIN_ID, "bad.mjs")).toBeUndefined()
 		expect(await statExisting(join(vaultDir, "pinned.mjs"))).toBeTruthy()
+	})
+
+	test("batched downloads: one ticket for the misses, results in request order", async () => {
+		const base = await listen((req, res) => {
+			res.writeHead(200)
+			res.end(
+				req.url === "/a.mjs" ? "aaa" : req.url === "/b.mjs" ? "bbb" : "cached",
+			)
+		})
+		const { service, consent, vaultDir } = serviceWith()
+		await mkdir(vaultDir, { recursive: true })
+		await writeFile(join(vaultDir, "cached.mjs"), "cached")
+
+		const decision = service.requestDownloads(PLUGIN_ID, [
+			{ url: `${base}/cached.mjs`, dest: "cached.mjs" },
+			{ url: `${base}/a.mjs`, dest: "a.mjs" },
+			{ url: `${base}/b.mjs`, dest: "b.mjs" },
+		])
+		const tickets = await until(
+			() => consent.listPending(),
+			(t) => t.length === 1,
+		)
+		// The cached hit is silent: one ticket, misses only.
+		expect(tickets[0]).toMatchObject({
+			items: [
+				{ url: `${base}/a.mjs`, dest: "a.mjs" },
+				{ url: `${base}/b.mjs`, dest: "b.mjs" },
+			],
+		})
+		consent.decide(tickets[0]!.ticketId, true)
+		const results = await decision
+		expect(results.map((r) => r.path)).toEqual(["cached.mjs", "a.mjs", "b.mjs"])
+		expect(results.map((r) => r.cached)).toEqual([true, false, false])
+		expect(await readFile(join(vaultDir, "a.mjs"), "utf-8")).toBe("aaa")
+		expect(await readFile(join(vaultDir, "b.mjs"), "utf-8")).toBe("bbb")
+	})
+
+	test("batches reject duplicate destinations before any consent", async () => {
+		const { service, consent } = serviceWith()
+		await expect(
+			service.requestDownloads(PLUGIN_ID, [
+				{ url: "https://example.com/a.mjs", dest: "x.mjs" },
+				{ url: "https://example.com/b.mjs", dest: "x.mjs" },
+			]),
+		).rejects.toMatchObject({ name: "POLICY" })
+		expect(consent.listPending()).toEqual([])
+	})
+
+	test("batches reject empty and over-cap input before any consent", async () => {
+		const { service, consent } = serviceWith()
+		await expect(service.requestDownloads(PLUGIN_ID, [])).rejects.toMatchObject(
+			{
+				name: "POLICY",
+			},
+		)
+		const many = Array.from({ length: 17 }, (_v, i) => ({
+			url: `https://example.com/${i}.mjs`,
+			dest: `${i}.mjs`,
+		}))
+		await expect(
+			service.requestDownloads(PLUGIN_ID, many),
+		).rejects.toMatchObject({ name: "POLICY" })
+		expect(consent.listPending()).toEqual([])
+	})
+
+	test("a batch with any staging failure commits nothing (all-or-nothing)", async () => {
+		const base = await listen((req, res) => {
+			if (req.url === "/ok.mjs") {
+				res.writeHead(200)
+				res.end("ok")
+				return
+			}
+			res.writeHead(404)
+			res.end("nope")
+		})
+		const { service, consent } = serviceWith()
+		const decision = service.requestDownloads(PLUGIN_ID, [
+			{ url: `${base}/ok.mjs`, dest: "ok.mjs" },
+			{ url: `${base}/missing.mjs`, dest: "missing.mjs" },
+		])
+		const tickets = await until(
+			() => consent.listPending(),
+			(t) => t.length === 1,
+		)
+		consent.decide(tickets[0]!.ticketId, true)
+		await expect(decision).rejects.toBeDefined()
+		// The already-staged "ok" was discarded with the failing batch.
+		expect(await service.statAsset(PLUGIN_ID, "ok.mjs")).toBeUndefined()
+		expect(await service.statAsset(PLUGIN_ID, "missing.mjs")).toBeUndefined()
+	})
+
+	test("the cumulative quota is pre-checked before any commit", async () => {
+		const base = await listen((_req, res) => {
+			res.writeHead(200)
+			res.end("partial filler") // 14 bytes each
+		})
+		const { service, consent, vaultDir } = serviceWith({ maxTotalBytes: 20 })
+		await mkdir(vaultDir, { recursive: true })
+		await writeFile(join(vaultDir, "existing.mjs"), "existing") // 8 bytes
+		const decision = service.requestDownloads(PLUGIN_ID, [
+			{ url: `${base}/a.mjs`, dest: "a.mjs" },
+			{ url: `${base}/b.mjs`, dest: "b.mjs" },
+		])
+		const tickets = await until(
+			() => consent.listPending(),
+			(t) => t.length === 1,
+		)
+		consent.decide(tickets[0]!.ticketId, true)
+		await expect(decision).rejects.toMatchObject({ name: "POLICY" })
+		expect(await service.statAsset(PLUGIN_ID, "a.mjs")).toBeUndefined()
+		expect(await service.statAsset(PLUGIN_ID, "b.mjs")).toBeUndefined()
 	})
 
 	test("missing permission, unknown plugin and traversal are POLICY before network", async () => {

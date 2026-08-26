@@ -220,19 +220,23 @@ export type StorageContextReloadedEvent = {
 /**
  * Emitted when a plugin asks to download into its own asset vault and the
  * host needs the user's consent. The web app shows the shared consent
- * dialog from this event (URL shown verbatim); any connected tab may
- * answer via the `pluginAsset.decide` procedure. `sizeBytes` is present
- * when a cheap HEAD probe succeeded at request time.
+ * dialog from this event — one ticket = one dialog listing every `item`
+ * (a single download is an items array of one; a batched call is one
+ * all-or-nothing question for the whole batch); any connected tab may
+ * answer via the `pluginAsset.decide` procedure. `sizeBytes` stays
+ * undefined (no network probe before consent).
  */
 export type PluginDownloadRequestedEvent = {
 	type: "pluginDownloadRequested"
 	ticketId: string
 	pluginId: string
 	pluginName: string
-	url: string
-	dest: string
-	sizeBytes?: number
-	reason?: string
+	items: readonly {
+		url: string
+		dest: string
+		sizeBytes?: number
+		reason?: string
+	}[]
 }
 
 /**

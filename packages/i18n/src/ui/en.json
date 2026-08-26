@@ -20,11 +20,18 @@
 	"pluginDownload": {
 		"eyebrow": "Plugin download",
 		"title": "Download this file?",
+		"titleMany_one": "Download this file?",
+		"titleMany_other": "Download these {{count}} files?",
 		"description": "{{pluginName}} wants to download a file into its own storage folder. The file is fetched from the URL below and stored only inside the plugin's folder.",
+		"descriptionMany_one": "{{pluginName}} wants to download a file into its own storage folder. The file is fetched from the URL below and stored only inside the plugin's folder.",
+		"descriptionMany_other": "{{pluginName}} wants to download {{count}} files into its own storage folder. The files are fetched from the URLs below and stored only inside the plugin's folder.",
 		"urlLabel": "URL",
 		"destLabel": "Destination",
 		"sizeLabel": "Size",
 		"unknownSize": "unknown",
+		"itemLabel": "File {{index}}",
+		"batchNote_one": "The file is handled as a whole: Allow downloads it, Deny downloads none.",
+		"batchNote_other": "All {{count}} files are handled together: Allow downloads them all, Deny downloads none.",
 		"deny": "Deny",
 		"allow": "Allow",
 		"remember": "Remember for this session (no more prompts from this plugin)"

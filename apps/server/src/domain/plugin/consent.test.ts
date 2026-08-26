@@ -18,8 +18,12 @@ function makeBroker(overrides: Partial<ConsentBrokerDeps> = {}) {
 const ticket = {
 	pluginId: "p-1",
 	pluginName: "Test",
-	url: "https://example.com/runtime.mjs",
-	dest: "runtime.mjs",
+	items: [
+		{
+			url: "https://example.com/runtime.mjs",
+			dest: "runtime.mjs",
+		},
+	],
 }
 
 describe("createConsentBroker", () => {
@@ -68,7 +72,10 @@ describe("createConsentBroker", () => {
 	test("an unknown ticket id is a no-op; dispose resolves everything", async () => {
 		const { broker, resolved } = makeBroker()
 		const a = broker.request(ticket)
-		const b = broker.request({ ...ticket, dest: "b.mjs" })
+		const b = broker.request({
+			...ticket,
+			items: [{ url: "https://example.com/b.mjs", dest: "b.mjs" }],
+		})
 		broker.decide("unknown-id", true, false)
 		broker.dispose()
 		expect(resolved).toHaveLength(2)

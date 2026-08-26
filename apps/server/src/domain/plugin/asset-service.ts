@@ -23,6 +23,7 @@ import {
 	vaultRemoveFile,
 	vaultStatFile,
 	vaultTempFile,
+	vaultTotalSize,
 	writeVersioned,
 } from "@hoardodile/host/hoard"
 import type {
@@ -33,6 +34,7 @@ import type {
 } from "@hoardodile/sdk-types"
 import { pluginAssetError } from "@hoardodile/sdk-types"
 import {
+	PLUGIN_ASSET_BATCH_MAX_ITEMS,
 	PLUGIN_ASSET_DEST_MAX_LENGTH,
 	PLUGIN_ASSET_REASON_MAX_LENGTH,
 	PLUGIN_ASSET_SHA256_PATTERN,
@@ -63,6 +65,10 @@ export type PluginAssetService = {
 		pluginId: string,
 		request: PluginDownloadRequest,
 	) => Promise<PluginDownloadResult>
+	readonly requestDownloads: (
+		pluginId: string,
+		requests: readonly PluginDownloadRequest[],
+	) => Promise<readonly PluginDownloadResult[]>
 	readonly statAsset: (
 		pluginId: string,
 		path: string,
@@ -150,8 +156,37 @@ export function createPluginAssetService(
 		pluginId: string,
 		request: PluginDownloadRequest,
 	): Promise<PluginDownloadResult> {
+		const results = await requestDownloads(pluginId, [request])
+		return results[0]!
+	}
+
+	/**
+	 * Batch download: one user-consent question for the whole set,
+	 * all-or-nothing. Order of business (per item): registry + permission
+	 * check → request validation (URL policy, dest confinement — before
+	 * any network) → vault stat (cached files resolve silently) → ONE
+	 * consent ticket for the misses (or session remember) → streamed
+	 * downloads with caps and SRI-style sha256 verification → cumulative
+	 * quota pre-check → atomic commits in request order. Any failure
+	 * discards every staged file: nothing is partially committed.
+	 */
+	async function requestDownloads(
+		pluginId: string,
+		requests: readonly PluginDownloadRequest[],
+	): Promise<readonly PluginDownloadResult[]> {
 		const manifest = assertPluginAllowed(pluginId)
-		const { url, dest } = validateRequest(request)
+		if (requests.length === 0) {
+			throw pluginAssetError(
+				"POLICY",
+				"plugin download batch must contain at least one request",
+			)
+		}
+		if (requests.length > PLUGIN_ASSET_BATCH_MAX_ITEMS) {
+			throw pluginAssetError(
+				"POLICY",
+				`plugin download batch exceeds ${PLUGIN_ASSET_BATCH_MAX_ITEMS} items`,
+			)
+		}
 		if (deps.readOnly) {
 			throw pluginAssetError(
 				"UNAVAILABLE",
@@ -159,14 +194,39 @@ export function createPluginAssetService(
 			)
 		}
 
+		// Validate every URL/dest/sha256/reason BEFORE any consent or
+		// network activity.
+		const vetted = requests.map((request) => validateRequest(request))
+
 		return writeVersioned(deps.paths, deps.readOnly, async (latest) => {
 			const vaultDir = latest.pluginVaultDir(pluginId)
 			// Dest confinement happens before any network: a bad path can
 			// never produce a request at all.
 			return asPolicy(async () => {
-				const parsed = parsePluginVaultDest(vaultDir, dest)
-				const existing = await vaultStatFile(vaultDir, parsed.rel)
-				if (existing !== undefined) {
+				type PlannedEntry = {
+					readonly request: PluginDownloadRequest
+					readonly parsed: { readonly rel: string }
+					readonly cached:
+						| { readonly sizeBytes: number; readonly sha256: string }
+						| undefined
+				}
+				const seenDests = new Set<string>()
+				const planned: PlannedEntry[] = []
+				for (let i = 0; i < requests.length; i++) {
+					const request = requests[i]!
+					const parsed = parsePluginVaultDest(vaultDir, vetted[i]!.dest)
+					if (seenDests.has(parsed.rel)) {
+						throw pluginAssetError(
+							"POLICY",
+							`duplicate destination in plugin download batch: ${parsed.rel}`,
+						)
+					}
+					seenDests.add(parsed.rel)
+					const existing = await vaultStatFile(vaultDir, parsed.rel)
+					if (existing === undefined) {
+						planned.push({ request, parsed, cached: undefined })
+						continue
+					}
 					const existingSha256 = await vaultFileSha256(vaultDir, parsed.rel)
 					// A cached hit still honours an integrity pin: a file
 					// that no longer matches the requested digest is a
@@ -180,57 +240,111 @@ export function createPluginAssetService(
 							`plugin vault file "${parsed.rel}" fails the requested sha256 pin`,
 						)
 					}
-					return {
-						path: parsed.rel,
-						sizeBytes: existing.sizeBytes,
-						sha256: existingSha256,
-						cached: true,
-					}
+					planned.push({
+						request,
+						parsed,
+						cached: { sizeBytes: existing.sizeBytes, sha256: existingSha256 },
+					})
 				}
+				const misses = planned.filter((p) => p.cached === undefined)
 
-				const decision = await deps.consent.request({
-					pluginId,
-					pluginName: manifest.name,
-					url,
-					dest: parsed.rel,
-					reason: request.reason,
-				})
-				if (!decision.approved) {
-					throw pluginAssetError(
-						"DENIED",
-						"plugin download was declined (or the consent dialog timed out)",
-					)
-				}
-
-				const tempPath = vaultTempFile(vaultDir)
-				try {
-					await mkdir(vaultDir, { recursive: true })
-					const fetched = await deps.downloader.fetchToFile(url, tempPath)
-					if (
-						request.sha256 !== undefined &&
-						fetched.sha256 !== request.sha256
-					) {
+				if (misses.length > 0) {
+					const decision = await deps.consent.request({
+						pluginId,
+						pluginName: manifest.name,
+						items: misses.map((p) => ({
+							url: p.request.url,
+							dest: p.parsed.rel,
+							reason: p.request.reason,
+						})),
+					})
+					if (!decision.approved) {
 						throw pluginAssetError(
-							"POLICY",
-							`plugin download integrity mismatch: expected ${request.sha256}, got ${fetched.sha256}`,
+							"DENIED",
+							"plugin download was declined (or the consent dialog timed out)",
 						)
 					}
-					const committed = await commitVaultFile({
-						vaultDir,
-						rel: parsed.rel,
-						tempPath,
-						maxFileBytes: deps.maxFileBytes,
-						maxTotalBytes: deps.maxTotalBytes,
-					})
+				}
+
+				// Stage every miss, verify each pin, then commit all — a
+				// failure anywhere discards every staging file.
+				type StagedEntry = {
+					readonly planned: PlannedEntry
+					readonly tempPath: string
+					readonly sizeBytes: number
+					readonly sha256: string
+				}
+				const staged: StagedEntry[] = []
+				try {
+					for (const entry of misses) {
+						const tempPath = vaultTempFile(vaultDir)
+						await mkdir(vaultDir, { recursive: true })
+						const fetched = await deps.downloader.fetchToFile(
+							entry.request.url,
+							tempPath,
+						)
+						if (
+							entry.request.sha256 !== undefined &&
+							fetched.sha256 !== entry.request.sha256
+						) {
+							throw pluginAssetError(
+								"POLICY",
+								`plugin download integrity mismatch: expected ${entry.request.sha256}, got ${fetched.sha256}`,
+							)
+						}
+						staged.push({
+							planned: entry,
+							tempPath,
+							sizeBytes: fetched.sizeBytes,
+							sha256: fetched.sha256,
+						})
+					}
+					// `commitVaultFile` checks the total quota per commit
+					// against the vault's current size, so a sequential
+					// commit could fail mid-batch and leave a partial
+					// result — pre-check the cumulative sum once.
+					const currentTotal = await vaultTotalSize(vaultDir)
+					const addedBytes = staged.reduce((sum, s) => sum + s.sizeBytes, 0)
+					if (currentTotal + addedBytes > deps.maxTotalBytes) {
+						throw pluginAssetError(
+							"POLICY",
+							`plugin download batch would exceed the ${deps.maxTotalBytes}-byte plugin quota (current ${currentTotal})`,
+						)
+					}
+					for (const entry of staged) {
+						await commitVaultFile({
+							vaultDir,
+							rel: entry.planned.parsed.rel,
+							tempPath: entry.tempPath,
+							maxFileBytes: deps.maxFileBytes,
+							maxTotalBytes: deps.maxTotalBytes,
+						})
+					}
+				} finally {
+					for (const entry of staged) {
+						await discardVaultTempFile(entry.tempPath)
+					}
+				}
+
+				// Results in request order; cached hits keep their slots.
+				let stagedIndex = 0
+				return planned.map((entry) => {
+					if (entry.cached !== undefined) {
+						return {
+							path: entry.parsed.rel,
+							sizeBytes: entry.cached.sizeBytes,
+							sha256: entry.cached.sha256,
+							cached: true,
+						}
+					}
+					const committed = staged[stagedIndex++]!
 					return {
-						path: parsed.rel,
+						path: entry.parsed.rel,
 						sizeBytes: committed.sizeBytes,
 						sha256: committed.sha256,
 						cached: false,
 					}
-				} finally {
-					await discardVaultTempFile(tempPath)
-				}
+				})
 			})
 		})
 	}
@@ -274,5 +388,11 @@ export function createPluginAssetService(
 		})
 	}
 
-	return { requestDownload, statAsset, readAsset, deleteAsset }
+	return {
+		requestDownload,
+		requestDownloads,
+		statAsset,
+		readAsset,
+		deleteAsset,
+	}
 }

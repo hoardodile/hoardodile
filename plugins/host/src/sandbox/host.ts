@@ -33,10 +33,15 @@ import { createSandboxedPlugin } from "./sandboxed-plugin.ts"
  * workbench) omit it and the methods answer `UNAVAILABLE`.
  */
 export type PluginAssetHandler = {
+	/**
+	 * Download one request or a batch of requests. Answers with the
+	 * result array (batch shape) — this adapter unwraps the single
+	 * result for a single request (see {@link dispatchApi}).
+	 */
 	readonly download: (
 		pluginId: string,
-		request: PluginDownloadRequest,
-	) => Promise<PluginDownloadResult>
+		request: PluginDownloadRequest | readonly PluginDownloadRequest[],
+	) => Promise<readonly PluginDownloadResult[]>
 	readonly statAsset: (
 		pluginId: string,
 		path: string,
@@ -804,13 +809,15 @@ export function createPluginSandbox(
 					return
 				}
 				// RPC boundary: the child-side proxy forwards args verbatim,
-				// so the contract order is guaranteed (request object for
-				// `download`, string path for the rest).
+				// so the contract order is guaranteed (request object or
+				// request array for `download`, string path for the rest).
 				if (method === "download") {
-					respond(
-						true,
-						await handler.download(state.id, args[0] as PluginDownloadRequest),
-					)
+					const request = args[0] as
+						| PluginDownloadRequest
+						| readonly PluginDownloadRequest[]
+					const results = await handler.download(state.id, request)
+					// Wire rule: array in → array out, single in → single out.
+					respond(true, Array.isArray(request) ? results : results[0])
 				} else if (method === "statAsset") {
 					respond(true, await handler.statAsset(state.id, args[0] as string))
 				} else if (method === "readAsset") {

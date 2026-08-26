@@ -51,10 +51,7 @@ async function pluginDomainImpl(app: FastifyInstance): Promise<void> {
 				ticketId: ticket.ticketId,
 				pluginId: ticket.pluginId,
 				pluginName: ticket.pluginName,
-				url: ticket.url,
-				dest: ticket.dest,
-				sizeBytes: ticket.sizeBytes,
-				reason: ticket.reason,
+				items: ticket.items,
 			})
 		},
 		onResolved: (ticketId) => {
@@ -95,7 +92,10 @@ async function pluginDomainImpl(app: FastifyInstance): Promise<void> {
 
 	const assetHandler: PluginAssetHandler = {
 		download: (pluginId, request) =>
-			assetService.requestDownload(pluginId, request),
+			assetService.requestDownloads(
+				pluginId,
+				Array.isArray(request) ? request : [request],
+			),
 		statAsset: (pluginId, path) => assetService.statAsset(pluginId, path),
 		readAsset: (pluginId, path) => assetService.readAsset(pluginId, path),
 		deleteAsset: (pluginId, path) => assetService.deleteAsset(pluginId, path),

@@ -1,3 +1,4 @@
+import { PLUGIN_ASSET_BATCH_MAX_ITEMS } from "@hoardodile/sdk-types/plugin-asset-limits"
 import { anchorData as anchorDataSchema } from "@hoardodile/sdk-types/schema"
 import type { PluginRequests } from "@hoardodile/sdk-web"
 import { pluginMethods } from "@hoardodile/sdk-web"
@@ -16,6 +17,17 @@ import { z } from "zod"
  * into the anchor before it reaches the server.
  */
 export const anchorData = anchorDataSchema
+
+/** One download request (a batch is an array of these). */
+const downloadItem = z.object({
+	url: z.string().min(1).max(2048),
+	dest: z.string().min(1).max(256),
+	sha256: z
+		.string()
+		.regex(/^[0-9a-f]{64}$/)
+		.optional(),
+	reason: z.string().max(200).optional(),
+})
 
 export const requestSchemas = {
 	[pluginMethods.readFile]: z.object({
@@ -57,16 +69,13 @@ export const requestSchemas = {
 		target: z.enum(["resource", "resources", "messages", "danmaku"]),
 	}),
 	// The URL is length-capped but not URI-validated here: the host parses
-	// it server-side and answers with a machine-readable POLICY error.
-	[pluginMethods.download]: z.object({
-		url: z.string().min(1).max(2048),
-		dest: z.string().min(1).max(256),
-		sha256: z
-			.string()
-			.regex(/^[0-9a-f]{64}$/)
-			.optional(),
-		reason: z.string().max(200).optional(),
-	}),
+	// it server-side and answers with a machine-readable POLICY error. A
+	// single request or a batch (one consent dialog listing every item,
+	// all-or-nothing) — capped so a burst cannot stack unbounded tickets.
+	[pluginMethods.download]: z.union([
+		downloadItem,
+		z.array(downloadItem).min(1).max(PLUGIN_ASSET_BATCH_MAX_ITEMS),
+	]),
 	[pluginMethods.deleteAsset]: z.object({
 		path: z.string().min(1).max(256),
 	}),

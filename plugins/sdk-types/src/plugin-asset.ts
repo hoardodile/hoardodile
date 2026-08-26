@@ -10,6 +10,9 @@
  * Both sides of the plugin speak the same shapes: the server-side
  * `ResourceAPI` (main.js hooks) and the iframe `WebPluginAPI` (render)
  * call the same four methods with the same request/result vocabulary.
+ * `download` also accepts an **array of requests** — one batched call is
+ * ONE consent question (the dialog lists every item) and is all-or-nothing
+ * (results arrive in request order; any failure commits nothing).
  * All methods are gated by the manifest `download` permission and
  * denied inside the sandbox when the manifest does not declare it.
  *

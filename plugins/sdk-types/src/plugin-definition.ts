@@ -363,11 +363,19 @@ export type ResourceAPI<TSchema extends PluginSchema = PluginSchema> = {
 	 */
 	readonly extractArchive: (filename: string) => Promise<ArchiveExtraction>
 	/**
-	 * Ensure a remote asset exists in the plugin's own vault: when
-	 * `dest` is already present the host answers `cached: true` without
-	 * any dialog and without touching the network; otherwise the host
-	 * asks the user (the web app shows the consent dialog with the URL
-	 * verbatim) and downloads on approval. The file always lands inside
+	 * Ensure remote assets exist in the plugin's own vault — one call with
+	 * one request, or one call with an array of requests. When `dest` is
+	 * already present the host answers `cached: true` without any dialog
+	 * and without touching the network; otherwise the host asks the user
+	 * (the web app shows the shared consent dialog with the URLs
+	 * verbatim) and downloads on approval.
+	 *
+	 * An array is ONE consent question for the WHOLE batch (the dialog
+	 * lists every item) and is all-or-nothing: any failure discards every
+	 * staged file and rejects with the first error, so nothing is
+	 * partially committed. Results arrive in request order with `cached`
+	 * items keeping their positions. Cap: {@link PLUGIN_ASSET_BATCH_MAX_ITEMS}
+	 * items per call. The file always lands inside
 	 * `<plugin-dir>/vault/` — `dest` is vault-relative and can never
 	 * reach the plugin's bundled files.
 	 *
@@ -375,9 +383,12 @@ export type ResourceAPI<TSchema extends PluginSchema = PluginSchema> = {
 	 * machine-readable {@link PluginAssetErrorName} in `err.name`
 	 * (`DENIED` / `UNAVAILABLE` / `POLICY`).
 	 */
-	readonly download: (
+	readonly download: ((
 		request: PluginDownloadRequest,
-	) => Promise<PluginDownloadResult>
+	) => Promise<PluginDownloadResult>) &
+		((
+			requests: readonly PluginDownloadRequest[],
+		) => Promise<readonly PluginDownloadResult[]>)
 	/**
 	 * Byte size of a vault file, or `undefined` when absent. The cheap
 	 * presence check on top of which `download` resolves cached hits.
@@ -607,13 +618,15 @@ export type ResourceAPIFixtureConfig<
 	 */
 	readonly assetFiles?: Readonly<Record<string, string | Uint8Array>>
 	/**
-	 * Handler for `download`. Absent means the hosted runtime has no
-	 * consent channel — `download` rejects with `UNAVAILABLE`, exactly
-	 * like the CLI, workbench and offline mock hosts.
+	 * Handler for `download` (single request or batch of requests, typed
+	 * as the union — the fixture returns the matching shape). Absent
+	 * means the hosted runtime has no consent channel — `download`
+	 * rejects with `UNAVAILABLE`, exactly like the CLI, workbench and
+	 * offline mock hosts.
 	 */
 	readonly downloadHandler?: (
-		request: PluginDownloadRequest,
-	) => Promise<PluginDownloadResult>
+		request: PluginDownloadRequest | readonly PluginDownloadRequest[],
+	) => Promise<PluginDownloadResult | readonly PluginDownloadResult[]>
 	/**
 	 * Container addressing for the fixture: maps a virtual path
 	 * (`outer!inner`) to stat/sniff/probe results, so hooks that browse
@@ -844,15 +857,23 @@ export function createResourceAPIFixture<
 			}
 			return configured
 		},
-		async download(request) {
+		download: (async (
+			request: PluginDownloadRequest | readonly PluginDownloadRequest[],
+		) => {
 			if (config.downloadHandler === undefined) {
 				throw pluginAssetError(
 					"UNAVAILABLE",
 					"ResourceAPIFixture: no download handler configured",
 				)
 			}
-			return config.downloadHandler(request)
-		},
+			const result = await config.downloadHandler(request)
+			// Mirror the real host: batch in → batch out, single in →
+			// single out.
+			if (Array.isArray(request)) {
+				return Array.isArray(result) ? result : [result]
+			}
+			return Array.isArray(result) ? (result[0] ?? result) : result
+		}) as ResourceAPI<TSchema>["download"],
 		async statAsset(path) {
 			const content = resolveValue(path, config.assetFiles, undefined)
 			if (content === undefined) return undefined

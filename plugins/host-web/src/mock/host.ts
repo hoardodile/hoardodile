@@ -90,8 +90,8 @@ export type MockHostOptions = {
  */
 export type PluginAssetVaultMock = {
 	readonly download: (
-		request: PluginDownloadRequest,
-	) => Promise<PluginDownloadResult>
+		request: PluginDownloadRequest | readonly PluginDownloadRequest[],
+	) => Promise<PluginDownloadResult | readonly PluginDownloadResult[]>
 	readonly deleteAsset: (path: string) => Promise<PluginAssetDeleteResult>
 }
 

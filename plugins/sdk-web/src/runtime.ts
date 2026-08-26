@@ -219,10 +219,23 @@ export function createIframeHostAPI<
 
 	function download(
 		request: PluginDownloadRequest,
-	): Promise<PluginDownloadResult> {
+	): Promise<PluginDownloadResult>
+	function download(
+		requests: readonly PluginDownloadRequest[],
+	): Promise<readonly PluginDownloadResult[]>
+	function download(
+		request: PluginDownloadRequest | readonly PluginDownloadRequest[],
+	): Promise<PluginDownloadResult | readonly PluginDownloadResult[]> {
 		// The protocol table declares the 5-minute ceiling (consent dialog
 		// + transfer) — the bridge reads it; no per-call override here.
-		return host.request("download", request)
+		// The host answers with the array shape on the wire; a single call
+		// unwraps its one result, so the plugin sees the shape it sent.
+		return host.request("download", request).then((result) => {
+			if (Array.isArray(request)) {
+				return result as readonly PluginDownloadResult[]
+			}
+			return (result as readonly PluginDownloadResult[])[0]!
+		})
 	}
 
 	function resolveAssetUrl(path: string): string {

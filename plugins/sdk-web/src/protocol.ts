@@ -265,17 +265,21 @@ export type PluginRequests = {
 	/**
 	 * User-consented download into the plugin's own asset vault (see
 	 * `@hoardodile/sdk-types/plugin-asset`). The host asks the user with
-	 * the shared consent dialog; cached destinations resolve without any
-	 * dialog. Rejections carry a machine-readable `err.name`
+	 * the shared consent dialog — an array of requests is ONE dialog
+	 * listing every item (all-or-nothing); cached destinations resolve
+	 * without any dialog. Rejections carry a machine-readable `err.name`
 	 * (`DENIED` / `UNAVAILABLE` / `POLICY`).
+	 *
+	 * The wire mirrors the call: single in → single result out, array in
+	 * → array of results out, in request order.
 	 *
 	 * Timeout: {@link pluginRequestTimeouts.download} — the client-side
 	 * ceiling for the whole flow (consent dialog + transfer), declared in
 	 * the protocol meta rather than ad hoc at the call site.
 	 */
 	download: {
-		readonly input: PluginDownloadRequest
-		readonly output: PluginDownloadResult
+		readonly input: PluginDownloadRequest | readonly PluginDownloadRequest[]
+		readonly output: PluginDownloadResult | readonly PluginDownloadResult[]
 	}
 	/**
 	 * Remove a vault file (idempotent); the plugin decides its own vault

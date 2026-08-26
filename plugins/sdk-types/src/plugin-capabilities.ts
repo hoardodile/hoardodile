@@ -52,7 +52,7 @@ export const PLUGIN_CAPABILITY_GATES = {
 	},
 	download: {
 		description:
-			"The plugin asset vault: user-consented downloads into the plugin's own vault/ plus the vault read/delete methods; denied by default and per-download by the user.",
+			"The plugin asset vault: user-consented downloads into the plugin's own vault/ plus the vault read/delete methods; denied by default and per-request by the user. One batched call = one consent dialog listing every item (all-or-nothing), capped per call.",
 		sandboxMethods: ["download", "statAsset", "readAsset", "deleteAsset"],
 	},
 } as const satisfies Record<keyof PluginPermissions, PluginCapabilityGate>
