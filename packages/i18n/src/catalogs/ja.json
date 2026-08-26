@@ -897,7 +897,9 @@
 		"untitledHeading": "無題の見出し",
 		"detailMeta": {
 			"chars_one": "{{count, number}} 文字",
-			"chars_other": "{{count, number}} 文字"
+			"chars_other": "{{count, number}} 文字",
+			"created": "作成: {{time}}",
+			"updated": "更新: {{time}}"
 		},
 		"notes": {
 			"tab": "メモ",
@@ -932,6 +934,7 @@
 			"committed": "バージョンをコミットしました",
 			"contentTooLarge": "内容が最大文字数を超えています",
 			"versionLoadFailed": "バージョンの内容を読み込めませんでした",
+			"diffFailed": "ドキュメントの差分を計算できませんでした",
 			"savedLocally": "このデバイスに保存しました",
 			"resolveConflictFirst": "コミットする前にオフラインの競合を解決してください",
 			"movedToTrash": "ごみ箱に移動しました",

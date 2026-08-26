@@ -902,6 +902,7 @@
 			"moveFailed": "移动失败",
 			"contentTooLarge": "内容超出最大字数限制",
 			"versionLoadFailed": "版本内容加载失败",
+			"diffFailed": "无法计算文档差异",
 			"savedLocally": "已保存到本机",
 			"resolveConflictFirst": "请先处理离线冲突再提交"
 		},
@@ -915,7 +916,9 @@
 		"untitledHeading": "无标题",
 		"detailMeta": {
 			"chars_one": "{{count, number}} 字",
-			"chars_other": "{{count, number}} 字"
+			"chars_other": "{{count, number}} 字",
+			"created": "创建于 {{time}}",
+			"updated": "更新于 {{time}}"
 		},
 		"notes": {
 			"tab": "笔记",

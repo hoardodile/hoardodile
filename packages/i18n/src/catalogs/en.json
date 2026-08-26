@@ -897,7 +897,9 @@
 		"untitledHeading": "Untitled heading",
 		"detailMeta": {
 			"chars_one": "{{count, number}} char",
-			"chars_other": "{{count, number}} chars"
+			"chars_other": "{{count, number}} chars",
+			"created": "Created {{time}}",
+			"updated": "Updated {{time}}"
 		},
 		"notes": {
 			"tab": "Notes",
@@ -932,6 +934,7 @@
 			"committed": "Version committed",
 			"contentTooLarge": "Content exceeds maximum character limit",
 			"versionLoadFailed": "Could not load version content",
+			"diffFailed": "Could not compute the document diff",
 			"savedLocally": "Saved on this device",
 			"resolveConflictFirst": "Resolve the offline conflict before committing",
 			"movedToTrash": "Moved to recycle bin",

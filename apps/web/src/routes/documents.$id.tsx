@@ -400,6 +400,8 @@ function DocDetailRoute() {
 
 					<DocDetailMeta
 						charCount={draftState.charCount}
+						createdAt={node.createdAt}
+						updatedAt={node.updatedAt}
 						exposure={exposureQuery.data}
 					/>
 

@@ -897,7 +897,9 @@
 		"untitledHeading": "Unbenannte Überschrift",
 		"detailMeta": {
 			"chars_one": "{{count, number}} Zeichen",
-			"chars_other": "{{count, number}} Zeichen"
+			"chars_other": "{{count, number}} Zeichen",
+			"created": "Erstellt {{time}}",
+			"updated": "Aktualisiert {{time}}"
 		},
 		"notes": {
 			"tab": "Notizen",
@@ -932,6 +934,7 @@
 			"committed": "Version festgeschrieben",
 			"contentTooLarge": "Inhalt überschreitet das maximale Zeichenlimit",
 			"versionLoadFailed": "Versionsinhalt konnte nicht geladen werden",
+			"diffFailed": "Die Dokumentdifferenz konnte nicht berechnet werden",
 			"savedLocally": "Auf diesem Gerät gespeichert",
 			"resolveConflictFirst": "Löse den Offline-Konflikt, bevor du festschreibst",
 			"movedToTrash": "In den Papierkorb verschoben",

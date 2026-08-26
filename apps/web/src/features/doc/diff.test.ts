@@ -4,7 +4,7 @@
 
 import { BlockNoteEditor } from "@blocknote/core"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
-import { computeInlineDiffDoc } from "./diffCompute.ts"
+import { blocksToDoc, computeInlineDiffDoc } from "./diffCompute.ts"
 import { docSchema } from "./editor/schema.ts"
 
 type MarkedText = {
@@ -87,6 +87,51 @@ describe("computeInlineDiffDoc", () => {
 		expect(marks.some((m) => m.text === "keep me" && m.kind === "none")).toBe(
 			true,
 		)
+	})
+
+	it("never throws on changes that cross block structure", () => {
+		// A text change spanning a paragraph boundary produces a replace
+		// slice that does not fit its base position; the computation must
+		// degrade (skip the offending region) instead of throwing.
+		const diffDoc = computeInlineDiffDoc(
+			editor,
+			[
+				{ type: "paragraph", content: "hello world" },
+				{ type: "paragraph", content: "foo bar" },
+			],
+			[
+				{ type: "paragraph", content: "hello" },
+				{ type: "paragraph", content: "world foo bar" },
+			],
+		)
+		expect(diffDoc).toBeDefined()
+	})
+
+	it("round-trips real editor block shapes through blocksToDoc without throwing", () => {
+		// Real `editor.document` shapes (children arrays, code string
+		// content) must convert — a throw here is what silently blanks
+		// the compare view.
+		editor.insertBlocks(
+			[
+				{
+					type: "checkListItem",
+					content: "done",
+				},
+			],
+			editor.document[0]!,
+			"before",
+		)
+		editor.insertBlocks(
+			[{ type: "codeBlock", content: "const x = 1" }],
+			editor.document[0]!,
+			"before",
+		)
+		const blocks = editor.document as Parameters<typeof blocksToDoc>[1]
+		const doc = blocksToDoc(editor._tiptapEditor.state.schema, blocks)
+		expect(doc).toBeDefined()
+		const text = doc.textBetween(0, doc.content.size, "\n")
+		expect(text).toContain("const x = 1")
+		expect(text).toContain("done")
 	})
 })
 

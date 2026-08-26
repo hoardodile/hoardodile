@@ -1,7 +1,14 @@
 import type { DocVersionMeta } from "@hoardodile/schemas"
 import { toast } from "@hoardodile/ui/components/toast"
 import { useQuery } from "@tanstack/react-query"
-import { type RefObject, useCallback, useEffect, useRef, useState } from "react"
+import {
+	type RefObject,
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from "react"
 import { useTranslation } from "react-i18next"
 import { blocksOf } from "../contentShape.ts"
 import { type DiffableBlock, loadDiffModule } from "../diff.ts"
@@ -121,9 +128,13 @@ export function useDocDiff(args: UseDocDiffInput): UseDocDiffResult {
 		return undefined
 	}, [])
 
-	const diffBaseBlocks = blocksOf(selectedVersionQuery.data?.content) as
-		| DiffableBlock[]
-		| undefined
+	const diffBaseBlocks = useMemo(
+		() =>
+			blocksOf(selectedVersionQuery.data?.content) as
+				| DiffableBlock[]
+				| undefined,
+		[selectedVersionQuery.data?.content],
+	)
 
 	useEffect(() => {
 		if (
@@ -144,8 +155,8 @@ export function useDocDiff(args: UseDocDiffInput): UseDocDiffResult {
 		// (blocknote core, prosemirror changeset) lives in its own chunk —
 		// it is only fetched once a diff actually opens.
 		const timer = setTimeout(() => {
-			void loadDiffModule().then(
-				async ({ blocksToDoc, computeInlineDiffDoc, applyDiffDoc }) => {
+			void loadDiffModule()
+				.then(async ({ blocksToDoc, computeInlineDiffDoc, applyDiffDoc }) => {
 					if (appliedDiffMarkerRef.current === marker) return
 					const schema = editor._tiptapEditor.state.schema
 					const diff =
@@ -153,8 +164,21 @@ export function useDocDiff(args: UseDocDiffInput): UseDocDiffResult {
 						blocksToDoc(schema, diffCurrentBlocks)
 					applyDiffDoc(editor, diff)
 					appliedDiffMarkerRef.current = marker
-				},
-			)
+				})
+				.catch((err: unknown) => {
+					if (appliedDiffMarkerRef.current === marker) return
+					// A failed diff must never leave a silently blank
+					// compare view: surface the failure (with its cause)
+					// and drop out so the user is back on their document.
+					console.error("[doc-diff] document diff computation failed", err)
+					toast.add({
+						title: t("documents.toast.diffFailed"),
+						description:
+							err instanceof Error ? err.message.slice(0, 200) : String(err),
+						type: "error",
+					})
+					exitDiff()
+				})
 		}, 0)
 		return () => clearTimeout(timer)
 	}, [
@@ -163,6 +187,8 @@ export function useDocDiff(args: UseDocDiffInput): UseDocDiffResult {
 		diffVersionId,
 		diffEditorReady,
 		diffBaseBlocks,
+		exitDiff,
+		t,
 	])
 
 	return {

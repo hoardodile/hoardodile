@@ -897,7 +897,9 @@
 		"untitledHeading": "Encabezado sin título",
 		"detailMeta": {
 			"chars_one": "{{count, number}} carácter",
-			"chars_other": "{{count, number}} caracteres"
+			"chars_other": "{{count, number}} caracteres",
+			"created": "Creado {{time}}",
+			"updated": "Actualizado {{time}}"
 		},
 		"notes": {
 			"tab": "Notas",
@@ -932,6 +934,7 @@
 			"committed": "Versión confirmada",
 			"contentTooLarge": "El contenido supera el límite máximo de caracteres",
 			"versionLoadFailed": "No se pudo cargar el contenido de la versión",
+			"diffFailed": "No se pudo calcular la diferencia del documento",
 			"savedLocally": "Guardado en este dispositivo",
 			"resolveConflictFirst": "Resuelve el conflicto sin conexión antes de confirmar",
 			"movedToTrash": "Movido a la papelera",

@@ -285,4 +285,38 @@ describe("useDocDiff", () => {
 			expect.objectContaining({ type: "error" }),
 		)
 	})
+
+	test("surfaces a diff computation failure and exits diff mode", async () => {
+		const { args, qc, editorHandleRef } = setup({
+			versions: [version("v-1", 1)],
+		})
+		editorHandleRef.current = {
+			editor: { document: [] },
+		} as unknown as DocEditorHandle
+		trpcQuery.mockResolvedValue({ content: { version: 3, blocks: [] } })
+		vi.mocked(loadDiffModule).mockRejectedValue(new Error("diff chunk failed"))
+		const { result } = renderHook(() => useDocDiff(args), {
+			wrapper: createWrapper(qc),
+		})
+
+		await act(async () => {
+			await result.current.enterDiff()
+		})
+		// Mount the read-only diff editor so the apply effect can run.
+		result.current.diffEditorHandleRef.current = {
+			editor: {
+				_tiptapEditor: { state: { schema: {} } },
+			},
+		} as unknown as DocEditorHandle
+		act(() => result.current.onDiffEditorReady())
+
+		await waitFor(() => expect(result.current.diffMode).toBe(false))
+		expect(toast.add).toHaveBeenCalledWith(
+			expect.objectContaining({
+				title: "Could not compute the document diff",
+				description: "diff chunk failed",
+				type: "error",
+			}),
+		)
+	})
 })

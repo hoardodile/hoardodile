@@ -100,13 +100,22 @@ export const DocEditorColumn = memo(function DocEditorColumn(
 				// loading area blends with the document background.
 				<Skeleton className="min-h-[50svh] w-full bg-transparent" />
 			) : diffMode && diffEditor !== undefined ? (
-				<DocEditor
-					key={`${docId}-diff`}
-					value={diffEditor.value}
-					editable={false}
-					handleRef={diffEditor.handleRef}
-					onReady={diffEditor.onReady}
-				/>
+				diffEditor.value !== undefined ? (
+					<DocEditor
+						key={`${docId}-diff`}
+						value={diffEditor.value}
+						editable={false}
+						handleRef={diffEditor.handleRef}
+						onReady={diffEditor.onReady}
+					/>
+				) : (
+					// The twin editor captures `initialContent` at mount,
+					// so it mounts only once the selected version's
+					// content is actually available — mounting empty and
+					// relying on the later diff apply would leave a blank
+					// compare view on any failure.
+					<Skeleton className="min-h-[50svh] w-full bg-transparent" />
+				)
 			) : (
 				<DocEditor
 					key={docId}
