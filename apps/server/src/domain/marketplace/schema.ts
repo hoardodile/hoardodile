@@ -5,8 +5,19 @@ import { z } from "zod"
  * System-preference key holding the marketplace registry repo
  * ("owner/repo", normalized). Sync-scoped like every document-level
  * preference, so a LAN client shares the same marketplace.
+ *
+ * The value is tri-state: absent = the built-in default registry,
+ * `""` (written by `setConfig(null)`) = explicitly disabled, anything
+ * else = the configured registry.
  */
 export const MARKETPLACE_PREF_KEY = "marketplace.registryRepo"
+
+/**
+ * Built-in default registry repo — the official Hoardodile marketplace.
+ * Used whenever the preference is absent (a fresh install has never
+ * configured a registry), so the catalog works out of the box.
+ */
+export const DEFAULT_MARKETPLACE_REPO = "hoardodile/marketplace"
 
 /**
  * The registry file at the root of the registry repo. Deliberately tiny —

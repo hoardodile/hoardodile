@@ -63,10 +63,10 @@ Then add the line to the `plugins` array of your registry repo's
 ```
 
 The app's **Settings → Marketplace** takes the registry repo address
-once and reads everything else — each plugin's manifest (name,
-description, icon, permissions) via `raw.githubusercontent.com`, and its
-latest release (version, notes, zip asset, optional `.sha256` sidecar)
-via `api.github.com`. Requirements:
+once (built-in default: `hoardodile/marketplace`) and reads everything
+else — each plugin's manifest (name, description, icon, permissions) via
+`raw.githubusercontent.com`, and its latest release (version, notes, zip
+asset, optional `.sha256` sidecar) via `api.github.com`. Requirements:
 
 - all repos are **public** (raw reads and unauthenticated API calls);
 - release tags follow `v<version>` (a `v` prefix is tolerated);

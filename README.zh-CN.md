@@ -30,7 +30,7 @@ docker compose up -d   # http://localhost:3000
 - 数据保存在命名卷 `hoardodile-data`（挂载于 `/data`）；`docker compose down -v` 会**删除数据**——如需直接查看目录，可用 bind mount `./data:/data`。镜像以非 root 用户运行，自带 HEALTHCHECK（`docker compose ps` 可查看状态）。
 - 升级 = 重新构建/拉取镜像后 `docker compose up -d`，迁移在下次启动时自动执行。内置的 gallery/pdf 插件是种子插件：卸载后在当前容器生命周期内不再出现，新镜像会重新下发（与桌面端应用更新语义一致）。
 - 若放在 TLS 反向代理之后，请设置 `FORCE_HTTPS=true` 并从 `environment` 中移除 `SESSION_SECURE_COOKIE=false`。`HOST`/`PORT`/`STORAGE_ROOT` 均可配置；完整环境变量见 `.env.example`。`pnpm seed` 演示工具拒绝在镜像内运行（它只是开发工具）。
-- 自定义插件：将你的插件目录挂载到 `/app/plugins/<slug>`（不要覆盖内置种子插件），然后在界面中安装；新镜像仍会像之前一样重新下发内置插件。若要分发自己的插件，用 GitHub Release 发布并把“设置 → 插件市场”指向你的注册单仓库即可——见 `packages/cli/README.md`。
+- 自定义插件：将你的插件目录挂载到 `/app/plugins/<slug>`（不要覆盖内置种子插件），然后在界面中安装；新镜像仍会像之前一样重新下发内置插件。若要分发自己的插件，用 GitHub Release 发布并把“设置 → 插件市场”指向你的注册单仓库（内置默认为 `hoardodile/marketplace`）即可——见 `packages/cli/README.md`。
 
 ## AI 技能
 

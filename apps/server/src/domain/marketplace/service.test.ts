@@ -4,6 +4,7 @@ import { writeFile } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
+import { DEFAULT_MARKETPLACE_REPO } from "./schema.ts"
 import { createMarketplaceService, normalizeRepoAddress } from "./service.ts"
 
 const PLUGIN_ID = "44444444-4444-4444-8444-444444444444"
@@ -401,14 +402,28 @@ describe("createMarketplaceService.refresh", () => {
 		})
 	})
 
-	test("throws when the marketplace is not configured", async () => {
+	test("uses the built-in default registry when never configured", async () => {
+		const f = fixture!
+		expect(f.service.getConfig()).toEqual({
+			registryRepo: DEFAULT_MARKETPLACE_REPO,
+		})
+
+		// The default repo's registry is unmocked → registry missing.
+		await expect(f.service.refresh(false)).rejects.toMatchObject({
+			code: "VALIDATION",
+			message: expect.stringContaining(DEFAULT_MARKETPLACE_REPO),
+		})
+	})
+
+	test("throws when the marketplace is explicitly disabled", async () => {
+		fixture!.service.setConfig(null)
 		await expect(fixture!.service.refresh(false)).rejects.toMatchObject({
 			code: "VALIDATION",
 			message: expect.stringContaining("not configured"),
 		})
 	})
 
-	test("setConfig normalizes and null clears the cache", async () => {
+	test("setConfig normalizes and null disables", async () => {
 		const f = fixture!
 		f.service.setConfig("https://github.com/me/registry")
 		expect(f.prefs.get("marketplace.registryRepo")).toBe("me/registry")
@@ -423,7 +438,8 @@ describe("createMarketplaceService.refresh", () => {
 		expect(apiCalls(f)).toBe(1)
 
 		f.service.setConfig(null)
-		expect(f.prefs.has("marketplace.registryRepo")).toBe(false)
+		expect(f.prefs.get("marketplace.registryRepo")).toBe("")
+		expect(f.service.getConfig()).toEqual({ registryRepo: null })
 		await expect(f.service.refresh(false)).rejects.toMatchObject({
 			message: expect.stringContaining("not configured"),
 		})

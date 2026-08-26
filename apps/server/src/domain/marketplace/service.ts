@@ -10,6 +10,7 @@ import {
 	createConcurrencyLimiter,
 } from "src/infra/concurrency-limiter.ts"
 import {
+	DEFAULT_MARKETPLACE_REPO,
 	githubReleasePayload,
 	MARKETPLACE_PREF_KEY,
 	type MarketError,
@@ -107,6 +108,10 @@ export type MarketplaceServiceDeps = {
 }
 
 export type MarketplaceService = {
+	/**
+	 * Configured registry repo, the built-in default registry, or
+	 * `null` when the marketplace is explicitly disabled.
+	 */
 	getConfig(): { readonly registryRepo: string | null }
 	/** `null` disables the marketplace and clears the cache. */
 	setConfig(registryRepo: string | null): void
@@ -152,12 +157,22 @@ export function createMarketplaceService(
 	let pending: Promise<MarketSnapshot> | undefined
 
 	function getConfig(): { readonly registryRepo: string | null } {
-		return { registryRepo: prefs.get(MARKETPLACE_PREF_KEY)?.value ?? null }
+		const value = prefs.get(MARKETPLACE_PREF_KEY)?.value
+		return {
+			registryRepo:
+				value === undefined
+					? DEFAULT_MARKETPLACE_REPO
+					: value.length === 0
+						? null
+						: value,
+		}
 	}
 
 	function setConfig(registryRepo: string | null): void {
 		if (registryRepo === null) {
-			prefs.remove(MARKETPLACE_PREF_KEY)
+			// A `""` sentinel keeps "disabled" distinct from "never
+			// configured", which means the built-in default registry.
+			prefs.set(MARKETPLACE_PREF_KEY, "")
 			cache.clear()
 			return
 		}
@@ -220,6 +235,10 @@ export function createMarketplaceService(
 	function currentRepo(): string {
 		const repo = prefs.get(MARKETPLACE_PREF_KEY)?.value
 		if (repo === undefined) {
+			// Never configured: the built-in default registry.
+			return DEFAULT_MARKETPLACE_REPO
+		}
+		if (repo.length === 0) {
 			throw invalid(
 				"marketplace.not_configured",
 				"plugin marketplace is not configured — set a registry repo first",
