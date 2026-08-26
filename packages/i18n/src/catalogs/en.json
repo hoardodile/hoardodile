@@ -310,6 +310,8 @@
 			"title": "Recent connections",
 			"description": "Every sign-in with device, IP and time. Stored only on this device; rows older than 90 days are pruned.",
 			"empty": "No sign-ins yet.",
+			"totalLabel_one": "{{count}} sign-in",
+			"totalLabel_other": "{{count}} sign-ins",
 			"loopback": "this device"
 		},
 		"desktop": {

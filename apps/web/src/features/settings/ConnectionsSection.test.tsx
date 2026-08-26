@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { render, screen, waitFor } from "@testing-library/react"
+import userEvent from "@testing-library/user-event"
 import { beforeAll, describe, expect, it } from "vitest"
 import {
 	DEFAULT_DATE_FORMAT,
@@ -87,6 +88,42 @@ describe("ConnectionsSection", () => {
 				formatDateTime(FIRST_RECORDED_AT, DEFAULT_DATE_FORMAT, "local"),
 			),
 		).toBeInTheDocument()
+		// Fewer than six entries: no pager, one flat list.
+		expect(screen.queryByTestId("pagination-bar")).toBeNull()
+	})
+
+	it("paginates above and below when there are more than five sign-ins", async () => {
+		setTrpcClient(
+			createMockTrpcClient({
+				"access.connections": () => ({
+					connections: Array.from({ length: 7 }, (_, index) => ({
+						id: `session-${index + 1}`,
+						ip: `192.168.1.${index + 1}`,
+						origin: "lan",
+						deviceLabel: `Device ${index + 1}`,
+						recordedAt: Date.now() - index * 60_000,
+					})),
+				}),
+			}),
+		)
+		const user = userEvent.setup()
+		renderSection()
+		await waitFor(() => {
+			expect(screen.getByText("Device 1")).toBeInTheDocument()
+		})
+
+		// One pager below the list with the count label.
+		expect(screen.getAllByTestId("pagination-bar")).toHaveLength(1)
+		expect(screen.getByText("7 sign-ins")).toBeInTheDocument()
+		// First page: five rows, the rest hidden.
+		expect(screen.getByText("Device 5")).toBeInTheDocument()
+		expect(screen.queryByText("Device 6")).toBeNull()
+
+		await user.click(screen.getByRole("button", { name: "2" }))
+
+		expect(screen.getByText("Device 6")).toBeInTheDocument()
+		expect(screen.getByText("Device 7")).toBeInTheDocument()
+		expect(screen.queryByText("Device 1")).toBeNull()
 	})
 
 	it("renders an empty state without sign-ins", async () => {

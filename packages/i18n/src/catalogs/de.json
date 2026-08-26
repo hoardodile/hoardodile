@@ -310,6 +310,8 @@
 			"title": "Letzte Verbindungen",
 			"description": "Jede Anmeldung mit Gerät, IP und Zeitpunkt. Nur auf diesem Gerät gespeichert; Einträge älter als 90 Tage werden entfernt.",
 			"empty": "Noch keine Anmeldungen.",
+			"totalLabel_one": "{{count}} Anmeldung",
+			"totalLabel_other": "{{count}} Anmeldungen",
 			"loopback": "dieses Gerät"
 		},
 		"desktop": {

@@ -310,6 +310,8 @@
 			"title": "Conexiones recientes",
 			"description": "Cada inicio de sesión con dispositivo, IP y hora. Se guarda solo en este dispositivo; las filas de más de 90 días se eliminan.",
 			"empty": "Aún no hay inicios de sesión.",
+			"totalLabel_one": "{{count}} inicio de sesión",
+			"totalLabel_other": "{{count}} inicios de sesión",
 			"loopback": "este dispositivo"
 		},
 		"desktop": {

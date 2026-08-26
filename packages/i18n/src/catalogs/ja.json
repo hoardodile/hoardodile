@@ -310,6 +310,8 @@
 			"title": "最近の接続",
 			"description": "デバイス、IP、時刻を伴うすべてのサインイン。このデバイスにのみ保存され、90日より古い行は削除されます。",
 			"empty": "まだサインインがありません。",
+			"totalLabel_one": "サインイン {{count}}件",
+			"totalLabel_other": "サインイン {{count}}件",
 			"loopback": "このデバイス"
 		},
 		"desktop": {

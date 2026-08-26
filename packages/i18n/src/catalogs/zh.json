@@ -310,6 +310,8 @@
 			"title": "最近连接",
 			"description": "每次登录的设备、IP 与时间。数据只保存在本机，超过 90 天自动清除。",
 			"empty": "暂无登录记录。",
+			"totalLabel_one": "共 {{count}} 条登录记录",
+			"totalLabel_other": "共 {{count}} 条登录记录",
 			"loopback": "本机"
 		},
 		"desktop": {
