@@ -169,6 +169,17 @@ Solar Icon Set (CC BY 4.0), via the design system's registry —
   two places that mean "add" render the same icon. ✓/×/+ are in-house
   marks (`marks.tsx`: `Check`, `Cross`, `Plus`) — never Solar's
   Circle/Square composites, which go muddy at small sizes.
+- **Host-rendered plugin icons are Solar-only.** `manifest.icon`,
+  `{{icon('<SolarGlyph>')}}` and search-kind icons name a **Solar glyph**
+  from the host's full glyph index (not a curated subset) — same
+  three-weight `createIcon` wrapper as the registry, so the icon style
+  preference (duotone/grayscale/linear), `selected`→bold and
+  `--icon-tone` all apply. A name outside the Solar set renders nothing
+  (never an error). Custom images are allowed only as plugin zip asset
+  paths (`assets/icon.svg` via `asset('path')` or the manifest `icon`);
+  URLs and `data:` URIs are rejected. Raw Solar imports stay confined to
+  host machinery (`packages/ui` registry + the app's generated lazy
+  index) — plugin iframes import `@hoardodile/ui` wrapped exports only.
 - Every glyph is small with `currentColor`; duotone only via the hook.
 
 ## Components

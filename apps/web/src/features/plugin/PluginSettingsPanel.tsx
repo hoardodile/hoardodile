@@ -26,7 +26,6 @@ import {
 	DropdownMenuTrigger,
 } from "@hoardodile/ui/components/dropdown-menu"
 import { Icon, type IconType } from "@hoardodile/ui/components/icon"
-import { IconTile } from "@hoardodile/ui/components/icon-tile"
 import {
 	IconToggle,
 	type IconToggleOption,
@@ -85,6 +84,7 @@ import {
 import { useToastMutation } from "@/hooks/useToastMutation"
 import { errorMessage } from "@/lib/errors"
 import type { RouterOutputs } from "@/trpc/client"
+import { PluginTileIcon } from "./icons/plugin-tile-icon"
 import {
 	renderSearchKindLabel,
 	resolveManifestDescription,
@@ -249,19 +249,26 @@ export function PluginPageActions() {
 				body={
 					installConfirm.target !== undefined ? (
 						<div className="flex flex-col gap-3">
-							<div className="flex flex-col gap-0.5">
-								<span className="text-sm font-medium">
-									{resolveManifestName(
-										installConfirm.target.manifest,
-										i18n.language,
-									)}
-									<span className="ml-2 text-xs font-normal text-muted-foreground">
-										v{installConfirm.target.manifest.version}
+							<div className="flex items-center gap-2.5">
+								<PluginTileIcon
+									iconRef={installConfirm.target.manifest.icon}
+									pluginId={installConfirm.target.manifest.id}
+									fallback={PlugCircle}
+								/>
+								<div className="flex flex-col gap-0.5">
+									<span className="text-sm font-medium">
+										{resolveManifestName(
+											installConfirm.target.manifest,
+											i18n.language,
+										)}
+										<span className="ml-2 text-xs font-normal text-muted-foreground">
+											v{installConfirm.target.manifest.version}
+										</span>
 									</span>
-								</span>
-								<span className="font-mono text-xs text-muted-foreground">
-									{installConfirm.target.manifest.id}
-								</span>
+									<span className="font-mono text-xs text-muted-foreground">
+										{installConfirm.target.manifest.id}
+									</span>
+								</div>
 							</div>
 							<PluginPermissionBadges
 								permissions={installConfirm.target.manifest.permissions}
@@ -695,7 +702,11 @@ function SortablePluginRow(props: {
 					{priority}
 				</span>
 			</div>
-			<IconTile icon={pluginIcons[p.id] ?? PlugCircle} />
+			<PluginTileIcon
+				iconRef={p.manifest.icon}
+				pluginId={p.id}
+				fallback={pluginIcons[p.id] ?? PlugCircle}
+			/>
 			<div className="flex min-w-0 shrink-0 items-center gap-2">
 				<span className="truncate text-ui font-medium">
 					{resolveManifestName(p.manifest, i18n.language)}
@@ -743,7 +754,11 @@ function PluginCard(props: {
 			data-testid={`plugin-row-${p.id}`}
 		>
 			<div className="flex items-center gap-2.5">
-				<IconTile icon={pluginIcons[p.id] ?? PlugCircle} />
+				<PluginTileIcon
+					iconRef={p.manifest.icon}
+					pluginId={p.id}
+					fallback={pluginIcons[p.id] ?? PlugCircle}
+				/>
 				<div className="min-w-0 flex-1">
 					<span className="block truncate text-ui font-medium">
 						{resolveManifestName(p.manifest, i18n.language)}

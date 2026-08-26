@@ -13,6 +13,10 @@ The app validates it on install (Settings → Plugins) and rescans.
   "name": "My Plugin",           // REQUIRED — user-facing (i18n overrides it)
   "description": "What it claims.",
   "version": "0.0.0",
+  "icon": "box",                 // optional — Solar glyph name (three weights,
+                                 //   follows the user's icon style preference)
+                                 //   or a zip asset path ("assets/icon.svg");
+                                 //   Solar-only, no URLs/data: URIs
   "permissions": { … },          // see below
   "i18n": { … },                 // see below
   "ui": { … }                    // see below
@@ -22,6 +26,12 @@ The app validates it on install (Settings → Plugins) and rescans.
 **`id`**: generate with `node -e "console.log(crypto.randomUUID())"`.
 **`version`**: the plugin's own version; the app shows it (Settings →
 Plugins) — bump it on user-visible changes.
+**`icon`**: shown on the plugin's card/row in Settings → Plugins and the
+install preview. A **Solar glyph name** (any glyph from the host's full
+Solar index — see `hd-plugin-design` Iconography) or a relative asset
+path inside your plugin zip. Names outside the Solar set render the
+fallback icon; `http(s):`/`data:` URIs and `..` paths are rejected on
+install.
 
 ## Permissions
 
@@ -95,8 +105,10 @@ labels (search kind labels, etc.) are referenced from the `ui` block:
 
 ### Template expressions
 
-`{{t('key')}}` — i18n label · `{{icon('Name')}}` — registry icon ·
-`{{join(' ', a, b)}}` — join · `{{number(x)}}` — locale number ·
+`{{t('key')}}` — i18n label · `{{icon('<SolarGlyph>')}}` — **Solar glyph
+name only** (full set; same three weights as the registry, follows the
+user's icon style; unknown names render empty) · `{{join(' ', a, b)}}` —
+join · `{{number(x)}}` — locale number ·
 `{{duration(ms)}}` — time string · `{{inc(n)}}` — 0-based value + 1
 (pipes `bytes`/`duration`/`number`/`inc`, comparisons `eq`/`ne`/`gt`/
 `lt`/`gte`/`lte` also exist) · `{{if(cond, a, b)}}` — conditional ·

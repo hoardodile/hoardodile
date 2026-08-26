@@ -6,25 +6,33 @@ import { describe, expect, test } from "vitest"
 import { parseIconRef } from "./template-icons"
 
 describe("parseIconRef", () => {
-	test("plain name → whitelist icon", () => {
+	test("plain name → normalized Solar glyph name", () => {
 		expect(parseIconRef("Heart", "pid")).toEqual({
 			kind: "icon",
-			name: "Heart",
+			name: "heart",
 		})
 	})
 
 	test("trims whitespace", () => {
 		expect(parseIconRef("  Heart  ", "pid")).toEqual({
 			kind: "icon",
-			name: "Heart",
+			name: "heart",
 		})
 	})
 
-	test("no longer supports the name: prefix", () => {
-		expect(parseIconRef("icon:Heart", "pid")).toEqual({
+	test("legacy whitelist names normalize to their Solar glyph", () => {
+		expect(parseIconRef("Image", "pid")).toEqual({
 			kind: "icon",
-			name: "icon:Heart",
+			name: "gallery",
 		})
+		expect(parseIconRef("FileText", "pid")).toEqual({
+			kind: "icon",
+			name: "file-text",
+		})
+	})
+
+	test("the name: prefix is rejected outright", () => {
+		expect(parseIconRef("icon:Heart", "pid")).toBeUndefined()
 	})
 
 	test("parses relative asset path", () => {
@@ -43,6 +51,11 @@ describe("parseIconRef", () => {
 
 	test("returns undefined for empty asset path", () => {
 		expect(parseIconRef("./", "pid")).toBeUndefined()
+	})
+
+	test("returns undefined for .. asset paths", () => {
+		expect(parseIconRef("../x.svg", "pid")).toBeUndefined()
+		expect(parseIconRef("icons/../x.svg", "pid")).toBeUndefined()
 	})
 
 	test("returns undefined for http scheme", () => {

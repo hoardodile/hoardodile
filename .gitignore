@@ -33,6 +33,12 @@ lefthook-local.yml
 # regenerates it deterministically.
 apps/web/src/routeTree.gen.ts
 
+# Solar plugin-icon index generated before the web dev/build/lint/test
+# chain (scripts/generate-solar-lazy-index.mjs) — never committed: it
+# mirrors the installed @solar-icons/react version.
+apps/web/src/features/plugin/icons/solar-names.generated.ts
+apps/web/src/features/plugin/icons/solar-loaders.generated.ts
+
 # Third-party notices generated before the web dev/build chain
 # (scripts/generate-licenses.mjs): runtime assets only, never committed.
 apps/web/public/licenses.json

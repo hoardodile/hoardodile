@@ -5,11 +5,11 @@
 	"license": "GPL-3.0-only",
 	"type": "module",
 	"scripts": {
-		"dev": "node ../../scripts/generate-licenses.mjs && vite",
-		"build": "node scripts/gen-route-tree.mjs && node ../../scripts/generate-licenses.mjs && vite build",
+		"dev": "node ../../scripts/generate-licenses.mjs && node ../../scripts/generate-solar-lazy-index.mjs && vite",
+		"build": "node scripts/gen-route-tree.mjs && node ../../scripts/generate-licenses.mjs && node ../../scripts/generate-solar-lazy-index.mjs && vite build",
 		"preview": "vite preview",
-		"lint": "node scripts/gen-route-tree.mjs && tsc --noEmit",
-		"test": "node scripts/gen-route-tree.mjs && vitest run",
+		"lint": "node scripts/gen-route-tree.mjs && node ../../scripts/generate-solar-lazy-index.mjs && tsc --noEmit",
+		"test": "node scripts/gen-route-tree.mjs && node ../../scripts/generate-solar-lazy-index.mjs && vitest run",
 		"test:e2e": "playwright test"
 	},
 	"devDependencies": {

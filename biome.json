@@ -16,6 +16,8 @@
 			"**",
 			"!**/vendor",
 			"!**/routeTree.gen.ts",
+			"!**/solar-names.generated.ts",
+			"!**/solar-loaders.generated.ts",
 			"!**/coverage",
 			"!**/dist",
 			"!**/out",

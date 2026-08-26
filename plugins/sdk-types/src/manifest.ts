@@ -48,15 +48,44 @@ export type PluginPermissions = z.infer<typeof pluginPermissions>
  */
 export const localeString = z.record(z.string(), z.string())
 
-/** Icon reference: an asset path inside the plugin zip (`assets/icon.svg`). */
-export const iconRef = z.string().min(1)
+/**
+ * Icon reference, in exactly one of two static forms:
+ *
+ * - `<SolarGlyph>` — a Solar glyph name (kebab-case, or the legacy
+ *   PascalCase spelling); the host renders it from its own bundled three
+ *   weights (bold / boldDuotone / linear) and follows the user's icon
+ *   style preference. Names outside the host's Solar index render
+ *   nothing.
+ * - `<relative/path>` — an asset inside the plugin zip (`assets/icon.svg`),
+ *   served from the plugin's own directory.
+ *
+ * `http(s):`/`data:` URIs and `..` path segments are rejected: the
+ * manifest stays plain static JSON and the host never fetches or
+ * executes anything an icon reference asks for.
+ */
+export const iconRef = z
+	.string()
+	.min(1)
+	.max(512)
+	.refine(
+		(value) =>
+			!value.startsWith("http://") &&
+			!value.startsWith("https://") &&
+			!value.startsWith("data:") &&
+			!value.split("/").includes(".."),
+		{
+			message:
+				"plugin icon must be a Solar glyph name or a zip asset path (no URLs, no data: URIs, no .. path segments)",
+		},
+	)
 
 /**
  * Corner template slot: a string rendered by the host's template engine
  * over the resource scope. The engine supports `{{data.field}}` paths,
  * pipes (`bytes`, `duration`, `number`, `inc`), comparisons
  * (`eq`/`ne`/`gt`/`lt`/`gte`/`lte`), `if(cond, a, b)`, `join`,
- * `t('key')` for i18n, `icon('Icon')`, `asset('path')`,
+ * `t('key')` for i18n, `icon('<SolarGlyph>')` (a Solar glyph name — see
+ * {@link iconRef}), `asset('path')`,
  * `kind(...)`, and `searchKindIcons()` (the plugin's search kinds).
  * Unknown expressions render as the empty string.
  */
@@ -97,7 +126,7 @@ export const searchKind = z.object({
 	key: z.string().min(1),
 	/** i18n label key shown as the facet group's title. */
 	label: z.string().min(1),
-	/** Optional icon asset path in the plugin zip. */
+	/** Optional Solar glyph name (template `icon('Name')` or `asset('path')`). */
 	icon: templateValue.optional(),
 })
 export type SearchKind = z.infer<typeof searchKind>
@@ -167,7 +196,7 @@ export const pluginManifest = z.object({
 	name: z.string().min(1),
 	/** One-line description shown in the plugins list. */
 	description: z.string().min(1),
-	/** Icon asset path inside the plugin zip. */
+	/** Icon: a Solar glyph name or a zip asset path (see {@link iconRef}). */
 	icon: iconRef.optional(),
 	/** Semantic plugin version; shown to users on the plugin card. */
 	version: z.string().min(1),

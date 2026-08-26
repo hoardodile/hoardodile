@@ -3,6 +3,7 @@
 	"name": "Gallery",
 	"description": "Official media gallery plugin",
 	"version": "0.1.0",
+	"icon": "gallery-wide",
 	"permissions": {
 		"sourceMeta": true,
 		"searchMeta": true,
