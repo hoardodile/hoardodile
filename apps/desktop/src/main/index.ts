@@ -44,6 +44,7 @@ import {
 	type SidecarLayout,
 	workspaceLayout,
 } from "./paths.ts"
+import { applyDesktopProxy } from "./proxy.ts"
 import { resourceUpdateSupport } from "./resource-support.ts"
 import { startResourceChannel } from "./resource-updater.ts"
 import { recoverAtBoot } from "./resources-swap.ts"
@@ -1067,6 +1068,21 @@ async function boot(): Promise<void> {
 					reloadWindow: async () => {
 						const win = runtime.window
 						if (win !== undefined && !win.isDestroyed()) {
+							// The restarted sidecar may have landed on a
+							// different port (its predecessor's sockets can
+							// linger between stop and rebind, e.g. TIME_WAIT
+							// on Windows); a bare `reload()` would retry the
+							// stale URL and park the window on the shell
+							// error page. Follow the sidecar's actual
+							// endpoint instead — the session cookie is
+							// host-scoped (127.0.0.1), so a port change keeps
+							// the user signed in. A failed load falls through
+							// to the in-window error page + Retry.
+							const url = runtime.sidecar?.url
+							if (url !== undefined && win.webContents.getURL() !== url) {
+								await win.loadURL(url).catch(() => undefined)
+								return
+							}
 							win.webContents.reload()
 							return
 						}
@@ -1155,6 +1171,7 @@ if (!gotLock) {
 		void quitApp(activeRuntime)
 	})
 	app.whenReady().then(() => {
+		void applyDesktopProxy()
 		void boot()
 	})
 }
