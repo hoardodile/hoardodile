@@ -56,7 +56,7 @@ pnpm release 0.1.1     # bump + changelog + commit + tag + push, then a draft Re
 ```
 
 - `pnpm release` (scripts/release.mjs) provisions `GITHUB_TOKEN` from `gh auth token` when unset — without a token release-it falls back to web mode and the draft is later auto-created by CI (empty body; the `release-draft` job fixes that).
-- The tag push triggers `.github/workflows/release.yml`: the `release-draft` job creates/fills the draft from the newest `CHANGELOG.md` section, the `npm` job publishes the SDK set, and the desktop matrix builds and attaches the installers + update feeds to the same draft.
+- The tag push triggers `.github/workflows/release.yml`: the `release-draft` job creates/fills the draft from the newest `CHANGELOG.md` section, the `npm` job publishes the SDK set, and the desktop matrix builds and attaches the installers + update feeds to the same draft. Tag-push checkouts are detached HEADs, so the SDK publish intentionally disables pnpm's git checks (the CI tree is a fresh tag checkout — see `scripts/publish-release-set.mjs`).
 - **A human publishes the draft** on GitHub — electron-updater only sees published releases, so the draft is the review gate.
 
 ### npm Trusted Publishing (one-time setup)
@@ -71,7 +71,7 @@ One command per published package (list: `scripts/lib/release-packages.mjs`). `-
 
 ### Re-running an existing version
 
-`workflow_dispatch` on release.yml (input `version`) re-runs the same pipeline on a fixed branch without touching the tag — used to complete a release whose tag predates a pipeline fix. Everything is idempotent: the draft is not re-created, already-published npm versions are skipped, and existing assets are clobbered.
+`workflow_dispatch` on release.yml (input `version`) re-runs the same pipeline on a fixed branch without touching the tag — used to complete a release whose tag predates a pipeline fix. Everything is idempotent: the draft is not re-created, already-published npm versions are skipped, and existing assets are clobbered. (Rerunning an old run — `gh run rerun` — replays the workflow files of that run's commit, so pre-fix tag runs are completed through dispatch instead.) `desktop.yml` also accepts `workflow_dispatch`: it re-runs the full desktop/docker verification matrix on `main` without a tag.
 
 ## License
 
