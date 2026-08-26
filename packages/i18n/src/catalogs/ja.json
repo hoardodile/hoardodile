@@ -314,6 +314,25 @@
 			"totalLabel_other": "サインイン {{count}}件",
 			"loopback": "このデバイス"
 		},
+		"network": {
+			"title": "外部ネットワーク",
+			"description": "プラグインのダウンロードとプラグインマーケットが使うプロキシ。プロキシ環境変数またはシステムプロキシから自動検出され、HOARDODILE_PROXY で上書きできます。",
+			"proxyLabel": "外部プロキシ",
+			"sourceNone": "直接接続（プロキシなし）",
+			"sourceEnv": "ユーザープロキシ（環境変数）",
+			"sourceSystem": "ユーザープロキシ（システム）",
+			"sourceExplicit": "ユーザープロキシ（明示）",
+			"bypassCount_one": "{{count}} ホストがプロキシをバイパス",
+			"bypassCount_other": "{{count}} ホストがプロキシをバイパス",
+			"test": "GitHub 接続をテスト",
+			"testing": "GitHub 接続をテスト中…",
+			"testSuccess": "GitHub に到達できました（HTTP {{status}}）",
+			"testFailed": "GitHub に到達できません：{{message}}",
+			"testHint": "プロキシ設定を確認してください（HOARDODILE_PROXY / システムプロキシ / プロキシ環境変数）。",
+			"connectionLabel": "GitHub 接続",
+			"notTested": "未テスト",
+			"proxyConfigHint": "システムプロキシまたはプロキシ環境変数（HOARDODILE_PROXY）で有効化できます。"
+		},
 		"desktop": {
 			"library": {
 				"title": "ライブラリフォルダー",
@@ -556,7 +575,11 @@
 		"installing": "インストール中…",
 		"installConfirmNote": "上記の GitHub リポジトリからサーバー側コードをインストールします。他のプラグインと同じ制限付きサンドボックスで実行され、宣言された権限は上に表示されています。信頼できるリポジトリからのみインストールしてください。",
 		"installSuccess": "{{name}} をインストールしました",
-		"updateSuccess": "{{name}} を v{{version}} に更新しました"
+		"updateSuccess": "{{name}} を v{{version}} に更新しました",
+		"details": "詳細",
+		"installToggle": "プラグインをインストールまたはアンインストール",
+		"notesTitle": "リリースノート",
+		"registryActive": "現在のレジストリ：{{url}}"
 	},
 	"overview": {
 		"usageHistory": {

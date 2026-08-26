@@ -314,6 +314,25 @@
 			"totalLabel_other": "共 {{count}} 条登录记录",
 			"loopback": "本机"
 		},
+		"network": {
+			"title": "出站网络",
+			"description": "插件下载与插件市场使用的出站代理。自动识别代理环境变量或系统代理，HOARDODILE_PROXY 可覆盖。",
+			"proxyLabel": "出站代理",
+			"sourceNone": "直连（未使用代理）",
+			"sourceEnv": "用户代理（环境变量）",
+			"sourceSystem": "用户代理（系统设置）",
+			"sourceExplicit": "用户代理（显式配置）",
+			"bypassCount_one": "{{count}} 个主机绕过代理",
+			"bypassCount_other": "{{count}} 个主机绕过代理",
+			"test": "测试 GitHub 连接",
+			"testing": "正在测试 GitHub 连接…",
+			"testSuccess": "GitHub 可访问（HTTP {{status}}）",
+			"testFailed": "GitHub 不可访问：{{message}}",
+			"testHint": "请检查代理设置（HOARDODILE_PROXY / 系统代理 / 代理环境变量）。",
+			"connectionLabel": "GitHub 连接",
+			"notTested": "尚未测试",
+			"proxyConfigHint": "可通过系统代理或代理环境变量（HOARDODILE_PROXY）启用。"
+		},
 		"desktop": {
 			"library": {
 				"title": "内容库文件夹",
@@ -556,7 +575,11 @@
 		"installing": "正在安装…",
 		"installConfirmNote": "该操作会从上述 GitHub 仓库安装服务端代码，并与所有插件一样运行在受限沙箱中。上方展示了声明的权限。请只安装你信任的仓库。",
 		"installSuccess": "已安装 {{name}}",
-		"updateSuccess": "已将 {{name}} 更新到 v{{version}}"
+		"updateSuccess": "已将 {{name}} 更新到 v{{version}}",
+		"details": "详情",
+		"installToggle": "安装或卸载插件",
+		"notesTitle": "发布说明",
+		"registryActive": "当前 registry：{{url}}"
 	},
 	"overview": {
 		"usageHistory": {

@@ -11,6 +11,10 @@
  *   to the vetted address via a custom `lookup` — DNS rebinding can
  *   never race the check;
  * - redirects followed manually, ≤ 5 hops, re-vetted per hop;
+ * - the app-wide user proxy is honored per hop (CONNECT for https,
+ *   absolute-form for http, `NO_PROXY`/loopback bypass keeps the pinned
+ *   direct path); proxied targets are still vetted locally first and TLS
+ *   still validates the target certificate;
  * - streamed body with a hard byte cap (`maxBytes`): the transfer is
  *   aborted the moment the cap is crossed and the staging file is
  *   discarded by the caller;
@@ -28,6 +32,13 @@ import { isIP } from "node:net"
 import { Transform } from "node:stream"
 import { pipeline } from "node:stream/promises"
 import { pluginAssetError } from "@hoardodile/sdk-types"
+import {
+	isPublicAddress,
+	type ProxyConfig,
+	proxyAgentFor,
+	proxyFor,
+	proxyTargetAllowed,
+} from "@hoardodile/shared/net-proxy"
 
 export type PluginDownloaderDeps = {
 	/** Per-file byte cap — the stream is aborted as soon as it is crossed. */
@@ -36,6 +47,13 @@ export type PluginDownloaderDeps = {
 	readonly timeoutMs: number
 	/** Allow private/loopback addresses (explicit env opt-in). */
 	readonly allowPrivate: boolean
+	/**
+	 * App-wide outbound proxy config (see `resolveProxyConfig`). When a
+	 * target is routed through the proxy, its hostname is still vetted
+	 * locally first (public address, or a trusted GitHub host when local
+	 * DNS is unusable) and TLS keeps validating the target certificate.
+	 */
+	readonly proxy?: ProxyConfig | null
 }
 
 export type PluginDownloader = {
@@ -142,6 +160,45 @@ export function createPluginDownloader(
 		return url.href
 	}
 
+	/**
+	 * The proxy for `url` per the app-wide config, or `null` for direct
+	 * fetches (no proxy, loopback, bypass entries).
+	 */
+	function proxyForTarget(url: URL): URL | null {
+		return deps.proxy == null ? null : proxyFor(url, deps.proxy!)
+	}
+
+	/**
+	 * Proxy-mode target policy: the local resolver is still consulted and
+	 * a non-public answer (DNS-blocked, poisoned, Clash fake-IP) only
+	 * passes for the trusted GitHub hosts — the proxy resolves those and
+	 * the TLS certificate check pins the destination to the hostname.
+	 * Everything else keeps today's "not public" rejection, so a proxy
+	 * can never be used to reach private ranges.
+	 */
+	function assertProxyTargetAllowed(hostname: string): Promise<void> {
+		if (deps.allowPrivate) return Promise.resolve()
+		return new Promise((resolveDone, reject) => {
+			dnsLookup(hostname, { all: true, verbatim: true }, (_err, addresses) => {
+				if (
+					proxyTargetAllowed(
+						hostname,
+						(addresses ?? []).map((a) => a.address),
+					)
+				) {
+					resolveDone()
+					return
+				}
+				reject(
+					pluginAssetError(
+						"POLICY",
+						`plugin download address is not public: ${hostname} — enable PLUGIN_DOWNLOAD_ALLOW_PRIVATE to allow private ranges`,
+					),
+				)
+			})
+		})
+	}
+
 	async function fetchToFile(
 		rawUrl: string,
 		targetPath: string,
@@ -152,6 +209,8 @@ export function createPluginDownloader(
 	): Promise<{ readonly sizeBytes: number; readonly sha256: string }> {
 		let url = parseHttpUrl(rawUrl)
 		assertHostAllowed(url.hostname)
+		if (proxyForTarget(url) !== null)
+			await assertProxyTargetAllowed(url.hostname)
 		let followed = 0
 		for (;;) {
 			const outcome = await transferOnce(url, targetPath, {
@@ -168,6 +227,9 @@ export function createPluginDownloader(
 				}
 				url = parseHttpUrl(new URL(outcome.location, url).href)
 				assertHostAllowed(url.hostname)
+				if (proxyForTarget(url) !== null) {
+					await assertProxyTargetAllowed(url.hostname)
+				}
 				continue
 			}
 			return { sizeBytes: outcome.sizeBytes, sha256: outcome.sha256 }
@@ -177,6 +239,8 @@ export function createPluginDownloader(
 	async function probeSize(rawUrl: string): Promise<number | undefined> {
 		const url = parseHttpUrl(rawUrl)
 		assertHostAllowed(url.hostname)
+		if (proxyForTarget(url) !== null)
+			await assertProxyTargetAllowed(url.hostname)
 		try {
 			const size = await new Promise<number | undefined>((resolve, reject) => {
 				const req = requestUrl(url, {
@@ -295,22 +359,42 @@ export function createPluginDownloader(
 		},
 	): http.ClientRequest {
 		const client = url.protocol === "https:" ? https : http
-		const req = client.request(
-			url,
-			{
-				method: opts.method,
-				// Pin the socket to a vetted public address (or any address
-				// when private ranges are allowed) — the resolve-time policy
-				// check and the actual connect share one lookup.
-				lookup: pinnedLookup,
-				headers: {
-					Accept: "*/*",
-					"Accept-Encoding": "identity",
-					...opts.headers,
-				},
-			},
-			opts.onResponse,
-		)
+		const headers = {
+			Accept: "*/*",
+			"Accept-Encoding": "identity",
+			...opts.headers,
+		}
+		const proxy = proxyForTarget(url)
+		const req =
+			proxy === null
+				? client.request(
+						url,
+						{
+							method: opts.method,
+							// Pin the socket to a vetted public address (or any address
+							// when private ranges are allowed) — the resolve-time policy
+							// check and the actual connect share one lookup.
+							lookup: pinnedLookup,
+							headers,
+						},
+						opts.onResponse,
+					)
+				: client.request(
+						url,
+						{
+							method: opts.method,
+							// The proxy agent owns the tunnel (CONNECT for https,
+							// absolute-form for http); the target was already
+							// vetted by `assertProxyTargetAllowed`, and the agent's
+							// TLS handshake still validates the target certificate.
+							agent: proxyAgentFor(
+								proxy,
+								url.protocol === "https:" ? "https" : "http",
+							),
+							headers,
+						},
+						opts.onResponse,
+					)
 		req.setTimeout(opts.timeoutMs, () => {
 			req.destroy(new Error(`plugin download timed out: ${url.href}`))
 		})
@@ -346,53 +430,6 @@ export function createPluginDownloader(
 	}
 
 	return { vetUrl, fetchToFile, probeSize }
-}
-
-/** True for a globally routable address (IPv4/IPv6). */
-function isPublicAddress(address: string): boolean {
-	const family = isIP(address)
-	if (family === 4) {
-		const parts = address.split(".")
-		const a = Number(parts[0])
-		const b = Number(parts[1])
-		if (a === 0 || a === 10 || a === 127) return false
-		if (a === 169 && b === 254) return false
-		if (a === 172 && Number.isFinite(b) && b >= 16 && b <= 31) return false
-		if (a === 192 && b === 168) return false
-		// CGNAT (100.64.0.0/10), documentation (192.0.2/24, 198.51.100/24,
-		// 203.0.113/24) and benchmarking (198.18.0.0/15) ranges are not
-		// globally routable — block them like the private ones.
-		if (a === 100 && Number.isFinite(b) && b >= 64 && b <= 127) return false
-		if (a === 192 && b === 0 && parts[2] === "2") return false
-		if (a === 198 && (b === 18 || b === 19)) return false
-		if (a === 198 && b === 51 && parts[2] === "100") return false
-		if (a === 203 && b === 0 && parts[2] === "113") return false
-		if (a >= 224) return false
-		return true
-	}
-	if (family === 6) {
-		const lower = address.toLowerCase()
-		if (lower === "::" || lower === "::1") return false
-		// IPv4-mapped IPv6: decode the enclosed v4 address and re-check.
-		if (lower.startsWith("::ffff:")) {
-			return isPublicAddress(lower.slice("::ffff:".length))
-		}
-		// fc00::/7 unique-local, fe80::/10 link-local, ff00::/8 multicast.
-		if (lower.startsWith("fc") || lower.startsWith("fd")) return false
-		if (
-			lower.startsWith("fe8") ||
-			lower.startsWith("fe9") ||
-			lower.startsWith("fea") ||
-			lower.startsWith("feb")
-		) {
-			return false
-		}
-		// 2001:db8::/32 documentation range — not globally routable.
-		if (lower.startsWith("2001:db8:")) return false
-		if (lower.startsWith("ff")) return false
-		return true
-	}
-	return false
 }
 
 async function hashFile(path: string): Promise<string> {

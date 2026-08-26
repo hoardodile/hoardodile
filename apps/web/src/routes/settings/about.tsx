@@ -4,6 +4,7 @@ import { Scale } from "@hoardodile/ui/icons/registry"
 import { createFileRoute } from "@tanstack/react-router"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
+import { NetworkSection } from "@/features/network/NetworkSection"
 import { AboutSection } from "@/features/settings/AboutSection"
 import { ConnectionsSection } from "@/features/settings/ConnectionsSection"
 import {
@@ -55,6 +56,8 @@ function AboutSettingsRoute() {
 				</Button>
 				<LicensesDialog open={licensesOpen} onOpenChange={setLicensesOpen} />
 			</SettingsSection>
+			<SectionDivider />
+			<NetworkSection />
 			<SectionDivider />
 			<ConnectionsSection />
 		</SettingsSheet>

@@ -547,17 +547,25 @@ const PERMISSION_MARKS_VISIBLE = 3
 /** Declared permissions as bare icon marks — tooltips carry the full
     names. Search metadata also counts the plugin's own sub-categories;
     its chip opens them as a popover. Shared by the row and grid-card
-    layouts; beyond {@link PERMISSION_MARKS_VISIBLE} the rest fold into a
-    "+N" chip so neither a row nor a narrow card can overflow. */
+    layouts — and by the marketplace cards (which pass no manifest, so
+    the search-categories popover simply does not apply). Beyond
+    {@link PERMISSION_MARKS_VISIBLE} the rest fold into a "+N" chip so
+    neither a row nor a narrow card can overflow. */
 export function PermissionMarks({
 	p,
 }: {
-	p: { readonly manifest: PluginManifest; readonly id: string }
+	readonly p: {
+		readonly id: string
+		readonly permissions: PluginPermissions
+		/** Presence enables the search-categories popover (needs manifest i18n). */
+		readonly manifest?: PluginManifest
+	}
 }) {
 	const { t, i18n } = useTranslation()
-	const granted = grantedPermissionKeys(p.manifest.permissions)
+	const granted = grantedPermissionKeys(p.permissions)
 	if (granted.length === 0) return null
-	const kinds = p.manifest.ui?.search?.kinds ?? []
+	const manifest = p.manifest
+	const kinds = manifest?.ui?.search?.kinds ?? []
 	const visible = granted.slice(0, PERMISSION_MARKS_VISIBLE)
 	const overflowed = granted.slice(PERMISSION_MARKS_VISIBLE)
 	return (
@@ -565,7 +573,7 @@ export function PermissionMarks({
 			{visible.map((key) => {
 				const meta = permissionMeta[key]
 				const kindCount = key === "searchMeta" ? kinds.length : 0
-				if (kindCount === 0) {
+				if (kindCount === 0 || manifest === undefined) {
 					return (
 						<span
 							key={key}
@@ -597,12 +605,7 @@ export function PermissionMarks({
 							<span className="mt-2 flex flex-wrap gap-1">
 								{kinds.map((kind) => (
 									<MetaChip key={kind.key}>
-										{renderSearchKindLabel(
-											kind,
-											p.manifest,
-											p.id,
-											i18n.language,
-										)}
+										{renderSearchKindLabel(kind, manifest, p.id, i18n.language)}
 									</MetaChip>
 								))}
 							</span>
@@ -716,7 +719,13 @@ function SortablePluginRow(props: {
 				</span>
 				<StateBadges p={p} />
 			</div>
-			<PermissionMarks p={p} />
+			<PermissionMarks
+				p={{
+					id: p.id,
+					permissions: p.manifest.permissions,
+					manifest: p.manifest,
+				}}
+			/>
 			<p className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
 				{resolveManifestDescription(p.manifest, i18n.language)}
 			</p>
@@ -780,7 +789,13 @@ function PluginCard(props: {
 			{/* Badges ride the bottom row — the header meta line is too narrow
 			    to hold them next to the version. */}
 			<div className="flex min-w-0 items-center gap-1.5 overflow-hidden">
-				<PermissionMarks p={p} />
+				<PermissionMarks
+					p={{
+						id: p.id,
+						permissions: p.manifest.permissions,
+						manifest: p.manifest,
+					}}
+				/>
 				<StateBadges p={p} />
 				<span className="ml-auto shrink-0">
 					<PluginRowActions plugin={p} onSaveAppearance={onSaveAppearance} />
@@ -1064,7 +1079,7 @@ function reorderListByIds(
  * Rendered by `PluginRowActions` OUTSIDE the dropdown — a dialog inside
  * the menu content is unmounted the moment an item is selected.
  */
-function PluginUninstallDialog(props: {
+export function PluginUninstallDialog(props: {
 	readonly pluginId: string
 	readonly pluginName: string
 	readonly open: boolean

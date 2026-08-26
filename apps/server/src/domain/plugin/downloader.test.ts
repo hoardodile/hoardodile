@@ -8,6 +8,7 @@ import {
 } from "node:http"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
+import { resolveProxyConfig } from "@hoardodile/shared/net-proxy"
 import { afterEach, describe, expect, test } from "vitest"
 import { createPluginDownloader, vetDownloadUrl } from "./downloader.ts"
 
@@ -197,5 +198,119 @@ describe("createPluginDownloader", () => {
 			headers: { "User-Agent": "hoardodile-test" },
 		})
 		expect(seenUserAgent).toBe("hoardodile-test")
+	})
+
+	test("routes http targets through the configured proxy (absolute-form)", async () => {
+		let seenUrl: string | undefined
+		const proxy = createServer((req, res) => {
+			seenUrl = req.url
+			res.writeHead(200, { "content-length": "4" })
+			res.end("okay")
+		})
+		await new Promise<void>((resolve) => proxy.listen(0, "127.0.0.1", resolve))
+		const addr = proxy.address()
+		if (addr === null || typeof addr === "string") throw new Error("no addr")
+		try {
+			const dl = downloader({
+				proxy: resolveProxyConfig(
+					{ HOARDODILE_PROXY: `http://127.0.0.1:${addr.port}` },
+					"linux",
+				),
+			})
+			const target = join(tempDir(), "via-proxy.bin")
+			await dl.fetchToFile("http://downloader.test/x.bin", target)
+			expect(seenUrl).toBe("http://downloader.test/x.bin")
+			expect(readFileSync(target, "utf-8")).toBe("okay")
+		} finally {
+			await new Promise<void>((resolve) => proxy.close(() => resolve()))
+		}
+	})
+
+	test("proxies https targets via CONNECT and forwards proxy auth", async () => {
+		const connects: Array<{ path?: string; auth?: string }> = []
+		const proxy = createServer()
+		proxy.on("connect", (req, clientSocket) => {
+			connects.push({
+				path: req.url,
+				auth: String(req.headers["proxy-authorization"] ?? ""),
+			})
+			// Accept the tunnel, then destroy it on the first TLS byte:
+			// the handshake against the fake target can never complete,
+			// but we only assert the CONNECT request itself.
+			clientSocket.write("HTTP/1.1 200 Connection Established\r\n\r\n")
+			clientSocket.once("data", () => clientSocket.destroy())
+		})
+		await new Promise<void>((resolve) => proxy.listen(0, "127.0.0.1", resolve))
+		const addr = proxy.address()
+		if (addr === null || typeof addr === "string") throw new Error("no addr")
+		try {
+			const dl = downloader({
+				proxy: resolveProxyConfig(
+					{
+						HOARDODILE_PROXY: `http://user:pw@127.0.0.1:${addr.port}`,
+					},
+					"linux",
+				),
+			})
+			await expect(
+				dl.fetchToFile(
+					"https://downloader.test/x.bin",
+					join(tempDir(), "tunnel.bin"),
+				),
+			).rejects.toThrow()
+			expect(connects[0]?.path).toBe("downloader.test:443")
+			expect(connects[0]?.auth).toBe(
+				`Basic ${Buffer.from("user:pw").toString("base64")}`,
+			)
+		} finally {
+			await new Promise<void>((resolve) => proxy.close(() => resolve()))
+		}
+	})
+
+	test("loopback targets stay direct even with a proxy configured", async () => {
+		const base = await listen((_req, res) => {
+			res.writeHead(200)
+			res.end("direct")
+		})
+		const dl = downloader({
+			proxy: resolveProxyConfig(
+				{ HOARDODILE_PROXY: "http://127.0.0.1:9" },
+				"linux",
+			),
+		})
+		const target = join(tempDir(), "direct.bin")
+		await dl.fetchToFile(`${base}/x`, target)
+		expect(readFileSync(target, "utf-8")).toBe("direct")
+	})
+
+	test("bypass entries keep targets on the direct path", async () => {
+		const proxy = createServer((_req, res) => {
+			res.writeHead(500)
+			res.end()
+		})
+		await new Promise<void>((resolve) => proxy.listen(0, "127.0.0.1", resolve))
+		const addr = proxy.address()
+		if (addr === null || typeof addr === "string") throw new Error("no addr")
+		try {
+			const dl = downloader({
+				proxy: resolveProxyConfig(
+					{
+						HOARDODILE_PROXY: `http://127.0.0.1:${addr.port}`,
+						NO_PROXY: "downloader.test",
+					},
+					"linux",
+				),
+			})
+			// downloader.test gets no proxy → direct → DNS fails, instead
+			// of the proxy happily answering.
+			await expect(
+				dl.fetchToFile(
+					"http://downloader.test/x.bin",
+					join(tempDir(), "bypass.bin"),
+				),
+			).rejects.toThrow()
+		} finally {
+			await new Promise<void>((resolve) => proxy.close(() => resolve()))
+		}
 	})
 })

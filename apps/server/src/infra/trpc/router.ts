@@ -121,6 +121,12 @@ export function buildDomainRouter(services: RouterServices) {
 					connections: listSignIns(ctx.req.server.db),
 				})),
 			}),
+			network: router({
+				/** Read-only view of the resolved outbound proxy config. */
+				info: authedProcedure.query(() => services.outboundNetwork.info()),
+				/** User-triggered connectivity probe towards the raw GitHub host. */
+				test: authedProcedure.query(() => services.outboundNetwork.test()),
+			}),
 		}),
 	)
 }

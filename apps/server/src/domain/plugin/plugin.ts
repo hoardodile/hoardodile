@@ -15,10 +15,12 @@ import {
 	writeVersioned,
 } from "@hoardodile/host/hoard"
 import { PLUGIN_READ_FILE_MAX_BYTES } from "@hoardodile/sdk-types/plugin"
+import { describeProxy, resolveProxyConfig } from "@hoardodile/shared/net-proxy"
 import type { FastifyInstance, FastifyPluginAsync } from "fastify"
 import fp from "fastify-plugin"
 import "src/infra/fastify-augment.ts"
 import { isPackagedRuntime } from "src/config/env.ts"
+import { createOutboundNetwork } from "src/infra/outbound-network.ts"
 import { createPluginAssetService } from "./asset-service.ts"
 import { createConsentBroker } from "./consent.ts"
 import { createPluginDownloader } from "./downloader.ts"
@@ -68,12 +70,27 @@ async function pluginDomainImpl(app: FastifyInstance): Promise<void> {
 		connectionCount: () => app.sseBroadcaster.connectionCount(),
 	})
 
+	// The app-wide outbound proxy: auto-detected (env vars, then the OS
+	// system proxy) with an explicit HOARDODILE_PROXY override — one
+	// resolution shared by every network service.
+	const proxyConfig = resolveProxyConfig(process.env, process.platform)
+	app.log.info({ proxy: describeProxy(proxyConfig) }, "outbound proxy")
+
 	const downloader = createPluginDownloader({
 		maxBytes: app.env.PLUGIN_DOWNLOAD_MAX_BYTES,
 		timeoutMs: 60_000,
 		allowPrivate: app.env.PLUGIN_DOWNLOAD_ALLOW_PRIVATE,
+		proxy: proxyConfig,
 	})
 	app.decorate("pluginDownloader", downloader)
+	app.decorate(
+		"outboundNetwork",
+		createOutboundNetwork({
+			config: proxyConfig,
+			fetcher: downloader,
+			tmpDir: app.paths.local.tmp(),
+		}),
+	)
 
 	// One upload pipeline serves both the browser's zip upload and the
 	// marketplace's URL install — the commit step (writeVersioned + vault

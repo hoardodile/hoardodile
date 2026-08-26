@@ -2404,4 +2404,53 @@ describe("POST /auth/login records sign-ins and refreshes password weakness", ()
 			built.db.close()
 		}
 	})
+
+	test("GET /trpc/network.info reports the resolved outbound proxy state", async () => {
+		const built = await bootstrapLogin()
+		await built.app.ready()
+		try {
+			const cookie = await login(built, {
+				remoteAddress: "127.0.0.1",
+				userAgent: chromeUA,
+			})
+			const res = await built.app.inject({
+				method: "GET",
+				url: "/trpc/network.info",
+				remoteAddress: "127.0.0.1",
+				headers: { cookie },
+			})
+			expect(res.statusCode).toBe(200)
+			const body = res.json()
+			assertTrpcEnvelope<{
+				source: string
+				httpHost: string | null
+				httpsHost: string | null
+				bypassCount: number
+			}>(body)
+			expect(["explicit", "env", "system", "none"]).toContain(
+				body.result.data.source,
+			)
+		} finally {
+			await built.close()
+			built.db.close()
+		}
+	})
+
+	test("network.info and network.test are 401 without a session", async () => {
+		const built = await bootstrapLogin()
+		await built.app.ready()
+		try {
+			for (const path of ["/trpc/network.info", "/trpc/network.test"]) {
+				const res = await built.app.inject({
+					method: "GET",
+					url: path,
+					remoteAddress: "127.0.0.1",
+				})
+				expect(res.statusCode).toBe(401)
+			}
+		} finally {
+			await built.close()
+			built.db.close()
+		}
+	})
 })

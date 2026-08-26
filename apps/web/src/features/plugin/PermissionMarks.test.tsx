@@ -26,11 +26,13 @@ function manifestWith(permissions: PluginPermissions): PluginManifest {
 function renderMarks(
 	permissions: PluginPermissions,
 ): ReturnType<typeof render> {
+	const manifest = manifestWith(permissions)
 	return render(
 		<PermissionMarks
 			p={{
-				manifest: manifestWith(permissions),
-				id: manifestWith(permissions).id,
+				id: manifest.id,
+				permissions: manifest.permissions,
+				manifest,
 			}}
 		/>,
 	)

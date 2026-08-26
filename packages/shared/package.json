@@ -11,7 +11,8 @@
 		"./immer": "./src/immer.ts",
 		"./dayjs": "./src/dayjs.ts",
 		"./usage-period": "./src/usage-period.ts",
-		"./desktop": "./src/desktop.ts"
+		"./desktop": "./src/desktop.ts",
+		"./net-proxy": "./src/net-proxy.ts"
 	},
 	"scripts": {
 		"dev": "tsc --noEmit --watch --preserveWatchOutput",
@@ -22,12 +23,15 @@
 	"devDependencies": {
 		"@hoardodile/i18n": "workspace:*",
 		"@hoardodile/sdk-types": "workspace:*",
+		"@types/node": "catalog:",
 		"typescript": "catalog:",
 		"vitest": "catalog:"
 	},
 	"dependencies": {
 		"@hoardodile/schemas": "workspace:*",
 		"dayjs": "^1.11.23",
+		"http-proxy-agent": "catalog:",
+		"https-proxy-agent": "catalog:",
 		"immer": "^11.1.18",
 		"zod": "catalog:"
 	}

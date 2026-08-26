@@ -76,6 +76,9 @@ asset, optional `.sha256` sidecar) via `api.github.com`. Requirements:
 The unauthenticated GitHub API budget is 60 requests/hour per IP; one
 marketplace refresh costs one request per plugin (registry + manifests
 skip the API entirely), and the app caches snapshots for 10 minutes.
+All these fetches go through the app's user proxy when one is
+configured (auto-detected from the proxy env vars / OS system proxy;
+`HOARDODILE_PROXY` overrides) — destinations stay GitHub-only.
 
 ## Install
 

@@ -33,6 +33,7 @@ import type { UsageService } from "src/domain/usage/service.ts"
 import type { VersionService } from "src/domain/version/service.ts"
 import type { DbHandles, SqliteDb } from "src/infra/db/connection.ts"
 import type { SseBroadcaster } from "src/infra/http/sse-broadcaster.ts"
+import type { OutboundNetwork } from "src/infra/outbound-network.ts"
 import type { Deferred, RuntimeRefs } from "src/infra/runtime-context.ts"
 import type { SignalEmitter } from "src/infra/signals.ts"
 import type { StoragePaths } from "src/infra/storage/paths.ts"
@@ -123,6 +124,8 @@ declare module "fastify" {
 		readonly pluginHooks: PluginHooks
 		/** Hardened HTTP client behind plugin vault downloads (and the marketplace). */
 		readonly pluginDownloader: PluginDownloader
+		/** Read-only outbound network diagnostics (resolved proxy + GitHub probe). */
+		readonly outboundNetwork: OutboundNetwork
 		/** Plugin install pipeline: extraction, manifest validation, vault-safe commit. */
 		readonly pluginUploads: PluginUploads
 		/** Plugin asset vault pipeline (download/stat/read/delete, consent-gated). */

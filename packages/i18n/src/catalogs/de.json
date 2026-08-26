@@ -314,6 +314,25 @@
 			"totalLabel_other": "{{count}} Anmeldungen",
 			"loopback": "dieses Gerät"
 		},
+		"network": {
+			"title": "Ausgehendes Netzwerk",
+			"description": "Der Proxy für Plugin-Downloads und den Plugin-Marktplatz. Wird aus Proxy-Umgebungsvariablen oder dem System-Proxy erkannt; HOARDODILE_PROXY übersteuert.",
+			"proxyLabel": "Ausgehender Proxy",
+			"sourceNone": "Direktverbindung (kein Proxy)",
+			"sourceEnv": "Benutzer-Proxy (Umgebungsvariablen)",
+			"sourceSystem": "Benutzer-Proxy (System)",
+			"sourceExplicit": "Benutzer-Proxy (explizit)",
+			"bypassCount_one": "{{count}} Host umgeht den Proxy",
+			"bypassCount_other": "{{count}} Hosts umgehen den Proxy",
+			"test": "GitHub-Verbindung testen",
+			"testing": "GitHub-Verbindung wird getestet…",
+			"testSuccess": "GitHub erreichbar (HTTP {{status}})",
+			"testFailed": "GitHub nicht erreichbar: {{message}}",
+			"testHint": "Prüfe die Proxy-Einstellungen (HOARDODILE_PROXY / System-Proxy / Proxy-Umgebungsvariablen).",
+			"connectionLabel": "GitHub-Verbindung",
+			"notTested": "Noch nicht getestet",
+			"proxyConfigHint": "Aktiviere es über den System-Proxy oder Proxy-Umgebungsvariablen (HOARDODILE_PROXY)."
+		},
 		"desktop": {
 			"library": {
 				"title": "Bibliotheksordner",
@@ -556,7 +575,11 @@
 		"installing": "Installiere…",
 		"installConfirmNote": "Es wird Servercode aus dem oben genannten GitHub-Repository installiert und im selben eingeschränkten Sandbox ausgeführt wie jedes Plugin. Die deklarierten Berechtigungen sind oben aufgeführt. Installiere nur aus vertrauenswürdigen Repositories.",
 		"installSuccess": "{{name}} installiert",
-		"updateSuccess": "{{name}} auf v{{version}} aktualisiert"
+		"updateSuccess": "{{name}} auf v{{version}} aktualisiert",
+		"details": "Details",
+		"installToggle": "Plugin installieren oder deinstallieren",
+		"notesTitle": "Versionshinweise",
+		"registryActive": "Aktuelles Registry: {{url}}"
 	},
 	"overview": {
 		"usageHistory": {

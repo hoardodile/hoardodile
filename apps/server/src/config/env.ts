@@ -368,6 +368,36 @@ const envSchema = z
 			)
 			.default(false),
 		/**
+		 * Explicit outbound proxy for plugin downloads and the plugin
+		 * marketplace, e.g. `http://127.0.0.1:7897` (only `http://`
+		 * proxies are supported). Overrides the standard
+		 * `HTTPS_PROXY`/`HTTP_PROXY`/`ALL_PROXY` env vars and the OS
+		 * system proxy; `off` disables proxy use entirely. Unset →
+		 * auto-detect (proxy env vars, then the OS system proxy: Windows
+		 * Internet Settings, macOS `scutil`). `NO_PROXY` / the system
+		 * override list keep those hosts on the direct path.
+		 */
+		HOARDODILE_PROXY: z
+			.string()
+			.max(300)
+			.refine(
+				(value) => {
+					const trimmed = value.trim()
+					if (trimmed.length === 0) return true
+					if (trimmed.toLowerCase() === "off") return true
+					const withScheme = /^[a-z][a-z0-9+.-]*:\/\//i.test(trimmed)
+						? trimmed
+						: `http://${trimmed}`
+					try {
+						return new URL(withScheme).protocol === "http:"
+					} catch {
+						return false
+					}
+				},
+				{ message: "HOARDODILE_PROXY must be an http:// proxy URL or 'off'" },
+			)
+			.optional(),
+		/**
 		 * When true, the background scheduler takes an automatic snapshot of
 		 * the live DB once per local day (with a catch-up run at boot when
 		 * the newest snapshot is stale) into

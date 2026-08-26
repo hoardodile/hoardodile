@@ -314,6 +314,25 @@
 			"totalLabel_other": "{{count}} sign-ins",
 			"loopback": "this device"
 		},
+		"network": {
+			"title": "Outbound network",
+			"description": "The proxy used for plugin downloads and the plugin marketplace. Detected from your proxy env vars or the system proxy; HOARDODILE_PROXY overrides.",
+			"proxyLabel": "Outbound proxy",
+			"sourceNone": "Direct connection (no proxy)",
+			"sourceEnv": "User proxy (env vars)",
+			"sourceSystem": "User proxy (system)",
+			"sourceExplicit": "User proxy (explicit)",
+			"bypassCount_one": "{{count}} host bypasses the proxy",
+			"bypassCount_other": "{{count}} hosts bypass the proxy",
+			"test": "Test GitHub connection",
+			"testing": "Testing GitHub connection…",
+			"testSuccess": "GitHub is reachable (HTTP {{status}})",
+			"testFailed": "GitHub is not reachable: {{message}}",
+			"testHint": "Check your proxy settings (HOARDODILE_PROXY / system proxy / proxy env vars).",
+			"connectionLabel": "GitHub connection",
+			"notTested": "Not tested yet",
+			"proxyConfigHint": "Enable via your system proxy or proxy env vars (HOARDODILE_PROXY)."
+		},
 		"desktop": {
 			"library": {
 				"title": "Library folder",
@@ -556,7 +575,11 @@
 		"installing": "Installing…",
 		"installConfirmNote": "This installs server-side code from the GitHub repository above, running in the same restricted sandbox as every plugin. The declared permissions are shown above. Only install from repositories you trust.",
 		"installSuccess": "Installed {{name}}",
-		"updateSuccess": "Updated {{name}} to v{{version}}"
+		"updateSuccess": "Updated {{name}} to v{{version}}",
+		"details": "Details",
+		"installToggle": "Install or uninstall plugin",
+		"notesTitle": "Release notes",
+		"registryActive": "Current registry: {{url}}"
 	},
 	"overview": {
 		"usageHistory": {

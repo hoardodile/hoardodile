@@ -314,6 +314,25 @@
 			"totalLabel_other": "{{count}} inicios de sesión",
 			"loopback": "este dispositivo"
 		},
+		"network": {
+			"title": "Red saliente",
+			"description": "El proxy usado para las descargas de plugins y el mercado de plugins. Se detecta desde las variables de entorno o el proxy del sistema; HOARDODILE_PROXY lo sobrescribe.",
+			"proxyLabel": "Proxy saliente",
+			"sourceNone": "Conexión directa (sin proxy)",
+			"sourceEnv": "Proxy de usuario (variables de entorno)",
+			"sourceSystem": "Proxy de usuario (sistema)",
+			"sourceExplicit": "Proxy de usuario (explícito)",
+			"bypassCount_one": "{{count}} host evita el proxy",
+			"bypassCount_other": "{{count}} hosts evitan el proxy",
+			"test": "Probar conexión con GitHub",
+			"testing": "Probando conexión con GitHub…",
+			"testSuccess": "GitHub accesible (HTTP {{status}})",
+			"testFailed": "GitHub inaccesible: {{message}}",
+			"testHint": "Revisa la configuración del proxy (HOARDODILE_PROXY / proxy del sistema / variables de entorno).",
+			"connectionLabel": "Conexión con GitHub",
+			"notTested": "Sin probar",
+			"proxyConfigHint": "Actívalo mediante el proxy del sistema o las variables de entorno (HOARDODILE_PROXY)."
+		},
 		"desktop": {
 			"library": {
 				"title": "Carpeta de la biblioteca",
@@ -556,7 +575,11 @@
 		"installing": "Instalando…",
 		"installConfirmNote": "Se instalará código de servidor desde el repositorio de GitHub indicado y se ejecutará en el mismo sandbox restringido que cualquier plugin. Los permisos declarados se muestran arriba. Instala solo desde repositorios de confianza.",
 		"installSuccess": "Instalado {{name}}",
-		"updateSuccess": "{{name}} actualizado a v{{version}}"
+		"updateSuccess": "{{name}} actualizado a v{{version}}",
+		"details": "Detalles",
+		"installToggle": "Instalar o desinstalar el plugin",
+		"notesTitle": "Notas de la versión",
+		"registryActive": "Registro actual: {{url}}"
 	},
 	"overview": {
 		"usageHistory": {

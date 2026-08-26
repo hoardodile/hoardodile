@@ -1,10 +1,11 @@
 import { randomUUID } from "node:crypto"
 import { createReadStream } from "node:fs"
-import { readFile, rm } from "node:fs/promises"
+import { mkdir, readFile, rm } from "node:fs/promises"
 import { join } from "node:path"
 import type { PluginManifest } from "@hoardodile/sdk-types"
 import { pluginManifest } from "@hoardodile/sdk-types/schema"
 import { invalid } from "@hoardodile/shared"
+import { GITHUB_ASSET_HOSTS } from "@hoardodile/shared/net-proxy"
 import {
 	type ConcurrencyLimiter,
 	createConcurrencyLimiter,
@@ -55,11 +56,7 @@ const USER_AGENT = "hoardodile-plugin-marketplace"
  * targets GitHub serves release assets from. Every redirect hop is
  * re-vetted by the underlying downloader (public addresses only).
  */
-const ASSET_HOSTS = new Set([
-	"github.com",
-	"objects.githubusercontent.com",
-	"release-assets.githubusercontent.com",
-])
+const ASSET_HOSTS = GITHUB_ASSET_HOSTS
 
 /**
  * Narrow structural view of the app's HTTP client. Satisfied by the real
@@ -198,6 +195,7 @@ export function createMarketplaceService(
 		input: MarketInstallInput,
 	): Promise<{ readonly pluginId: string }> {
 		assertAssetHost(input.assetUrl)
+		await mkdir(tmpDir, { recursive: true })
 		const target = join(tmpDir, `marketplace-install-${randomUUID()}.zip`)
 		let result: { readonly sha256: string }
 		try {
@@ -368,6 +366,7 @@ export function createMarketplaceService(
 			description: manifest.description,
 			icon: manifest.icon,
 			permissions: manifest.permissions,
+			manifest,
 		}
 
 		let latest: MarketLatest | undefined
@@ -476,6 +475,7 @@ export function createMarketplaceService(
 			readonly headers?: Readonly<Record<string, string>>
 		},
 	): Promise<string> {
+		await mkdir(tmpDir, { recursive: true })
 		let lastMissing: MarketFetchError | undefined
 		for (const url of urls) {
 			try {

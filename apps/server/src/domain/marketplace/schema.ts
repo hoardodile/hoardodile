@@ -1,4 +1,4 @@
-import type { PluginPermissions } from "@hoardodile/sdk-types"
+import type { PluginManifest, PluginPermissions } from "@hoardodile/sdk-types"
 import { z } from "zod"
 
 /**
@@ -72,6 +72,13 @@ export type MarketPlugin = {
 	readonly description: string
 	readonly icon: string | undefined
 	readonly permissions: PluginPermissions
+	/**
+	 * The full parsed manifest — authoritative; the projection fields above
+	 * are convenience copies. Carried so the UI resolves i18n display
+	 * names/descriptions and renders the search-category popover exactly
+	 * like the plugins page.
+	 */
+	readonly manifest: PluginManifest
 	readonly state: "ok" | "no_release" | "error"
 	readonly latest: MarketLatest | undefined
 	/** Human-readable reason when `state` is `error`. */

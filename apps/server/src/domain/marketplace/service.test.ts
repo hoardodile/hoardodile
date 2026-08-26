@@ -205,6 +205,10 @@ describe("createMarketplaceService.refresh", () => {
 			assetName: `${PLUGIN_ID}-v1.2.3.zip`,
 		})
 		expect(plugin.permissions.sourceMeta).toBe(true)
+		// The full manifest rides the snapshot for the UI (i18n names,
+		// search-category popover) — same projection the plugins page uses.
+		expect(plugin.manifest.id).toBe(PLUGIN_ID)
+		expect(plugin.manifest.version).toBe("1.2.3")
 		expect(f.fetcher.fetchToFile).toHaveBeenCalledWith(
 			rawUrl("me", "cat-viewer", "HEAD", "manifest.json"),
 			expect.any(String),

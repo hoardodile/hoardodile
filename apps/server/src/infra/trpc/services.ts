@@ -28,6 +28,7 @@ import type { TraceService } from "src/domain/trace/service.ts"
 import type { TraitService } from "src/domain/trait/service.ts"
 import type { UsageService } from "src/domain/usage/service.ts"
 import type { VersionService } from "src/domain/version/service.ts"
+import type { OutboundNetwork } from "src/infra/outbound-network.ts"
 import type { SignalEmitter } from "src/infra/signals.ts"
 import type { ThumbService } from "src/infra/thumb/service.ts"
 
@@ -63,6 +64,7 @@ export interface RouterServices {
 	readonly pluginAssetService: PluginAssetService
 	readonly pluginAssetConsent: ConsentBroker
 	readonly marketplaceService: MarketplaceService
+	readonly outboundNetwork: OutboundNetwork
 	readonly sessions: SessionStore
 	/**
 	 * Absolute path to the local temp directory (`<storageRoot>/local/cache/tmp`).
