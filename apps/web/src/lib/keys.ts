@@ -38,6 +38,12 @@ export const prefKeys = {
 	authSessionIdleTimeoutSeconds: "auth.sessionIdleTimeoutSeconds",
 	searchLive: "search.live",
 	/**
+	 * Desktop-only: the last resolved route, so a reopened window (tray /
+	 * relaunch) returns to the page the user left. Never written or read
+	 * in the browser.
+	 */
+	lastRoute: "app.lastRoute",
+	/**
 	 * Async-scope prefs (server-side, `asyncPreference` namespace) for the
 	 * sync-device feature. `index.html` does not read these.
 	 */

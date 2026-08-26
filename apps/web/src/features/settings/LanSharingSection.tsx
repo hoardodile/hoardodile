@@ -12,6 +12,7 @@ import { Switch } from "@hoardodile/ui/components/switch"
 import { toast } from "@hoardodile/ui/components/toast"
 import { Cross } from "@hoardodile/ui/icons/marks"
 import {
+	ArrowToTopRight,
 	Copy,
 	InfoCircle,
 	MonitorSmartphone,
@@ -19,6 +20,7 @@ import {
 import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import QRCode from "react-qr-code"
+import { openExternalUrl } from "@/components/common/ExternalLink"
 import { getDesktopBridge } from "@/lib/desktop"
 import { SettingsSection } from "./SettingsSection"
 import { SectionDivider } from "./SettingsSheet"
@@ -87,6 +89,9 @@ function LanSharingForm(props: {
 	const { t } = useTranslation()
 	const [portInput, setPortInput] = useState(String(lan.preferredPort))
 	const [busy, setBusy] = useState(false)
+	// The shell probe (weak-password check) runs without any loading UI:
+	// a required confirm dialog must appear before a spinner ever does.
+	const [pending, setPending] = useState(false)
 	const [weakConfirmOpen, setWeakConfirmOpen] = useState(false)
 	// Device-local dismiss of the port-conflict notice: value is the
 	// `(preferredPort, port)` pair it was dismissed for, so a later
@@ -131,13 +136,14 @@ function LanSharingForm(props: {
 	}
 
 	/**
-	 * Enable or disable sharing and restart the sidecar. A declined weak
-	 * password is not an error: the shell resolves `{ ok: false,
-	 * reason: "weak-password-required" }` so the in-app confirm dialog is
-	 * shown instead; retrying with `weakPasswordConfirmed` is how the
-	 * user accepts the risk (the shell re-checks the password each time).
+	 * Apply a sharing change and restart the sidecar. The spinner is on
+	 * for the whole round trip. A declined weak password is not an error:
+	 * the shell resolves `{ ok: false, reason: "weak-password-required" }`
+	 * (only reachable through a race past the probe) so the in-app confirm
+	 * dialog is shown instead; retrying with `weakPasswordConfirmed` is how
+	 * the user accepts the risk (the shell re-checks the password each time).
 	 */
-	async function enable(
+	async function applyLanEnabled(
 		enabled: boolean,
 		options?: { readonly weakPasswordConfirmed?: boolean },
 	): Promise<void> {
@@ -171,10 +177,47 @@ function LanSharingForm(props: {
 		}
 	}
 
+	/**
+	 * Toggle the sharing switch. Enabling probes the shell first with no
+	 * loading UI: when the weak-password confirm is required, the dialog
+	 * appears before any spinner (the probe never restarts anything);
+	 * a clean enable starts applying directly.
+	 */
+	async function toggleEnable(enabled: boolean): Promise<void> {
+		if (busy || pending) return
+		if (!enabled) {
+			await applyLanEnabled(false)
+			return
+		}
+		setPending(true)
+		try {
+			const check = await desktop.checkLanEnabled()
+			if (!check.ok && check.reason === "weak-password-required") {
+				setWeakConfirmOpen(true)
+				return
+			}
+			if (!check.ok) {
+				// no admin password: preserve the shell's native box (it
+				// declines without restarting) plus the in-app toast.
+				await desktop.setLanEnabled(true).catch(() => {})
+				toast.add({
+					title: t("me.desktop.lan.passwordRequired"),
+					type: "error",
+				})
+				return
+			}
+			await applyLanEnabled(true)
+		} catch {
+			// probe failed (sidecar down): the switch stays at its state
+		} finally {
+			setPending(false)
+		}
+	}
+
 	async function handleWeakConfirm(): Promise<void> {
 		// Keep the dialog open while the sidecar restarts — its button
 		// label switches to the pending copy (isPending + pendingLabel).
-		await enable(true, { weakPasswordConfirmed: true })
+		await applyLanEnabled(true, { weakPasswordConfirmed: true })
 		setWeakConfirmOpen(false)
 	}
 
@@ -202,6 +245,11 @@ function LanSharingForm(props: {
 		)
 	}
 
+	// The address the desktop app window itself loads from. It stays
+	// valid in both bind modes, so it is offered even while local-network
+	// sharing is off — this machine's browser can open it too. Uses the
+	// actual listening port so a conflict fallback is never stale.
+	const localUrl = `http://127.0.0.1:${lan.port}/`
 	const urls = lan.addresses.map((entry) => ({
 		label: entry.address,
 		address: entry.address,
@@ -244,9 +292,9 @@ function LanSharingForm(props: {
 							<Switch
 								checked={config.lanEnabled}
 								onCheckedChange={(enabled) => {
-									void enable(enabled)
+									void toggleEnable(enabled)
 								}}
-								disabled={busy}
+								disabled={busy || pending}
 								aria-label={t("me.desktop.lan.enable")}
 								data-testid="desktop-lan-enable"
 							/>
@@ -318,6 +366,41 @@ function LanSharingForm(props: {
 							</Button>
 						</div>
 					) : null}
+					<div className="flex items-start gap-4">
+						<div className="min-w-0 flex-1">
+							<p className="text-xs leading-5 text-muted-foreground">
+								{t("me.desktop.lan.localHint")}
+							</p>
+							<div
+								className="mt-1 break-all text-ui font-semibold text-foreground"
+								data-testid="desktop-lan-local-url"
+							>
+								{localUrl}
+							</div>
+							<div className="mt-2 flex flex-wrap gap-2 [-webkit-app-region:no-drag]">
+								<Button
+									variant="secondary"
+									onClick={() => {
+										handleCopy(localUrl)
+									}}
+									data-testid="desktop-lan-copy-local"
+								>
+									<Icon icon={Copy} />
+									{t("me.desktop.lan.copy")}
+								</Button>
+								<Button
+									variant="secondary"
+									onClick={() => {
+										openExternalUrl(localUrl)
+									}}
+									data-testid="desktop-lan-open-local"
+								>
+									<Icon icon={ArrowToTopRight} />
+									{t("me.desktop.lan.open")}
+								</Button>
+							</div>
+						</div>
+					</div>
 					{config.lanEnabled ? (
 						<div className="flex flex-col gap-4">
 							{primary !== undefined ? (

@@ -28,8 +28,10 @@ import { PrefsSync } from "@/features/prefs"
 import { initPrefSyncQueue } from "@/features/prefs/prefSyncQueue"
 import { i18n } from "@/i18n"
 import { collectRoutePaths } from "@/lib/appRoutes"
+import { holdSplashUntilReady } from "@/lib/boot-splash"
 import { getDesktopBridge, isHoardodileDesktop } from "@/lib/desktop"
 import { collectFontCssPaths } from "@/lib/fonts"
+import { armLastRouteRestore, writeLastRoute } from "@/lib/last-route"
 import {
 	createQueryClient,
 	createTrpc,
@@ -109,6 +111,17 @@ if (isHoardodileDesktop()) {
 	getDesktopBridge()?.registerAppRoutes(collectRoutePaths(routeTree))
 }
 
+// Desktop reopen continuity: remember the resolved route so a recreated
+// window (tray reopen, relaunch) returns to the page the user left after
+// signing in; arm the one-shot restore for this boot. Browser tabs are
+// untouched — the key is written and read on desktop only.
+if (isHoardodileDesktop()) {
+	armLastRouteRestore(collectRoutePaths(routeTree))
+	router.subscribe("onResolved", () => {
+		if (isHoardodileDesktop()) writeLastRoute(router.state.location.href)
+	})
+}
+
 // Wire the router's navigation lifecycle into the mobile overlay
 // back-to-close hook so it can wait for navigation to resolve before
 // inspecting history.state (instead of relying on timing heuristics).
@@ -129,6 +142,19 @@ const rootElement = document.getElementById("root")
 if (!rootElement) {
 	throw new Error("#root element not found")
 }
+
+// The index.html splash keeps the first frame from being an empty canvas
+// while React mounts. Hold it until the initial route has resolved and its
+// queries have data: a cold load (desktop tray reopen, relaunch, browser
+// refresh) then goes spinner → finished page, never through the
+// route-pending / section skeletons. The deadline in the gate guarantees
+// removal even if a query hangs. Subscribed before render so the first
+// `onResolved` can never be missed.
+holdSplashUntilReady({
+	router,
+	queryClient,
+	remove: () => document.getElementById("app-splash")?.remove(),
+})
 
 createRoot(rootElement).render(
 	<StrictMode>
@@ -153,12 +179,3 @@ createRoot(rootElement).render(
 		</I18nProvider>
 	</StrictMode>,
 )
-
-// The index.html splash keeps the first frame from being an empty canvas
-// while React mounts; drop it right after the app's first paint so the
-// spinner hands over to app content with no blank frame in between.
-requestAnimationFrame(() => {
-	requestAnimationFrame(() => {
-		document.getElementById("app-splash")?.remove()
-	})
-})

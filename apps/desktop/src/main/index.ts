@@ -8,6 +8,7 @@ import { uiCatalogFor } from "@hoardodile/i18n/catalogs/ui"
 import type {
 	DesktopUpdateState,
 	DesktopWizardResult,
+	LanCheckResult,
 	LanInfo,
 	LanSetResult,
 } from "@hoardodile/shared/desktop"
@@ -46,6 +47,7 @@ import {
 import { resourceUpdateSupport } from "./resource-support.ts"
 import { startResourceChannel } from "./resource-updater.ts"
 import { recoverAtBoot } from "./resources-swap.ts"
+import { clearSessionCookies } from "./session-cookie.ts"
 import {
 	clearShellCache,
 	getShellCacheSize,
@@ -291,6 +293,23 @@ function readResourcesMarker(
 }
 
 /**
+ * Probe whether local-network sharing could be enabled right now: no
+ * admin password, or a weak one that needs the user's explicit consent.
+ * Never restarts anything — the renderer probes first so a required
+ * confirm dialog can appear before any loading state.
+ */
+async function checkLanEnabled(runtime: Runtime): Promise<LanCheckResult> {
+	const sidecar = runtime.sidecar
+	if (sidecar === undefined) {
+		throw new Error("sidecar is not running")
+	}
+	const state = await readSidecarAuthConfigured(sidecar)
+	if (!state.configured) return { ok: false, reason: "no-admin-password" }
+	if (state.weakPassword) return { ok: false, reason: "weak-password-required" }
+	return { ok: true }
+}
+
+/**
  * Enable or disable local-network sharing. The bind host changes at
  * `listen()` time, so the sidecar restarts in place; the app window is
  * kept and reloaded (production) or left alone (dev, proxy target
@@ -314,17 +333,20 @@ async function setLanEnabled(
 		throw new Error("sidecar is not running")
 	}
 	if (enabled) {
-		const state = await readSidecarAuthConfigured(sidecar)
-		const catalog = catalogFor(runtime.language)
-		if (!state.configured) {
-			dialog.showErrorBox(
-				"hoardodile",
-				catalog.desktopShell.dialog.lanPasswordRequired,
-			)
-			return { ok: false, reason: "no-admin-password" }
-		}
-		if (state.weakPassword && !weakPasswordConfirmed) {
-			return { ok: false, reason: "weak-password-required" }
+		const check = await checkLanEnabled(runtime)
+		if (!check.ok) {
+			if (check.reason === "no-admin-password") {
+				// The native box is only for the case the renderer cannot
+				// explain without a restart attempt; weak consent stays in-app.
+				const catalog = catalogFor(runtime.language)
+				dialog.showErrorBox(
+					"hoardodile",
+					catalog.desktopShell.dialog.lanPasswordRequired,
+				)
+				return check
+			}
+			// Weak password: only the renderer-confirmed retry proceeds.
+			if (!weakPasswordConfirmed) return check
 		}
 	}
 	await applyLanChange(runtime, { lanEnabled: enabled })
@@ -651,6 +673,13 @@ async function handleWindowCloseRequest(
 	win: BrowserWindow,
 	finishClose: () => void,
 ): Promise<void> {
+	// Closing the window drops the session: reopening (tray, second
+	// launch) always lands on the sign-in screen. Quit is re-covered at
+	// boot by requireSignInOnLaunch; internal destroys (sidecar crash,
+	// LAN failure) never pass through here and keep the session.
+	if (runtime.config.requireSignInOnWindowOpen) {
+		await clearSessionCookies(session.defaultSession)
+	}
 	switch (runtime.config.closeAction) {
 		case "tray":
 			finishClose()
@@ -836,6 +865,11 @@ async function boot(): Promise<void> {
 				runtime.config = { ...runtime.config, closeAction: action }
 				persist(runtime)
 			}
+			// Same close-time sign-out rule as the window close guard:
+			// the renderer decided to close; the session dies with it.
+			if (runtime.config.requireSignInOnWindowOpen) {
+				await clearSessionCookies(session.defaultSession)
+			}
 			if (action === "quit") {
 				await quitApp(runtime)
 				return
@@ -863,6 +897,7 @@ async function boot(): Promise<void> {
 		setSharedFolderEnabled: (enabled) =>
 			setSharedFolderEnabled(runtime, enabled),
 		lanInfo: () => lanInfo(runtime),
+		checkLanEnabled: () => checkLanEnabled(runtime),
 		setLanEnabled: (enabled, options) =>
 			setLanEnabled(runtime, enabled, options?.weakPasswordConfirmed === true),
 		setLanPort: (port) => setLanPort(runtime, port),
@@ -916,6 +951,14 @@ async function boot(): Promise<void> {
 	}
 
 	applyLoginItem(runtime.config)
+
+	// Per-launch sign-in: drop the session cookie before the window loads
+	// so the SPA always boots to the sign-in screen. Runs once per app
+	// start (hidden tray launches included); reopening the window or
+	// reloading after a LAN/port/resource change keeps the session.
+	if (runtime.config.requireSignInOnLaunch) {
+		await clearSessionCookies(session.defaultSession)
+	}
 
 	// Resource-swap crash recovery + shipped-tree reconciliation. Must
 	// run before the sidecar spawns: recoverAtBoot may re-roll the tree.

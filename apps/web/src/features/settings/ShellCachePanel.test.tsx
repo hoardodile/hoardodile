@@ -46,6 +46,8 @@ function installBridge(
 				autoStart: false,
 				startInTray: false,
 				closeAction: "ask",
+				requireSignInOnLaunch: true,
+				requireSignInOnWindowOpen: true,
 				autoUpdate: false,
 				portable: false,
 				resourceVersion: null,
@@ -68,6 +70,9 @@ function installBridge(
 				preferredPort: 3000,
 				addresses: [],
 			}
+		},
+		async checkLanEnabled() {
+			return { ok: true }
 		},
 		async setLanEnabled() {
 			return { ok: true }

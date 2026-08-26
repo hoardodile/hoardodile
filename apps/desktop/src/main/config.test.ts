@@ -33,6 +33,8 @@ describe("parseDesktopConfig", () => {
 		expect(parsed.portPreferred).toBe(3000)
 		expect(parsed.lanEnabled).toBe(false)
 		expect(parsed.closeAction).toBe("ask")
+		expect(parsed.requireSignInOnLaunch).toBe(true)
+		expect(parsed.requireSignInOnWindowOpen).toBe(true)
 		expect(parsed.sharedFolderRoot).toBe("C:/docs")
 		expect(parsed.sharedFolderEnabled).toBe(false)
 		expect(parsed.resourceVersion).toBeNull()
@@ -92,6 +94,24 @@ describe("parseDesktopConfig", () => {
 			"C:/docs",
 		)
 		expect(explicitNull.resourceVersion).toBeNull()
+	})
+
+	it("keeps a persisted requireSignInOnLaunch false", () => {
+		const parsed = parseDesktopConfig(
+			{ requireSignInOnLaunch: false },
+			"C:/lib",
+			"C:/docs",
+		)
+		expect(parsed.requireSignInOnLaunch).toBe(false)
+	})
+
+	it("keeps a persisted requireSignInOnWindowOpen false", () => {
+		const parsed = parseDesktopConfig(
+			{ requireSignInOnWindowOpen: false },
+			"C:/lib",
+			"C:/docs",
+		)
+		expect(parsed.requireSignInOnWindowOpen).toBe(false)
 	})
 })
 

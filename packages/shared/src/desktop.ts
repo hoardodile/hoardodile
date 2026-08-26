@@ -45,6 +45,16 @@ export type DesktopShellConfig = {
 	readonly autoStart: boolean
 	readonly startInTray: boolean
 	readonly closeAction: DesktopCloseAction
+	/**
+	 * Drop the session cookie at every app start so the app always boots
+	 * to the sign-in screen. Off keeps the 7-day sliding session as-is.
+	 */
+	readonly requireSignInOnLaunch: boolean
+	/**
+	 * Drop the session cookie whenever a fresh app window is created —
+	 * tray reopen and second launches included — not only at boot.
+	 */
+	readonly requireSignInOnWindowOpen: boolean
 	readonly autoUpdate: boolean
 	readonly portable: boolean
 	/**
@@ -82,6 +92,13 @@ export type LanSetResult =
 			readonly ok: false
 			readonly reason: "no-admin-password" | "weak-password-required"
 	  }
+
+/**
+ * Outcome of a `checkLanEnabled` probe: whether enabling would be
+ * accepted right now and, when not, which confirmation the shell wants
+ * the renderer to obtain first. Same vocabulary as {@link LanSetResult}.
+ */
+export type LanCheckResult = LanSetResult
 
 export type DesktopWizardResult = {
 	readonly libraryPath: string
@@ -124,7 +141,14 @@ export type HoardodileDesktopBridge = {
 	getConfig: () => Promise<DesktopShellConfig>
 	setConfig: (
 		patch: Partial<
-			Pick<DesktopShellConfig, "autoStart" | "startInTray" | "autoUpdate">
+			Pick<
+				DesktopShellConfig,
+				| "autoStart"
+				| "startInTray"
+				| "autoUpdate"
+				| "requireSignInOnLaunch"
+				| "requireSignInOnWindowOpen"
+			>
 		>,
 	) => Promise<void>
 	/**
@@ -169,6 +193,14 @@ export type HoardodileDesktopBridge = {
 	 * addresses. Resolves only when the sidecar is running.
 	 */
 	getLanInfo: () => Promise<LanInfo>
+	/**
+	 * Probe whether enabling local-network sharing would be accepted
+	 * right now (admin password configured and not weak-consent-pending).
+	 * Never restarts the sidecar or changes state; the renderer probes
+	 * first so a required confirm dialog appears before any loading UI.
+	 * Rejects when the sidecar is down.
+	 */
+	checkLanEnabled: () => Promise<LanCheckResult>
 	/**
 	 * Enable or disable local-network sharing and restart the sidecar
 	 * with the matching bind host. Rejects when the sidecar is down or

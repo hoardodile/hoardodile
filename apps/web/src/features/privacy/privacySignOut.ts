@@ -2,6 +2,7 @@ import type { AuthStatus } from "@hoardodile/schemas"
 import type { QueryClient } from "@tanstack/react-query"
 import { authStatusQueryKey, logout } from "@/features/auth"
 import { channelNames } from "@/lib/keys"
+import { clearLastRoute } from "@/lib/last-route"
 
 export type AuthLogoutMessage = {
 	readonly type: "logout"
@@ -62,5 +63,8 @@ export async function performSignOut(queryClient: QueryClient): Promise<void> {
 		authenticated: false,
 		configured: previous?.configured ?? true,
 	})
+	// An explicit sign-out must never restore the last page on the next
+	// open — the desktop reopen continuity starts clean.
+	clearLastRoute()
 	broadcastAuthLogout()
 }

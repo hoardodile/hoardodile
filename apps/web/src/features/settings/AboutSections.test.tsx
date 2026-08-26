@@ -205,6 +205,8 @@ function desktopBridge(
 				autoStart: false,
 				startInTray: false,
 				closeAction: "ask",
+				requireSignInOnLaunch: true,
+				requireSignInOnWindowOpen: true,
 				autoUpdate: false,
 				portable: false,
 				resourceVersion: extras.resourceVersion ?? null,
@@ -222,6 +224,9 @@ function desktopBridge(
 		async setSharedFolderEnabled() {},
 		async getLanInfo() {
 			return { enabled: false, port: 3000, preferredPort: 3000, addresses: [] }
+		},
+		async checkLanEnabled() {
+			return { ok: true }
 		},
 		async setLanEnabled() {
 			return { ok: true }

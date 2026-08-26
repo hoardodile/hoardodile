@@ -77,6 +77,10 @@ export async function launchDesktop(
 					autoStart: false,
 					startInTray: false,
 					closeAction: "quit",
+					// The relaunch smoke asserts the session cookie survives;
+					// the per-launch/first-window sign-in defaults would break that.
+					requireSignInOnLaunch: false,
+					requireSignInOnWindowOpen: false,
 					autoUpdate: options.feedBase !== undefined,
 				},
 				null,

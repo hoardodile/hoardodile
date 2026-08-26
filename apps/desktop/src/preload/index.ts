@@ -225,6 +225,14 @@ const bridge: HoardodileDesktopBridge = {
 			autoStart: raw.autoStart === true,
 			startInTray: raw.startInTray === true,
 			closeAction: isCloseAction(raw.closeAction) ? raw.closeAction : "ask",
+			requireSignInOnLaunch:
+				raw.requireSignInOnLaunch === true ||
+				// Missing on configs written before the setting existed: the
+				// shell's parsed config already carries the default (true).
+				raw.requireSignInOnLaunch === undefined,
+			requireSignInOnWindowOpen:
+				raw.requireSignInOnWindowOpen === true ||
+				raw.requireSignInOnWindowOpen === undefined,
 			autoUpdate: raw.autoUpdate === true,
 			portable: raw.portable === true,
 			resourceVersion:
@@ -264,6 +272,9 @@ const bridge: HoardodileDesktopBridge = {
 	},
 	async getLanInfo() {
 		return parseLanInfo(await invokeUnknown(IPC.lanInfo))
+	},
+	async checkLanEnabled() {
+		return parseLanSetResult(await invokeUnknown(IPC.lanCheck))
 	},
 	async setLanEnabled(enabled, options) {
 		return parseLanSetResult(

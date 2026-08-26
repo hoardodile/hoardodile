@@ -4,6 +4,7 @@ import type {
 	DesktopShellConfig,
 	DesktopUpdateState,
 	DesktopWizardResult,
+	LanCheckResult,
 	LanInfo,
 	LanSetResult,
 } from "@hoardodile/shared/desktop"
@@ -31,13 +32,21 @@ export type IpcHost = {
 	getLanguage: () => Promise<SupportedLanguage | undefined>
 	patchConfig: (
 		patch: Partial<
-			Pick<DesktopConfig, "autoStart" | "startInTray" | "autoUpdate">
+			Pick<
+				DesktopConfig,
+				| "autoStart"
+				| "startInTray"
+				| "autoUpdate"
+				| "requireSignInOnLaunch"
+				| "requireSignInOnWindowOpen"
+			>
 		>,
 	) => void
 	changeLibraryFolder: (libraryPath: string) => Promise<void>
 	setSharedFolderRoot: (sharedFolderRoot: string) => Promise<void>
 	setSharedFolderEnabled: (enabled: boolean) => Promise<void>
 	lanInfo: () => LanInfo
+	checkLanEnabled: () => Promise<LanCheckResult>
 	setLanEnabled: (
 		enabled: boolean,
 		options?: { readonly weakPasswordConfirmed?: boolean },
@@ -125,6 +134,8 @@ export function registerIpc(host: IpcHost): void {
 			autoStart: config.autoStart,
 			startInTray: config.startInTray,
 			closeAction: config.closeAction,
+			requireSignInOnLaunch: config.requireSignInOnLaunch,
+			requireSignInOnWindowOpen: config.requireSignInOnWindowOpen,
 			autoUpdate: config.autoUpdate,
 			portable: host.portable(),
 			resourceVersion: config.resourceVersion,
@@ -157,6 +168,7 @@ export function registerIpc(host: IpcHost): void {
 		return host.setSharedFolderEnabled(enabled)
 	})
 	ipcMain.handle(IPC.lanInfo, () => host.lanInfo())
+	ipcMain.handle(IPC.lanCheck, () => host.checkLanEnabled())
 	ipcMain.handle(
 		IPC.setLanEnabled,
 		(_event, enabled: unknown, options: unknown) => {
@@ -266,10 +278,23 @@ function isHttpUrl(url: string): boolean {
 function isConfigPatch(
 	value: unknown,
 ): value is Partial<
-	Pick<DesktopConfig, "autoStart" | "startInTray" | "autoUpdate">
+	Pick<
+		DesktopConfig,
+		| "autoStart"
+		| "startInTray"
+		| "autoUpdate"
+		| "requireSignInOnLaunch"
+		| "requireSignInOnWindowOpen"
+	>
 > {
 	if (!isRecord(value)) return false
-	for (const key of ["autoStart", "startInTray", "autoUpdate"] as const) {
+	for (const key of [
+		"autoStart",
+		"startInTray",
+		"autoUpdate",
+		"requireSignInOnLaunch",
+		"requireSignInOnWindowOpen",
+	] as const) {
 		if (key in value && typeof value[key] !== "boolean") return false
 	}
 	return true

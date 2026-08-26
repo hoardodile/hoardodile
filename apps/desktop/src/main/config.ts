@@ -19,6 +19,13 @@ export type DesktopConfig = {
 	startInTray: boolean
 	/** What closing the app window does: ask, hide to tray, or quit the app. */
 	closeAction: CloseAction
+	/** Drop the session cookie on boot so every app launch starts at sign-in. */
+	requireSignInOnLaunch: boolean
+	/**
+	 * Drop the session cookie whenever a fresh app window is created
+	 * (tray reopen, second launch, recovery), not only at boot.
+	 */
+	requireSignInOnWindowOpen: boolean
 	autoUpdate: boolean
 	/** Version of the applied resource payload (server tree), `null` when still on the installer's tree. */
 	resourceVersion: string | null
@@ -35,6 +42,8 @@ const storedConfigSchema = z.object({
 	autoStart: z.boolean(),
 	startInTray: z.boolean(),
 	closeAction: z.enum(["ask", "tray", "quit"]),
+	requireSignInOnLaunch: z.boolean(),
+	requireSignInOnWindowOpen: z.boolean(),
 	autoUpdate: z.boolean(),
 	resourceVersion: z.string().nullable(),
 })
@@ -54,6 +63,12 @@ export function defaultDesktopConfig(
 		autoStart: false,
 		startInTray: false,
 		closeAction: "ask",
+		// Locked by default: the stateless session cookie is dropped at
+		// boot, so the app always opens at the sign-in screen.
+		requireSignInOnLaunch: true,
+		// Also locked by default: reopening the window (tray, second
+		// launch) re-arms sign-in instead of restoring the session.
+		requireSignInOnWindowOpen: true,
 		// macOS is still shipped unsigned in this phase: electron-updater
 		// refuses an unsigned download there, so auto-update must stay off
 		// (the Settings page still runs a click-to-check) until signed &
@@ -89,6 +104,11 @@ export function parseDesktopConfig(
 		autoStart: parsed.data.autoStart ?? defaults.autoStart,
 		startInTray: parsed.data.startInTray ?? defaults.startInTray,
 		closeAction: parsed.data.closeAction ?? defaults.closeAction,
+		requireSignInOnLaunch:
+			parsed.data.requireSignInOnLaunch ?? defaults.requireSignInOnLaunch,
+		requireSignInOnWindowOpen:
+			parsed.data.requireSignInOnWindowOpen ??
+			defaults.requireSignInOnWindowOpen,
 		autoUpdate: parsed.data.autoUpdate ?? defaults.autoUpdate,
 		resourceVersion: parsed.data.resourceVersion ?? defaults.resourceVersion,
 	}

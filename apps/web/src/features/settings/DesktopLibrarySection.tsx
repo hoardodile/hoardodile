@@ -102,7 +102,14 @@ function DesktopLibraryForm(props: {
 
 	async function patch(
 		partial: Partial<
-			Pick<DesktopShellConfig, "autoStart" | "startInTray" | "autoUpdate">
+			Pick<
+				DesktopShellConfig,
+				| "autoStart"
+				| "startInTray"
+				| "autoUpdate"
+				| "requireSignInOnLaunch"
+				| "requireSignInOnWindowOpen"
+			>
 		>,
 	) {
 		await desktop.setConfig(partial)
@@ -145,6 +152,24 @@ function DesktopLibraryForm(props: {
 							void patch({ startInTray })
 						}}
 						testId="desktop-start-in-tray"
+					/>
+					<DesktopToggleRow
+						title={t("me.desktop.signInOnLaunch.title")}
+						description={t("me.desktop.signInOnLaunch.description")}
+						checked={config.requireSignInOnLaunch}
+						onCheckedChange={(requireSignInOnLaunch) => {
+							void patch({ requireSignInOnLaunch })
+						}}
+						testId="desktop-sign-in-on-launch"
+					/>
+					<DesktopToggleRow
+						title={t("me.desktop.signInOnWindowOpen.title")}
+						description={t("me.desktop.signInOnWindowOpen.description")}
+						checked={config.requireSignInOnWindowOpen}
+						onCheckedChange={(requireSignInOnWindowOpen) => {
+							void patch({ requireSignInOnWindowOpen })
+						}}
+						testId="desktop-sign-in-on-window-open"
 					/>
 					{config.portable ? null : (
 						<DesktopToggleRow

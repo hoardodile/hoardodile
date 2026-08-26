@@ -26,6 +26,7 @@ export const IPC = {
 	setSharedFolderRoot: "desktop:shared-folder:set",
 	setSharedFolderEnabled: "desktop:shared-folder:enabled",
 	lanInfo: "desktop:lan:info",
+	lanCheck: "desktop:lan:check",
 	setLanEnabled: "desktop:lan:set-enabled",
 	setLanPort: "desktop:lan:set-port",
 	shellCacheSize: "desktop:shell-cache:size",
