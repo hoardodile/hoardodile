@@ -45,6 +45,15 @@ pnpm run detect:smoke  # sandboxed detect against testdata (needs a build first)
 `hoardodile plugin run` runs hooks through the same worker sandbox the
 server uses — the exact production execution path.
 
+## Requirements
+
+- hoardodile **≥ 0.1.1** — the built-in plugin marketplace
+  (**Settings → Marketplace**) and the batched asset-download API
+  (`download([…])`) when the manifest declares `"download": true`.
+- The plugin's version is independent of the hoardodile release
+  version; bump it on user-visible changes.
+- Dev loop: Node ≥ 24, pnpm 11.
+
 ## Deploying
 
 Publish to the marketplace with two steps:
