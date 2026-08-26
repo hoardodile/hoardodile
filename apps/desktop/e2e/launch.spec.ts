@@ -1,6 +1,7 @@
 import { existsSync } from "node:fs"
 import { join } from "node:path"
 import { expect, test } from "@playwright/test"
+import { expectShellRendered } from "./app-shell.ts"
 import { appWindow, E2E_PASSWORD, launchDesktop } from "./launch.ts"
 
 /**
@@ -32,7 +33,9 @@ test("first run → claim → relaunch persistence", async () => {
 			.toBe(true)
 		const appWin = appWindow(first.app, first.url)
 
-		// 3. claim the instance through the real setup form.
+		// 3. claim the instance through the real setup form; the claim lands
+		// in the main shell (sidebar above the breakpoint, drawer button
+		// below it — see apps/desktop/e2e/app-shell.ts).
 		await expect(appWin.getByTestId("setup-submit")).toBeVisible({
 			timeout: 120_000,
 		})
@@ -40,7 +43,7 @@ test("first run → claim → relaunch persistence", async () => {
 		await fields.nth(0).fill(E2E_PASSWORD)
 		await fields.nth(1).fill(E2E_PASSWORD)
 		await appWin.getByTestId("setup-submit").click()
-		await expect(appWin.getByTestId("app-sidebar")).toBeVisible()
+		await expectShellRendered(appWin)
 
 		// The preload bridge is the only thing that exists in the desktop
 		// renderer; a browser tab would see `undefined`.
@@ -82,9 +85,7 @@ test("first run → claim → relaunch persistence", async () => {
 			)
 			.toBe(true)
 		const appWin = appWindow(second.app, second.url)
-		await expect(appWin.getByTestId("app-sidebar")).toBeVisible({
-			timeout: 120_000,
-		})
+		await expectShellRendered(appWin, { timeout: 120_000 })
 	} finally {
 		await second.close()
 	}

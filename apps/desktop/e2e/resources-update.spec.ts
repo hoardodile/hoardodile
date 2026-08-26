@@ -14,6 +14,7 @@ import { dirname, join, resolve } from "node:path"
 import { expect, test } from "@playwright/test"
 import * as tar from "tar"
 import { contentHashTree } from "../../../scripts/lib/shell-hash.mjs"
+import { expectShellRendered, navigateInShell } from "./app-shell.ts"
 import {
 	appWindow,
 	E2E_PASSWORD,
@@ -37,9 +38,21 @@ import {
  *      and desktop.json resourceVersion say v9.9.9, the library is
  *      untouched.
  *
+ * The resource channel is a Windows NSIS-only capability by policy
+ * (INSTALL_POLICY in apps/desktop/src/main/resource-support.ts — dmg and
+ * AppImage shapes route to the full updater instead), so the whole file
+ * is skipped elsewhere: channel-policy coverage lives in the unit tests
+ * (resource-support.test.ts), packaged-app coverage in launch.spec.ts.
+ *
  * Requires `pnpm -F @hoardodile/desktop package:dir` first (the staged
  * tree + out/ + the packaged app this harness launches).
  */
+
+// Channel policy (see the header): NSIS installs are Windows-only.
+test.skip(
+	process.platform !== "win32",
+	"the resource channel is Windows NSIS-only (INSTALL_POLICY)",
+)
 
 const FIXTURE_VERSION = "9.9.9"
 
@@ -75,6 +88,8 @@ function packagedResourcesDir(): string {
 }
 
 test.beforeAll(async () => {
+	// Skipped platforms never run a test — keep the fixture build off them.
+	if (process.platform !== "win32") return
 	const repoRoot = resolve(import.meta.dirname, "..", "..", "..")
 	const desktopRoot = join(repoRoot, "apps", "desktop")
 	resourcesDir = packagedResourcesDir()
@@ -267,7 +282,7 @@ async function readUpdateState(appWin: Awaited<ReturnType<typeof appWindow>>) {
 	}
 }
 
-/** Drive wizard → claim → app sidebar; returns the app window. */
+/** Drive wizard → claim → app shell; returns the app window. */
 async function claimApp(harness: Awaited<ReturnType<typeof launchDesktop>>) {
 	const wizard = await harness.app.firstWindow()
 	await expect(wizard.locator("input#library-path")).not.toHaveValue("")
@@ -285,7 +300,7 @@ async function claimApp(harness: Awaited<ReturnType<typeof launchDesktop>>) {
 	await fields.nth(0).fill(E2E_PASSWORD)
 	await fields.nth(1).fill(E2E_PASSWORD)
 	await appWin.getByTestId("setup-submit").click()
-	await expect(appWin.getByTestId("app-sidebar")).toBeVisible()
+	await expectShellRendered(appWin)
 	return appWin
 }
 
@@ -346,8 +361,9 @@ test("a tampered layer reports an error and leaves the tree untouched", async ()
 			.poll(() => readUpdateState(appWin), { timeout: 180_000 })
 			.toMatchObject({ status: "error" })
 		// In-app navigation (a full `goto` would hit the shell's
-		// navigation policy — the user gets there via the sidebar).
-		await appWin.getByRole("link", { name: "Feedback & About" }).click()
+		// navigation policy — the user gets there via the sidebar; below
+		// the breakpoint that means the drawer first).
+		await navigateInShell(appWin, "Feedback & About")
 		await expect(appWin.getByTestId("me-about-update-error")).toBeVisible({
 			timeout: 15_000,
 		})
@@ -387,25 +403,8 @@ test("a tampered layer reports an error and leaves the tree untouched", async ()
 test("resource update applies in place against a fixture feed", async () => {
 	const harness = await launchDesktop({ feedBase: baseUrl })
 	try {
-		// wizard → claim → app sidebar (same flow as the launch smoke).
-		const wizard = await harness.app.firstWindow()
-		await expect(wizard.locator("input#library-path")).not.toHaveValue("")
-		await wizard.getByTestId("wizard-continue").click()
-		await expect
-			.poll(() =>
-				harness.app.windows().some((win) => win.url().startsWith(harness.url)),
-			)
-			.toBe(true)
-		const appWin = appWindow(harness.app, harness.url)
-
-		await expect(appWin.getByTestId("setup-submit")).toBeVisible({
-			timeout: 120_000,
-		})
-		const fields = appWin.locator('input[type="password"]')
-		await fields.nth(0).fill(E2E_PASSWORD)
-		await fields.nth(1).fill(E2E_PASSWORD)
-		await appWin.getByTestId("setup-submit").click()
-		await expect(appWin.getByTestId("app-sidebar")).toBeVisible()
+		// wizard → claim → app shell (same flow as the launch smoke).
+		const appWin = await claimApp(harness)
 
 		// The boot check (autoUpdate on, ~15 s after start) routes to the
 		// resource channel: only the server-dist layer is downloaded. The
@@ -458,9 +457,7 @@ test("resource update applies in place against a fixture feed", async () => {
 
 		// The window came back with the session intact (sidecar reborn on
 		// the same port + library; cookie keyed by host+port survived).
-		await expect(appWin.getByTestId("app-sidebar")).toBeVisible({
-			timeout: 120_000,
-		})
+		await expectShellRendered(appWin, { timeout: 120_000 })
 
 		// The tree, the config and the library all agree on the version.
 		await expect
