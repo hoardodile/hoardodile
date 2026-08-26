@@ -57,7 +57,9 @@ COPY plugins/create-plugin/package.json plugins/create-plugin/package.json
 RUN pnpm install --frozen-lockfile
 
 # Full source: build the runtime tree (desktop shell is irrelevant here —
-# its dependencies are installed but never built or shipped).
+# its dependencies are installed but never built or shipped; only its
+# package.json enters the build context, see .dockerignore, because
+# `pnpm install --frozen-lockfile` resolves every workspace importer).
 COPY . .
 RUN pnpm exec turbo run build --filter=!@hoardodile/desktop
 RUN node scripts/stage-runtime.mjs --out /out/runtime --channels-env

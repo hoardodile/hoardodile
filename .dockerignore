@@ -9,7 +9,15 @@ node_modules
 .cache
 tmp
 temp
-apps/desktop
+# Desktop shell: only package.json joins the context — the manifest-first
+# install must resolve every workspace package (pnpm imports the desktop
+# package from the lockfile), while the shell itself is never built in the
+# image (`turbo run build --filter=!@hoardodile/desktop`) and its packed
+# release/out trees are large. Exclude the contents, not the directory,
+# so the package.json re-inclusion below still applies (Docker's pattern
+# matcher cannot re-include a file under an excluded directory).
+apps/desktop/**
+!apps/desktop/package.json
 apps/web/e2e
 apps/web/playwright-report
 apps/web/test-results
