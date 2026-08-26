@@ -1,11 +1,11 @@
 /**
- * Boot splash gate: keep the in-document spinner (index.html `#app-splash`,
- * visually identical to the desktop loading page) until the initial route
- * has resolved AND the queries running under it have data. The first
- * visible frame is then the finished page — the desktop tray reopen (and
- * any cold load) never flashes the route-pending or section skeletons.
- * A deadline makes removal unconditional so a hung query can never leave
- * the spinner up forever.
+ * Boot splash gate: keep the in-document dimmed logo (index.html
+ * `#app-splash`, visually identical to the desktop loading page) until the
+ * initial route has resolved AND the queries running under it have data.
+ * The first visible frame is then the finished page — the desktop tray
+ * reopen (and any cold load) never flashes the route-pending or section
+ * skeletons. A deadline makes removal unconditional so a hung query can
+ * never leave the logo up forever.
  */
 
 export const BOOT_SPLASH_DEADLINE_MS = 1500

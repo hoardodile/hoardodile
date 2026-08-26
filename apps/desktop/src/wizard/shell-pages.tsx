@@ -3,19 +3,24 @@ import { Button } from "@hoardodile/ui/components/button"
 import { CaptionBar } from "@hoardodile/ui/components/caption-bar"
 import { CloseConfirmDialog } from "@hoardodile/ui/components/close-confirm-dialog"
 import { useEffect, useState } from "react"
+import logoUrl from "../../resources/icon.png"
 import { disabledCaptionHistory, shellCopy } from "./copy.ts"
 import { applyLanguage } from "./i18n.ts"
 
 export type ShellPageMode = "loading" | "error"
 
 /**
- * Shell pages (loading spinner / server unreachable + Retry) with the same
- * caption bar and close dialog as the SPA. Loaded from the wizard bundle in
- * the matching mode (`?mode=loading|error`); the close flow mirrors the
- * SPA caption: ask shows the shared close-confirm dialog, tray/quit run
- * directly. Caption and dialog copy follow the shared `ui` catalog
- * namespace (instance in `./i18n.ts`); the language follows the SPA push
- * (shared catalogs), falling back to the shell's system language.
+ * Shell pages (loading logo / server unreachable + Retry) from the wizard
+ * bundle in the matching mode (`?mode=loading|error`). The loading mode is
+ * a transient state: no caption bar (it would pop in and out during the
+ * shell → SPA handoff), just the same dimmed logo the SPA splash shows, so
+ * both loading surfaces read as one. The error mode keeps the caption bar
+ * and close dialog — a stuck server must stay closable — with the same
+ * close flow as the SPA caption: ask shows the shared close-confirm
+ * dialog, tray/quit run directly. Caption/dialog copy follows the shared
+ * `ui` catalog namespace (instance in `./i18n.ts`); the language follows
+ * the SPA push (shared catalogs), falling back to the shell's system
+ * language.
  */
 export function ShellPages(props: {
 	readonly mode: ShellPageMode
@@ -68,17 +73,24 @@ function ShellPagesView(props: {
 
 	return (
 		<div className="flex h-full flex-col bg-background">
-			<CaptionBar
-				controls={{ ...desktop, close: handleClose }}
-				history={disabledCaptionHistory}
-			/>
+			{mode === "error" ? (
+				<CaptionBar
+					controls={{ ...desktop, close: handleClose }}
+					history={disabledCaptionHistory}
+				/>
+			) : null}
 			<main className="flex min-h-0 flex-1 items-center justify-center p-6">
 				{mode === "loading" ? (
-					<div
-						role="progressbar"
-						aria-label={copy.loadingLabel}
-						className="size-[26px] animate-spin rounded-full border-2 border-muted-foreground/30 border-t-foreground"
-					/>
+					<div role="progressbar" aria-label={copy.loadingLabel}>
+						<img
+							src={logoUrl}
+							width={80}
+							height={80}
+							alt=""
+							className="size-20 opacity-60"
+							decoding="async"
+						/>
+					</div>
 				) : (
 					<div className="flex max-w-[460px] flex-col items-center gap-3 text-center">
 						<h1 className="text-[17px] font-semibold text-foreground">
@@ -93,11 +105,13 @@ function ShellPagesView(props: {
 					</div>
 				)}
 			</main>
-			<CloseConfirmDialog
-				open={askOpen}
-				onOpenChange={setAskOpen}
-				onDecide={handleDecide}
-			/>
+			{mode === "error" ? (
+				<CloseConfirmDialog
+					open={askOpen}
+					onOpenChange={setAskOpen}
+					onDecide={handleDecide}
+				/>
+			) : null}
 		</div>
 	)
 }

@@ -144,12 +144,12 @@ if (!rootElement) {
 }
 
 // The index.html splash keeps the first frame from being an empty canvas
-// while React mounts. Hold it until the initial route has resolved and its
-// queries have data: a cold load (desktop tray reopen, relaunch, browser
-// refresh) then goes spinner → finished page, never through the
-// route-pending / section skeletons. The deadline in the gate guarantees
-// removal even if a query hangs. Subscribed before render so the first
-// `onResolved` can never be missed.
+// while React mounts. Hold the dimmed logo until the initial route has
+// resolved and its queries have data: a cold load (desktop tray reopen,
+// relaunch, browser refresh) then goes logo → finished page, never through
+// the route-pending / section skeletons. The deadline in the gate
+// guarantees removal even if a query hangs. Subscribed before render so the
+// first `onResolved` can never be missed.
 holdSplashUntilReady({
 	router,
 	queryClient,
