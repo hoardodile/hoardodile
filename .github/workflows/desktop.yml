@@ -82,6 +82,9 @@ jobs:
           path: |
             apps/desktop/.playwright-desktop
             apps/desktop/release/builder-effective-config.yaml
+          # The report dir starts with a dot; upload-artifact's default
+          # include-hidden-files:false would silently upload nothing.
+          include-hidden-files: true
           if-no-files-found: ignore
           retention-days: 7
 
@@ -94,6 +97,8 @@ jobs:
       - name: Build (web e2e on tags/dispatch needs the plugin dists)
         if: github.event_name != 'pull_request'
         run: pnpm build
+      - name: Set up buildx (the gha cache backend needs its container driver)
+        uses: docker/setup-buildx-action@v4
       - name: Build image
         uses: docker/build-push-action@v6
         with:
@@ -101,10 +106,11 @@ jobs:
           push: false
           load: true
           tags: hoardodile:ci
-          # Read-only cache: the default docker driver cannot export a gha
-          # cache ("Cache export is not supported for the docker driver"),
-          # and buildx only falls over on the cache-to line.
+          # GHA cache backend requires the buildx container driver: the
+          # default docker driver cannot import or export a type=gha cache
+          # ("unknown cache importer" / "Cache export is not supported").
           cache-from: type=gha,scope=hoardodile
+          cache-to: type=gha,mode=max,scope=hoardodile
       - name: Compose smoke (health / SPA / migrations / persistence)
         run: node scripts/docker-smoke.mjs --skip-build
       - name: Boot the stack for the full e2e suite

@@ -21,9 +21,11 @@
 FROM node:24-bookworm-slim AS build
 
 # 7z-bin's install script downloads its binary through `curl` (ffmpeg-static
-# style); bookworm-slim ships neither it nor the CA bundle.
+# style); bookworm-slim ships neither it nor the CA bundle. git serves the
+# root postinstall (lefthook), which also needs a repository — the manifest
+# stage has none until `COPY . .`, so an empty one is initialized below.
 RUN apt-get update \
-	&& apt-get install -y --no-install-recommends curl ca-certificates \
+	&& apt-get install -y --no-install-recommends curl ca-certificates git \
 	&& rm -rf /var/lib/apt/lists/*
 
 # Corepack reads the pinned pnpm from package.json's `packageManager`.
@@ -54,7 +56,7 @@ COPY plugins/sdk-web/package.json plugins/sdk-web/package.json
 COPY plugins/sdk-react/package.json plugins/sdk-react/package.json
 COPY plugins/workbench/package.json plugins/workbench/package.json
 COPY plugins/create-plugin/package.json plugins/create-plugin/package.json
-RUN pnpm install --frozen-lockfile
+RUN git init -q && pnpm install --frozen-lockfile
 
 # Full source: build the runtime tree (desktop shell is irrelevant here —
 # its dependencies are installed but never built or shipped; only its
