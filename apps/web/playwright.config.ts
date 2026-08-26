@@ -18,6 +18,11 @@ const externalBaseUrl = process.env.E2E_EXTERNAL_BASE_URL
 const baseUrl = externalBaseUrl ?? `http://127.0.0.1:${webPort}`
 if (externalBaseUrl !== undefined) {
 	process.env.E2E_SERVER_PORT = new URL(externalBaseUrl).port || "80"
+} else {
+	// Local-server mode: the port of the webServer fixture below. External
+	// mode keeps the port from the external base URL — overwriting it here
+	// would point the API helpers at the dead local port (ECONNREFUSED).
+	process.env.E2E_SERVER_PORT = String(serverPort)
 }
 // Ephemeral file per test run; wiped before the server boots so the web
 // setup flow starts from an unconfigured server.
@@ -47,7 +52,6 @@ for (const dir of devPluginDirs) {
 
 process.env.E2E_DB_PATH = dbPath
 process.env.E2E_TEST_PASSWORD = testPassword
-process.env.E2E_SERVER_PORT = String(serverPort)
 process.env.E2E_WEB_PORT = String(webPort)
 
 // Playwright loads this config in the main process and again in each worker;
