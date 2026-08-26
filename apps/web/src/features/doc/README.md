@@ -85,6 +85,14 @@ The diff engine is built on BlockNote internals that changed after 0.51.x:
   the computed changes into the same `insertion`/`deletion`/`modification`
   marks that BlockNote's default schema registers — this is what the
   read-only diff editor renders (`doc.css` styles `.ProseMirror ins/del`).
+- `prosemirror-changeset` (also pinned, 2.4.1) is the diff engine: the
+  whole document is fed to it as one replacement and it splits the changed
+  region into individually replaceable steps. **2.4.2 added a 2500-token
+  guard in `computeDiff` that returns a large changed range as ONE change**;
+  with the whole-document step above, large multi-block edits then produce
+  a boundary-crossing replace step that cannot be applied and the diff
+  degrades to unmarked (or fallback) content. Upgrade only with the
+  large-edit regression test in `diff.test.ts` green.
 
 BlockNote **0.52.0 removed the suggestion marks from core's default
 extension set** (verified by inspecting the 0.52.0/0.53.0/0.54.0 tarballs):

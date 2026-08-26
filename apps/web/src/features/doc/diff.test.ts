@@ -107,6 +107,33 @@ describe("computeInlineDiffDoc", () => {
 		expect(diffDoc).toBeDefined()
 	})
 
+	it("keeps granular marks for large edits spanning block boundaries", () => {
+		// prosemirror-changeset 2.4.2 added a 2500-token guard that returns
+		// a whole large changed range as ONE change; combined with the
+		// whole-document step below that yields an unapplyable
+		// boundary-crossing step and the diff degrades to no marks. 2.4.1
+		// computes the range granularly and keeps the inline marks — this
+		// test guards that dependency behavior (see the deliberate-upgrade
+		// checklist in apps/web/src/features/doc/README.md).
+		const longA = "aaaaaaaaaaaaaaaaaa".repeat(190) // > 2500 chars
+		const longB = "bbbbbbbbbbbbbbbbbb".repeat(190)
+		const diffDoc = computeInlineDiffDoc(
+			editor,
+			[
+				{ type: "paragraph", content: longA },
+				{ type: "paragraph", content: "hello" },
+			],
+			[
+				{ type: "paragraph", content: longB },
+				{ type: "paragraph", content: "HELLO" },
+			],
+		)
+		expect(diffDoc).toBeDefined()
+		const marks = collectMarkedText(diffDoc!)
+		expect(marks.some((m) => m.kind === "deletion")).toBe(true)
+		expect(marks.some((m) => m.kind === "insertion")).toBe(true)
+	})
+
 	it("round-trips real editor block shapes through blocksToDoc without throwing", () => {
 		// Real `editor.document` shapes (children arrays, code string
 		// content) must convert — a throw here is what silently blanks

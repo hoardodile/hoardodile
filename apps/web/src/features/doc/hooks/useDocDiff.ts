@@ -159,9 +159,12 @@ export function useDocDiff(args: UseDocDiffInput): UseDocDiffResult {
 				.then(async ({ blocksToDoc, computeInlineDiffDoc, applyDiffDoc }) => {
 					if (appliedDiffMarkerRef.current === marker) return
 					const schema = editor._tiptapEditor.state.schema
+					// When the inline diff cannot be computed (or there is
+					// nothing to mark), show the SELECTED version's content
+					// — the user is inspecting that version, not the draft.
 					const diff =
 						computeInlineDiffDoc(editor, baseBlocks, diffCurrentBlocks) ??
-						blocksToDoc(schema, diffCurrentBlocks)
+						blocksToDoc(schema, baseBlocks)
 					applyDiffDoc(editor, diff)
 					appliedDiffMarkerRef.current = marker
 				})

@@ -17,6 +17,13 @@
  * - `@handlewithcare/prosemirror-suggest-changes` is the transform that
  *   turns the computed changes into those marks; it must stay compatible
  *   with the schema above.
+ * - `prosemirror-changeset` 2.4.1 is the version the document diff was
+ *   developed and verified against. 2.4.2 added a 2500-token guard in
+ *   `computeDiff` that returns a whole large changed range as ONE change;
+ *   combined with the whole-document step the diff view feeds it, large
+ *   multi-block edits then produce an unapplyable boundary-crossing
+ *   replace step and the diff degrades to unmarked (or fallback) content.
+ *   Upgrade only with the large-edit test in `diff.test.ts` green.
  * - The 10 tsup-built packages pin `typescript: 5.9.3` on purpose
  *   (see AGENTS.md); the catalog pin is 7.0.2. Both are legitimate.
  * - `@videojs/react` is an exact-pinned prerelease (10.0.0-beta.25): the
@@ -46,6 +53,7 @@ export const PINNED = {
 	"@blocknote/mantine": "0.51.4",
 	"@blocknote/shadcn": "0.51.4",
 	"@handlewithcare/prosemirror-suggest-changes": "0.1.8",
+	"prosemirror-changeset": "2.4.1",
 	"@videojs/react": "10.0.0-beta.25",
 }
 
@@ -169,6 +177,8 @@ must not be bumped on a whim:
     editor._tiptapEditor and those marks).
   - @handlewithcare/prosemirror-suggest-changes stays at 0.1.8 — it is the
     transform that emits those marks.
+  - prosemirror-changeset stays at 2.4.1 — 2.4.2's 2500-token diff guard
+    regresses large multi-block edits to unmarked content.
   - typescript stays at 5.9.3 (tsup packages) / 7.0.2 (catalog).
 
 To upgrade deliberately, follow the checklist in
