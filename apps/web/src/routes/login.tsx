@@ -162,8 +162,9 @@ function LoginRoute() {
 					alt=""
 					width={56}
 					height={56}
-					className="size-14 rounded-2xl object-cover shadow-md"
+					className="size-14 object-cover"
 					decoding="async"
+					data-login-logo=""
 				/>
 				<span className="mt-4 text-xl font-semibold tracking-[0.18em] indent-[0.18em] text-foreground">
 					{t("login.brand")}

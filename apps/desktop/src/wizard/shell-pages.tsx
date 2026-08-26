@@ -3,7 +3,7 @@ import { Button } from "@hoardodile/ui/components/button"
 import { CaptionBar } from "@hoardodile/ui/components/caption-bar"
 import { CloseConfirmDialog } from "@hoardodile/ui/components/close-confirm-dialog"
 import { useEffect, useState } from "react"
-import logoUrl from "../../resources/icon.png"
+import logoUrl from "../../resources/icon.png?inline"
 import { disabledCaptionHistory, shellCopy } from "./copy.ts"
 import { applyLanguage } from "./i18n.ts"
 

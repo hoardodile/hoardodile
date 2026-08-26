@@ -32,6 +32,7 @@ import { holdSplashUntilReady } from "@/lib/boot-splash"
 import { getDesktopBridge, isHoardodileDesktop } from "@/lib/desktop"
 import { collectFontCssPaths } from "@/lib/fonts"
 import { armLastRouteRestore, writeLastRoute } from "@/lib/last-route"
+import { dismissSplash } from "@/lib/splash-handoff"
 import {
 	createQueryClient,
 	createTrpc,
@@ -153,7 +154,9 @@ if (!rootElement) {
 holdSplashUntilReady({
 	router,
 	queryClient,
-	remove: () => document.getElementById("app-splash")?.remove(),
+	// Login destination: the dimmed splash logo morphs onto the sign-in
+	// logo; every other page removes the overlay instantly.
+	remove: () => dismissSplash(document.getElementById("app-splash")),
 })
 
 createRoot(rootElement).render(

@@ -13,6 +13,40 @@
 	</head>
 	<body>
 		<div id="root"></div>
+		<style>
+			/* First-paint splash: #root is empty until React mounts, and a
+			   plain canvas reads as a white flash on every app handoff. The
+			   same dimmed logo mark the SPA splash uses is baked into this
+			   document (token replaced by the inline-splash-logo plugin, so
+			   the first frame needs no request). main.tsx removes it after
+			   React mounts; keep size/tint in sync with apps/web/index.html. */
+			#app-splash {
+				position: fixed;
+				inset: 0;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				background: #fbfbfb;
+				pointer-events: none;
+			}
+			html.dark #app-splash {
+				background: #0d0d0d;
+			}
+			#app-splash img {
+				width: 80px;
+				height: 80px;
+				opacity: 0.6;
+			}
+		</style>
+		<div id="app-splash" role="progressbar" aria-label="Loading">
+			<img
+				src="%HOARDODILE_LOGO_DATA_URL%"
+				width="80"
+				height="80"
+				alt=""
+				decoding="async"
+			/>
+		</div>
 		<script type="module" src="./main.tsx"></script>
 	</body>
 </html>

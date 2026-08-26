@@ -9,6 +9,7 @@ import inspect from "vite-plugin-inspect"
 import { VitePWA } from "vite-plugin-pwa"
 import { defineConfig } from "vitest/config"
 import { cspMetaPlugin } from "../../scripts/lib/csp-meta.ts"
+import { inlineSplashLogoPlugin } from "../../scripts/lib/splash-logo.ts"
 
 const serverTarget = process.env.VITE_SERVER_URL ?? "http://127.0.0.1:3000"
 
@@ -42,6 +43,11 @@ const isTest = process.env.VITEST === "true"
 export default defineConfig({
 	plugins: [
 		cspMetaPlugin(),
+		// First-paint splash logo: inline data URI so the very first frame
+		// of index.html already shows the logo (no /logo.png fetch wait).
+		inlineSplashLogoPlugin({
+			pngPath: path.resolve(import.meta.dirname, "public/logo.png"),
+		}),
 		!isTest &&
 			tanstackRouter({
 				target: "react",

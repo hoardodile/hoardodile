@@ -50,3 +50,13 @@ createRoot(root).render(
 		<I18nProvider i18n={i18n}>{ui}</I18nProvider>
 	</StrictMode>,
 )
+
+// The raw-HTML splash (index.html) keeps the first frame from being a
+// white flash before React mounts; drop it right after the app's first
+// paint. The loading mode's React logo is the identical mark, so the
+// handover is seamless.
+requestAnimationFrame(() => {
+	requestAnimationFrame(() => {
+		document.getElementById("app-splash")?.remove()
+	})
+})
