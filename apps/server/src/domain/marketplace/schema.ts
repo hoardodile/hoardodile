@@ -85,8 +85,6 @@ export type MarketPlugin = {
 	 * like the plugins page.
 	 */
 	readonly manifest: PluginManifest
-	/** The repo-root `README.md` (markdown), when the repo ships one. */
-	readonly readme?: string
 	readonly state: "ok" | "no_release" | "error"
 	readonly latest: MarketLatest | undefined
 	/** Human-readable reason when `state` is `error`. */

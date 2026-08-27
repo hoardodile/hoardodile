@@ -1117,6 +1117,7 @@ describe("plugin seeding", () => {
 	const PLUGIN_ID = "22222222-2222-4222-8222-222222222222"
 	let root: string
 	let built: BuiltServer
+	let env: ReturnType<typeof loadEnv>
 	let consoleWarnSpy: ReturnType<typeof vi.spyOn> | undefined
 	let consoleInfoSpy: ReturnType<typeof vi.spyOn> | undefined
 
@@ -1137,7 +1138,7 @@ describe("plugin seeding", () => {
 			}),
 		)
 		writeFileSync(join(bundledDir, "main.js"), "export default {}\n")
-		const env = loadEnv({
+		env = loadEnv({
 			NODE_ENV: "test",
 			LOG_LEVEL: "silent",
 			STORAGE_ROOT: root,
@@ -1166,6 +1167,100 @@ describe("plugin seeding", () => {
 			remoteAddress: "127.0.0.1",
 		})
 		expect(res.statusCode).toBe(200)
+	})
+
+	test("listSeedPlugins reports the bundled plugin as installed", () => {
+		const seeds = built.app.pluginService.listSeedPlugins()
+		expect(seeds).toHaveLength(1)
+		expect(seeds[0]).toMatchObject({
+			id: PLUGIN_ID,
+			installed: true,
+			installedVersion: "0.0.0",
+			removed: false,
+			restorable: false,
+		})
+	})
+
+	test("uninstall keeps the bundled source and survives a restart", async () => {
+		await built.app.pluginService.uninstall(PLUGIN_ID)
+
+		// The bundled original is never deleted.
+		expect(existsSync(join(root, "bundled", "manifest.json"))).toBe(true)
+		expect(existsSync(join(root, "bundled", "main.js"))).toBe(true)
+		// The installed copy is gone and the removal marker recorded.
+		expect(existsSync(join(root, "versions", "1", "plugins", PLUGIN_ID))).toBe(
+			false,
+		)
+		const seedRemovals = JSON.parse(
+			readFileSync(join(root, "local", "seed-removals.json"), "utf-8"),
+		) as { readonly removed: readonly string[] }
+		expect(seedRemovals.removed).toContain(PLUGIN_ID)
+
+		// A restart must NOT re-seed the deliberately-removed plugin.
+		await built.close()
+		built = await buildServer({ env })
+		await built.app.ready()
+		expect(existsSync(join(root, "versions", "1", "plugins", PLUGIN_ID))).toBe(
+			false,
+		)
+		// And the bundled section still lists it as restorable.
+		expect(built.app.pluginService.listSeedPlugins()).toEqual([
+			expect.objectContaining({
+				id: PLUGIN_ID,
+				installed: false,
+				removed: true,
+				restorable: true,
+			}),
+		])
+	})
+
+	test("restoreSeedPlugin reinstalls the bundled plugin offline", async () => {
+		await built.app.pluginService.uninstall(PLUGIN_ID)
+		await built.app.pluginService.restoreSeedPlugin(PLUGIN_ID)
+
+		expect(
+			existsSync(
+				join(root, "versions", "1", "plugins", PLUGIN_ID, "manifest.json"),
+			),
+		).toBe(true)
+		const seedRemovals = JSON.parse(
+			readFileSync(join(root, "local", "seed-removals.json"), "utf-8"),
+		) as { readonly removed: readonly string[] }
+		expect(seedRemovals.removed).not.toContain(PLUGIN_ID)
+		expect(built.app.pluginService.listSeedPlugins()).toEqual([
+			expect.objectContaining({ id: PLUGIN_ID, installed: true }),
+		])
+	})
+
+	test("restoreSeedPlugin rejects an id without a bundled source", async () => {
+		await expect(
+			built.app.pluginService.restoreSeedPlugin(
+				"33333333-3333-4333-8333-333333333333",
+			),
+		).rejects.toThrow("bundled source")
+	})
+
+	test("restoreSeedPlugin works across a restart (marker persisted)", async () => {
+		await built.app.pluginService.uninstall(PLUGIN_ID)
+		await built.close()
+
+		// Reboot: the removal marker survives, so the plugin is not seeded.
+		built = await buildServer({ env })
+		await built.app.ready()
+		expect(built.app.pluginService.listSeedPlugins()).toEqual([
+			expect.objectContaining({ id: PLUGIN_ID, removed: true }),
+		])
+
+		// Offline restore from the (untouched) bundled original.
+		await built.app.pluginService.restoreSeedPlugin(PLUGIN_ID)
+		expect(
+			existsSync(
+				join(root, "versions", "1", "plugins", PLUGIN_ID, "manifest.json"),
+			),
+		).toBe(true)
+		expect(built.app.pluginService.listSeedPlugins()).toEqual([
+			expect.objectContaining({ id: PLUGIN_ID, installed: true }),
+		])
 	})
 })
 

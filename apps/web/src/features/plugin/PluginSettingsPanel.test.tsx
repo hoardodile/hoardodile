@@ -63,7 +63,6 @@ function marketPlugin(id: string, name: string) {
 			version: "1.2.3",
 			permissions: PERMISSIONS,
 		},
-		readme: undefined,
 		state: "ok" as const,
 		latest: {
 			tag: "v1.2.3",

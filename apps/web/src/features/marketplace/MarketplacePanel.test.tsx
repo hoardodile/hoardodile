@@ -62,7 +62,6 @@ const SNAPSHOT = {
 					download: true,
 				},
 			},
-			readme: "# README body\n\nFull repository readme.",
 			state: "ok",
 			latest: {
 				tag: "v1.2.3",
@@ -108,6 +107,7 @@ function installClient(overrides?: {
 	readonly snapshot?: unknown
 	readonly snapshotQuery?: (input: { force: boolean }) => Promise<unknown>
 	readonly installed?: unknown[]
+	readonly seeds?: unknown[]
 }) {
 	mockClient.marketplace = {
 		getConfig: {
@@ -124,6 +124,8 @@ function installClient(overrides?: {
 		listAll: { query: vi.fn(async () => overrides?.installed ?? []) },
 		uninstall: { mutate: vi.fn(async () => undefined) },
 		usageCount: { query: vi.fn(async () => 0) },
+		listSeeds: { query: vi.fn(async () => overrides?.seeds ?? []) },
+		restoreSeed: { mutate: vi.fn(async () => undefined) },
 	}
 }
 
@@ -554,17 +556,17 @@ describe("MarketplacePanel", () => {
 		expect(securityLink?.href).toContain(
 			"github.com/me/cat-viewer/security/advisories/new",
 		)
-		// Intro tab is the default and renders markdown.
+		// Intro tab is the default and renders the release intro markdown.
 		expect(within(dialog).getByText("Intro heading")).toBeInTheDocument()
-		// Readme tab switches to the repo README.
+		// Release notes tab switches to the release body markdown.
 		await user.click(
-			within(dialog).getByTestId("marketplace-detail-tab-readme"),
+			within(dialog).getByTestId("marketplace-detail-tab-release"),
 		)
-		expect(within(dialog).getByText("README body")).toBeInTheDocument()
+		expect(within(dialog).getByText("First release")).toBeInTheDocument()
 		expect(within(dialog).queryByText("Intro heading")).not.toBeInTheDocument()
 	})
 
-	it("shows a hint when the repo ships no README", async () => {
+	it("shows a hint when the release ships no intro and keeps the release notes tab", async () => {
 		installClient({
 			config: { registryRepo: "me/registry" },
 			snapshot: {
@@ -572,7 +574,6 @@ describe("MarketplacePanel", () => {
 				plugins: [
 					{
 						...SNAPSHOT.plugins[0]!,
-						readme: undefined,
 						latest: { ...SNAPSHOT.plugins[0]!.latest!, intro: undefined },
 					},
 				],
@@ -582,13 +583,128 @@ describe("MarketplacePanel", () => {
 
 		await user.click(await screen.findByTestId(`marketplace-view-${PLUGIN_ID}`))
 		const dialog = await screen.findByTestId("marketplace-detail-dialog")
-		// No intro → the release notes take over as the intro tab.
-		expect(within(dialog).getByText("First release")).toBeInTheDocument()
+		// No intro → the intro tab shows its hint…
+		expect(
+			within(dialog).getByText("This release ships no introduction"),
+		).toBeInTheDocument()
+		// …and the release body lives in its own tab.
 		await user.click(
-			within(dialog).getByTestId("marketplace-detail-tab-readme"),
+			within(dialog).getByTestId("marketplace-detail-tab-release"),
+		)
+		expect(within(dialog).getByText("First release")).toBeInTheDocument()
+	})
+
+	it("shows a hint when the release ships no notes", async () => {
+		installClient({
+			config: { registryRepo: "me/registry" },
+			snapshot: {
+				...SNAPSHOT,
+				plugins: [
+					{
+						...SNAPSHOT.plugins[0]!,
+						latest: { ...SNAPSHOT.plugins[0]!.latest!, notes: null },
+					},
+				],
+			},
+		})
+		renderPanel()
+
+		await user.click(await screen.findByTestId(`marketplace-view-${PLUGIN_ID}`))
+		const dialog = await screen.findByTestId("marketplace-detail-dialog")
+		await user.click(
+			within(dialog).getByTestId("marketplace-detail-tab-release"),
 		)
 		expect(
-			within(dialog).getByText("No README found in the repository"),
+			within(dialog).getByText("This release has no release notes"),
 		).toBeInTheDocument()
+	})
+
+	it("shows the no-release state in the release tab", async () => {
+		installClient({
+			config: { registryRepo: "me/registry" },
+			snapshot: {
+				...SNAPSHOT,
+				plugins: [
+					{
+						...SNAPSHOT.plugins[0]!,
+						state: "no_release" as const,
+						latest: undefined,
+					},
+				],
+			},
+		})
+		renderPanel()
+
+		await user.click(await screen.findByTestId(`marketplace-view-${PLUGIN_ID}`))
+		const dialog = await screen.findByTestId("marketplace-detail-dialog")
+		await user.click(
+			within(dialog).getByTestId("marketplace-detail-tab-release"),
+		)
+		expect(
+			within(dialog).getByText("No GitHub release yet"),
+		).toBeInTheDocument()
+	})
+
+	it("shows the bundled section and restores offline even when the registry is disabled", async () => {
+		installClient({
+			config: { registryRepo: null },
+			seeds: [
+				{
+					id: PLUGIN_ID,
+					manifest: SNAPSHOT.plugins[0]!.manifest,
+					installed: false,
+					removed: true,
+					restorable: true,
+				},
+			],
+		})
+		renderPanel()
+
+		const section = await screen.findByTestId("bundled-plugins-section")
+		expect(within(section).getByText("Cat Viewer")).toBeInTheDocument()
+		expect(within(section).getByText("Removed")).toBeInTheDocument()
+		await user.click(
+			within(section).getByTestId(`bundled-restore-${PLUGIN_ID}`),
+		)
+		await waitFor(() => {
+			expect(
+				(
+					mockClient.plugin.restoreSeed as {
+						mutate: ReturnType<typeof vi.fn>
+					}
+				).mutate,
+			).toHaveBeenCalledWith({ id: PLUGIN_ID })
+		})
+	})
+
+	it("shows an installed bundled row with its version chip and no restore action", async () => {
+		installClient({
+			config: { registryRepo: null },
+			seeds: [
+				{
+					id: PLUGIN_ID,
+					manifest: SNAPSHOT.plugins[0]!.manifest,
+					installed: true,
+					installedVersion: "1.2.3",
+					removed: false,
+					restorable: false,
+				},
+			],
+		})
+		renderPanel()
+
+		const section = await screen.findByTestId("bundled-plugins-section")
+		expect(within(section).getByText("Installed v1.2.3")).toBeInTheDocument()
+		expect(
+			within(section).queryByTestId(`bundled-restore-${PLUGIN_ID}`),
+		).toBeNull()
+	})
+
+	it("hides the bundled section when the host ships no bundled plugins", async () => {
+		installClient({ config: { registryRepo: "me/registry" } })
+		renderPanel()
+
+		await screen.findByTestId("marketplace-catalog")
+		expect(screen.queryByTestId("bundled-plugins-section")).toBeNull()
 	})
 })

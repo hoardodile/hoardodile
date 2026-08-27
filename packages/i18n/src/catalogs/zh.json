@@ -599,7 +599,7 @@
 		"view": "查看",
 		"details": "详情",
 		"moreActions": "更多操作",
-		"notesTitle": "发布说明",
+		"releaseNotes": "发布说明",
 		"pluginInfo": "插件信息",
 		"pluginId": "插件 ID",
 		"repository": "仓库",
@@ -611,10 +611,9 @@
 		"reportIssue": "报告问题",
 		"reportSecurity": "报告安全漏洞",
 		"intro": "介绍",
-		"readme": "README",
 		"languages": "语言",
-		"noReadme": "仓库中未找到 README",
 		"noIntro": "该版本未随发布提供介绍",
+		"noReleaseNotes": "该版本未提供发布说明",
 		"errorRateLimitedShort": "最新发布信息暂时无法获取，稍后自动重试。",
 		"configureRegistry": "配置注册表",
 		"pageHint": "插件以 GitHub Release 发布，通过你持有的注册单仓库发现。在上方配置注册表——目录将直接从各插件仓库及其 Release 读取名称、版本、权限与发布说明。",
@@ -626,7 +625,12 @@
 		"emptyFilterHint": "当前筛选下没有插件。",
 		"requiresAppVersion": "需要 hoardodile ≥ v{{version}}",
 		"incompatibleAppVersion": "该插件需要 hoardodile ≥ v{{require}}，当前为 v{{current}}",
-		"registryActive": "当前 registry：{{url}}"
+		"registryActive": "当前 registry：{{url}}",
+		"bundledTitle": "捆绑插件",
+		"bundledDescription": "随应用分发的官方插件。卸载不会删除打包原件——可随时在此处离线还原。",
+		"bundledRemoved": "已移除",
+		"bundledRestore": "还原",
+		"bundledRestoreSuccess": "已还原 {{name}}"
 	},
 	"overview": {
 		"usageHistory": {

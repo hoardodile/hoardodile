@@ -599,7 +599,7 @@
 		"view": "表示",
 		"details": "詳細",
 		"moreActions": "その他の操作",
-		"notesTitle": "リリースノート",
+		"releaseNotes": "リリースノート",
 		"pluginInfo": "プラグイン情報",
 		"pluginId": "プラグイン ID",
 		"repository": "リポジトリ",
@@ -611,10 +611,9 @@
 		"reportIssue": "問題を報告",
 		"reportSecurity": "脆弱性を報告",
 		"intro": "紹介",
-		"readme": "README",
 		"languages": "言語",
-		"noReadme": "リポジトリに README が見つかりません",
 		"noIntro": "このリリースには紹介がありません",
+		"noReleaseNotes": "このリリースにはノートがありません",
 		"errorRateLimitedShort": "最新リリース情報を取得できません — 自動的に再試行します。",
 		"configureRegistry": "レジストリを構成",
 		"pageHint": "プラグインは GitHub リリースとして公開され、自分のレジストリリポジトリ経由で見つかります。上のレジストリを構成してください。カタログは名前・バージョン・権限・リリースノートを各リポジトリとリリースから直接読み取ります。",
@@ -626,7 +625,12 @@
 		"emptyFilterHint": "このフィルターに一致するプラグインはありません。",
 		"requiresAppVersion": "hoardodile ≥ v{{version}} が必要",
 		"incompatibleAppVersion": "このプラグインには hoardodile ≥ v{{require}} が必要です（このホストは v{{current}}）",
-		"registryActive": "現在のレジストリ：{{url}}"
+		"registryActive": "現在のレジストリ：{{url}}",
+		"bundledTitle": "同梱プラグイン",
+		"bundledDescription": "アプリに同梱されている公式プラグイン。アンインストールしても同梱元は削除されません — いつでもオフラインで復元できます。",
+		"bundledRemoved": "削除済み",
+		"bundledRestore": "復元",
+		"bundledRestoreSuccess": "{{name}} を復元しました"
 	},
 	"overview": {
 		"usageHistory": {

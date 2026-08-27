@@ -18,6 +18,7 @@ import { eq } from "drizzle-orm"
 import { type DbHandles, openDb } from "src/infra/db/connection.ts"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import { contentPlugins } from "./schema.ts"
+import { createSeedRemovalsStore } from "./seed-removals.ts"
 import { createPluginService, type PluginService } from "./service.ts"
 
 const PLUGIN_ID = "11111111-1111-4111-8111-111111111111" as PluginManifestId
@@ -78,9 +79,15 @@ describe("plugin service uninstall", () => {
 	let sandbox: PluginSandbox
 	let svc: PluginService
 	let prepareDisk: (() => Promise<void>) | undefined
-	let removeSeedSource: ((id: string) => Promise<void>) | undefined
+	let seedDirs: string[]
+	let seedRemovalsFile: string
 
-	function registryWith(entries: readonly ReturnType<typeof entryFor>[]) {
+	function registryWith(
+		entries: readonly ReturnType<typeof entryFor>[],
+		seedRemovalsOverride?: Parameters<
+			typeof createPluginService
+		>[0]["seedRemovals"],
+	) {
 		registry = buildRegistry(entries)
 		loader = {
 			getRegistry: () => registry,
@@ -88,13 +95,16 @@ describe("plugin service uninstall", () => {
 		} as unknown as PluginLoader
 		sandbox = { unloadPlugin: vi.fn() } as unknown as PluginSandbox
 		prepareDisk = vi.fn(async () => {})
-		removeSeedSource = vi.fn(async () => {})
+		seedDirs = []
+		seedRemovalsFile = join(root, "local", "seed-removals.json")
 		svc = createPluginService({
 			db: dbh.db,
 			loader,
 			sandbox,
 			prepareDisk,
-			removeSeedSource,
+			seedDirs,
+			seedRemovals:
+				seedRemovalsOverride ?? createSeedRemovalsStore(seedRemovalsFile),
 		})
 	}
 
@@ -198,7 +208,13 @@ describe("plugin service uninstall", () => {
 			getRegistry: () => buildRegistry([]),
 			rescan: vi.fn(async () => {}),
 		} as unknown as PluginLoader
-		svc = createPluginService({ db: dbh.db, loader, sandbox })
+		svc = createPluginService({
+			db: dbh.db,
+			loader,
+			sandbox,
+			seedDirs,
+			seedRemovals: createSeedRemovalsStore(seedRemovalsFile),
+		})
 		await svc.rescan()
 		const row = dbh.db
 			.select()
@@ -238,9 +254,11 @@ describe("plugin service uninstall", () => {
 		expect(sandbox.unloadPlugin).toHaveBeenCalledWith(PLUGIN_ID)
 		expect(loader.rescan).toHaveBeenCalled()
 		// The removal stays removed for the session — no immediate re-seed
-		// — while the (optional) seed-source cleanup runs for packaged
-		// runtimes.
-		expect(removeSeedSource).toHaveBeenCalledWith(PLUGIN_ID)
+		// — and the removal marker records it so boot-time seeding skips
+		// the (untouched) bundled original on the next restart.
+		expect(
+			createSeedRemovalsStore(seedRemovalsFile).read().has(PLUGIN_ID),
+		).toBe(true)
 		expect(prepareDisk).not.toHaveBeenCalled()
 	})
 
@@ -262,5 +280,155 @@ describe("plugin service uninstall", () => {
 			.where(eq(contentPlugins.id, PLUGIN_ID))
 			.get()
 		expect(row).toBeUndefined()
+	})
+
+	test("uninstall aborts when the removal marker cannot be persisted", async () => {
+		const diskPath = join(pluginsDir, PLUGIN_ID)
+		mkdirSync(diskPath, { recursive: true })
+		writeFileSync(join(diskPath, "manifest.json"), "{}")
+		seedSettingsRow(PLUGIN_ID)
+		registryWith([entryFor(PLUGIN_ID, "Disk", { diskPath })], {
+			read: () => new Set(),
+			add: () => {
+				throw new Error("disk full")
+			},
+			remove: () => {},
+		})
+
+		await expect(svc.uninstall(PLUGIN_ID)).rejects.toThrow("disk full")
+
+		// A failed marker write aborts the uninstall: the settings row stays
+		// and no worker is freed — the plugin remains registered (the user
+		// can retry, and a restart cannot silently resurrect it).
+		const row = dbh.db
+			.select()
+			.from(contentPlugins)
+			.where(eq(contentPlugins.id, PLUGIN_ID))
+			.get()
+		expect(row).toBeDefined()
+		expect(sandbox.unloadPlugin).not.toHaveBeenCalled()
+		expect(loader.rescan).not.toHaveBeenCalled()
+	})
+})
+
+describe("plugin service seed plugins", () => {
+	let root: string
+	let dbh: DbHandles
+	let registry: ReturnType<typeof buildRegistry>
+	let loader: PluginLoader
+	let sandbox: PluginSandbox
+	let svc: PluginService
+	let prepareDisk: (() => Promise<void>) | undefined
+	let seedDirs: string[]
+	let seedRemovalsFile: string
+
+	function build(dirs: readonly string[]) {
+		loader = {
+			getRegistry: () => registry,
+			rescan: vi.fn(async () => {}),
+		} as unknown as PluginLoader
+		sandbox = { unloadPlugin: vi.fn() } as unknown as PluginSandbox
+		prepareDisk = vi.fn(async () => {})
+		seedDirs = [...dirs]
+		seedRemovalsFile = join(root, "local", "seed-removals.json")
+		svc = createPluginService({
+			db: dbh.db,
+			loader,
+			sandbox,
+			prepareDisk,
+			seedDirs,
+			seedRemovals: createSeedRemovalsStore(seedRemovalsFile),
+		})
+	}
+
+	function writeSeedDir(name: string, id: PluginManifestId) {
+		const dir = join(root, "seeds", name)
+		mkdirSync(dir, { recursive: true })
+		writeFileSync(
+			join(dir, "manifest.json"),
+			// The bundled manifest must satisfy the contract schema (a
+			// non-empty description), unlike the lenient registry fixtures.
+			JSON.stringify({ ...manifestFor(id, name), description: `${name} seed` }),
+		)
+		writeFileSync(join(dir, "main.js"), "export default {}\n")
+		return dir
+	}
+
+	beforeEach(() => {
+		root = mkdtempSync(join(tmpdir(), "plugin-seeds-"))
+		dbh = openDb(":memory:")
+		dbh.runMigrations()
+	})
+
+	afterEach(() => {
+		dbh.close()
+		rmSync(root, { recursive: true, force: true })
+	})
+
+	test("listSeedPlugins annotates installed, removed and restorable", () => {
+		const installedDir = writeSeedDir("installed", PLUGIN_ID)
+		const removedId = "22222222-2222-4222-8222-222222222222" as PluginManifestId
+		const removedDir = writeSeedDir("removed", removedId)
+		const junkDir = writeSeedDir(
+			"junk",
+			"44444444-4444-4444-8444-444444444444" as PluginManifestId,
+		)
+		rmSync(join(junkDir, "manifest.json"))
+		build([installedDir, removedDir, junkDir])
+		registry = buildRegistry([entryFor(PLUGIN_ID, "installed")])
+		createSeedRemovalsStore(seedRemovalsFile).add(removedId)
+
+		const rows = svc.listSeedPlugins()
+
+		expect(rows).toHaveLength(2)
+		const installed = rows.find((r) => r.id === PLUGIN_ID)
+		expect(installed).toMatchObject({
+			id: PLUGIN_ID,
+			installed: true,
+			installedVersion: "1.0.0",
+			removed: false,
+			restorable: false,
+		})
+		const removed = rows.find((r) => r.id === removedId)
+		expect(removed).toMatchObject({
+			id: removedId,
+			installed: false,
+			removed: true,
+			restorable: true,
+		})
+	})
+
+	test("restoreSeedPlugin clears the marker and rescans (offline restore)", async () => {
+		const dir = writeSeedDir("gallery", PLUGIN_ID)
+		build([dir])
+		registry = buildRegistry([])
+		createSeedRemovalsStore(seedRemovalsFile).add(PLUGIN_ID)
+
+		await svc.restoreSeedPlugin(PLUGIN_ID)
+
+		expect(
+			createSeedRemovalsStore(seedRemovalsFile).read().has(PLUGIN_ID),
+		).toBe(false)
+		expect(loader.rescan).toHaveBeenCalled()
+		// The reseed channel (prepareDisk → seedPlugins) re-copies the tree.
+		expect(prepareDisk).toHaveBeenCalled()
+	})
+
+	test("restoreSeedPlugin rejects an unknown seed id", async () => {
+		build([writeSeedDir("gallery", PLUGIN_ID)])
+		registry = buildRegistry([])
+		await expect(
+			svc.restoreSeedPlugin(
+				"33333333-3333-4333-8333-333333333333" as PluginManifestId,
+			),
+		).rejects.toThrow("bundled source")
+	})
+
+	test("restoreSeedPlugin rejects an already-installed plugin", async () => {
+		build([writeSeedDir("gallery", PLUGIN_ID)])
+		registry = buildRegistry([entryFor(PLUGIN_ID, "gallery")])
+		await expect(svc.restoreSeedPlugin(PLUGIN_ID)).rejects.toThrow(
+			"already installed",
+		)
 	})
 })

@@ -599,7 +599,7 @@
 		"view": "View",
 		"details": "Details",
 		"moreActions": "More actions",
-		"notesTitle": "Release notes",
+		"releaseNotes": "Release notes",
 		"pluginInfo": "Plugin info",
 		"pluginId": "Plugin ID",
 		"repository": "Repository",
@@ -611,10 +611,9 @@
 		"reportIssue": "Report an issue",
 		"reportSecurity": "Report a security vulnerability",
 		"intro": "Intro",
-		"readme": "README",
 		"languages": "Languages",
-		"noReadme": "No README found in the repository",
 		"noIntro": "This release ships no introduction",
+		"noReleaseNotes": "This release has no release notes",
 		"errorRateLimitedShort": "Latest release info unavailable — retrying automatically.",
 		"configureRegistry": "Configure registry",
 		"pageHint": "Plugins are published as GitHub releases and discovered through a registry repo you own. Configure the registry above — the catalog reads names, versions, permissions and release notes straight from each repo and its releases.",
@@ -626,7 +625,12 @@
 		"emptyFilterHint": "No plugins match this filter.",
 		"requiresAppVersion": "Requires hoardodile ≥ v{{version}}",
 		"incompatibleAppVersion": "This plugin requires hoardodile ≥ v{{require}}; this host runs v{{current}}",
-		"registryActive": "Current registry: {{url}}"
+		"registryActive": "Current registry: {{url}}",
+		"bundledTitle": "Bundled plugins",
+		"bundledDescription": "Official plugins that ship with this app. Removing one keeps the bundled original — restore it here anytime, without a network connection.",
+		"bundledRemoved": "Removed",
+		"bundledRestore": "Restore",
+		"bundledRestoreSuccess": "Restored {{name}}"
 	},
 	"overview": {
 		"usageHistory": {

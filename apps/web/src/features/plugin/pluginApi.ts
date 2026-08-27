@@ -1,10 +1,16 @@
 import { apiFetch } from "@/lib/http"
 import { apiPaths } from "@/lib/paths"
-import { trpcMutation, trpcQuery, trpcQueryOptions } from "@/trpc/factory"
+import {
+	idMutation,
+	trpcMutation,
+	trpcQuery,
+	trpcQueryOptions,
+} from "@/trpc/factory"
 
 export const pluginKeys = {
 	all: ["plugin"] as const,
 	listAll: () => [...pluginKeys.all, "listAll"] as const,
+	seeds: () => [...pluginKeys.all, "seeds"] as const,
 	previewInitContext: (pluginId: string, resId: string) =>
 		[...pluginKeys.all, "previewInitContext", pluginId, resId] as const,
 	usageCount: (pluginId: string) =>
@@ -17,6 +23,21 @@ export function pluginListAllQueryOptions() {
 		procedure: "listAll",
 		input: undefined,
 		queryKey: pluginKeys.listAll(),
+		staleTime: 10_000,
+	})
+}
+
+/**
+ * The bundled (seed) plugins of this host with their installed/removed/
+ * restorable state — the marketplace's bundled-plugins section. Fully
+ * local, no network.
+ */
+export function pluginSeedsQueryOptions() {
+	return trpcQueryOptions({
+		namespace: "plugin",
+		procedure: "listSeeds",
+		input: undefined,
+		queryKey: pluginKeys.seeds(),
 		staleTime: 10_000,
 	})
 }
@@ -71,6 +92,14 @@ export function pluginUsageCountQueryOptions(pluginId: string) {
 /** Permanently uninstall a plugin (disk directory + settings row). */
 export function pluginUninstallMutation() {
 	return trpcMutation("plugin", "uninstall")
+}
+
+/**
+ * Restore a deliberately-uninstalled bundled plugin from its bundled
+ * original — fully offline.
+ */
+export function pluginRestoreSeedMutation() {
+	return idMutation("plugin", "restoreSeed")
 }
 
 export function systemPrefRemoveAllMutation() {

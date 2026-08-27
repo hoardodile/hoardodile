@@ -31,6 +31,7 @@ import {
 } from "@/features/plugin/pluginApi"
 import { errorMessage } from "@/lib/errors"
 import { isNewer } from "@/lib/versions"
+import { BundledPluginsSection } from "./BundledPluginsSection"
 import { isMinAppSatisfied, marketUpdateAvailable } from "./compat"
 import type { InstalledPlugin, MarketPlugin } from "./MarketplaceDetailDialog"
 import {
@@ -152,6 +153,10 @@ export function MarketplacePanel() {
 
 	return (
 		<div className="flex flex-col gap-4">
+			{/* Official bundled plugins — offline restore lives here and must
+			    work even when the registry is disabled, so it renders before
+			    the catalog and independent of the registry config. */}
+			<BundledPluginsSection />
 			{registryRepo === null ? (
 				<p className="text-sm text-muted-foreground">
 					{t("marketplace.notConfiguredHint")}

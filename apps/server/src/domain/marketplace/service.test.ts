@@ -479,60 +479,6 @@ describe("createMarketplaceService.refresh", () => {
 		expect(snapshot.plugins[0]?.latest?.sha256).toBe(sha256("zip"))
 	})
 
-	test("loads the repo README best-effort", async () => {
-		const f = fixture!
-		f.prefs.set("marketplace.registryRepo", "me/registry")
-		f.addJson(rawUrl("me", "registry", "HEAD", "registry.json"), {
-			version: 1,
-			plugins: ["me/cat"],
-		})
-		f.addJson(rawUrl("me", "cat", "HEAD", "manifest.json"), MANIFEST)
-		f.addJson("https://api.github.com/repos/me/cat/releases/latest", RELEASE)
-		f.add(rawUrl("me", "cat", "HEAD", "README.md"), "# Cat\n\nREADME body")
-
-		const snapshot = await f.service.refresh(false)
-
-		expect(snapshot.plugins[0]?.readme).toBe("# Cat\n\nREADME body")
-	})
-
-	test("a missing or failing README leaves the entry intact", async () => {
-		const f = fixture!
-		f.prefs.set("marketplace.registryRepo", "me/registry")
-		f.addJson(rawUrl("me", "registry", "HEAD", "registry.json"), {
-			version: 1,
-			plugins: ["me/cat"],
-		})
-		f.addJson(rawUrl("me", "cat", "HEAD", "manifest.json"), MANIFEST)
-		f.addJson("https://api.github.com/repos/me/cat/releases/latest", RELEASE)
-
-		// No README route at all → every ref 404s, entry stays ok.
-		const missing = await f.service.refresh(false)
-		expect(missing.plugins[0]?.readme).toBeUndefined()
-		expect(missing.plugins[0]?.state).toBe("ok")
-
-		// A non-404 README failure is equally harmless.
-		f.add(rawUrl("me", "cat", "HEAD", "README.md"), "# Cat")
-		f.fetcher.fetchToFile.mockImplementation(
-			async (u: string, target: string) => {
-				if (u.endsWith("/README.md")) {
-					throw new Error(`plugin download returned HTTP 500: ${u}`)
-				}
-				const body = f.routes.get(u)
-				if (body === undefined) {
-					throw new Error(`plugin download returned HTTP 404: ${u}`)
-				}
-				await writeFile(target, body)
-				return {
-					sizeBytes: Buffer.byteLength(body),
-					sha256: sha256(body),
-				}
-			},
-		)
-		const failed = await f.service.refresh(true)
-		expect(failed.plugins[0]?.readme).toBeUndefined()
-		expect(failed.plugins[0]?.state).toBe("ok")
-	})
-
 	test("loads the release intro assets per locale", async () => {
 		const f = fixture!
 		f.prefs.set("marketplace.registryRepo", "me/registry")

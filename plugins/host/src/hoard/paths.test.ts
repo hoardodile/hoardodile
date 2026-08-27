@@ -100,6 +100,7 @@ describe("createStoragePaths", () => {
 			paths.local.trash(),
 			paths.local.logs(),
 			paths.local.sessionKey(),
+			paths.local.seedRemovals(),
 			paths.local.uploadStagingRoot(),
 			paths.local.stagingPoolRoot(),
 		]

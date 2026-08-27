@@ -640,7 +640,6 @@ describe("AppShell marketplace update badge", () => {
 								version: "1.2.3",
 								permissions: { sourceMeta: true },
 							},
-							readme: undefined,
 							state: "ok",
 							latest: {
 								tag: "v1.2.3",

@@ -236,6 +236,14 @@ export type LocalPaths = {
 	 */
 	sessionKey(): string
 	/**
+	 * Path to the seed-removal marker file: `<root>/local/seed-removals.json`.
+	 * Holds the plugin ids (UUIDs) whose bundled seed was deliberately
+	 * uninstalled by this host, so boot-time seeding skips them until the
+	 * user restores them. Host-only state — never synced, survives app
+	 * updates, and stays out of the wipe-on-clear `cache/` tree.
+	 */
+	seedRemovals(): string
+	/**
 	 * Root of the host-only temporary directory tree:
 	 * `<localRoot>/.tmp`. Holds the global staging pool
 	 * ({@link stagingPoolRoot}) plus short-lived extraction directories
@@ -398,6 +406,7 @@ export function createStoragePaths(
 		tmp: () => join(cacheRoot, "tmp"),
 		tmpFile: (name) => join(cacheRoot, "tmp", assertSafeSegment(name)),
 		sessionKey: () => join(localRoot, ".session-key"),
+		seedRemovals: () => join(localRoot, "seed-removals.json"),
 		uploadStagingRoot: () => uploadStagingRootPath,
 		stagingPoolRoot: () => join(uploadStagingRootPath, "staging"),
 		stagingPoolFile: (fileId, ext) =>

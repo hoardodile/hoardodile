@@ -19,11 +19,11 @@ import { describeProxy, resolveProxyConfig } from "@hoardodile/shared/net-proxy"
 import type { FastifyInstance, FastifyPluginAsync } from "fastify"
 import fp from "fastify-plugin"
 import "src/infra/fastify-augment.ts"
-import { isPackagedRuntime } from "src/config/env.ts"
 import { createOutboundNetwork } from "src/infra/outbound-network.ts"
 import { createPluginAssetService } from "./asset-service.ts"
 import { createConsentBroker } from "./consent.ts"
 import { createPluginDownloader } from "./downloader.ts"
+import { createSeedRemovalsStore } from "./seed-removals.ts"
 import { createPluginService } from "./service.ts"
 import { createPluginSettingsStore } from "./settings-store.ts"
 import { buildPluginUploads, moveDir } from "./upload.ts"
@@ -38,10 +38,26 @@ async function pluginDomainImpl(app: FastifyInstance): Promise<void> {
 		.atVersion(app.paths.activeVersion)
 		.plugins()
 
+	// Deliberately-uninstalled bundled plugins: seeding skips these ids so
+	// a removal persists across restarts and app updates. The bundled
+	// originals are never deleted — the marketplace's bundled section
+	// restores them, fully offline.
+	const seedRemovals = createSeedRemovalsStore(app.paths.local.seedRemovals())
+
+	/** The seed dirs whose plugin was not deliberately removed. */
+	function seedDirsToSeed(): string[] {
+		const removed = seedRemovals.read()
+		if (removed.size === 0) return app.env.SEED_PLUGIN_PATHS
+		return app.env.SEED_PLUGIN_PATHS.filter((dir) => {
+			const id = readSeedManifestId(dir)
+			return id === undefined || !removed.has(id)
+		})
+	}
+
 	async function preparePluginDisk(): Promise<void> {
 		if (app.readOnly) return
 		await writeVersioned(app.paths, false, (latest) => {
-			seedPlugins(latest.plugins(), app.env.SEED_PLUGIN_PATHS)
+			seedPlugins(latest.plugins(), seedDirsToSeed())
 		})
 	}
 
@@ -206,26 +222,11 @@ async function pluginDomainImpl(app: FastifyInstance): Promise<void> {
 				})
 			})
 		},
-		// On a packaged runtime the bundled seed plugins live in the
-		// SEED_PLUGIN_PATHS directories themselves — removing a plugin also
-		// removes its bundled source, so a restart cannot resurrect it
-		// (until an app update re-ships the package). Plain servers keep
-		// the admin's seed sources untouched and re-import on restart.
-		removeSeedSource: async (id) => {
-			if (!isPackagedRuntime()) return
-			for (const dir of app.env.SEED_PLUGIN_PATHS) {
-				try {
-					const manifest = JSON.parse(
-						readFileSync(join(dir, "manifest.json"), "utf-8"),
-					) as { id?: unknown }
-					if (manifest.id === id) {
-						await rm(dir, { recursive: true, force: true })
-					}
-				} catch {
-					// Not a seed source for this id (or unreadable) — skip.
-				}
-			}
-		},
+		// The bundled seed sources stay untouched on every runtime shape —
+		// the removal marker (written by uninstall) keeps them uninstalled
+		// across restarts until the user restores them.
+		seedDirs: app.env.SEED_PLUGIN_PATHS,
+		seedRemovals,
 	})
 	// Record every discovered plugin so a later disk removal shows up in
 	// the missing list instead of leaving bound resources as "unknown".
@@ -245,3 +246,17 @@ export const pluginDomain = fp(pluginDomainImpl satisfies FastifyPluginAsync, {
 	name: "content-plugin-domain",
 	dependencies: ["db-plugin", "paths-plugin"],
 })
+
+/** The manifest id of a seed-plugin directory, or undefined when unreadable. */
+function readSeedManifestId(dir: string): string | undefined {
+	try {
+		const parsed = JSON.parse(
+			readFileSync(join(dir, "manifest.json"), "utf-8"),
+		) as { id?: unknown }
+		return typeof parsed.id === "string" && parsed.id.length > 0
+			? parsed.id
+			: undefined
+	} catch {
+		return undefined
+	}
+}

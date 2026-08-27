@@ -73,6 +73,22 @@ export function buildPluginRouter(deps: PluginRouterDeps) {
 			.mutation(({ input }) => service.reorder(input.ids)),
 		rescan: writeProcedure.mutation(() => service.rescan()),
 		/**
+		 * The bundled (seed) plugins of this host with their
+		 * installed/removed/restorable state — the marketplace's
+		 * bundled-plugins section. Fully local, no network.
+		 */
+		listSeeds: authedProcedure.query(() => service.listSeedPlugins()),
+		/**
+		 * Restore a deliberately-uninstalled bundled plugin from its
+		 * bundled original (offline). Throws `plugin.seed_source_missing`
+		 * when the source is gone and `plugin.seed_already_installed`
+		 * when the plugin is already installed (a newer marketplace
+		 * version must never be overwritten by the bundled one).
+		 */
+		restoreSeed: writeProcedure
+			.input(z.object({ id: pluginManifestId }))
+			.mutation(({ input }) => service.restoreSeedPlugin(input.id)),
+		/**
 		 * Number of live resources bound to a content plugin. Shown in the
 		 * uninstall confirmation so the user knows what the plugin owns.
 		 */

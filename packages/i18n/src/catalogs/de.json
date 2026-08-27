@@ -599,7 +599,7 @@
 		"view": "Ansehen",
 		"details": "Details",
 		"moreActions": "Weitere Aktionen",
-		"notesTitle": "Versionshinweise",
+		"releaseNotes": "Versionshinweise",
 		"pluginInfo": "Plugin-Info",
 		"pluginId": "Plugin-ID",
 		"repository": "Repository",
@@ -611,10 +611,9 @@
 		"reportIssue": "Problem melden",
 		"reportSecurity": "Sicherheitslücke melden",
 		"intro": "Einführung",
-		"readme": "README",
 		"languages": "Sprachen",
-		"noReadme": "Kein README im Repository gefunden",
 		"noIntro": "Diese Version enthält keine Einführung",
+		"noReleaseNotes": "Diese Version enthält keine Versionshinweise",
 		"errorRateLimitedShort": "Neueste Versionsinfos nicht verfügbar — wird automatisch erneut versucht.",
 		"configureRegistry": "Registry konfigurieren",
 		"pageHint": "Plugins werden als GitHub-Releases veröffentlicht und über ein eigenes Registry-Repository gefunden. Konfiguriere das Registry oben — der Katalog liest Namen, Versionen, Berechtigungen und Versionshinweise direkt aus jedem Repository und seinen Releases.",
@@ -626,7 +625,12 @@
 		"emptyFilterHint": "Keine Plugins entsprechen diesem Filter.",
 		"requiresAppVersion": "Benötigt hoardodile ≥ v{{version}}",
 		"incompatibleAppVersion": "Dieses Plugin benötigt hoardodile ≥ v{{require}}; diese Installation läuft mit v{{current}}",
-		"registryActive": "Aktuelles Registry: {{url}}"
+		"registryActive": "Aktuelles Registry: {{url}}",
+		"bundledTitle": "Gebündelte Plugins",
+		"bundledDescription": "Offizielle Plugins, die mit der App ausgeliefert werden. Das Deinstallieren löscht das gebündelte Original nicht — hier jederzeit offline wiederherstellbar.",
+		"bundledRemoved": "Entfernt",
+		"bundledRestore": "Wiederherstellen",
+		"bundledRestoreSuccess": "{{name}} wiederhergestellt"
 	},
 	"overview": {
 		"usageHistory": {

@@ -51,7 +51,7 @@ const CACHE_TTL_MS = 10 * 60_000
  * How long one repo's `releases/latest` payload is trusted. The API is
  * the ONLY quota-hungry call (60/hour unauthenticated per IP), so the
  * release layer is cached independently from the snapshot layer (whose
- * registry/manifests/README fetches are raw URLs, no quota).
+ * registry/manifest fetches are raw URLs, no quota).
  */
 const RELEASE_CACHE_TTL_MS = 60 * 60_000
 /** After a GitHub 403/429, skip the API for this long per repo. */
@@ -59,9 +59,9 @@ const RATE_LIMIT_COOLDOWN_MS = 60 * 60_000
 const MAX_RAW_BYTES = 512 * 1024
 const MAX_API_BYTES = 2 * 1024 * 1024
 const MAX_SHA256_BYTES = 8 * 1024
-const MAX_README_BYTES = 256 * 1024
 const MAX_INTRO_BYTES = 256 * 1024
-const NOTES_MAX_LENGTH = 2_000
+/** Release-body cap for the dedicated Release notes tab (still bounded by the payload cap). */
+const NOTES_MAX_LENGTH = 128_000
 const REFS = ["HEAD", "main", "master"] as const
 const API_FETCH_CONCURRENCY = 5
 const USER_AGENT = "hoardodile-plugin-marketplace"
@@ -500,7 +500,6 @@ export function createMarketplaceService(
 			icon: manifest.icon,
 			permissions: manifest.permissions,
 			manifest,
-			readme: await loadReadme(repo),
 		}
 
 		let latest: MarketLatest | undefined
@@ -696,20 +695,6 @@ export function createMarketplaceService(
 			}
 		}
 		return Object.keys(intro).length === 0 ? undefined : intro
-	}
-
-	/**
-	 * The repo-root `README.md` — best-effort: a missing or unreadable
-	 * README never fails the catalog entry.
-	 */
-	async function loadReadme(repo: string): Promise<string | undefined> {
-		try {
-			return await fetchTextBestEffort(rawUrls(repo, "README.md"), {
-				maxBytes: MAX_README_BYTES,
-			})
-		} catch {
-			return undefined
-		}
 	}
 
 	/**

@@ -1,4 +1,4 @@
-import { statSync } from "node:fs"
+import { readFileSync, statSync } from "node:fs"
 import { join } from "node:path"
 import type {
 	PluginLoader,
@@ -8,9 +8,12 @@ import type {
 } from "@hoardodile/host"
 import type { PluginManifest, PluginManifestId } from "@hoardodile/sdk-types"
 import type { PluginCapabilityKey } from "@hoardodile/sdk-types/plugin-capabilities"
+import { pluginManifest as pluginManifestSchema } from "@hoardodile/sdk-types/schema"
+import { invalid } from "@hoardodile/shared"
 import { eq } from "drizzle-orm"
 import type { SqliteDb } from "src/infra/db/connection.ts"
 import { contentPlugins } from "./schema.ts"
+import type { SeedRemovalsStore } from "./seed-removals.ts"
 
 export type PluginSettingsRow = {
 	readonly id: PluginManifestId
@@ -54,12 +57,34 @@ export type PluginServiceDeps = {
 	 */
 	readonly removeInstalledDir?: (id: PluginManifestId) => Promise<void>
 	/**
-	 * Delete the plugin's seed-source directory (the bundled seed plugin
-	 * copy on a packaged runtime). Called after the installed copy is
-	 * removed, so a seed plugin that is uninstalled on desktop stays
-	 * uninstalled — the boot-time seed has no source left.
+	 * Bundled (seed) plugin directories, each a plugin dir with
+	 * `manifest.json` at its root. The seed channel: what ships with the
+	 * app (desktop) or an admin mounts (plain server). Drives the
+	 * marketplace's "bundled plugins" section and the restore action.
 	 */
-	readonly removeSeedSource?: (id: PluginManifestId) => Promise<void>
+	readonly seedDirs: readonly string[]
+	/**
+	 * Persistent marker of deliberately-uninstalled seeds. `uninstall`
+	 * records the id here so boot-time seeding skips it — the bundled
+	 * original is never deleted; the user restores from the marketplace.
+	 */
+	readonly seedRemovals: SeedRemovalsStore
+}
+
+/**
+ * One bundled (seed) plugin, as the marketplace's bundled section reads
+ * it: the bundled manifest (display truth) plus this host's relationship
+ * to it. `installed` reflects the live registry; `removed` the
+ * deliberate-removal marker; `restorable` is what gates the offline
+ * restore action.
+ */
+export type SeedPluginInfo = {
+	readonly id: PluginManifestId
+	readonly manifest: PluginManifest
+	readonly installed: boolean
+	readonly installedVersion?: string
+	readonly removed: boolean
+	readonly restorable: boolean
 }
 
 export type PluginService = {
@@ -103,13 +128,32 @@ export type PluginService = {
 	 * directory (when present), drops its settings row, frees its worker,
 	 * and rescans the registry. Resources bound to it are left untouched —
 	 * read paths fall back to the builtin plugin until it is reinstalled.
+	 *
+	 * A seed (bundled) plugin additionally gets its id recorded in the
+	 * removal marker: the bundled original is never deleted, and boot-time
+	 * seeding skips it until the user restores it from the marketplace's
+	 * bundled-plugins section.
 	 * @throws when the plugin is unknown, builtin, or a dev plugin.
 	 */
 	uninstall(id: PluginManifestId): Promise<void>
+	/**
+	 * The bundled (seed) plugins of this host: one row per seed dir with a
+	 * parsable manifest, annotated with installed/removed/restorable
+	 * state. Backs the marketplace's bundled-plugins section.
+	 */
+	listSeedPlugins(): SeedPluginInfo[]
+	/**
+	 * Restore a deliberately-uninstalled bundled plugin from its bundled
+	 * original — fully offline: clear the removal marker, then rescan
+	 * (the boot seeding channel re-copies the tree and registers it).
+	 * @throws when the plugin is not a bundled plugin (`plugin.seed_source_missing`)
+	 *   or already installed (`plugin.seed_already_installed`).
+	 */
+	restoreSeedPlugin(id: PluginManifestId): Promise<void>
 }
 
 export function createPluginService(deps: PluginServiceDeps): PluginService {
-	const { db, loader, sandbox } = deps
+	const { db, loader, sandbox, seedDirs, seedRemovals } = deps
 	// Asset fingerprints are per-registry: loadAll/rescan replace the
 	// registry object, so this cache can never serve a fingerprint for a
 	// reloaded plugin's old disk state, and listAll stops paying one
@@ -351,13 +395,56 @@ export function createPluginService(deps: PluginServiceDeps): PluginService {
 				await rm(entry.diskPath, { recursive: true, force: true })
 			}
 		}
-		// A packaged runtime also drops the bundled seed source, so a
-		// removed seed plugin does not reappear on restart.
-		await deps.removeSeedSource?.(id)
+		// Record the deliberate removal so boot-time seeding skips the
+		// bundled original (which stays untouched) until the user restores
+		// it. Persisting the marker may fail — the uninstall must abort
+		// then, or the plugin would silently come back on restart.
+		seedRemovals.add(id)
 
 		db.delete(contentPlugins).where(eq(contentPlugins.id, id)).run()
 		sandbox.unloadPlugin(id)
 		await loader.rescan()
+	}
+
+	function listSeedPlugins(): SeedPluginInfo[] {
+		const removed = seedRemovals.read()
+		const registry = loader.getRegistry()
+		const out: SeedPluginInfo[] = []
+		for (const dir of seedDirs) {
+			const manifest = readSeedManifest(dir)
+			if (manifest === undefined) continue
+			const entry = registry.getById(manifest.id)
+			const installed = entry !== undefined && !entry.missing
+			out.push({
+				id: manifest.id,
+				manifest,
+				installed,
+				...(installed ? { installedVersion: entry.manifest.version } : {}),
+				removed: removed.has(manifest.id),
+				restorable: removed.has(manifest.id) && !installed,
+			})
+		}
+		return out
+	}
+
+	async function restoreSeedPlugin(id: PluginManifestId): Promise<void> {
+		const dir = seedDirs.find(
+			(candidate) => readSeedManifest(candidate)?.id === id,
+		)
+		if (dir === undefined) {
+			throw invalid(
+				"plugin.seed_source_missing",
+				"the bundled source of this plugin is not available on this host",
+			)
+		}
+		if (loader.getRegistry().getById(id) !== undefined) {
+			throw invalid(
+				"plugin.seed_already_installed",
+				"this plugin is already installed",
+			)
+		}
+		seedRemovals.remove(id)
+		await rescan()
 	}
 
 	return {
@@ -369,6 +456,22 @@ export function createPluginService(deps: PluginServiceDeps): PluginService {
 		rescan,
 		syncRecords,
 		uninstall,
+		listSeedPlugins,
+		restoreSeedPlugin,
+	}
+}
+
+/** Parse a seed directory's manifest with the contract schema, or
+    undefined when unreadable/invalid — the bundled section skips junk. */
+function readSeedManifest(dir: string): PluginManifest | undefined {
+	try {
+		const parsed: unknown = JSON.parse(
+			readFileSync(join(dir, "manifest.json"), "utf-8"),
+		)
+		const result = pluginManifestSchema.safeParse(parsed)
+		return result.success ? result.data : undefined
+	} catch {
+		return undefined
 	}
 }
 

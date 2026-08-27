@@ -46,6 +46,7 @@ import {
 	createDocumentService,
 	type DocService,
 } from "src/domain/doc/service.ts"
+import { createSeedRemovalsStore } from "src/domain/plugin/seed-removals.ts"
 import {
 	createPluginService,
 	type PluginService,
@@ -187,6 +188,8 @@ async function assembleRuntime(
 		loader,
 		sandbox,
 		readOnly: false,
+		seedDirs: env.SEED_PLUGIN_PATHS,
+		seedRemovals: createSeedRemovalsStore(paths.local.seedRemovals()),
 	})
 	pluginService.syncRecords()
 

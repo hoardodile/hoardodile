@@ -599,7 +599,7 @@
 		"view": "Ver",
 		"details": "Detalles",
 		"moreActions": "Más acciones",
-		"notesTitle": "Notas de la versión",
+		"releaseNotes": "Notas de la versión",
 		"pluginInfo": "Información del plugin",
 		"pluginId": "ID del plugin",
 		"repository": "Repositorio",
@@ -611,10 +611,9 @@
 		"reportIssue": "Informar de un problema",
 		"reportSecurity": "Informar de una vulnerabilidad",
 		"intro": "Introducción",
-		"readme": "README",
 		"languages": "Idiomas",
-		"noReadme": "No se encontró README en el repositorio",
 		"noIntro": "Esta versión no incluye una introducción",
+		"noReleaseNotes": "Esta versión no incluye notas",
 		"errorRateLimitedShort": "Información de la última versión no disponible — se reintentará automáticamente.",
 		"configureRegistry": "Configurar registro",
 		"pageHint": "Los plugins se publican como lanzamientos de GitHub y se descubren mediante un repositorio de registro propio. Configura el registro arriba: el catálogo lee nombres, versiones, permisos y notas directamente de cada repositorio y sus lanzamientos.",
@@ -626,7 +625,12 @@
 		"emptyFilterHint": "Ningún plugin coincide con este filtro.",
 		"requiresAppVersion": "Requiere hoardodile ≥ v{{version}}",
 		"incompatibleAppVersion": "Este plugin requiere hoardodile ≥ v{{require}}; este host usa v{{current}}",
-		"registryActive": "Registro actual: {{url}}"
+		"registryActive": "Registro actual: {{url}}",
+		"bundledTitle": "Complementos integrados",
+		"bundledDescription": "Complementos oficiales que se distribuyen con la aplicación. Desinstalarlos no elimina el original empaquetado: restáuralo aquí en cualquier momento, sin conexión.",
+		"bundledRemoved": "Eliminado",
+		"bundledRestore": "Restaurar",
+		"bundledRestoreSuccess": "{{name}} restaurado"
 	},
 	"overview": {
 		"usageHistory": {

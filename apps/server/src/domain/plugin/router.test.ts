@@ -18,6 +18,8 @@ describe("plugin router previewInitContext", () => {
 			rescan: vi.fn(async () => undefined),
 			syncRecords: vi.fn(),
 			uninstall: vi.fn(async () => undefined),
+			listSeedPlugins: vi.fn(() => []),
+			restoreSeedPlugin: vi.fn(async () => undefined),
 		}
 		const usage = {
 			countByContentPluginId: vi.fn(() => 0),
@@ -153,5 +155,26 @@ describe("plugin router previewInitContext", () => {
 		await caller.uninstall({ id: PLUGIN_ID })
 		expect(deps.service.uninstall).toHaveBeenCalledWith(PLUGIN_ID)
 		expect(deps.cleanupPluginData).toHaveBeenCalledWith(PLUGIN_ID)
+	})
+
+	test("listSeeds delegates to the service", async () => {
+		const deps = createMocks()
+		const caller = createCaller(deps)
+		await caller.listSeeds()
+		expect(deps.service.listSeedPlugins).toHaveBeenCalled()
+	})
+
+	test("restoreSeed delegates to the service with the given id", async () => {
+		const deps = createMocks()
+		const caller = createCaller(deps)
+		await caller.restoreSeed({ id: PLUGIN_ID })
+		expect(deps.service.restoreSeedPlugin).toHaveBeenCalledWith(PLUGIN_ID)
+	})
+
+	test("restoreSeed rejects a non-uuid id", async () => {
+		const deps = createMocks()
+		const caller = createCaller(deps)
+		await expect(caller.restoreSeed({ id: "not-a-uuid" })).rejects.toThrow()
+		expect(deps.service.restoreSeedPlugin).not.toHaveBeenCalled()
 	})
 })

@@ -25,7 +25,7 @@ export type MarketPlugin =
 export type InstalledPlugin = RouterOutputs["plugin"]["listAll"][number]
 
 /** The markdown tabs of the detail dialog. */
-type MarketplaceTab = "intro" | "readme"
+type MarketplaceTab = "intro" | "release"
 
 /** `owner/repo` → its GitHub page URL (the display form the UI shows). */
 export function marketRepoUrl(repo: string): string {
@@ -335,16 +335,6 @@ export function MarketplaceDetailDialog(props: {
 											repo={plugin.repo}
 											markdown={introContent}
 										/>
-									) : latest?.notes != null ? (
-										<>
-											<h1 className="text-base font-semibold text-foreground">
-												{t("marketplace.notesTitle")}
-											</h1>
-											<PluginMarkdown
-												repo={plugin.repo}
-												markdown={latest.notes}
-											/>
-										</>
 									) : (
 										<p className="text-xs text-muted-foreground">
 											{t("marketplace.noIntro")}
@@ -355,15 +345,19 @@ export function MarketplaceDetailDialog(props: {
 						),
 					},
 					{
-						value: "readme",
-						label: t("marketplace.readme"),
-						testId: "marketplace-detail-tab-readme",
+						value: "release",
+						label: t("marketplace.releaseNotes"),
+						testId: "marketplace-detail-tab-release",
 						panel:
-							plugin.readme !== undefined ? (
-								<PluginMarkdown repo={plugin.repo} markdown={plugin.readme} />
+							latest?.notes !== null && latest?.notes !== undefined ? (
+								<PluginMarkdown repo={plugin.repo} markdown={latest.notes} />
 							) : (
 								<p className="text-xs text-muted-foreground">
-									{t("marketplace.noReadme")}
+									{t(
+										plugin.state === "no_release"
+											? "marketplace.noRelease"
+											: "marketplace.noReleaseNotes",
+									)}
 								</p>
 							),
 					},

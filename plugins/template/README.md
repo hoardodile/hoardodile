@@ -50,8 +50,9 @@ server uses — the exact production execution path.
 - hoardodile **≥ 0.1.1** — the built-in plugin marketplace
   (**Settings → Marketplace**) and the batched asset-download API
   (`download([…])`) when the manifest declares `"download": true`.
-  The marketplace's Intro/README tabs and release intro assets are read by
-  newer builds; older builds still list and install the plugin normally.
+  The marketplace's Intro and Release notes tabs and release intro
+  assets are read by newer builds; older builds still list and install
+  the plugin normally.
 - `"minAppVersion"` in `manifest.json` declares the lowest hoardodile
   release this plugin runs on. Hosts below it refuse to install or update
   the plugin (the marketplace gates the install/update entries and zip
@@ -97,5 +98,5 @@ uploads them alongside the zip, so **each release carries its own
 introduction** and every version shows independent notes.
 
 The app resolves the intro for the user's UI language (exact locale → base
-language → `en` → the only shipped language), falling back to the release
-notes when a release ships none.
+language → `en` → the only shipped language); the release body always shows
+in the **Release notes** tab.
