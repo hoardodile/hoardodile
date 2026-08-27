@@ -49,7 +49,7 @@ and marketplace install) rejects any other archive format, so `plugin
 package` always produces the zip the server expects.
 
 Publishing is a CI concern, not a local one: the plugin template ships a
-tag-triggered workflow (`plugins/template/.github/workflows/release.yml`)
+tag-triggered workflow ([`plugins/template/.github/workflows/release.yml`](../../plugins/template/.github/workflows/release.yml))
 that runs `pnpm build` + `plugin package` and uploads both artifacts as
 the GitHub release for the tag. All you need is a pushed tag matching
 `v<manifest.version>` — no `gh` CLI, no token.
@@ -67,7 +67,7 @@ Then add the line to the `plugins` array of your registry repo's
 ```
 
 The app's **Settings → Marketplace** takes the registry repo address
-once (built-in default: `hoardodile/marketplace`) and reads everything
+once (built-in default: [`hoardodile/marketplace`](https://github.com/hoardodile/marketplace)) and reads everything
 else — each plugin's manifest (name, description, icon, permissions) via
 `raw.githubusercontent.com`, and its latest release (version, notes, zip
 asset, optional `.sha256` sidecar) via `api.github.com`. Requirements:

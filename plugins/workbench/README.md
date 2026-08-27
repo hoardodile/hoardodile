@@ -3,7 +3,7 @@
 Offline dev workbench for hoardodile content plugins: mounts one plugin
 iframe against the offline mock host (`@hoardodile/host-web`), fed with
 real data by the dev server — no hoardodile server needed. The workbench
-page itself is a small React app built on `@hoardodile/ui` (the same
+page itself is a small React app built on [`@hoardodile/ui`](https://www.npmjs.com/package/@hoardodile/ui) (the same
 design system and theme tokens the app and plugins use).
 
 You normally never touch this package directly. `hoardodile plugin dev`

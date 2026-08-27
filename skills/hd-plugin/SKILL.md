@@ -77,7 +77,7 @@ lives in `references/`.
      tag `v<version>` — the template's `release.yml` builds, packages,
      and publishes the GitHub release (zip + sha256 + the `intro.*.md`
      assets). Add the repository address to a registry `registry.json`
-     (built-in default: `hoardodile/marketplace`) and the app's
+     (built-in default: [`hoardodile/marketplace`](https://github.com/hoardodile/marketplace)) and the app's
      **Settings → Marketplace** lists and installs it. Declare
      `minAppVersion` honestly: hosts below it refuse install/update
      (marketplace entries and zip uploads are gated). To ship a plugin
@@ -93,7 +93,7 @@ Plugin **runtime** code may only import `@hoardodile/{ui,sdk-types,sdk-server,sd
 The terminal packages — `@hoardodile/cli`, `@hoardodile/host`,
 `@hoardodile/host-web`, `@hoardodile/workbench` — are **never** runtime
 dependencies; use them as devDependencies only (`runPluginHook`,
-`createDirectoryResourceAPI`, workbench). `@hoardodile/ui` is the only
+`createDirectoryResourceAPI`, workbench). [`@hoardodile/ui`](https://www.npmjs.com/package/@hoardodile/ui) is the only
 component library; import per-subpath (`components/*`, `theme.css`,
 `hooks/*`, `lib/*`, `viewport`) so bundles stay small. Keep the wire
 protocol in mind: plugins stamp every outbound message with
@@ -116,16 +116,16 @@ types from the root entry.
 
 | Plugin | What it teaches |
 | --- | --- |
-| `plugins/template` (hoardodile repo) | The minimal end-to-end path: `detect` → `sourceMeta` → iframe render, fixture tests, `detect:smoke`. Start here. |
-| `plugins/gallery` (hoardodile repo) | The official media plugin: multi-kind cards (`ui.card.<kind>`), video/audio skipping + probes, danmaku/message/imageHashes permissions, `testdata` generation script, bench baseline. |
-| `plugins/file` (hoardodile repo) | The built-in fallback plugin: a resource as a browseable file tree. |
-| `plugins/pdf` (hoardodile repo) | Official seed plugin, the newest end-to-end example: multi-candidate `detect`, range-streamed binary via the host file URL, a worker blob fallback for the sandboxed opaque origin, per-page anchors, and structural fixture verification (`testdata:verify`). |
+| [`plugins/template`](../../plugins/template) (hoardodile repo) | The minimal end-to-end path: `detect` → `sourceMeta` → iframe render, fixture tests, `detect:smoke`. Start here. |
+| [`plugins/gallery`](../../plugins/gallery) (hoardodile repo) | The official media plugin: multi-kind cards (`ui.card.<kind>`), video/audio skipping + probes, danmaku/message/imageHashes permissions, `testdata` generation script, bench baseline. |
+| [`plugins/file`](../../plugins/file) (hoardodile repo) | The built-in fallback plugin: a resource as a browseable file tree. |
+| [`plugins/pdf`](../../plugins/pdf) (hoardodile repo) | Official seed plugin, the newest end-to-end example: multi-candidate `detect`, range-streamed binary via the host file URL, a worker blob fallback for the sandboxed opaque origin, per-page anchors, and structural fixture verification (`testdata:verify`). |
 
 ## Resources
 
 - The contract is documented inline in the SDK:
-  `plugins/sdk-types/src/plugin-definition.ts` (hooks, definitions,
+  [`plugins/sdk-types/src/plugin-definition.ts`](../../plugins/sdk-types/src/plugin-definition.ts) (hooks, definitions,
   fixtures) — the authoritative reference behind `references/server.md`.
-- Plugin UI: `@hoardodile/ui` (see `hd-plugin-design`).
+- Plugin UI: [`@hoardodile/ui`](https://www.npmjs.com/package/@hoardodile/ui) (see `hd-plugin-design`).
 - `references/tooling.md` covers the registry bootstrap, the plugin
   CLI/workbench toolchain and the test/deploy loop.

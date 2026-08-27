@@ -18,7 +18,7 @@ pnpm dlx create-hoardodile-plugin <name>   # or: hoardodile plugin create <name>
   the registry. A 0.x caret is effectively pinned — bump the spec to
   adopt a newer SDK release.
 
-## Project anatomy (from the template plugin)
+## Project anatomy (from the [template plugin](../../../plugins/template))
 
 ```
 manifest.json          identity + permissions + ui contracts
@@ -43,7 +43,7 @@ Standard scripts (template): `dev` = `hoardodile plugin dev`;
 `test` = `vitest run`; `detect:smoke` = `hoardodile plugin run detect
 testdata --plugin-dir dist`; `lint` = `tsc --noEmit`. Runtime
 dependencies: `@hoardodile/sdk-{types,server,react}` (+ `react`,
-`react-dom`, and `@hoardodile/ui` for UI); devDependencies:
+`react-dom`, and [`@hoardodile/ui`](https://www.npmjs.com/package/@hoardodile/ui) for UI); devDependencies:
 `@hoardodile/cli`, `@hoardodile/host`, `@hoardodile/host-web`,
 `@hoardodile/workbench` + the usual Vite/Vitest/TS toolchain.
 
@@ -152,7 +152,7 @@ Plugins.
 
 ## Publishing to the marketplace
 
-The built-in registry is `hoardodile/marketplace`; the app reads a
+The built-in registry is [`hoardodile/marketplace`](https://github.com/hoardodile/marketplace); the app reads a
 registry repo's `registry.json`, which lists plugin repository addresses:
 
 ```json
@@ -171,7 +171,7 @@ Publishing is a tag, not a build:
    the file names (`intro.en.md`, `intro.zh.md`, `intro.ja.md`,
    `intro.de.md`, `intro.es.md`).
 3. Push a tag `v<version>` matching `manifest.json` — the template's
-   `.github/workflows/release.yml` builds, runs `plugin package`, and
+   [`.github/workflows/release.yml`](../../../plugins/template/.github/workflows/release.yml) builds, runs `plugin package`, and
    creates the GitHub release with the zip, the sha256 and every
    `intro.*.md` asset.
 4. Add the repository address to your registry's `registry.json`.

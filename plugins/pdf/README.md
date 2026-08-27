@@ -3,7 +3,7 @@
 Official hoardodile content plugin: an online PDF reader. Renders `.pdf`
 documents in the plugin iframe with paged scrolling at fit-to-width, and
 per-page comment anchors — all inside the host's design system
-(`@hoardodile/ui`), with zero network calls beyond the host's own
+([`@hoardodile/ui`](https://www.npmjs.com/package/@hoardodile/ui)), with zero network calls beyond the host's own
 tokenized file URLs.
 
 ## What a resource is

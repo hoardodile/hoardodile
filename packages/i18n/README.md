@@ -10,7 +10,7 @@ never re-typed per surface.
 | Namespace | Owns | Consumed by |
 | --- | --- | --- |
 | `translation` | App copy (pages, features, dialogs about domain objects) | web SPA, desktop shell, workbench |
-| `ui` | Component chrome: control labels, aria labels, prompts (`@hoardodile/ui` components read it via `useTranslation("ui")`) | every React surface, including plugin iframes |
+| `ui` | Component chrome: control labels, aria labels, prompts ([`@hoardodile/ui`](https://www.npmjs.com/package/@hoardodile/ui) components read it via `useTranslation("ui")`) | every React surface, including plugin iframes |
 | `workbench` | Offline dev-tool copy (toolbar, config popover, empty states) | `@hoardodile/workbench` only |
 | `plugin` | Plugin-authored strings (declared by each plugin's own bundle) | plugin iframes |
 

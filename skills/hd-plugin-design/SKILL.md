@@ -11,11 +11,11 @@ metadata:
 
 A hoardodile plugin's iframe is a **surface inside the host app**, not a
 separate product: it should feel like the app's own viewer. The design
-system ships as a package — `@hoardodile/ui`, "the design-system
+system ships as a package — [`@hoardodile/ui`](https://www.npmjs.com/package/@hoardodile/ui), "the design-system
 component library for hoardodile (the host app and plugin iframes
 alike)". All tokens below are real, exported names from that package and
 its `theme.css`; verify anything you are unsure of against a hoardodile
-checkout (`packages/ui/src/styles/theme.css`, `packages/ui/src/viewport.ts`).
+checkout ([`packages/ui/src/styles/theme.css`](../../packages/ui/src/styles/theme.css), [`packages/ui/src/viewport.ts`](../../packages/ui/src/viewport.ts)).
 
 ## When to Apply
 

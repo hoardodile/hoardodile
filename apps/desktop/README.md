@@ -1,6 +1,6 @@
 # Hoardodile Desktop
 
-Thin cross-platform Electron shell around the existing Fastify app. The shell MUST do as little as possible: Fastify, Drizzle, plugins, native addons, and media binaries stay on a real Node 24 sidecar. Electron owns tray, one window, the first-run wizard, env injection, graceful stop, and the updater. UI tokens, palettes, and layout live in `DESIGN.md`.
+Thin cross-platform Electron shell around the existing Fastify app. The shell MUST do as little as possible: Fastify, Drizzle, plugins, native addons, and media binaries stay on a real Node 24 sidecar. Electron owns tray, one window, the first-run wizard, env injection, graceful stop, and the updater. UI tokens, palettes, and layout live in [DESIGN.md](../../DESIGN.md).
 
 Release matrix: **Windows x64** (NSIS + portable zip), **Linux x64** (AppImage), **macOS arm64** (dmg + zip). macOS x64 and signing/notarization are future work. **32-bit targets are intentionally not built** — see [32-bit machines](#32-bit-machines).
 
@@ -67,7 +67,7 @@ The app window must never be navigated away from the SPA. The shell's `setWindow
 
 ## Caption bar
 
-One shared control (prefer `@hoardodile/ui`) used by `AppShell` on the SPA and by the wizard page; details (height `h-nav`, history buttons, Windows caption buttons, drag region, double-click maximize) live in `DESIGN.md`. Shown only when the bridge is present. Accepted gap: no Win11 snap-layout flyout; edge snapping must still work, and the window must not be transparent.
+One shared control (prefer [`@hoardodile/ui`](https://www.npmjs.com/package/@hoardodile/ui)) used by `AppShell` on the SPA and by the wizard page; details (height `h-nav`, history buttons, Windows caption buttons, drag region, double-click maximize) live in `DESIGN.md`. Shown only when the bridge is present. Accepted gap: no Win11 snap-layout flyout; edge snapping must still work, and the window must not be transparent.
 
 ## Packaging
 

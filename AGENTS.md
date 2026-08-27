@@ -18,7 +18,7 @@ Server config: env vars only, validated in `apps/server/src/config/env.ts` — n
 
 ## Coding rules
 
-- Elegance beats brevity; no speculative abstractions; functions with >4 parameters become one options object. Prefer type guards / `satisfies` over `as`; plain-function component calls outside React render need `"use no memo"`. Check `DESIGN.md` before reshaping any UI.
+- Elegance beats brevity; no speculative abstractions; functions with >4 parameters become one options object. Prefer type guards / `satisfies` over `as`; plain-function component calls outside React render need `"use no memo"`. Check [DESIGN.md](DESIGN.md) before reshaping any UI.
 - Links outside the SPA go through `ExternalLink` (pre-commit guard); on desktop, same-origin SPA-route navigations stay in-window, every other URL opens in the OS browser (`apps/desktop/src/main/urls.ts`).
 - Never edit non-ASCII files (i18n JSON, docs) via PowerShell string replacement — use the edit tool.
 
@@ -57,7 +57,7 @@ scripts/       Root dev/license/guard/version scripts
 ## Architecture
 
 - Domain-driven: `schema.ts` → `repo.ts` → `service.ts` → `router.ts` (+ often Fastify `plugin.ts`); services are `create*Service(deps)` factories.
-- Plugins: `manifest.json` + server `main.js` (`definePlugin()`) + sandboxed iframe client; `plugins/host/src/hooks.ts` is the ONLY way to invoke plugin hooks (workers run under the Node permission model). Authoring: `plugins/template` + `packages/cli/README.md`.
+- Plugins: `manifest.json` + server `main.js` (`definePlugin()`) + sandboxed iframe client; `plugins/host/src/hooks.ts` is the ONLY way to invoke plugin hooks (workers run under the Node permission model). Authoring: `plugins/template` + [packages/cli/README.md](packages/cli/README.md).
 - Storage: layout authority `createStoragePaths` (`plugins/host/src/hoard/paths.ts`); writes under `versions/<v>/` go through `writeVersioned` targeting the latest version (`scripts/guard-versions.mjs`; exemptions need `// write-guard-exempt`); live DB `{STORAGE_ROOT}/app.sqlite`, `versions/<v>/` frozen, `local/` host-only.
 - Tags: identity `(category, name)`, globally unique. Sync: per-device snapshots in `domain/sync/`. Privacy: `performSignOut` (`apps/web/src/features/privacy/`) is the only sign-out path. Trace (`user_actions`) and usage (`usage_sessions`) are separate domains — never mix.
 
@@ -82,7 +82,7 @@ Drizzle migration pitfalls: split add+drop into two `db:generate` runs; `ADD COL
 
 ## Guardrails
 
-- No telemetry or external calls — the only authorized requests: the user-triggered update check (desktop `autoUpdate` may fetch GitHub Release artifacts while the tray is alive), user-consented plugin downloads (the asset API's shared consent dialog; files land only in the plugin's own `vault/`), and the plugin marketplace's GitHub fetches (built-in default registry `hoardodile/marketplace`; a custom registry is opt-in): catalog refresh (registry + per-plugin manifests via raw URLs + `releases/latest` via the API + per-release `intro.<locale>.md` assets, server-side, cached 10 min, on page open or explicit refresh) and user-confirmed install/update downloads (same hardened HTTP client; GitHub release hosts only).
+- No telemetry or external calls — the only authorized requests: the user-triggered update check (desktop `autoUpdate` may fetch GitHub Release artifacts while the tray is alive), user-consented plugin downloads (the asset API's shared consent dialog; files land only in the plugin's own `vault/`), and the plugin marketplace's GitHub fetches (built-in default registry [`hoardodile/marketplace`](https://github.com/hoardodile/marketplace); a custom registry is opt-in): catalog refresh (registry + per-plugin manifests via raw URLs + `releases/latest` via the API + per-release `intro.<locale>.md` assets, server-side, cached 10 min, on page open or explicit refresh) and user-confirmed install/update downloads (same hardened HTTP client; GitHub release hosts only).
 - Outbound fetches honor the user's proxy by default (`HOARDODILE_PROXY` explicit override, `off` to disable; auto-detected from `HTTPS_PROXY`/`HTTP_PROXY`/`ALL_PROXY` and the Windows/macOS system proxy; `NO_PROXY` keeps those hosts direct). The proxy is transport only — destinations stay the authorized hosts above; TLS verification and the public-address policy are unchanged. Settings → About exposes read-only network diagnostics plus a user-triggered connectivity probe against `raw.githubusercontent.com`.
 - No git mutations unless explicitly asked.
 - **Ask the user before modifying AGENTS.md.**

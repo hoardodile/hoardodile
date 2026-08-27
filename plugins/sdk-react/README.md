@@ -22,7 +22,7 @@ pnpm add @hoardodile/sdk-react
   flush on `pagehide`/unmount
 - **`createPluginTranslation(bundles)`** — `useTranslation()` backed by
   the shared `@hoardodile/i18n` catalogs and the host's language pushes;
-  `@hoardodile/ui` chrome is localized for free in every supported host
+  [`@hoardodile/ui`](https://www.npmjs.com/package/@hoardodile/ui) chrome is localized for free in every supported host
   language. Want full control over the i18n stack (namespaces, plurals,
   `Trans`, custom format, lazy backends)? Assemble your own
   react-i18next instance instead — the only hoardodile piece is the
