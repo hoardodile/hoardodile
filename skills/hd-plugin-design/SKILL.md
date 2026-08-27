@@ -4,7 +4,7 @@ description: The hoardodile plugin design system — how a plugin iframe follows
 license: MIT
 metadata:
   author: hoardodile
-  version: "1.0.0"
+  version: "1.1.0"
 ---
 
 # Hoardodile Plugin Design
@@ -319,5 +319,7 @@ motion. Long lists use `content-visibility: auto`; animation must hold
       loading (2px top bar or `--animate-skel` skeletons).
 - [ ] Motion within the duration/ease tokens, transform-opacity only,
       collapsed under `prefers-reduced-motion`.
-- [ ] i18n: every user-visible string in both `en` and `zh`, via
-      `{{t()}}` in the manifest and `t()` in the client.
+- [ ] i18n: every user-visible string in the app's five languages
+      (`en`/`zh`/`ja`/`de`/`es` — `en`/`zh` at minimum), via
+      `{{t()}}` in the manifest and `t()` in the client; untranslated
+      strings fall back exact locale → base language → first shipped.

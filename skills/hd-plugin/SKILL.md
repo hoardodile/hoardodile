@@ -1,10 +1,10 @@
 ---
 name: hd-plugin
-description: Author hoardodile content plugins — manifest, server hooks, iframe client, and the plugin toolchain. Use when building, extending, or debugging a hoardodile plugin, adding a new resource format, or wiring detect/sourceMeta/searchMeta/coverLocal/listFiles/imageHashes.
+description: Author hoardodile content plugins — manifest, server hooks, iframe client, and the plugin toolchain. Use when building, extending, or debugging a hoardodile plugin, adding a new resource format, or wiring detect/sourceMeta/searchMeta/coverLocal/listFiles/imageHashes, or publishing a plugin to the marketplace.
 license: MIT
 metadata:
   author: hoardodile
-  version: "1.2.0"
+  version: "1.3.0"
 ---
 
 # Hoardodile Plugin Development
@@ -36,7 +36,7 @@ lives in `references/`.
 ## Workflow
 
 1. **Get the SDK.** The `@hoardodile/*` release set is on npm
-   (0.1.1) — `pnpm dlx create-hoardodile-plugin <name>` scaffolds a
+   (0.1.2) — `pnpm dlx create-hoardodile-plugin <name>` scaffolds a
    plugin prewired to the published SDK. Registry install only — no
    tarballs or `file:` overrides. Full details:
    `references/tooling.md`.
@@ -67,13 +67,25 @@ lives in `references/`.
    `createResourceAPIFixture<MySchema>()`, `detect:smoke` against
    `testdata/`, `hoardodile plugin bench detect .` for latency
    baselines (`bench-detect.json`).
-7. **Publish.** Zip `dist/` with `manifest.json` at the zip root and
-   upload in **Settings → Plugins**; the app validates, installs, and
-   rescans. To ship a plugin with the app itself, keep it under
-   `plugins/<slug>/` — the desktop build list and the runtime seed
-   discovery are both directory-driven
-   (`scripts/lib/plugin-channels.mjs`), so building the dist is all it
-   takes to bundle and seed it.
+7. **Publish.** Two distribution paths:
+   - **Local install.** Zip `dist/` with `manifest.json` at the zip root
+     and upload in **Settings → Plugins**; the app validates, installs,
+     and rescans. The archive channel is **zip-only** — any other
+     format is rejected by the installer.
+   - **Marketplace.** `hoardodile plugin package` produces
+     `release/<id>-<version>.zip` plus a `.sha256` sidecar, then push a
+     tag `v<version>` — the template's `release.yml` builds, packages,
+     and publishes the GitHub release (zip + sha256 + the `intro.*.md`
+     assets). Add the repository address to a registry `registry.json`
+     (built-in default: `hoardodile/marketplace`) and the app's
+     **Settings → Marketplace** lists and installs it. Declare
+     `minAppVersion` honestly: hosts below it refuse install/update
+     (marketplace entries and zip uploads are gated). To ship a plugin
+     with the app itself, keep it under `plugins/<slug>/` — the desktop
+     build list and the runtime seed discovery are both directory-driven
+     (`scripts/lib/plugin-channels.mjs`); bundled seeds uninstalled by a
+     user stay uninstalled per library and are restored (offline) from
+     **Settings → Marketplace → Bundled plugins**.
 
 ## SDK Closure
 

@@ -13,6 +13,8 @@ The app validates it on install (Settings → Plugins) and rescans.
   "name": "My Plugin",           // REQUIRED — user-facing (i18n overrides it)
   "description": "What it claims.",
   "version": "0.0.0",
+  "minAppVersion": "0.1.1",      // optional — lowest hoardodile release this
+                                 //   plugin runs on; absent = every version
   "icon": "box",                 // optional — Solar glyph name (three weights,
                                  //   follows the user's icon style preference)
                                  //   or a zip asset path ("assets/icon.svg");
@@ -26,6 +28,12 @@ The app validates it on install (Settings → Plugins) and rescans.
 **`id`**: generate with `node -e "console.log(crypto.randomUUID())"`.
 **`version`**: the plugin's own version; the app shows it (Settings →
 Plugins) — bump it on user-visible changes.
+**`minAppVersion`**: the lowest hoardodile release the plugin runs on
+(e.g. `"0.1.1"`). Hosts below it refuse to install or update the plugin —
+the marketplace hides the install/update entries and the zip upload is
+blocked with an explanation — so declare it honestly and bump it only when
+the plugin really needs a newer app. Omit it for plugins that support every
+release.
 **`icon`**: shown on the plugin's card/row in Settings → Plugins and the
 install preview. A **Solar glyph name** (any glyph from the host's full
 Solar index — see `hd-plugin-design` Iconography) or a relative asset
@@ -60,15 +68,16 @@ in the plugin's own `vault/` folder.
 ## i18n
 
 Every user-visible string the host renders should come from `i18n`, in
-both `en` and `zh` at least — the app is bilingual and untranslated
-labels fall back to `name`/`description`. Keys you define for your own
-labels (search kind labels, etc.) are referenced from the `ui` block:
+the app's five supported languages — `en`, `zh`, `ja`, `de`, `es` (only
+`en`/`zh` at minimum; untranslated labels fall back exact locale → base
+language → first shipped). Keys you define for your own labels (search
+kind labels, etc.) are referenced from the `ui` block:
 
 ```jsonc
 "i18n": {
-  "name": { "en": "PDF", "zh": "PDF" },
-  "description": { "en": "Online PDF reader.", "zh": "在线 PDF 阅读器。" },
-  "pagesLabel": { "en": "pages", "zh": "页" }
+  "name": { "en": "PDF", "zh": "PDF", "ja": "PDF", "de": "PDF", "es": "PDF" },
+  "description": { "en": "Online PDF reader.", "zh": "在线 PDF 阅读器。", "ja": "オンライン PDF リーダー。", "de": "Online-PDF-Reader.", "es": "Lector de PDF en línea." },
+  "pagesLabel": { "en": "pages", "zh": "页", "ja": "ページ", "de": "Seiten", "es": "páginas" }
 }
 ```
 
@@ -100,6 +109,10 @@ labels (search kind labels, etc.) are referenced from the `ui` block:
 - **`search.kinds`** — searchable categories your plugin supplies.
   `key` is stable and typed; labels via `{{t()}}`; icons via
   `{{icon('<SolarGlyph>')}}` (see `hd-plugin-design` for the icon set).
+  Every kind must appear in the plugin's `searchMeta` hook output — the
+  facets are boolean flags computed once at import/upload time (not per
+  search), and `v` in that payload bumps whenever the plugin changes its
+  facet algorithm incompatibly (stale rows are then rebuilt).
 - **`message.anchor`** — how an anchored message renders in the host
   (e.g. `{{duration(data.timeMs)}}` for a video timestamp). Applies only
   with the `message` permission.

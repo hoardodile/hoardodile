@@ -2,7 +2,7 @@
 
 ## Getting the SDK (bootstrap)
 
-The `@hoardodile/*` release set is on npm (0.1.1): the SDK closure
+The `@hoardodile/*` release set is on npm (0.1.2): the SDK closure
 (`sdk-{types,web,react,server}`, `ui`, `i18n`) plus the terminal
 packages (`cli`, `host`, `host-web`, `workbench`) and the
 `create-plugin` scaffolder. Install from the registry directly — no
@@ -31,6 +31,11 @@ src/
   index.css            entry styles (e.g. @import "tailwindcss")
   __tests__/           vitest suites
 testdata/              sample resources for `plugin dev`
+intro.<locale>.md      per-release marketplace introduction (see below)
+CONTRIBUTING.md        dev loop, releases, marketplace publishing
+SECURITY.md            private-advisory reporting policy
+.github/               CI, dependabot, issue templates, release workflow
+.nvmrc / .gitignore    Node 24 pin / artifact ignores
 ```
 
 Standard scripts (template): `dev` = `hoardodile plugin dev`;
@@ -129,13 +134,51 @@ instead of fake results.
 
 ## Deploying
 
+Local install first — the app's installer is **zip-only**, and
+`hoardodile plugin package` always produces the zip the server expects:
+
 1. `hoardodile plugin build` — verify `dist/` contains
    `manifest.json` (at the zip root), `main.js`, and the client bundle.
 2. Zip the **contents** of `dist/` — `manifest.json` must be at the
-   zip root, not inside a folder.
+   zip root, not inside a folder (checksum-verified by the marketplace
+   when the release ships a `.sha256` sidecar).
 3. **Settings → Plugins → Upload** in the app. The app validates the
-   manifest, installs the plugin, and rescans the library.
+   manifest (including `minAppVersion`), installs the plugin, and
+   rescans the library.
 4. Test against a library with your kinds; iterate via `plugin dev`.
 
 Bump `manifest.json` version on changes — users see it in Settings →
 Plugins.
+
+## Publishing to the marketplace
+
+The built-in registry is `hoardodile/marketplace`; the app reads a
+registry repo's `registry.json`, which lists plugin repository addresses:
+
+```json
+{ "version": 1, "plugins": ["https://github.com/<owner>/<repo>"] }
+```
+
+Publishing is a tag, not a build:
+
+1. `hoardodile plugin package` (or the release workflow) produces
+   `release/<id>-<version>.zip` + `.<sha256>`.
+2. Ship `intro.<locale>.md` files at the repo root for the languages you
+   support — the marketplace detail view shows the release's **Intro**
+   tab, resolved for the user's UI language (exact locale → base
+   language → `en` → the only shipped language), and the release body
+   always shows in **Release notes**. Use the app's language codes as
+   the file names (`intro.en.md`, `intro.zh.md`, `intro.ja.md`,
+   `intro.de.md`, `intro.es.md`).
+3. Push a tag `v<version>` matching `manifest.json` — the template's
+   `.github/workflows/release.yml` builds, runs `plugin package`, and
+   creates the GitHub release with the zip, the sha256 and every
+   `intro.*.md` asset.
+4. Add the repository address to your registry's `registry.json`.
+
+Requirements: all repos are public; tags follow `v<version>`. The app
+caches the catalog for 10 minutes and honors the user's proxy config;
+installs/updates are user-confirmed downloads of the release zip, and
+hosts below the plugin's `minAppVersion` hide the entries. The
+**Bundled plugins** section restores ships-with-app plugins a user
+uninstalled — offline.
