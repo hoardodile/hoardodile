@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test"
 import { login } from "./helpers"
 import { apiLogin, createResource, uploadOrderedFile } from "./serverApi"
 import { solidPng } from "./testArchive"
+import { idFromTrpcJson } from "./trpcResourceCreate"
 
 const SERVER = `http://127.0.0.1:${process.env.E2E_SERVER_PORT ?? "3001"}`
 // The preinstalled gallery plugin (see playwright.config.ts DEV_PLUGIN_PATHS).
@@ -55,10 +56,20 @@ test.describe("message anchor jump (real browser)", () => {
 			created.ok(),
 			`comment.create failed: ${created.status()} ${createdText}`,
 		).toBe(true)
+		const commentId = idFromTrpcJson(JSON.parse(createdText))
+		if (commentId === undefined) {
+			throw new Error("comment.create response missing the comment id")
+		}
 
 		await login(page)
 		await page.goto("/messages")
-		await expect(page.getByTestId("comment-anchor-chip")).toBeVisible({
+		// Retries share the e2e DB, so earlier attempts leave anchored
+		// comments behind — scope every interaction to this test's own
+		// comment instead of the global chip testid.
+		const anchorChip = page
+			.getByTestId(`comment-${commentId}`)
+			.getByTestId("comment-anchor-chip")
+		await expect(anchorChip).toBeVisible({
 			timeout: 30_000,
 		})
 
@@ -80,7 +91,7 @@ test.describe("message anchor jump (real browser)", () => {
 				}
 			})
 		})
-		await page.getByTestId("comment-anchor-chip").click()
+		await anchorChip.click()
 		await expect(page).toHaveURL(new RegExp(`/resources/${resId}`))
 		await expect(page).toHaveURL(/pluginState=/)
 		await expect(page.getByTestId("resource-detail-title")).toBeVisible({

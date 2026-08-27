@@ -23,7 +23,7 @@ setup(
 		).not.toBe("")
 
 		await page.goto("/", { timeout: 120_000 })
-		await expect(page).toHaveURL(/\/login$/)
+		await expect(page).toHaveURL(/\/login$/, { timeout: 30_000 })
 		await expect(
 			page.getByRole("heading", { name: /set a password/i }),
 		).toBeVisible()

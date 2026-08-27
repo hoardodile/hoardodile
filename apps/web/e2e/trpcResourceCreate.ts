@@ -1,16 +1,13 @@
 /**
- * Parses `resource.create` tRPC HTTP JSON (batch or single) for the new
- * resource id. Without a transformer the payload sits at `result.data`;
- * a transformer nests it one level deeper at `result.data.json`. Both
- * shapes are walked.
+ * Walks tRPC HTTP JSON (batch or single) for the created entity's id.
+ * Without a transformer the payload sits at `result.data`; a transformer
+ * nests it one level deeper at `result.data.json`. Both shapes are walked.
  */
-export function resourceIdFromTrpcCreateJson(
-	body: unknown,
-): string | undefined {
+export function idFromTrpcJson(body: unknown): string | undefined {
 	if (body === null || typeof body !== "object") return undefined
 	if (Array.isArray(body)) {
 		for (const item of body) {
-			const id = resourceIdFromTrpcCreateJson(item)
+			const id = idFromTrpcJson(item)
 			if (id !== undefined) return id
 		}
 		return undefined
@@ -33,15 +30,4 @@ export function resourceIdFromTrpcCreateJson(
 		}
 	}
 	return undefined
-}
-
-export async function resourceIdFromTrpcCreateResponse(res: {
-	json(): Promise<unknown>
-}): Promise<string | undefined> {
-	try {
-		const body: unknown = await res.json()
-		return resourceIdFromTrpcCreateJson(body)
-	} catch {
-		return undefined
-	}
 }

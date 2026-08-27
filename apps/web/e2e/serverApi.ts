@@ -1,5 +1,5 @@
 import type { APIRequestContext } from "@playwright/test"
-import { resourceIdFromTrpcCreateJson } from "./trpcResourceCreate"
+import { idFromTrpcJson } from "./trpcResourceCreate"
 
 /**
  * Server-side e2e API helpers: drive the real HTTP API with Playwright's
@@ -120,7 +120,7 @@ export async function createResource(
 			`resource.create failed: ${res.status()} ${await res.text()}`,
 		)
 	}
-	const id = resourceIdFromTrpcCreateJson(await res.json())
+	const id = idFromTrpcJson(await res.json())
 	if (id === undefined) {
 		throw new Error("resource.create response missing resource id")
 	}

@@ -12,7 +12,9 @@ export async function login(page: Page) {
 	// Generous timeout: the first spec of a run can still be inside the
 	// vite dev cold-start window (see claim.setup.ts).
 	await page.goto("/", { timeout: 120_000 })
-	await expect(page).toHaveURL(/\/login$/)
+	// Fresh-context boots can outlast the 5s default (state after the
+	// claim/cold-start window); 30s is the suite's standard timeout cap.
+	await expect(page).toHaveURL(/\/login$/, { timeout: 30_000 })
 	const fields = page.locator('input[type="password"]')
 	const setupButton = page.getByTestId("setup-submit")
 	if ((await setupButton.count()) > 0) {
