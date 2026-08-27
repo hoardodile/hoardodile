@@ -544,19 +544,19 @@ function DefaultNav(props: NavAreaProps) {
 				onNavigate={props.onNavigate}
 			/>
 			<NavRow
-				to="/characters"
-				icon={UsersGroupRounded}
-				label={t("appShell.nav.characters")}
-				active={isRouteActive({ pathname: props.pathname, to: "/characters" })}
-				count={counts.characters}
-				onNavigate={props.onNavigate}
-			/>
-			<NavRow
 				to="/resources"
 				icon={Gallery}
 				label={t("appShell.nav.resources")}
 				active={isRouteActive({ pathname: props.pathname, to: "/resources" })}
 				count={counts.resources}
+				onNavigate={props.onNavigate}
+			/>
+			<NavRow
+				to="/characters"
+				icon={UsersGroupRounded}
+				label={t("appShell.nav.characters")}
+				active={isRouteActive({ pathname: props.pathname, to: "/characters" })}
+				count={counts.characters}
 				onNavigate={props.onNavigate}
 			/>
 			<DocNavRow
