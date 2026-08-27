@@ -1,5 +1,33 @@
 # Changelog
 
+## [0.1.2](https://github.com/hoardodile/hoardodile/compare/v0.1.1...v0.1.2) (2026-08-27)
+
+### Features
+
+* collect client logs, fix directional scroll restore, and add the in-app error page ([c53158c](https://github.com/hoardodile/hoardodile/commit/c53158ce8021946ba0c592a80a16d0f8bc21e428))
+* **desktop:** single-document boot — the SPA splash is the loading surface ([8fbe2cf](https://github.com/hoardodile/hoardodile/commit/8fbe2cfbecaf3f2318cfb0ba465febc020b224fb)), references [#0d0d0d](https://github.com/hoardodile/hoardodile/issues/0d0d0d) [#060606](https://github.com/hoardodile/hoardodile/issues/060606)
+* **marketplace:** intro + release-notes detail tabs, bundled plugin offline restore ([d50d9cc](https://github.com/hoardodile/hoardodile/commit/d50d9ccc1f02fcf9c3e552606ffeb94bc377e0ad))
+* plugin marketplace full experience ([b6a0bb5](https://github.com/hoardodile/hoardodile/commit/b6a0bb52af9543d33fe05b9f3395e399fce03239))
+* **server:** make hoardodile/marketplace the default plugin registry ([bb14587](https://github.com/hoardodile/hoardodile/commit/bb145875de7b0f5a47e95dcebb21c482fc9b1241))
+* **server:** unify project zips on yauzl/yazl, enforce zip-only plugin installs ([c5bbca6](https://github.com/hoardodile/hoardodile/commit/c5bbca68e27b6267f4357a64abe537b403db3b32))
+* unify outbound proxy handling and redesign the plugin marketplace ([b978187](https://github.com/hoardodile/hoardodile/commit/b97818746cabe71b9f0431785cff92698a97ab97))
+* **web:** add marketplace entry to the sidebar nav ([39f4d73](https://github.com/hoardodile/hoardodile/commit/39f4d73605eb0e87b5465c3c7dbfb1aa91d44ace))
+* **web:** bundle redacted app and server logs into a downloadable archive ([0cfe649](https://github.com/hoardodile/hoardodile/commit/0cfe64949e1325cb5ff315dd8cfd062124672c01))
+* **web:** move bundled-plugins restore section to the plugins settings page ([5d6e999](https://github.com/hoardodile/hoardodile/commit/5d6e99934601551e5b9147bb6fa56e0bfda737ad))
+* **web:** paginate recent connections ([d068e46](https://github.com/hoardodile/hoardodile/commit/d068e46ede1285af11e1132dd65715e92b79a5b0))
+
+### Bug Fixes
+
+* **ci:** give the docker build a git repo and the gha cache driver ([5766c35](https://github.com/hoardodile/hoardodile/commit/5766c3514d3fe17e6506900bc20f09da87406a02))
+* **ci:** keep the desktop manifest in the docker build context ([7ef837e](https://github.com/hoardodile/hoardodile/commit/7ef837ed0c12a392160a7da44b5f9ddf954f97db))
+* **desktop:** reload the resolved sidecar URL after a resource swap ([240a3a6](https://github.com/hoardodile/hoardodile/commit/240a3a699ff13bc8f148e4d45afb427426438259))
+* **sync:** diff the live library state against each device's last sync ([1eabe82](https://github.com/hoardodile/hoardodile/commit/1eabe826ae968e5520b9c206943fdbfc93f95077))
+* **web:** carry anchor payload as arbitrary JSON in pluginState ([1c99d31](https://github.com/hoardodile/hoardodile/commit/1c99d317c1d3d001af9575b39cdf1d67ee3135c7))
+* **web:** keep the external base URL port for the e2e API helpers ([5747f1d](https://github.com/hoardodile/hoardodile/commit/5747f1df628005e527e6c12e26cc6e5c087b5d51))
+* **web:** navigate message anchor jumps in-app without reloading ([07d2440](https://github.com/hoardodile/hoardodile/commit/07d24407d2dd137ceae007f518f8993ab4657409))
+* **web:** regenerate the solar glyph index before the e2e run ([c3b5100](https://github.com/hoardodile/hoardodile/commit/c3b5100d3024bed85dd4bcb53e195aade63e4bb7))
+* **web:** reset app scroll position on untracked route arrival ([8e0340e](https://github.com/hoardodile/hoardodile/commit/8e0340eb517e0029cb3e29252e9422bdaa0d3b46))
+
 ## [0.1.1](https://github.com/hoardodile/hoardodile/compare/v0.1.0...v0.1.1) (2026-08-26)
 
 ### Features

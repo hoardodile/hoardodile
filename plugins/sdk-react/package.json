@@ -1,6 +1,6 @@
 {
 	"name": "@hoardodile/sdk-react",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"license": "MIT",
 	"description": "React bindings for hoardodile content plugins.",
 	"keywords": [
