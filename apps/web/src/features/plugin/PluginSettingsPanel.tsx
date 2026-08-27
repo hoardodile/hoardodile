@@ -47,6 +47,7 @@ import {
 	Database,
 	Download,
 	Eraser,
+	Eye,
 	File,
 	Gallery,
 	GalleryWide,
@@ -77,11 +78,19 @@ import { useTranslation } from "react-i18next"
 import { ColorPicker } from "@/components/common/ColorPicker"
 import { SearchField } from "@/components/common/SearchField"
 import { useConfirmDialog } from "@/components/common/useConfirmDialog"
+import { isMinAppSatisfied } from "@/features/marketplace/compat"
+import type { MarketPlugin } from "@/features/marketplace/MarketplaceDetailDialog"
+import { MarketplaceDetailDialog } from "@/features/marketplace/MarketplaceDetailDialog"
+import {
+	marketplaceConfigQueryOptions,
+	marketplaceSnapshotQueryOptions,
+} from "@/features/marketplace/marketplaceApi"
 import {
 	pushCacheChanged,
 	pushPrefsChanged,
 } from "@/features/plugin/iframe/pushes"
 import { useToastMutation } from "@/hooks/useToastMutation"
+import { APP_VERSION } from "@/lib/appInfo"
 import { errorMessage } from "@/lib/errors"
 import type { RouterOutputs } from "@/trpc/client"
 import { PluginTileIcon } from "./icons/plugin-tile-icon"
@@ -94,6 +103,7 @@ import {
 	grantedPermissionKeys,
 	PluginPermissionBadges,
 } from "./PluginPermissionBadges"
+import { PluginUninstallDialog } from "./PluginUninstallDialog"
 import { readPluginZipManifest } from "./plugin-zip-preview"
 import {
 	pluginCacheRemoveAllByPluginMutation,
@@ -104,12 +114,12 @@ import {
 	pluginPrefRemoveAllMutation,
 	pluginReorderMutation,
 	pluginRescanMutation,
-	pluginUninstallMutation,
 	pluginUpdateMutation,
-	pluginUsageCountQueryOptions,
 	uploadPlugin,
 } from "./pluginApi"
 import { matchesPluginQuery } from "./pluginFilter"
+
+export { PluginUninstallDialog } from "./PluginUninstallDialog"
 
 type PluginView = "list" | "grid"
 
@@ -174,6 +184,16 @@ export function PluginPageActions() {
 		// is server-side code, so installing must never be one-click.
 		try {
 			const manifest = await readPluginZipManifest(file)
+			if (!isMinAppSatisfied(manifest)) {
+				toast.add({
+					title: t("marketplace.incompatibleAppVersion", {
+						require: manifest.minAppVersion ?? "",
+						current: APP_VERSION,
+					}),
+					type: "error",
+				})
+				return
+			}
 			installConfirm.open({ file, manifest })
 		} catch {
 			toast.add({ title: t("plugins.uploadInvalidPlugin"), type: "error" })
@@ -293,8 +313,20 @@ export function InstalledPluginsPanel() {
 	const { t, i18n } = useTranslation()
 	const qc = useQueryClient()
 	const listQuery = useQuery(pluginListAllQueryOptions())
+	// Marketplace metadata for the "details" menu entry; the snapshot
+	// shares its query key with the marketplace page (one fetch).
+	const configQuery = useQuery(marketplaceConfigQueryOptions())
+	const registryRepo = configQuery.data?.registryRepo ?? null
+	const marketQuery = useQuery({
+		...marketplaceSnapshotQueryOptions(),
+		enabled: registryRepo !== null,
+	})
 	const [view, setView] = useState<PluginView>("grid")
 	const [query, setQuery] = useState("")
+	const [detailPlugin, setDetailPlugin] = useState<MarketPlugin | null>(null)
+	const [uninstallPlugin, setUninstallPlugin] = useState<PluginRowData | null>(
+		null,
+	)
 
 	const updateMut = useToastMutation({
 		...pluginUpdateMutation(),
@@ -340,6 +372,9 @@ export function InstalledPluginsPanel() {
 
 	const plugins = listQuery.data ?? []
 	const nonBuiltinPlugins = plugins.filter((p) => !p.builtin)
+	const marketById = new Map(
+		(marketQuery.data?.plugins ?? []).map((plugin) => [plugin.id, plugin]),
+	)
 	const filteredPlugins = nonBuiltinPlugins.filter((p) =>
 		matchesPluginQuery(
 			{
@@ -409,8 +444,10 @@ export function InstalledPluginsPanel() {
 								key={p.id}
 								p={p}
 								priority={i + 1}
+								marketPlugin={marketById.get(p.id)}
 								onToggleEnabled={handleToggleEnabled}
 								onSaveAppearance={handleSaveAppearance}
+								onShowDetails={setDetailPlugin}
 							/>
 						))}
 					</div>
@@ -431,14 +468,46 @@ export function InstalledPluginsPanel() {
 									key={p.id}
 									p={p}
 									priority={i + 1}
+									marketPlugin={marketById.get(p.id)}
 									onToggleEnabled={handleToggleEnabled}
 									onSaveAppearance={handleSaveAppearance}
+									onShowDetails={setDetailPlugin}
 									disabled={reorderMut.isPending}
 								/>
 							))}
 						</div>
 					</SortableContext>
 				</DndContext>
+			)}
+
+			{detailPlugin !== null && (
+				<MarketplaceDetailDialog
+					open
+					plugin={detailPlugin}
+					installed={plugins.find((p) => p.id === detailPlugin.id)}
+					onOpenChange={(open) => {
+						if (!open) setDetailPlugin(null)
+					}}
+					onInstall={() => setDetailPlugin(null)}
+					onUninstall={() => {
+						const row = plugins.find((p) => p.id === detailPlugin.id)
+						setDetailPlugin(null)
+						if (row !== undefined) setUninstallPlugin(row)
+					}}
+				/>
+			)}
+			{uninstallPlugin !== null && (
+				<PluginUninstallDialog
+					pluginId={uninstallPlugin.id}
+					pluginName={resolveManifestName(
+						uninstallPlugin.manifest,
+						i18n.language,
+					)}
+					open
+					onOpenChange={(open) => {
+						if (!open) setUninstallPlugin(null)
+					}}
+				/>
 			)}
 		</div>
 	)
@@ -653,11 +722,13 @@ function StateBadges({ p }: { p: PluginRowData }) {
 function SortablePluginRow(props: {
 	readonly p: PluginRowData
 	readonly priority: number
+	readonly marketPlugin?: MarketPlugin
 	readonly onToggleEnabled: (id: string, enabled: boolean) => void
 	readonly onSaveAppearance: (
 		id: string,
 		patch: { readonly pinned: boolean; readonly color: string },
 	) => void
+	readonly onShowDetails: (plugin: MarketPlugin) => void
 	readonly disabled: boolean
 }) {
 	const { p, priority, onToggleEnabled, onSaveAppearance, disabled } = props
@@ -733,7 +804,12 @@ function SortablePluginRow(props: {
 			    cache clearing all live in the More menu; only the switch
 			    earns a permanent spot. */}
 			<div className="flex shrink-0 items-center gap-0.5">
-				<PluginRowActions plugin={p} onSaveAppearance={onSaveAppearance} />
+				<PluginRowActions
+					plugin={p}
+					marketPlugin={props.marketPlugin}
+					onShowDetails={props.onShowDetails}
+					onSaveAppearance={onSaveAppearance}
+				/>
 				<Switch
 					checked={p.enabled}
 					onCheckedChange={(checked) => onToggleEnabled(p.id, checked)}
@@ -749,11 +825,13 @@ function SortablePluginRow(props: {
 function PluginCard(props: {
 	readonly p: PluginRowData
 	readonly priority: number
+	readonly marketPlugin?: MarketPlugin
 	readonly onToggleEnabled: (id: string, enabled: boolean) => void
 	readonly onSaveAppearance: (
 		id: string,
 		patch: { readonly pinned: boolean; readonly color: string },
 	) => void
+	readonly onShowDetails: (plugin: MarketPlugin) => void
 }) {
 	const { p, priority, onToggleEnabled, onSaveAppearance } = props
 	const { t, i18n } = useTranslation()
@@ -798,7 +876,12 @@ function PluginCard(props: {
 				/>
 				<StateBadges p={p} />
 				<span className="ml-auto shrink-0">
-					<PluginRowActions plugin={p} onSaveAppearance={onSaveAppearance} />
+					<PluginRowActions
+						plugin={p}
+						marketPlugin={props.marketPlugin}
+						onShowDetails={props.onShowDetails}
+						onSaveAppearance={onSaveAppearance}
+					/>
 				</span>
 			</div>
 		</div>
@@ -809,12 +892,14 @@ function PluginCard(props: {
     per-plugin cache clear and uninstall. */
 function PluginRowActions(props: {
 	readonly plugin: PluginRowData
+	readonly marketPlugin?: MarketPlugin
+	readonly onShowDetails: (plugin: MarketPlugin) => void
 	readonly onSaveAppearance: (
 		id: string,
 		patch: { readonly pinned: boolean; readonly color: string },
 	) => void
 }) {
-	const { plugin, onSaveAppearance } = props
+	const { plugin, marketPlugin, onShowDetails, onSaveAppearance } = props
 	const { t, i18n } = useTranslation()
 
 	const prefResetMut = useMutation({
@@ -884,6 +969,15 @@ function PluginRowActions(props: {
 					}
 				/>
 				<DropdownMenuContent align="end" className="w-44">
+					{marketPlugin !== undefined && (
+						<DropdownMenuItem
+							onClick={() => onShowDetails(marketPlugin)}
+							data-testid={`plugin-menu-detail-${plugin.id}`}
+						>
+							<Icon icon={Eye} />
+							{t("marketplace.details")}
+						</DropdownMenuItem>
+					)}
 					<DropdownMenuItem onClick={() => setAppearanceOpen(true)}>
 						<Icon icon={Sun} />
 						{t("plugins.appearance")}
@@ -1069,66 +1163,4 @@ function reorderListByIds(
 		if (r !== undefined) reordered.push(r)
 	}
 	return [...reordered, ...builtin]
-}
-
-/**
- * Uninstall confirmation for a plugin row: a destructive dialog with a
- * live usage count, then permanently removes the plugin (disk directory +
- * settings row). Resources bound to it keep working through the builtin
- * fallback and revert automatically once the plugin is reinstalled.
- * Rendered by `PluginRowActions` OUTSIDE the dropdown — a dialog inside
- * the menu content is unmounted the moment an item is selected.
- */
-export function PluginUninstallDialog(props: {
-	readonly pluginId: string
-	readonly pluginName: string
-	readonly open: boolean
-	readonly onOpenChange: (open: boolean) => void
-}) {
-	const { t } = useTranslation()
-	const qc = useQueryClient()
-	const usageQuery = useQuery({
-		...pluginUsageCountQueryOptions(props.pluginId),
-		enabled: props.open,
-	})
-	const uninstallMut = useMutation({
-		...pluginUninstallMutation(),
-		onSuccess: async () => {
-			await qc.invalidateQueries({ queryKey: pluginKeys.all })
-			toast.add({
-				title: t("plugins.uninstallSuccess", { name: props.pluginName }),
-				type: "success",
-			})
-		},
-		onError: (err) => {
-			toast.add({
-				title: errorMessage(err, t("common.error")),
-				type: "error",
-			})
-		},
-	})
-	const usageCount = usageQuery.data ?? 0
-
-	return (
-		<ConfirmDialog
-			open={props.open}
-			onOpenChange={props.onOpenChange}
-			title={t("plugins.uninstallConfirmTitle", { name: props.pluginName })}
-			description={
-				usageCount > 0
-					? t("plugins.uninstallConfirmDescription", {
-							name: props.pluginName,
-							count: usageCount,
-						})
-					: t("plugins.uninstallConfirmNoUsage", {
-							name: props.pluginName,
-						})
-			}
-			confirmLabel={t("plugins.uninstall")}
-			pendingLabel={t("common.working")}
-			isPending={uninstallMut.isPending}
-			destructive
-			onConfirm={() => uninstallMut.mutate({ id: props.pluginId })}
-		/>
-	)
 }

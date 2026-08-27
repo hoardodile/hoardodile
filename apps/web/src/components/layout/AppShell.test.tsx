@@ -48,7 +48,7 @@ function createMockTrpcClient(
 	) as unknown as TRPCClient
 }
 
-const baseHandlers = {
+const baseHandlers: Record<string, (input: unknown) => unknown> = {
 	"resource.listCards": () => ({ rows: [], total: 7, page: 1, size: 1 }),
 	"character.listCards": () => ({ rows: [], total: 3, page: 1, size: 1 }),
 	"document.tree": () => [
@@ -82,6 +82,11 @@ const baseHandlers = {
 		},
 	}),
 	"sync.summary": () => ({ remindDays: 7, devices: [] }),
+	// The marketplace update badge queries these; the defaults keep the
+	// badge silent (no registry → snapshot disabled, no installed plugins).
+	"marketplace.getConfig": () => ({ registryRepo: null }),
+	"marketplace.snapshot": () => ({ plugins: [], errors: [] }),
+	"plugin.listAll": () => [],
 }
 
 beforeAll(() => {
@@ -604,3 +609,88 @@ function installDesktopBridge() {
 	}
 	window.hoardodileDesktop = bridge
 }
+
+describe("AppShell marketplace update badge", () => {
+	it("shows the marketplace alert dot when a compatible update is available", async () => {
+		// Follow the sync tests' pattern: the sync describe re-creates the
+		// mock client from a spread copy, so this test must set its own
+		// client too — mutating `baseHandlers` alone would not reach it.
+		setTrpcClient(
+			createMockTrpcClient({
+				...baseHandlers,
+				"marketplace.getConfig": () => ({ registryRepo: "me/registry" }),
+				"marketplace.snapshot": () => ({
+					registryRepo: "me/registry",
+					fetchedAt: 1,
+					plugins: [
+						{
+							id: "55555555-5555-4555-8555-555555555555",
+							repo: "me/cat-viewer",
+							name: "Cat Viewer",
+							description: "Shows cats",
+							icon: undefined,
+							permissions: { sourceMeta: true },
+							manifest: {
+								id: "55555555-5555-4555-8555-555555555555",
+								name: "Cat Viewer",
+								description: "Shows cats",
+								version: "1.2.3",
+								permissions: { sourceMeta: true },
+							},
+							readme: undefined,
+							state: "ok",
+							latest: {
+								tag: "v1.2.3",
+								version: "1.2.3",
+								releaseUrl:
+									"https://github.com/me/cat-viewer/releases/tag/v1.2.3",
+								publishedAt: "2025-01-02T03:04:05Z",
+								notes: null,
+								assetName: "cat.zip",
+								assetUrl: "",
+								intro: undefined,
+							},
+							error: undefined,
+						},
+					],
+					errors: [],
+				}),
+				"plugin.listAll": () => [
+					{
+						id: "55555555-5555-4555-8555-555555555555",
+						manifest: {
+							id: "55555555-5555-4555-8555-555555555555",
+							name: "Cat Viewer",
+							description: "Shows cats",
+							version: "1.1.0",
+							permissions: { sourceMeta: true },
+						},
+						enabled: true,
+						priority: 1,
+						pinned: false,
+						color: "",
+						missing: false,
+						builtin: false,
+						dev: false,
+						assetVersion: "1",
+					},
+				],
+			}),
+		)
+
+		const { container, findByTestId } = renderAppShell()
+		await findByTestId("app-sidebar")
+		await waitFor(
+			() => {
+				expect(
+					container
+						.querySelector('[data-testid="app-sidebar"]')
+						?.querySelector(
+							'[role="img"][aria-label="Plugin updates available"]',
+						),
+				).not.toBeNull()
+			},
+			{ timeout: 5_000 },
+		)
+	})
+})

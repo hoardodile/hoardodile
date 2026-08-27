@@ -51,6 +51,7 @@ const SNAPSHOT = {
 				name: "Cat Viewer",
 				description: "Shows cats",
 				version: "1.2.3",
+				minAppVersion: "0.1.1",
 				permissions: {
 					sourceMeta: true,
 					searchMeta: false,
@@ -61,6 +62,7 @@ const SNAPSHOT = {
 					download: true,
 				},
 			},
+			readme: "# README body\n\nFull repository readme.",
 			state: "ok",
 			latest: {
 				tag: "v1.2.3",
@@ -70,7 +72,8 @@ const SNAPSHOT = {
 				notes: "First release",
 				assetName: `${PLUGIN_ID}-v1.2.3.zip`,
 				assetUrl: `https://github.com/me/cat-viewer/releases/download/v1.2.3/${PLUGIN_ID}-v1.2.3.zip`,
-				sha256: undefined,
+				sha256: "abc123def456",
+				intro: { en: "# Intro heading\n\nIntro **body**." },
 			},
 			error: undefined,
 		},
@@ -86,6 +89,7 @@ function installedRow(version: string) {
 			name: "Cat Viewer",
 			description: "Shows cats",
 			version,
+			minAppVersion: "0.1.1",
 			permissions: SNAPSHOT.plugins[0]!.permissions,
 		},
 		enabled: true,
@@ -102,6 +106,7 @@ function installedRow(version: string) {
 function installClient(overrides?: {
 	readonly config?: { readonly registryRepo: string | null }
 	readonly snapshot?: unknown
+	readonly snapshotQuery?: (input: { force: boolean }) => Promise<unknown>
 	readonly installed?: unknown[]
 }) {
 	mockClient.marketplace = {
@@ -110,7 +115,9 @@ function installClient(overrides?: {
 		},
 		setConfig: { mutate: vi.fn(async () => {}) },
 		snapshot: {
-			query: vi.fn(async () => overrides?.snapshot ?? SNAPSHOT),
+			query:
+				overrides?.snapshotQuery ??
+				vi.fn(async () => overrides?.snapshot ?? SNAPSHOT),
 		},
 	}
 	mockClient.plugin = {
@@ -134,6 +141,8 @@ function renderPanel() {
 	)
 	return { queryClient }
 }
+
+const user = { click: async (el: Element) => fireEvent.click(el) }
 
 beforeEach(() => {
 	vi.restoreAllMocks()
@@ -161,6 +170,47 @@ describe("MarketplacePanel", () => {
 		expect(screen.queryByTestId("marketplace-catalog")).not.toBeInTheDocument()
 	})
 
+	it("shows skeleton cards while the catalog loads", async () => {
+		installClient({
+			config: { registryRepo: "me/registry" },
+			snapshotQuery: vi.fn(() => new Promise<never>(() => {})),
+		})
+		renderPanel()
+
+		expect(
+			await screen.findByTestId("marketplace-catalog-skeleton"),
+		).toBeInTheDocument()
+		expect(screen.queryByTestId("marketplace-catalog")).not.toBeInTheDocument()
+	})
+
+	it("shows the error with a manual refresh and never retries silently", async () => {
+		const snapshotQuery = vi.fn(async () => {
+			throw new Error("boom")
+		})
+		installClient({
+			config: { registryRepo: "me/registry" },
+			snapshotQuery,
+		})
+		renderPanel()
+
+		expect(
+			await screen.findByText(/marketplace refresh failed/i),
+		).toBeInTheDocument()
+		// No automatic retry: the query failed exactly once.
+		expect(snapshotQuery).toHaveBeenCalledTimes(1)
+
+		// Manual refresh first asks for confirmation (it burns GitHub API
+		// quota), then forces.
+		await user.click(screen.getByTestId("marketplace-refresh"))
+		expect(
+			await screen.findByTestId("marketplace-refresh-confirm"),
+		).toBeInTheDocument()
+		await user.click(screen.getByTestId("marketplace-refresh-confirm"))
+		await waitFor(() => {
+			expect(snapshotQuery).toHaveBeenCalledWith({ force: true })
+		})
+	})
+
 	it("renders catalog entries with icon permission marks and version meta", async () => {
 		installClient({ config: { registryRepo: "me/registry" } })
 		renderPanel()
@@ -170,29 +220,24 @@ describe("MarketplacePanel", () => {
 		expect(screen.getByTitle("Source metadata")).toBeInTheDocument()
 		expect(screen.getByTitle("Downloads")).toBeInTheDocument()
 		// The version+date meta line sits directly under the title; the
-		// card omits the repo entirely (it lives in the details dialog
-		// and the list row).
+		// card omits the repo entirely (it lives in the detail dialog).
 		expect(screen.getByText(/^v1\.2\.3 · /)).toBeInTheDocument()
 		expect(screen.queryByText("@me/cat-viewer")).not.toBeInTheDocument()
-		// Not installed → the toggle is off; the details button sits
-		// bottom-right instead of an install button.
+		// Not installed → the View button only; no ribbon, no ⋯ menu.
 		expect(
-			screen.getByTestId(`marketplace-toggler-${PLUGIN_ID}`),
-		).toHaveAttribute("aria-checked", "false")
-		expect(
-			screen.getByTestId(`marketplace-details-${PLUGIN_ID}`),
+			screen.getByTestId(`marketplace-view-${PLUGIN_ID}`),
 		).toBeInTheDocument()
-		expect(screen.queryByTestId(`marketplace-install-${PLUGIN_ID}`)).toBeNull()
-		// The registry line shows the full URL, not the bare owner/repo.
 		expect(
-			screen.getByText("Current registry: https://github.com/me/registry"),
-		).toBeInTheDocument()
+			screen.queryByTestId(`marketplace-menu-${PLUGIN_ID}`),
+		).not.toBeInTheDocument()
+		expect(
+			screen.queryByTestId(`marketplace-installed-banner-${PLUGIN_ID}`),
+		).not.toBeInTheDocument()
 	})
 
-	it("switches between grid and list views", async () => {
+	it("switches between grid and list views and never shows the repo link", async () => {
 		installClient({ config: { registryRepo: "me/registry" } })
 		renderPanel()
-		const user = { click: async (el: Element) => fireEvent.click(el) }
 
 		await screen.findByTestId(`marketplace-plugin-${PLUGIN_ID}`)
 		expect(screen.getByTestId("marketplace-catalog")).toHaveAttribute(
@@ -207,27 +252,27 @@ describe("MarketplacePanel", () => {
 				"list",
 			)
 		})
-		// The list row keeps the repo link (the compact card drops it).
-		expect(screen.getByText("@me/cat-viewer")).toBeInTheDocument()
+		// The repo link lives only in the detail dialog — never on a row.
+		expect(screen.queryByText("@me/cat-viewer")).not.toBeInTheDocument()
 		expect(
 			screen.getByTestId(`marketplace-plugin-${PLUGIN_ID}`),
 		).toBeInTheDocument()
 		expect(
-			screen.getByTestId(`marketplace-toggler-${PLUGIN_ID}`),
-		).toHaveAttribute("aria-checked", "false")
+			screen.getByTestId(`marketplace-view-${PLUGIN_ID}`),
+		).toBeInTheDocument()
 	})
 
-	it("installs via the toggle after confirmation and posts the asset", async () => {
+	it("installs from the detail dialog after confirmation and posts the asset", async () => {
 		installClient({ config: { registryRepo: "me/registry" } })
 		renderPanel()
-		const user = { click: async (el: Element) => fireEvent.click(el) }
 
-		await user.click(
-			await screen.findByTestId(`marketplace-toggler-${PLUGIN_ID}`),
-		)
+		await user.click(await screen.findByTestId(`marketplace-view-${PLUGIN_ID}`))
+		// The big dialog carries Install; the consent dialog follows.
+		await user.click(await screen.findByTestId("marketplace-detail-install"))
 		await screen.findByTestId("marketplace-install-confirm")
-		// The install confirm is a decision dialog: no release notes here
-		// (those belong to the details dialog).
+		expect(
+			screen.queryByTestId("marketplace-detail-dialog"),
+		).not.toBeInTheDocument()
 		expect(screen.queryByText("First release")).toBeNull()
 		await user.click(screen.getByTestId("marketplace-install-confirm"))
 
@@ -247,74 +292,113 @@ describe("MarketplacePanel", () => {
 		)
 	})
 
-	it("offers an update via the footer button when the installed version is older", async () => {
+	it("installed card: straight banner + View only; dialog offers Update and Uninstall", async () => {
 		installClient({
 			config: { registryRepo: "me/registry" },
 			installed: [installedRow("1.1.0")],
 		})
 		renderPanel()
 
+		// The banner strip marks the card; only the View button remains —
+		// no version chip, no ⋯ menu.
 		expect(
-			await screen.findByTestId(`marketplace-update-${PLUGIN_ID}`),
+			await screen.findByTestId(`marketplace-installed-banner-${PLUGIN_ID}`),
 		).toBeInTheDocument()
-		expect(screen.getByText(/update to v1\.2\.3/i)).toBeInTheDocument()
 		expect(
-			screen.getByTestId(`marketplace-toggler-${PLUGIN_ID}`),
-		).toHaveAttribute("aria-checked", "true")
+			screen.getByTestId(`marketplace-view-${PLUGIN_ID}`),
+		).toBeInTheDocument()
+		expect(
+			screen.queryByTestId(`marketplace-menu-${PLUGIN_ID}`),
+		).not.toBeInTheDocument()
+		expect(screen.queryByText("Installed v1.1.0")).not.toBeInTheDocument()
 
-		// The update confirm shows the version arrow instead of notes.
-		const user = { click: async (el: Element) => fireEvent.click(el) }
-		await user.click(screen.getByTestId(`marketplace-update-${PLUGIN_ID}`))
+		await user.click(screen.getByTestId(`marketplace-view-${PLUGIN_ID}`))
+		const dialog = await screen.findByTestId("marketplace-detail-dialog")
+		expect(
+			within(dialog).queryByTestId("marketplace-detail-install"),
+		).not.toBeInTheDocument()
+		expect(
+			within(dialog).getByTestId("marketplace-detail-update"),
+		).toBeInTheDocument()
+		expect(
+			within(dialog).getByTestId("marketplace-detail-uninstall"),
+		).toBeInTheDocument()
+		expect(within(dialog).getByText("Installed v1.1.0")).toBeInTheDocument()
+		expect(within(dialog).getByText("1.1.0 → 1.2.3")).toBeInTheDocument()
+	})
+
+	it("uninstalls from the detail dialog through the uninstall confirm", async () => {
+		installClient({
+			config: { registryRepo: "me/registry" },
+			installed: [installedRow("1.1.0")],
+		})
+		renderPanel()
+
+		await user.click(await screen.findByTestId(`marketplace-view-${PLUGIN_ID}`))
+		const dialog = await screen.findByTestId("marketplace-detail-dialog")
+		await user.click(within(dialog).getByTestId("marketplace-detail-uninstall"))
+		await user.click(await screen.findByRole("button", { name: /uninstall/i }))
+		await waitFor(() => {
+			expect(
+				(
+					mockClient.plugin.uninstall as {
+						mutate: ReturnType<typeof vi.fn>
+					}
+				).mutate,
+			).toHaveBeenCalledWith({ id: PLUGIN_ID })
+		})
+	})
+
+	it("updates from the detail dialog and hides the entry when up to date", async () => {
+		installClient({
+			config: { registryRepo: "me/registry" },
+			installed: [installedRow("1.1.0")],
+		})
+		renderPanel()
+
+		await user.click(await screen.findByTestId(`marketplace-view-${PLUGIN_ID}`))
+		const dialog = await screen.findByTestId("marketplace-detail-dialog")
+		await user.click(within(dialog).getByTestId("marketplace-detail-update"))
 		expect(await screen.findByText(/1\.1\.0 → 1\.2\.3/)).toBeInTheDocument()
 	})
 
-	it("keeps the toggle on when up to date and shows no update button", async () => {
+	it("hides the update entry when the installed version is current", async () => {
 		installClient({
 			config: { registryRepo: "me/registry" },
 			installed: [installedRow("1.2.3")],
 		})
 		renderPanel()
 
-		await waitFor(() => {
-			expect(
-				screen.getByTestId(`marketplace-toggler-${PLUGIN_ID}`),
-			).toHaveAttribute("aria-checked", "true")
-		})
+		await user.click(await screen.findByTestId(`marketplace-view-${PLUGIN_ID}`))
+		const dialog = await screen.findByTestId("marketplace-detail-dialog")
 		expect(
-			screen.queryByTestId(`marketplace-update-${PLUGIN_ID}`),
+			within(dialog).queryByTestId("marketplace-detail-update"),
 		).not.toBeInTheDocument()
-		expect(screen.queryByText("Installed v1.2.3")).toBeNull()
+		expect(
+			within(dialog).getByTestId("marketplace-detail-uninstall"),
+		).toBeInTheDocument()
 	})
 
-	it("uninstalls through the toggle when the plugin is installed", async () => {
+	it("filters the catalog by installed state and compatible updates", async () => {
 		installClient({
 			config: { registryRepo: "me/registry" },
-			installed: [installedRow("1.2.3")],
+			installed: [installedRow("1.1.0")],
 		})
 		renderPanel()
-		const user = { click: async (el: Element) => fireEvent.click(el) }
 
-		await user.click(
-			await screen.findByTestId(`marketplace-toggler-${PLUGIN_ID}`),
-		)
+		await user.click(await screen.findByRole("button", { name: "Updates" }))
 		expect(
-			await screen.findByRole("button", { name: /uninstall/i }),
+			screen.getByTestId(`marketplace-plugin-${PLUGIN_ID}`),
 		).toBeInTheDocument()
-		await user.click(screen.getAllByRole("button", { name: /uninstall/i })[0]!)
 
-		await waitFor(() => {
-			const uninstall = (
-				mockClient.plugin.uninstall as {
-					mutate: ReturnType<typeof vi.fn>
-				}
-			).mutate
-			expect(uninstall).toHaveBeenCalledWith({
-				id: PLUGIN_ID,
-			})
-		})
+		await user.click(screen.getByRole("button", { name: "All" }))
+		await user.click(screen.getByRole("button", { name: "Installed" }))
+		expect(
+			screen.getByTestId(`marketplace-plugin-${PLUGIN_ID}`),
+		).toBeInTheDocument()
 	})
 
-	it("shows a disabled toggle and a quiet chip when there is no release", async () => {
+	it("keeps a quiet chip and no install action when there is no release", async () => {
 		installClient({
 			config: { registryRepo: "me/registry" },
 			snapshot: {
@@ -330,32 +414,181 @@ describe("MarketplacePanel", () => {
 		})
 		renderPanel()
 
-		await waitFor(() => {
-			expect(
-				screen.getByTestId(`marketplace-toggler-${PLUGIN_ID}`),
-			).toHaveAttribute("data-disabled")
-		})
-		expect(screen.getByText("No GitHub release yet")).toBeInTheDocument()
+		expect(await screen.findByText("No GitHub release yet")).toBeInTheDocument()
+		expect(
+			screen.getByTestId(`marketplace-view-${PLUGIN_ID}`),
+		).toBeInTheDocument()
+
+		await user.click(screen.getByTestId(`marketplace-view-${PLUGIN_ID}`))
+		const dialog = await screen.findByTestId("marketplace-detail-dialog")
+		expect(
+			within(dialog).getByText("No GitHub release yet"),
+		).toBeInTheDocument()
+		expect(
+			within(dialog).queryByTestId("marketplace-detail-install"),
+		).not.toBeInTheDocument()
 	})
 
-	it("opens the details dialog with description, permissions, notes and links", async () => {
+	it("gates the install and shows the requirement when the app is too old", async () => {
+		installClient({
+			config: { registryRepo: "me/registry" },
+			snapshot: {
+				...SNAPSHOT,
+				plugins: [
+					{
+						...SNAPSHOT.plugins[0]!,
+						manifest: {
+							...SNAPSHOT.plugins[0]!.manifest,
+							minAppVersion: "9.9.9",
+						},
+					},
+				],
+			},
+		})
+		renderPanel()
+
+		expect(
+			await screen.findByText(/Requires hoardodile ≥ v9\.9\.9/i),
+		).toBeInTheDocument()
+
+		await user.click(screen.getByTestId(`marketplace-view-${PLUGIN_ID}`))
+		const dialog = await screen.findByTestId("marketplace-detail-dialog")
+		expect(
+			within(dialog).queryByTestId("marketplace-detail-install"),
+		).not.toBeInTheDocument()
+		expect(
+			within(dialog).getByText(/requires hoardodile ≥ v9\.9\.9/i),
+		).toBeInTheDocument()
+	})
+
+	it("shows a standalone danger error line inside the card for a rate-limited entry", async () => {
+		installClient({
+			config: { registryRepo: "me/registry" },
+			snapshot: {
+				...SNAPSHOT,
+				plugins: [
+					{
+						...SNAPSHOT.plugins[0]!,
+						state: "error",
+						latest: undefined,
+						error:
+							"GitHub API rate limit hit while fetching the latest release — the unauthenticated quota resets hourly; try again later",
+						errorKind: "rate_limited",
+					},
+				],
+			},
+		})
+		renderPanel()
+
+		// The card owns the error as its own line (danger colour) — no
+		// ticker, no chip, no raw English text anywhere.
+		const cardError = await screen.findByTestId(
+			`marketplace-card-error-${PLUGIN_ID}`,
+		)
+		expect(cardError).toHaveTextContent("Latest release info unavailable")
+		expect(screen.queryByTestId("marketplace-errors-ticker")).toBeNull()
+		expect(screen.queryByText(/rate limit/i)).toBeNull()
+
+		// Dialog: one quiet line at the bottom, still no raw text.
+		await user.click(screen.getByTestId(`marketplace-view-${PLUGIN_ID}`))
+		const dialog = await screen.findByTestId("marketplace-detail-dialog")
+		expect(
+			within(dialog).getByTestId("marketplace-dialog-error"),
+		).toHaveTextContent("Latest release info unavailable")
+		expect(within(dialog).queryByText(/rate limit/i)).toBeNull()
+	})
+
+	it("flags a rate-limited stale release on the card", async () => {
+		installClient({
+			config: { registryRepo: "me/registry" },
+			snapshot: {
+				...SNAPSHOT,
+				plugins: [
+					{
+						...SNAPSHOT.plugins[0]!,
+						rateLimited: true,
+					},
+				],
+			},
+		})
+		renderPanel()
+
+		// A rate-limited entry still shows data, but the card owns a
+		// scrolling danger strip so the staleness is never silent.
+		const strip = await screen.findByTestId(
+			`marketplace-card-error-${PLUGIN_ID}`,
+		)
+		expect(strip).toHaveTextContent("Latest release info unavailable")
+		expect(screen.queryByText(/rate limit/i)).toBeNull()
+		expect(
+			screen.getByTestId(`marketplace-view-${PLUGIN_ID}`),
+		).toBeInTheDocument()
+	})
+
+	it("opens the detail dialog with metadata, version info, issue channels and markdown tabs", async () => {
 		installClient({ config: { registryRepo: "me/registry" } })
 		renderPanel()
-		const user = { click: async (el: Element) => fireEvent.click(el) }
 
-		await user.click(
-			await screen.findByTestId(`marketplace-details-${PLUGIN_ID}`),
-		)
+		await user.click(await screen.findByTestId(`marketplace-view-${PLUGIN_ID}`))
 
 		const dialog = await screen.findByTestId("marketplace-detail-dialog")
-		expect(dialog).toBeInTheDocument()
-		// Notes live in the details dialog — never on the card.
-		expect(within(dialog).getByText("First release")).toBeInTheDocument()
 		expect(within(dialog).getByText("Cat Viewer")).toBeInTheDocument()
 		expect(within(dialog).getByText("Shows cats")).toBeInTheDocument()
 		expect(within(dialog).getByText("Source metadata")).toBeInTheDocument()
+		// Version info + metadata.
+		expect(within(dialog).getByText("Not installed")).toBeInTheDocument()
 		expect(
-			(dialog.querySelector("a") as HTMLAnchorElement | null)?.href,
-		).toContain("github.com/me/cat-viewer")
+			within(dialog).getByText(/Latest release v1\.2\.3/),
+		).toBeInTheDocument()
+		expect(within(dialog).getByText(PLUGIN_ID)).toBeInTheDocument()
+		expect(within(dialog).getByText("abc123def456")).toBeInTheDocument()
+		expect(within(dialog).getByText("@me/cat-viewer")).toBeInTheDocument()
+		// Both issue channels.
+		const issueLink = within(dialog).getByText("Report an issue").closest("a")
+		expect(issueLink?.href).toContain(
+			"github.com/me/cat-viewer/issues/new/choose",
+		)
+		const securityLink = within(dialog)
+			.getByText("Report a security vulnerability")
+			.closest("a")
+		expect(securityLink?.href).toContain(
+			"github.com/me/cat-viewer/security/advisories/new",
+		)
+		// Intro tab is the default and renders markdown.
+		expect(within(dialog).getByText("Intro heading")).toBeInTheDocument()
+		// Readme tab switches to the repo README.
+		await user.click(
+			within(dialog).getByTestId("marketplace-detail-tab-readme"),
+		)
+		expect(within(dialog).getByText("README body")).toBeInTheDocument()
+		expect(within(dialog).queryByText("Intro heading")).not.toBeInTheDocument()
+	})
+
+	it("shows a hint when the repo ships no README", async () => {
+		installClient({
+			config: { registryRepo: "me/registry" },
+			snapshot: {
+				...SNAPSHOT,
+				plugins: [
+					{
+						...SNAPSHOT.plugins[0]!,
+						readme: undefined,
+						latest: { ...SNAPSHOT.plugins[0]!.latest!, intro: undefined },
+					},
+				],
+			},
+		})
+		renderPanel()
+
+		await user.click(await screen.findByTestId(`marketplace-view-${PLUGIN_ID}`))
+		const dialog = await screen.findByTestId("marketplace-detail-dialog")
+		// No intro → the release notes take over as the intro tab.
+		expect(within(dialog).getByText("First release")).toBeInTheDocument()
+		await user.click(
+			within(dialog).getByTestId("marketplace-detail-tab-readme"),
+		)
+		expect(
+			within(dialog).getByText("No README found in the repository"),
+		).toBeInTheDocument()
 	})
 })

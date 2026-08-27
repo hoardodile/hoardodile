@@ -1,0 +1,57 @@
+name: Bug report
+description: File a bug report against this hoardodile plugin
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report.
+        Minimal reproduction steps first — the title can stay generic until the steps are clear.
+  - type: input
+    id: hoardodile-version
+    attributes:
+      label: hoardodile version
+      description: The version shown in Settings → About.
+      placeholder: 0.x.x
+    validations:
+      required: true
+  - type: input
+    id: plugin-version
+    attributes:
+      label: Plugin version
+      description: The version in Settings → Plugins (vX.Y.Z), or the marketplace's latest release if installing fresh.
+      placeholder: 0.0.1
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Minimal, ordered steps — what did you do to get here?
+      placeholder: |
+        1. …
+        2. …
+        3. …
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What did you expect to happen?
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: What actually happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / screenshots
+      description: Paste the relevant console or server logs, or attach screenshots.
+      render: shell

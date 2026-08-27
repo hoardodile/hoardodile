@@ -3,6 +3,7 @@
 	"name": "Template",
 	"description": "Template plugin — copy this directory to start your own plugin",
 	"version": "0.0.0",
+	"minAppVersion": "0.1.1",
 	"permissions": {
 		"sourceMeta": true,
 		"searchMeta": false,

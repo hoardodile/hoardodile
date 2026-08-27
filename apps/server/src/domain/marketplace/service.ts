@@ -1,7 +1,12 @@
 import { randomUUID } from "node:crypto"
-import { createReadStream } from "node:fs"
+import {
+	createReadStream,
+	mkdirSync,
+	readFileSync,
+	writeFileSync,
+} from "node:fs"
 import { mkdir, readFile, rm } from "node:fs/promises"
-import { join } from "node:path"
+import { dirname, join } from "node:path"
 import type { PluginManifest } from "@hoardodile/sdk-types"
 import { pluginManifest } from "@hoardodile/sdk-types/schema"
 import { invalid } from "@hoardodile/shared"
@@ -42,13 +47,26 @@ import {
  */
 
 const CACHE_TTL_MS = 10 * 60_000
+/**
+ * How long one repo's `releases/latest` payload is trusted. The API is
+ * the ONLY quota-hungry call (60/hour unauthenticated per IP), so the
+ * release layer is cached independently from the snapshot layer (whose
+ * registry/manifests/README fetches are raw URLs, no quota).
+ */
+const RELEASE_CACHE_TTL_MS = 60 * 60_000
+/** After a GitHub 403/429, skip the API for this long per repo. */
+const RATE_LIMIT_COOLDOWN_MS = 60 * 60_000
 const MAX_RAW_BYTES = 512 * 1024
 const MAX_API_BYTES = 2 * 1024 * 1024
 const MAX_SHA256_BYTES = 8 * 1024
+const MAX_README_BYTES = 256 * 1024
+const MAX_INTRO_BYTES = 256 * 1024
 const NOTES_MAX_LENGTH = 2_000
 const REFS = ["HEAD", "main", "master"] as const
 const API_FETCH_CONCURRENCY = 5
 const USER_AGENT = "hoardodile-plugin-marketplace"
+/** Release-asset names for the author-published intro: `intro.<locale>.md`. */
+const INTRO_ASSET_RE = /^intro\.([A-Za-z0-9-]{1,20})\.md$/
 
 /**
  * Hosts a marketplace install URL may land on. `github.com` is the
@@ -101,6 +119,12 @@ export type MarketplaceServiceDeps = {
 	readonly tmpDir: string
 	/** Byte cap for one install download (mirrors the plugin upload cap). */
 	readonly maxInstallBytes: number
+	/**
+	 * Persistent release-cache file (`local/cache/marketplace-releases.json`).
+	 * Survives server restarts so the quota-hungry GitHub API is asked at
+	 * most once per repo per hour.
+	 */
+	readonly releaseCacheFile: string
 	readonly now?: () => number
 }
 
@@ -138,10 +162,53 @@ type GithubAsset = {
 	readonly browser_download_url: string
 }
 
+/** Disk/memory shape of one repo's cached latest release payload. */
+type ReleaseCacheEntry = {
+	readonly latest?: MarketLatest
+	readonly fetchedAt?: number
+	readonly rateLimitedUntil?: number
+}
+
+/** Structural acceptance for one persisted cache entry — invalid entries
+    are skipped, a fully invalid file starts the cache empty. */
+function parseReleaseCacheEntry(value: unknown): ReleaseCacheEntry | undefined {
+	if (typeof value !== "object" || value === null) return undefined
+	const entry = value as Record<string, unknown>
+	const latest = entry.latest
+	if (
+		typeof latest === "object" &&
+		latest !== null &&
+		typeof (latest as Record<string, unknown>).version === "string" &&
+		typeof (latest as Record<string, unknown>).tag === "string"
+	) {
+		const fetchedAt =
+			typeof entry.fetchedAt === "number" ? entry.fetchedAt : undefined
+		const rateLimitedUntil =
+			typeof entry.rateLimitedUntil === "number"
+				? entry.rateLimitedUntil
+				: undefined
+		return {
+			latest: latest as unknown as MarketLatest,
+			...(fetchedAt !== undefined ? { fetchedAt } : {}),
+			...(rateLimitedUntil !== undefined ? { rateLimitedUntil } : {}),
+		}
+	}
+	// Marker-only entry ({ rateLimitedUntil }) is still loadable.
+	if (typeof entry.rateLimitedUntil !== "number") return undefined
+	return { rateLimitedUntil: entry.rateLimitedUntil }
+}
+
 export function createMarketplaceService(
 	deps: MarketplaceServiceDeps,
 ): MarketplaceService {
-	const { prefs, fetcher, installer, tmpDir, maxInstallBytes } = deps
+	const {
+		prefs,
+		fetcher,
+		installer,
+		tmpDir,
+		maxInstallBytes,
+		releaseCacheFile,
+	} = deps
 	const now = deps.now ?? Date.now
 	const limiter: ConcurrencyLimiter = createConcurrencyLimiter(
 		API_FETCH_CONCURRENCY,
@@ -152,6 +219,62 @@ export function createMarketplaceService(
 		{ readonly snapshot: MarketSnapshot; readonly fetchedAt: number }
 	>()
 	let pending: Promise<MarketSnapshot> | undefined
+
+	/** One repo's latest release payload, with its cooldown marker. */
+	const releaseCache = new Map<string, ReleaseCacheEntry>()
+	let releaseCacheLoaded = false
+	let releaseCacheDirty = false
+
+	function loadReleaseCache(): void {
+		if (releaseCacheLoaded) return
+		releaseCacheLoaded = true
+		try {
+			const parsed: unknown = JSON.parse(
+				readFileSync(releaseCacheFile, "utf-8"),
+			)
+			if (typeof parsed !== "object" || parsed === null) return
+			const entries = (parsed as { entries?: unknown }).entries
+			if (typeof entries !== "object" || entries === null) return
+			for (const [repo, value] of Object.entries(
+				entries as Record<string, unknown>,
+			)) {
+				const entry = parseReleaseCacheEntry(value)
+				if (entry !== undefined) releaseCache.set(repo, entry)
+			}
+		} catch {
+			// Missing or corrupt cache — start empty.
+		}
+	}
+
+	function persistReleaseCache(): void {
+		if (!releaseCacheDirty) return
+		releaseCacheDirty = false
+		try {
+			const entries: Record<string, unknown> = {}
+			for (const [repo, entry] of releaseCache) {
+				entries[repo] = {
+					...(entry.latest !== undefined ? { latest: entry.latest } : {}),
+					...(entry.fetchedAt !== undefined
+						? { fetchedAt: entry.fetchedAt }
+						: {}),
+					...(entry.rateLimitedUntil !== undefined
+						? { rateLimitedUntil: entry.rateLimitedUntil }
+						: {}),
+				}
+			}
+			mkdirSync(dirname(releaseCacheFile), { recursive: true })
+			writeFileSync(
+				releaseCacheFile,
+				JSON.stringify({ version: 1, entries: entries }, null, "\t"),
+			)
+		} catch {
+			// Cache persistence is best-effort — never fail the catalog.
+		}
+	}
+
+	function markReleaseCacheDirty(): void {
+		releaseCacheDirty = true
+	}
 
 	function getConfig(): { readonly registryRepo: string | null } {
 		const value = prefs.get(MARKETPLACE_PREF_KEY)?.value
@@ -185,7 +308,7 @@ export function createMarketplaceService(
 			}
 		}
 		if (pending !== undefined) return await pending
-		pending = buildAndCache(repo).finally(() => {
+		pending = buildAndCache(repo, force).finally(() => {
 			pending = undefined
 		})
 		return await pending
@@ -245,13 +368,19 @@ export function createMarketplaceService(
 		return repo
 	}
 
-	async function buildAndCache(repo: string): Promise<MarketSnapshot> {
-		const snapshot = await buildSnapshot(repo)
+	async function buildAndCache(
+		repo: string,
+		force: boolean,
+	): Promise<MarketSnapshot> {
+		const snapshot = await buildSnapshot(repo, force)
 		cache.set(repo, { snapshot, fetchedAt: snapshot.fetchedAt })
 		return snapshot
 	}
 
-	async function buildSnapshot(repo: string): Promise<MarketSnapshot> {
+	async function buildSnapshot(
+		repo: string,
+		force: boolean,
+	): Promise<MarketSnapshot> {
 		let registryText: string
 		try {
 			registryText = await fetchTextBestEffort(rawUrls(repo, "registry.json"), {
@@ -292,7 +421,7 @@ export function createMarketplaceService(
 		})
 
 		const results = await Promise.all(
-			entries.map((entry) => limiter.run(() => loadPlugin(entry))),
+			entries.map((entry) => limiter.run(() => loadPlugin(entry, force))),
 		)
 		const plugins: MarketPlugin[] = []
 		const errors: MarketError[] = []
@@ -303,6 +432,7 @@ export function createMarketplaceService(
 				plugins.push(result.plugin)
 			}
 		}
+		persistReleaseCache()
 		return {
 			registryRepo: repo,
 			fetchedAt: now(),
@@ -311,7 +441,10 @@ export function createMarketplaceService(
 		}
 	}
 
-	async function loadPlugin(repo: string): Promise<
+	async function loadPlugin(
+		repo: string,
+		force: boolean,
+	): Promise<
 		| { readonly kind: "plugin"; readonly plugin: MarketPlugin }
 		| {
 				readonly kind: "error"
@@ -367,12 +500,17 @@ export function createMarketplaceService(
 			icon: manifest.icon,
 			permissions: manifest.permissions,
 			manifest,
+			readme: await loadReadme(repo),
 		}
 
 		let latest: MarketLatest | undefined
+		let degraded = false
 		let failure: string | undefined
+		let failureKind: "rate_limited" | "failed" | "missing" | undefined
 		try {
-			latest = await loadLatest(repo, manifest)
+			const result = await loadLatest(repo, manifest, force)
+			latest = result.latest
+			degraded = result.degraded
 		} catch (err) {
 			if (err instanceof MarketFetchError && err.kind === "missing") {
 				// 404 from `releases/latest` = a manifest-bearing repo that
@@ -388,21 +526,106 @@ export function createMarketplaceService(
 				}
 			}
 			failure = fetchFailureMessage(err, "latest release")
+			failureKind = err instanceof MarketFetchError ? err.kind : "failed"
 		}
 
 		if (failure !== undefined) {
 			return {
 				kind: "plugin",
-				plugin: { ...base, state: "error", latest: undefined, error: failure },
+				plugin: {
+					...base,
+					state: "error",
+					latest: undefined,
+					error: failure,
+					...(failureKind !== undefined ? { errorKind: failureKind } : {}),
+				},
 			}
 		}
 		return {
 			kind: "plugin",
-			plugin: { ...base, state: "ok", latest, error: undefined },
+			plugin: {
+				...base,
+				state: "ok",
+				latest,
+				error: undefined,
+				...(degraded ? { rateLimited: true } : {}),
+			},
 		}
 	}
 
+	/** Cached release payload plus whether it was served degraded. */
+	type ReleaseLoadResult = {
+		readonly latest: MarketLatest
+		/** True when the rate limit forced a stale-cache reuse. */
+		readonly degraded: boolean
+	}
+
+	/**
+	 * One repo's latest release — cached per repo for an hour (and
+	 * persisted to disk) because the GitHub API call is the only
+	 * quota-hungry fetch. A rate-limited API degrades to the stale cached
+	 * payload instead of erroring (flagged as degraded); the cooldown
+	 * marker suppresses further API attempts for the hour.
+	 *
+	 * The manual "refresh now" passes `bypass = true`: it re-checks the
+	 * API regardless of the one-hour TTL (the whole catalog refreshes,
+	 * including release info), but still respects the rate-limit cooldown
+	 * and degrades to cached data on any other failure.
+	 */
 	async function loadLatest(
+		repo: string,
+		manifest: PluginManifest,
+		bypass: boolean,
+	): Promise<ReleaseLoadResult> {
+		loadReleaseCache()
+		const cached = releaseCache.get(repo)
+		if (
+			!bypass &&
+			cached?.latest !== undefined &&
+			cached.fetchedAt !== undefined &&
+			cached.rateLimitedUntil === undefined &&
+			now() - cached.fetchedAt < RELEASE_CACHE_TTL_MS
+		) {
+			return { latest: cached.latest, degraded: false }
+		}
+		const cooldownActive =
+			cached?.rateLimitedUntil !== undefined && cached.rateLimitedUntil > now()
+
+		if (!cooldownActive) {
+			try {
+				const latest = await fetchRelease(repo, manifest)
+				releaseCache.set(repo, { latest, fetchedAt: now() })
+				markReleaseCacheDirty()
+				return { latest, degraded: false }
+			} catch (err) {
+				if (err instanceof MarketFetchError && err.kind === "rate_limited") {
+					releaseCache.set(repo, {
+						...(cached !== undefined ? { ...cached } : {}),
+						rateLimitedUntil: now() + RATE_LIMIT_COOLDOWN_MS,
+					})
+					markReleaseCacheDirty()
+					if (cached?.latest !== undefined) {
+						return { latest: cached.latest, degraded: true }
+					}
+				} else if (bypass && cached?.latest !== undefined) {
+					// A forced refresh that fails keeps serving the cached
+					// payload rather than dropping the entry.
+					return { latest: cached.latest, degraded: false }
+				}
+				throw err
+			}
+		}
+
+		if (cached?.latest !== undefined) {
+			return { latest: cached.latest, degraded: true }
+		}
+		throw new MarketFetchError(
+			"rate_limited",
+			"GitHub API rate limit hit — no cached release data yet",
+		)
+	}
+
+	async function fetchRelease(
 		repo: string,
 		manifest: PluginManifest,
 	): Promise<MarketLatest> {
@@ -432,6 +655,7 @@ export function createMarketplaceService(
 			asset === undefined
 				? undefined
 				: await readSha256Sidecar(release.assets ?? [], asset.name)
+		const intro = await readIntroAssets(release.assets ?? [])
 		const latest: MarketLatest = {
 			tag: release.tag_name,
 			version,
@@ -441,8 +665,51 @@ export function createMarketplaceService(
 			assetName: asset?.name,
 			assetUrl: asset?.browser_download_url,
 			...(sidecar !== undefined ? { sha256: sidecar } : {}),
+			...(intro !== undefined ? { intro } : {}),
 		}
 		return latest
+	}
+
+	/**
+	 * The `intro.<locale>.md` release assets — the plugin's version-pinned
+	 * introduction, one markdown per locale. Best-effort per locale: a
+	 * missing/over-limit asset just drops that locale; all failures leave
+	 * `intro` unset rather than failing the catalog entry.
+	 */
+	async function readIntroAssets(
+		assets: readonly GithubAsset[],
+	): Promise<Readonly<Record<string, string>> | undefined> {
+		const intro: Record<string, string> = {}
+		for (const asset of assets) {
+			const match = asset.name.match(INTRO_ASSET_RE)
+			if (match === null) continue
+			try {
+				intro[match[1]!] = await fetchTextBestEffort(
+					[asset.browser_download_url],
+					{
+						maxBytes: MAX_INTRO_BYTES,
+						headers: { "User-Agent": USER_AGENT },
+					},
+				)
+			} catch {
+				// Missing or over-limit intro — skip just this locale.
+			}
+		}
+		return Object.keys(intro).length === 0 ? undefined : intro
+	}
+
+	/**
+	 * The repo-root `README.md` — best-effort: a missing or unreadable
+	 * README never fails the catalog entry.
+	 */
+	async function loadReadme(repo: string): Promise<string | undefined> {
+		try {
+			return await fetchTextBestEffort(rawUrls(repo, "README.md"), {
+				maxBytes: MAX_README_BYTES,
+			})
+		} catch {
+			return undefined
+		}
 	}
 
 	/**
@@ -595,7 +862,7 @@ function classifyFetchError(err: unknown): MarketFetchError {
 
 function fetchFailureMessage(err: unknown, what: string): string {
 	if (err instanceof MarketFetchError && err.kind === "rate_limited") {
-		return `GitHub API rate limit hit while fetching ${what} — refresh later`
+		return `GitHub API rate limit hit while fetching ${what} — the unauthenticated quota resets hourly; try again later`
 	}
 	if (err instanceof MarketFetchError && err.kind === "missing") {
 		return `not found (${what})`

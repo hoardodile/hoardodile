@@ -50,3 +50,25 @@ html {
 	animation-duration: var(--duration-4);
 	animation-timing-function: var(--ease-standard);
 }
+
+/* Marketplace card error strip: the text scrolls within its line when it
+   is longer than the card — the track carries two copies and slides by
+   half its width for a seamless loop. */
+.market-ticker-track {
+	display: inline-flex;
+	width: max-content;
+	animation: market-ticker 14s linear infinite;
+}
+@keyframes market-ticker {
+	from {
+		transform: translateX(0);
+	}
+	to {
+		transform: translateX(-50%);
+	}
+}
+@media (prefers-reduced-motion: reduce) {
+	.market-ticker-track {
+		animation: none;
+	}
+}

@@ -50,6 +50,14 @@ server uses — the exact production execution path.
 - hoardodile **≥ 0.1.1** — the built-in plugin marketplace
   (**Settings → Marketplace**) and the batched asset-download API
   (`download([…])`) when the manifest declares `"download": true`.
+  The marketplace's Intro/README tabs and release intro assets are read by
+  newer builds; older builds still list and install the plugin normally.
+- `"minAppVersion"` in `manifest.json` declares the lowest hoardodile
+  release this plugin runs on. Hosts below it refuse to install or update
+  the plugin (the marketplace gates the install/update entries and zip
+  uploads are blocked with an explanation), so bump it only when the
+  plugin really needs a newer app. Omit it for plugins that support every
+  release.
 - The plugin's version is independent of the hoardodile release
   version; bump it on user-visible changes.
 - Dev loop: Node ≥ 24, pnpm 11.
@@ -79,3 +87,15 @@ up with a "no release" state.
 
 Local installs (zip upload in **Settings → Plugins**) still work for
 private packages.
+
+## Publishing an introduction
+
+The marketplace detail view shows a per-release **Intro** tab. Ship one
+markdown file per supported language at the repository root, named
+`intro.<locale>.md` (e.g. `intro.en.md`, `intro.zh-CN.md`) — `release.yml`
+uploads them alongside the zip, so **each release carries its own
+introduction** and every version shows independent notes.
+
+The app resolves the intro for the user's UI language (exact locale → base
+language → `en` → the only shipped language), falling back to the release
+notes when a release ships none.

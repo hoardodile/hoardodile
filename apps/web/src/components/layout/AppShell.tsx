@@ -33,6 +33,7 @@ import { charListCardsQueryOptions } from "@/features/char/api"
 import { commentListQueryOptions } from "@/features/comments/api"
 import { docTreeQueryOptions } from "@/features/doc/api"
 import { useDocTheme } from "@/features/doc/hooks/useDocPrefs"
+import { useMarketplaceUpdateCount } from "@/features/marketplace/useMarketplaceUpdateCount"
 import { resListCardsQueryOptions } from "@/features/res/api"
 import { ImageSearchButton } from "@/features/search/components/ImageSearchButton"
 import { syncSummaryQueryOptions } from "@/features/sync/api"
@@ -313,6 +314,7 @@ function SidebarContent(props: SidebarContentProps) {
 	const navigate = useNavigate()
 	const slotClaimed = useSidebarSlotClaimed()
 	const syncAlert = useSyncAlert()
+	const marketplaceUpdates = useMarketplaceUpdateCount()
 	// Claimed slot (e.g. the documents tree): toggle between the module and
 	// the main menu. Unclaimed: the main menu, as before.
 	const moduleView = slotClaimed && props.moduleVisible
@@ -439,6 +441,8 @@ function SidebarContent(props: SidebarContentProps) {
 								pathname: props.pathname,
 								to: "/settings/marketplace",
 							})}
+							alert={marketplaceUpdates > 0}
+							alertLabel={t("appShell.nav.marketplaceUpdatesBadge")}
 							onNavigate={props.onNavigate}
 						/>
 						<NavRow
@@ -638,9 +642,12 @@ type NavRowProps = {
 	readonly count?: number
 	/**
 	 * When true, renders a small warning dot at the row's end (used by the
-	 * settings row while a sync reminder is due).
+	 * settings row while a sync reminder is due, and the marketplace row
+	 * while plugin updates are available).
 	 */
 	readonly alert?: boolean
+	/** Screen-reader name for the warning dot; defaults to the sync badge. */
+	readonly alertLabel?: string
 	readonly onNavigate?: () => void
 }
 
@@ -660,7 +667,7 @@ function NavRow(props: NavRowProps) {
 				<span
 					className="ml-auto size-1.5 shrink-0 rounded-full bg-destructive"
 					role="img"
-					aria-label={t("appShell.syncDueBadge")}
+					aria-label={props.alertLabel ?? t("appShell.syncDueBadge")}
 				/>
 			) : null}
 			{props.count !== undefined && (

@@ -39,5 +39,8 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          zip=$(ls release/*.zip)
-          gh release create "$GITHUB_REF_NAME" "$zip" "$zip.sha256" --generate-notes
+          files=$(ls release/*)
+          if ls intro.*.md >/dev/null 2>&1; then
+            files="$files intro.*.md"
+          fi
+          gh release create "$GITHUB_REF_NAME" $files --generate-notes

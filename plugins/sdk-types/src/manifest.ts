@@ -200,6 +200,13 @@ export const pluginManifest = z.object({
 	icon: iconRef.optional(),
 	/** Semantic plugin version; shown to users on the plugin card. */
 	version: z.string().min(1),
+	/**
+	 * Minimum hoardodile app version this plugin runs on (e.g. `"0.1.1"`).
+	 * Optional: absent means compatible with every app version. Hosts below
+	 * the minimum refuse to install/update the plugin — the marketplace
+	 * hides the install/update entries and the zip upload blocks it.
+	 */
+	minAppVersion: z.string().min(1).optional(),
 	/** Declared capabilities (see {@link pluginPermissions}). */
 	permissions: pluginPermissions,
 	/**

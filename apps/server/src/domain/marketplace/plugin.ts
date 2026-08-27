@@ -1,3 +1,4 @@
+import { join } from "node:path"
 import type { FastifyInstance, FastifyPluginAsync } from "fastify"
 import fp from "fastify-plugin"
 import "src/infra/fastify-augment.ts"
@@ -13,6 +14,13 @@ async function marketplacePluginImpl(app: FastifyInstance): Promise<void> {
 			rescan: () => app.pluginService.rescan(),
 			tmpDir: app.paths.local.tmp(),
 			maxInstallBytes: app.env.PLUGIN_UPLOAD_MAX_BYTES,
+			// Under `local/cache/` so it clears with the cache and
+			// survives server restarts — keeps the quota-hungry API at
+			// one call per repo per hour.
+			releaseCacheFile: join(
+				app.paths.local.cache(),
+				"marketplace-releases.json",
+			),
 		}),
 	)
 }

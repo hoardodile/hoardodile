@@ -61,6 +61,12 @@ export type MarketLatest = {
 	readonly assetUrl?: string
 	/** Contents of the `<asset>.sha256` sidecar, when the release ships one. */
 	readonly sha256?: string
+	/**
+	 * The release's `intro.<locale>.md` assets — the author-published,
+	 * version-pinned plugin introduction, locale → markdown. Absent when
+	 * the release ships none.
+	 */
+	readonly intro?: Readonly<Record<string, string>>
 }
 
 export type MarketPlugin = {
@@ -79,10 +85,23 @@ export type MarketPlugin = {
 	 * like the plugins page.
 	 */
 	readonly manifest: PluginManifest
+	/** The repo-root `README.md` (markdown), when the repo ships one. */
+	readonly readme?: string
 	readonly state: "ok" | "no_release" | "error"
 	readonly latest: MarketLatest | undefined
 	/** Human-readable reason when `state` is `error`. */
 	readonly error: string | undefined
+	/**
+	 * Machine-readable error classification when `state` is `error` — the
+	 * UI picks friendly copy off it instead of the raw message.
+	 */
+	readonly errorKind?: "rate_limited" | "failed" | "missing"
+	/**
+	 * True when the shown release payload was served from the cache after
+	 * the GitHub API rate limit hit — `state` stays `ok` (data is usable)
+	 * but may be stale; the UI flags it on the card.
+	 */
+	readonly rateLimited?: boolean
 }
 
 export type MarketError = {
