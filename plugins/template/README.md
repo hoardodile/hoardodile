@@ -93,9 +93,12 @@ private packages.
 
 The marketplace detail view shows a per-release **Intro** tab. Ship one
 markdown file per supported language at the repository root, named
-`intro.<locale>.md` (e.g. `intro.en.md`, `intro.zh-CN.md`) — `release.yml`
+`intro.<locale>.md` (e.g. `intro.en.md`, `intro.zh.md`) — `release.yml`
 uploads them alongside the zip, so **each release carries its own
-introduction** and every version shows independent notes.
+introduction** and every version shows independent notes. Use the app's
+supported language codes as file names (`en`, `zh`, `ja`, `de`, `es`) —
+a region-coded name like `intro.zh-CN.md` only matches a UI language
+resolved to that exact code, so `intro.zh.md` is what Chinese users see.
 
 The app resolves the intro for the user's UI language (exact locale → base
 language → `en` → the only shipped language); the release body always shows

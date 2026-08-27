@@ -5,11 +5,12 @@
  * would ship to every new plugin.
  *
  *   node scripts/sync-template.mjs          # copy plugins/template → src/template
- *   node scripts/sync-template.mjs --check  # exit 1 on drift (CI)
+ *   node scripts/sync-template.mjs --check  # read-only drift check, exit 1 on drift (CI)
  *
  * dist/, node_modules/ and other build artifacts never enter the copy.
  */
-import { cpSync, readdirSync, rmSync } from "node:fs"
+import { createHash } from "node:crypto"
+import { cpSync, readdirSync, readFileSync, rmSync } from "node:fs"
 import { dirname, join, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 
@@ -30,6 +31,19 @@ function walk(dir) {
 	return out
 }
 
+/** Relative path → sha256, for every file below `dir` (artifacts skipped). */
+function tree(dir) {
+	const files = new Map()
+	for (const file of walk(dir)) {
+		const rel = file.slice(dir.length + 1).replaceAll("\\", "/")
+		files.set(
+			rel,
+			createHash("sha256").update(readFileSync(file)).digest("hex"),
+		)
+	}
+	return files
+}
+
 function sync() {
 	rmSync(EMBEDDED, { recursive: true, force: true })
 	cpSync(SRC_TEMPLATE, EMBEDDED, {
@@ -40,17 +54,20 @@ function sync() {
 
 const isCheck = process.argv.includes("--check")
 if (isCheck) {
-	sync()
-	const embeddedFiles = walk(EMBEDDED).map((f) =>
-		f.slice(EMBEDDED.length + 1).replaceAll("\\", "/"),
-	)
-	const sourceFiles = walk(SRC_TEMPLATE)
-		.map((f) => f.slice(SRC_TEMPLATE.length + 1).replaceAll("\\", "/"))
-		.filter((f) => !SKIP.has(f.split("/")[0] ?? ""))
-	const drift = [
-		...embeddedFiles.filter((f) => !sourceFiles.includes(f)),
-		...sourceFiles.filter((f) => !embeddedFiles.includes(f)),
-	]
+	// Read-only: compare the committed copy against the source without
+	// touching it, so content drift fails CI instead of being silently
+	// clobbered (the old check ran sync() first and compared file names).
+	const source = tree(SRC_TEMPLATE)
+	const embedded = tree(EMBEDDED)
+	const drift = []
+	for (const rel of [...source.keys()].sort()) {
+		if (!embedded.has(rel)) drift.push(`missing: ${rel}`)
+		else if (embedded.get(rel) !== source.get(rel))
+			drift.push(`changed: ${rel}`)
+	}
+	for (const rel of [...embedded.keys()].sort()) {
+		if (!source.has(rel)) drift.push(`extra: ${rel}`)
+	}
 	if (drift.length > 0) {
 		console.error(
 			`[create-plugin] template drift detected:\n  ${drift.join("\n  ")}\nRun \`node scripts/sync-template.mjs\` and commit the copy.`,
