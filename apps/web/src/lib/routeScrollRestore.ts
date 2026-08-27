@@ -10,7 +10,10 @@
  * Routes with their own position mechanisms — the document reader
  * (`/documents/$id`, persisted per-doc) and plugin readers
  * (`/resources/$id`, plugin-managed via `pluginState`) — are excluded so
- * the two mechanisms never fight over the same container.
+ * the two mechanisms never fight over the same container. The
+ * scroll-restore hook still resets the container to the top when
+ * navigating into these routes: they inherit their own *position* logic,
+ * never the outgoing page's raw scrollTop.
  */
 
 const SESSION_PREFIX = "hoardodile.scroll"

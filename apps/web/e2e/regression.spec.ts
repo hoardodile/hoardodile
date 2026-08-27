@@ -8,7 +8,8 @@ import {
 } from "@playwright/test"
 import yauzl from "yauzl"
 import { login } from "./helpers"
-import { apiLogin } from "./serverApi"
+import { apiLogin, createResource, uploadOrderedFile } from "./serverApi"
+import { solidPng } from "./testArchive"
 
 /**
  * Regression coverage for the manual-test-unfriendly edge cases introduced
@@ -29,6 +30,8 @@ const LOGS_DIR = resolve(
 	"local",
 	"logs",
 )
+// The preinstalled gallery plugin (see playwright.config.ts DEV_PLUGIN_PATHS).
+const GALLERY_PLUGIN_ID = "665cfbdd-1db6-48f5-9d53-1008b8cb84c3"
 
 /** Read a zip buffer into entry name → bytes (the yauzl engine, same as the server). */
 function readZipEntries(buffer: Buffer): Promise<Map<string, Buffer>> {
@@ -82,6 +85,26 @@ test.describe("scroll restoration (real browser)", () => {
 			)
 			// Sequenced batches: the parallel inserts share one connection.
 			await new Promise((done) => setTimeout(done, 250))
+		}
+	}
+
+	/** Seed `count` gallery image resources (each its own staged file). */
+	async function seedResources(request: APIRequestContext, count: number) {
+		const cookie = await apiLogin(request)
+		for (let i = 0; i < count; i += 1) {
+			const fileId = await uploadOrderedFile(
+				request,
+				cookie,
+				solidPng(4, 4, [220, 30, 30]),
+				"pixel.png",
+				"image/png",
+			)
+			await createResource(request, cookie, {
+				files: [fileId],
+				names: ["pixel.png"],
+				name: `e2e-res-detail-${i}`,
+				contentPluginId: GALLERY_PLUGIN_ID,
+			})
 		}
 	}
 
@@ -175,6 +198,33 @@ test.describe("scroll restoration (real browser)", () => {
 		await expect(page).toHaveURL(/\/characters$/)
 		await page.waitForTimeout(400)
 		await expect.poll(() => scrollTopOf(page)).toBe(deep)
+	})
+
+	test("pushing from the resources grid to a resource detail resets the scroll", async ({
+		page,
+		request,
+	}) => {
+		test.setTimeout(180_000)
+		await seedResources(request, 40)
+		await login(page)
+		await page.goto("/resources?size=40")
+		await expect(page.locator("[data-resource-card-id]")).toHaveCount(40, {
+			timeout: 30_000,
+		})
+
+		// A deep scroll whose position must not leak into the detail page.
+		const deep = await scrollTo(page, 1500)
+		expect(deep).toBeGreaterThan(0)
+
+		await page.locator('[data-testid^="resource-open-"]').last().click()
+		await expect(page).toHaveURL(/\/resources\/[^?]+/)
+		await expect(page.getByTestId("resource-detail-title")).toBeVisible({
+			timeout: 30_000,
+		})
+		// The detail route is scroll-untracked (the plugin owns its own
+		// position): it must still start at the top instead of inheriting
+		// the grid's scrollTop.
+		await expect.poll(() => scrollTopOf(page), { timeout: 10_000 }).toBe(0)
 	})
 })
 

@@ -49,6 +49,12 @@ const RESTORE_HARD_CAP_FRAMES = 300
  * treated like back so a refresh or a desktop reopen lands where the user
  * left off (the `pagehide` flush covers the leave).
  *
+ * Untracked routes are never *restored* here (their managers own the
+ * position), but any arrival on a different route key still resets the
+ * container to the top — a fresh page must not inherit the outgoing
+ * page's scrollTop. Each manager then aligns its own position on top of
+ * that reset.
+ *
  * The position of the outgoing route is flushed from `onBeforeLoad`, i.e.
  * before any pending skeleton replaces the content and the browser clamps
  * the container's `scrollTop` to the skeleton height — the old
@@ -272,6 +278,14 @@ export function useRouteScrollRestore() {
 			leaving = false
 			if (!next.tracked) {
 				detach()
+				// Untracked routes own their position (the doc reader rests
+				// its saved anchor, the plugin receives its anchor jump),
+				// but the shared container must not pass the outgoing
+				// page's offset on: any change of route key resets it once,
+				// and the route's own manager re-aligns on top of that
+				// reset. First mount and same-key arrivals leave the
+				// container alone.
+				if (prev !== undefined && prev.key !== next.key) resetToTop()
 				return
 			}
 			attach()

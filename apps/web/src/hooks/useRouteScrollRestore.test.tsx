@@ -409,7 +409,10 @@ describe("useRouteScrollRestore", () => {
 		)
 	})
 
-	it("does not restore routes that manage their own position", async () => {
+	it("resets to the top when navigating to a route that manages its own position", async () => {
+		// The route's own manager (doc reader, plugin reader) owns the
+		// position, but the container must not inherit the outgoing page's
+		// scrollTop — a fresh arrival starts at the top.
 		const { fixture, router } = renderWithHook()
 		await flushFrames()
 		fixture.scrollTo.mockClear()
@@ -419,6 +422,30 @@ describe("useRouteScrollRestore", () => {
 				params: { id: "doc-1" },
 			})
 		})
-		expect(fixture.scrollTo).not.toHaveBeenCalled()
+		expect(fixture.scrollTo).toHaveBeenLastCalledWith({
+			top: 0,
+			behavior: "instant",
+		})
+	})
+
+	it("resets to the top when returning back to a route that manages its own position", async () => {
+		const { fixture, router } = renderWithHook()
+		await flushFrames()
+		await act(async () => {
+			await router.navigate({
+				to: "/documents/$id",
+				params: { id: "doc-1" },
+			})
+		})
+		// Leave the untracked route for a tracked one, then come back.
+		await act(async () => {
+			await router.navigate({ to: "/documents" })
+		})
+		fixture.scrollTo.mockClear()
+		await traverseHistory(router, -1)
+		expect(fixture.scrollTo).toHaveBeenLastCalledWith({
+			top: 0,
+			behavior: "instant",
+		})
 	})
 })

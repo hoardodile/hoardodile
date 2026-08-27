@@ -80,7 +80,8 @@ export function AppShell(props: AppShellProps) {
 
 	// Restore the app scroll container's position on back / forward
 	// navigation (sessionStorage, per route); document and plugin reader
-	// pages manage their own positions and are skipped inside.
+	// pages manage their own positions, but arriving at one still resets
+	// the container to the top so no page inherits the outgoing scroll.
 	useRouteScrollRestore()
 
 	// A claimed sidebar slot (e.g. the documents tree) opens in module view;

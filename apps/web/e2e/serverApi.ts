@@ -30,6 +30,40 @@ export async function apiLogin(request: APIRequestContext): Promise<string> {
 	return first
 }
 
+/** Stages a single file via the ordered upload endpoint; returns the fileId. */
+export async function uploadOrderedFile(
+	request: APIRequestContext,
+	cookie: string,
+	fileBuffer: Buffer,
+	filename: string,
+	mimeType: string,
+): Promise<string> {
+	const res = await request.post(`${SERVER}/api/uploads/ordered`, {
+		headers: { cookie },
+		multipart: {
+			file: {
+				name: filename,
+				mimeType,
+				buffer: fileBuffer,
+			},
+		},
+	})
+	if (!res.ok()) {
+		throw new Error(
+			`ordered upload failed: ${res.status()} ${await res.text()}`,
+		)
+	}
+	const body: unknown = await res.json()
+	if (body === null || typeof body !== "object" || !("fileId" in body)) {
+		throw new Error("ordered upload response missing fileId")
+	}
+	const { fileId } = body
+	if (typeof fileId !== "string") {
+		throw new Error("ordered upload fileId was not a string")
+	}
+	return fileId
+}
+
 /** Stages a zip via the archive upload endpoint; returns the fileId. */
 export async function uploadArchive(
 	request: APIRequestContext,
@@ -64,10 +98,12 @@ export async function uploadArchive(
 }
 
 export type CreateResourceInput = {
-	readonly archiveFileId: string
 	readonly name: string
 	readonly contentPluginId: string
-}
+} & (
+	| { readonly archiveFileId: string }
+	| { readonly files: readonly string[]; readonly names?: readonly string[] }
+)
 
 /** Creates a resource from a staged archive; returns the resource id. */
 export async function createResource(
