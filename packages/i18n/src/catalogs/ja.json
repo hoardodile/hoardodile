@@ -2126,7 +2126,7 @@
 		}
 	},
 	"sync": {
-		"pageHint": "デバイスごと: エンティティ数、コンテンツサイズ、ストレージ容量を記録 · 最新2つのスナップショットを保持",
+		"pageHint": "デバイスごと: エンティティ数、コンテンツサイズ、ストレージ容量を記録 · ページを開くと前回の同期からの変化を確認できます",
 		"status": {
 			"allUpToDate": "すべてのデバイスが最新です",
 			"dueCount_one": "同期期限のデバイス: {{total}}台中 {{count}}台",
@@ -2173,14 +2173,17 @@
 			"editTitle": "デバイスを編集",
 			"edit": "編集",
 			"save": "保存",
-			"editPending": "保存中…"
+			"editPending": "保存中…",
+			"liveHint": "現在の状態 · 前回の同期からの変化"
 		},
 		"fields": {
 			"resources": "リソース",
 			"characters": "キャラクター",
 			"documents": "ドキュメント",
+			"folders": "フォルダー",
 			"messages": "メッセージ",
 			"tags": "タグ",
+			"collections": "コレクション",
 			"trash": "ごみ箱",
 			"contentSize": "コンテンツサイズ",
 			"storage": "ストレージ",

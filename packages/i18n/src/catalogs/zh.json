@@ -2126,7 +2126,7 @@
 		}
 	},
 	"sync": {
-		"pageHint": "每台设备：记录实体数量、内容大小与存储体积 · 保留最近两次快照",
+		"pageHint": "每台设备：记录实体数量、内容大小与存储体积 · 打开页面即可查看自上次同步以来的变化",
 		"status": {
 			"allUpToDate": "所有设备已是最新",
 			"dueCount_one": "{{total}} 台中 {{count}} 台待同步",
@@ -2173,14 +2173,17 @@
 			"editTitle": "编辑设备",
 			"edit": "编辑",
 			"save": "保存",
-			"editPending": "保存中…"
+			"editPending": "保存中…",
+			"liveHint": "当前状态 · 相比上次同步的变化"
 		},
 		"fields": {
 			"resources": "资源",
 			"characters": "角色",
 			"documents": "文档",
+			"folders": "文件夹",
 			"messages": "留言",
 			"tags": "标签",
+			"collections": "收藏",
 			"trash": "回收站",
 			"contentSize": "内容大小",
 			"storage": "存储体积",

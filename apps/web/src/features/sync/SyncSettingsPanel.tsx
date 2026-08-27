@@ -1,6 +1,7 @@
 import type {
 	SyncDevice,
 	SyncDeviceSummary,
+	SyncLiveState,
 	SyncRecord,
 } from "@hoardodile/schemas"
 import {
@@ -39,6 +40,7 @@ import {
 	deleteSyncDeviceMutation,
 	invalidateSync,
 	recordSyncMutation,
+	syncCurrentQueryOptions,
 	syncSummaryQueryOptions,
 	updateSyncDeviceMutation,
 } from "./api"
@@ -47,8 +49,10 @@ type StateKey =
 	| "resourceCount"
 	| "characterCount"
 	| "documentCount"
+	| "folderCount"
 	| "commentCount"
 	| "tagCount"
+	| "collectionCount"
 	| "trashCount"
 	| "storageBytes"
 	| "resourceBytes"
@@ -60,8 +64,10 @@ type StateField = {
 		| "resources"
 		| "characters"
 		| "documents"
+		| "folders"
 		| "messages"
 		| "tags"
+		| "collections"
 		| "trash"
 		| "contentSize"
 		| "storage"
@@ -73,8 +79,10 @@ const STATE_FIELDS: readonly StateField[] = [
 	{ key: "resourceCount", labelKey: "resources", bytes: false },
 	{ key: "characterCount", labelKey: "characters", bytes: false },
 	{ key: "documentCount", labelKey: "documents", bytes: false },
+	{ key: "folderCount", labelKey: "folders", bytes: false },
 	{ key: "commentCount", labelKey: "messages", bytes: false },
 	{ key: "tagCount", labelKey: "tags", bytes: false },
+	{ key: "collectionCount", labelKey: "collections", bytes: false },
 	{ key: "trashCount", labelKey: "trash", bytes: false },
 	{ key: "resourceBytes", labelKey: "contentSize", bytes: true },
 	{ key: "storageBytes", labelKey: "storage", bytes: true },
@@ -206,9 +214,10 @@ export function SyncPageActions() {
 /**
  * Sync-device settings: the reminder interval as its own compact card,
  * then one floating card per device with its snapshot states and
- * per-device reminder. Each card shows the latest snapshot and what
- * changed since the previous one. The feature only stores records — it
- * never talks to any sync software.
+ * per-device reminder. Each card diffs the live library state against
+ * the device's last snapshot, so every visit shows what changed since
+ * the last sync — until the next `record` call resets the baseline. The
+ * feature only stores records — it never talks to any sync software.
  */
 export function SyncSettingsPanel() {
 	const { t } = useTranslation()
@@ -219,7 +228,9 @@ export function SyncSettingsPanel() {
 		numberCodec(),
 	)
 	const summaryQuery = useQuery(syncSummaryQueryOptions())
+	const currentQuery = useQuery(syncCurrentQueryOptions())
 	const devices = summaryQuery.data?.devices
+	const current = currentQuery.data
 
 	const [editing, setEditing] = useState<SyncDevice | null>(null)
 	const [editName, setEditName] = useState("")
@@ -308,6 +319,7 @@ export function SyncSettingsPanel() {
 					<SyncDeviceCard
 						key={entry.device.id}
 						entry={entry}
+						current={current}
 						timeZone={timeZone}
 						recordPending={recordMut.isPending}
 						onRecord={() => recordMut.mutate({ deviceId: entry.device.id })}
@@ -406,12 +418,13 @@ export function SyncSettingsPanel() {
 /**
  * One sync device — a floating card, the Archive detail card's anatomy:
  * an icon tile + name header, health and management on the right, the
- * snapshot states as a two-column table of changes since the previous
- * sync. Deltas read by direction: success when the state grew, danger
- * when it shrank.
+ * live library state as a two-column table of deltas against the last
+ * snapshot. Deltas read by direction: success when the state grew,
+ * danger when it shrank.
  */
 function SyncDeviceCard(props: {
 	readonly entry: SyncDeviceSummary
+	readonly current: SyncLiveState | undefined
 	readonly timeZone: string
 	readonly recordPending: boolean
 	readonly onRecord: () => void
@@ -419,15 +432,16 @@ function SyncDeviceCard(props: {
 	readonly onDelete: () => void
 }) {
 	const { t } = useTranslation()
-	const { entry, timeZone, recordPending, onRecord, onEdit, onDelete } = props
 	const {
-		device,
-		latestRecord,
-		previousRecord,
-		lastRecordedAt,
-		elapsedDays,
-		due,
-	} = entry
+		entry,
+		current,
+		timeZone,
+		recordPending,
+		onRecord,
+		onEdit,
+		onDelete,
+	} = props
+	const { device, latestRecord, lastRecordedAt, elapsedDays, due } = entry
 
 	return (
 		<div
@@ -482,8 +496,8 @@ function SyncDeviceCard(props: {
 				</div>
 			</div>
 
-			{latestRecord !== undefined ? (
-				<SnapshotStats record={latestRecord} previous={previousRecord} />
+			{current !== undefined ? (
+				<SnapshotStats current={current} baseline={latestRecord} />
 			) : null}
 
 			<div className="mt-4 flex justify-end">
@@ -571,51 +585,60 @@ function LastSyncedLabel(props: {
 }
 
 /**
- * Latest snapshot with per-state deltas against the previous one. Rows
- * with no change drop the delta; the very first snapshot carries a
- * "first sync" marker instead.
+ * Live library state with per-field deltas against the device's last
+ * snapshot. Fields with no change drop the delta; a device that never
+ * recorded carries a "first sync" marker on every row instead — the
+ * first `record` establishes the baseline.
  */
 function SnapshotStats(props: {
-	readonly record: SyncRecord
-	readonly previous: SyncRecord | undefined
+	readonly current: SyncLiveState
+	readonly baseline: SyncRecord | undefined
 }) {
 	const { t } = useTranslation()
-	const { record, previous } = props
+	const { current, baseline } = props
 	return (
-		<ul className="mt-4 grid grid-cols-2 gap-x-8">
-			{STATE_FIELDS.map((field) => {
-				const { key, labelKey, bytes } = field
-				const current = record[key]
-				const prev = previous?.[key]
-				const delta = prev === undefined ? undefined : current - prev
-				return (
-					<li
-						key={key}
-						className="flex min-h-nav items-center justify-between gap-3 border-t border-border px-1 text-ui"
-						aria-label={t(`sync.fields.${labelKey}`)}
-					>
-						<span className="text-muted-foreground">
-							{t(`sync.fields.${labelKey}`)}
-						</span>
-						<span className="flex items-center gap-2 tabular-nums">
-							{formatStateValue(bytes, current)}
-							{delta === undefined ? (
-								<MetaChip>{t("sync.fields.firstRecord")}</MetaChip>
-							) : delta === 0 ? null : (
-								<span
-									className={
-										delta > 0 ? "text-emerald-600" : "text-destructive"
-									}
-									data-testid={`sync-delta-${key}`}
-								>
-									{formatDelta(bytes, delta)}
-								</span>
-							)}
-						</span>
-					</li>
-				)
-			})}
-		</ul>
+		<>
+			<p
+				className="mt-4 text-xs text-muted-foreground"
+				data-testid="sync-live-hint"
+			>
+				{t("sync.devices.liveHint")}
+			</p>
+			<ul className="mt-2 grid grid-cols-2 gap-x-8">
+				{STATE_FIELDS.map((field) => {
+					const { key, labelKey, bytes } = field
+					const value = current[key]
+					const prev = baseline?.[key]
+					const delta = prev === undefined ? undefined : value - prev
+					return (
+						<li
+							key={key}
+							className="flex min-h-nav items-center justify-between gap-3 border-t border-border px-1 text-ui"
+							aria-label={t(`sync.fields.${labelKey}`)}
+						>
+							<span className="text-muted-foreground">
+								{t(`sync.fields.${labelKey}`)}
+							</span>
+							<span className="flex items-center gap-2 tabular-nums">
+								{formatStateValue(bytes, value)}
+								{delta === undefined ? (
+									<MetaChip>{t("sync.fields.firstRecord")}</MetaChip>
+								) : delta === 0 ? null : (
+									<span
+										className={
+											delta > 0 ? "text-emerald-600" : "text-destructive"
+										}
+										data-testid={`sync-delta-${key}`}
+									>
+										{formatDelta(bytes, delta)}
+									</span>
+								)}
+							</span>
+						</li>
+					)
+				})}
+			</ul>
+		</>
 	)
 }
 

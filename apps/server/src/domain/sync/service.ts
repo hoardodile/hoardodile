@@ -3,6 +3,7 @@ import type {
 	SyncDeviceCreateInput,
 	SyncDeviceSummary,
 	SyncDeviceUpdateInput,
+	SyncLiveState,
 	SyncRecord,
 	SyncRecordCreateInput,
 	SyncSummary,
@@ -13,6 +14,7 @@ import type { SQL } from "drizzle-orm"
 import { and, count, eq, isNotNull, isNull } from "drizzle-orm"
 import type { AnySQLiteTable } from "drizzle-orm/sqlite-core"
 import { characters } from "src/domain/char/schema.ts"
+import { resCollections } from "src/domain/col/schema.ts"
 import { comments } from "src/domain/comment/schema.ts"
 import { documents } from "src/domain/doc/schema.ts"
 import { buildAsyncPrefRepository } from "src/domain/prefs/repo.ts"
@@ -45,10 +47,15 @@ export type SyncService = {
 	deviceRemove(id: string): Promise<void>
 	/**
 	 * Capture the current state (entity counts + storage volume) as a
-	 * snapshot for a device. The previous snapshot is kept as
-	 * `previousRecord` for the change view; older snapshots are pruned.
+	 * snapshot for a device, pruned down to this single baseline row.
 	 */
 	recordCreate(input: SyncRecordCreateInput): Promise<SyncRecord>
+	/**
+	 * The live library state right now, in the same shape as a recorded
+	 * snapshot — the service's summary consumers diff it against each
+	 * device's `latestRecord`.
+	 */
+	current(): Promise<SyncLiveState>
 	summary(): Promise<SyncSummary>
 }
 
@@ -56,9 +63,10 @@ export type SyncService = {
  * Device-sync service: users add target devices ("this computer",
  * "backup drive", ...) and capture an automatic snapshot of the current
  * library state per device. Creating a device records the first snapshot
- * immediately; only the two newest snapshots are kept so the UI can show
- * what changed since the last sync. The feature never touches any real
- * sync software; the interval pref is a plain number.
+ * immediately; each device keeps only its newest snapshot, which serves
+ * as the baseline for the live change view (the UI diffs the live state
+ * against it). The feature never touches any real sync software; the
+ * interval pref is a plain number.
  */
 export function createSyncService(deps: SyncServiceDeps): SyncService {
 	const devices = buildSyncDeviceRepository(deps.db)
@@ -131,34 +139,55 @@ export function createSyncService(deps: SyncServiceDeps): SyncService {
 		return captureSnapshot(input.deviceId)
 	}
 
-	async function captureSnapshot(deviceId: string): Promise<SyncRecord> {
-		const previous = records.latest(deviceId)
+	/**
+	 * Compute the observed state server-side: one round of entity counts
+	 * plus the (60s-cached) storage overview. The same values land in a
+	 * snapshot and in {@link current}; `tableCounts` uses existing
+	 * deleted-at/kind indexes, so this stays cheap enough to run on the
+	 * sync page's poll.
+	 */
+	async function liveState(): Promise<SyncLiveState> {
 		const [
 			resourceCount,
 			characterCount,
 			documentCount,
+			folderCount,
 			commentCount,
 			tagCount,
+			collectionCount,
 			trashCount,
 		] = tableCounts()
 		const overview = await deps.storageService.getOverview()
+		return {
+			resourceCount,
+			characterCount,
+			documentCount,
+			folderCount,
+			commentCount,
+			tagCount,
+			collectionCount,
+			trashCount,
+			storageBytes: overview.usedBytes,
+			resourceBytes: overview.resources.totalBytes,
+		}
+	}
+
+	function current(): Promise<SyncLiveState> {
+		return liveState()
+	}
+
+	async function captureSnapshot(deviceId: string): Promise<SyncRecord> {
+		const state = await liveState()
 		const ts = now()
 		const id = newId()
-		// Keep only the latest snapshot (it becomes `previousRecord`), then
-		// append the new one — a device never holds more than two snapshots.
-		records.keepOnly(deviceId, previous?.id)
+		// Delete the previous baseline, then append the new one — a device
+		// never holds more than one snapshot.
+		records.keepOnly(deviceId, undefined)
 		records.insert({
 			id,
 			deviceId,
 			recordedAt: ts,
-			resourceCount,
-			characterCount,
-			documentCount,
-			commentCount,
-			tagCount,
-			trashCount,
-			storageBytes: overview.usedBytes,
-			resourceBytes: overview.resources.totalBytes,
+			...state,
 			createdAt: ts,
 		})
 		const row = records.latest(deviceId)
@@ -170,7 +199,16 @@ export function createSyncService(deps: SyncServiceDeps): SyncService {
 		return rowToSyncRecord(row)
 	}
 
-	function tableCounts(): [number, number, number, number, number, number] {
+	function tableCounts(): [
+		number,
+		number,
+		number,
+		number,
+		number,
+		number,
+		number,
+		number,
+	] {
 		return [
 			tableCount(resources, isNull(resources.deletedAt)),
 			tableCount(characters, isNull(characters.deletedAt)),
@@ -178,8 +216,13 @@ export function createSyncService(deps: SyncServiceDeps): SyncService {
 				documents,
 				and(isNull(documents.deletedAt), eq(documents.kind, "document")),
 			),
+			tableCount(
+				documents,
+				and(isNull(documents.deletedAt), eq(documents.kind, "folder")),
+			),
 			tableCount(comments, isNull(comments.deletedAt)),
 			tableCount(tags),
+			tableCount(resCollections),
 			tableCount(resources, isNotNull(resources.deletedAt)),
 		]
 	}
@@ -215,8 +258,6 @@ export function createSyncService(deps: SyncServiceDeps): SyncService {
 			lastRecordedAt !== undefined &&
 			elapsedMs !== undefined &&
 			elapsedMs > remindDays * DAY_MS
-		const previous =
-			latest === undefined ? undefined : records.previous(row.id, latest.id)
 		return {
 			device: rowToSyncDevice(row),
 			lastRecordedAt,
@@ -226,8 +267,6 @@ export function createSyncService(deps: SyncServiceDeps): SyncService {
 					: Math.max(0, Math.floor(elapsedMs / DAY_MS)),
 			due: lastRecordedAt === undefined || overdue,
 			latestRecord: latest === undefined ? undefined : rowToSyncRecord(latest),
-			previousRecord:
-				previous === undefined ? undefined : rowToSyncRecord(previous),
 		}
 	}
 
@@ -236,6 +275,7 @@ export function createSyncService(deps: SyncServiceDeps): SyncService {
 		deviceUpdate,
 		deviceRemove,
 		recordCreate,
+		current,
 		summary,
 	})
 }
@@ -258,8 +298,10 @@ function rowToSyncRecord(row: SyncRecordRow): SyncRecord {
 		resourceCount: row.resourceCount,
 		characterCount: row.characterCount,
 		documentCount: row.documentCount,
+		folderCount: row.folderCount,
 		commentCount: row.commentCount,
 		tagCount: row.tagCount,
+		collectionCount: row.collectionCount,
 		trashCount: row.trashCount,
 		storageBytes: row.storageBytes,
 		resourceBytes: row.resourceBytes,

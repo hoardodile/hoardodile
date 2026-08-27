@@ -15,6 +15,13 @@
 			"when": 1787396922788,
 			"tag": "0001_aberrant_tigra",
 			"breakpoints": true
+		},
+		{
+			"idx": 2,
+			"version": "6",
+			"when": 1787819933200,
+			"tag": "0002_orange_lady_bullseye",
+			"breakpoints": true
 		}
 	]
 }

@@ -1,4 +1,4 @@
-import type { SyncRecord } from "@hoardodile/schemas"
+import type { SyncLiveState, SyncRecord } from "@hoardodile/schemas"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { act, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
@@ -55,27 +55,27 @@ const currentRecord: SyncRecord = {
 	resourceCount: 42,
 	characterCount: 10,
 	documentCount: 5,
+	folderCount: 2,
 	commentCount: 12,
 	tagCount: 8,
+	collectionCount: 3,
 	trashCount: 2,
 	storageBytes: 2048,
 	resourceBytes: 1024,
 	createdAt: 2_000_000,
 }
 
-const previousRecord: SyncRecord = {
-	id: "rec-1",
-	deviceId: "dev-laptop",
-	recordedAt: 1_000_000,
-	resourceCount: 39,
+const currentState: SyncLiveState = {
+	resourceCount: 45,
 	characterCount: 10,
 	documentCount: 5,
-	commentCount: 13,
+	folderCount: 4,
+	commentCount: 11,
 	tagCount: 8,
-	trashCount: 1,
-	storageBytes: 1024,
-	resourceBytes: 512,
-	createdAt: 1_000_000,
+	collectionCount: 5,
+	trashCount: 2,
+	storageBytes: 3072,
+	resourceBytes: 1536,
 }
 
 type SummaryShape = {
@@ -86,7 +86,6 @@ type SummaryShape = {
 		readonly elapsedDays?: number
 		readonly due: boolean
 		readonly latestRecord?: SyncRecord
-		readonly previousRecord?: SyncRecord
 	}[]
 }
 
@@ -100,7 +99,6 @@ function summaryOf(overrides: Partial<SummaryShape> = {}): SummaryShape {
 				elapsedDays: 9,
 				due: true,
 				latestRecord: currentRecord,
-				previousRecord,
 			},
 		],
 		...overrides,
@@ -108,8 +106,10 @@ function summaryOf(overrides: Partial<SummaryShape> = {}): SummaryShape {
 }
 
 let summaryData: SummaryShape
+let currentData: SyncLiveState
 
 const summaryHandler = vi.fn(() => summaryData)
+const currentHandler = vi.fn(() => currentData)
 const prefHandler = vi.fn(() => null)
 const deviceCreateHandler = vi.fn(() => undefined)
 const deviceUpdateHandler = vi.fn(() => undefined)
@@ -117,9 +117,11 @@ const deviceDeleteHandler = vi.fn(() => undefined)
 const recordCreateHandler = vi.fn(() => undefined)
 
 beforeAll(() => {
+	currentData = currentState
 	setTrpcClient(
 		createMockTrpcClient({
 			"sync.summary": summaryHandler,
+			"sync.current": currentHandler,
 			"asyncPreference.get": prefHandler,
 			"sync.deviceCreate": deviceCreateHandler,
 			"sync.deviceUpdate": deviceUpdateHandler,
@@ -214,49 +216,42 @@ describe("SyncSettingsPanel", () => {
 		})
 	})
 
-	it("shows the latest snapshot values with deltas against the previous one", async () => {
+	it("shows the live values with deltas against the last snapshot", async () => {
+		currentData = currentState
 		summaryData = summaryOf()
 		await renderPanel()
 		await waitForCard()
 
-		expect(screen.getByLabelText(/resources/i)).toHaveTextContent("42")
+		await waitFor(() => {
+			expect(screen.getByLabelText(/resources/i)).toHaveTextContent("45")
+		})
 		expect(screen.getByText("+3")).toBeInTheDocument()
-		expect(screen.getByText("+1")).toBeInTheDocument()
+		expect(screen.getAllByText("+2")).toHaveLength(2)
+		expect(screen.getByText("−1")).toBeInTheDocument()
 		expect(screen.getByText("+512 B")).toBeInTheDocument()
 		expect(screen.getByText("+1 KB")).toBeInTheDocument()
-		expect(screen.getByText("−1")).toBeInTheDocument()
+		expect(
+			screen.queryByTestId("sync-delta-characterCount"),
+		).not.toBeInTheDocument()
+		expect(screen.getByTestId("sync-live-hint")).toBeInTheDocument()
 		expect(screen.getByText(/last synced .*9 days ago/i)).toBeInTheDocument()
 		expect(screen.getByText(/overdue · 9 days/i)).toBeInTheDocument()
 	})
 
-	it("marks the first snapshot instead of showing deltas", async () => {
-		summaryData = summaryOf({
-			devices: [
-				{
-					device: laptop,
-					lastRecordedAt: 2_000_000,
-					elapsedDays: 1,
-					due: false,
-					latestRecord: currentRecord,
-				},
-			],
-		})
-		await renderPanel()
-		await waitForCard()
-
-		expect(screen.getAllByText("First sync")).toHaveLength(8)
-		expect(screen.queryByText("+3")).not.toBeInTheDocument()
-	})
-
-	it("renders the never-synced state when no snapshot exists", async () => {
+	it("shows live values with first-sync markers when the device never recorded", async () => {
+		currentData = currentState
 		summaryData = summaryOf({
 			devices: [{ device: laptop, due: true }],
 		})
 		await renderPanel()
 		await waitForCard()
 
+		await waitFor(() => {
+			expect(screen.getAllByText("First sync")).toHaveLength(10)
+		})
+		expect(screen.getByLabelText(/resources/i)).toHaveTextContent("45")
+		expect(screen.queryByText("+3")).not.toBeInTheDocument()
 		expect(screen.getByText("Never synced")).toBeInTheDocument()
-		expect(screen.queryByLabelText(/resources/i)).not.toBeInTheDocument()
 	})
 
 	it("edits the device name and notes through the edit dialog", async () => {

@@ -48,35 +48,47 @@ export const syncDeviceUpdateInput = z.object({
 export type SyncDeviceUpdateInput = z.infer<typeof syncDeviceUpdateInput>
 
 /**
- * One automatically captured state snapshot for a device. All values are
- * captured server-side at record time — entity counts exclude deleted
- * rows, documents exclude folders, `trashCount` counts trashed
- * resources, `storageBytes` is the total size of the storage root and
- * `resourceBytes` the live resource files alone. `recordedAt` is the
- * moment the reminder counts from; `createdAt` is when the row was
- * written.
+ * The observed state of the library, shared by a recorded snapshot
+ * ({@link syncRecord}) and the live state ({@link syncLiveState}). The
+ * shapes must stay identical so the UI can diff "now" against a
+ * device's baseline snapshot.
+ */
+const syncObservedState = {
+	/** Live (non-deleted) resource count. */
+	resourceCount: z.number().int().nonnegative(),
+	/** Live (non-deleted) character count. */
+	characterCount: z.number().int().nonnegative(),
+	/** Live (non-deleted) document count (folders excluded). */
+	documentCount: z.number().int().nonnegative(),
+	/** Live (non-deleted) folder count in the document tree. */
+	folderCount: z.number().int().nonnegative(),
+	/** Live (non-deleted) comment count. */
+	commentCount: z.number().int().nonnegative(),
+	/** Tag count. */
+	tagCount: z.number().int().nonnegative(),
+	/** Collection count. */
+	collectionCount: z.number().int().nonnegative(),
+	/** Trashed (soft-deleted) resource count. */
+	trashCount: z.number().int().nonnegative(),
+	/** Total bytes the storage root occupies. */
+	storageBytes: z.number().int().nonnegative(),
+	/** Total bytes of live resource files. */
+	resourceBytes: z.number().int().nonnegative(),
+}
+
+/**
+ * One automatically captured state snapshot for a device — the baseline
+ * the UI diffs the live library state against. All values are captured
+ * server-side at record time, matching {@link syncLiveState} field for
+ * field. `recordedAt` is the moment the reminder counts from; `createdAt`
+ * is when the row was written.
  */
 export const syncRecord = z.object({
 	id,
 	/** The device this snapshot was recorded for. */
 	deviceId: id,
 	recordedAt: timestamp,
-	/** Live resource count at record time. */
-	resourceCount: z.number().int().nonnegative(),
-	/** Live character count at record time. */
-	characterCount: z.number().int().nonnegative(),
-	/** Live document count (folders excluded) at record time. */
-	documentCount: z.number().int().nonnegative(),
-	/** Live comment count at record time. */
-	commentCount: z.number().int().nonnegative(),
-	/** Tag count at record time. */
-	tagCount: z.number().int().nonnegative(),
-	/** Trashed (soft-deleted) resource count at record time. */
-	trashCount: z.number().int().nonnegative(),
-	/** Total bytes occupied by the storage root at record time. */
-	storageBytes: z.number().int().nonnegative(),
-	/** Total bytes of live resource files at record time. */
-	resourceBytes: z.number().int().nonnegative(),
+	...syncObservedState,
 	createdAt: timestamp,
 })
 
@@ -87,6 +99,14 @@ export const syncRecordCreateInput = z.object({
 })
 
 export type SyncRecordCreateInput = z.infer<typeof syncRecordCreateInput>
+
+/**
+ * The live library state right now, computed by the server on demand
+ * with the same fields as a recorded snapshot.
+ */
+export const syncLiveState = z.object(syncObservedState)
+
+export type SyncLiveState = z.infer<typeof syncLiveState>
 
 /**
  * Reminder state for one device, computed by the server. `due` is `true`
@@ -101,13 +121,12 @@ export const syncDeviceSummary = z.object({
 	elapsedDays: z.number().int().nonnegative().optional(),
 	/** Whether a record reminder should be shown for this device. */
 	due: z.boolean(),
-	/** The most recent snapshot; absent when the device never recorded. */
-	latestRecord: syncRecord.optional(),
 	/**
-	 * The snapshot before the latest one, kept so the card can show what
-	 * changed since the last record; absent when only one exists.
+	 * The baseline snapshot; the UI diffs the live state
+	 * ({@link syncLiveState}) against it. Absent when the device never
+	 * recorded — every field then reads as "first sync".
 	 */
-	previousRecord: syncRecord.optional(),
+	latestRecord: syncRecord.optional(),
 })
 
 export type SyncDeviceSummary = z.infer<typeof syncDeviceSummary>

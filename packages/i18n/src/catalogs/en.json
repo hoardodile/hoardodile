@@ -2126,7 +2126,7 @@
 		}
 	},
 	"sync": {
-		"pageHint": "Per device: records entity counts, content size and storage volume · keeps the two most recent snapshots",
+		"pageHint": "Per device: records entity counts, content size and storage volume · open the page anytime to see what changed since the last sync",
 		"status": {
 			"allUpToDate": "All devices up to date",
 			"dueCount_one": "{{count}} of {{total}} device due",
@@ -2173,14 +2173,17 @@
 			"editTitle": "Edit device",
 			"edit": "Edit",
 			"save": "Save",
-			"editPending": "Saving…"
+			"editPending": "Saving…",
+			"liveHint": "Live state · changes since the last sync"
 		},
 		"fields": {
 			"resources": "Resources",
 			"characters": "Characters",
 			"documents": "Documents",
+			"folders": "Folders",
 			"messages": "Messages",
 			"tags": "Tags",
+			"collections": "Collections",
 			"trash": "Trash",
 			"contentSize": "Content size",
 			"storage": "Storage",

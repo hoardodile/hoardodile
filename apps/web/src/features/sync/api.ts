@@ -5,6 +5,7 @@ import { idMutation, trpcMutation, trpcQuery } from "@/trpc/factory"
 export const syncKeys = {
 	all: ["sync"] as const,
 	summary: () => [...syncKeys.all, "summary"] as const,
+	current: () => [...syncKeys.all, "current"] as const,
 }
 
 export function syncSummaryQueryOptions() {
@@ -13,6 +14,21 @@ export function syncSummaryQueryOptions() {
 		queryFn: () => trpcQuery("sync", "summary"),
 		staleTime: 30_000,
 		// An open tab must flip to the reminder state without navigation.
+		refetchInterval: 60_000,
+	})
+}
+
+/**
+ * Live library state (counts + storage) used by the sync page's change
+ * view. Kept separate from the cheap {@link syncSummaryQueryOptions} —
+ * only this page pays for the count queries and the cached storage scan.
+ */
+export function syncCurrentQueryOptions() {
+	return queryOptions({
+		queryKey: syncKeys.current(),
+		queryFn: () => trpcQuery("sync", "current"),
+		staleTime: 30_000,
+		// The change view must stay live while the page is open.
 		refetchInterval: 60_000,
 	})
 }

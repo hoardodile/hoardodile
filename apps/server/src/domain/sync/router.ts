@@ -26,6 +26,9 @@ export function buildSyncRouter(service: SyncService) {
 		recordCreate: writeProcedure
 			.input(syncRecordCreateInput)
 			.mutation(({ input }) => service.recordCreate(input)),
+		/** Live library state, diffed client-side against each device's
+		    latest snapshot; only the sync page polls this. */
+		current: authedProcedure.query(() => service.current()),
 		summary: authedProcedure.query(() => service.summary()),
 	})
 }

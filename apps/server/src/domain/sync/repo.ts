@@ -21,17 +21,12 @@ export type SyncDeviceRepository = {
 /**
  * Pure Drizzle query layer for the sync-records module. No domain rules;
  * the service layer owns the snapshot/reminder semantics and prunes the
- * history to at most two rows per device.
+ * history to the newest baseline row per device.
  */
 export type SyncRecordRepository = {
 	insert(row: SyncRecordRow): void
 	/** Most recent record by `recordedAt` for one device, or `undefined`. */
 	latest(deviceId: string): SyncRecordRow | undefined
-	/**
-	 * Most recent record by `recordedAt` for one device, excluding the
-	 * given record; `undefined` when no other record exists.
-	 */
-	previous(deviceId: string, excludeId: string): SyncRecordRow | undefined
 	/** Delete every record of a device except the one to keep. */
 	keepOnly(deviceId: string, keepId: string | undefined): void
 }
@@ -96,26 +91,6 @@ export function buildSyncRecordRepository(
 		)
 	}
 
-	function previous(
-		deviceId: string,
-		excludeId: string,
-	): SyncRecordRow | undefined {
-		return (
-			client
-				.select()
-				.from(syncRecords)
-				.where(
-					and(
-						eq(syncRecords.deviceId, deviceId),
-						ne(syncRecords.id, excludeId),
-					),
-				)
-				.orderBy(desc(syncRecords.recordedAt), desc(syncRecords.createdAt))
-				.limit(1)
-				.get() ?? undefined
-		)
-	}
-
 	function keepOnly(deviceId: string, keepId: string | undefined): void {
 		if (keepId === undefined) {
 			client.delete(syncRecords).where(eq(syncRecords.deviceId, deviceId)).run()
@@ -129,5 +104,5 @@ export function buildSyncRecordRepository(
 			.run()
 	}
 
-	return { insert, latest, previous, keepOnly }
+	return { insert, latest, keepOnly }
 }

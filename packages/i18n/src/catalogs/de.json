@@ -2126,7 +2126,7 @@
 		}
 	},
 	"sync": {
-		"pageHint": "Pro Gerät: erfasst Elementanzahlen, Inhaltsgröße und Speichervolumen · behält die zwei neuesten Snapshots",
+		"pageHint": "Pro Gerät: erfasst Elementanzahlen, Inhaltsgröße und Speichervolumen · öffne die Seite, um zu sehen, was sich seit dem letzten Sync geändert hat",
 		"status": {
 			"allUpToDate": "Alle Geräte auf dem neuesten Stand",
 			"dueCount_one": "{{count}} von {{total}} Gerät fällig",
@@ -2173,14 +2173,17 @@
 			"editTitle": "Gerät bearbeiten",
 			"edit": "Bearbeiten",
 			"save": "Speichern",
-			"editPending": "Speichern…"
+			"editPending": "Speichern…",
+			"liveHint": "Aktueller Zustand · Änderungen seit dem letzten Sync"
 		},
 		"fields": {
 			"resources": "Ressourcen",
 			"characters": "Charaktere",
 			"documents": "Dokumente",
+			"folders": "Ordner",
 			"messages": "Nachrichten",
 			"tags": "Tags",
+			"collections": "Sammlungen",
 			"trash": "Papierkorb",
 			"contentSize": "Inhaltsgröße",
 			"storage": "Speicher",

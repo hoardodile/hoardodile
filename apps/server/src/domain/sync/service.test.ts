@@ -1,6 +1,7 @@
 import { DEFAULT_SYNC_REMIND_DAYS } from "@hoardodile/schemas"
 import { count } from "drizzle-orm"
 import { characters } from "src/domain/char/schema.ts"
+import { resCollections } from "src/domain/col/schema.ts"
 import { comments } from "src/domain/comment/schema.ts"
 import { documents } from "src/domain/doc/schema.ts"
 import { buildAsyncPrefRepository } from "src/domain/prefs/repo.ts"
@@ -184,6 +185,13 @@ describe("sync devices service", () => {
 				{ id: "t2", name: "y", createdAt: ts, updatedAt: ts },
 			])
 			.run()
+		dbh.db
+			.insert(resCollections)
+			.values([
+				{ id: "col1", name: "one", createdAt: ts, updatedAt: ts },
+				{ id: "col2", name: "two", createdAt: ts, updatedAt: ts },
+			])
+			.run()
 
 		const device = await addDevice("Laptop")
 		// The auto-record at creation already captured the seeded state.
@@ -194,34 +202,61 @@ describe("sync devices service", () => {
 		expect(record?.resourceCount).toBe(2)
 		expect(record?.characterCount).toBe(2)
 		expect(record?.documentCount).toBe(1)
+		expect(record?.folderCount).toBe(1)
 		expect(record?.commentCount).toBe(2)
 		expect(record?.tagCount).toBe(2)
+		expect(record?.collectionCount).toBe(2)
 		expect(record?.trashCount).toBe(1)
 		expect(record?.storageBytes).toBe(usedBytes)
 		expect(record?.resourceBytes).toBe(contentBytes)
 		expect(storageService.getOverview).toHaveBeenCalled()
 	})
 
-	test("record create keeps at most two snapshots per device", async () => {
+	test("record create keeps only the latest snapshot per device", async () => {
 		const device = await addDevice("Laptop")
 		nowValue += 1 * DAY_MS
-		const second = await svc.recordCreate({ deviceId: device.id })
+		await svc.recordCreate({ deviceId: device.id })
 		nowValue += 1 * DAY_MS
 		const third = await svc.recordCreate({ deviceId: device.id })
 
-		expect(await recordCount()).toBe(2)
+		expect(await recordCount()).toBe(1)
 		const summary = (await svc.summary()).devices[0]
 		expect(summary?.latestRecord?.id).toBe(third.id)
-		expect(summary?.previousRecord?.id).toBe(second.id)
-		expect(summary?.previousRecord?.storageBytes).toBe(usedBytes)
 	})
 
-	test("record create leaves no previous when only one snapshot exists", async () => {
+	test("record create keeps the first snapshot as the latest baseline", async () => {
 		await addDevice("Laptop")
 		const entry = (await svc.summary()).devices[0]
 		expect(entry?.latestRecord).toBeDefined()
-		expect(entry?.previousRecord).toBeUndefined()
 		expect(await recordCount()).toBe(1)
+	})
+
+	test("current reports the live state without writing records", async () => {
+		const ts = nowValue
+		dbh.db
+			.insert(resources)
+			.values([
+				{ id: "r1", name: "a", createdAt: ts, updatedAt: ts },
+				{ id: "r2", name: "b", createdAt: ts, updatedAt: ts },
+			])
+			.run()
+		await addDevice("Laptop")
+		expect(await recordCount()).toBe(1)
+		expect(storageService.getOverview).toHaveBeenCalledTimes(1)
+
+		const live = await svc.current()
+		expect(await recordCount()).toBe(1)
+		expect(live.resourceCount).toBe(2)
+		expect(live.characterCount).toBe(0)
+		expect(live.documentCount).toBe(0)
+		expect(live.folderCount).toBe(0)
+		expect(live.commentCount).toBe(0)
+		expect(live.tagCount).toBe(0)
+		expect(live.collectionCount).toBe(0)
+		expect(live.trashCount).toBe(0)
+		expect(live.storageBytes).toBe(usedBytes)
+		expect(live.resourceBytes).toBe(contentBytes)
+		expect(storageService.getOverview).toHaveBeenCalledTimes(2)
 	})
 
 	test("summary device is not due inside the remind interval", async () => {

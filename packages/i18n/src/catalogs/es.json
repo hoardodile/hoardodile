@@ -2126,7 +2126,7 @@
 		}
 	},
 	"sync": {
-		"pageHint": "Por dispositivo: registra recuentos de entidades, tamaño del contenido y volumen de almacenamiento · conserva las dos instantáneas más recientes",
+		"pageHint": "Por dispositivo: registra recuentos de entidades, tamaño del contenido y volumen de almacenamiento · abre la página para ver qué cambió desde la última sincronización",
 		"status": {
 			"allUpToDate": "Todos los dispositivos están al día",
 			"dueCount_one": "{{count}} de {{total}} dispositivo pendiente",
@@ -2173,14 +2173,17 @@
 			"editTitle": "Editar dispositivo",
 			"edit": "Editar",
 			"save": "Guardar",
-			"editPending": "Guardando…"
+			"editPending": "Guardando…",
+			"liveHint": "Estado actual · cambios desde la última sincronización"
 		},
 		"fields": {
 			"resources": "Recursos",
 			"characters": "Personajes",
 			"documents": "Documentos",
+			"folders": "Carpetas",
 			"messages": "Mensajes",
 			"tags": "Etiquetas",
+			"collections": "Colecciones",
 			"trash": "Papelera",
 			"contentSize": "Tamaño del contenido",
 			"storage": "Almacenamiento",
