@@ -867,7 +867,7 @@ function PluginCard(props: {
 	const { t, i18n } = useTranslation()
 	return (
 		<div
-			className="flex flex-col gap-2.5 rounded-xl border border-border p-4 transition-colors hover:bg-accent/40"
+			className="flex flex-col gap-2.5 overflow-hidden rounded-xl border border-border p-4 transition-colors hover:bg-accent/40"
 			data-testid={`plugin-row-${p.id}`}
 		>
 			<div className="flex items-center gap-2.5">
@@ -896,7 +896,7 @@ function PluginCard(props: {
 			</p>
 			{/* Badges ride the bottom row — the header meta line is too narrow
 			    to hold them next to the version. */}
-			<div className="flex min-w-0 items-center gap-1.5 overflow-hidden">
+			<div className="flex min-w-0 items-center gap-1.5">
 				<PermissionMarks
 					p={{
 						id: p.id,
@@ -998,7 +998,7 @@ function PluginRowActions(props: {
 							{marketPlugin !== undefined &&
 							marketUpdateAvailable(marketPlugin, plugin.manifest.version) ? (
 								<span
-									className="absolute -right-1 -top-1 size-1.5 rounded-full bg-destructive"
+									className="absolute right-1 top-1 size-1.5 -translate-y-1/2 translate-x-1/2 rounded-full bg-destructive"
 									role="img"
 									aria-label={t("appShell.nav.marketplaceUpdatesBadge")}
 									data-testid={`plugin-update-dot-${plugin.id}`}

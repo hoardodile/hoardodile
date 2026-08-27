@@ -351,13 +351,14 @@ function RequiresChip(props: { readonly plugin: MarketPlugin }) {
 	)
 }
 
-/** Per-plugin update dot, mounted at the trigger's top-right corner —
-    the same signal the sidebar and settings tabs aggregate. */
+/** Per-plugin update dot, mounted on the trigger's top-right corner —
+    centered on the corner so it reads as one with the button, not a
+    floating marker (the same signal the sidebar and tabs aggregate). */
 function UpdateDot(props: { readonly pluginId: string }) {
 	const { t } = useTranslation()
 	return (
 		<span
-			className="absolute -right-1 -top-1 size-1.5 rounded-full bg-destructive"
+			className="absolute right-0.5 top-0.5 size-1.5 -translate-y-1/2 translate-x-1/2 rounded-full bg-destructive"
 			role="img"
 			aria-label={t("appShell.nav.marketplaceUpdatesBadge")}
 			data-testid={`marketplace-update-dot-${props.pluginId}`}
@@ -433,7 +434,7 @@ function MarketplaceCard(props: {
 			<p className="line-clamp-2 min-h-8 text-xs text-muted-foreground">
 				{resolveManifestDescription(plugin.manifest, i18n.language)}
 			</p>
-			<div className="flex min-w-0 items-center gap-1.5 overflow-hidden">
+			<div className="flex min-w-0 items-center gap-1.5">
 				<PermissionMarks
 					p={{
 						id: plugin.id,
