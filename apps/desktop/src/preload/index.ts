@@ -206,6 +206,10 @@ const bridge: HoardodileDesktopBridge = {
 	async relaunch() {
 		await invokeUnknown(IPC.relaunch)
 	},
+	async openLogsFolder() {
+		const raw = await invokeUnknown(IPC.logsOpen)
+		return raw === true
+	},
 	async getConfig() {
 		const raw = await invokeUnknown(IPC.getConfig)
 		if (

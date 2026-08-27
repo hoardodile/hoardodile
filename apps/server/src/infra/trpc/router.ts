@@ -30,6 +30,7 @@ import { buildTraceRouter } from "src/domain/trace/router.ts"
 import { buildTraitRouter } from "src/domain/trait/router.ts"
 import { buildUsageRouter } from "src/domain/usage/router.ts"
 import { buildVersionRouter } from "src/domain/version/router.ts"
+import { z } from "zod"
 import { authedProcedure, mergeRouters, router } from "./core.ts"
 import type { AppRouterServices, RouterServices } from "./services.ts"
 
@@ -126,6 +127,45 @@ export function buildDomainRouter(services: RouterServices) {
 				info: authedProcedure.query(() => services.outboundNetwork.info()),
 				/** User-triggered connectivity probe towards the raw GitHub host. */
 				test: authedProcedure.query(() => services.outboundNetwork.test()),
+			}),
+			diagnostics: router({
+				/**
+				 * Best-effort ingestion of frontend console / window / React
+				 * errors into the server's own pino log files. The SPA and the
+				 * server share the origin, so nothing leaves the machine — the
+				 * user-facing export stays Settings → About → "Copy
+				 * diagnostics"; this procedure simply makes the frontend side
+				 * of a report visible in the same `app.log`.
+				 */
+				clientLog: authedProcedure
+					.input(
+						z.object({
+							entries: z
+								.array(
+									z.object({
+										ts: z.number().int().positive(),
+										level: z.enum(["error", "warn"]),
+										message: z.string().min(1).max(1000),
+										stack: z.string().max(4000).optional(),
+									}),
+								)
+								.min(1)
+								.max(50),
+						}),
+					)
+					.mutation(({ ctx, input }) => {
+						for (const entry of input.entries) {
+							const log = ctx.req.log
+							log[entry.level](
+								{
+									src: "client",
+									clientTs: entry.ts,
+									...(entry.stack !== undefined ? { stack: entry.stack } : {}),
+								},
+								entry.message,
+							)
+						}
+					}),
 			}),
 		}),
 	)

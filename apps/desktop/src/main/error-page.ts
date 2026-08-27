@@ -14,3 +14,10 @@ export function devServerErrorMessage(
 ): string {
 	return catalogFor(language).desktopShell.errorPage.devServerError
 }
+
+/** Message shown when the renderer process crashed (Crash, OOM, kill). */
+export function rendererCrashedMessage(
+	language: SupportedLanguage | undefined,
+): string {
+	return catalogFor(language).desktopShell.errorPage.rendererCrashed
+}

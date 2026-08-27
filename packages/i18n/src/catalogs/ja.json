@@ -105,6 +105,17 @@
 			"noMatches": "一致するタイムゾーンがありません。"
 		}
 	},
+	"appError": {
+		"title": "問題が発生しました",
+		"description": "ページを表示できませんでした。アプリを再読み込みしてください（データは安全です）。エラー詳細をコピーして報告に添付することもできます。",
+		"details": "エラーの詳細",
+		"tryAgain": "再試行",
+		"reload": "再読み込み",
+		"copyDetails": "エラー詳細をコピー",
+		"copied": "エラー詳細をクリップボードにコピーしました。",
+		"copyFailed": "クリップボードにコピーできませんでした。",
+		"reportIssue": "Issue を報告"
+	},
 	"appShell": {
 		"primaryNav": "メインナビゲーション",
 		"secondaryNav": "セカンダリナビゲーション",
@@ -289,6 +300,13 @@
 			"bugTitle": "バグを報告",
 			"bugDescription": "問題があれば issue を立ててください。",
 			"bugAction": "Issue を作成",
+			"copyDiagnostics": "診断情報をコピー",
+			"diagnosticsCopied": "診断情報をクリップボードにコピーしました。",
+			"copyDiagnosticsFailed": "クリップボードにコピーできませんでした。",
+			"openLogsFolder": "ログフォルダーを開く",
+			"openLogsFailed": "ログフォルダーを開けませんでした。",
+			"logsFolderHint": "サーバーログはライブラリフォルダーの local/logs にあります",
+			"selfHostedLogsHint": "サーバーログは `<STORAGE_ROOT>/local/logs` にあります（Docker では `docker compose logs` を利用）。",
 			"featureTitle": "機能リクエスト",
 			"featureDescription": "足りない機能があれば教えてください。",
 			"featureAction": "アイデアを送る",
@@ -2225,6 +2243,7 @@
 			"copied": "LAN アドレスをクリップボードにコピーしました。"
 		},
 		"errorPage": {
+			"rendererCrashed": "アプリウィンドウがクラッシュしました。「再試行」で再読み込みしてください — データと内蔵サーバーは安全です。",
 			"serverError": "サーバーに接続できませんでした。まだ起動中か、停止している可能性があります。少し待って「再試行」を押すか、トレイの「サーバーを再起動」を使用してください。",
 			"devServerError": "開発サーバーが動作していません。別のターミナルで `pnpm dev` を起動し、「再試行」を押してください。"
 		},

@@ -17,6 +17,10 @@ body:
         Thanks for reporting. The desktop app bundles its own server — if you are accessing a
         *self-hosted* instance in a browser instead, please use the **Self-hosted** template.
         This form is for defects only: usage questions belong in [Discussions](https://github.com/hoardodile/hoardodile/discussions).
+        The app collects a local trace for you: Settings → About → **Copy diagnostics** copies
+        the app version, platform and the recent frontend log, and **Open logs folder** reveals
+        the server logs (`<library>/local/logs`). Paste those into the logs field below — the
+        same data a maintainer would ask for.
         Attach screenshots or copied text, and **redact** library paths (e.g. `C:\Users\...\hoardodile`,
         `~/hoardodile`) before pasting anything.
   - type: dropdown
@@ -104,7 +108,7 @@ body:
     id: actual
     attributes:
       label: Actual behavior and logs
-      description: What actually happened — error-page text, tray message, console output, or a screenshot attached below. Redact anything private first.
+      description: What actually happened — error-page text, tray message, console output, or a screenshot attached below. Start with Settings → About → **Copy diagnostics** (and open the logs folder) and paste the block here. Redact anything private first.
       render: shell
     validations:
       required: true

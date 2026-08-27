@@ -138,6 +138,12 @@ export type HoardodileDesktopBridge = {
 	}
 	pickLibraryFolder: () => Promise<string | undefined>
 	relaunch: () => Promise<void>
+	/**
+	 * Open the bundled server's log directory (`<library>/local/logs`) in
+	 * the OS file manager. Resolves `false` when the folder cannot be
+	 * opened (missing library, permissions); the shell creates it first.
+	 */
+	openLogsFolder: () => Promise<boolean>
 	getConfig: () => Promise<DesktopShellConfig>
 	setConfig: (
 		patch: Partial<

@@ -557,6 +557,9 @@ function installDesktopBridge() {
 			return undefined
 		},
 		async relaunch() {},
+		async openLogsFolder() {
+			return true
+		},
 		async getConfig() {
 			return {
 				libraryPath: "",

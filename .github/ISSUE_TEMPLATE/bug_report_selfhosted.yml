@@ -19,6 +19,9 @@ body:
         packaged desktop app, please use the **Desktop** template instead.
         This form is for defects only: deployment and usage questions belong in
         [Discussions](https://github.com/hoardodile/hoardodile/discussions).
+        The web UI collects a local trace: Settings → About → **Copy diagnostics** copies the
+        app version, platform and the recent frontend log — paste it into the logs field below.
+        Server-side logs live at `<STORAGE_ROOT>/local/logs` (`docker compose logs` on Docker).
         Attach screenshots or copied text, and **redact** library paths, hostnames, IPs, passwords
         and tokens before pasting anything.
   - type: dropdown
@@ -129,7 +132,7 @@ body:
     id: actual
     attributes:
       label: Actual behavior and logs
-      description: What actually happened — server logs (`docker compose logs` / console output), error text in the UI, or a screenshot attached below. Redact anything private first.
+      description: What actually happened — server logs (`docker compose logs` / console output), error text in the UI, or a screenshot attached below. Start with Settings → About → **Copy diagnostics** and paste the block here. Redact anything private first.
       render: shell
     validations:
       required: true

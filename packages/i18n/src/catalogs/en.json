@@ -105,6 +105,17 @@
 			"noMatches": "No matching time zones."
 		}
 	},
+	"appError": {
+		"title": "Something went wrong",
+		"description": "This page could not be displayed. Reload the app — your data is safe — or copy the error details into a bug report.",
+		"details": "Error details",
+		"tryAgain": "Try again",
+		"reload": "Reload",
+		"copyDetails": "Copy error details",
+		"copied": "Error details copied to the clipboard.",
+		"copyFailed": "Could not copy to the clipboard.",
+		"reportIssue": "Report an issue"
+	},
 	"appShell": {
 		"primaryNav": "Primary navigation",
 		"secondaryNav": "Secondary navigation",
@@ -289,6 +300,13 @@
 			"bugTitle": "Report a bug",
 			"bugDescription": "Something went wrong? File an issue so we can fix it.",
 			"bugAction": "File an issue",
+			"copyDiagnostics": "Copy diagnostics",
+			"diagnosticsCopied": "Diagnostics copied to the clipboard.",
+			"copyDiagnosticsFailed": "Could not copy to the clipboard.",
+			"openLogsFolder": "Open logs folder",
+			"openLogsFailed": "Could not open the logs folder.",
+			"logsFolderHint": "Server logs live in the library's local logs folder",
+			"selfHostedLogsHint": "Server logs live at `<STORAGE_ROOT>/local/logs`; on Docker use `docker compose logs`.",
 			"featureTitle": "Request a feature",
 			"featureDescription": "Missing something? Tell us what to build next.",
 			"featureAction": "Share your idea",
@@ -2225,6 +2243,7 @@
 			"copied": "LAN address copied to the clipboard."
 		},
 		"errorPage": {
+			"rendererCrashed": "The app window crashed. Press Retry to reload it — your data and the bundled server are safe.",
 			"serverError": "The server could not be reached. It may still be starting, or it may have stopped. Wait a moment and press Retry, or use Restart server from the tray.",
 			"devServerError": "The development server is not running. Start `pnpm dev` in another terminal, then press Retry."
 		},

@@ -105,6 +105,17 @@
 			"noMatches": "Keine passenden Zeitzonen."
 		}
 	},
+	"appError": {
+		"title": "Da ist etwas schiefgelaufen",
+		"description": "Diese Seite konnte nicht angezeigt werden. Lade die App neu — deine Daten sind sicher — oder kopiere die Fehlerdetails in einen Bugbericht.",
+		"details": "Fehlerdetails",
+		"tryAgain": "Erneut versuchen",
+		"reload": "Neu laden",
+		"copyDetails": "Fehlerdetails kopieren",
+		"copied": "Fehlerdetails in die Zwischenablage kopiert.",
+		"copyFailed": "Kopieren in die Zwischenablage fehlgeschlagen.",
+		"reportIssue": "Problem melden"
+	},
 	"appShell": {
 		"primaryNav": "Primäre Navigation",
 		"secondaryNav": "Sekundäre Navigation",
@@ -289,6 +300,13 @@
 			"bugTitle": "Fehler melden",
 			"bugDescription": "Etwas funktioniert nicht? Eröffne ein Issue.",
 			"bugAction": "Issue eröffnen",
+			"copyDiagnostics": "Diagnose kopieren",
+			"diagnosticsCopied": "Diagnose in die Zwischenablage kopiert.",
+			"copyDiagnosticsFailed": "Kopieren in die Zwischenablage fehlgeschlagen.",
+			"openLogsFolder": "Protokollordner öffnen",
+			"openLogsFailed": "Der Protokollordner konnte nicht geöffnet werden.",
+			"logsFolderHint": "Die Serverprotokolle liegen im Ordner local/logs der Bibliothek",
+			"selfHostedLogsHint": "Die Serverprotokolle liegen unter `<STORAGE_ROOT>/local/logs`; bei Docker: `docker compose logs`.",
 			"featureTitle": "Funktion vorschlagen",
 			"featureDescription": "Fehlt etwas? Sag uns, was als Nächstes kommen soll.",
 			"featureAction": "Idee teilen",
@@ -2225,6 +2243,7 @@
 			"copied": "LAN-Adresse in die Zwischenablage kopiert."
 		},
 		"errorPage": {
+			"rendererCrashed": "Das App-Fenster ist abgestürzt. Drücke „Erneut versuchen“, um es neu zu laden — deine Daten und der eingebettete Server sind sicher.",
 			"serverError": "Der Server konnte nicht erreicht werden. Er startet möglicherweise noch oder wurde gestoppt. Warte einen Moment und drücke Erneut versuchen, oder verwende Server neu starten aus dem Infobereich.",
 			"devServerError": "Der Entwicklungsserver läuft nicht. Starte `pnpm dev` in einem anderen Terminal und drücke dann Erneut versuchen."
 		},

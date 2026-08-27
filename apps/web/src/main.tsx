@@ -8,8 +8,9 @@ import { TooltipProvider } from "@hoardodile/ui/components/tooltip"
 import { MOBILE_INITIAL_SCALE } from "@hoardodile/ui/viewport"
 import { QueryClientProvider } from "@tanstack/react-query"
 import { createRouter, RouterProvider } from "@tanstack/react-router"
-import { StrictMode, useEffect } from "react"
+import { Component, type ReactNode, StrictMode, useEffect } from "react"
 import { createRoot } from "react-dom/client"
+import { AppErrorPage } from "@/components/common/AppErrorPage"
 import { FontProvider, useFont } from "@/components/common/FontProvider"
 import {
 	IconStyleProvider,
@@ -29,6 +30,11 @@ import { initPrefSyncQueue } from "@/features/prefs/prefSyncQueue"
 import { i18n } from "@/i18n"
 import { collectRoutePaths } from "@/lib/appRoutes"
 import { holdSplashUntilReady } from "@/lib/boot-splash"
+import {
+	flushClientLogToServer,
+	initClientLogging,
+	pushClientLog,
+} from "@/lib/clientLog"
 import { getDesktopBridge, isHoardodileDesktop } from "@/lib/desktop"
 import { collectFontCssPaths } from "@/lib/fonts"
 import { armLastRouteRestore, writeLastRoute } from "@/lib/last-route"
@@ -70,6 +76,10 @@ const trpc = createTrpc(trpcClient, queryClient)
 // Global plugin iframe message handler (ref-counted, lives for app lifetime)
 ensureGlobalHandler(queryClient)
 
+// Capture console / window / unhandled-rejection errors before the first
+// frame so the ring buffer has the crash context the About page exports.
+initClientLogging()
+
 if (isHoardodileDesktop()) {
 	document.documentElement.classList.add("desktop-shell")
 }
@@ -103,6 +113,7 @@ const router = createRouter({
 	defaultPendingMs: 200,
 	defaultPendingMinMs: 120,
 	defaultPendingComponent: RoutePendingFallback,
+	defaultErrorComponent: AppErrorPage,
 })
 
 // Desktop shell navigation policy: register the SPA's real routes so the
@@ -139,6 +150,38 @@ document.documentElement.style.setProperty(
 	String(MOBILE_INITIAL_SCALE),
 )
 
+/**
+ * Last-resort boundary above the router: catches crashes in the provider
+ * stack (theme, fonts, query client, plugin hosts) that the router's own
+ * error components cannot see. Renders the same AppErrorPage in its
+ * standalone frame — reload (window reload on desktop) is the recovery.
+ */
+class AppRootErrorBoundary extends Component<
+	{ readonly children: ReactNode },
+	{ readonly error: unknown }
+> {
+	override state: { error: unknown } = { error: undefined }
+
+	static getDerivedStateFromError(error: unknown): { error: unknown } {
+		return { error }
+	}
+
+	override componentDidCatch(error: unknown): void {
+		pushClientLog(
+			"error",
+			error instanceof Error ? error.message : String(error),
+			error instanceof Error ? error.stack : undefined,
+		)
+		void flushClientLogToServer()
+	}
+
+	override render(): ReactNode {
+		const error = this.state.error
+		if (error === undefined) return this.props.children
+		return <AppErrorPage error={error} standalone />
+	}
+}
+
 const rootElement = document.getElementById("root")
 if (!rootElement) {
 	throw new Error("#root element not found")
@@ -162,23 +205,25 @@ holdSplashUntilReady({
 createRoot(rootElement).render(
 	<StrictMode>
 		<I18nProvider i18n={i18n}>
-			<ThemeProvider defaultPalette="mono">
-				<IconStyleProvider>
-					<FontProvider>
-						<ThemeBroadcast />
-						<FontBroadcast />
-						<TooltipProvider>
-							<QueryClientProvider client={queryClient}>
-								<PluginListProvider>
-									<PluginIframePoolHost />
-									<PrefsSync />
-									<RouterProvider router={router} />
-								</PluginListProvider>
-							</QueryClientProvider>
-						</TooltipProvider>
-					</FontProvider>
-				</IconStyleProvider>
-			</ThemeProvider>
+			<AppRootErrorBoundary>
+				<ThemeProvider defaultPalette="mono">
+					<IconStyleProvider>
+						<FontProvider>
+							<ThemeBroadcast />
+							<FontBroadcast />
+							<TooltipProvider>
+								<QueryClientProvider client={queryClient}>
+									<PluginListProvider>
+										<PluginIframePoolHost />
+										<PrefsSync />
+										<RouterProvider router={router} />
+									</PluginListProvider>
+								</QueryClientProvider>
+							</TooltipProvider>
+						</FontProvider>
+					</IconStyleProvider>
+				</ThemeProvider>
+			</AppRootErrorBoundary>
 		</I18nProvider>
 	</StrictMode>,
 )

@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs"
+import { existsSync, mkdirSync, readFileSync } from "node:fs"
 import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
 import type { SupportedLanguage } from "@hoardodile/i18n"
@@ -594,6 +594,7 @@ async function openAppWindow(runtime: Runtime): Promise<void> {
 		url: url ?? "about:blank",
 		iconPath: runtime.iconPath,
 		shellPage: shellPageTarget(runtime),
+		language: runtime.language,
 	})
 	bindWindowMaximizeEvents(win)
 	win.on("closed", () => {
@@ -854,6 +855,24 @@ async function boot(): Promise<void> {
 		portable: () => runtime.portable,
 		pickLibraryFolder: (parent) => pickDirectory(parent),
 		relaunch: () => relaunchApp(runtime),
+		async openLogsFolder() {
+			// The sidecar's STORAGE_ROOT is the library folder, so the
+			// server logs live at `<library>/local/logs`. Ensure the folder
+			// exists (a fresh install has no log yet), then hand it to the
+			// OS file manager; `shell.openPath` resolves "" on success.
+			const logsDir = join(runtime.config.libraryPath, "local", "logs")
+			try {
+				mkdirSync(logsDir, { recursive: true })
+				return (await shell.openPath(logsDir)) === ""
+			} catch (err) {
+				console.error(
+					`[desktop] failed to open logs folder: ${
+						err instanceof Error ? err.message : String(err)
+					}`,
+				)
+				return false
+			}
+		},
 		retryLoad: () => {
 			void retryAppWindow(runtime)
 		},

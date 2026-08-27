@@ -8,11 +8,22 @@ import {
 import { act, render } from "@testing-library/react"
 import { StrictMode } from "react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import * as routeScrollRestore from "@/lib/routeScrollRestore"
 import { useRouteScrollRestore } from "./useRouteScrollRestore"
 
 const PREFIX = "hoardodile.scroll"
 
-function makeContainer() {
+vi.mock("@/lib/routeScrollRestore", async (importOriginal) => {
+	const actual =
+		await importOriginal<typeof import("@/lib/routeScrollRestore")>()
+	return {
+		...actual,
+		writeRouteScroll: vi.fn(actual.writeRouteScroll),
+	}
+})
+
+function makeContainer(options?: { readonly clamp?: boolean }) {
+	const clamp = options?.clamp === true
 	const container = document.createElement("div")
 	container.setAttribute("data-app-scroll", "")
 	document.body.appendChild(container)
@@ -30,8 +41,16 @@ function makeContainer() {
 		scrollHeight: { get: () => layout.scrollHeight, configurable: true },
 		clientHeight: { get: () => layout.clientHeight, configurable: true },
 	})
-	const scrollTo = vi.fn((options: { top: number }) => {
-		layout.scrollTop = Math.max(0, options.top)
+	const scrollTo = vi.fn((scrollOptions: { top: number }) => {
+		// A real browser clamps scrollTo to the current max and fires a
+		// scroll event afterwards; the default fixture lets the target land
+		// verbatim. `clamp` opts into the browser behavior so the restore
+		// loop's self-clamp handling can be exercised.
+		const max = Math.max(layout.scrollHeight - layout.clientHeight, 0)
+		layout.scrollTop = Math.max(0, Math.min(scrollOptions.top, max))
+		if (clamp) {
+			queueMicrotask(() => container.dispatchEvent(new Event("scroll")))
+		}
 	})
 	Object.defineProperty(container, "scrollTo", {
 		writable: true,
@@ -41,8 +60,11 @@ function makeContainer() {
 	return { container, layout, scrollTo }
 }
 
-function renderWithHook(initialPath = "/", options?: { strict?: boolean }) {
-	const fixture = makeContainer()
+function renderWithHook(
+	initialPath = "/",
+	options?: { readonly strict?: boolean; readonly clamp?: boolean },
+) {
+	const fixture = makeContainer({ clamp: options?.clamp })
 	const rootRoute = createRootRoute({
 		component: () => {
 			useRouteScrollRestore()
@@ -90,6 +112,17 @@ async function flushFrames(count = 4) {
 	}
 }
 
+/** Browser-history back/forward via the router's history instance. */
+async function traverseHistory(
+	router: { history: { back: () => void; forward: () => void } },
+	delta: -1 | 1,
+) {
+	await act(async () => {
+		if (delta === -1) router.history.back()
+		else router.history.forward()
+	})
+}
+
 beforeEach(() => {
 	vi.useFakeTimers({
 		toFake: [
@@ -103,6 +136,7 @@ beforeEach(() => {
 		],
 	})
 	sessionStorage.clear()
+	vi.mocked(routeScrollRestore.writeRouteScroll).mockClear()
 })
 
 afterEach(() => {
@@ -180,6 +214,28 @@ describe("useRouteScrollRestore", () => {
 		})
 	})
 
+	it("does not cancel its own clamp: the browser's scrollTo clamping fires a scroll event", async () => {
+		sessionStorage.setItem(`${PREFIX}:/`, "300")
+		const { fixture } = renderWithHook("/", { clamp: true })
+		// The page is short: every scrollTo(300) is clamped to 50 and fires
+		// a scroll event. The loop must keep re-aligning instead of treating
+		// its own clamped position as a user scroll and cancelling.
+		fixture.layout.scrollHeight = 450
+		await flushFrames(65)
+		expect(fixture.scrollTo).toHaveBeenLastCalledWith({
+			top: 50,
+			behavior: "instant",
+		})
+		// Content grows past the target: the loop survived the clamp and
+		// re-aligns onto the stored position.
+		fixture.layout.scrollHeight = 1400
+		await flushFrames(5)
+		expect(fixture.scrollTo).toHaveBeenLastCalledWith({
+			top: 300,
+			behavior: "instant",
+		})
+	})
+
 	it("scrolls to the top when the route has no stored position", async () => {
 		const { fixture } = renderWithHook()
 		await flushFrames()
@@ -231,6 +287,96 @@ describe("useRouteScrollRestore", () => {
 		})
 	})
 
+	it("pushes to a route with a stored position reset to the top", async () => {
+		// A stored position from an earlier visit must not resurrect on a
+		// forward navigation: only back restores.
+		sessionStorage.setItem(`${PREFIX}:/documents`, "300")
+		const { fixture, router } = renderWithHook()
+		await flushFrames()
+		fixture.scrollTo.mockClear()
+		await act(async () => {
+			await router.navigate({ to: "/documents" })
+		})
+		expect(fixture.scrollTo).toHaveBeenLastCalledWith({
+			top: 0,
+			behavior: "instant",
+		})
+		// The stored value survives: a later back to the route restores it.
+		expect(sessionStorage.getItem(`${PREFIX}:/documents`)).toBe("300")
+	})
+
+	it("restores on back and resets on forward", async () => {
+		sessionStorage.setItem(`${PREFIX}:/`, "300")
+		const { fixture, router } = renderWithHook()
+		await flushFrames(35)
+		await act(async () => {
+			await router.navigate({ to: "/documents" })
+		})
+		// The user scrolls the pushed route and leaves it.
+		fixture.layout.scrollTop = 150
+		fixture.scrollTo.mockClear()
+		await traverseHistory(router, -1)
+		await flushFrames(35)
+		expect(sessionStorage.getItem(`${PREFIX}:/documents`)).toBe("150")
+		expect(fixture.scrollTo).toHaveBeenLastCalledWith({
+			top: 300,
+			behavior: "instant",
+		})
+		// Forward returns to the top — no stale restore.
+		fixture.scrollTo.mockClear()
+		await traverseHistory(router, 1)
+		expect(fixture.scrollTo).toHaveBeenLastCalledWith({
+			top: 0,
+			behavior: "instant",
+		})
+	})
+
+	it("resets to the top on a same-index replace to a new route", async () => {
+		sessionStorage.setItem(`${PREFIX}:/documents`, "300")
+		const { fixture, router } = renderWithHook()
+		await flushFrames()
+		fixture.scrollTo.mockClear()
+		await act(async () => {
+			await router.navigate({ to: "/documents", replace: true })
+		})
+		expect(fixture.scrollTo).toHaveBeenLastCalledWith({
+			top: 0,
+			behavior: "instant",
+		})
+	})
+
+	it("does not overwrite the stored position when a push resets the container", async () => {
+		sessionStorage.setItem(`${PREFIX}:/`, "300")
+		const { fixture, router } = renderWithHook()
+		await flushFrames(35)
+		await act(async () => {
+			await router.navigate({ to: "/documents" })
+		})
+		// The browser fires the async scroll event of our programmatic reset:
+		// it must not record the reset position over the stored "/" value,
+		// or the next back-restore would come back empty.
+		fixture.layout.scrollTop = 0
+		fixture.container.dispatchEvent(new Event("scroll"))
+		await flushFrames(3)
+		expect(sessionStorage.getItem(`${PREFIX}:/`)).toBe("300")
+		// A genuine user scroll still records (and re-arms the writer); 17
+		// frames ≈ 270ms gets past the 250ms throttle window.
+		fixture.layout.scrollTop = 123
+		fixture.container.dispatchEvent(new Event("scroll"))
+		await flushFrames(17)
+		expect(sessionStorage.getItem(`${PREFIX}:/documents`)).toBe("123")
+	})
+
+	it("leaves the position alone when the route does not change", async () => {
+		const { fixture, router } = renderWithHook("/documents")
+		await flushFrames()
+		fixture.scrollTo.mockClear()
+		await act(async () => {
+			await router.navigate({ to: "/documents" })
+		})
+		expect(fixture.scrollTo).not.toHaveBeenCalled()
+	})
+
 	it("flushes the exact position when leaving a tracked route", async () => {
 		const { fixture, router } = renderWithHook()
 		await flushFrames()
@@ -239,6 +385,28 @@ describe("useRouteScrollRestore", () => {
 			await router.navigate({ to: "/documents" })
 		})
 		expect(sessionStorage.getItem(`${PREFIX}:/`)).toBe("123")
+	})
+
+	it("flushes the outgoing position before resetting the container", async () => {
+		const { fixture, router } = renderWithHook()
+		await flushFrames()
+		fixture.layout.scrollTop = 123
+		fixture.scrollTo.mockClear()
+		await act(async () => {
+			await router.navigate({ to: "/documents" })
+		})
+		// The leave flush (onBeforeLoad — the outgoing page is still
+		// mounted) must precede any scroll movement of the incoming route.
+		const writeCall = vi
+			.mocked(routeScrollRestore.writeRouteScroll)
+			.mock.calls.find(([key]) => key === `${PREFIX}:/`)
+		expect(writeCall).toEqual([`${PREFIX}:/`, 123])
+		const writeOrder = vi
+			.mocked(routeScrollRestore.writeRouteScroll)
+			.mock.invocationCallOrder.slice(0, 1)[0]
+		expect(writeOrder).toBeLessThan(
+			fixture.scrollTo.mock.invocationCallOrder[0] ?? Number.MAX_SAFE_INTEGER,
+		)
 	})
 
 	it("does not restore routes that manage their own position", async () => {

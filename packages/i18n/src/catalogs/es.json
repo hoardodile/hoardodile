@@ -105,6 +105,17 @@
 			"noMatches": "No hay zonas horarias coincidentes."
 		}
 	},
+	"appError": {
+		"title": "Algo salió mal",
+		"description": "No se pudo mostrar esta página. Recarga la aplicación — tus datos están a salvo — o copia los detalles del error en un informe.",
+		"details": "Detalles del error",
+		"tryAgain": "Reintentar",
+		"reload": "Recargar",
+		"copyDetails": "Copiar detalles del error",
+		"copied": "Detalles del error copiados al portapapeles.",
+		"copyFailed": "No se pudo copiar al portapapeles.",
+		"reportIssue": "Informar de un problema"
+	},
 	"appShell": {
 		"primaryNav": "Navegación principal",
 		"secondaryNav": "Navegación secundaria",
@@ -289,6 +300,13 @@
 			"bugTitle": "Informar de un error",
 			"bugDescription": "¿Algo falló? Crea un issue para que lo arreglemos.",
 			"bugAction": "Crear un issue",
+			"copyDiagnostics": "Copiar diagnóstico",
+			"diagnosticsCopied": "Diagnóstico copiado al portapapeles.",
+			"copyDiagnosticsFailed": "No se pudo copiar al portapapeles.",
+			"openLogsFolder": "Abrir carpeta de registros",
+			"openLogsFailed": "No se pudo abrir la carpeta de registros.",
+			"logsFolderHint": "Los registros del servidor están en local/logs dentro de la carpeta de la biblioteca",
+			"selfHostedLogsHint": "Los registros del servidor están en `<STORAGE_ROOT>/local/logs`; con Docker usa `docker compose logs`.",
 			"featureTitle": "Solicitar una función",
 			"featureDescription": "¿Falta algo? Cuéntanos qué construir.",
 			"featureAction": "Comparte tu idea",
@@ -2225,6 +2243,7 @@
 			"copied": "Dirección LAN copiada al portapapeles."
 		},
 		"errorPage": {
+			"rendererCrashed": "La ventana de la aplicación se ha bloqueado. Pulsa Reintentar para recargarla: tus datos y el servidor integrado están a salvo.",
 			"serverError": "No se pudo conectar con el servidor. Puede que aún esté iniciando, o que se haya detenido. Espera un momento y pulsa Reintentar, o usa Reiniciar servidor desde la bandeja.",
 			"devServerError": "El servidor de desarrollo no está en ejecución. Inicia `pnpm dev` en otra terminal y pulsa Reintentar."
 		},

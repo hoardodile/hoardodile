@@ -1,6 +1,11 @@
 import { join } from "node:path"
+import type { SupportedLanguage } from "@hoardodile/i18n"
 import { app, BrowserWindow, nativeTheme, shell } from "electron"
-import { devServerErrorMessage, serverErrorMessage } from "./error-page.ts"
+import {
+	devServerErrorMessage,
+	rendererCrashedMessage,
+	serverErrorMessage,
+} from "./error-page.ts"
 import {
 	appWindowDecision,
 	type WindowOpenDecision,
@@ -49,6 +54,8 @@ export type CreateWindowOptions = {
 	readonly iconPath?: string
 	/** App windows: the in-window loading/error fallback target. */
 	readonly shellPage?: ShellPageTarget
+	/** App windows: UI language for shell-page messages (fallback: system). */
+	readonly language?: SupportedLanguage
 }
 
 export function createDesktopWindow(
@@ -197,6 +204,22 @@ function loadWindow(win: BrowserWindow, options: CreateWindowOptions): void {
 		// the swap can never loop.
 		win.webContents.on("did-finish-load", () => {
 			errorPageShown = false
+		})
+		// The renderer process died (crash, OOM, sandbox kill). The
+		// webContents survives; the next load spawns a fresh renderer, so
+		// swap in the shell error page with the crash message — its Retry
+		// re-resolves and re-loads the app URL (like a browser refresh).
+		win.webContents.on("render-process-gone", (_event, details) => {
+			console.error(
+				`[desktop] renderer gone: ${details.reason} (exit ${details.exitCode})`,
+			)
+			if (options.shellPage === undefined) return
+			void loadShellPage(
+				win,
+				options.shellPage,
+				"error",
+				rendererCrashedMessage(options.language),
+			)
 		})
 	}
 	void win.loadURL(options.url)

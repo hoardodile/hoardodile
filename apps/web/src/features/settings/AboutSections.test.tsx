@@ -102,16 +102,27 @@ describe("Settings → About", () => {
 		expect(openExternalMock).not.toHaveBeenCalled()
 	})
 
-	test("a desktop click routes to the desktop form through the shell", () => {
+	test("a desktop click routes to the desktop form through the shell", async () => {
 		bridgeMock.mockReturnValue({
 			isDesktop: true,
 			openExternal: openExternalMock,
+			async getConfig() {
+				// path-guard-exempt: a Windows library path feeds the logs hint.
+				return { libraryPath: "C:\\lib" }
+			},
+			async openLogsFolder() {
+				return true
+			},
 		})
 		render(
 			<>
 				<BugReportSection />
 				<FeatureRequestSection />
 			</>,
+		)
+		// Wait out the async config load (logs path hint) inside act.
+		await waitFor(() =>
+			expect(screen.getByText(/C:\\lib\/local\/logs/)).toBeInTheDocument(),
 		)
 		expect(screen.getByTestId("me-feedback-bug").getAttribute("href")).toBe(
 			APP_ISSUES_BUG_DESKTOP_URL,
@@ -125,6 +136,41 @@ describe("Settings → About", () => {
 		)
 		expect(openExternalMock).toHaveBeenNthCalledWith(2, APP_ISSUES_FEATURE_URL)
 		expect(openSpy).not.toHaveBeenCalled()
+	})
+
+	test("copies the diagnostics block from the bug section", async () => {
+		bridgeMock.mockReturnValue(undefined)
+		const writeText = vi.fn(async (_text: string) => {})
+		Object.defineProperty(navigator, "clipboard", {
+			value: { writeText },
+			configurable: true,
+		})
+		renderAboutSections()
+		fireEvent.click(screen.getByTestId("me-feedback-copy-diagnostics"))
+		await waitFor(() => expect(writeText).toHaveBeenCalledTimes(1))
+		expect(writeText.mock.calls[0]![0]).toContain("hoardodile v")
+		expect(writeText.mock.calls[0]![0]).toContain("Platform:")
+		delete (navigator as { clipboard?: unknown }).clipboard
+	})
+
+	test("opens the server logs folder on desktop and shows its path", async () => {
+		const openLogsFolder = vi.fn(async () => true)
+		bridgeMock.mockReturnValue({
+			isDesktop: true,
+			openExternal: openExternalMock,
+			async getConfig() {
+				// path-guard-exempt: a Windows path is what the hint renders.
+				return { libraryPath: "C:\\lib" }
+			},
+			openLogsFolder,
+		})
+		render(<BugReportSection />)
+		expect(
+			// path-guard-exempt: the hint renders the Windows path verbatim.
+			await screen.findByText("C:\\lib/local/logs", { exact: false }),
+		).toBeInTheDocument()
+		fireEvent.click(screen.getByTestId("me-feedback-open-logs"))
+		await waitFor(() => expect(openLogsFolder).toHaveBeenCalledTimes(1))
 	})
 
 	test("surfaces a resource-channel error in the desktop About block", async () => {

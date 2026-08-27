@@ -36,6 +36,9 @@ function installBridge(
 			return undefined
 		},
 		async relaunch() {},
+		async openLogsFolder() {
+			return true
+		},
 		async getConfig() {
 			return {
 				libraryPath: "",

@@ -25,6 +25,7 @@ export type IpcHost = {
 	portable: () => boolean
 	pickLibraryFolder: (parent?: BrowserWindow) => Promise<string | undefined>
 	relaunch: () => Promise<void>
+	openLogsFolder: () => Promise<boolean>
 	retryLoad: () => void
 	setCloseAction: (action: DesktopConfig["closeAction"]) => void
 	closeWithAction: (action: "tray" | "quit", remember: boolean) => Promise<void>
@@ -101,6 +102,7 @@ export function registerIpc(host: IpcHost): void {
 		host.pickLibraryFolder(windowFrom(event)),
 	)
 	ipcMain.handle(IPC.relaunch, () => host.relaunch())
+	ipcMain.handle(IPC.logsOpen, () => host.openLogsFolder())
 	ipcMain.on(IPC.windowRetryLoad, () => {
 		host.retryLoad()
 	})

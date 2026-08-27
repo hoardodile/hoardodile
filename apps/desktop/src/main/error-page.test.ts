@@ -3,7 +3,11 @@
  */
 
 import { describe, expect, it } from "vitest"
-import { devServerErrorMessage, serverErrorMessage } from "./error-page.ts"
+import {
+	devServerErrorMessage,
+	rendererCrashedMessage,
+	serverErrorMessage,
+} from "./error-page.ts"
 
 const LOCALIZED_LANGUAGES = ["zh", "ja", "de", "es"] as const
 
@@ -14,6 +18,11 @@ describe("shell error copy", () => {
 
 	it("exposes the generic server message", () => {
 		expect(serverErrorMessage("en")).toContain("Retry")
+	})
+
+	it("exposes the renderer-crash message", () => {
+		expect(rendererCrashedMessage("en")).toContain("Retry")
+		expect(rendererCrashedMessage("en")).not.toBe(serverErrorMessage("en"))
 	})
 
 	it("keeps the message functions distinct", () => {

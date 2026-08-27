@@ -15,6 +15,7 @@ export const IPC = {
 	updatesQuitAndInstall: "desktop:updates:quit-and-install",
 	pickLibraryFolder: "desktop:library:pick",
 	relaunch: "desktop:relaunch",
+	logsOpen: "desktop:logs:open",
 	getConfig: "desktop:config:get",
 	setConfig: "desktop:config:set",
 	configSync: "desktop:config:sync",

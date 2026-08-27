@@ -105,6 +105,17 @@
 			"noMatches": "暂无匹配时区。"
 		}
 	},
+	"appError": {
+		"title": "页面出错了",
+		"description": "页面无法正常显示。刷新应用即可恢复——数据是安全的；也可以复制错误详情用于反馈。",
+		"details": "错误详情",
+		"tryAgain": "重试",
+		"reload": "重新加载",
+		"copyDetails": "复制错误详情",
+		"copied": "错误详情已复制到剪贴板。",
+		"copyFailed": "无法复制到剪贴板。",
+		"reportIssue": "提交 Issue"
+	},
 	"appShell": {
 		"primaryNav": "主导航",
 		"secondaryNav": "辅助导航",
@@ -289,6 +300,13 @@
 			"bugTitle": "报告 Bug",
 			"bugDescription": "遇到了问题？提交 issue，帮我们修复。",
 			"bugAction": "提交 Issue",
+			"copyDiagnostics": "复制诊断信息",
+			"diagnosticsCopied": "诊断信息已复制到剪贴板。",
+			"copyDiagnosticsFailed": "无法复制到剪贴板。",
+			"openLogsFolder": "打开日志文件夹",
+			"openLogsFailed": "无法打开日志文件夹。",
+			"logsFolderHint": "服务端日志位于库目录的 local/logs 文件夹",
+			"selfHostedLogsHint": "服务端日志位于 `<STORAGE_ROOT>/local/logs`；使用 Docker 时可用 `docker compose logs`。",
 			"featureTitle": "功能建议",
 			"featureDescription": "缺少什么功能？告诉我们。",
 			"featureAction": "告诉我们",
@@ -2225,6 +2243,7 @@
 			"copied": "局域网地址已复制到剪贴板。"
 		},
 		"errorPage": {
+			"rendererCrashed": "应用窗口崩溃了。点击重试即可重新加载——数据和内置服务都是安全的。",
 			"serverError": "无法连接服务器。服务器可能仍在启动，或已停止。稍候片刻后点击重试，或在托盘中使用「重启服务器」。",
 			"devServerError": "开发服务器未运行。请在另一个终端运行 `pnpm dev`，然后点击重试。"
 		},
