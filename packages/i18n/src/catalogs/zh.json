@@ -511,6 +511,10 @@
 		"missingSource": "来源缺失",
 		"installed": "已安装",
 		"installedDescription": "顺序决定谁优先认领内容——拖拽可调整优先级。",
+		"bundledTitle": "捆绑插件",
+		"bundledDescription": "随应用分发的官方插件。卸载不会删除打包原件——可随时在此处离线还原。",
+		"bundledRestore": "还原",
+		"bundledRestoreSuccess": "已还原 {{name}}",
 		"filterPlaceholder": "筛选插件",
 		"countInstalled": "已安装 {{count}} 个",
 		"listView": "列表视图",
@@ -625,12 +629,7 @@
 		"emptyFilterHint": "当前筛选下没有插件。",
 		"requiresAppVersion": "需要 hoardodile ≥ v{{version}}",
 		"incompatibleAppVersion": "该插件需要 hoardodile ≥ v{{require}}，当前为 v{{current}}",
-		"registryActive": "当前 registry：{{url}}",
-		"bundledTitle": "捆绑插件",
-		"bundledDescription": "随应用分发的官方插件。卸载不会删除打包原件——可随时在此处离线还原。",
-		"bundledRemoved": "已移除",
-		"bundledRestore": "还原",
-		"bundledRestoreSuccess": "已还原 {{name}}"
+		"registryActive": "当前 registry：{{url}}"
 	},
 	"overview": {
 		"usageHistory": {

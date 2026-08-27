@@ -129,7 +129,7 @@ function buildServices(selectedPlugins) {
 	// watch script keeps rebuilding dist; a server restart refreshes the
 	// seeded copy — unless the plugin was deliberately uninstalled, which
 	// the removal marker keeps out until it is restored from the
-	// marketplace's bundled-plugins section.
+	// plugins settings page's bundled-plugins section.
 	const explicitSeeds = process.env.SEED_PLUGIN_PATHS
 	if (explicitSeeds !== undefined && explicitSeeds.trim().length > 0) {
 		const seedIds = new Set()

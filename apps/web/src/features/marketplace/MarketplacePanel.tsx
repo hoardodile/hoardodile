@@ -9,6 +9,7 @@ import { PillTabs } from "@hoardodile/ui/components/pill-tabs"
 import { Skeleton } from "@hoardodile/ui/components/skeleton"
 import { toast } from "@hoardodile/ui/components/toast"
 import {
+	Eye,
 	ListVertical,
 	PlugCircle,
 	Refresh,
@@ -31,7 +32,6 @@ import {
 } from "@/features/plugin/pluginApi"
 import { errorMessage } from "@/lib/errors"
 import { isNewer } from "@/lib/versions"
-import { BundledPluginsSection } from "./BundledPluginsSection"
 import { isMinAppSatisfied, marketUpdateAvailable } from "./compat"
 import type { InstalledPlugin, MarketPlugin } from "./MarketplaceDetailDialog"
 import {
@@ -153,10 +153,6 @@ export function MarketplacePanel() {
 
 	return (
 		<div className="flex flex-col gap-4">
-			{/* Official bundled plugins — offline restore lives here and must
-			    work even when the registry is disabled, so it renders before
-			    the catalog and independent of the registry config. */}
-			<BundledPluginsSection />
 			{registryRepo === null ? (
 				<p className="text-sm text-muted-foreground">
 					{t("marketplace.notConfiguredHint")}
@@ -478,6 +474,7 @@ function MarketplaceCard(props: {
 						onClick={props.onDetails}
 						data-testid={`marketplace-view-${plugin.id}`}
 					>
+						<Icon icon={Eye} />
 						{t("marketplace.view")}
 					</Button>
 				</div>
@@ -625,6 +622,7 @@ function MarketplaceListRow(props: {
 					onClick={props.onDetails}
 					data-testid={`marketplace-view-${plugin.id}`}
 				>
+					<Icon icon={Eye} />
 					{t("marketplace.view")}
 				</Button>
 			</div>

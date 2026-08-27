@@ -511,6 +511,10 @@
 		"missingSource": "ソース欠落",
 		"installed": "インストール済み",
 		"installedDescription": "順序が誰が最初にバンドルを取得するかを決めます — ドラッグで優先度を変更してください。",
+		"bundledTitle": "同梱プラグイン",
+		"bundledDescription": "アプリに同梱されている公式プラグイン。アンインストールしても同梱元は削除されません — いつでもオフラインで復元できます。",
+		"bundledRestore": "復元",
+		"bundledRestoreSuccess": "{{name}} を復元しました",
 		"filterPlaceholder": "プラグインをフィルター",
 		"countInstalled": "{{count}}件 インストール済み",
 		"listView": "リスト表示",
@@ -625,12 +629,7 @@
 		"emptyFilterHint": "このフィルターに一致するプラグインはありません。",
 		"requiresAppVersion": "hoardodile ≥ v{{version}} が必要",
 		"incompatibleAppVersion": "このプラグインには hoardodile ≥ v{{require}} が必要です（このホストは v{{current}}）",
-		"registryActive": "現在のレジストリ：{{url}}",
-		"bundledTitle": "同梱プラグイン",
-		"bundledDescription": "アプリに同梱されている公式プラグイン。アンインストールしても同梱元は削除されません — いつでもオフラインで復元できます。",
-		"bundledRemoved": "削除済み",
-		"bundledRestore": "復元",
-		"bundledRestoreSuccess": "{{name}} を復元しました"
+		"registryActive": "現在のレジストリ：{{url}}"
 	},
 	"overview": {
 		"usageHistory": {

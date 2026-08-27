@@ -511,6 +511,10 @@
 		"missingSource": "falta el origen",
 		"installed": "Instalado",
 		"installedDescription": "El orden decide quién reclama un paquete primero — arrastra para cambiar la prioridad.",
+		"bundledTitle": "Complementos integrados",
+		"bundledDescription": "Complementos oficiales que se distribuyen con la aplicación. Desinstalarlos no elimina el original empaquetado: restáuralo aquí en cualquier momento, sin conexión.",
+		"bundledRestore": "Restaurar",
+		"bundledRestoreSuccess": "{{name}} restaurado",
 		"filterPlaceholder": "Filtrar complementos",
 		"countInstalled": "{{count}} instalados",
 		"listView": "Vista de lista",
@@ -625,12 +629,7 @@
 		"emptyFilterHint": "Ningún plugin coincide con este filtro.",
 		"requiresAppVersion": "Requiere hoardodile ≥ v{{version}}",
 		"incompatibleAppVersion": "Este plugin requiere hoardodile ≥ v{{require}}; este host usa v{{current}}",
-		"registryActive": "Registro actual: {{url}}",
-		"bundledTitle": "Complementos integrados",
-		"bundledDescription": "Complementos oficiales que se distribuyen con la aplicación. Desinstalarlos no elimina el original empaquetado: restáuralo aquí en cualquier momento, sin conexión.",
-		"bundledRemoved": "Eliminado",
-		"bundledRestore": "Restaurar",
-		"bundledRestoreSuccess": "{{name}} restaurado"
+		"registryActive": "Registro actual: {{url}}"
 	},
 	"overview": {
 		"usageHistory": {

@@ -29,7 +29,7 @@ export function pluginListAllQueryOptions() {
 
 /**
  * The bundled (seed) plugins of this host with their installed/removed/
- * restorable state — the marketplace's bundled-plugins section. Fully
+ * restorable state — the settings page's bundled-plugins section. Fully
  * local, no network.
  */
 export function pluginSeedsQueryOptions() {

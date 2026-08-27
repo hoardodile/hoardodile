@@ -85,7 +85,7 @@ lives in `references/`.
      build list and the runtime seed discovery are both directory-driven
      (`scripts/lib/plugin-channels.mjs`); bundled seeds uninstalled by a
      user stay uninstalled per library and are restored (offline) from
-     **Settings → Marketplace → Bundled plugins**.
+     **Settings → Plugins → Bundled plugins**.
 
 ## SDK Closure
 

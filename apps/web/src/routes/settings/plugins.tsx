@@ -2,6 +2,7 @@ import { Eraser, File, Layers, Restart } from "@hoardodile/ui/icons/registry"
 import { createFileRoute } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 import {
+	BundledPluginsSection,
 	FilePluginPill,
 	InstalledPluginsPanel,
 	PluginCachesPanel,
@@ -21,10 +22,11 @@ export const Route = createFileRoute("/settings/plugins")({
 })
 
 /**
- * Plugins settings tab: four clean sections in the shared settings
+ * Plugins settings tab: five clean sections in the shared settings
  * rhythm: Installed (the priority list that decides who claims content),
- * File (the built-in fallback), Defaults and cache (plugin-wide
- * maintenance as compact one-liners).
+ * Bundled (removed seeds, restored offline — hidden when nothing is
+ * restorable), File (the built-in fallback), Defaults and cache
+ * (plugin-wide maintenance as compact one-liners).
  */
 function PluginsSettingsRoute() {
 	const { t } = useTranslation()
@@ -41,6 +43,7 @@ function PluginsSettingsRoute() {
 				>
 					<InstalledPluginsPanel />
 				</SettingsSection>
+				<BundledPluginsSection />
 				<SectionDivider />
 				<SettingsSection
 					icon={File}

@@ -60,23 +60,25 @@ export type PluginServiceDeps = {
 	 * Bundled (seed) plugin directories, each a plugin dir with
 	 * `manifest.json` at its root. The seed channel: what ships with the
 	 * app (desktop) or an admin mounts (plain server). Drives the
-	 * marketplace's "bundled plugins" section and the restore action.
+	 * plugins settings page's "bundled plugins" section and the restore
+	 * action.
 	 */
 	readonly seedDirs: readonly string[]
 	/**
 	 * Persistent marker of deliberately-uninstalled seeds. `uninstall`
 	 * records the id here so boot-time seeding skips it — the bundled
-	 * original is never deleted; the user restores from the marketplace.
+	 * original is never deleted; the user restores it from the plugins
+	 * settings page.
 	 */
 	readonly seedRemovals: SeedRemovalsStore
 }
 
 /**
- * One bundled (seed) plugin, as the marketplace's bundled section reads
- * it: the bundled manifest (display truth) plus this host's relationship
- * to it. `installed` reflects the live registry; `removed` the
- * deliberate-removal marker; `restorable` is what gates the offline
- * restore action.
+ * One bundled (seed) plugin, as the plugins settings page's bundled
+ * section reads it: the bundled manifest (display truth) plus this
+ * host's relationship to it. `installed` reflects the live registry;
+ * `removed` the deliberate-removal marker; `restorable` is what gates
+ * the offline restore action.
  */
 export type SeedPluginInfo = {
 	readonly id: PluginManifestId
@@ -131,15 +133,15 @@ export type PluginService = {
 	 *
 	 * A seed (bundled) plugin additionally gets its id recorded in the
 	 * removal marker: the bundled original is never deleted, and boot-time
-	 * seeding skips it until the user restores it from the marketplace's
-	 * bundled-plugins section.
+	 * seeding skips it until the user restores it from the plugins
+	 * settings page's bundled-plugins section.
 	 * @throws when the plugin is unknown, builtin, or a dev plugin.
 	 */
 	uninstall(id: PluginManifestId): Promise<void>
 	/**
 	 * The bundled (seed) plugins of this host: one row per seed dir with a
 	 * parsable manifest, annotated with installed/removed/restorable
-	 * state. Backs the marketplace's bundled-plugins section.
+	 * state. Backs the plugins settings page's bundled-plugins section.
 	 */
 	listSeedPlugins(): SeedPluginInfo[]
 	/**

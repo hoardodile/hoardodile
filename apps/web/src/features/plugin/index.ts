@@ -1,3 +1,4 @@
+export { BundledPluginsSection } from "./BundledPluginsSection"
 export { claim, setPoolContainer } from "./iframe/iframe-pool"
 export { PluginIframePoolHost } from "./iframe/PluginIframePoolHost"
 export {

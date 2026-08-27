@@ -1,42 +1,41 @@
 import { Button } from "@hoardodile/ui/components/button"
 import { Icon } from "@hoardodile/ui/components/icon"
-import { MetaChip } from "@hoardodile/ui/components/meta-chip"
 import { toast } from "@hoardodile/ui/components/toast"
-import { PlugCircle, Restart } from "@hoardodile/ui/icons/registry"
+import { Box, PlugCircle, Restart } from "@hoardodile/ui/icons/registry"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useTranslation } from "react-i18next"
-import { PluginTileIcon } from "@/features/plugin/icons/plugin-tile-icon"
-import {
-	resolveManifestDescription,
-	resolveManifestName,
-} from "@/features/plugin/manifestText"
-import { PermissionMarks } from "@/features/plugin/PluginSettingsPanel"
+import { SettingsSection } from "@/features/settings/SettingsSection"
+import { SectionDivider } from "@/features/settings/SettingsSheet"
+import { errorMessage } from "@/lib/errors"
+import type { RouterOutputs } from "@/trpc/client"
+import { PluginTileIcon } from "./icons/plugin-tile-icon"
+import { resolveManifestDescription, resolveManifestName } from "./manifestText"
+import { PermissionMarks } from "./PluginSettingsPanel"
 import {
 	pluginKeys,
 	pluginRestoreSeedMutation,
 	pluginSeedsQueryOptions,
-} from "@/features/plugin/pluginApi"
-import { errorMessage } from "@/lib/errors"
-import type { RouterOutputs } from "@/trpc/client"
+} from "./pluginApi"
 
 type SeedPluginRow = RouterOutputs["plugin"]["listSeeds"][number]
 
 /**
- * The marketplace's bundled-plugins section: every official plugin that
- * ships with this app (the seed channel), with this host's relationship
- * to it. Uninstalling one keeps the bundled original on disk — the
+ * The settings page's bundled-plugins section: every official plugin that
+ * ships with this app (the seed channel) which is NOT currently
+ * installed. Uninstalling one keeps the bundled original on disk — the
  * removal marker makes boot-time seeding skip it — and this section
- * restores it from that original, fully offline.
+ * restores it from that original, fully offline, independent of the
+ * marketplace registry configuration.
  *
- * Renders above the catalog and independent of the registry
- * configuration: the restore action must work even with the marketplace
- * disabled. Hidden entirely when the host ships no bundled plugins.
+ * Renders itself as one full settings section (with its leading divider)
+ * below the Installed section. Hidden entirely when every bundled
+ * plugin is installed or the host ships no bundled plugins.
  */
 export function BundledPluginsSection() {
 	const { t, i18n } = useTranslation()
 	const qc = useQueryClient()
 	const seedsQuery = useQuery(pluginSeedsQueryOptions())
-	const rows = seedsQuery.data ?? []
+	const rows = (seedsQuery.data ?? []).filter((row) => !row.installed)
 
 	const restoreMut = useMutation({
 		...pluginRestoreSeedMutation(),
@@ -44,7 +43,7 @@ export function BundledPluginsSection() {
 			await qc.invalidateQueries({ queryKey: pluginKeys.all })
 			const row = rows.find((candidate) => candidate.id === id)
 			toast.add({
-				title: t("marketplace.bundledRestoreSuccess", {
+				title: t("plugins.bundledRestoreSuccess", {
 					name:
 						row !== undefined
 							? resolveManifestName(row.manifest, i18n.language)
@@ -64,29 +63,27 @@ export function BundledPluginsSection() {
 	if (rows.length === 0) return null
 
 	return (
-		<section
-			className="flex flex-col gap-3"
-			data-testid="bundled-plugins-section"
-		>
-			<div className="flex flex-col gap-1">
-				<p className="text-sm font-semibold text-foreground">
-					{t("marketplace.bundledTitle")}
-				</p>
-				<p className="text-xs text-muted-foreground">
-					{t("marketplace.bundledDescription")}
-				</p>
-			</div>
-			<div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-				{rows.map((row) => (
-					<BundledPluginCard
-						key={row.id}
-						row={row}
-						restorePending={restoreMut.isPending}
-						onRestore={() => restoreMut.mutate(row.id)}
-					/>
-				))}
-			</div>
-		</section>
+		<>
+			<SectionDivider />
+			<SettingsSection
+				icon={Box}
+				title={t("plugins.bundledTitle")}
+				description={t("plugins.bundledDescription")}
+				layout="stack"
+				data-testid="plugins-bundled-section"
+			>
+				<div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+					{rows.map((row) => (
+						<BundledPluginCard
+							key={row.id}
+							row={row}
+							restorePending={restoreMut.isPending}
+							onRestore={() => restoreMut.mutate(row.id)}
+						/>
+					))}
+				</div>
+			</SettingsSection>
+		</>
 	)
 }
 
@@ -126,15 +123,6 @@ function BundledPluginCard(props: {
 					}}
 				/>
 				<div className="ml-auto flex shrink-0 items-center gap-2">
-					{row.installed ? (
-						<MetaChip tone="inverse">
-							{t("marketplace.installed", {
-								version: row.installedVersion ?? row.manifest.version,
-							})}
-						</MetaChip>
-					) : row.removed ? (
-						<MetaChip>{t("marketplace.bundledRemoved")}</MetaChip>
-					) : null}
 					{row.restorable && (
 						<Button
 							size="sm"
@@ -147,7 +135,7 @@ function BundledPluginCard(props: {
 								icon={Restart}
 								className={restorePending ? "animate-spin" : ""}
 							/>
-							{t("marketplace.bundledRestore")}
+							{t("plugins.bundledRestore")}
 						</Button>
 					)}
 				</div>

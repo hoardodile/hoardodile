@@ -180,5 +180,5 @@ Requirements: all repos are public; tags follow `v<version>`. The app
 caches the catalog for 10 minutes and honors the user's proxy config;
 installs/updates are user-confirmed downloads of the release zip, and
 hosts below the plugin's `minAppVersion` hide the entries. The
-**Bundled plugins** section restores ships-with-app plugins a user
-uninstalled — offline.
+**Bundled plugins** section (Settings → Plugins) restores
+ships-with-app plugins a user uninstalled — offline.

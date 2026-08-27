@@ -511,6 +511,10 @@
 		"missingSource": "source missing",
 		"installed": "Installed",
 		"installedDescription": "Order decides who claims a bundle first — drag to re-prioritize.",
+		"bundledTitle": "Bundled plugins",
+		"bundledDescription": "Official plugins that ship with this app. Removing one keeps the bundled original — restore it here anytime, without a network connection.",
+		"bundledRestore": "Restore",
+		"bundledRestoreSuccess": "Restored {{name}}",
 		"filterPlaceholder": "Filter plugins",
 		"countInstalled": "{{count}} installed",
 		"listView": "List view",
@@ -625,12 +629,7 @@
 		"emptyFilterHint": "No plugins match this filter.",
 		"requiresAppVersion": "Requires hoardodile ≥ v{{version}}",
 		"incompatibleAppVersion": "This plugin requires hoardodile ≥ v{{require}}; this host runs v{{current}}",
-		"registryActive": "Current registry: {{url}}",
-		"bundledTitle": "Bundled plugins",
-		"bundledDescription": "Official plugins that ship with this app. Removing one keeps the bundled original — restore it here anytime, without a network connection.",
-		"bundledRemoved": "Removed",
-		"bundledRestore": "Restore",
-		"bundledRestoreSuccess": "Restored {{name}}"
+		"registryActive": "Current registry: {{url}}"
 	},
 	"overview": {
 		"usageHistory": {

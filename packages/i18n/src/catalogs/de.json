@@ -511,6 +511,10 @@
 		"missingSource": "Quelle fehlt",
 		"installed": "Installiert",
 		"installedDescription": "Die Reihenfolge bestimmt, wer ein Paket zuerst beansprucht — zum Neusortieren ziehen.",
+		"bundledTitle": "Gebündelte Plugins",
+		"bundledDescription": "Offizielle Plugins, die mit der App ausgeliefert werden. Das Deinstallieren löscht das gebündelte Original nicht — hier jederzeit offline wiederherstellbar.",
+		"bundledRestore": "Wiederherstellen",
+		"bundledRestoreSuccess": "{{name}} wiederhergestellt",
 		"filterPlaceholder": "Plugins filtern",
 		"countInstalled": "{{count}} installiert",
 		"listView": "Listenansicht",
@@ -625,12 +629,7 @@
 		"emptyFilterHint": "Keine Plugins entsprechen diesem Filter.",
 		"requiresAppVersion": "Benötigt hoardodile ≥ v{{version}}",
 		"incompatibleAppVersion": "Dieses Plugin benötigt hoardodile ≥ v{{require}}; diese Installation läuft mit v{{current}}",
-		"registryActive": "Aktuelles Registry: {{url}}",
-		"bundledTitle": "Gebündelte Plugins",
-		"bundledDescription": "Offizielle Plugins, die mit der App ausgeliefert werden. Das Deinstallieren löscht das gebündelte Original nicht — hier jederzeit offline wiederherstellbar.",
-		"bundledRemoved": "Entfernt",
-		"bundledRestore": "Wiederherstellen",
-		"bundledRestoreSuccess": "{{name}} wiederhergestellt"
+		"registryActive": "Aktuelles Registry: {{url}}"
 	},
 	"overview": {
 		"usageHistory": {
