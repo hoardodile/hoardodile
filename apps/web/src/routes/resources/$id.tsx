@@ -5,8 +5,8 @@ import { PageScaffold } from "@hoardodile/ui/components/page-scaffold"
 import { SectionLabel } from "@hoardodile/ui/components/section-label"
 import { Link, Maximize, MenuDots } from "@hoardodile/ui/icons/registry"
 import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query"
-import { createFileRoute } from "@tanstack/react-router"
-import { useMemo, useRef, useState } from "react"
+import { createFileRoute, useNavigate } from "@tanstack/react-router"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { z } from "zod"
 import { ExternalLink } from "@/components/common/ExternalLink"
@@ -22,7 +22,11 @@ import {
 } from "@/features/col"
 import { ResCollectionChips } from "@/features/col/ResColChips"
 import { CommentsSection } from "@/features/comments"
-import { AnchorJumpProvider } from "@/features/comments/anchor"
+import {
+	AnchorJumpProvider,
+	decodeAnchorPluginState,
+	encodeAnchorPluginState,
+} from "@/features/comments/anchor"
 import { LinkedDocumentsSection } from "@/features/doc/components/LinkedDocumentsSection"
 import {
 	pluginListAllQueryOptions,
@@ -92,8 +96,9 @@ const resDetailSearchSchema = z
 		fileName: z.string().min(1).optional(),
 		/**
 		 * Opaque plugin state persisted across navigation (e.g. anchor jump
-		 * coordinates, reader scroll position). Interpreted by the plugin's
-		 * render module.
+		 * coordinates, reader scroll position). Written by anchor-chip
+		 * navigation and delivered to the plugin iframe by
+		 * {@link ResDetailRoute} once it is presented.
 		 */
 		pluginState: z.string().optional(),
 	})
@@ -119,7 +124,10 @@ export const Route = createFileRoute("/resources/$id")({
  */
 function ResDetailRoute() {
 	const { id } = Route.useParams()
+	const { pluginState } = Route.useSearch()
+	const navigate = useNavigate()
 	const [contentVisible, setContentVisible] = useState(true)
+	const [previewPresented, setPreviewPresented] = useState(false)
 	useUsageTracker({
 		entityType: "resource",
 		entityId: id,
@@ -153,16 +161,33 @@ function ResDetailRoute() {
 		return undefined
 	}, [qc, id, detailQuery.data])
 
+	// Anchor-jump arrival: a `pluginState` search value (written by an
+	// anchor-chip click on another page) delivers the payload to the
+	// plugin iframe once that iframe is presented. The per-mount guard
+	// keys on the value so a refresh re-delivers (the URL still asks for
+	// the jump) while StrictMode's double invocation does not.
+	const deliveredAnchorRef = useRef<string | null>(null)
+	useEffect(() => {
+		if (!previewPresented || pluginState === undefined) return
+		if (deliveredAnchorRef.current === pluginState) return
+		deliveredAnchorRef.current = pluginState
+		pushAnchorJump(id, { data: decodeAnchorPluginState(pluginState) })
+	}, [previewPresented, pluginState, id])
+
 	function handleAnchorJump(anchor: ResAnchor): void {
 		if (anchor.resId !== id) {
-			const params = new URLSearchParams()
-			if (anchor.data !== undefined) {
-				params.set(
-					"pluginState",
-					encodeURIComponent(JSON.stringify(anchor.data)),
-				)
-			}
-			window.location.href = `/resources/${anchor.resId}?${params.toString()}`
+			// Cross-resource chips open the target detail page in-app — the
+			// encoded payload is delivered by the arrival effect above.
+			navigate({
+				to: "/resources/$id",
+				params: { id: anchor.resId },
+				search: {
+					pluginState:
+						anchor.data !== undefined
+							? encodeAnchorPluginState(anchor.data)
+							: undefined,
+				},
+			})
 			return
 		}
 		pushAnchorJump(id, { data: anchor.data })
@@ -369,6 +394,7 @@ function ResDetailRoute() {
 				iframeRef={previewIframeRef}
 				inline
 				onContentVisibleChange={setContentVisible}
+				onPresentedChange={setPreviewPresented}
 			/>
 		</div>
 	)

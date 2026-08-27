@@ -1,5 +1,7 @@
 import type { ResAnchor } from "@hoardodile/schemas"
+import { useNavigate } from "@tanstack/react-router"
 import { createContext, type ReactNode, useContext } from "react"
+import { encodeAnchorPluginState } from "./pluginState"
 
 /**
  * Default behaviour to jump to a comment's anchor location. Readers
@@ -27,21 +29,25 @@ export function AnchorJumpProvider(props: {
 }
 
 /**
- * Resolve the anchor click handler in scope. Falls back to a route
- * navigation that lands on the resource detail page; the plugin's
- * resolveCommentAnchor handles interpretation of the anchor data
- * once the detail page loads.
+ * Resolve the anchor click handler in scope. Falls back to an in-app
+ * route navigation that lands on the resource detail page (never a hard
+ * reload); the detail page pushes the encoded anchor payload to the
+ * plugin iframe once it is presented.
  */
 export function useAnchorJump(): AnchorJumpHandler {
 	const ctx = useContext(AnchorJumpContext)
+	const navigate = useNavigate()
 	if (ctx !== undefined) return ctx
-	return defaultJump
-}
-
-function defaultJump(anchor: ResAnchor): void {
-	const params = new URLSearchParams()
-	if (anchor.data !== undefined) {
-		params.set("pluginState", encodeURIComponent(JSON.stringify(anchor.data)))
+	return (anchor) => {
+		navigate({
+			to: "/resources/$id",
+			params: { id: anchor.resId },
+			search: {
+				pluginState:
+					anchor.data !== undefined
+						? encodeAnchorPluginState(anchor.data)
+						: undefined,
+			},
+		})
 	}
-	window.location.href = `/resources/${anchor.resId}?${params.toString()}`
 }

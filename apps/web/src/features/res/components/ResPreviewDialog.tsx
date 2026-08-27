@@ -153,6 +153,12 @@ export type PreviewContentProps = PreviewTarget & {
 	readonly windowRef?: RefObject<PreviewWindowFlip | null>
 	/** Called when the plugin placeholder enters or leaves the viewport. */
 	readonly onContentVisibleChange?: (visible: boolean) => void
+	/**
+	 * Called when a slot iframe becomes (or stops being) on screen — the
+	 * plugin has loaded, accepted its context and registered its resource
+	 * binding, so host pushes (e.g. an anchor jump) will reach it.
+	 */
+	readonly onPresentedChange?: (presented: boolean) => void
 }
 
 /**
@@ -208,6 +214,10 @@ export function PreviewContent(props: PreviewContentProps) {
 	useEffect(() => {
 		props.onContentVisibleChange?.(contentVisible)
 	}, [contentVisible, props.onContentVisibleChange])
+
+	useEffect(() => {
+		props.onPresentedChange?.(presented)
+	}, [presented, props.onPresentedChange])
 
 	// Delay the loading indicator: switching to an idle pooled plugin only
 	// needs one local bootstrap round-trip plus a couple of frames, so the
