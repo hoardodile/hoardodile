@@ -128,8 +128,8 @@ test.describe("boot splash", () => {
 		expect(probe?.firstFrame?.background).toBe("rgb(10, 16, 14)")
 		expect(probe?.firstFrame?.classes).toContain("dark")
 		expect(probe?.firstFrame?.classes).toContain("theme-sage")
-		// The removed morph animated the logo with transforms; the fade
-		// must never set one.
+		// The removed morph animated the logo with transforms; the hard-cut
+		// handoff must never set a transform or transition.
 		expect(probe?.transforms).toEqual([])
 	})
 

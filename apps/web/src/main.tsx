@@ -197,8 +197,9 @@ if (!rootElement) {
 holdSplashUntilReady({
 	router,
 	queryClient,
-	// The overlay (background + dimmed logo) fades out as one surface,
-	// revealing the finished page beneath — no moving logo, no swap.
+	// The overlay (background + dimmed logo) is then removed in a single
+	// hard cut, revealing the finished page beneath — no fade, no moving
+	// logo, no swap.
 	remove: () => dismissSplash(document.getElementById("app-splash")),
 })
 
