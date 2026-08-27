@@ -283,6 +283,7 @@ describe("MarketplacePanel", () => {
 			expect(installCall).toBeDefined()
 			expect(JSON.parse(String(installCall?.[1]?.body))).toMatchObject({
 				id: PLUGIN_ID,
+				repo: "me/cat-viewer",
 				assetUrl: SNAPSHOT.plugins[0]!.latest!.assetUrl,
 			})
 		})
@@ -547,6 +548,12 @@ describe("MarketplacePanel", () => {
 		expect(issueLink?.href).toContain(
 			"github.com/me/cat-viewer/issues/new/choose",
 		)
+		const featureLink = within(dialog)
+			.getByText("Request a feature")
+			.closest("a")
+		expect(featureLink?.href).toContain(
+			"github.com/me/cat-viewer/issues/new/choose",
+		)
 		const securityLink = within(dialog)
 			.getByText("Report a security vulnerability")
 			.closest("a")
@@ -640,5 +647,146 @@ describe("MarketplacePanel", () => {
 		expect(
 			within(dialog).getByText("No GitHub release yet"),
 		).toBeInTheDocument()
+	})
+
+	it("mounts the update dot on the View button when a compatible update exists", async () => {
+		installClient({
+			config: { registryRepo: "me/registry" },
+			installed: [installedRow("1.1.0")],
+		})
+		renderPanel()
+
+		expect(
+			await screen.findByTestId(`marketplace-update-dot-${PLUGIN_ID}`),
+		).toBeInTheDocument()
+	})
+
+	it("keeps the View button dot off when the installed version is current", async () => {
+		installClient({
+			config: { registryRepo: "me/registry" },
+			installed: [installedRow("1.2.3")],
+		})
+		renderPanel()
+
+		await screen.findByTestId(`marketplace-plugin-${PLUGIN_ID}`)
+		expect(
+			screen.queryByTestId(`marketplace-update-dot-${PLUGIN_ID}`),
+		).not.toBeInTheDocument()
+	})
+
+	it("keeps the View button dot off when the update is incompatible with the host app", async () => {
+		installClient({
+			config: { registryRepo: "me/registry" },
+			installed: [installedRow("1.1.0")],
+			snapshot: {
+				...SNAPSHOT,
+				plugins: [
+					{
+						...SNAPSHOT.plugins[0]!,
+						manifest: {
+							...SNAPSHOT.plugins[0]!.manifest,
+							minAppVersion: "99.0.0",
+						},
+					},
+				],
+			},
+		})
+		renderPanel()
+
+		await screen.findByTestId(`marketplace-plugin-${PLUGIN_ID}`)
+		expect(
+			screen.queryByTestId(`marketplace-update-dot-${PLUGIN_ID}`),
+		).not.toBeInTheDocument()
+	})
+
+	it("keeps the View button dot off when the catalog entry errors", async () => {
+		installClient({
+			config: { registryRepo: "me/registry" },
+			installed: [installedRow("1.1.0")],
+			snapshot: {
+				...SNAPSHOT,
+				plugins: [
+					{
+						...SNAPSHOT.plugins[0]!,
+						state: "error" as const,
+						latest: undefined,
+						error: "fetching latest release failed",
+						errorKind: "failed" as const,
+					},
+				],
+			},
+		})
+		renderPanel()
+
+		await screen.findByTestId(`marketplace-plugin-${PLUGIN_ID}`)
+		expect(
+			screen.queryByTestId(`marketplace-update-dot-${PLUGIN_ID}`),
+		).not.toBeInTheDocument()
+	})
+
+	it("shows the update dot on the View button in the list view too", async () => {
+		installClient({
+			config: { registryRepo: "me/registry" },
+			installed: [installedRow("1.1.0")],
+		})
+		renderPanel()
+
+		await user.click(await screen.findByRole("button", { name: /list view/i }))
+		expect(
+			await screen.findByTestId(`marketplace-update-dot-${PLUGIN_ID}`),
+		).toBeInTheDocument()
+	})
+
+	it("splits the footer only with three actions: uninstall at the left edge", async () => {
+		installClient({
+			config: { registryRepo: "me/registry" },
+			installed: [installedRow("1.1.0")],
+		})
+		renderPanel()
+
+		await user.click(await screen.findByTestId(`marketplace-view-${PLUGIN_ID}`))
+		const dialog = await screen.findByTestId("marketplace-detail-dialog")
+		const footer = document.querySelector('[data-slot="dialog-footer"]')
+		expect(footer).not.toBeNull()
+		const uninstall = within(dialog).getByTestId("marketplace-detail-uninstall")
+		// DESIGN.md three-button footer: the secondary function key sits at
+		// the left edge (mr-auto), cancel + update stay right-aligned.
+		expect(uninstall.className).toContain("mr-auto")
+		const buttons = Array.from(
+			footer!.querySelectorAll("button[data-testid]"),
+		).map((el) => el.getAttribute("data-testid"))
+		expect(buttons[0]).toBe("marketplace-detail-uninstall")
+		expect(buttons).toContain("marketplace-detail-update")
+		expect(within(dialog).getByText("Cancel")).toBeInTheDocument()
+	})
+
+	it("keeps the two-button footer unsplit (installed, no update)", async () => {
+		installClient({
+			config: { registryRepo: "me/registry" },
+			installed: [installedRow("1.2.3")],
+		})
+		renderPanel()
+
+		await user.click(await screen.findByTestId(`marketplace-view-${PLUGIN_ID}`))
+		const dialog = await screen.findByTestId("marketplace-detail-dialog")
+		const uninstall = within(dialog).getByTestId("marketplace-detail-uninstall")
+		expect(uninstall.className).not.toContain("mr-auto")
+		expect(
+			within(dialog).queryByTestId("marketplace-detail-update"),
+		).not.toBeInTheDocument()
+	})
+
+	it("keeps the two-button footer unsplit (not installed)", async () => {
+		installClient({ config: { registryRepo: "me/registry" } })
+		renderPanel()
+
+		await user.click(await screen.findByTestId(`marketplace-view-${PLUGIN_ID}`))
+		const dialog = await screen.findByTestId("marketplace-detail-dialog")
+		expect(
+			within(dialog).getByTestId("marketplace-detail-install"),
+		).toBeInTheDocument()
+		expect(
+			within(dialog).queryByTestId("marketplace-detail-uninstall"),
+		).not.toBeInTheDocument()
 	})
 })

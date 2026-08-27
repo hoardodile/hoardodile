@@ -10,6 +10,7 @@ import {
 	useLocation,
 } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
+import { useMarketplaceUpdateCount } from "@/features/marketplace/useMarketplaceUpdateCount"
 import {
 	SETTINGS_TABS,
 	type SettingsTabKey,
@@ -49,7 +50,12 @@ function SettingsLayout() {
 	const syncSummaryQuery = useQuery(syncSummaryQueryOptions())
 	const syncDue =
 		(syncSummaryQuery.data?.devices ?? []).some((entry) => entry.due) === true
+	const marketplaceUpdates = useMarketplaceUpdateCount()
 	const tabs = visibleSettingsTabs(isHoardodileDesktop())
+
+	/** The marketplace/plugins tabs signal plugin updates with a dot —
+	    the settings-page echo of the sidebar's marketplace alert. */
+	const hasUpdates = marketplaceUpdates > 0
 
 	return (
 		<PageScaffold width="content">
@@ -74,6 +80,15 @@ function SettingsLayout() {
 								aria-current={active ? "page" : undefined}
 							>
 								{t(`me.tabs.${tab.key}`)}
+								{hasUpdates &&
+								(tab.key === "marketplace" || tab.key === "plugins") ? (
+									<span
+										className="size-1.5 rounded-full bg-destructive"
+										role="img"
+										aria-label={t("appShell.nav.marketplaceUpdatesBadge")}
+										data-testid="me-tab-update-dot"
+									/>
+								) : null}
 							</Link>
 						),
 					}))}
@@ -102,6 +117,14 @@ function SettingsLayout() {
 								{t(`me.tabs.${tab.key}`)}
 								{tab.key === "sync" && syncDue ? (
 									<span className="ml-auto size-2 shrink-0 rounded-full bg-destructive" />
+								) : hasUpdates &&
+									(tab.key === "marketplace" || tab.key === "plugins") ? (
+									<span
+										className="ml-auto size-2 shrink-0 rounded-full bg-destructive"
+										role="img"
+										aria-label={t("appShell.nav.marketplaceUpdatesBadge")}
+										data-testid="me-tab-update-dot"
+									/>
 								) : null}
 							</Link>
 						)

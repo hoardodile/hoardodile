@@ -19,6 +19,8 @@ describe("plugin router previewInitContext", () => {
 			syncRecords: vi.fn(),
 			uninstall: vi.fn(async () => undefined),
 			listSeedPlugins: vi.fn(() => []),
+			setMarketplaceSource: vi.fn(),
+			listMarketplaceSources: vi.fn(() => []),
 			restoreSeedPlugin: vi.fn(async () => undefined),
 		}
 		const usage = {

@@ -94,8 +94,21 @@ function makeFixture() {
 	}
 
 	let clock = 0
+	const sourcesData: { readonly id?: string; readonly repo?: string }[] = []
+	const sources = {
+		recordInstallSource: vi.fn((id: string, repo: string) => {
+			sourcesData.push({ id, repo })
+		}),
+		listInstallSources: vi.fn(() =>
+			sourcesData.filter(
+				(entry): entry is { readonly id: string; readonly repo: string } =>
+					entry.id !== undefined && entry.repo !== undefined,
+			),
+		),
+	}
 	const service = createMarketplaceService({
 		prefs,
+		sources,
 		fetcher,
 		installer,
 		rescan,
@@ -112,6 +125,7 @@ function makeFixture() {
 		routes,
 		fetcher,
 		installer,
+		sources,
 		rescan,
 		prefs: prefValues,
 		service,
@@ -356,6 +370,7 @@ describe("createMarketplaceService.refresh", () => {
 					f.prefs.delete(key)
 				},
 			},
+			sources: f.sources,
 			fetcher: f.fetcher,
 			installer: f.installer,
 			rescan: f.rescan,
@@ -647,24 +662,49 @@ describe("createMarketplaceService.refresh", () => {
 })
 
 describe("createMarketplaceService.install", () => {
-	test("downloads, installs with the expected id and rescans", async () => {
+	test("downloads, installs with the expected id, rescans and records the normalized source repo", async () => {
 		const f = fixture!
 		const assetUrl = `https://github.com/me/cat/releases/download/v1.2.3/${PLUGIN_ID}-v1.2.3.zip`
 		f.add(assetUrl, "zip-bytes")
 
-		const result = await f.service.install({ id: PLUGIN_ID, assetUrl })
+		const result = await f.service.install({
+			id: PLUGIN_ID,
+			// The full https://github.com/… form normalizes to `owner/repo`.
+			repo: "https://github.com/me/cat-viewer",
+			assetUrl,
+		})
 
 		expect(result).toEqual({ pluginId: PLUGIN_ID })
 		expect(f.installer.installFromZip).toHaveBeenCalledWith(expect.anything(), {
 			expectedId: PLUGIN_ID,
 		})
 		expect(f.rescan).toHaveBeenCalledTimes(1)
+		expect(f.sources.recordInstallSource).toHaveBeenCalledWith(
+			PLUGIN_ID,
+			"me/cat-viewer",
+		)
+	})
+
+	test("rejects a bad source repo before any fetch", async () => {
+		await expect(
+			fixture!.service.install({
+				id: PLUGIN_ID,
+				repo: "https://gitlab.com/me/x",
+				assetUrl: "https://evil.example.com/plugin.zip",
+			}),
+		).rejects.toMatchObject({
+			code: "VALIDATION",
+			message: expect.stringContaining("GitHub repository address"),
+		})
+		expect(fixture!.fetcher.fetchToFile).not.toHaveBeenCalled()
+		expect(fixture!.sources.recordInstallSource).not.toHaveBeenCalled()
 	})
 
 	test("rejects hosts outside the GitHub release family before any fetch", async () => {
 		await expect(
 			fixture!.service.install({
 				id: PLUGIN_ID,
+				repo: "me/cat-viewer",
 				assetUrl: "https://evil.example.com/plugin.zip",
 			}),
 		).rejects.toMatchObject({
@@ -672,6 +712,25 @@ describe("createMarketplaceService.install", () => {
 			message: expect.stringContaining("not an official GitHub release host"),
 		})
 		expect(fixture!.fetcher.fetchToFile).not.toHaveBeenCalled()
+	})
+
+	test("does not record the source when a later step fails", async () => {
+		const f = fixture!
+		const assetUrl = `https://github.com/me/cat/releases/download/v1.2.3/${PLUGIN_ID}-v1.2.3.zip`
+		f.add(assetUrl, "zip-bytes")
+
+		await expect(
+			f.service.install({
+				id: PLUGIN_ID,
+				repo: "me/cat-viewer",
+				assetUrl,
+				sha256: sha256("other"),
+			}),
+		).rejects.toMatchObject({
+			code: "VALIDATION",
+			message: expect.stringContaining("checksum"),
+		})
+		expect(f.sources.recordInstallSource).not.toHaveBeenCalled()
 	})
 
 	test("fails on an sha256 mismatch without installing", async () => {
@@ -682,6 +741,7 @@ describe("createMarketplaceService.install", () => {
 		await expect(
 			f.service.install({
 				id: PLUGIN_ID,
+				repo: "me/cat-viewer",
 				assetUrl,
 				sha256: sha256("other"),
 			}),
@@ -701,11 +761,159 @@ describe("createMarketplaceService.install", () => {
 		await expect(
 			f.service.install({
 				id: "99999999-9999-4999-8999-999999999999",
+				repo: "me/cat-viewer",
 				assetUrl,
 			}),
 		).rejects.toThrow("expected plugin id")
 		// The download happened, but nothing was committed.
 		expect(f.installer.installFromZip).toHaveBeenCalledTimes(1)
 		expect(f.rescan).not.toHaveBeenCalled()
+	})
+})
+
+describe("createMarketplaceService origin merge", () => {
+	const OTHER_ID = "55555555-5555-4555-8555-555555555555"
+
+	test("merges installed plugins whose source repo left the current registry", async () => {
+		const f = fixture!
+		f.prefs.set("marketplace.registryRepo", "me/registry")
+		f.addJson(rawUrl("me", "registry", "HEAD", "registry.json"), {
+			version: 1,
+			plugins: ["me/cat-viewer"],
+		})
+		f.addJson(rawUrl("me", "cat-viewer", "HEAD", "manifest.json"), MANIFEST)
+		f.addJson(
+			"https://api.github.com/repos/me/cat-viewer/releases/latest",
+			RELEASE,
+		)
+		// Installed from another registry: source repo not listed here and
+		// its plugin id is absent from the current catalog.
+		f.sources.listInstallSources.mockReturnValue([
+			{ id: OTHER_ID, repo: "me/other-viewer" },
+		])
+		f.addJson(rawUrl("me", "other-viewer", "HEAD", "manifest.json"), {
+			...MANIFEST,
+			id: OTHER_ID,
+			version: "2.0.0",
+		})
+		f.addJson("https://api.github.com/repos/me/other-viewer/releases/latest", {
+			...RELEASE,
+			tag_name: "v2.0.0",
+		})
+
+		const snapshot = await f.service.refresh(false)
+
+		expect(snapshot.plugins).toHaveLength(2)
+		const merged = snapshot.plugins.find((p) => p.repo === "me/other-viewer")
+		expect(merged).toMatchObject({
+			id: OTHER_ID,
+			state: "ok",
+		})
+		expect(merged?.latest?.version).toBe("2.0.0")
+	})
+
+	test("the current registry wins when an installed origin matches a catalog id", async () => {
+		const f = fixture!
+		f.prefs.set("marketplace.registryRepo", "me/registry")
+		f.addJson(rawUrl("me", "registry", "HEAD", "registry.json"), {
+			version: 1,
+			plugins: ["me/cat-viewer"],
+		})
+		f.addJson(rawUrl("me", "cat-viewer", "HEAD", "manifest.json"), MANIFEST)
+		f.addJson(
+			"https://api.github.com/repos/me/cat-viewer/releases/latest",
+			RELEASE,
+		)
+		// The same plugin id is listed by the current registry: the origin
+		// repo is skipped (and never fetched) — catalog data wins.
+		f.sources.listInstallSources.mockReturnValue([
+			{ id: PLUGIN_ID, repo: "me/other-viewer" },
+		])
+
+		const snapshot = await f.service.refresh(false)
+
+		expect(snapshot.plugins).toHaveLength(1)
+		expect(snapshot.plugins[0]?.repo).toBe("me/cat-viewer")
+		expect(apiCalls(f)).toBe(1)
+	})
+
+	test("does not refetch an origin repo the registry already lists", async () => {
+		const f = fixture!
+		f.prefs.set("marketplace.registryRepo", "me/registry")
+		f.addJson(rawUrl("me", "registry", "HEAD", "registry.json"), {
+			version: 1,
+			plugins: ["me/cat-viewer"],
+		})
+		f.addJson(rawUrl("me", "cat-viewer", "HEAD", "manifest.json"), MANIFEST)
+		f.addJson(
+			"https://api.github.com/repos/me/cat-viewer/releases/latest",
+			RELEASE,
+		)
+		f.sources.listInstallSources.mockReturnValue([
+			{ id: OTHER_ID, repo: "me/cat-viewer" },
+		])
+
+		const snapshot = await f.service.refresh(false)
+
+		expect(snapshot.plugins).toHaveLength(1)
+		expect(snapshot.plugins[0]?.repo).toBe("me/cat-viewer")
+		expect(apiCalls(f)).toBe(1)
+	})
+
+	test("an origin repo that fails to load lands in the errors list", async () => {
+		const f = fixture!
+		f.prefs.set("marketplace.registryRepo", "me/registry")
+		f.addJson(rawUrl("me", "registry", "HEAD", "registry.json"), {
+			version: 1,
+			plugins: ["me/cat-viewer"],
+		})
+		f.addJson(rawUrl("me", "cat-viewer", "HEAD", "manifest.json"), MANIFEST)
+		f.addJson(
+			"https://api.github.com/repos/me/cat-viewer/releases/latest",
+			RELEASE,
+		)
+		f.sources.listInstallSources.mockReturnValue([
+			{ id: OTHER_ID, repo: "me/other-viewer" },
+		])
+
+		const snapshot = await f.service.refresh(false)
+
+		expect(snapshot.plugins).toHaveLength(1)
+		expect(snapshot.errors).toEqual([
+			{
+				repo: "me/other-viewer",
+				message: expect.stringContaining("manifest.json"),
+			},
+		])
+	})
+
+	test("a repo whose manifest id changed no longer sources the installed plugin", async () => {
+		const f = fixture!
+		f.prefs.set("marketplace.registryRepo", "me/registry")
+		f.addJson(rawUrl("me", "registry", "HEAD", "registry.json"), {
+			version: 1,
+			plugins: ["me/cat-viewer"],
+		})
+		f.addJson(rawUrl("me", "cat-viewer", "HEAD", "manifest.json"), MANIFEST)
+		f.addJson(
+			"https://api.github.com/repos/me/cat-viewer/releases/latest",
+			RELEASE,
+		)
+		f.sources.listInstallSources.mockReturnValue([
+			{ id: OTHER_ID, repo: "me/other-viewer" },
+		])
+		f.addJson(rawUrl("me", "other-viewer", "HEAD", "manifest.json"), {
+			...MANIFEST,
+			id: "66666666-6666-4666-8666-666666666666",
+		})
+		f.addJson("https://api.github.com/repos/me/other-viewer/releases/latest", {
+			...RELEASE,
+			tag_name: "v2.0.0",
+		})
+
+		const snapshot = await f.service.refresh(false)
+
+		expect(snapshot.plugins).toHaveLength(1)
+		expect(snapshot.errors).toEqual([])
 	})
 })

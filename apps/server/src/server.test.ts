@@ -1915,6 +1915,7 @@ describe("plugin upload limits", () => {
 		const cookie = await loginCookie()
 		const payload = {
 			id: "22222222-2222-4222-8222-222222222222",
+			repo: "me/plugin",
 			assetUrl: "https://evil.example.com/plugin.zip",
 		}
 		// The host allowlist is the first gate: no download is attempted.

@@ -23,13 +23,9 @@ import {
 	resolveManifestDescription,
 	resolveManifestName,
 } from "@/features/plugin/manifestText"
-import { PluginPermissionBadges } from "@/features/plugin/PluginPermissionBadges"
 import { PermissionMarks } from "@/features/plugin/PluginSettingsPanel"
 import { PluginUninstallDialog } from "@/features/plugin/PluginUninstallDialog"
-import {
-	pluginKeys,
-	pluginListAllQueryOptions,
-} from "@/features/plugin/pluginApi"
+import { pluginListAllQueryOptions } from "@/features/plugin/pluginApi"
 import { errorMessage } from "@/lib/errors"
 import { isNewer } from "@/lib/versions"
 import { isMinAppSatisfied, marketUpdateAvailable } from "./compat"
@@ -39,8 +35,12 @@ import {
 	versionDateLine,
 } from "./MarketplaceDetailDialog"
 import {
+	type InstallTarget,
+	MarketplaceInstallDialog,
+	useMarketplaceInstall,
+} from "./MarketplaceInstallDialog"
+import {
 	marketplaceConfigQueryOptions,
-	marketplaceInstall,
 	marketplaceKeys,
 	marketplaceRefreshMutation,
 	marketplaceSnapshotQueryOptions,
@@ -50,13 +50,6 @@ type MarketplaceView = "grid" | "list"
 
 /** Catalog filter: everything, installed plugins, compatible updates. */
 type MarketplaceFilter = "all" | "installed" | "updates"
-
-type InstallTarget = {
-	readonly plugin: MarketPlugin
-	readonly mode: "install" | "update"
-	/** Installed version before an update — shown as the version arrow. */
-	readonly installedVersion?: string
-}
 
 /**
  * Plugin marketplace: a registry repo (a GitHub repo whose root
@@ -105,34 +98,7 @@ export function MarketplacePanel() {
 		},
 	})
 
-	const installMut = useMutation({
-		mutationFn: (target: InstallTarget) =>
-			marketplaceInstall({
-				id: target.plugin.id,
-				assetUrl: target.plugin.latest?.assetUrl ?? "",
-				sha256: target.plugin.latest?.sha256,
-			}),
-		onSuccess: (_result, target) => {
-			setInstallTarget(null)
-			void qc.invalidateQueries({ queryKey: pluginKeys.all })
-			toast.add({
-				title:
-					target.mode === "update"
-						? t("marketplace.updateSuccess", {
-								name: target.plugin.name,
-								version: target.plugin.latest?.version,
-							})
-						: t("marketplace.installSuccess", { name: target.plugin.name }),
-				type: "success",
-			})
-		},
-		onError: (err) => {
-			toast.add({
-				title: errorMessage(err, t("common.error")),
-				type: "error",
-			})
-		},
-	})
+	const installMut = useMarketplaceInstall(() => setInstallTarget(null))
 
 	const installedById = new Map(
 		(installedQuery.data ?? []).map((row) => [row.id, row]),
@@ -385,6 +351,20 @@ function RequiresChip(props: { readonly plugin: MarketPlugin }) {
 	)
 }
 
+/** Per-plugin update dot, mounted at the trigger's top-right corner —
+    the same signal the sidebar and settings tabs aggregate. */
+function UpdateDot(props: { readonly pluginId: string }) {
+	const { t } = useTranslation()
+	return (
+		<span
+			className="absolute -right-1 -top-1 size-1.5 rounded-full bg-destructive"
+			role="img"
+			aria-label={t("appShell.nav.marketplaceUpdatesBadge")}
+			data-testid={`marketplace-update-dot-${props.pluginId}`}
+		/>
+	)
+}
+
 function MarketplaceCard(props: {
 	readonly plugin: MarketPlugin
 	readonly installed?: InstalledPlugin
@@ -471,86 +451,19 @@ function MarketplaceCard(props: {
 					<Button
 						size="sm"
 						variant="secondary"
+						className="relative"
 						onClick={props.onDetails}
 						data-testid={`marketplace-view-${plugin.id}`}
 					>
 						<Icon icon={Eye} />
 						{t("marketplace.view")}
+						{marketUpdateAvailable(plugin, installedVersion) ? (
+							<UpdateDot pluginId={plugin.id} />
+						) : null}
 					</Button>
 				</div>
 			</div>
 		</div>
-	)
-}
-
-function MarketplaceInstallDialog(props: {
-	readonly request: InstallTarget | null
-	readonly onOpenChange: (open: boolean) => void
-	readonly isPending: boolean
-	readonly onConfirm: () => void
-}) {
-	const { t, i18n } = useTranslation()
-	const target = props.request
-	const versionLabel =
-		target === null
-			? undefined
-			: target.mode === "update" && target.installedVersion !== undefined
-				? `${target.installedVersion} → ${target.plugin.latest?.version ?? ""}`
-				: target.plugin.latest?.version
-	return (
-		<ConfirmDialog
-			open={target !== null}
-			onOpenChange={props.onOpenChange}
-			title={
-				target?.mode === "update"
-					? t("marketplace.updateConfirmTitle", {
-							name:
-								target !== null
-									? resolveManifestName(target.plugin.manifest, i18n.language)
-									: "",
-						})
-					: t("marketplace.installConfirmTitle")
-			}
-			confirmLabel={
-				target?.mode === "update"
-					? t("marketplace.update")
-					: t("marketplace.install")
-			}
-			pendingLabel={t("marketplace.installing")}
-			isPending={props.isPending}
-			onConfirm={props.onConfirm}
-			confirmTestId="marketplace-install-confirm"
-			body={
-				target !== null ? (
-					<div className="flex flex-col gap-3">
-						<div className="flex items-center gap-2.5">
-							<PluginTileIcon
-								iconRef={target.plugin.icon}
-								pluginId={target.plugin.id}
-								fallback={PlugCircle}
-							/>
-							<div className="flex flex-col gap-0.5">
-								<span className="text-sm font-medium">
-									{resolveManifestName(target.plugin.manifest, i18n.language)}
-									{versionLabel !== undefined && versionLabel.length > 0 && (
-										<span className="ml-2 text-xs font-normal text-muted-foreground">
-											v{versionLabel}
-										</span>
-									)}
-								</span>
-								<span className="font-mono text-xs text-muted-foreground">
-									@{target.plugin.repo}
-								</span>
-							</div>
-						</div>
-						<PluginPermissionBadges permissions={target.plugin.permissions} />
-						<p className="text-xs leading-relaxed text-muted-foreground">
-							{t("marketplace.installConfirmNote")}
-						</p>
-					</div>
-				) : undefined
-			}
-		/>
 	)
 }
 
@@ -619,11 +532,15 @@ function MarketplaceListRow(props: {
 				<Button
 					size="sm"
 					variant="secondary"
+					className="relative"
 					onClick={props.onDetails}
 					data-testid={`marketplace-view-${plugin.id}`}
 				>
 					<Icon icon={Eye} />
 					{t("marketplace.view")}
+					{marketUpdateAvailable(plugin, installedVersion) ? (
+						<UpdateDot pluginId={plugin.id} />
+					) : null}
 				</Button>
 			</div>
 		</div>

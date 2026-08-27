@@ -8,6 +8,14 @@ export const contentPlugins = sqliteTable("content_plugins", {
 	pinned: integer("pinned").notNull().default(1),
 	color: text("color").notNull().default(""),
 	missing: integer("missing").notNull().default(0),
+	/**
+	 * Normalized `owner/repo` the plugin was installed from via the
+	 * marketplace. The update source remembered across registry switches:
+	 * the snapshot merges installed plugins whose source repo is no longer
+	 * listed by the current registry, so their updates stay detectable.
+	 * `NULL` for plugins installed from a zip or bundled (seed) plugins.
+	 */
+	sourceRepo: text("source_repo"),
 	createdAt: integer("created_at").notNull(),
 	updatedAt: integer("updated_at").notNull(),
 })

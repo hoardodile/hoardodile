@@ -1,7 +1,17 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { fireEvent, render, screen, waitFor } from "@testing-library/react"
+import {
+	fireEvent,
+	render,
+	screen,
+	waitFor,
+	within,
+} from "@testing-library/react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { InstalledPluginsPanel } from "./PluginSettingsPanel"
+
+vi.mock("@hoardodile/ui/components/toast", () => ({
+	toast: { add: vi.fn() },
+}))
 
 const { mockClient } = vi.hoisted(() => ({
 	mockClient: {} as {
@@ -78,10 +88,15 @@ function marketPlugin(id: string, name: string) {
 	}
 }
 
-function installClient(overrides?: { readonly catalog?: unknown[] }) {
+function installClient(overrides?: {
+	readonly catalog?: unknown[]
+	readonly config?: { readonly registryRepo: string | null }
+}) {
 	mockClient.marketplace = {
 		getConfig: {
-			query: vi.fn(async () => ({ registryRepo: "me/registry" })),
+			query: vi.fn(
+				async () => overrides?.config ?? { registryRepo: "me/registry" },
+			),
 		},
 		snapshot: {
 			query: vi.fn(async () => ({ plugins: overrides?.catalog ?? [] })),
@@ -117,6 +132,17 @@ const user = { click: async (el: Element) => fireEvent.click(el) }
 
 beforeEach(() => {
 	vi.restoreAllMocks()
+	vi.stubGlobal(
+		"fetch",
+		vi.fn(async () =>
+			Promise.resolve(
+				new Response(JSON.stringify({ pluginId: PLUGIN_ID }), {
+					status: 200,
+					headers: { "content-type": "application/json" },
+				}),
+			),
+		),
+	)
 })
 
 describe("InstalledPluginsPanel marketplace details", () => {
@@ -148,5 +174,72 @@ describe("InstalledPluginsPanel marketplace details", () => {
 			).not.toBeInTheDocument()
 		})
 		expect(screen.queryByTestId("marketplace-detail-dialog")).toBeNull()
+	})
+
+	it("mounts the update dot on the More button when a newer release exists", async () => {
+		installClient({ catalog: [marketPlugin(PLUGIN_ID, "Cat Viewer")] })
+		renderPanel()
+
+		expect(
+			await screen.findByTestId(`plugin-update-dot-${PLUGIN_ID}`),
+		).toBeInTheDocument()
+		expect(
+			screen.queryByTestId(`plugin-update-dot-${OTHER_ID}`),
+		).not.toBeInTheDocument()
+	})
+
+	it("keeps the More button dot off when the installed version is current", async () => {
+		const plugin = marketPlugin(PLUGIN_ID, "Cat Viewer")
+		plugin.latest = { ...plugin.latest!, version: "1.1.0", tag: "v1.1.0" }
+		installClient({ catalog: [plugin] })
+		renderPanel()
+
+		await screen.findByTestId(`plugin-menu-${PLUGIN_ID}`)
+		expect(
+			screen.queryByTestId(`plugin-update-dot-${PLUGIN_ID}`),
+		).not.toBeInTheDocument()
+	})
+
+	it("keeps the More button dot off when the marketplace is disabled", async () => {
+		installClient({
+			catalog: [marketPlugin(PLUGIN_ID, "Cat Viewer")],
+			config: { registryRepo: null },
+		})
+		renderPanel()
+
+		await screen.findByTestId(`plugin-menu-${PLUGIN_ID}`)
+		expect(
+			screen.queryByTestId(`plugin-update-dot-${PLUGIN_ID}`),
+		).not.toBeInTheDocument()
+	})
+
+	it("updates a plugin from the detail dialog opened via the More menu", async () => {
+		installClient({ catalog: [marketPlugin(PLUGIN_ID, "Cat Viewer")] })
+		renderPanel()
+
+		await user.click(await screen.findByTestId(`plugin-menu-${PLUGIN_ID}`))
+		await user.click(
+			await screen.findByTestId(`plugin-menu-detail-${PLUGIN_ID}`),
+		)
+		const dialog = await screen.findByTestId("marketplace-detail-dialog")
+		// The detail dialog carries the primary Update action; the install
+		// confirmation owns the consent, then the HTTP install posts the
+		// source repo (the update source remembered across registries).
+		await user.click(within(dialog).getByTestId("marketplace-detail-update"))
+		await screen.findByTestId("marketplace-install-confirm")
+		await user.click(screen.getByTestId("marketplace-install-confirm"))
+
+		await waitFor(() => {
+			const calls = (fetch as unknown as ReturnType<typeof vi.fn>).mock.calls
+			const installCall = calls.find(([input]) =>
+				String(input).includes("/api/plugin-marketplace/install"),
+			)
+			expect(installCall).toBeDefined()
+			expect(JSON.parse(String(installCall?.[1]?.body))).toMatchObject({
+				id: PLUGIN_ID,
+				repo: "me/cat-viewer",
+				assetUrl: "",
+			})
+		})
 	})
 })

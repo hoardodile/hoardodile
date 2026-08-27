@@ -1,0 +1,1 @@
+ALTER TABLE `content_plugins` ADD `source_repo` text;

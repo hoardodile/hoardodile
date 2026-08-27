@@ -5,6 +5,9 @@ import { domainErrorToHttp, sendError } from "./utils.ts"
 const installInput = z.object({
 	/** App manifest id — the zip must carry the same id (no half-installs). */
 	id: z.string().uuid(),
+	/** Source repo the plugin is installed from (normalized inside the
+	    service) — the update source remembered across registry switches. */
+	repo: z.string().min(1).max(300),
 	/** Release asset download URL (`github.com` release-download family). */
 	assetUrl: z.string().min(1).max(2_000),
 	/** Optional sha256 from the release's `<asset>.sha256` sidecar. */

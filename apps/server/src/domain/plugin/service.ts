@@ -10,7 +10,7 @@ import type { PluginManifest, PluginManifestId } from "@hoardodile/sdk-types"
 import type { PluginCapabilityKey } from "@hoardodile/sdk-types/plugin-capabilities"
 import { pluginManifest as pluginManifestSchema } from "@hoardodile/sdk-types/schema"
 import { invalid } from "@hoardodile/shared"
-import { eq } from "drizzle-orm"
+import { eq, isNotNull } from "drizzle-orm"
 import type { SqliteDb } from "src/infra/db/connection.ts"
 import { contentPlugins } from "./schema.ts"
 import type { SeedRemovalsStore } from "./seed-removals.ts"
@@ -144,6 +144,24 @@ export type PluginService = {
 	 * state. Backs the plugins settings page's bundled-plugins section.
 	 */
 	listSeedPlugins(): SeedPluginInfo[]
+	/**
+	 * Record the normalized marketplace repo a plugin was installed from.
+	 * The update source remembered across registry switches: the
+	 * marketplace snapshot merges installed plugins whose source repo is
+	 * no longer listed by the current registry, so their updates stay
+	 * detectable. A no-op for a plugin installed outside the marketplace
+	 * (the column simply stays `null`).
+	 */
+	setMarketplaceSource(id: PluginManifestId, repo: string): void
+	/**
+	 * Installed plugins with a recorded marketplace source repo — id →
+	 * normalized `owner/repo`. The marketplace reads this to merge
+	 * origin-repo entries into its snapshot.
+	 */
+	listMarketplaceSources(): readonly {
+		readonly id: PluginManifestId
+		readonly repo: string
+	}[]
 	/**
 	 * Restore a deliberately-uninstalled bundled plugin from its bundled
 	 * original — fully offline: clear the removal marker, then rescan
@@ -429,6 +447,41 @@ export function createPluginService(deps: PluginServiceDeps): PluginService {
 		return out
 	}
 
+	function setMarketplaceSource(id: PluginManifestId, repo: string): void {
+		const now = Date.now()
+		const existing = db
+			.select({ id: contentPlugins.id })
+			.from(contentPlugins)
+			.where(eq(contentPlugins.id, id))
+			.get()
+		if (existing === undefined) {
+			// No settings row yet (the plugin was never configured): seed one
+			// from the registry entry, mirroring `syncRecords`, so the source
+			// is never lost to a missing row.
+			const entry = loader.getRegistry().getById(id)
+			if (entry === undefined) {
+				throw new Error(`Plugin ${id} is not registered`)
+			}
+			insertSettingsRow(entry, {})
+		}
+		db.update(contentPlugins)
+			.set({ sourceRepo: repo, updatedAt: now })
+			.where(eq(contentPlugins.id, id))
+			.run()
+	}
+
+	function listMarketplaceSources(): readonly {
+		readonly id: PluginManifestId
+		readonly repo: string
+	}[] {
+		return db
+			.select({ id: contentPlugins.id, repo: contentPlugins.sourceRepo })
+			.from(contentPlugins)
+			.where(isNotNull(contentPlugins.sourceRepo))
+			.all()
+			.map((row) => ({ id: row.id, repo: row.repo! }))
+	}
+
 	async function restoreSeedPlugin(id: PluginManifestId): Promise<void> {
 		const dir = seedDirs.find(
 			(candidate) => readSeedManifest(candidate)?.id === id,
@@ -459,6 +512,8 @@ export function createPluginService(deps: PluginServiceDeps): PluginService {
 		syncRecords,
 		uninstall,
 		listSeedPlugins,
+		setMarketplaceSource,
+		listMarketplaceSources,
 		restoreSeedPlugin,
 	}
 }

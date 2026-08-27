@@ -78,9 +78,17 @@ import { useTranslation } from "react-i18next"
 import { ColorPicker } from "@/components/common/ColorPicker"
 import { SearchField } from "@/components/common/SearchField"
 import { useConfirmDialog } from "@/components/common/useConfirmDialog"
-import { isMinAppSatisfied } from "@/features/marketplace/compat"
+import {
+	isMinAppSatisfied,
+	marketUpdateAvailable,
+} from "@/features/marketplace/compat"
 import type { MarketPlugin } from "@/features/marketplace/MarketplaceDetailDialog"
 import { MarketplaceDetailDialog } from "@/features/marketplace/MarketplaceDetailDialog"
+import {
+	type InstallTarget,
+	MarketplaceInstallDialog,
+	useMarketplaceInstall,
+} from "@/features/marketplace/MarketplaceInstallDialog"
 import {
 	marketplaceConfigQueryOptions,
 	marketplaceSnapshotQueryOptions,
@@ -324,9 +332,12 @@ export function InstalledPluginsPanel() {
 	const [view, setView] = useState<PluginView>("grid")
 	const [query, setQuery] = useState("")
 	const [detailPlugin, setDetailPlugin] = useState<MarketPlugin | null>(null)
+	const [updateTarget, setUpdateTarget] = useState<InstallTarget | null>(null)
 	const [uninstallPlugin, setUninstallPlugin] = useState<PluginRowData | null>(
 		null,
 	)
+
+	const installMut = useMarketplaceInstall(() => setUpdateTarget(null))
 
 	const updateMut = useToastMutation({
 		...pluginUpdateMutation(),
@@ -489,11 +500,30 @@ export function InstalledPluginsPanel() {
 						if (!open) setDetailPlugin(null)
 					}}
 					onInstall={() => setDetailPlugin(null)}
+					onUpdate={() => {
+						setUpdateTarget({
+							plugin: detailPlugin,
+							mode: "update",
+							installedVersion: plugins.find((p) => p.id === detailPlugin.id)
+								?.manifest.version,
+						})
+						setDetailPlugin(null)
+					}}
 					onUninstall={() => {
 						const row = plugins.find((p) => p.id === detailPlugin.id)
 						setDetailPlugin(null)
 						if (row !== undefined) setUninstallPlugin(row)
 					}}
+				/>
+			)}
+			{updateTarget !== null && (
+				<MarketplaceInstallDialog
+					request={updateTarget}
+					onOpenChange={(open) => {
+						if (!open) setUpdateTarget(null)
+					}}
+					isPending={installMut.isPending}
+					onConfirm={() => installMut.mutate(updateTarget)}
 				/>
 			)}
 			{uninstallPlugin !== null && (
@@ -960,11 +990,20 @@ function PluginRowActions(props: {
 						<Button
 							variant="ghost"
 							size="icon-sm"
-							className="size-7"
+							className="size-7 relative"
 							aria-label={t("plugins.more")}
 							data-testid={`plugin-menu-${plugin.id}`}
 						>
 							<Icon icon={MenuDots} size="sm" />
+							{marketPlugin !== undefined &&
+							marketUpdateAvailable(marketPlugin, plugin.manifest.version) ? (
+								<span
+									className="absolute -right-1 -top-1 size-1.5 rounded-full bg-destructive"
+									role="img"
+									aria-label={t("appShell.nav.marketplaceUpdatesBadge")}
+									data-testid={`plugin-update-dot-${plugin.id}`}
+								/>
+							) : null}
 						</Button>
 					}
 				/>

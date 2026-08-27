@@ -432,3 +432,122 @@ describe("plugin service seed plugins", () => {
 		)
 	})
 })
+
+describe("plugin service marketplace source", () => {
+	let root: string
+	let dbh: DbHandles
+	let registry: ReturnType<typeof buildRegistry>
+	let loader: PluginLoader
+	let sandbox: PluginSandbox
+	let svc: PluginService
+
+	function build() {
+		loader = {
+			getRegistry: () => registry,
+			rescan: vi.fn(async () => {}),
+		} as unknown as PluginLoader
+		sandbox = { unloadPlugin: vi.fn() } as unknown as PluginSandbox
+		svc = createPluginService({
+			db: dbh.db,
+			loader,
+			sandbox,
+			seedDirs: [],
+			seedRemovals: createSeedRemovalsStore(
+				join(root, "local", "seed-removals.json"),
+			),
+		})
+	}
+
+	beforeEach(() => {
+		root = mkdtempSync(join(tmpdir(), "plugin-src-"))
+		dbh = openDb(":memory:")
+		dbh.runMigrations()
+	})
+
+	afterEach(() => {
+		dbh.close()
+		rmSync(root, { recursive: true, force: true })
+	})
+
+	test("records the source repo on an existing settings row", () => {
+		dbh.db
+			.insert(contentPlugins)
+			.values({
+				id: PLUGIN_ID,
+				manifest: JSON.stringify(manifestFor(PLUGIN_ID, "Test")),
+				enabled: 1,
+				priority: 100,
+				pinned: 0,
+				color: "",
+				missing: 0,
+				createdAt: 1,
+				updatedAt: 1,
+			})
+			.run()
+		registry = buildRegistry([entryFor(PLUGIN_ID, "Disk")])
+		build()
+
+		svc.setMarketplaceSource(PLUGIN_ID, "me/cat-viewer")
+
+		const row = dbh.db
+			.select()
+			.from(contentPlugins)
+			.where(eq(contentPlugins.id, PLUGIN_ID))
+			.get()
+		expect(row?.sourceRepo).toBe("me/cat-viewer")
+		expect(svc.listMarketplaceSources()).toEqual([
+			{ id: PLUGIN_ID, repo: "me/cat-viewer" },
+		])
+	})
+
+	test("seeds a missing settings row before recording the source", () => {
+		registry = buildRegistry([entryFor(PLUGIN_ID, "Disk")])
+		build()
+
+		svc.setMarketplaceSource(PLUGIN_ID, "me/cat-viewer")
+
+		const row = dbh.db
+			.select()
+			.from(contentPlugins)
+			.where(eq(contentPlugins.id, PLUGIN_ID))
+			.get()
+		expect(row?.sourceRepo).toBe("me/cat-viewer")
+		expect(JSON.parse(row?.manifest ?? "{}").name).toBe("Disk")
+	})
+
+	test("throws for an unregistered plugin — no row is invented", () => {
+		registry = buildRegistry([])
+		build()
+		expect(() => svc.setMarketplaceSource(PLUGIN_ID, "me/cat-viewer")).toThrow(
+			"not registered",
+		)
+		expect(svc.listMarketplaceSources()).toEqual([])
+	})
+
+	test("uninstall drops the source along with the settings row", async () => {
+		const diskPath = join(root, "plugins", PLUGIN_ID)
+		mkdirSync(diskPath, { recursive: true })
+		writeFileSync(join(diskPath, "manifest.json"), "{}")
+		dbh.db
+			.insert(contentPlugins)
+			.values({
+				id: PLUGIN_ID,
+				manifest: JSON.stringify(manifestFor(PLUGIN_ID, "Test")),
+				enabled: 1,
+				priority: 100,
+				pinned: 0,
+				color: "",
+				missing: 0,
+				createdAt: 1,
+				updatedAt: 1,
+				sourceRepo: "me/cat-viewer",
+			})
+			.run()
+		registry = buildRegistry([entryFor(PLUGIN_ID, "Disk", { diskPath })])
+		build()
+
+		await svc.uninstall(PLUGIN_ID)
+
+		expect(svc.listMarketplaceSources()).toEqual([])
+	})
+})

@@ -22,6 +22,13 @@
 			"when": 1787819933200,
 			"tag": "0002_orange_lady_bullseye",
 			"breakpoints": true
+		},
+		{
+			"idx": 3,
+			"version": "6",
+			"when": 1787852618225,
+			"tag": "0003_even_night_nurse",
+			"breakpoints": true
 		}
 	]
 }

@@ -61,6 +61,9 @@ export function marketplaceRefreshMutation(): UseMutationOptions<
 /** Install/update a plugin from its published release asset (HTTP — long-running). */
 export async function marketplaceInstall(input: {
 	readonly id: string
+	/** Source repo the plugin is installed from — recorded by the server
+	    so updates stay detectable after a registry switch. */
+	readonly repo: string
 	readonly assetUrl: string
 	readonly sha256?: string
 }): Promise<void> {

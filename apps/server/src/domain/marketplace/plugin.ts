@@ -9,6 +9,11 @@ async function marketplacePluginImpl(app: FastifyInstance): Promise<void> {
 		"marketplaceService",
 		createMarketplaceService({
 			prefs: app.systemPrefService,
+			sources: {
+				recordInstallSource: (id, repo) =>
+					app.pluginService.setMarketplaceSource(id, repo),
+				listInstallSources: () => app.pluginService.listMarketplaceSources(),
+			},
 			fetcher: app.pluginDownloader,
 			installer: app.pluginUploads,
 			rescan: () => app.pluginService.rescan(),

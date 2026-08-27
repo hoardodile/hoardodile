@@ -111,12 +111,18 @@ export type MarketSnapshot = {
 	readonly registryRepo: string
 	readonly fetchedAt: number
 	readonly plugins: readonly MarketPlugin[]
-	/** Repos the registry listed that could not be loaded as plugins. */
+	/**
+	 * Repos the registry listed — or an installed plugin's recorded source
+	 * repo — that could not be loaded as plugins.
+	 */
 	readonly errors: readonly MarketError[]
 }
 
 export type MarketInstallInput = {
 	readonly id: string
+	/** Normalized `owner/repo` the plugin is installed from — later the
+	    update source remembered across registry switches. */
+	readonly repo: string
 	readonly assetUrl: string
 	readonly sha256?: string
 }

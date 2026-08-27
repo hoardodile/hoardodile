@@ -110,8 +110,24 @@ type MarketplacePrefs = {
 	remove(key: string): void
 }
 
+/** Narrow structural view of the installed-plugin source provenance. */
+type MarketplaceSources = {
+	/**
+	 * Persist the normalized source repo for a just-installed plugin —
+	 * the update source brought back into the snapshot even after the
+	 * registry the user installed from is switched away.
+	 */
+	readonly recordInstallSource: (id: string, repo: string) => void
+	/** Installed plugins with a recorded source repo (`id` → `repo`). */
+	readonly listInstallSources: () => readonly {
+		readonly id: string
+		readonly repo: string
+	}[]
+}
+
 export type MarketplaceServiceDeps = {
 	readonly prefs: MarketplacePrefs
+	readonly sources: MarketplaceSources
 	readonly fetcher: MarketplaceFetcher
 	readonly installer: MarketplaceInstaller
 	readonly rescan: () => Promise<void>
@@ -317,6 +333,7 @@ export function createMarketplaceService(
 	async function install(
 		input: MarketInstallInput,
 	): Promise<{ readonly pluginId: string }> {
+		const repo = normalizeRepoAddress(input.repo)
 		assertAssetHost(input.assetUrl)
 		await mkdir(tmpDir, { recursive: true })
 		const target = join(tmpDir, `marketplace-install-${randomUUID()}.zip`)
@@ -347,6 +364,10 @@ export function createMarketplaceService(
 				{ expectedId: input.id },
 			)
 			await deps.rescan()
+			// Remember the source repo last — the rescan's `syncRecords`
+			// creates the settings row when the plugin was never
+			// configured, and the record must survive a registry switch.
+			deps.sources.recordInstallSource(pluginId, repo)
 			return { pluginId }
 		} finally {
 			await rm(target, { force: true }).catch(() => {})
@@ -432,12 +453,54 @@ export function createMarketplaceService(
 				plugins.push(result.plugin)
 			}
 		}
+		await mergeInstalledOrigins(plugins, errors, force)
 		persistReleaseCache()
 		return {
 			registryRepo: repo,
 			fetchedAt: now(),
 			plugins,
 			errors,
+		}
+	}
+
+	/**
+	 * Bring installed plugins' source repos back into the snapshot: an
+	 * installed plugin whose repo is no longer listed by the current
+	 * registry (the user switched registries) would otherwise lose its
+	 * update detection. Repos already providing a catalog entry are
+	 * re-used; one load per unique origin repo (same limiter, release
+	 * cache and error classification as the registry entries).
+	 */
+	async function mergeInstalledOrigins(
+		plugins: MarketPlugin[],
+		errors: MarketError[],
+		force: boolean,
+	): Promise<void> {
+		const catalogIds = new Set(plugins.map((plugin) => plugin.id))
+		const catalogRepos = new Set(plugins.map((plugin) => plugin.repo))
+		const originRepoById = new Map<string, string>()
+		for (const origin of deps.sources.listInstallSources()) {
+			if (catalogIds.has(origin.id) || catalogRepos.has(origin.repo)) {
+				continue
+			}
+			originRepoById.set(origin.id, origin.repo)
+		}
+		const repos = new Set(originRepoById.values())
+		const results = await Promise.all(
+			[...repos].map((repo) => limiter.run(() => loadPlugin(repo, force))),
+		)
+		for (const result of results) {
+			if (result.kind === "error") {
+				errors.push({ repo: result.repo, message: result.message })
+				continue
+			}
+			const plugin = result.plugin
+			// Only the installed plugin ids may enter the catalog — a repo
+			// that renamed its manifest id no longer sources them.
+			if (!catalogIds.has(plugin.id) && originRepoById.has(plugin.id)) {
+				plugins.push(plugin)
+				catalogIds.add(plugin.id)
+			}
 		}
 	}
 

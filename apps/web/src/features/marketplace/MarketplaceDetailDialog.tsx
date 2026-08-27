@@ -3,7 +3,12 @@ import { Button } from "@hoardodile/ui/components/button"
 import { Icon } from "@hoardodile/ui/components/icon"
 import { MetaChip } from "@hoardodile/ui/components/meta-chip"
 import { SectionTabs } from "@hoardodile/ui/components/section-tabs"
-import { Bug, PlugCircle, ShieldCheck } from "@hoardodile/ui/icons/registry"
+import {
+	Bug,
+	MagicWand2,
+	PlugCircle,
+	ShieldCheck,
+} from "@hoardodile/ui/icons/registry"
 import { type ReactNode, useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { ExternalLink } from "@/components/common/ExternalLink"
@@ -145,6 +150,23 @@ export function MarketplaceDetailDialog(props: {
 			contentTestId="marketplace-detail-dialog"
 			footer={
 				<>
+					{/* Three-button footer when installed + updateable (DESIGN.md
+					    — Overlays): the secondary function key (uninstall) sits
+					    at the left edge, cancel and the primary action stay
+					    right-aligned. Two-button footers do not split. */}
+					{installedVersion !== undefined ? (
+						<Button
+							variant="destructive"
+							className={updateAvailable ? "mr-auto" : undefined}
+							onClick={() => {
+								props.onOpenChange(false)
+								props.onUninstall()
+							}}
+							data-testid="marketplace-detail-uninstall"
+						>
+							{t("plugins.uninstall")}
+						</Button>
+					) : null}
 					<Button variant="secondary" onClick={() => props.onOpenChange(false)}>
 						{t("common.cancel")}
 					</Button>
@@ -165,18 +187,6 @@ export function MarketplaceDetailDialog(props: {
 							data-testid="marketplace-detail-update"
 						>
 							{t("marketplace.updateTo", { version: latest?.version ?? "" })}
-						</Button>
-					) : null}
-					{installedVersion !== undefined ? (
-						<Button
-							variant="destructive"
-							onClick={() => {
-								props.onOpenChange(false)
-								props.onUninstall()
-							}}
-							data-testid="marketplace-detail-uninstall"
-						>
-							{t("plugins.uninstall")}
 						</Button>
 					) : null}
 				</>
@@ -319,6 +329,13 @@ export function MarketplaceDetailDialog(props: {
 									>
 										<Icon icon={Bug} size="sm" />
 										{t("marketplace.reportIssue")}
+									</ExternalLink>
+									<ExternalLink
+										href={issueReportUrl(plugin.repo)}
+										className="inline-flex items-center gap-1.5 text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+									>
+										<Icon icon={MagicWand2} size="sm" />
+										{t("marketplace.requestFeature")}
 									</ExternalLink>
 									<ExternalLink
 										href={securityReportUrl(plugin.repo)}
