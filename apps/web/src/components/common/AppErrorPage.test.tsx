@@ -1,5 +1,6 @@
 import { act, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { bugIssueUrl } from "@/lib/appInfo"
 import { AppErrorPage } from "./AppErrorPage"
 
 const { pushClientLogMock, flushClientLogToServerMock, formatDiagnosticsMock } =
@@ -56,10 +57,15 @@ describe("AppErrorPage", () => {
 		)
 	})
 
-	it("points the report link at the matching issue template", () => {
+	it("reporting opens the matching template with the version prefilled", () => {
 		render(<AppErrorPage error={new Error("boom")} />)
-		expect(screen.getByTestId("app-error-report").getAttribute("href")).toBe(
-			"https://github.com/hoardodile/hoardodile/issues/new?template=bug_report_selfhosted.yml",
+		fireEvent.click(screen.getByTestId("app-error-report"))
+		expect(openSpy).toHaveBeenCalledWith(
+			bugIssueUrl(
+				"https://github.com/hoardodile/hoardodile/issues/new?template=bug_report_selfhosted.yml",
+			),
+			"_blank",
+			"noopener,noreferrer",
 		)
 	})
 

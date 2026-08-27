@@ -3,6 +3,8 @@
 // graph. Required for downstream packages that import `AppRouter`
 // without the rest of the server tree.
 import "src/infra/fastify-augment.ts"
+import { readdirSync, readFileSync, statSync } from "node:fs"
+import { join } from "node:path"
 import { authRouter } from "src/domain/auth/router.ts"
 import { listSignIns } from "src/domain/auth/signins.ts"
 import { buildBackupRouter } from "src/domain/backup/router.ts"
@@ -133,9 +135,9 @@ export function buildDomainRouter(services: RouterServices) {
 				 * Best-effort ingestion of frontend console / window / React
 				 * errors into the server's own pino log files. The SPA and the
 				 * server share the origin, so nothing leaves the machine — the
-				 * user-facing export stays Settings → About → "Copy
-				 * diagnostics"; this procedure simply makes the frontend side
-				 * of a report visible in the same `app.log`.
+				 * user-facing export stays Settings → About → Download logs;
+				 * this procedure simply makes the frontend side of a report
+				 * visible in the same `app.log`.
 				 */
 				clientLog: authedProcedure
 					.input(
@@ -166,6 +168,20 @@ export function buildDomainRouter(services: RouterServices) {
 							)
 						}
 					}),
+				/**
+				 * The server's own rolling log files, redacted before they
+				 * leave the host: pino already masks cookies/authorization/
+				 * passwords; this endpoint additionally replaces the storage
+				 * root path and private IPv4 addresses, so a log archive the
+				 * user attaches to a public issue does not leak the library
+				 * location or LAN topology.
+				 */
+				logs: authedProcedure.query(({ ctx }) => ({
+					files: readRollingLogs(
+						ctx.req.server.paths.local.logs(),
+						ctx.req.server.paths.root,
+					),
+				})),
 			}),
 		}),
 	)
@@ -194,3 +210,62 @@ export function buildAppRouter(services: AppRouterServices) {
 }
 
 export type AppRouter = ReturnType<typeof buildAppRouter>
+
+// ── Server log archive (diagnostics.logs) ────────────────────────────────────
+
+/** `app.log` / `app.error.log` plus the pino-roll dated variants. */
+const LOG_FILE_RE = /^app(\.error)?(\.\d{4}-\d{2}-\d{2}(\.\d+)?)?\.log$/
+
+/** Private (RFC 1918) IPv4 addresses — never send LAN topology into an issue. */
+const PRIVATE_IP_RE =
+	/\b(?:10\.\d{1,3}\.\d{1,3}\.\d{1,3}|192\.168\.\d{1,3}\.\d{1,3}|172\.(?:1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3})\b/g
+
+const MAX_LOG_FILES = 12
+const MAX_LOG_FILE_BYTES = 1024 * 1024
+const MAX_LOG_TOTAL_BYTES = 4 * 1024 * 1024
+
+function redactLogContent(content: string, storageRoot: string): string {
+	let text = content.split(storageRoot).join("<storage>")
+	text = text.split(storageRoot.replaceAll("\\", "/")).join("<storage>")
+	return text.replace(PRIVATE_IP_RE, "<ip>")
+}
+
+/**
+ * Read the most recent rolling log files (chronological order) with
+ * sensible caps, redacting the storage root and private IPs so the
+ * archive is safe to attach to a public issue.
+ */
+export function readRollingLogs(
+	logsDir: string,
+	storageRoot: string,
+): Array<{ readonly name: string; readonly content: string }> {
+	const names = readdirSync(logsDir)
+		.filter((name) => LOG_FILE_RE.test(name))
+		.sort()
+	const selected = names.slice(-MAX_LOG_FILES)
+	const files: Array<{ readonly name: string; readonly content: string }> = []
+	let totalBytes = 0
+	for (const name of selected) {
+		const path = join(logsDir, name)
+		let size: number
+		try {
+			size = statSync(path).size
+		} catch {
+			continue
+		}
+		if (size <= 0) continue
+		if (size > MAX_LOG_FILE_BYTES) {
+			// Keep the tail — the most recent evidence.
+			size = MAX_LOG_FILE_BYTES
+		}
+		if (totalBytes + size > MAX_LOG_TOTAL_BYTES) continue
+		try {
+			const content = readFileSync(path, "utf8")
+			files.push({ name, content: redactLogContent(content, storageRoot) })
+			totalBytes += size
+		} catch {
+			// A log rotated away mid-read: skip it.
+		}
+	}
+	return files
+}

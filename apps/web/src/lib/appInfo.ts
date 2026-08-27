@@ -22,6 +22,16 @@ export const APP_ISSUES_BUG_DESKTOP_URL = `${APP_REPOSITORY_URL}/issues/new?temp
 export const APP_ISSUES_BUG_SELFHOSTED_URL = `${APP_REPOSITORY_URL}/issues/new?template=bug_report_selfhosted.yml`
 export const APP_ISSUES_FEATURE_URL = `${APP_REPOSITORY_URL}/issues/new?template=feature_request.yml`
 
+/**
+ * An issue-template URL with the app version prefilled (GitHub prefills
+ * issue-form fields from matching query parameters). Only the version is
+ * prefilled: platform/OS are not reliably derivable, and guessing wrong is
+ * worse than leaving the field empty.
+ */
+export function bugIssueUrl(template: string): string {
+	return `${template}${template.includes("?") ? "&" : "?"}version=${encodeURIComponent(APP_VERSION)}`
+}
+
 /** GitHub API endpoint for the latest release (CORS-open, no token needed). */
 export const APP_RELEASES_API_URL =
 	"https://api.github.com/repos/hoardodile/hoardodile/releases/latest"

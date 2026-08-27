@@ -1,15 +1,16 @@
-import { Button, buttonVariants } from "@hoardodile/ui/components/button"
+import { Button } from "@hoardodile/ui/components/button"
 import { toast } from "@hoardodile/ui/components/toast"
 import { DangerTriangle } from "@hoardodile/ui/icons/registry"
 import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { ExternalLink } from "@/components/common/ExternalLink"
+import { openExternalUrl } from "@/components/common/ExternalLink"
 import { DesktopCaptionBar } from "@/components/layout/DesktopCaptionBar"
 import { getAppScrollContainer } from "@/features/doc/lib/docReadingAnchor"
 import {
 	APP_ISSUES_BUG_DESKTOP_URL,
 	APP_ISSUES_BUG_SELFHOSTED_URL,
 	APP_VERSION,
+	bugIssueUrl,
 } from "@/lib/appInfo"
 import {
 	flushClientLogToServer,
@@ -147,13 +148,17 @@ export function AppErrorPage(props: AppErrorPageProps) {
 					>
 						{t("appError.copyDetails")}
 					</Button>
-					<ExternalLink
-						href={issueHref}
+					<Button
+						variant="outline"
 						data-testid="app-error-report"
-						className={buttonVariants({ variant: "outline" })}
+						onClick={() => {
+							// Same report flow as Settings → About: open the
+							// matching template with the version prefilled.
+							openExternalUrl(bugIssueUrl(issueHref))
+						}}
 					>
 						{t("appError.reportIssue")}
-					</ExternalLink>
+					</Button>
 				</div>
 				<div className="w-full">
 					<button

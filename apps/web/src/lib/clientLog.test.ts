@@ -108,6 +108,23 @@ describe("clientLog", () => {
 		expect(block).toContain("stack line 1")
 	})
 
+	it("masks the app origin in reports unless it is loopback", async () => {
+		const clientLog = await loadClientLog()
+		expect(clientLog.originForReport("http://127.0.0.1:3000")).toBe(
+			"http://127.0.0.1:3000",
+		)
+		expect(clientLog.originForReport("http://localhost:3000")).toBe(
+			"http://localhost:3000",
+		)
+		expect(clientLog.originForReport("http://[::1]:3000")).toBe(
+			"http://[::1]:3000",
+		)
+		expect(clientLog.originForReport("http://nas.local:3000")).toBe("<server>")
+		expect(clientLog.originForReport("https://archive.example.com")).toBe(
+			"<server>",
+		)
+	})
+
 	it("pushes unsent error/warn entries once and retries a failure", async () => {
 		const clientLog = await loadClientLog()
 		clientLog.pushClientLog("info", "noise")

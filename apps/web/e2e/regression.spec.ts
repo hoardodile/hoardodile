@@ -6,6 +6,7 @@ import {
 	type Page,
 	test,
 } from "@playwright/test"
+import { unzipSync } from "fflate"
 import { login } from "./helpers"
 import { apiLogin } from "./serverApi"
 
@@ -175,11 +176,10 @@ test.describe("designed error page", () => {
 test.describe("client log → diagnostics → server log", () => {
 	test.setTimeout(120_000)
 
-	test("console errors are captured, copied to the clipboard and pushed to the server log", async ({
+	test("console errors are captured, archived and pushed to the server log", async ({
 		page,
 	}) => {
 		const marker = `e2e-client-marker-${Date.now()}`
-		await page.context().grantPermissions(["clipboard-read", "clipboard-write"])
 		await login(page)
 
 		// Two capture paths: the patched console and the window error hook.
@@ -193,14 +193,40 @@ test.describe("client log → diagnostics → server log", () => {
 			)
 		}, marker)
 
-		// About → Copy diagnostics carries the marker and the identity.
+		// About → Report an issue: the form opens with the version prefilled.
 		await page.goto("/settings/about")
-		const copy = page.getByTestId("me-feedback-copy-diagnostics")
-		await expect(copy).toBeVisible()
-		await copy.click()
-		const diagnostic = await page.evaluate(() => navigator.clipboard.readText())
-		expect(diagnostic).toContain("hoardodile v")
-		expect(diagnostic).toContain(marker)
+		const report = page.getByTestId("me-feedback-bug")
+		await expect(report).toBeVisible()
+		const [popup] = await Promise.all([
+			page.waitForEvent("popup"),
+			report.click(),
+		])
+		await popup.waitForLoadState()
+		// A signed-out browser is bounced through GitHub's login page with
+		// the target encoded in `return_to` — assert the decoded direction.
+		const opened = decodeURIComponent(popup.url())
+		expect(opened).toContain("template=bug_report_selfhosted.yml")
+		expect(opened).toContain("version=")
+
+		// About → Download logs: the privacy dialog first, then a real zip
+		// with the frontend log (carrying the marker) and the server's own
+		// rolling log files.
+		const downloadPromise = page.waitForEvent("download")
+		await page.getByTestId("me-feedback-download-logs").click()
+		await expect(page.getByTestId("me-logs-archive-confirm")).toBeVisible()
+		await page.getByTestId("me-logs-archive-confirm").click()
+		const download = await downloadPromise
+		expect(download.suggestedFilename()).toMatch(/^hoardodile-logs-.*\.zip$/)
+		const downloadPath = await download.path()
+		expect(downloadPath).not.toBeNull()
+		const archive = unzipSync(readFileSync(downloadPath!))
+		expect(Object.keys(archive)).toContain("frontend.log")
+		expect(Object.keys(archive).some((name) => name.startsWith("app."))).toBe(
+			true,
+		)
+		const frontend = new TextDecoder().decode(archive["frontend.log"])
+		expect(frontend).toContain("hoardodile v")
+		expect(frontend).toContain(marker)
 
 		// The 15s sender interval lands the marker in the server's app.log.
 		await expect

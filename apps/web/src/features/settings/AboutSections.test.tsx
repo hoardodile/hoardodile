@@ -7,6 +7,7 @@ import {
 	APP_ISSUES_BUG_SELFHOSTED_URL,
 	APP_ISSUES_FEATURE_URL,
 	APP_REPOSITORY_URL,
+	APP_VERSION,
 	APP_WEBSITE_URL,
 } from "@/lib/appInfo"
 import { AboutSection } from "./AboutSection"
@@ -15,8 +16,9 @@ import { BugReportSection, FeatureRequestSection } from "./FeedbackSections"
 const openSpy = vi.spyOn(window, "open").mockImplementation(() => null)
 const openExternalMock = vi.fn()
 
-const { bridgeMock } = vi.hoisted(() => ({
+const { bridgeMock, downloadLogArchiveMock } = vi.hoisted(() => ({
 	bridgeMock: vi.fn(),
+	downloadLogArchiveMock: vi.fn(() => Promise.resolve()),
 }))
 
 vi.mock("@/lib/desktop", () => ({
@@ -24,9 +26,14 @@ vi.mock("@/lib/desktop", () => ({
 	isHoardodileDesktop: () => bridgeMock()?.isDesktop === true,
 }))
 
+vi.mock("@/lib/logArchive", () => ({
+	downloadLogArchive: downloadLogArchiveMock,
+}))
+
 afterEach(() => {
 	openSpy.mockClear()
 	openExternalMock.mockClear()
+	downloadLogArchiveMock.mockClear()
 	bridgeMock.mockReset()
 })
 
@@ -38,6 +45,11 @@ function renderAboutSections() {
 			<FeatureRequestSection />
 		</>,
 	)
+}
+
+/** The bug form URL with the version prefilled, as the app opens it. */
+function reportUrl(template: string): string {
+	return `${template}&version=${encodeURIComponent(APP_VERSION)}`
 }
 
 describe("Settings → About", () => {
@@ -60,13 +72,16 @@ describe("Settings → About", () => {
 		expect(screen.getByTestId("me-about-developer").getAttribute("href")).toBe(
 			APP_DEVELOPER_URL,
 		)
-		// Feedback: one action per issue template (browser → self-hosted form).
-		expect(screen.getByTestId("me-feedback-bug").getAttribute("href")).toBe(
-			APP_ISSUES_BUG_SELFHOSTED_URL,
-		)
+		// Report: the primary action plus the log-archive download; the
+		// desktop-only server-log link must be hidden in a browser tab.
+		expect(screen.getByTestId("me-feedback-bug")).toBeInTheDocument()
+		expect(screen.getByTestId("me-feedback-download-logs")).toBeInTheDocument()
 		expect(screen.getByTestId("me-feedback-feature").getAttribute("href")).toBe(
 			APP_ISSUES_FEATURE_URL,
 		)
+		expect(
+			screen.queryByTestId("me-feedback-open-logs"),
+		).not.toBeInTheDocument()
 	})
 
 	test("a browser click opens each link in a new tab", () => {
@@ -83,7 +98,7 @@ describe("Settings → About", () => {
 		)
 		fireEvent.click(screen.getByTestId("me-feedback-bug"))
 		expect(openSpy).toHaveBeenCalledWith(
-			APP_ISSUES_BUG_SELFHOSTED_URL,
+			reportUrl(APP_ISSUES_BUG_SELFHOSTED_URL),
 			"_blank",
 			"noopener,noreferrer",
 		)
@@ -102,14 +117,10 @@ describe("Settings → About", () => {
 		expect(openExternalMock).not.toHaveBeenCalled()
 	})
 
-	test("a desktop click routes to the desktop form through the shell", async () => {
+	test("a desktop click routes to the desktop form through the shell", () => {
 		bridgeMock.mockReturnValue({
 			isDesktop: true,
 			openExternal: openExternalMock,
-			async getConfig() {
-				// path-guard-exempt: a Windows library path feeds the logs hint.
-				return { libraryPath: "C:\\lib" }
-			},
 			async openLogsFolder() {
 				return true
 			},
@@ -120,55 +131,45 @@ describe("Settings → About", () => {
 				<FeatureRequestSection />
 			</>,
 		)
-		// Wait out the async config load (logs path hint) inside act.
-		await waitFor(() =>
-			expect(screen.getByText(/C:\\lib\/local\/logs/)).toBeInTheDocument(),
-		)
-		expect(screen.getByTestId("me-feedback-bug").getAttribute("href")).toBe(
-			APP_ISSUES_BUG_DESKTOP_URL,
-		)
+		// Desktop also shows the quiet server-log row.
+		expect(screen.getByTestId("me-feedback-open-logs")).toBeInTheDocument()
 
 		fireEvent.click(screen.getByTestId("me-feedback-bug"))
 		fireEvent.click(screen.getByTestId("me-feedback-feature"))
 		expect(openExternalMock).toHaveBeenNthCalledWith(
 			1,
-			APP_ISSUES_BUG_DESKTOP_URL,
+			reportUrl(APP_ISSUES_BUG_DESKTOP_URL),
 		)
 		expect(openExternalMock).toHaveBeenNthCalledWith(2, APP_ISSUES_FEATURE_URL)
 		expect(openSpy).not.toHaveBeenCalled()
 	})
 
-	test("copies the diagnostics block from the bug section", async () => {
+	test("downloading the log archive asks for confirmation first", async () => {
 		bridgeMock.mockReturnValue(undefined)
-		const writeText = vi.fn(async (_text: string) => {})
-		Object.defineProperty(navigator, "clipboard", {
-			value: { writeText },
-			configurable: true,
-		})
 		renderAboutSections()
-		fireEvent.click(screen.getByTestId("me-feedback-copy-diagnostics"))
-		await waitFor(() => expect(writeText).toHaveBeenCalledTimes(1))
-		expect(writeText.mock.calls[0]![0]).toContain("hoardodile v")
-		expect(writeText.mock.calls[0]![0]).toContain("Platform:")
-		delete (navigator as { clipboard?: unknown }).clipboard
+
+		fireEvent.click(screen.getByTestId("me-feedback-download-logs"))
+		// The privacy dialog must appear before anything is packed.
+		expect(screen.getByTestId("me-logs-archive-confirm")).toBeInTheDocument()
+		expect(downloadLogArchiveMock).not.toHaveBeenCalled()
+
+		fireEvent.click(screen.getByTestId("me-logs-archive-confirm"))
+		await waitFor(() => expect(downloadLogArchiveMock).toHaveBeenCalledTimes(1))
 	})
 
-	test("opens the server logs folder on desktop and shows its path", async () => {
+	test("opens the server log folder on desktop only", async () => {
 		const openLogsFolder = vi.fn(async () => true)
 		bridgeMock.mockReturnValue({
 			isDesktop: true,
 			openExternal: openExternalMock,
-			async getConfig() {
-				// path-guard-exempt: a Windows path is what the hint renders.
-				return { libraryPath: "C:\\lib" }
-			},
 			openLogsFolder,
 		})
 		render(<BugReportSection />)
+		// The server-log row is the quiet desktop extra — the copy action is
+		// folded into the report button.
 		expect(
-			// path-guard-exempt: the hint renders the Windows path verbatim.
-			await screen.findByText("C:\\lib/local/logs", { exact: false }),
-		).toBeInTheDocument()
+			screen.queryByTestId("me-feedback-copy-logs"),
+		).not.toBeInTheDocument()
 		fireEvent.click(screen.getByTestId("me-feedback-open-logs"))
 		await waitFor(() => expect(openLogsFolder).toHaveBeenCalledTimes(1))
 	})

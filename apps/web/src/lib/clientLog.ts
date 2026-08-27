@@ -270,7 +270,10 @@ export function formatDiagnostics(count = 100): string {
 		lines.push(`User agent: ${navigator.userAgent}`)
 	}
 	if (typeof window !== "undefined") {
-		lines.push(`Server: ${window.location.origin}`)
+		// The origin is loopback-only on a desktop shell, but a self-hosted
+		// instance may be reachable by hostname or public address — an
+		// archive attached to a public issue must not leak that.
+		lines.push(`Server: ${originForReport(window.location.origin)}`)
 	}
 	lines.push(`Time: ${new Date().toISOString()}`)
 	lines.push("")
@@ -288,6 +291,23 @@ export function formatDiagnostics(count = 100): string {
 		}
 	}
 	return lines.join("\n")
+}
+
+/**
+ * The app origin for a report: verbatim on loopback, masked otherwise so a
+ * self-hosted hostname or public address never leaves the machine.
+ */
+export function originForReport(origin: string): string {
+	let host: string
+	try {
+		host = new URL(origin).hostname
+	} catch {
+		return origin
+	}
+	if (host === "127.0.0.1" || host === "localhost" || host === "[::1]") {
+		return origin
+	}
+	return "<server>"
 }
 
 function formatTime(ts: number): string {
