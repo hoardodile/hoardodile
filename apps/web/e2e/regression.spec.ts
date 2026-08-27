@@ -1,5 +1,4 @@
-import { globSync, readFileSync } from "node:fs"
-import { resolve } from "node:path"
+import { readFileSync } from "node:fs"
 import {
 	type APIRequestContext,
 	expect,
@@ -8,7 +7,12 @@ import {
 } from "@playwright/test"
 import yauzl from "yauzl"
 import { login } from "./helpers"
-import { apiLogin, createResource, uploadOrderedFile } from "./serverApi"
+import {
+	apiLogin,
+	createResource,
+	fetchServerLogs,
+	uploadOrderedFile,
+} from "./serverApi"
 import { solidPng } from "./testArchive"
 
 /**
@@ -21,15 +25,6 @@ import { solidPng } from "./testArchive"
  * rAF timing, and the client-log push lands in the server's pino files.
  */
 const SERVER = `http://127.0.0.1:${process.env.E2E_SERVER_PORT ?? "3001"}`
-// The config's webServer points STORAGE_ROOT at apps/web/.playwright/storage.
-const LOGS_DIR = resolve(
-	import.meta.dirname,
-	"..",
-	".playwright",
-	"storage",
-	"local",
-	"logs",
-)
 // The preinstalled gallery plugin (see playwright.config.ts DEV_PLUGIN_PATHS).
 const GALLERY_PLUGIN_ID = "665cfbdd-1db6-48f5-9d53-1008b8cb84c3"
 
@@ -258,9 +253,11 @@ test.describe("client log → diagnostics → server log", () => {
 
 	test("console errors are captured, archived and pushed to the server log", async ({
 		page,
+		request,
 	}) => {
 		const marker = `e2e-client-marker-${Date.now()}`
 		await login(page)
+		const cookie = await apiLogin(request)
 
 		// Two capture paths: the patched console and the window error hook.
 		await page.evaluate((mark) => {
@@ -309,16 +306,20 @@ test.describe("client log → diagnostics → server log", () => {
 		expect(frontend).toContain(marker)
 
 		// The 15s sender interval lands the marker in the server's app.log.
+		// The authenticated diagnostics.logs query reads the same rolling
+		// files the user downloads — host-agnostic, so it also holds against
+		// the Docker image (external-server mode: no local STORAGE_ROOT).
 		await expect
 			.poll(
-				() => {
-					const files = globSync(`${LOGS_DIR}/app*.log`)
-					return files.some((file) =>
-						readFileSync(file, "utf8").includes(marker),
-					)
+				async () => {
+					try {
+						return await fetchServerLogs(request, cookie)
+					} catch {
+						return ""
+					}
 				},
 				{ timeout: 40_000 },
 			)
-			.toBe(true)
+			.toContain(marker)
 	})
 })

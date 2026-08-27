@@ -144,3 +144,64 @@ export async function deleteResources(
 		}
 	}
 }
+
+/**
+ * Fetches the server's own rolling log files via the app's authenticated
+ * `diagnostics.logs` query, concatenated in file order. Works against any
+ * server the suite targets — the local webServer or an external instance
+ * (Docker image) whose STORAGE_ROOT the test runner cannot see.
+ */
+export async function fetchServerLogs(
+	request: APIRequestContext,
+	cookie: string,
+): Promise<string> {
+	const res = await request.get(`${SERVER}/trpc/diagnostics.logs`, {
+		headers: { cookie },
+	})
+	if (!res.ok()) {
+		throw new Error(
+			`diagnostics.logs failed: ${res.status()} ${await res.text()}`,
+		)
+	}
+	const files = logFilesFromTrpcJson(await res.json())
+	if (files === undefined) {
+		throw new Error("diagnostics.logs response missing files")
+	}
+	return files.join("\n")
+}
+
+/**
+ * Walks the tRPC HTTP JSON (single, non-batch) for the log file contents.
+ * Without a transformer the payload sits at `result.data`; a transformer
+ * nests it one level deeper at `result.data.json`. Both shapes are walked.
+ */
+function logFilesFromTrpcJson(body: unknown): string[] | undefined {
+	if (body === null || typeof body !== "object") return undefined
+	const obj = body as Record<string, unknown>
+	if (!("result" in obj)) return undefined
+	const result = obj.result
+	if (typeof result !== "object" || result === null) return undefined
+	const envelope = result as Record<string, unknown>
+	if (!("data" in envelope)) return undefined
+	const data = envelope.data
+	if (typeof data !== "object" || data === null) return undefined
+	const payload =
+		"json" in (data as Record<string, unknown>) &&
+		typeof (data as Record<string, unknown>).json === "object"
+			? ((data as Record<string, unknown>).json as Record<string, unknown>)
+			: (data as Record<string, unknown>)
+	const files = payload.files
+	if (!Array.isArray(files)) return undefined
+	const contents: string[] = []
+	for (const file of files) {
+		if (
+			typeof file === "object" &&
+			file !== null &&
+			"content" in (file as Record<string, unknown>) &&
+			typeof (file as Record<string, unknown>).content === "string"
+		) {
+			contents.push((file as Record<string, unknown>).content as string)
+		}
+	}
+	return contents
+}
