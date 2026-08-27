@@ -4,29 +4,29 @@ Privacy-first, self-hosted archiving app. pnpm monorepo: Fastify + tRPC server, 
 
 ## Commands
 
-Prerequisites: Node.js 24, pnpm (corepack), `pnpm install`; copy `.env.example` to `.env`.
+Prerequisites: Node.js 24 + pnpm (corepack); `pnpm install`; copy `.env.example` to `.env`.
 
 - `pnpm dev` — web (Vite HMR) + backend (`vite-node --watch`) + plugin watchers.
-- `pnpm build` — turbo build (plugins, web, server); `pnpm lint` / `pnpm format` — biome + tsc; `pnpm test` — turbo test. Lint/test need `pnpm build` first (published-package `default` exports point at `dist/`). Generated files are never committed and regenerate before their consumers: `apps/web/src/routeTree.gen.ts` before every web build/lint/test (`apps/web/scripts/gen-route-tree.mjs`), the third-party notices (`apps/web/public/{licenses.json,LICENSE}`) before the web dev/build chain (`scripts/generate-licenses.mjs`); CI gates the notices' license policy via `pnpm licenses:check`.
+- `pnpm build` — turbo build (plugins, web, server); `pnpm lint` / `pnpm format` — biome + tsc; `pnpm test` — turbo test. Lint/test need `pnpm build` first (published-package `default` exports point at `dist/`). Generated files regenerate before their consumers: `apps/web/src/routeTree.gen.ts` before every web build/lint/test, the third-party notices (`apps/web/public/{licenses.json,LICENSE}`) before the web dev/build chain (`scripts/generate-licenses.mjs`; CI gates the notice license policy via `pnpm licenses:check`).
 - One package: `turbo run test --concurrency=2 --filter=<package>`; `pnpm db:generate` — regenerate Drizzle migrations.
-- `pnpm desktop` — Electron dev shell; packaging per platform (`desktop:package` = Windows x64 NSIS+zip, `:linux` = AppImage, `:mac` = arm64 dmg+zip): stages the server runtime via shared `scripts/stage-runtime.mjs` (seed plugin set per `scripts/lib/plugin-channels.mjs`) plus a Node 24 sidecar runtime, then self-checks (`verify-package.mjs` natives/sandbox/asar guard, yml-driven `verify-feed.mjs`); `package:dir` + `test:e2e` = packaged Playwright launch smoke. Details: `apps/desktop/README.md`.
-- `pnpm docker:smoke` — compose-driven health/SPA/persistence check; the `docker` CI job also runs the web e2e against the container (`E2E_EXTERNAL_BASE_URL`).
-- `pnpm seed` — demo data only (refuses non-empty libraries and `HOARDODILE_PACKAGED=1` runtimes; admin password `demo`); `pnpm -F @hoardodile/server reset` / `reset:dev` — drop the admin password.
+- `pnpm desktop` — Electron dev shell; packaging per platform (`desktop:package` = Windows x64 NSIS+zip, `:linux` = AppImage, `:mac` = arm64 dmg+zip) stages the server runtime (`scripts/stage-runtime.mjs`, seed set per `scripts/lib/plugin-channels.mjs`) + a Node 24 sidecar, then self-checks (`verify-package.mjs`, yml-driven `verify-feed.mjs`); `package:dir` + `test:e2e` = packaged Playwright launch smoke. Details: `apps/desktop/README.md`.
+- `pnpm docker:smoke` — compose health/SPA/persistence check; CI also runs the web e2e against the container (`E2E_EXTERNAL_BASE_URL`).
+- `pnpm seed` — demo data only (refuses non-empty libraries and packaged runtimes; admin password `demo`); `pnpm -F @hoardodile/server reset` / `reset:dev` — drop the admin password.
 - `hoardodile plugin <create|build|package|run|bench|dev>` — plugin CLI (package = zip `dist/` into `release/<id>-<version>.zip` for a GitHub release); scaffold via `pnpm dlx create-hoardodile-plugin <name>`.
 
 Server config: env vars only, validated in `apps/server/src/config/env.ts` — no CLI flags.
 
 ## Coding rules
 
-- Elegance beats brevity; no speculative abstractions; deduplicate; functions with >4 parameters become one options object. Prefer type guards / assertion functions / `satisfies` over `as`; plain-function component calls outside React render need `"use no memo"`. Check `DESIGN.md` before reshaping any UI.
-- Links outside the SPA must go through `ExternalLink` (pre-commit guard); on desktop, same-origin SPA-route navigations stay in-window, every other URL opens in the OS browser (`apps/desktop/src/main/urls.ts`).
+- Elegance beats brevity; no speculative abstractions; functions with >4 parameters become one options object. Prefer type guards / `satisfies` over `as`; plain-function component calls outside React render need `"use no memo"`. Check `DESIGN.md` before reshaping any UI.
+- Links outside the SPA go through `ExternalLink` (pre-commit guard); on desktop, same-origin SPA-route navigations stay in-window, every other URL opens in the OS browser (`apps/desktop/src/main/urls.ts`).
 - Never edit non-ASCII files (i18n JSON, docs) via PowerShell string replacement — use the edit tool.
 
 ## Dependencies
 
 - Runtime deps live in the package that uses them; shared versions via `catalog:` in `pnpm-workspace.yaml`; `apps/server` ships a production `node_modules`.
 - SDK closure (`@hoardodile/{i18n,ui,sdk-*}`) must not import outside itself (`sdks:pack`); terminal packages (`cli`, `host`, `host-web`, `workbench`) are never imported by plugin code; `host`/`host-web` and the SDKs ship `src` alongside `dist`.
-- Pinned by `scripts/guard-protected-deps.mjs` (pre-commit + CI): `@blocknote/*` 0.51.4 (+ `@handlewithcare/prosemirror-suggest-changes` 0.1.8), `@videojs/react` 10.0.0-beta.25, `typescript: 5.9.3` in the tsup-built packages — an intentional bump must follow the checklist in `apps/web/src/features/doc/README.md`.
+- Pinned by `scripts/guard-protected-deps.mjs` (pre-commit + CI): `@blocknote/*` 0.51.4 (+ `@handlewithcare/prosemirror-suggest-changes` 0.1.8), `@videojs/react` 10.0.0-beta.25, `typescript: 5.9.3` in the tsup-built packages — an intentional bump follows the checklist in `apps/web/src/features/doc/README.md`.
 
 ## Structure
 
@@ -48,6 +48,7 @@ plugins/
   create-plugin/  Interactive scaffolder (embeds a copy of template/)
   file/        Built-in fallback plugin
   gallery/     Official preinstalled media gallery
+  pdf/         Official preinstalled PDF reader
   template/    Third-party plugin starting point
 scripts/       Root dev/license/guard/version scripts
 .agents/skills/  Repo-local agent skills
@@ -63,12 +64,12 @@ scripts/       Root dev/license/guard/version scripts
 ## Testing
 
 - Vitest at `src/**/*.test.{ts,tsx}` (server: node; web/plugins: jsdom); bench runs manually.
-- E2E: Playwright critical-path smoke only (`apps/web/e2e/` + the desktop launch smoke); prefer Vitest + Testing Library; select by `data-testid`/role.
-- Expected filesystem paths in tests must be built from `join()`/`resolve()`/`sep` (the implementation's own primitives), never from drive-letter/backslash literals — Windows-behavior cases are exempted with `// path-guard-exempt` (enforced by `scripts/guard-portable-tests.mjs`, pre-commit + CI).
+- E2E: Playwright critical-path smoke only (`apps/web/e2e/` + the desktop launch smoke) — prefer Vitest + Testing Library; select by `data-testid`/role.
+- Expected filesystem paths in tests come from `join()`/`resolve()`/`sep`, never drive-letter/backslash literals — Windows-behavior cases are exempted with `// path-guard-exempt` (`scripts/guard-portable-tests.mjs`, pre-commit + CI).
 
 ## Generated files — never hand-edit
 
-`apps/server/src/infra/db/migrations/`, `CHANGELOG.md`, `pnpm-lock.yaml`, `plugins/create-plugin/src/sdk-deps.gen.ts`, `plugins/create-plugin/src/template/` (edit the source `plugins/template`). `apps/web/src/routeTree.gen.ts` and `apps/web/public/{licenses.json,LICENSE}` are not committed at all — they regenerate before their consumers (route tree: every web build/lint/test; notices: the web dev/build chain).
+`apps/server/src/infra/db/migrations/`, `CHANGELOG.md`, `pnpm-lock.yaml`, `plugins/create-plugin/src/sdk-deps.gen.ts`, `plugins/create-plugin/src/template/` (edit the source `plugins/template`; `scripts/sync-template.mjs` regenerates the copy). `apps/web/src/routeTree.gen.ts` and `apps/web/public/{licenses.json,LICENSE}` are not committed at all — they regenerate before their consumers (route tree: every web build/lint/test; notices: the web dev/build chain).
 
 Drizzle migration pitfalls: split add+drop into two `db:generate` runs; `ADD COLUMN` silently drops FK actions like `ON DELETE CASCADE` — verify the SQL.
 
@@ -77,11 +78,11 @@ Drizzle migration pitfalls: split add+drop into two `db:generate` runs; `ADD COL
 - Conventional Commits (`type(scope): subject`; scope = workspace package name); one cohesive unit per commit; pre-commit = lint-staged + `pnpm lint` + version/versioned-write guards.
 - **Before committing:** `pnpm format` → `pnpm lint` → `turbo run test --concurrency=2 --filter=<changed packages>`, all green.
 - **Never merge, rebase, push, or delete branches.** Never hand-edit a `version` field; never re-run `pnpm release` for an already-tagged version.
-- Release: `pnpm release <version>` (bump/tag/push + **draft** GitHub Release) → tag-triggered `release.yml` publishes npm + the per-platform desktop installers → a human publishes the draft (updater sees it then). Pre-1.0: breaking changes allowed, but flag them to the user first.
+- Release: `pnpm release <version>` (bump/tag/push + **draft** GitHub Release) → tag-triggered `release.yml` publishes npm + the per-platform desktop installers → a human publishes the draft (the updater sees it then). Pre-1.0: breaking changes allowed, but flag them first.
 
 ## Guardrails
 
-- No telemetry or external calls — the only authorized network requests are the user-triggered update check (desktop `autoUpdate` may fetch GitHub Release artifacts while the tray is alive), user-consented plugin downloads (the plugin asset API: every download requires the shared consent dialog in the web UI, and the file lands only inside the plugin's own `vault/` folder), and the plugin marketplace's GitHub fetches (built-in default registry `hoardodile/marketplace`; a custom registry is opt-in): catalog refresh (registry + per-plugin manifests via raw URLs + `releases/latest` via the API + per-release `intro.<locale>.md` assets via release download URLs, server-side, cached 10 min, on page open or explicit refresh) and user-confirmed install/update downloads of release assets (same hardened HTTP client; GitHub release hosts only).
-- Outbound fetches honor the user's proxy by default (`HOARDODILE_PROXY` explicit override, `off` to disable; auto-detected from `HTTPS_PROXY`/`HTTP_PROXY`/`ALL_PROXY` env vars and the Windows/macOS system proxy; `NO_PROXY` keeps those hosts direct). The proxy is transport only: destinations stay the authorized hosts above, and TLS verification plus the public-address policy are unchanged. Settings → About exposes read-only network diagnostics plus a user-triggered connectivity probe against `raw.githubusercontent.com`.
+- No telemetry or external calls — the only authorized requests: the user-triggered update check (desktop `autoUpdate` may fetch GitHub Release artifacts while the tray is alive), user-consented plugin downloads (the asset API's shared consent dialog; files land only in the plugin's own `vault/`), and the plugin marketplace's GitHub fetches (built-in default registry `hoardodile/marketplace`; a custom registry is opt-in): catalog refresh (registry + per-plugin manifests via raw URLs + `releases/latest` via the API + per-release `intro.<locale>.md` assets, server-side, cached 10 min, on page open or explicit refresh) and user-confirmed install/update downloads (same hardened HTTP client; GitHub release hosts only).
+- Outbound fetches honor the user's proxy by default (`HOARDODILE_PROXY` explicit override, `off` to disable; auto-detected from `HTTPS_PROXY`/`HTTP_PROXY`/`ALL_PROXY` and the Windows/macOS system proxy; `NO_PROXY` keeps those hosts direct). The proxy is transport only — destinations stay the authorized hosts above; TLS verification and the public-address policy are unchanged. Settings → About exposes read-only network diagnostics plus a user-triggered connectivity probe against `raw.githubusercontent.com`.
 - No git mutations unless explicitly asked.
 - **Ask the user before modifying AGENTS.md.**

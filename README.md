@@ -8,6 +8,8 @@ Hoardodile is a modern digital hoarding tool for self-hosted archivists. It lets
 
 - **Hoard any content** — extensible content plugins support different formats and media types.
 - **Preview in place** — browse and preview resources directly from your library.
+- **Plugin marketplace** — discover and install content plugins from **Settings → Marketplace** (built-in default registry: `hoardodile/marketplace`).
+- **Desktop app** — Windows / Linux / macOS installers with an auto-updater; or run the self-hosted web version / Docker image.
 - **Self-hosted & private** — your data stays on your own storage, under your control.
 
 ## Quick Start
@@ -27,10 +29,9 @@ Requires Node.js 24 and pnpm.
 docker compose up -d   # http://localhost:3000
 ```
 
-- Data lives in the named volume `hoardodile-data` (mounted at `/data`); `docker compose down -v` **deletes it** — bind-mount `./data:/data` instead if you prefer an inspectable directory. The image runs as a non-root user and declares a HEALTHCHECK (`docker compose ps` shows the state).
-- Upgrade = rebuild/re-pull the image and `docker compose up -d`; migrations run on next start. The bundled gallery/pdf plugins are seeds: uninstalling one keeps the bundled original and stays uninstalled for this library until you restore it — fully offline — from **Settings → Marketplace → Bundled plugins** (a newer image does not re-ship it on its own).
-- Behind a TLS reverse proxy set `FORCE_HTTPS=true` and drop `SESSION_SECURE_COOKIE=false` from `environment`. `HOST`/`PORT`/`STORAGE_ROOT` are configurable; see `.env.example` for the full env surface. The `pnpm seed` demo tool refuses to run inside the image (it is dev-only tooling).
-- Custom plugins: mount your plugin zip/dir under `/app/plugins/<slug>` (never overwrite the bundled seeds) and install it in the UI. To distribute your own plugins, publish GitHub releases and point **Settings → Marketplace** at a registry repo (built-in default: `hoardodile/marketplace`) — see `packages/cli/README.md`.
+- Data lives in the named volume `hoardodile-data` (mounted at `/data`); `docker compose down -v` **deletes it** — bind-mount `./data:/data` if you prefer an inspectable directory. The image runs as a non-root user and declares a HEALTHCHECK (`docker compose ps` shows the state).
+- Upgrade = rebuild/re-pull the image and `docker compose up -d`; migrations run on next start. The bundled gallery/pdf plugins are seeds: uninstalling one keeps the bundled original and stays uninstalled for this library until you restore it — fully offline — from **Settings → Marketplace → Bundled plugins** (a newer image does not re-ship them).
+- Behind a TLS reverse proxy set `FORCE_HTTPS=true` and drop `SESSION_SECURE_COOKIE=false` from `environment`; see `.env.example` for the full env surface. Custom plugins: mount your plugin zip/dir under `/app/plugins/<slug>` (never overwrite the bundled seeds) and install it in the UI. To distribute your own plugins, publish GitHub releases and point **Settings → Marketplace** at a registry repo (built-in default: `hoardodile/marketplace`) — see `packages/cli/README.md`.
 
 ## Agent Skills
 
