@@ -34,7 +34,6 @@ export type WizardCopy = {
 export type ShellCopy = {
 	readonly serverUnreachable: string
 	readonly retry: string
-	readonly loadingLabel: string
 }
 
 /** The shell's own copy before the SPA pushes a language: detect from the
@@ -64,6 +63,5 @@ export function shellCopy(): ShellCopy {
 	return {
 		serverUnreachable: catalog.desktopShell.shell.serverUnreachable,
 		retry: catalog.desktopShell.shell.retry,
-		loadingLabel: catalog.desktopShell.shell.loadingLabel,
 	}
 }

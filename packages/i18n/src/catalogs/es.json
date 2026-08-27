@@ -2258,8 +2258,7 @@
 		},
 		"shell": {
 			"serverUnreachable": "Servidor inaccesible",
-			"retry": "Reintentar",
-			"loadingLabel": "Cargando"
+			"retry": "Reintentar"
 		},
 		"wizard": {
 			"title": "Te damos la bienvenida a hoardodile",

@@ -197,8 +197,8 @@ if (!rootElement) {
 holdSplashUntilReady({
 	router,
 	queryClient,
-	// Login destination: the dimmed splash logo morphs onto the sign-in
-	// logo; every other page removes the overlay instantly.
+	// The overlay (background + dimmed logo) fades out as one surface,
+	// revealing the finished page beneath — no moving logo, no swap.
 	remove: () => dismissSplash(document.getElementById("app-splash")),
 })
 

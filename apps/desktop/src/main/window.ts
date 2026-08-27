@@ -22,18 +22,19 @@ export type ShellPageTarget = {
 }
 
 /**
- * Load a shell page (loading spinner / error + retry) from the wizard
+ * Load a shell page (server-unreachable error + Retry) from the wizard
  * bundle: the dev wizard server when ELECTRON_WIZARD_URL points at one
- * (mode + message ride the query), the built `out/wizard` via loadFile
- * otherwise. `message` carries the error copy for the error mode.
+ * (the message rides the query), the built `out/wizard` via loadFile
+ * otherwise. `message` carries the error copy for the error mode. The
+ * loading surface is the SPA's own first-paint splash — the app window
+ * loads the SPA directly, so no separate loading page exists anymore.
  */
 export async function loadShellPage(
 	win: BrowserWindow,
 	target: ShellPageTarget,
-	mode: "loading" | "error",
 	message?: string,
 ): Promise<void> {
-	const query: Record<string, string> = { mode }
+	const query: Record<string, string> = { mode: "error" }
 	if (message !== undefined) query.message = message
 	if (target.url.length > 0) {
 		const url = new URL(target.url)
@@ -52,7 +53,7 @@ export type CreateWindowOptions = {
 	readonly url: string
 	readonly wizardFile?: string
 	readonly iconPath?: string
-	/** App windows: the in-window loading/error fallback target. */
+	/** App windows: the in-window error fallback target. */
 	readonly shellPage?: ShellPageTarget
 	/** App windows: UI language for shell-page messages (fallback: system). */
 	readonly language?: SupportedLanguage
@@ -176,7 +177,6 @@ function loadWindow(win: BrowserWindow, options: CreateWindowOptions): void {
 			void loadShellPage(
 				win,
 				options.shellPage,
-				"error",
 				process.env.HOARDODILE_WEB_URL === undefined
 					? serverErrorMessage(undefined)
 					: devServerErrorMessage(undefined),
@@ -217,12 +217,15 @@ function loadWindow(win: BrowserWindow, options: CreateWindowOptions): void {
 			void loadShellPage(
 				win,
 				options.shellPage,
-				"error",
 				rendererCrashedMessage(options.language),
 			)
 		})
 	}
-	void win.loadURL(options.url)
+	// The wizard branches above return after loading their own page. App
+	// windows never load here: the caller owns the SPA load
+	// (`openAppWindow` / `retryAppWindow`), and the SPA's own first-paint
+	// splash is the loading surface — a single document with no shell-page
+	// handoff.
 }
 
 /**

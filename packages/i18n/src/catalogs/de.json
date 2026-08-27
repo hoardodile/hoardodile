@@ -2258,8 +2258,7 @@
 		},
 		"shell": {
 			"serverUnreachable": "Server nicht erreichbar",
-			"retry": "Erneut versuchen",
-			"loadingLabel": "Wird geladen"
+			"retry": "Erneut versuchen"
 		},
 		"wizard": {
 			"title": "Willkommen bei hoardodile",

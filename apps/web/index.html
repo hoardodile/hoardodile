@@ -53,11 +53,14 @@
       overflow-y: auto;
     }
     /* First-paint splash: index.html's #root is empty until React
-       mounts, and a plain canvas frame reads as a flash after the
-       desktop loading page. The same dimmed logo mark is baked into
-       this document so the first frame already shows it — keep size and
-       tint in sync with the desktop loading page
-       (apps/desktop/src/wizard/shell-pages.tsx, logo + opacity-60);
+       mounts, and a plain canvas frame reads as a flash. The dimmed
+       logo mark is baked into this document (inline data URI, no fetch)
+       so the very first frame already shows it. This is the single
+       loading surface for the desktop app too — the app window loads
+       the SPA directly, so the same logo spans shell → React with no
+       document swap. Keep size and tint in sync with the wizard
+       splash (apps/desktop/src/wizard/index.html) and with the
+       background tokens in packages/ui/src/styles/theme.css:
        main.tsx removes it once the app's first content is ready. */
     #app-splash {
       position: fixed;
@@ -68,8 +71,38 @@
       background: #fbfbfb;
       pointer-events: none;
     }
+    /* Dark canvas: the page's dark `--background` token
+       (oklch(0.12 0 0)) encoded as sRGB — the same value
+       apps/desktop/src/main/window-background.ts uses. */
     html.dark #app-splash {
-      background: #0d0d0d;
+      background: #060606;
+    }
+    /* Palette canvases: each `.theme-<id>` background from
+       packages/ui/src/styles/theme.css, so the splash's frame always
+       matches the first painted page. Keep in sync with theme.css. */
+    html.theme-sage #app-splash {
+      background: #f5f6f0;
+    }
+    html.dark.theme-sage #app-splash {
+      background: #0a100e;
+    }
+    html.theme-parchment #app-splash {
+      background: #d9c7a3;
+    }
+    html.dark.theme-parchment #app-splash {
+      background: #181818;
+    }
+    html.theme-azure #app-splash {
+      background: #fbfbfc;
+    }
+    html.dark.theme-azure #app-splash {
+      background: #191a1c;
+    }
+    html.theme-hoardodile #app-splash {
+      background: #fbfbfb;
+    }
+    html.dark.theme-hoardodile #app-splash {
+      background: #272822;
     }
     #app-splash img {
       width: 80px;
@@ -87,7 +120,6 @@
       width="80"
       height="80"
       alt=""
-      decoding="async"
     />
   </div>
   <script type="module" src="/src/main.tsx"></script>

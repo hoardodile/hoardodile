@@ -2258,8 +2258,7 @@
 		},
 		"shell": {
 			"serverUnreachable": "无法连接服务器",
-			"retry": "重试",
-			"loadingLabel": "加载中"
+			"retry": "重试"
 		},
 		"wizard": {
 			"title": "欢迎使用 hoardodile",

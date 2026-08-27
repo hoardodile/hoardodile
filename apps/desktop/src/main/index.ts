@@ -405,17 +405,16 @@ async function applyLanChange(
 	if (win !== undefined && !win.isDestroyed()) {
 		// Dev loads the Vite URL directly and the proxy already rebinds
 		// to the new sidecar URL; production pages come from the sidecar
-		// and die with it, so reload from the fresh URL — spinner first,
-		// then the app (or the error page if it still fails).
+		// and die with it, so reload from the fresh URL — the SPA's own
+		// first-paint splash is the loading surface (or the error page if
+		// it still fails).
 		if (process.env.HOARDODILE_WEB_URL === undefined) {
 			try {
-				await loadShellPage(win, shellPageTarget(runtime), "loading")
 				await win.loadURL(handle.url)
 			} catch {
 				await loadShellPage(
 					win,
 					shellPageTarget(runtime),
-					"error",
 					serverErrorMessage(runtime.language),
 				)
 			}
@@ -624,14 +623,13 @@ async function openAppWindow(runtime: Runtime): Promise<void> {
 		await loadShellPage(
 			win,
 			shellPageTarget(runtime),
-			"error",
 			devServerErrorMessage(runtime.language),
 		)
 		return
 	}
-	// Spinner first, then the app: the window is never a blank white canvas
-	// while the page loads (ready-to-show fires on the loading page).
-	await loadShellPage(win, shellPageTarget(runtime), "loading")
+	// The SPA's first-paint splash is the loading surface (same dimmed
+	// logo), so the window loads the app directly and the boot stays in a
+	// single document — no shell-page handoff, no flash between surfaces.
 	await win.loadURL(url)
 }
 
@@ -719,10 +717,10 @@ async function handleWindowCloseRequest(
 }
 
 /**
- * The error page's Retry button: show the loading page (its button already
- * switched to a spinner), re-resolve the app URL (Vite in dev, the sidecar
- * otherwise) and reload; on failure the window's own `did-fail-load` guard
- * swaps in a fresh error page.
+ * The error page's Retry button: re-resolve the app URL (Vite in dev, the
+ * sidecar otherwise) and reload; on failure the window's own
+ * `did-fail-load` guard swaps in a fresh error page. The SPA's first-paint
+ * splash is the loading surface while the reload settles.
  */
 async function retryAppWindow(runtime: Runtime): Promise<void> {
 	const win = runtime.window
@@ -730,7 +728,6 @@ async function retryAppWindow(runtime: Runtime): Promise<void> {
 		await openAppWindow(runtime)
 		return
 	}
-	await loadShellPage(win, shellPageTarget(runtime), "loading")
 	let url: string | undefined
 	try {
 		url = await resolveAppUrl(runtime)
@@ -741,7 +738,6 @@ async function retryAppWindow(runtime: Runtime): Promise<void> {
 		await loadShellPage(
 			win,
 			shellPageTarget(runtime),
-			"error",
 			serverErrorMessage(runtime.language),
 		)
 		return
@@ -750,7 +746,6 @@ async function retryAppWindow(runtime: Runtime): Promise<void> {
 		await loadShellPage(
 			win,
 			shellPageTarget(runtime),
-			"error",
 			devServerErrorMessage(runtime.language),
 		)
 		return

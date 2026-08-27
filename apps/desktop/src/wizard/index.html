@@ -15,11 +15,13 @@
 		<div id="root"></div>
 		<style>
 			/* First-paint splash: #root is empty until React mounts, and a
-			   plain canvas reads as a white flash on every app handoff. The
-			   same dimmed logo mark the SPA splash uses is baked into this
-			   document (token replaced by the inline-splash-logo plugin, so
-			   the first frame needs no request). main.tsx removes it after
-			   React mounts; keep size/tint in sync with apps/web/index.html. */
+			   plain canvas reads as a white flash. The same dimmed logo mark
+			   the SPA splash uses is baked into this document (token
+			   replaced by the inline-splash-logo plugin, so the first frame
+			   needs no request). main.tsx removes it after React mounts;
+			   keep size/tint in sync with apps/web/index.html (incl. the
+			   dark canvas value below — the page's `--background` token
+			   oklch(0.12 0 0) encoded as sRGB). */
 			#app-splash {
 				position: fixed;
 				inset: 0;
@@ -30,7 +32,7 @@
 				pointer-events: none;
 			}
 			html.dark #app-splash {
-				background: #0d0d0d;
+				background: #060606;
 			}
 			#app-splash img {
 				width: 80px;
@@ -44,7 +46,6 @@
 				width="80"
 				height="80"
 				alt=""
-				decoding="async"
 			/>
 		</div>
 		<script type="module" src="./main.tsx"></script>

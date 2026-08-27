@@ -2258,8 +2258,7 @@
 		},
 		"shell": {
 			"serverUnreachable": "Server unreachable",
-			"retry": "Retry",
-			"loadingLabel": "Loading"
+			"retry": "Retry"
 		},
 		"wizard": {
 			"title": "Welcome to hoardodile",

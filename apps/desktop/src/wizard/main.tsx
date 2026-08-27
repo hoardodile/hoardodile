@@ -32,15 +32,9 @@ const root = document.getElementById("root")
 if (root === null) throw new Error("#root element not found")
 
 const params = new URLSearchParams(window.location.search)
-const mode = params.get("mode")
 const ui =
-	mode === "loading" || mode === "error" ? (
-		<ShellPages
-			mode={mode}
-			message={
-				mode === "error" ? (params.get("message") ?? undefined) : undefined
-			}
-		/>
+	params.get("mode") === "error" ? (
+		<ShellPages message={params.get("message") ?? undefined} />
 	) : (
 		<WizardApp />
 	)
@@ -53,8 +47,7 @@ createRoot(root).render(
 
 // The raw-HTML splash (index.html) keeps the first frame from being a
 // white flash before React mounts; drop it right after the app's first
-// paint. The loading mode's React logo is the identical mark, so the
-// handover is seamless.
+// paint, when the wizard or the shell error page is already rendered.
 requestAnimationFrame(() => {
 	requestAnimationFrame(() => {
 		document.getElementById("app-splash")?.remove()
