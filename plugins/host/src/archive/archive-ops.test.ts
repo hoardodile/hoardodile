@@ -14,7 +14,7 @@ import {
 	normalizeExtractedTree,
 } from "./extract.ts"
 import { listArchiveEntries, validateArchiveBudget } from "./listing.ts"
-import { streamStoredZip } from "./pack.ts"
+import { packZipDirectory, streamStoredZip } from "./pack.ts"
 import {
 	createFileArchiveSource,
 	listZipEntries,
@@ -230,6 +230,30 @@ describe("extractArchiveInto", () => {
 		await expect(
 			extract(Buffer.from("definitely not an archive"), dest),
 		).rejects.toMatchObject({ kind: "resource.archive_open_failed" })
+	})
+
+	test("rejects formats outside the allow-list without touching the destination", async () => {
+		const root = tempRoot()
+		const dest = join(root, "out")
+		await expect(
+			extractArchiveInto(
+				Readable.from(await buildZip([["a.txt", "alpha"]])),
+				dest,
+				{ maxBytes: 1_000_000, formats: ["tar"] },
+			),
+		).rejects.toMatchObject({ kind: "resource.archive_format_not_allowed" })
+		expect(existsSync(join(dest, "a.txt"))).toBe(false)
+	})
+
+	test("accepts a zip under a zip-only allow-list", async () => {
+		const root = tempRoot()
+		const dest = join(root, "out")
+		await extractArchiveInto(
+			Readable.from(await buildZip([["a.txt", "alpha"]])),
+			dest,
+			{ maxBytes: 1_000_000, formats: ["zip"] },
+		)
+		expect(await readFile(join(dest, "a.txt"), "utf8")).toBe("alpha")
 	})
 
 	test("rejects a corrupt zip with the archive-open error", async () => {
@@ -572,6 +596,30 @@ describe("streamStoredZip", () => {
 		}
 		expect(await readEntryContent(out, "empty.bin")).toEqual(Buffer.alloc(0))
 		expect(await readEntryContent(out, "data.bin")).toEqual(Buffer.from("data"))
+	})
+})
+
+describe("packZipDirectory", () => {
+	test("packs a directory's contents at the zip root, sorted, with forward slashes", async () => {
+		const root = tempRoot()
+		const src = join(root, "src")
+		await mkdir(join(src, "nested"), { recursive: true })
+		await writeFile(join(src, "manifest.json"), '{"id":"x"}')
+		await writeFile(join(src, "a.txt"), "a")
+		await writeFile(join(src, "nested", "b.txt"), "b")
+		const zipPath = join(root, "out.zip")
+
+		await packZipDirectory(src, zipPath)
+
+		const entries = await listZipEntries(zipPath)
+		expect(entries.map((entry) => entry.name)).toEqual([
+			"a.txt",
+			"manifest.json",
+			"nested/b.txt",
+		])
+		expect(await readEntryContent(zipPath, "nested/b.txt")).toEqual(
+			Buffer.from("b"),
+		)
 	})
 })
 

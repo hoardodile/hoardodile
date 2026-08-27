@@ -102,7 +102,7 @@ export {
 	VIRTUAL_PATH_SEPARATOR,
 } from "./nested-entry.ts"
 export type { ZipStreamEntry } from "./pack.ts"
-export { streamStoredZip } from "./pack.ts"
+export { packZipDirectory, streamStoredZip } from "./pack.ts"
 export type { ArchiveSource, ZipEntry } from "./zip-entries.ts"
 export {
 	createFileArchiveSource,

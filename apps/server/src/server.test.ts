@@ -1882,6 +1882,35 @@ describe("plugin upload limits", () => {
 		expect(res.json().kind).toBe("resource.archive_too_large")
 	})
 
+	test("rejects a non-zip plugin archive with a format error", async () => {
+		const cookie = await loginCookie()
+		// A real gzip stream: the archive engine accepts gzip in general,
+		// but the plugin channel is zip-only (the CLI publishes zips, the
+		// marketplace picks zip assets) — anything else must be refused.
+		const { gzipSync } = await import("node:zlib")
+		const gz = gzipSync(Buffer.from("not a plugin package"))
+		const boundary = "----hoardodile-test-boundary"
+		const payload = Buffer.concat([
+			Buffer.from(
+				`--${boundary}\r\nContent-Disposition: form-data; name="archive"; filename="plugin.zip"\r\nContent-Type: application/zip\r\n\r\n`,
+			),
+			gz,
+			Buffer.from(`\r\n--${boundary}--\r\n`),
+		])
+		const res = await built.app.inject({
+			method: "POST",
+			url: "/api/plugin-upload",
+			remoteAddress: "127.0.0.1",
+			headers: {
+				cookie,
+				"content-type": `multipart/form-data; boundary=${boundary}`,
+			},
+			payload,
+		})
+		expect(res.statusCode).toBe(400)
+		expect(res.json().kind).toBe("resource.archive_format_not_allowed")
+	})
+
 	test("marketplace install rejects non-GitHub hosts and unauthenticated calls", async () => {
 		const cookie = await loginCookie()
 		const payload = {

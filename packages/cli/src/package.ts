@@ -1,15 +1,9 @@
 import { createHash } from "node:crypto"
-import {
-	existsSync,
-	mkdirSync,
-	readdirSync,
-	readFileSync,
-	rmSync,
-} from "node:fs"
+import { existsSync, mkdirSync, readFileSync, rmSync } from "node:fs"
 import { writeFile } from "node:fs/promises"
-import { join, resolve, sep } from "node:path"
+import { join, resolve } from "node:path"
+import { packZipDirectory } from "@hoardodile/host"
 import type { PluginManifest } from "@hoardodile/sdk-types"
-import { zipSync } from "fflate"
 import { buildPlugin } from "./build.ts"
 import { CliError } from "./runner.ts"
 
@@ -77,13 +71,14 @@ export async function packPlugin(
 	)
 
 	// Zip only the files `dist/` produced; entries use forward slashes so
-	// the archive is identical on every platform.
-	const files = zipFiles(distDir, distDir)
+	// the archive is identical on every platform. The packer is the same
+	// yazl engine the host runtime extracts with (streamed to disk, no
+	// whole-archive buffer).
 	rmSync(zipPath, { force: true })
-	const packed = zipSync(files, { level: 9 })
-	await writeFile(zipPath, packed)
+	await packZipDirectory(distDir, zipPath)
 
 	const sha256Path = `${zipPath}.sha256`
+	const packed = readFileSync(zipPath)
 	await writeFile(
 		sha256Path,
 		`${createHash("sha256").update(packed).digest("hex")}\n`,
@@ -99,24 +94,9 @@ export async function packPlugin(
 	}
 }
 
-function zipFiles(
-	rootDir: string,
-	currentDir: string,
-): Record<string, Uint8Array> {
-	const files: Record<string, Uint8Array> = {}
-	for (const entry of readdirSync(currentDir, { withFileTypes: true })) {
-		const fullPath = join(currentDir, entry.name)
-		if (entry.isDirectory()) {
-			Object.assign(files, zipFiles(rootDir, fullPath))
-		} else if (entry.isFile()) {
-			const rel = fullPath
-				.slice(rootDir.length + 1)
-				.split(sep)
-				.join("/")
-			files[rel] = readFileSync(fullPath)
-		}
-	}
-	return files
+function sanitizeFileNamePart(value: string): string {
+	const sanitized = value.replace(/[^A-Za-z0-9._-]+/g, "-")
+	return sanitized.length > 0 ? sanitized : "0"
 }
 
 /** Derive the registry line from package.json's repository, if present. */
@@ -137,9 +117,4 @@ function registryLineFor(pluginDir: string): string {
 		// No package.json (or unreadable) — fall through to the placeholder.
 	}
 	return '"https://github.com/<owner>/<repo>"'
-}
-
-function sanitizeFileNamePart(value: string): string {
-	const sanitized = value.replace(/[^A-Za-z0-9._-]+/g, "-")
-	return sanitized.length > 0 ? sanitized : "0"
 }

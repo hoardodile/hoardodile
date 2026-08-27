@@ -6,7 +6,7 @@ import {
 	type Page,
 	test,
 } from "@playwright/test"
-import { unzipSync } from "fflate"
+import yauzl from "yauzl"
 import { login } from "./helpers"
 import { apiLogin } from "./serverApi"
 
@@ -29,6 +29,36 @@ const LOGS_DIR = resolve(
 	"local",
 	"logs",
 )
+
+/** Read a zip buffer into entry name → bytes (the yauzl engine, same as the server). */
+function readZipEntries(buffer: Buffer): Promise<Map<string, Buffer>> {
+	const out = new Map<string, Buffer>()
+	return new Promise((resolve, reject) => {
+		yauzl.fromBuffer(buffer, { lazyEntries: true }, (err, zipfile) => {
+			if (err !== null || zipfile === undefined) {
+				reject(err ?? new Error("missing zipfile"))
+				return
+			}
+			zipfile.readEntry()
+			zipfile.on("entry", (entry: yauzl.Entry) => {
+				zipfile.openReadStream(entry, (streamErr, stream) => {
+					if (streamErr !== null) {
+						reject(streamErr)
+						return
+					}
+					const chunks: Buffer[] = []
+					stream.on("data", (chunk: Buffer) => chunks.push(chunk))
+					stream.on("end", () => {
+						out.set(entry.fileName, Buffer.concat(chunks))
+						zipfile.readEntry()
+					})
+				})
+			})
+			zipfile.on("end", () => resolve(out))
+			zipfile.on("error", reject)
+		})
+	})
+}
 
 test.describe("scroll restoration (real browser)", () => {
 	test.setTimeout(120_000)
@@ -219,12 +249,12 @@ test.describe("client log → diagnostics → server log", () => {
 		expect(download.suggestedFilename()).toMatch(/^hoardodile-logs-.*\.zip$/)
 		const downloadPath = await download.path()
 		expect(downloadPath).not.toBeNull()
-		const archive = unzipSync(readFileSync(downloadPath!))
-		expect(Object.keys(archive)).toContain("frontend.log")
-		expect(Object.keys(archive).some((name) => name.startsWith("app."))).toBe(
+		const archive = await readZipEntries(readFileSync(downloadPath!))
+		expect(archive.has("frontend.log")).toBe(true)
+		expect([...archive.keys()].some((name) => name.startsWith("app."))).toBe(
 			true,
 		)
-		const frontend = new TextDecoder().decode(archive["frontend.log"])
+		const frontend = new TextDecoder().decode(archive.get("frontend.log"))
 		expect(frontend).toContain("hoardodile v")
 		expect(frontend).toContain(marker)
 

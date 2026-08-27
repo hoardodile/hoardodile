@@ -44,6 +44,10 @@ hoardodile plugin package
 
 (Use `--skip-build` to package the existing `dist/` without rebuilding.)
 
+The plugin archive channel is zip-only: the app's installer (zip upload
+and marketplace install) rejects any other archive format, so `plugin
+package` always produces the zip the server expects.
+
 Publishing is a CI concern, not a local one: the plugin template ships a
 tag-triggered workflow (`plugins/template/.github/workflows/release.yml`)
 that runs `pnpm build` + `plugin package` and uploads both artifacts as

@@ -37,6 +37,7 @@ export {
 	createNestedCdCache,
 	listZipEntries,
 	materializeFile,
+	packZipDirectory,
 } from "./archive/index.ts"
 export type {
 	CapabilityGuard,

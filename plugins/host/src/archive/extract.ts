@@ -66,6 +66,14 @@ export type ExtractArchiveOptions = {
 	/** Optional entry-count budget (enforced on the listing). */
 	readonly maxEntries?: number
 	readonly onProgress?: ZipExtractReporter
+	/**
+	 * Optional format allow-list (e.g. `["zip"]` for plugin installs).
+	 * An archive sniffed outside the list is rejected up front with
+	 * `resource.archive_format_not_allowed` — project-internal channels
+	 * that only ever produce one format stop admitting the others
+	 * instead of opening every codec to untrusted input.
+	 */
+	readonly formats?: readonly ContainerFormat[]
 }
 
 /**
@@ -98,6 +106,13 @@ export async function extractArchiveInto(
 			"resource.archive_open_failed",
 			"not a supported archive (zip/tar/7z/rar/xz/gzip)",
 			{},
+		)
+	}
+	if (opts.formats !== undefined && !opts.formats.includes(format)) {
+		throw invalid(
+			"resource.archive_format_not_allowed",
+			`archive format ${format} is not allowed here (allowed: ${opts.formats.join(", ")})`,
+			{ allowed: opts.formats },
 		)
 	}
 	if (format === "zip" && resolveSevenZipPath() === undefined) {

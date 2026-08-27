@@ -10,8 +10,8 @@ import {
 } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
-import { unzipSync } from "fflate"
 import { afterEach, describe, expect, test } from "vitest"
+import yauzl from "yauzl"
 import { packPlugin } from "./package.ts"
 
 const PLUGIN_ID = "33333333-3333-4333-8333-333333333333"
@@ -59,8 +59,38 @@ function makePlugin(opts?: { readonly withRepository?: boolean }): string {
 	return pluginDir
 }
 
-function textEntry(files: ReturnType<typeof unzipSync>, name: string): string {
-	const bytes = files[name]
+/** Read a zip buffer into entry name → bytes (the yauzl engine, same as the runtime). */
+function unzipBuffer(buffer: Buffer): Promise<Map<string, Buffer>> {
+	const out = new Map<string, Buffer>()
+	return new Promise((resolve, reject) => {
+		yauzl.fromBuffer(buffer, { lazyEntries: true }, (err, zipfile) => {
+			if (err !== null || zipfile === undefined) {
+				reject(err ?? new Error("missing zipfile"))
+				return
+			}
+			zipfile.readEntry()
+			zipfile.on("entry", (entry: yauzl.Entry) => {
+				zipfile.openReadStream(entry, (streamErr, stream) => {
+					if (streamErr !== null) {
+						reject(streamErr)
+						return
+					}
+					const chunks: Buffer[] = []
+					stream.on("data", (chunk: Buffer) => chunks.push(chunk))
+					stream.on("end", () => {
+						out.set(entry.fileName, Buffer.concat(chunks))
+						zipfile.readEntry()
+					})
+				})
+			})
+			zipfile.on("end", () => resolve(out))
+			zipfile.on("error", reject)
+		})
+	})
+}
+
+function textEntry(files: Map<string, Buffer>, name: string): string {
+	const bytes = files.get(name)
 	expect(bytes).toBeDefined()
 	return new TextDecoder().decode(bytes)
 }
@@ -81,12 +111,12 @@ describe("packPlugin", () => {
 		expect(result.zipPath.endsWith(`${PLUGIN_ID}-1.2.3-beta.1.zip`)).toBe(true)
 		expect(existsSync(result.zipPath)).toBe(true)
 
-		const files = unzipSync(readFileSync(result.zipPath))
+		const files = await unzipBuffer(readFileSync(result.zipPath))
 		// Entries are flat: no wrapping directory, no backslashes.
-		expect(Object.keys(files).sort()).toEqual(
+		expect([...files.keys()].sort()).toEqual(
 			["assets/note.txt", "index.html", "main.js", "manifest.json"].sort(),
 		)
-		expect(Object.keys(files).every((name) => !name.includes("\\"))).toBe(true)
+		expect([...files.keys()].every((name) => !name.includes("\\"))).toBe(true)
 		expect(JSON.parse(textEntry(files, "manifest.json")).id).toBe(PLUGIN_ID)
 	})
 

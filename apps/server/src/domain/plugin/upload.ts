@@ -26,12 +26,25 @@ export type PluginUploadsDeps = {
 	readonly commit: (stagingDir: string, id: string) => Promise<void>
 	/**
 	 * Archive extraction, injected by the assembly site so this module
-	 * does not depend on the res domain's archive utilities.
+	 * does not depend on the res domain's archive utilities. Plugin
+	 * installs always call it with a zip-only allow-list — the plugin
+	 * channel only ever produces/accepts zips, so tar/7z/rar… are
+	 * rejected up front rather than opened.
 	 */
 	readonly extractArchive: (
 		source: NodeJS.ReadableStream,
 		destDir: string,
-		opts: { readonly maxBytes: number },
+		opts: {
+			readonly maxBytes: number
+			readonly formats?: readonly (
+				| "zip"
+				| "tar"
+				| "7z"
+				| "rar"
+				| "xz"
+				| "gzip"
+			)[]
+		},
 	) => Promise<void>
 	/**
 	 * Cumulative uncompressed byte budget for one plugin archive. Defends
@@ -53,7 +66,13 @@ export function buildPluginUploads(deps: PluginUploadsDeps): PluginUploads {
 		try {
 			await mkdir(stagingDir, { recursive: true })
 
-			await extractArchive(archive, stagingDir, { maxBytes: maxExtractedBytes })
+			// Zip-only: the plugin archive channel is project-constrained,
+			// and the CLI publish artifact is a zip — nothing else is a
+			// valid plugin package.
+			await extractArchive(archive, stagingDir, {
+				maxBytes: maxExtractedBytes,
+				formats: ["zip"],
+			})
 
 			const manifestPath = join(stagingDir, "manifest.json")
 			if (!existsSync(manifestPath)) {
