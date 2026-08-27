@@ -25,7 +25,6 @@ import { CommentsSection } from "@/features/comments"
 import {
 	AnchorJumpProvider,
 	decodeAnchorPluginState,
-	encodeAnchorPluginState,
 } from "@/features/comments/anchor"
 import { LinkedDocumentsSection } from "@/features/doc/components/LinkedDocumentsSection"
 import {
@@ -96,11 +95,13 @@ const resDetailSearchSchema = z
 		fileName: z.string().min(1).optional(),
 		/**
 		 * Opaque plugin state persisted across navigation (e.g. anchor jump
-		 * coordinates, reader scroll position). Written by anchor-chip
-		 * navigation and delivered to the plugin iframe by
-		 * {@link ResDetailRoute} once it is presented.
+		 * coordinates). Arbitrary JSON — the host never interprets its
+		 * shape. Written by anchor-chip navigation and delivered to the
+		 * plugin iframe by {@link ResDetailRoute} once it is presented;
+		 * legacy URLs carried the payload as an encoded string, which
+		 * {@link decodeAnchorPluginState} still back-decodes.
 		 */
-		pluginState: z.string().optional(),
+		pluginState: z.unknown().optional(),
 	})
 	.loose()
 
@@ -166,7 +167,7 @@ function ResDetailRoute() {
 	// plugin iframe once that iframe is presented. The per-mount guard
 	// keys on the value so a refresh re-delivers (the URL still asks for
 	// the jump) while StrictMode's double invocation does not.
-	const deliveredAnchorRef = useRef<string | null>(null)
+	const deliveredAnchorRef = useRef<unknown>(null)
 	useEffect(() => {
 		if (!previewPresented || pluginState === undefined) return
 		if (deliveredAnchorRef.current === pluginState) return
@@ -177,15 +178,12 @@ function ResDetailRoute() {
 	function handleAnchorJump(anchor: ResAnchor): void {
 		if (anchor.resId !== id) {
 			// Cross-resource chips open the target detail page in-app — the
-			// encoded payload is delivered by the arrival effect above.
+			// payload is delivered by the arrival effect above.
 			navigate({
 				to: "/resources/$id",
 				params: { id: anchor.resId },
 				search: {
-					pluginState:
-						anchor.data !== undefined
-							? encodeAnchorPluginState(anchor.data)
-							: undefined,
+					pluginState: anchor.data !== undefined ? anchor.data : undefined,
 				},
 			})
 			return

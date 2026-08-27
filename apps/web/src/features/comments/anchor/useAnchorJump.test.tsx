@@ -16,7 +16,7 @@ import {
 } from "./useAnchorJump"
 
 const resDetailSearchSchema = z
-	.object({ pluginState: z.string().optional() })
+	.object({ pluginState: z.unknown().optional() })
 	.loose()
 
 function Probe() {
@@ -62,17 +62,17 @@ function renderWith(jump?: AnchorJumpHandler) {
 }
 
 describe("useAnchorJump", () => {
-	it("navigates in-app to the resource detail page with the encoded payload", async () => {
+	it("navigates in-app to the resource detail page with the payload untouched", async () => {
 		const router = renderWith()
 		await userEvent.click(await screen.findByRole("button", { name: "jump" }))
 		await waitFor(() => {
 			expect(router.state.location.pathname).toBe("/resources/res-1")
 		})
-		// The router's JSON-swallowing search parser must still see a plain
-		// string (the route schema is z.string()).
-		expect(router.state.location.search.pluginState).toBe(
-			"%7B%22pageIndex%22%3A2%7D",
-		)
+		// The payload is arbitrary JSON: the router JSON-serialises and
+		// re-parses it, and the host never interprets or re-encodes it.
+		expect(router.state.location.search.pluginState).toEqual({
+			pageIndex: 2,
+		})
 	})
 
 	it("prefers the provider handler over the default jump", async () => {
