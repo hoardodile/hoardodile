@@ -3,6 +3,8 @@ import { extname, join } from "node:path"
 import type { StoragePaths } from "./paths.ts"
 import { writeVersioned } from "./write-versioned.ts"
 
+export type VersionedFolderSubjectKind = "resource" | "character" | "tag"
+
 export type VersionedFolderOps = {
 	/** Ensure the current-version entity folder exists. */
 	ensureFolder(id: string): Promise<void>
@@ -24,7 +26,7 @@ export type VersionedFolderOps = {
 }
 
 /**
- * The four lifecycle operations shared by the resource and character
+ * The four lifecycle operations shared by the resource, character and tag
  * file-system layers. They differ only in which versioned folder they
  * target and how the trash / placeholder names are derived.
  *
@@ -35,17 +37,38 @@ export type VersionedFolderOps = {
  * `readOnly` is a live `{ current: boolean }` ref (the server's runtime
  * read-only flag), so a version switch mid-request re-reads it.
  */
+const KIND_LAYOUT: Record<
+	VersionedFolderSubjectKind,
+	{
+		readonly trashPrefix: string
+		readonly deletedKind: "resources" | "characters" | "tags"
+	}
+> = {
+	resource: { trashPrefix: "resources-", deletedKind: "resources" },
+	character: { trashPrefix: "characters-", deletedKind: "characters" },
+	tag: { trashPrefix: "tags-", deletedKind: "tags" },
+}
+
 export function buildVersionedFolderOps(
 	paths: StoragePaths,
 	readOnly: { readonly current: boolean },
-	kind: "resource" | "character",
+	kind: VersionedFolderSubjectKind,
 ): VersionedFolderOps {
 	const folderOf =
 		(id: string) =>
-		(current: StoragePaths["latest"]): string =>
-			kind === "resource" ? current.resource(id) : current.character(id)
-	const trashPrefix = kind === "resource" ? "resources-" : "characters-"
-	const deletedKind = kind === "resource" ? "resources" : "characters"
+		(current: StoragePaths["latest"]): string => {
+			switch (kind) {
+				case "resource":
+					return current.resource(id)
+				case "character":
+					return current.character(id)
+				case "tag":
+					return current.tag(id)
+			}
+		}
+	const layout = KIND_LAYOUT[kind]
+	const trashPrefix = layout.trashPrefix
+	const deletedKind = layout.deletedKind
 
 	async function ensureFolder(id: string): Promise<void> {
 		await writeVersioned(paths, readOnly.current, (current) =>

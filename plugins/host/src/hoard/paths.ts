@@ -71,7 +71,8 @@ function hasForbiddenVisibleChar(segment: string): boolean {
  *   per-version database snapshot), `db-backups/` (manual backups,
  *   only kept for the current version), `snapshots/` (automatic daily
  *   snapshots, only kept for the current version), `resources/<id>/`,
- *   `characters/<id>/`, `plugins/<id>/` (installed content plugins
+ *   `characters/<id>/`, `tags/<id>/` (tag art — see {@link VersionPaths.tag}),
+ *   `plugins/<id>/` (installed content plugins
  *   frozen with that version; the builtin `file` plugin is not stored
  *   here). Old versions are FROZEN: no writes ever land in
  *   `versions/<v>` once a `versions/<v+1>` exists.
@@ -129,10 +130,18 @@ export type VersionPaths = {
 	resources(): string
 	/** Root folder of all characters in this version: `<root>/versions/<v>/characters`. */
 	characters(): string
+	/** Root folder of all tags in this version: `<root>/versions/<v>/tags`. */
+	tags(): string
 	/** Root folder of all documents in this version: `<root>/versions/<v>/documents`. */
 	documents(): string
 	/** Root folder of a character: `<root>/versions/<v>/characters/<id>`. */
 	character(id: string): string
+	/**
+	 * Root folder of a tag: `<root>/versions/<v>/tags/<id>`. Holds the
+	 * tag's single image slot (`image.<ext>`), the same convention as
+	 * character avatar/fullbody slots.
+	 */
+	tag(id: string): string
 	/** Root of manual backups: `<root>/versions/<v>/db-backups`. */
 	dbBackups(): string
 	/** Path to one manual backup: `<root>/versions/<v>/db-backups/<name>`. */
@@ -147,7 +156,7 @@ export type VersionPaths = {
 	 * delete cannot remove a folder whose files live under frozen past
 	 * archives.
 	 */
-	deletedMarker(kind: "resources" | "characters", id: string): string
+	deletedMarker(kind: "resources" | "characters" | "tags", id: string): string
 	/** Root folder of a document: `<root>/versions/<v>/documents/<id>`. */
 	document(id: string): string
 	/**
@@ -175,12 +184,12 @@ export type LocalPaths = {
 	logs(): string
 	/**
 	 * Path to a local derived cover/thumb variant:
-	 * `<localRoot>/cache/<resources|characters>/<id>/<variant>.<format>`.
+	 * `<localRoot>/cache/<resources|characters|tags>/<id>/<variant>.<format>`.
 	 * Holds synthesized covers (resource covers, character avatars and
-	 * fullbody images); re-rendered when cleared.
+	 * fullbody images, tag art); re-rendered when cleared.
 	 */
 	localCover(
-		subjectKind: "resource" | "character",
+		subjectKind: "resource" | "character" | "tag",
 		id: string,
 		variant: string,
 		format?: string,
@@ -215,6 +224,13 @@ export type LocalPaths = {
 	 * (b) thumbnail variants (`avatar.webp`, `fullbody.webp`).
 	 */
 	character(id: string): string
+	/**
+	 * Root of the local per-tag directory:
+	 * `<localRoot>/cache/tags/<id>`.
+	 * Holds (a) versioned copies of replaced tag art and (b) the tag
+	 * thumbnail variant (`image.avif`).
+	 */
+	tag(id: string): string
 	/** Root of the trash: `<localRoot>/trash`. */
 	trash(): string
 	/** Path to a single trashed item: `<localRoot>/trash/<id>`. */
@@ -356,8 +372,10 @@ export function createStoragePaths(
 				join(vRoot, "resources", assertSafeSegment(id), RESOURCE_DATA_DIR_NAME),
 			resources: () => join(vRoot, "resources"),
 			characters: () => join(vRoot, "characters"),
+			tags: () => join(vRoot, "tags"),
 			documents: () => join(vRoot, "documents"),
 			character: (id) => join(vRoot, "characters", assertSafeSegment(id)),
+			tag: (id) => join(vRoot, "tags", assertSafeSegment(id)),
 			dbBackups: () => join(vRoot, "db-backups"),
 			dbBackup: (name) => join(vRoot, "db-backups", assertSafeSegment(name)),
 			snapshots: () => join(vRoot, "snapshots"),
@@ -401,6 +419,7 @@ export function createStoragePaths(
 			join(cacheRoot, "resources", assertSafeSegment(id), "files-cache.json"),
 		resource: (id) => join(cacheRoot, "resources", assertSafeSegment(id)),
 		character: (id) => join(cacheRoot, "characters", assertSafeSegment(id)),
+		tag: (id) => join(cacheRoot, "tags", assertSafeSegment(id)),
 		trash: () => join(localRoot, "trash"),
 		trashItem: (id) => join(localRoot, "trash", assertSafeSegment(id)),
 		tmp: () => join(cacheRoot, "tmp"),
@@ -465,13 +484,20 @@ export function createStoragePaths(
 }
 
 /**
- * Map a {@link LocalPaths.thumb} subjectKind onto its on-disk subdirectory.
- * Variants now live flat inside the per-id local directory (no enclosing
- * `thumbs/` parent), so `resource` -> `resources` and `character` ->
- * `characters` (both plural to match the storage layout convention).
+ * Map a {@link LocalPaths.localCover} subjectKind onto its on-disk
+ * subdirectory. Variants now live flat inside the per-id local directory
+ * (no enclosing `thumbs/` parent), so `resource` -> `resources`,
+ * `character` -> `characters`, `tag` -> `tags` (all plural to match the
+ * storage layout convention).
  */
-function localCoverSubjectDir(subjectKind: "resource" | "character"): string {
-	return subjectKind === "resource" ? "resources" : "characters"
+function localCoverSubjectDir(
+	subjectKind: "resource" | "character" | "tag",
+): string {
+	return subjectKind === "resource"
+		? "resources"
+		: subjectKind === "character"
+			? "characters"
+			: "tags"
 }
 
 /**

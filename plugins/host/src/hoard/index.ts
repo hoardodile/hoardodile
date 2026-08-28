@@ -75,7 +75,10 @@ export {
 	versionedPath,
 	writeActiveVersion,
 } from "./version.ts"
-export type { VersionedFolderOps } from "./versioned-folder-ops.ts"
+export type {
+	VersionedFolderOps,
+	VersionedFolderSubjectKind,
+} from "./versioned-folder-ops.ts"
 export {
 	archiveStaleFiles,
 	buildVersionedFolderOps,
