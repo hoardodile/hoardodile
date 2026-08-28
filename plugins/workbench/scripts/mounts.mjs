@@ -489,9 +489,11 @@ const VAULT_DELETE_PATH = "/api/workbench/vault/delete"
  *   `nosniff`, `access-control-allow-origin: *` (opaque-origin iframe),
  *   HTML demoted to an attachment, `no-store` cache.
  * - policy mirrors the server where it matters: http(s) only, no URL
- *   userinfo, ≤5 redirects, size cap (`WORKBENCH_VAULT_MAX_BYTES`,
- *   default 200 MiB), optional sha256 pin, atomic temp→rename write,
- *   dest confined to the plugin's vault directory.
+ *   userinfo, IP-literal public-address rule (unless
+ *   `WORKBENCH_VAULT_ALLOW_PRIVATE=1`), ≤5 redirects, size cap
+ *   (`WORKBENCH_VAULT_MAX_BYTES`, default 200 MiB), optional sha256 pin,
+ *   atomic temp→rename write, dest confined to the plugin's vault
+ *   directory.
  */
 function pluginAssetsMount(vaultRoot) {
 	return async (req, res) => {
@@ -670,15 +672,24 @@ function validVaultDest(dest) {
 	)
 }
 
-/** Fetch with the dev-policy subset: http(s), no userinfo, ≤5 redirects, size cap. */
+/** Fetch with the dev-policy subset: http(s), no userinfo, IP-literal public-address rule, ≤5 redirects, size cap. */
 async function fetchWithPolicy(rawUrl, maxBytes) {
 	let url = new URL(rawUrl)
+	const allowPrivate = process.env.WORKBENCH_VAULT_ALLOW_PRIVATE === "1"
 	function vet(next) {
 		if (next.protocol !== "http:" && next.protocol !== "https:") {
 			throw new Error(`unsupported scheme: ${next.protocol}`)
 		}
 		if (next.username.length > 0 || next.password.length > 0) {
 			throw new Error("URLs must not embed credentials")
+		}
+		if (!allowPrivate) {
+			const verdict = ipLiteralVerdict(next.hostname)
+			if (verdict === false) {
+				throw new Error(
+					`address is not public: ${next.hostname} — set WORKBENCH_VAULT_ALLOW_PRIVATE=1 to allow private ranges`,
+				)
+			}
 		}
 		return next
 	}
@@ -711,6 +722,76 @@ async function fetchWithPolicy(rawUrl, maxBytes) {
 		return { bytes, sha256: hash.digest("hex") }
 	}
 	throw new Error("more than 5 redirects")
+}
+
+/**
+ * Workbench dev mirror of the server's IP-literal public-address rule
+ * (see `packages/shared` `isPublicAddress`): private, loopback,
+ * link-local, CGNAT, documentation, benchmarking and multicast ranges
+ * are not globally routable. Returns `undefined` for hostnames — the dev
+ * tool deliberately does not resolve DNS per hop (fake-IP proxies and
+ * split-horizon DNS would make it unusable); the app's resolve-time
+ * pinning stays a server-side feature.
+ */
+function ipLiteralVerdict(address) {
+	if (!address.includes(":") && !/^\d{1,3}(?:\.\d{1,3}){3}$/.test(address)) {
+		return undefined
+	}
+	// The URL hostname keeps the IPv6 brackets — strip them before any
+	// range matching.
+	if (address.startsWith("[") && address.endsWith("]")) {
+		address = address.slice(1, -1)
+	}
+	if (!address.includes(":")) {
+		const parts = address.split(".").map(Number)
+		const [a, b, c] = parts
+		if (parts.some((p) => !Number.isInteger(p) || p < 0 || p > 255)) {
+			return undefined
+		}
+		if (a === 0 || a === 10 || a === 127) return false
+		if (a === 169 && b === 254) return false
+		if (a === 172 && b >= 16 && b <= 31) return false
+		if (a === 192 && b === 168) return false
+		if (a === 100 && b >= 64 && b <= 127) return false
+		if (a === 192 && b === 0 && c === 2) return false
+		if (a === 198 && (b === 18 || b === 19)) return false
+		if (a === 198 && b === 51 && c === 100) return false
+		if (a === 203 && b === 0 && c === 113) return false
+		if (a >= 224) return false
+		return true
+	}
+	const lower = address.split("%")[0].toLowerCase()
+	if (lower === "::" || lower === "::1") return false
+	if (lower.startsWith("::ffff:")) {
+		// The URL parser may normalize the dotted quad to hex groups
+		// (e.g. ::ffff:127.0.0.1 → [::ffff:7f00:1]) — decode the embedded
+		// IPv4 back out and re-check it.
+		const digits = lower
+			.slice("::ffff:".length)
+			.split(":")
+			.map((group) => group.padStart(4, "0"))
+			.join("")
+			.slice(-8)
+		if (/^[0-9a-f]{8}$/.test(digits)) {
+			const ipv4 = [0, 2, 4, 6]
+				.map((offset) => Number.parseInt(digits.slice(offset, offset + 2), 16))
+				.join(".")
+			return ipLiteralVerdict(ipv4)
+		}
+		return true
+	}
+	if (lower.startsWith("fc") || lower.startsWith("fd")) return false
+	if (
+		lower.startsWith("fe8") ||
+		lower.startsWith("fe9") ||
+		lower.startsWith("fea") ||
+		lower.startsWith("feb")
+	) {
+		return false
+	}
+	if (lower.startsWith("2001:db8:")) return false
+	if (lower.startsWith("ff")) return false
+	return true
 }
 
 function sha256File(path) {

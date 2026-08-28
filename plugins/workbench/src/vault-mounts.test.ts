@@ -8,7 +8,7 @@ import {
 } from "node:http"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
-import { afterEach, describe, expect, it } from "vitest"
+import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import { createWorkbenchMounts } from "../scripts/mounts.mjs"
 
 const PLUGIN_ID = "11111111-1111-4111-8111-111111111111"
@@ -16,7 +16,15 @@ const PLUGIN_ID = "11111111-1111-4111-8111-111111111111"
 let server: Server | undefined
 const roots: string[] = []
 
+// The fixture sources below all listen on 127.0.0.1: the dev-tool
+// default rejects private IP literals, so the loopback fixtures opt in
+// explicitly; the rejection paths are covered by their own tests.
+beforeEach(() => {
+	process.env.WORKBENCH_VAULT_ALLOW_PRIVATE = "1"
+})
+
 afterEach(async () => {
+	delete process.env.WORKBENCH_VAULT_ALLOW_PRIVATE
 	await new Promise<void>((resolve) => {
 		if (server === undefined) return resolve()
 		server.close(() => resolve())
@@ -268,6 +276,147 @@ describe("workbench plugin asset vault mounts", () => {
 			}),
 		})
 		expect(((await res.json()) as { status: string }).status).toBe("error")
+	})
+
+	it("download: rejects private IP-literal targets by default", async () => {
+		const vault = vaultRoot()
+		const src = createServer((_req: IncomingMessage, res: ServerResponse) => {
+			res.writeHead(200)
+			res.end("hello")
+		})
+		await new Promise<void>((resolve) => src.listen(0, "127.0.0.1", resolve))
+		const srcAddr = src.address()
+		if (srcAddr === null || typeof srcAddr === "string")
+			throw new Error("no addr")
+		const srcUrl = `http://127.0.0.1:${srcAddr.port}/a.mjs`
+		const base = await listenWith(vault)
+
+		delete process.env.WORKBENCH_VAULT_ALLOW_PRIVATE
+		const res = await fetch(`${base}/api/workbench/vault/download?force=1`, {
+			method: "POST",
+			headers: jsonHeaders(),
+			body: JSON.stringify({
+				pluginId: PLUGIN_ID,
+				url: srcUrl,
+				dest: "a.mjs",
+			}),
+		})
+		const body = (await res.json()) as { status: string; error?: string }
+		expect(body.status).toBe("error")
+		expect(body.error).toContain("address is not public")
+		src.close()
+	})
+
+	it("download: rejects IPv6 loopback and non-public literal ranges pre-network", async () => {
+		const base = await listenWith(vaultRoot())
+		delete process.env.WORKBENCH_VAULT_ALLOW_PRIVATE
+		for (const url of [
+			"http://[::1]/a.mjs",
+			"http://[fe80::1]/a.mjs",
+			"http://100.64.0.1/a.mjs",
+			"http://224.0.0.1/a.mjs",
+			"http://[::ffff:127.0.0.1]/a.mjs",
+		]) {
+			const res = await fetch(`${base}/api/workbench/vault/download?force=1`, {
+				method: "POST",
+				headers: jsonHeaders(),
+				body: JSON.stringify({
+					pluginId: PLUGIN_ID,
+					url,
+					dest: "a.mjs",
+				}),
+			})
+			const body = (await res.json()) as { status: string; error?: string }
+			expect(body.status).toBe("error")
+			expect(body.error).toContain("address is not public")
+		}
+	})
+
+	it("download: WORKBENCH_VAULT_ALLOW_PRIVATE permits IPv6 loopback", async () => {
+		process.env.WORKBENCH_VAULT_ALLOW_PRIVATE = "1"
+		const vault = vaultRoot()
+		const src = createServer((_req: IncomingMessage, res: ServerResponse) => {
+			res.writeHead(200)
+			res.end("hello")
+		})
+		await new Promise<void>((resolve) => src.listen(0, "::", resolve))
+		const srcAddr = src.address()
+		if (srcAddr === null || typeof srcAddr === "string")
+			throw new Error("no addr")
+		const srcUrl = `http://[::1]:${srcAddr.port}/a.mjs`
+		const base = await listenWith(vault)
+
+		const res = await fetch(`${base}/api/workbench/vault/download?force=1`, {
+			method: "POST",
+			headers: jsonHeaders(),
+			body: JSON.stringify({
+				pluginId: PLUGIN_ID,
+				url: srcUrl,
+				dest: "a.mjs",
+			}),
+		})
+		const body = (await res.json()) as { status: string; sha256?: string }
+		expect(body.status).toBe("downloaded")
+		expect(body.sha256).toMatch(/^[0-9a-f]{64}$/)
+		src.close()
+	})
+
+	it("download: redirect targets are re-vetted against the same rule", async () => {
+		const vault = vaultRoot()
+		const src = createServer((_req: IncomingMessage, res: ServerResponse) => {
+			res.writeHead(302, { location: "http://10.0.0.1/internal.mjs" })
+			res.end()
+		})
+		await new Promise<void>((resolve) => src.listen(0, "127.0.0.1", resolve))
+		const srcAddr = src.address()
+		if (srcAddr === null || typeof srcAddr === "string")
+			throw new Error("no addr")
+		const srcUrl = `http://127.0.0.1:${srcAddr.port}/a.mjs`
+		const base = await listenWith(vault)
+
+		delete process.env.WORKBENCH_VAULT_ALLOW_PRIVATE
+		const res = await fetch(`${base}/api/workbench/vault/download?force=1`, {
+			method: "POST",
+			headers: jsonHeaders(),
+			body: JSON.stringify({
+				pluginId: PLUGIN_ID,
+				url: srcUrl,
+				dest: "a.mjs",
+			}),
+		})
+		const body = (await res.json()) as { status: string; error?: string }
+		expect(body.status).toBe("error")
+		expect(body.error).toContain("address is not public")
+		src.close()
+	})
+
+	it("download: WORKBENCH_VAULT_ALLOW_PRIVATE permits loopback fixtures", async () => {
+		process.env.WORKBENCH_VAULT_ALLOW_PRIVATE = "1"
+		const vault = vaultRoot()
+		const src = createServer((_req: IncomingMessage, res: ServerResponse) => {
+			res.writeHead(200)
+			res.end("hello")
+		})
+		await new Promise<void>((resolve) => src.listen(0, "127.0.0.1", resolve))
+		const srcAddr = src.address()
+		if (srcAddr === null || typeof srcAddr === "string")
+			throw new Error("no addr")
+		const srcUrl = `http://127.0.0.1:${srcAddr.port}/a.mjs`
+		const base = await listenWith(vault)
+
+		const res = await fetch(`${base}/api/workbench/vault/download?force=1`, {
+			method: "POST",
+			headers: jsonHeaders(),
+			body: JSON.stringify({
+				pluginId: PLUGIN_ID,
+				url: srcUrl,
+				dest: "a.mjs",
+			}),
+		})
+		const body = (await res.json()) as { status: string; sha256?: string }
+		expect(body.status).toBe("downloaded")
+		expect(body.sha256).toMatch(/^[0-9a-f]{64}$/)
+		src.close()
 	})
 
 	it("hashes the size the same way the file list reports it", () => {
