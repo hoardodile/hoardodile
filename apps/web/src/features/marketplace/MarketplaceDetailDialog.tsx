@@ -150,14 +150,18 @@ export function MarketplaceDetailDialog(props: {
 			contentTestId="marketplace-detail-dialog"
 			footer={
 				<>
-					{/* Three-button footer when installed + updateable (DESIGN.md
-					    — Overlays): the secondary function key (uninstall) sits
+					{/* Footer action layout (DESIGN.md — Overlays): with
+					    three actions (installed + updateable) the bar
+					    splits — the secondary function key (uninstall) sits
 					    at the left edge, cancel and the primary action stay
-					    right-aligned. Two-button footers do not split. */}
-					{installedVersion !== undefined ? (
+					    right-aligned. Two-action footers never split: cancel
+					    leads and the function key holds the right edge
+					    (`cancel | uninstall` when installed, `cancel |
+					    install` otherwise). */}
+					{updateAvailable ? (
 						<Button
 							variant="destructive"
-							className={updateAvailable ? "mr-auto" : undefined}
+							className="mr-auto"
 							onClick={() => {
 								props.onOpenChange(false)
 								props.onUninstall()
@@ -170,6 +174,18 @@ export function MarketplaceDetailDialog(props: {
 					<Button variant="secondary" onClick={() => props.onOpenChange(false)}>
 						{t("common.cancel")}
 					</Button>
+					{installedVersion !== undefined && !updateAvailable ? (
+						<Button
+							variant="destructive"
+							onClick={() => {
+								props.onOpenChange(false)
+								props.onUninstall()
+							}}
+							data-testid="marketplace-detail-uninstall"
+						>
+							{t("plugins.uninstall")}
+						</Button>
+					) : null}
 					{canInstall ? (
 						<Button
 							onClick={props.onInstall}

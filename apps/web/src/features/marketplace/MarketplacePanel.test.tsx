@@ -769,6 +769,14 @@ describe("MarketplacePanel", () => {
 
 		await user.click(await screen.findByTestId(`marketplace-view-${PLUGIN_ID}`))
 		const dialog = await screen.findByTestId("marketplace-detail-dialog")
+		const footer = document.querySelector('[data-slot="dialog-footer"]')
+		expect(footer).not.toBeNull()
+		// DESIGN.md two-button footer: cancel leads, the function key
+		// (uninstall) holds the right edge — never to the left of cancel.
+		const labels = Array.from(footer!.querySelectorAll("button")).map(
+			(el) => el.textContent ?? "",
+		)
+		expect(labels).toEqual(["Cancel", "Uninstall"])
 		const uninstall = within(dialog).getByTestId("marketplace-detail-uninstall")
 		expect(uninstall.className).not.toContain("mr-auto")
 		expect(
