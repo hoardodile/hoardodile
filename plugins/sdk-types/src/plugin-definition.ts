@@ -463,6 +463,20 @@ export type PluginDefinition<TSchema extends PluginSchema = PluginSchema> = {
 	readonly imageHashes?: (
 		api: ResourceAPI<TSchema>,
 	) => Promise<ImageHashesResult | undefined>
+	/**
+	 * Optional post-install callback, invoked by the host after a
+	 * successful install or update commit (marketplace install/update and
+	 * zip uploads). Runs with an **install-scoped** API: no resource is
+	 * attached — the file surface answers empty and there is no
+	 * `context.detect` — while the asset methods still work and stay
+	 * gated by the shared consent dialog exactly like the runtime path.
+	 * A throwing (or consent-denied) hook never fails the install; the
+	 * plugin should treat it as best-effort and re-check at runtime.
+	 *
+	 * Typical use: fetch pinned runtime files into the plugin vault once,
+	 * so the first preview opens without a consent dialog.
+	 */
+	readonly onInstall?: (api: ResourceAPI<TSchema>) => Promise<void>
 }
 
 /** Plugin hook names the host can invoke, in contract order. */
@@ -473,6 +487,7 @@ export const HOOK_NAMES = [
 	"coverLocal",
 	"listFiles",
 	"imageHashes",
+	"onInstall",
 ] as const
 
 export type HookName = (typeof HOOK_NAMES)[number]

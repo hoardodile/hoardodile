@@ -77,6 +77,7 @@ function makeFixture() {
 	}
 
 	const rescan = vi.fn(async () => {})
+	const postInstall = vi.fn()
 
 	const prefValues = new Map<string, string>()
 	const prefs = {
@@ -112,6 +113,7 @@ function makeFixture() {
 		fetcher,
 		installer,
 		rescan,
+		postInstall,
 		tmpDir: root,
 		maxInstallBytes: 1024 * 1024,
 		releaseCacheFile: join(root, "releases.json"),
@@ -127,6 +129,7 @@ function makeFixture() {
 		installer,
 		sources,
 		rescan,
+		postInstall,
 		prefs: prefValues,
 		service,
 		clock: () => clock,
@@ -374,6 +377,7 @@ describe("createMarketplaceService.refresh", () => {
 			fetcher: f.fetcher,
 			installer: f.installer,
 			rescan: f.rescan,
+			postInstall: f.postInstall,
 			tmpDir: f.root,
 			maxInstallBytes: 1024 * 1024,
 			releaseCacheFile: join(f.root, "releases.json"),
@@ -683,6 +687,8 @@ describe("createMarketplaceService.install", () => {
 			PLUGIN_ID,
 			"me/cat-viewer",
 		)
+		// The post-install hook fires after the rescan (best-effort).
+		expect(f.postInstall).toHaveBeenCalledWith(PLUGIN_ID)
 	})
 
 	test("rejects a bad source repo before any fetch", async () => {

@@ -337,7 +337,14 @@ export function createPluginSandbox(
 			await teardownChild(previous)
 		}
 		if (!opts.eager) {
-			void teardownChild(state)
+			// AWAITED, not fire-and-forget: the hook list was probed by
+			// this load, and the loader returns the sandboxed definition
+			// the moment we resolve. A caller that invokes a hook
+			// immediately after (e.g. the post-install `onInstall`) must
+			// not find a half-alive child: `ensureLoaded` would see the
+			// not-yet-torn-down child and post its invocation into a
+			// dying process (rejected as "worker stopped").
+			await teardownChild(state)
 		}
 		return createSandboxedPlugin(state.hooks ?? ["detect"], (hook, api) =>
 			invoke(state, hook, api),
@@ -611,6 +618,28 @@ export function createPluginSandbox(
 			throw new Error(`plugin ${state.id} sandbox unavailable`)
 		}
 
+		try {
+			return await invokeOnChild(state, child, hook, api)
+		} finally {
+			// An install hook is one-shot and the host may immediately
+			// re-commit the same plugin (an update): a kept-alive worker
+			// holding the plugin directory (Windows keeps directory ops
+			// pinned while a child is alive) would make the vault-move
+			// during the next commit fail with EPERM. Drop the child right
+			// after an `onInstall`; the next invocation respawns it.
+			if (hook === "onInstall") {
+				state.respawnTimes = []
+				await teardownChild(state)
+			}
+		}
+	}
+
+	function invokeOnChild(
+		state: PluginState,
+		child: ChildProcess,
+		hook: HookName,
+		api: ResourceAPI,
+	): Promise<unknown> {
 		const callId = nextCallId++
 		return new Promise((resolveCall, reject) => {
 			const call: PendingCall = {

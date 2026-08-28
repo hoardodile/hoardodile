@@ -43,6 +43,7 @@ const HOOK_NAMES = [
 	"coverLocal",
 	"listFiles",
 	"imageHashes",
+	"onInstall",
 ]
 
 const API_METHOD_NAMES = [
@@ -283,7 +284,11 @@ function send(message) {
 function approxByteSize(value) {
 	if (value instanceof Uint8Array) return value.byteLength
 	try {
-		return JSON.stringify(value).length * 2
+		// `undefined` (hooks that legitimately return nothing — e.g.
+		// `onInstall`) stringifies to `undefined`, not a string: an empty
+		// payload must size 0, never throw into the Infinity branch.
+		const text = JSON.stringify(value)
+		return (typeof text === "string" ? text : "").length * 2
 	} catch {
 		return Infinity
 	}

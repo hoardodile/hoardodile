@@ -26,6 +26,7 @@ export default definePlugin<MySchema>({
   coverLocal: async (api) => { … },
   listFiles: async (api) => { … },
   imageHashes: async (api) => { … },
+  onInstall: async (api) => { … },       // optional post-install callback
 })
 ```
 
@@ -41,7 +42,7 @@ fails to build.
 
 ## Hook contract
 
-- **Only six hook names exist** and `definePlugin` validates the shape at
+- **Only seven hook names exist** and `definePlugin` validates the shape at
   load time: unknown keys and missing `detect` fail with a friendly
   message; every hook must be an `async` function.
 - **`detect` (required)** — answers "does this resource belong to this
@@ -64,6 +65,15 @@ fails to build.
   similarity, via the API primitives (`hashBytes`,
   `computeImageHashes`). Absent or failing keeps hash rows empty;
   request only the kinds you need.
+- **`onInstall`** — best-effort post-install callback, run once after a
+  successful install/update commit (marketplace install/update and zip
+  uploads; never seed/dev plugins). Receives an **install-scoped API**:
+  no resource is attached (the file surface answers empty,
+  `context.detect` is `undefined`), but `download`/`statAsset`/`readAsset`/
+  `deleteAsset` work and stay consent-gated. A throw or a denied consent
+  never fails the install — re-check at runtime (e.g. fetch pinned
+  runtime files into the vault so the first preview opens without a
+  dialog).
 
 `api.context.detect` may be `undefined` on a fresh worker — every hook
 must handle the absent case by re-deriving.

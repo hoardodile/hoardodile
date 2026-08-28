@@ -131,6 +131,13 @@ export type MarketplaceServiceDeps = {
 	readonly fetcher: MarketplaceFetcher
 	readonly installer: MarketplaceInstaller
 	readonly rescan: () => Promise<void>
+	/**
+	 * Best-effort notification that a plugin was just installed/updated:
+	 * the host runs the plugin's optional `onInstall` hook (fire-and-forget
+	 * from the caller's perspective — a failing or consent-denied hook
+	 * never fails the install).
+	 */
+	readonly postInstall: (pluginId: string) => void
 	/** Temp directory for downloaded registries/manifests/install zips. */
 	readonly tmpDir: string
 	/** Byte cap for one install download (mirrors the plugin upload cap). */
@@ -368,6 +375,10 @@ export function createMarketplaceService(
 			// creates the settings row when the plugin was never
 			// configured, and the record must survive a registry switch.
 			deps.sources.recordInstallSource(pluginId, repo)
+			// The registry now knows the plugin: ask it to run its
+			// optional post-install work (e.g. downloading pinned runtime
+			// files behind the shared consent dialog). Best-effort.
+			deps.postInstall(pluginId)
 			return { pluginId }
 		} finally {
 			await rm(target, { force: true }).catch(() => {})

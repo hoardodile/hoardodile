@@ -73,6 +73,14 @@ async function pluginUploadPluginImpl(app: FastifyInstance): Promise<void> {
 
 			await app.pluginService.rescan()
 
+			// The registry now knows the plugin: ask it to run its
+			// optional post-install work (e.g. downloading pinned runtime
+			// files behind the shared consent dialog). Best-effort; never
+			// fails the upload response.
+			void app.pluginHooks.runInstallHook(pluginId).catch((err) => {
+				app.log.warn({ pluginId, err }, "post-install plugin hook failed")
+			})
+
 			return reply.send({ pluginId })
 		} catch (err) {
 			if (err instanceof UploadTooLargeError) {

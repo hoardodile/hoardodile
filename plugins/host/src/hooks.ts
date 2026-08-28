@@ -6,6 +6,7 @@ import type {
 } from "@hoardodile/sdk-types"
 import type { PluginRegistry, PluginRegistryEntry } from "./api-types.ts"
 import { createCapabilityGuard } from "./capability-guard.ts"
+import { createInstallScopeApi } from "./install-api.ts"
 import type { Detection, ResourceAPI } from "./types.ts"
 
 /** Absolute cap of hash rows one resource may contribute (host policy). */
@@ -161,6 +162,18 @@ export type PluginHooks = {
 		api: ResourceAPI,
 		pluginId: PluginManifestId,
 	) => Promise<ImageHashesResult | undefined>
+	/**
+	 * Run the plugin's optional `onInstall` hook — best-effort, invoked
+	 * by the host after a successful install/update commit (marketplace
+	 * install/update or a zip upload; never seed/dev plugins). The hook
+	 * receives an install-scoped {@link ResourceAPI}: no resource is
+	 * attached (the file surface answers empty, `context.detect` is
+	 * `undefined`), while the asset methods still work and stay gated by
+	 * the shared consent dialog. A throwing (or consent-denied) hook is
+	 * logged via `hookFailureText` and swallowed — the install itself is
+	 * never failed; plugins must re-check at runtime.
+	 */
+	readonly runInstallHook: (pluginId: PluginManifestId) => Promise<void>
 }
 
 export function createPluginHooks(deps: PluginHooksDeps): PluginHooks {
@@ -364,6 +377,18 @@ export function createPluginHooks(deps: PluginHooksDeps): PluginHooks {
 		)
 	}
 
+	async function runInstallHook(pluginId: PluginManifestId): Promise<void> {
+		const entry = getRegistry().getById(pluginId)
+		if (entry === undefined) return
+		await invokeHook(
+			entry,
+			entry.plugin.onInstall,
+			createInstallScopeApi(),
+			"onInstall",
+			"warn",
+		)
+	}
+
 	return {
 		defaultPluginId,
 		getEffectiveEntry,
@@ -376,6 +401,7 @@ export function createPluginHooks(deps: PluginHooksDeps): PluginHooks {
 		runMetaHooks,
 		supportsImageHashes,
 		runImageHashes,
+		runInstallHook,
 	}
 }
 

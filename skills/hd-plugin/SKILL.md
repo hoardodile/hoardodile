@@ -1,6 +1,6 @@
 ---
 name: hd-plugin
-description: Author hoardodile content plugins — manifest, server hooks, iframe client, and the plugin toolchain. Use when building, extending, or debugging a hoardodile plugin, adding a new resource format, or wiring detect/sourceMeta/searchMeta/coverLocal/listFiles/imageHashes, or publishing a plugin to the marketplace.
+description: Author hoardodile content plugins — manifest, server hooks, iframe client, and the plugin toolchain. Use when building, extending, or debugging a hoardodile plugin, adding a new resource format, or wiring detect/sourceMeta/searchMeta/coverLocal/listFiles/imageHashes/onInstall, or publishing a plugin to the marketplace.
 license: MIT
 metadata:
   author: hoardodile

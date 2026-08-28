@@ -21,6 +21,21 @@ export default definePlugin<TemplateSchema>({
 				// so sourceMeta never rescans.
 				{ ok: true, hdtplCount: hdtpl.length }
 	},
+	// Optional: the host runs this once after a successful install/update
+	// commit (marketplace install/update, zip uploads), with an
+	// install-scoped API — no resource is attached (the file surface is
+	// empty) but `download` still works behind the shared consent
+	// dialog. Best-effort by contract: a throw (or a denied consent)
+	// never fails the install, so re-check at runtime.
+	//
+	// onInstall: async (api) => {
+	// 	await api.download({
+	// 		url: "https://example.com/runtime.min.js",
+	// 		dest: "runtime/runtime.min.js",
+	// 		sha256: "…64 lowercase hex…",
+	// 		reason: "…shown in the consent dialog…",
+	// 	})
+	// },
 	sourceMeta: buildSourceMeta,
 })
 

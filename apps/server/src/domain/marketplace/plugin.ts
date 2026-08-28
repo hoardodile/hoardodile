@@ -17,6 +17,13 @@ async function marketplacePluginImpl(app: FastifyInstance): Promise<void> {
 			fetcher: app.pluginDownloader,
 			installer: app.pluginUploads,
 			rescan: () => app.pluginService.rescan(),
+			postInstall: (pluginId) => {
+				// Fire-and-forget: the install response never waits for the
+				// consent dialog; a failing hook is logged and swallowed.
+				void app.pluginHooks.runInstallHook(pluginId).catch((err) => {
+					app.log.warn({ pluginId, err }, "post-install plugin hook failed")
+				})
+			},
 			tmpDir: app.paths.local.tmp(),
 			maxInstallBytes: app.env.PLUGIN_UPLOAD_MAX_BYTES,
 			// Under `local/cache/` so it clears with the cache and

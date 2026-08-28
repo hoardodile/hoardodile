@@ -566,6 +566,7 @@ export function countHooks(hooks: PluginHooks): {
 		runMetaHooks: wrap("runMetaHooks", hooks.runMetaHooks),
 		supportsImageHashes: hooks.supportsImageHashes,
 		runImageHashes: wrap("runImageHashes", hooks.runImageHashes),
+		runInstallHook: hooks.runInstallHook,
 	}
 
 	return {

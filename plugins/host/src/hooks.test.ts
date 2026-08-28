@@ -526,3 +526,73 @@ describe("plugin hooks: imageHashes", () => {
 		).resolves.toBeUndefined()
 	})
 })
+
+describe("runInstallHook", () => {
+	const installEntry = (onInstall: PluginDefinition["onInstall"]) => ({
+		id: PAGES_ID,
+		manifest: manifestFor(PAGES_ID, "Pages"),
+		enabled: true,
+		priority: 50,
+		pinned: false,
+		color: "",
+		missing: false,
+		builtin: false,
+		dev: false,
+		plugin: { ...createPagesPlugin(), onInstall },
+	})
+
+	test("invokes onInstall with an install-scoped API (empty file surface)", async () => {
+		const seen: ResourceAPI[] = []
+		const hooks = createPluginHooks({
+			getRegistry: () =>
+				buildRegistry([
+					installEntry(async (api) => {
+						seen.push(api)
+					}),
+				]),
+		})
+
+		await hooks.runInstallHook(PAGES_ID)
+
+		expect(seen).toHaveLength(1)
+		expect(await seen[0]!.listFileNames()).toEqual([])
+		expect(seen[0]!.context.detect).toBeUndefined()
+	})
+
+	test("no-ops when the plugin declares no onInstall", async () => {
+		const hooks = createPluginHooks({
+			getRegistry: () => buildRegistry([installEntry(undefined)]),
+		})
+
+		await expect(hooks.runInstallHook(PAGES_ID)).resolves.toBeUndefined()
+	})
+
+	test("a throwing hook is logged and swallowed", async () => {
+		const warn = vi.spyOn(console, "warn").mockImplementation(() => {})
+		try {
+			const hooks = createPluginHooks({
+				getRegistry: () =>
+					buildRegistry([
+						installEntry(async () => {
+							throw new Error("boom")
+						}),
+					]),
+			})
+
+			await expect(hooks.runInstallHook(PAGES_ID)).resolves.toBeUndefined()
+			expect(warn).toHaveBeenCalledWith(
+				expect.stringContaining("onInstall failed for plugin"),
+			)
+		} finally {
+			warn.mockRestore()
+		}
+	})
+
+	test("an unknown plugin id is a no-op", async () => {
+		const hooks = createPluginHooks({
+			getRegistry: () => buildRegistry([]),
+		})
+
+		await expect(hooks.runInstallHook(PAGES_ID)).resolves.toBeUndefined()
+	})
+})
