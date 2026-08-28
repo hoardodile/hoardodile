@@ -100,10 +100,11 @@ export async function streamSse(
 export type ConnectEventSourceOptions = {
 	readonly onEvent?: (event: SseEvent) => void
 	/**
-	 * Fired once per reconnected stream (leader and follower tabs alike).
-	 * Listeners rehydrate ephemeral server state that broadcasts may have
-	 * missed while the connection was down — e.g. pending plugin download
-	 * consent tickets (`pluginAsset.listPending`).
+	 * Fired on every established stream — the first successful connect
+	 * and each reconnect — so listeners rehydrate ephemeral server state
+	 * that broadcasts may have missed while the connection was down or
+	 * not yet up, e.g. pending plugin download consent tickets
+	 * (`pluginAsset.listPending`). Idempotent by contract.
 	 */
 	readonly onReconnect?: () => void
 }
@@ -163,10 +164,13 @@ export function connectEventSource(
 		switch (msg.type) {
 			case "connected":
 				document.documentElement.dataset.sseConnected = "1"
+				// Rehydrate on every open, not only reconnects: a ticket
+				// created before the first successful connect (server warm
+				// while the stream was retrying) must show up too.
 				if (msg.reconnect) {
 					void queryClient.invalidateQueries()
-					options?.onReconnect?.()
 				}
+				options?.onReconnect?.()
 				break
 			case "disconnected":
 				delete document.documentElement.dataset.sseConnected
@@ -207,10 +211,13 @@ export function connectEventSource(
 					if (isLeader) {
 						broadcast({ type: "connected", reconnect })
 					}
+					// Rehydrate on every open (initial included) so ephemeral
+					// state whose broadcast was missed while the stream was
+					// down — or before the first connect — reappears.
 					if (reconnect) {
 						void queryClient.invalidateQueries()
-						options?.onReconnect?.()
 					}
+					options?.onReconnect?.()
 				},
 				onmessage: (msg) => {
 					if (!msg.data) return

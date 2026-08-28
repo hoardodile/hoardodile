@@ -64,17 +64,29 @@ function RootComponent() {
 	useAutoLogout()
 	useEffect(
 		function startSse() {
-			return connectEventSource(queryClient, {
+			function rehydrateConsent() {
+				void trpcQuery("pluginAsset", "listPending")
+					.then((pending) => rehydrateDownloadConsent(pending))
+					.catch(() => {})
+			}
+			// The consent dialog must never depend on the SSE stream alone:
+			// a lost broadcast (vite dev proxy buffering, momentary gaps)
+			// would otherwise delay a ticket until the next reconnect.
+			// Rehydrate on every open AND on a light interval — the query
+			// is small and idempotent (`rehydrateDownloadConsent` replaces
+			// the queue, deduped by ticketId).
+			const rehydrateTimer = setInterval(rehydrateConsent, 5_000)
+			const stop = connectEventSource(queryClient, {
 				onEvent: (evt) =>
 					handleSseEvent(queryClient, evt, t("dataHistory.reloading")),
-				// Broadcasts can be lost while the stream is down — repull
-				// the broker's pending tickets so dialogs reappear.
 				onReconnect: () => {
-					void trpcQuery("pluginAsset", "listPending")
-						.then((pending) => rehydrateDownloadConsent(pending))
-						.catch(() => {})
+					rehydrateConsent()
 				},
 			})
+			return () => {
+				clearInterval(rehydrateTimer)
+				stop()
+			}
 		},
 		[queryClient, t],
 	)
