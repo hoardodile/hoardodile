@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest"
 import { pinnedTag, tag } from "./tag.ts"
+import { MAX_URL_LENGTH } from "./text-limits.ts"
 
 const valid = {
 	id: "tag_1",
@@ -45,6 +46,33 @@ describe("tag schema", () => {
 
 	test("a real tag without the virtual flag parses to undefined virtual", () => {
 		expect(tag.parse(valid).virtual).toBeUndefined()
+	})
+
+	test("rejects an overly long link", () => {
+		expect(
+			tag.safeParse({ ...valid, link: "a".repeat(MAX_URL_LENGTH + 1) }).success,
+		).toBe(false)
+	})
+
+	test("parses the imageMeta slot projection", () => {
+		const withMeta = tag.parse({
+			...valid,
+			link: "www.example.com/a",
+			imageMeta: { kind: "image", width: 4, height: 8, source: "image.png" },
+		})
+		expect(withMeta.link).toBe("www.example.com/a")
+		expect(withMeta.imageMeta).toEqual({
+			kind: "image",
+			width: 4,
+			height: 8,
+			source: "image.png",
+		})
+
+		const empty = tag.parse({ ...valid, imageMeta: { empty: true } })
+		expect(empty.imageMeta).toEqual({ empty: true })
+
+		const none = tag.parse(valid)
+		expect(none.imageMeta).toBeUndefined()
 	})
 })
 

@@ -1,5 +1,9 @@
+import { mkdtempSync, rmSync } from "node:fs"
+import { tmpdir } from "node:os"
+import { join } from "node:path"
 import { DomainError } from "@hoardodile/shared"
 import { type DbHandles, openDb } from "src/infra/db/connection.ts"
+import { createStoragePaths } from "src/infra/storage/paths.ts"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 import { createTagService } from "../tag/service.ts"
 import { type CatService, createCategoryService } from "./service.ts"
@@ -7,16 +11,29 @@ import { type CatService, createCategoryService } from "./service.ts"
 describe("category service", () => {
 	let dbh: DbHandles
 	let svc: CatService
+	let root: string
+	let paths: ReturnType<typeof createStoragePaths>
 
 	beforeEach(() => {
+		root = mkdtempSync(join(tmpdir(), "app-cat-"))
 		dbh = openDb(":memory:")
 		dbh.runMigrations()
+		paths = createStoragePaths({ root })
 		svc = createCategoryService({ db: dbh.db })
 	})
 
 	afterEach(() => {
 		dbh.close()
+		rmSync(root, { recursive: true, force: true })
 	})
+
+	function makeTagSvc() {
+		return createTagService({
+			db: dbh.db,
+			paths,
+			readOnly: { current: false },
+		})
+	}
 
 	test("create category", async () => {
 		const c = await svc.create({ name: "Root", kind: "common" })
@@ -46,14 +63,14 @@ describe("category service", () => {
 	})
 
 	test("delete blocked when category has tags", async () => {
-		const tagSvc = createTagService({ db: dbh.db })
+		const tagSvc = makeTagSvc()
 		const c = await svc.create({ name: "Has Tags", kind: "common" })
 		await tagSvc.create({ name: "T1", catId: c.id })
 		await expect(svc.delete(c.id)).rejects.toThrow(DomainError)
 	})
 
 	test("forceDelete removes even with tags when name confirmed", async () => {
-		const tagSvc = createTagService({ db: dbh.db })
+		const tagSvc = makeTagSvc()
 		const c = await svc.create({ name: "Force Me", kind: "common" })
 		await tagSvc.create({ name: "T1", catId: c.id })
 		await svc.forceDelete(c.id, c.name)
@@ -61,7 +78,7 @@ describe("category service", () => {
 	})
 
 	test("listAllWithCounts returns tag counts", async () => {
-		const tagSvc = createTagService({ db: dbh.db })
+		const tagSvc = makeTagSvc()
 		const a = await svc.create({ name: "A", kind: "common" })
 		const b = await svc.create({ name: "B", kind: "common" })
 		await tagSvc.create({ name: "T1", catId: a.id })

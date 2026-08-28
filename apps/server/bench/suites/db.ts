@@ -99,6 +99,7 @@ function seedDb(rows: number, seed: number): SeededDb {
 				name: `tag-${i}`,
 				intro: "",
 				color: i % 5 === 0 ? "#ababab" : "",
+				link: "",
 				position: i,
 				pinned: i < 10,
 				catId: null,

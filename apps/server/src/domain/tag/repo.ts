@@ -15,6 +15,7 @@ export type TagDbValues = {
 	readonly name: string
 	readonly intro: string
 	readonly color: string
+	readonly link: string
 	readonly position: number
 	readonly pinned: boolean
 	readonly catId: string | null
@@ -23,7 +24,16 @@ export type TagDbValues = {
 export type TagDbPatch = Partial<
 	Pick<
 		typeof tags.$inferInsert,
-		"name" | "intro" | "color" | "position" | "pinned" | "catId" | "updatedAt"
+		| "name"
+		| "intro"
+		| "color"
+		| "link"
+		| "position"
+		| "pinned"
+		| "catId"
+		| "updatedAt"
+		| "imageVersion"
+		| "imageMeta"
 	>
 >
 

@@ -26,7 +26,11 @@ describe("tag service", () => {
 		dbh = openDb(":memory:")
 		dbh.runMigrations()
 		const paths = createStoragePaths({ root })
-		svc = createTagService({ db: dbh.db })
+		svc = createTagService({
+			db: dbh.db,
+			paths,
+			readOnly: { current: false },
+		})
 
 		// Create a real category so FK constraints are satisfied.
 		const catSvc = createCategoryService({ db: dbh.db })

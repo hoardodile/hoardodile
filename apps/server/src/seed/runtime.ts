@@ -248,7 +248,7 @@ async function assembleRuntime(
 		plugins: pluginService,
 		res,
 		cats: createCategoryService({ db: db.db }),
-		tags: createTagService({ db: db.db }),
+		tags: createTagService({ db: db.db, paths, readOnly }),
 		traits: createTraitService({ db: db.db }),
 		chars: createCharacterService({ db: db.db, paths, readOnly }),
 		relationships: createRelationshipService({ db: db.db }),

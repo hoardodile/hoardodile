@@ -3,6 +3,7 @@ import {
 	entityMetaReorderInput,
 	entityMetaUpdateInput,
 	MAX_NAME_LENGTH,
+	MAX_URL_LENGTH,
 } from "@hoardodile/schemas"
 import { authedProcedure, router, writeProcedure } from "src/infra/trpc/core.ts"
 import { idInput, tagAttachmentInput } from "src/infra/trpc/inputs.ts"
@@ -12,10 +13,13 @@ import type { TagService } from "./service.ts"
 
 const createInput = entityMetaCreateInput(MAX_NAME_LENGTH).extend({
 	catId: z.string().min(1),
+	/** Optional external URL; stored raw (scheme-less pastes allowed). */
+	link: z.string().max(MAX_URL_LENGTH).default(""),
 })
 
 const updateInput = entityMetaUpdateInput(MAX_NAME_LENGTH).extend({
 	catId: z.string().min(1).optional(),
+	link: z.string().max(MAX_URL_LENGTH).optional(),
 })
 
 const reorderInput = entityMetaReorderInput.extend({

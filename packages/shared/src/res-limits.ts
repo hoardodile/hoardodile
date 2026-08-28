@@ -9,6 +9,8 @@
 export const CHARACTER_AVATAR_MAX_AREA = 100_000
 /** Max pixel area for character full-body renders. */
 export const CHARACTER_FULLBODY_MAX_AREA = 500_000
+/** Max pixel area for tag art renders (preview-card size — well under full-res). */
+export const TAG_IMAGE_MAX_AREA = 250_000
 
 /**
  * Upper bound on meta rebuilds running at once across all resources.

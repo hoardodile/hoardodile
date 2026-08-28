@@ -17,6 +17,7 @@ import { resUploadArchivePlugin } from "./res-upload-archive.ts"
 import { resUploadOrderedPlugin } from "./res-upload-ordered.ts"
 import { resUploadPreviewPlugin } from "./res-upload-preview.ts"
 import { ssePlugin } from "./sse.ts"
+import { tagFilesPlugin } from "./tag-files.ts"
 import { uploadPreviewsPlugin } from "./upload-previews.ts"
 
 /**
@@ -183,6 +184,7 @@ async function protectedHttpPluginImpl(app: FastifyInstance): Promise<void> {
 	await app.register(cacheAdminPlugin)
 	await app.register(charFilesPlugin)
 	await app.register(charThumbsPlugin)
+	await app.register(tagFilesPlugin)
 	await app.register(ssePlugin)
 }
 

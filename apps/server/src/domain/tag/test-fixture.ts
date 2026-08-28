@@ -48,7 +48,11 @@ export async function createTagTestContext(): Promise<TagTestContext> {
 	const dbh = openDb(":memory:")
 	dbh.runMigrations()
 	const paths = createStoragePaths({ root })
-	const svc = createTagService({ db: dbh.db })
+	const svc = createTagService({
+		db: dbh.db,
+		paths,
+		readOnly: { current: false },
+	})
 	const catSvc = createCategoryService({ db: dbh.db })
 	const commonId = (await catSvc.create({ name: "Common", kind: "common" })).id
 	const resCatId = (await catSvc.create({ name: "Res", kind: "resource" })).id

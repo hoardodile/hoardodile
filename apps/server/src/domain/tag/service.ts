@@ -1,7 +1,8 @@
-import type {
-	EntityMetaCreateInput,
-	EntityMetaUpdateInput,
-	Tag,
+import {
+	EMPTY_IMAGE_SLOT,
+	type EntityMetaCreateInput,
+	type EntityMetaUpdateInput,
+	type Tag,
 } from "@hoardodile/schemas"
 import { conflict } from "@hoardodile/shared"
 import { and, eq, inArray, isNull } from "drizzle-orm"
@@ -9,9 +10,10 @@ import { categories } from "src/domain/cat/schema.ts"
 import { characters } from "src/domain/char/schema.ts"
 import { resCharacters, resources } from "src/domain/res/schema.ts"
 import { type DbClient, withTransaction } from "src/infra/db/connection.ts"
+import { computeImageSlotFrom } from "src/infra/image-slots/meta.ts"
+import type { MutableRef } from "src/infra/runtime-context.ts"
 import {
 	buildEntityMetaPatch,
-	buildForceDelete,
 	buildMaxPosition,
 	buildReorder,
 	type DbServiceDeps,
@@ -19,7 +21,10 @@ import {
 	resolveEntityMetaInsert,
 	wrapAsync,
 } from "src/infra/service.ts"
+import type { StoragePaths } from "src/infra/storage/paths.ts"
 import { loadParentRules, loadSiblingPairs } from "./collapse.ts"
+import { buildTagFiles, TAG_IMAGE_SLOT } from "./files.ts"
+import { ensureTagImageMeta, parseTagImageMeta } from "./image-meta.ts"
 import {
 	applyTagMerge,
 	previewTagMerge,
@@ -51,14 +56,21 @@ import {
 
 export type { TagMergePreview, TagMergeResult } from "./merge.ts"
 
-export type TagServiceDeps = DbServiceDeps
+export type TagServiceDeps = DbServiceDeps & {
+	readonly paths: StoragePaths
+	readonly readOnly: MutableRef<boolean>
+}
 
 export type TagCreateInput = EntityMetaCreateInput & {
 	readonly catId: string
+	/** Optional external URL; trimmed, empty string means "no link". */
+	readonly link?: string
 }
 
 export type TagUpdateInput = EntityMetaUpdateInput & {
 	readonly catId?: string
+	/** Optional external URL; trimmed, empty string clears the link. */
+	readonly link?: string
 }
 
 export type TagWithCounts = Tag & {
@@ -115,6 +127,19 @@ export type TagService = {
 	delete(id: string): Promise<void>
 	forceDelete(id: string, confirmName: string): Promise<void>
 
+	/** Resolve the archive version pointer of the tag's image slot. */
+	getImageVersion(id: string): Promise<number>
+	/** Resolve the on-disk image path, or `undefined` when unset. */
+	resolveImagePath(id: string): Promise<string | undefined>
+	/**
+	 * Install a new image under the current archive version (via
+	 * `writeVersioned`), bumping `imageVersion` and refreshing the
+	 * `imageMeta` projection.
+	 */
+	setImage(id: string, ext: string, sourcePath: string): Promise<Tag>
+	/** Remove the image under the current version and reset the slot meta. */
+	clearImage(id: string): Promise<Tag>
+
 	mergePreview(sourceId: string, targetId: string): Promise<TagMergePreview>
 	merge(sourceId: string, targetId: string): Promise<TagMergeResult>
 
@@ -154,14 +179,17 @@ export type TagService = {
 
 export function createTagService(deps: TagServiceDeps): TagService {
 	const repo = buildTagRepository(deps.db)
+	const files = buildTagFiles(deps.paths, deps.readOnly)
 	const { now, newId } = resolveClock(deps)
 
-	function listAll(): readonly Tag[] {
+	async function listAll(): Promise<readonly Tag[]> {
+		await ensureImageMetaOf(repo.listAll())
 		const displayOf = siblingDisplayMap()
 		return repo.listAll().map((row) => rowToTag(row, displayOf(row.id)))
 	}
 
-	function listAllWithCounts(): readonly TagWithCounts[] {
+	async function listAllWithCounts(): Promise<readonly TagWithCounts[]> {
+		await ensureImageMetaOf(repo.listAll())
 		const resCounts = repo.resUsageCounts()
 		const charCounts = repo.charUsageCounts()
 		const displayOf = siblingDisplayMap()
@@ -170,6 +198,15 @@ export function createTagService(deps: TagServiceDeps): TagService {
 			resCount: resCounts.get(row.id) ?? 0,
 			charCount: charCounts.get(row.id) ?? 0,
 		}))
+	}
+
+	/** Fill missing image-meta projections for rows that have none. */
+	async function ensureImageMetaOf(rows: readonly TagRow[]): Promise<void> {
+		const missing = rows
+			.filter((row) => row.imageMeta === null)
+			.map((row) => row.id)
+		if (missing.length === 0) return
+		await ensureTagImageMeta(repo, files, missing)
 	}
 
 	function detail(id: string): Tag {
@@ -394,6 +431,7 @@ export function createTagService(deps: TagServiceDeps): TagService {
 			{
 				name: input.name,
 				...meta,
+				link: input.link?.trim() ?? "",
 				catId: input.catId,
 			},
 			ts,
@@ -412,6 +450,7 @@ export function createTagService(deps: TagServiceDeps): TagService {
 		const patch: TagDbPatch = {
 			...buildEntityMetaPatch(input, now()),
 			...(input.catId !== undefined ? { catId: input.catId } : {}),
+			...(input.link !== undefined ? { link: input.link.trim() } : {}),
 		}
 		repo.patch(input.id, patch)
 		const displayOf = siblingDisplayMap()
@@ -456,22 +495,92 @@ export function createTagService(deps: TagServiceDeps): TagService {
 		})(ids)
 	}
 
-	function deleteTag(id: string): void {
-		repo.findById(id)
+	async function deleteTag(id: string): Promise<void> {
+		const row = repo.findById(id)
 		assertNoUsages(id)
 		reelectSiblingDisplay(id)
+		await removeTagFolder(row)
 		repo.remove(id)
 	}
 
-	function forceDelete(id: string, confirmName: string): void {
-		buildForceDelete({
-			entity: "tag",
-			findById: repo.findById,
-			remove: (tagId) => {
-				reelectSiblingDisplay(tagId)
-				repo.remove(tagId)
-			},
-		})(id, confirmName)
+	async function forceDelete(id: string, confirmName: string): Promise<void> {
+		const row = repo.findById(id)
+		if (confirmName !== row.name) {
+			throw conflict(
+				"tag.confirm_name_mismatch",
+				`provided name "${confirmName}" does not match tag name`,
+				{ id, expected: row.name },
+			)
+		}
+		reelectSiblingDisplay(id)
+		await removeTagFolder(row)
+		repo.remove(id)
+	}
+
+	/**
+	 * Archive-version-aware cleanup of a tag's folder: bytes under the
+	 * current version move to `local/trash/`, while bytes that live only
+	 * under frozen past archives leave a `.deleted` placeholder in the
+	 * current folder instead (mirrors character hard-delete).
+	 */
+	async function removeTagFolder(row: TagRow): Promise<void> {
+		if (row.imageVersion === deps.paths.latestVersion) {
+			await files.moveFolderToTrash(row.id)
+		} else {
+			await files.markDeleted(row.id)
+		}
+	}
+
+	// ── Image slot ────────────────────────────────────────────────────────────
+
+	async function getImageVersion(id: string): Promise<number> {
+		return repo.findById(id).imageVersion
+	}
+
+	async function resolveImagePath(id: string): Promise<string | undefined> {
+		const row = repo.findById(id)
+		return files.findSlotInVersion(id, row.imageVersion, TAG_IMAGE_SLOT)
+	}
+
+	async function setImage(
+		id: string,
+		ext: string,
+		sourcePath: string,
+	): Promise<Tag> {
+		repo.findById(id)
+		await files.writeSlot(id, TAG_IMAGE_SLOT, ext, sourcePath)
+		await clearImageThumb(id)
+		const slot = await computeImageSlotFrom(() =>
+			files.findSlotInVersion(id, deps.paths.latestVersion, TAG_IMAGE_SLOT),
+		)
+		repo.patch(id, {
+			imageVersion: deps.paths.latestVersion,
+			imageMeta: JSON.stringify(slot),
+			updatedAt: now(),
+		})
+		return rowToTag(repo.findById(id))
+	}
+
+	async function clearImage(id: string): Promise<Tag> {
+		repo.findById(id)
+		await files.removeSlot(id, TAG_IMAGE_SLOT)
+		await clearImageThumb(id)
+		repo.patch(id, {
+			imageVersion: deps.paths.latestVersion,
+			imageMeta: JSON.stringify(EMPTY_IMAGE_SLOT),
+			updatedAt: now(),
+		})
+		return rowToTag(repo.findById(id))
+	}
+
+	async function clearImageThumb(id: string): Promise<void> {
+		const thumbPath = deps.paths.local.localCover(
+			"tag",
+			id,
+			`v${deps.paths.latestVersion}-${TAG_IMAGE_SLOT}`,
+		)
+		const { unlink } = await import("node:fs/promises")
+		await unlink(thumbPath).catch(() => {})
 	}
 
 	/**
@@ -802,10 +911,19 @@ export function createTagService(deps: TagServiceDeps): TagService {
 		})
 	}
 
-	function merge(sourceId: string, targetId: string): TagMergeResult {
-		return withTransaction(deps.db, (tx) =>
+	async function merge(
+		sourceId: string,
+		targetId: string,
+	): Promise<TagMergeResult> {
+		// The source keeps its own image/link; the target survives as-is.
+		// Capture the source row before the transaction deletes it so the
+		// folder bytes can be cleaned up afterwards.
+		const sourceRow = repo.findById(sourceId)
+		const result = withTransaction(deps.db, (tx) =>
 			applyTagMerge(tx, sourceId, targetId, now),
 		)
+		await removeTagFolder(sourceRow)
+		return result
 	}
 
 	function mergePreview(sourceId: string, targetId: string): TagMergePreview {
@@ -938,6 +1056,10 @@ export function createTagService(deps: TagServiceDeps): TagService {
 		reorder,
 		delete: deleteTag,
 		forceDelete,
+		getImageVersion,
+		resolveImagePath,
+		setImage,
+		clearImage,
 		mergePreview,
 		merge,
 		siblingGroups,
@@ -1131,11 +1253,14 @@ export function createTagService(deps: TagServiceDeps): TagService {
  * follows first member occurrence.
  */
 function rowToTag(row: TagRow, displayTagId = row.id, virtual = false): Tag {
+	const imageMeta = parseTagImageMeta(row.imageMeta)
 	return {
 		id: row.id,
 		name: row.name,
 		intro: row.intro,
 		color: row.color,
+		link: row.link,
+		...(imageMeta !== undefined ? { imageMeta } : {}),
 		position: row.position,
 		pinned: row.pinned,
 		catId: row.catId!,

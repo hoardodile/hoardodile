@@ -24,6 +24,20 @@ export const tags = sqliteTable(
 		name: text("name").notNull(),
 		intro: text("intro").notNull().default(""),
 		color: text("color").notNull().default(""),
+		link: text("link").notNull().default(""),
+		/**
+		 * Archive version where this tag's `image.<ext>` file lives.
+		 * Writes always target the latest version; the pointer lets reads
+		 * fall back to frozen archives exactly like character slots.
+		 */
+		imageVersion: integer("image_version").notNull().default(1),
+		/**
+		 * Rebuildable JSON projection of the image slot (see
+		 * `@hoardodile/schemas` `imageSlotMeta`). NULL means "not computed
+		 * yet"; `{ empty: true }` means "computed, no file". Disk stays the
+		 * byte SSOT.
+		 */
+		imageMeta: text("image_meta"),
 		position: integer("position").notNull().default(0),
 		pinned: integer("pinned", { mode: "boolean" }).notNull().default(false),
 		catId: text("category_id").references(() => categories.id, {
