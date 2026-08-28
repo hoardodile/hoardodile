@@ -100,6 +100,19 @@ export type ThumbService = {
 		variant: "avatar" | "fullbody",
 		version: number,
 	): Promise<ThumbResult>
+	/**
+	 * Synthesise the cached preview-size avif for a user-managed image
+	 * slot (character avatar/fullbody, tag art). Resolves the source via
+	 * `paths.atVersion(version)` so frozen-archive pointers keep working;
+	 * renders through the shared media channel with the given area cap.
+	 */
+	getSlotImageThumb(
+		subjectKind: "resource" | "character" | "tag",
+		id: string,
+		slot: string,
+		version: number,
+		maxArea: number,
+	): Promise<ThumbResult>
 	getVideoFrame(
 		id: string,
 		filename: string,
@@ -344,6 +357,70 @@ export function createThumbService(deps: ThumbServiceDeps): ThumbService {
 		})
 	}
 
+	/** Versioned subject folder for cross-version slot reads. */
+	function subjectVersionFolder(
+		subjectKind: "resource" | "character" | "tag",
+		version: number,
+		id: string,
+	): string {
+		const v = deps.paths.atVersion(version)
+		switch (subjectKind) {
+			case "resource":
+				return v.resource(id)
+			case "character":
+				return v.character(id)
+			case "tag":
+				return v.tag(id)
+		}
+	}
+
+	async function getSlotImageThumb(
+		subjectKind: "resource" | "character" | "tag",
+		id: string,
+		slot: string,
+		version: number,
+		maxArea: number,
+	): Promise<ThumbResult> {
+		const keyedVariant = `v${version}-${slot}`
+		const resolveDest = (fmt: ThumbFormat) =>
+			deps.paths.local.localCover(subjectKind, id, keyedVariant, fmt)
+		const slotVariant: ResolvedImageVariant = {
+			format: "avif",
+			fit: "inside",
+			maxArea,
+			webpQuality: WEBP_QUALITY,
+			avifQuality: AVIF_QUALITY,
+		}
+
+		return renderArtifact({
+			queue,
+			resolveDest,
+			resolveSource: async () => {
+				const subjectDir = subjectVersionFolder(subjectKind, version, id)
+				const entries = await readdir(subjectDir).catch(() => [])
+				const prefix = `${slot}.`
+				const filename = entries.find((n) => {
+					const base = basename(n)
+					return (
+						base.startsWith(prefix) &&
+						IMAGE_EXTS.has(extname(base).toLowerCase())
+					)
+				})
+				if (filename === undefined) return undefined
+				return { kind: "path", path: join(subjectDir, filename) }
+			},
+			render: async (source) => {
+				// Through the shared channel: content is sniffed, so the
+				// on-disk extension never decides what renders.
+				const rendered = await renderSourceThumb(source, {
+					resolveDest,
+					variant: slotVariant,
+				})
+				return { kind: "ready", path: rendered.path, format: rendered.format }
+			},
+		})
+	}
+
 	async function getCharacterThumb(
 		id: string,
 		variant: "avatar" | "fullbody",
@@ -353,47 +430,11 @@ export function createThumbService(deps: ThumbServiceDeps): ThumbService {
 			variant === "avatar"
 				? CHARACTER_AVATAR_VARIANT
 				: CHARACTER_FULLBODY_VARIANT
-		const keyedVariant = `v${version}-${variantName}`
-		const resolveDest = (fmt: ThumbFormat) =>
-			deps.paths.local.localCover("character", id, keyedVariant, fmt)
-		const characterVariant: ResolvedImageVariant = {
-			format: "avif",
-			fit: "inside",
-			maxArea:
-				variant === "avatar"
-					? CHARACTER_AVATAR_MAX_AREA
-					: CHARACTER_FULLBODY_MAX_AREA,
-			webpQuality: WEBP_QUALITY,
-			avifQuality: AVIF_QUALITY,
-		}
-
-		return renderArtifact({
-			queue,
-			resolveDest,
-			resolveSource: async () => {
-				const charDir = deps.paths.atVersion(version).character(id)
-				const entries = await readdir(charDir).catch(() => [])
-				const prefix = `${variant}.`
-				const filename = entries.find((n) => {
-					const base = basename(n)
-					return (
-						base.startsWith(prefix) &&
-						IMAGE_EXTS.has(extname(base).toLowerCase())
-					)
-				})
-				if (filename === undefined) return undefined
-				return { kind: "path", path: join(charDir, filename) }
-			},
-			render: async (source) => {
-				// Through the shared channel: content is sniffed, so the
-				// on-disk extension never decides what renders.
-				const rendered = await renderSourceThumb(source, {
-					resolveDest,
-					variant: characterVariant,
-				})
-				return { kind: "ready", path: rendered.path, format: rendered.format }
-			},
-		})
+		const maxArea =
+			variant === "avatar"
+				? CHARACTER_AVATAR_MAX_AREA
+				: CHARACTER_FULLBODY_MAX_AREA
+		return getSlotImageThumb("character", id, variantName, version, maxArea)
 	}
 
 	async function getVideoFrame(
@@ -454,6 +495,7 @@ export function createThumbService(deps: ThumbServiceDeps): ThumbService {
 		getCover,
 		getFilePreview,
 		getCharacterThumb,
+		getSlotImageThumb,
 		getVideoFrame,
 		queue,
 	}

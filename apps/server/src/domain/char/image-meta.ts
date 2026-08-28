@@ -1,11 +1,9 @@
-import { basename, extname } from "node:path"
-import { probeImageSource } from "@hoardodile/host/probe"
 import {
 	type CharImageMeta,
 	charImageMeta as charImageMetaSchema,
-	EMPTY_IMAGE_SLOT,
 	type ImageSlotMeta,
 } from "@hoardodile/schemas"
+import { computeImageSlotFrom } from "src/infra/image-slots/meta.ts"
 import type { CharFiles } from "./files.ts"
 import type { CharRepository, CharRow } from "./repo.ts"
 
@@ -28,17 +26,9 @@ export async function computeImageSlot(
 	variant: "avatar" | "fullbody",
 	version: number,
 ): Promise<ImageSlotMeta> {
-	const path = await files.findVariantInVersion(id, version, variant)
-	if (path === undefined) return EMPTY_IMAGE_SLOT
-	const ext = extname(path)
-	const probe = await probeImageSource(path, ext)
-	return {
-		kind: "image",
-		...(probe !== undefined
-			? { width: probe.width, height: probe.height }
-			: {}),
-		source: basename(path),
-	}
+	return computeImageSlotFrom(() =>
+		files.findVariantInVersion(id, version, variant),
+	)
 }
 
 function slotVersion(row: CharRow, variant: "avatar" | "fullbody"): number {

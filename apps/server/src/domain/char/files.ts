@@ -1,10 +1,4 @@
-import { copyFile, mkdir, readdir, rename, rm } from "node:fs/promises"
-import { join } from "node:path"
-import {
-	archiveStaleFiles,
-	buildVersionedFolderOps,
-	writeVersioned,
-} from "@hoardodile/host/hoard"
+import { buildImageSlotFiles } from "src/infra/image-slots/files.ts"
 import type { MutableRef } from "src/infra/runtime-context.ts"
 import type { StoragePaths } from "src/infra/storage/paths.ts"
 
@@ -17,6 +11,11 @@ import type { StoragePaths } from "src/infra/storage/paths.ts"
  * (`paths.latest.character(id)`). Reads accept a `version` argument so
  * callers can resolve avatar/fullbody against the archive recorded on
  * the row (`avatarVersion` / `fullbodyVersion` columns).
+ *
+ * The slot mechanics (versioned write, stale-file archiving, trash and
+ * `.deleted` markers) live in the shared image-slot kernel
+ * (`src/infra/image-slots/files.ts`); this module only pins the
+ * character folder and the `avatar` / `fullbody` slot names.
  */
 export type CharFiles = {
 	ensureFolder(id: string): Promise<void>
@@ -70,76 +69,21 @@ export function buildCharacterFiles(
 	paths: StoragePaths,
 	readOnly: MutableRef<boolean>,
 ): CharFiles {
-	const folderOps = buildVersionedFolderOps(paths, readOnly, "character")
-
-	async function findVariantInVersion(
-		id: string,
-		version: number,
-		variant: "avatar" | "fullbody",
-	): Promise<string | undefined> {
-		const folder = paths.atVersion(version).character(id)
-		try {
-			const entries = await readdir(folder, { withFileTypes: true })
-			const match = entries.find(
-				(e) => e.isFile() && e.name.startsWith(`${variant}.`),
-			)
-			return match !== undefined ? join(folder, match.name) : undefined
-		} catch {
-			return undefined
-		}
-	}
-
-	async function writeVariant(
-		id: string,
-		variant: "avatar" | "fullbody",
-		ext: string,
-		sourcePath: string,
-	): Promise<string> {
-		return writeVersioned(paths, readOnly.current, async (current) => {
-			const root = current.character(id)
-			await mkdir(root, { recursive: true })
-			await archiveStaleFiles({
-				sourceFolder: root,
-				destFolder: paths.local.character(id),
-				match: (name) => name.startsWith(`${variant}.`),
-				archivePrefix: `${variant}_`,
-			})
-			const finalFilename = `${variant}${ext}`
-			const finalPath = join(root, finalFilename)
-			const tmpPath = join(root, `.uploading-${variant}-${Date.now()}${ext}`)
-			try {
-				await copyFile(sourcePath, tmpPath)
-				await rename(tmpPath, finalPath)
-			} catch (err) {
-				await rm(tmpPath, { force: true }).catch(() => {})
-				throw err
-			}
-			return finalPath
-		})
-	}
-
-	async function deleteVariant(
-		id: string,
-		variant: "avatar" | "fullbody",
-	): Promise<void> {
-		return writeVersioned(paths, readOnly.current, async (current) => {
-			const root = current.character(id)
-			await archiveStaleFiles({
-				sourceFolder: root,
-				destFolder: paths.local.character(id),
-				match: (name) => name.startsWith(`${variant}.`),
-				archivePrefix: `${variant}_`,
-			})
-		})
-	}
+	const slots = buildImageSlotFiles({
+		paths,
+		readOnly,
+		subjectKind: "character",
+	})
 
 	return {
-		ensureFolder: folderOps.ensureFolder,
-		removeFolder: folderOps.removeFolder,
-		markDeleted: folderOps.markDeleted,
-		moveFolderToTrash: folderOps.moveFolderToTrash,
-		findVariantInVersion,
-		writeVariant,
-		deleteVariant,
+		ensureFolder: slots.ensureFolder,
+		removeFolder: slots.removeFolder,
+		markDeleted: slots.markDeleted,
+		moveFolderToTrash: slots.moveFolderToTrash,
+		findVariantInVersion: (id, version, variant) =>
+			slots.findSlotInVersion(id, version, variant),
+		writeVariant: (id, variant, ext, sourcePath) =>
+			slots.writeSlot(id, variant, ext, sourcePath),
+		deleteVariant: (id, variant) => slots.removeSlot(id, variant),
 	}
 }
