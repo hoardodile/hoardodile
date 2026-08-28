@@ -11,6 +11,13 @@ const devPorts: { spa: number } = JSON.parse(
 const webPort = Number(process.env.WEB_PORT ?? devPorts.spa)
 const serverPort = Number(process.env.SERVER_PORT ?? 3001)
 const serverHost = "127.0.0.1"
+// Deterministic runtime URL for the plugin-install consent fixture: a
+// third webServer below serves `e2e/fixtures/runtime/` on this port
+// (a confirmed non-excluded range on Windows — 3111 falls inside the
+// Hyper-V/WSL excluded 3047–3146 block).
+const runtimePort = Number(process.env.E2E_RUNTIME_PORT ?? 3200)
+process.env.E2E_RUNTIME_URL = `http://127.0.0.1:${runtimePort}/fixture.js`
+process.env.E2E_RUNTIME_DENY_URL = `http://127.0.0.1:${runtimePort}/deny.js`
 // External-server mode: point the whole suite (claim.setup included) at an
 // already-running instance — used to verify the Docker image on release
 // tags. No local server is booted and the external storage is never wiped.
@@ -118,6 +125,9 @@ export default defineConfig({
 							STORAGE_ROOT: storageRoot,
 							RESTART_ON_RESTORE: "false",
 							DEV_PLUGIN_PATHS: devPluginDirs.join(","),
+							// The plugin-consent fixture downloads from the
+							// loopback runtime fixture server.
+							PLUGIN_DOWNLOAD_ALLOW_PRIVATE: "true",
 						},
 					},
 					{
@@ -130,6 +140,17 @@ export default defineConfig({
 						stderr: "pipe",
 						env: {
 							VITE_SERVER_URL: `http://${serverHost}:${serverPort}`,
+						},
+					},
+					{
+						command: `node ${resolve(import.meta.dirname, "e2e", "runtime-server.mjs")}`,
+						url: `http://127.0.0.1:${runtimePort}/fixture.js`,
+						reuseExistingServer: false,
+						timeout: 30_000,
+						stdout: "pipe",
+						stderr: "pipe",
+						env: {
+							PORT: String(runtimePort),
 						},
 					},
 				],
