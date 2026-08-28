@@ -15,7 +15,6 @@ import type {
 import {
 	app,
 	BrowserWindow,
-	clipboard,
 	dialog,
 	Notification,
 	session,
@@ -37,7 +36,7 @@ import {
 	pickDirectory,
 	registerIpc,
 } from "./ipc.ts"
-import { computeLanAddresses, lanUrlFor } from "./lan.ts"
+import { computeLanAddresses } from "./lan.ts"
 import {
 	findWorkspaceRoot,
 	packagedLayout,
@@ -224,7 +223,6 @@ function broadcastUpdate(runtime: Runtime, state: DesktopUpdateState): void {
 				updateReady: runtime.updateReady,
 				updateReadyResources:
 					state.status === "ready" && state.channel === "resources",
-				lanUrl: lanTrayUrl(runtime),
 			},
 			trayStrings(runtime.language),
 		)
@@ -244,9 +242,6 @@ function trayHandlers(runtime: Runtime) {
 		},
 		restartSidecar() {
 			void restartSidecar(runtime)
-		},
-		copyLanAddress() {
-			copyLanAddress(runtime)
 		},
 	}
 }
@@ -494,29 +489,9 @@ function rebuildSidecarTray(runtime: Runtime): void {
 		{
 			crashed: runtime.crashed,
 			updateReady: runtime.updateReady,
-			lanUrl: lanTrayUrl(runtime),
 		},
 		trayStrings(runtime.language),
 	)
-}
-
-/** The URL the tray copies, using the actual listening port. */
-function lanTrayUrl(runtime: Runtime): string | undefined {
-	return lanUrlFor(
-		runtime.config.lanEnabled,
-		runtime.config.port,
-		computeLanAddresses(),
-	)
-}
-
-function copyLanAddress(runtime: Runtime): void {
-	const url = lanTrayUrl(runtime)
-	if (url === undefined) return
-	clipboard.writeText(url)
-	new Notification({
-		title: "hoardodile",
-		body: catalogFor(runtime.language).desktopShell.tray.copied,
-	}).show()
 }
 
 async function relaunchApp(runtime: Runtime): Promise<void> {
@@ -549,7 +524,6 @@ async function restartSidecar(runtime: Runtime): Promise<void> {
 				{
 					crashed: false,
 					updateReady: runtime.updateReady,
-					lanUrl: lanTrayUrl(runtime),
 				},
 				trayStrings(runtime.language),
 			)
@@ -608,7 +582,6 @@ function onSidecarCrash(runtime: Runtime): void {
 			{
 				crashed: true,
 				updateReady: runtime.updateReady,
-				lanUrl: lanTrayUrl(runtime),
 			},
 			trayStrings(runtime.language),
 		)
@@ -731,7 +704,6 @@ function trayStrings(language: SupportedLanguage | undefined) {
 	return {
 		open: catalog.desktopShell.tray.open,
 		changeLibrary: catalog.desktopShell.tray.changeLibrary,
-		copyLanAddress: catalog.desktopShell.tray.copyLanAddress,
 		restartServer: catalog.desktopShell.tray.restartServer,
 		updateReady: catalog.desktopShell.tray.updateReady,
 		updateReadyResources: catalog.desktopShell.tray.updateReadyResources,

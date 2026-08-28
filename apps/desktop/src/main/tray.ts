@@ -13,7 +13,6 @@ export type TrayHandlers = {
 	changeLibrary: () => void
 	quit: () => void
 	restartSidecar: () => void
-	copyLanAddress: () => void
 }
 
 export type TrayFlags = {
@@ -21,14 +20,11 @@ export type TrayFlags = {
 	readonly updateReady: boolean
 	/** Set when the ready update is the resource channel (apply, no app restart). */
 	readonly updateReadyResources?: boolean | undefined
-	/** LAN share URL; `undefined` disables the copy menu item. */
-	readonly lanUrl?: string | undefined
 }
 
 export type TrayStrings = {
 	readonly open: string
 	readonly changeLibrary: string
-	readonly copyLanAddress: string
 	readonly restartServer: string
 	readonly updateReady: string
 	readonly updateReadyResources: string
@@ -66,11 +62,6 @@ export function rebuildTrayMenu(
 		{
 			label: strings.changeLibrary,
 			click: () => handlers.changeLibrary(),
-		},
-		{
-			label: strings.copyLanAddress,
-			enabled: flags.lanUrl !== undefined,
-			click: () => handlers.copyLanAddress(),
 		},
 	]
 	if (flags.crashed) {
