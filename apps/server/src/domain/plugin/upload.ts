@@ -155,16 +155,35 @@ export function buildPluginUploads(deps: PluginUploadsDeps): PluginUploads {
 
 /**
  * Move `src` to `dest`. Same-volume `rename` first; `EXDEV` falls back
- * to a recursive copy then delete.
+ * to a recursive copy then delete. On Windows a rename can transiently
+ * fail with `EPERM`/`EACCES`/`EBUSY` (AV scans, a just-written file's
+ * last handle) — retry with a short backoff before giving up.
  */
 export async function moveDir(src: string, dest: string): Promise<void> {
-	try {
-		await rename(src, dest)
-	} catch (err) {
-		if (!isExdev(err)) throw err
-		await cp(src, dest, { recursive: true })
-		await rm(src, { recursive: true, force: true })
+	for (let attempt = 0; ; attempt++) {
+		try {
+			await rename(src, dest)
+			return
+		} catch (err) {
+			if (isExdev(err)) {
+				await cp(src, dest, { recursive: true })
+				await rm(src, { recursive: true, force: true })
+				return
+			}
+			if (!isTransientRename(err) || attempt >= 9) throw err
+			await new Promise((resolve) => setTimeout(resolve, 300 * (attempt + 1)))
+		}
 	}
+}
+
+/** Retryable Windows rename failures: antivirus / pending handles. */
+function isTransientRename(err: unknown): boolean {
+	return (
+		typeof err === "object" &&
+		err !== null &&
+		"code" in err &&
+		(err.code === "EPERM" || err.code === "EACCES" || err.code === "EBUSY")
+	)
 }
 
 /**
