@@ -64,10 +64,12 @@ export type PluginAssetService = {
 	readonly requestDownload: (
 		pluginId: string,
 		request: PluginDownloadRequest,
+		options?: { readonly expectsClient?: boolean },
 	) => Promise<PluginDownloadResult>
 	readonly requestDownloads: (
 		pluginId: string,
 		requests: readonly PluginDownloadRequest[],
+		options?: { readonly expectsClient?: boolean },
 	) => Promise<readonly PluginDownloadResult[]>
 	readonly statAsset: (
 		pluginId: string,
@@ -155,8 +157,9 @@ export function createPluginAssetService(
 	async function requestDownload(
 		pluginId: string,
 		request: PluginDownloadRequest,
+		options?: { readonly expectsClient?: boolean },
 	): Promise<PluginDownloadResult> {
-		const results = await requestDownloads(pluginId, [request])
+		const results = await requestDownloads(pluginId, [request], options)
 		return results[0]!
 	}
 
@@ -173,6 +176,7 @@ export function createPluginAssetService(
 	async function requestDownloads(
 		pluginId: string,
 		requests: readonly PluginDownloadRequest[],
+		options?: { readonly expectsClient?: boolean },
 	): Promise<readonly PluginDownloadResult[]> {
 		const manifest = assertPluginAllowed(pluginId)
 		if (requests.length === 0) {
@@ -249,15 +253,18 @@ export function createPluginAssetService(
 				const misses = planned.filter((p) => p.cached === undefined)
 
 				if (misses.length > 0) {
-					const decision = await deps.consent.request({
-						pluginId,
-						pluginName: manifest.name,
-						items: misses.map((p) => ({
-							url: p.request.url,
-							dest: p.parsed.rel,
-							reason: p.request.reason,
-						})),
-					})
+					const decision = await deps.consent.request(
+						{
+							pluginId,
+							pluginName: manifest.name,
+							items: misses.map((p) => ({
+								url: p.request.url,
+								dest: p.parsed.rel,
+								reason: p.request.reason,
+							})),
+						},
+						options,
+					)
 					if (!decision.approved) {
 						throw pluginAssetError(
 							"DENIED",

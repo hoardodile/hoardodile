@@ -59,9 +59,17 @@ export type ConsentBroker = {
 	 * `{ approved: true }` when granted (including a session-remembered
 	 * plugin) or `{ approved: false }` when denied or timed out; throws
 	 * `UNAVAILABLE`/`POLICY` for host-level refusals.
+	 *
+	 * `options.expectsClient` asserts a UI client session is attached —
+	 * the web path (authed tRPC) sets it. Without the flag the broker
+	 * fast-fails `UNAVAILABLE` when no SSE client is connected (the
+	 * sandbox hook path); the web path must not: the consent dialog is
+	 * delivered over SSE and rehydrated via `listPending` on reconnect,
+	 * so a momentarily disconnected stream must not kill the request.
 	 */
 	readonly request: (
 		ticket: Omit<ConsentTicket, "ticketId">,
+		options?: { readonly expectsClient?: boolean },
 	) => Promise<ConsentDecision>
 	/** Record the user's answer; `remember` marks the plugin for the session. */
 	readonly decide: (
@@ -97,8 +105,17 @@ export function createConsentBroker(deps: ConsentBrokerDeps): ConsentBroker {
 
 	function request(
 		ticket: Omit<ConsentTicket, "ticketId">,
+		options?: { readonly expectsClient?: boolean },
 	): Promise<ConsentDecision> {
-		if (deps.connectionCount !== undefined && deps.connectionCount() === 0) {
+		// The connection-count gate is for callers that cannot assert a
+		// client (sandbox hooks): a dialog nobody could answer must never
+		// be shown. The web path sets `expectsClient` — an authed session
+		// exists, and delivery uses SSE + reconnect rehydration.
+		if (
+			options?.expectsClient !== true &&
+			deps.connectionCount !== undefined &&
+			deps.connectionCount() === 0
+		) {
 			return Promise.reject(
 				pluginAssetError(
 					"UNAVAILABLE",

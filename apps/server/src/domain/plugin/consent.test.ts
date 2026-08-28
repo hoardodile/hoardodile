@@ -61,6 +61,22 @@ describe("createConsentBroker", () => {
 		})
 	})
 
+	test("expectsClient bypasses the zero-client fast-fail", async () => {
+		const { broker, requested } = makeBroker({ connectionCount: () => 0 })
+		const first = broker.request(ticket, { expectsClient: true })
+		expect(requested).toHaveLength(1)
+		broker.decide(requested[0]!.ticketId, true)
+		await expect(first).resolves.toEqual({ approved: true })
+	})
+
+	test("expectsClient does not bypass the per-plugin pending cap", async () => {
+		const { broker } = makeBroker({ maxPendingPerPlugin: 1 })
+		void broker.request(ticket, { expectsClient: true })
+		await expect(
+			broker.request(ticket, { expectsClient: true }),
+		).rejects.toMatchObject({ name: "POLICY" })
+	})
+
 	test("per-plugin pending cap rejects extra concurrent tickets", async () => {
 		const { broker } = makeBroker({ maxPendingPerPlugin: 1 })
 		void broker.request(ticket)

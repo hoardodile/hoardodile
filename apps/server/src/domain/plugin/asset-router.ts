@@ -44,11 +44,16 @@ export type PluginAssetRouterDeps = {
 export function buildPluginAssetRouter(deps: PluginAssetRouterDeps) {
 	return router({
 		/** User-consented download(s) into the plugin's vault (awaits the dialog). */
-		request: writeProcedure
-			.input(requestInput)
-			.mutation(({ input }) =>
-				deps.service.requestDownloads(input.pluginId, input.items),
-			),
+		request: writeProcedure.input(requestInput).mutation(({ input }) =>
+			deps.service.requestDownloads(input.pluginId, input.items, {
+				// This call is authed: a browser session exists, so the
+				// consent dialog can be answered. Delivery rides SSE and
+				// the reconnect rehydration (`listPending`), so a
+				// momentarily disconnected stream must not fast-fail
+				// the request as UNAVAILABLE.
+				expectsClient: true,
+			}),
+		),
 		/** Idempotent vault removal (the plugin's own lifecycle decision). */
 		delete: writeProcedure
 			.input(deleteInput)

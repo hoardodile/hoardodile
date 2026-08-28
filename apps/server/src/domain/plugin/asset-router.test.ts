@@ -44,7 +44,7 @@ function createCaller(opts?: { readOnly?: boolean }) {
 }
 
 describe("pluginAsset router", () => {
-	test("request forwards the batch to the service", async () => {
+	test("request forwards the batch to the service as a trusted client", async () => {
 		const { caller, service } = createCaller()
 		await expect(
 			caller.request({
@@ -57,12 +57,16 @@ describe("pluginAsset router", () => {
 				],
 			}),
 		).resolves.toEqual([RESULT])
-		expect(service.requestDownloads).toHaveBeenCalledWith(PLUGIN_ID, [
-			{
-				url: "https://example.com/runtime.mjs",
-				dest: "runtime.mjs",
-			},
-		])
+		expect(service.requestDownloads).toHaveBeenCalledWith(
+			PLUGIN_ID,
+			[
+				{
+					url: "https://example.com/runtime.mjs",
+					dest: "runtime.mjs",
+				},
+			],
+			{ expectsClient: true },
+		)
 	})
 
 	test("request rejects an empty batch", async () => {

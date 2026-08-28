@@ -11,7 +11,7 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { createStoragePaths } from "@hoardodile/host/hoard"
 import type { PluginManifest } from "@hoardodile/sdk-types"
-import { afterEach, describe, expect, test } from "vitest"
+import { afterEach, describe, expect, test, vi } from "vitest"
 import {
 	createPluginAssetService,
 	type PluginAssetService,
@@ -72,6 +72,7 @@ function serviceWith(
 	opts: {
 		readonly manifest?: PluginManifest
 		readonly maxTotalBytes?: number
+		readonly consent?: ConsentBroker
 	} = {},
 ): {
 	readonly service: PluginAssetService
@@ -80,10 +81,12 @@ function serviceWith(
 } {
 	root = mkdtempSync(join(tmpdir(), "hoardodile-asset-"))
 	const paths = createStoragePaths({ root })
-	const consent = createConsentBroker({
-		timeoutMs: 5_000,
-		connectionCount: () => 1,
-	})
+	const consent =
+		opts.consent ??
+		createConsentBroker({
+			timeoutMs: 5_000,
+			connectionCount: () => 1,
+		})
 	const downloader = createPluginDownloader({
 		maxBytes: 1_000_000,
 		timeoutMs: 2_000,
@@ -204,6 +207,31 @@ describe("createPluginAssetService", () => {
 		await expect(decision).rejects.toMatchObject({ name: "DENIED" })
 		expect(await service.statAsset(PLUGIN_ID, "x.mjs")).toBeUndefined()
 		expect(vaultDir).toBeDefined()
+	})
+
+	test("forwards the expectsClient flag to the consent broker", async () => {
+		const base = await listen((_req, res) => {
+			res.writeHead(200)
+			res.end("ok")
+		})
+		const request = vi.fn(async () => ({ approved: true }))
+		const { service } = serviceWith({
+			consent: {
+				request,
+				decide: vi.fn(),
+				listPending: () => [],
+				dispose: vi.fn(),
+			} as unknown as ConsentBroker,
+		})
+		await service.requestDownloads(
+			PLUGIN_ID,
+			[{ url: `${base}/a.mjs`, dest: "a.mjs" }],
+			{ expectsClient: true },
+		)
+		expect(request).toHaveBeenCalledWith(
+			expect.objectContaining({ pluginId: PLUGIN_ID }),
+			{ expectsClient: true },
+		)
 	})
 
 	test("sha256 pins are verified and mismatches never commit", async () => {
