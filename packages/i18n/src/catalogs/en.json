@@ -428,16 +428,16 @@
 			"updatePhaseSwapping": "Replacing server files…",
 			"updatePhaseStarting": "Starting the local server…",
 			"shellCache": {
-				"title": "Shell cache",
-				"description": "On-disk caches of the app window itself — HTTP responses, compiled code and GPU shaders — plus any downloaded update. Clearing never touches cookies, your preferences or offline data, and the app re-fetches from the local server right away. A downloaded update that is ready to install stays untouched.",
+				"title": "App temporary files",
+				"description": "Temporary files the app saves on your device as it runs — like the images and code used in the interface — plus any downloaded update. Clearing just means the app fetches what it needs again: your signed-in status, appearance preferences and offline data are never touched. A downloaded update that is ready to install stays untouched.",
 				"currentSize": "{{size}}",
 				"unavailable": "Unavailable",
-				"clear": "Clear cache",
+				"clear": "Clear temporary files",
 				"clearing": "Clearing…",
-				"confirmTitle": "Clear the shell cache?",
-				"confirmDescription": "The app window will fetch its files from the local server again on the next visit. Cookies, preferences and offline data are never touched. A downloaded update that is ready to install stays untouched.",
-				"toastCleared": "Shell cache cleared — {{bytes}} freed.",
-				"clearFailed": "Could not clear the shell cache."
+				"confirmTitle": "Clear the app's temporary files?",
+				"confirmDescription": "The app will fetch what it needs again the next time it is used. Your signed-in status, appearance preferences and offline data are never touched. A downloaded update that is ready to install stays untouched.",
+				"toastCleared": "App temporary files cleared — {{bytes}} freed.",
+				"clearFailed": "Could not clear the app's temporary files."
 			}
 		},
 		"usage": {
@@ -480,13 +480,13 @@
 			"confirmDescription": "This will delete every system preference including theme, language, font, and date format. The page will reload with default values. This cannot be undone."
 		},
 		"systemCache": {
-			"title": "Browser cache",
-			"description": "Browser-side local data — service-worker caches, localStorage and IndexedDB (offline usage queue, document drafts). The server is never touched; the page reloads afterwards.",
+			"title": "Browser data",
+			"description": "App data kept in your browser — appearance preferences (theme, language), offline usage records and saved document drafts. Clearing reloads the page and restores the default interface; resources and collections on the server are never touched.",
 			"clear": "Clear all",
 			"clearing": "Clearing…",
-			"resetting": "Browser cache cleared. Reloading…",
-			"confirmTitle": "Clear browser cache?",
-			"confirmDescription": "This will delete every piece of browser-side local data, including theme and language preferences, offline usage records, and saved document drafts, then reload the page. This cannot be undone."
+			"resetting": "Browser data cleared. Reloading…",
+			"confirmTitle": "Clear browser data?",
+			"confirmDescription": "This deletes every piece of app data kept in your browser, including appearance preferences (theme, language), offline usage records and saved document drafts, then reloads the page with the default interface. Resources and collections on the server are never touched. This cannot be undone."
 		}
 	},
 	"plugin": {

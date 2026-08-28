@@ -309,8 +309,8 @@
 			"openLogsFolder": "打开服务器日志文件夹",
 			"openLogsFailed": "无法打开日志文件夹。",
 			"featureTitle": "功能建议",
-			"featureDescription": "缺少什么功能？告诉我们。",
-			"featureAction": "告诉我们",
+			"featureDescription": "缺少什么功能？告诉我。",
+			"featureAction": "告诉我",
 			"developerTitle": "开发者",
 			"checkUpdate": "检查更新",
 			"checking": "正在检查…",
@@ -428,16 +428,16 @@
 			"updatePhaseSwapping": "正在替换服务文件…",
 			"updatePhaseStarting": "正在启动本地服务…",
 			"shellCache": {
-				"title": "Shell 缓存",
-				"description": "应用窗口自身的磁盘缓存——HTTP 响应、编译代码与 GPU 着色器——以及已下载的更新包。清理不会影响 cookies、你的偏好或离线数据，应用会立即从本地服务器重新获取。已就绪待安装的更新包会保留。",
+				"title": "应用临时文件",
+				"description": "应用运行时在设备上自动保存的临时文件，例如界面用到的图片和代码，以及已下载的更新包。清除后应用会自动重新获取所需文件；登录状态、界面外观和离线数据不受影响。已下载、等待安装的更新包会保留。",
 				"currentSize": "{{size}}",
 				"unavailable": "无法获取",
-				"clear": "清除缓存",
+				"clear": "清除临时文件",
 				"clearing": "正在清除…",
-				"confirmTitle": "清除 Shell 缓存？",
-				"confirmDescription": "应用窗口将在下次访问时从本地服务器重新获取文件。cookies、偏好与离线数据不受影响。已就绪待安装的更新包会保留。",
-				"toastCleared": "Shell 缓存已清除，释放 {{bytes}}。",
-				"clearFailed": "清除 Shell 缓存失败。"
+				"confirmTitle": "清除应用临时文件？",
+				"confirmDescription": "应用会在下次使用时自动重新获取所需文件。登录状态、界面外观和离线数据不受影响。已下载、等待安装的更新包会保留。",
+				"toastCleared": "应用临时文件已清除，释放 {{bytes}}。",
+				"clearFailed": "清除应用临时文件失败。"
 			}
 		},
 		"usage": {
@@ -480,13 +480,13 @@
 			"confirmDescription": "这将删除所有系统偏好，包括主题、语言、字体和日期格式。页面将使用默认值重新加载。此操作无法撤销。"
 		},
 		"systemCache": {
-			"title": "浏览器缓存",
-			"description": "浏览器侧的本地数据——Service Worker 缓存、localStorage 与 IndexedDB（离线使用队列、文档草稿）。不会触碰服务器，随后页面将重新加载。",
+			"title": "浏览器本地数据",
+			"description": "应用保存在浏览器中的界面偏好（主题、语言）、离线使用记录和文档草稿。清空后页面会重新加载、界面恢复默认外观；服务器上的资源和收藏不受影响。",
 			"clear": "全部清空",
 			"clearing": "清空中…",
-			"resetting": "浏览器缓存已清空，正在重新加载…",
-			"confirmTitle": "清空浏览器缓存？",
-			"confirmDescription": "这将删除所有浏览器侧本地数据，包括主题与语言偏好、离线使用记录和已保存的文档草稿，然后重新加载页面。此操作无法撤销。"
+			"resetting": "浏览器本地数据已清空，正在重新加载…",
+			"confirmTitle": "清空浏览器本地数据？",
+			"confirmDescription": "这将删除应用保存在浏览器中的全部数据，包括主题与语言等界面偏好、离线使用记录和文档草稿，然后重新加载页面、恢复默认外观。服务器上的资源和收藏不受影响。此操作无法撤销。"
 		}
 	},
 	"plugin": {

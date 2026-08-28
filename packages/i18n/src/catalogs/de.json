@@ -428,16 +428,16 @@
 			"updatePhaseSwapping": "Serverdateien werden ersetzt…",
 			"updatePhaseStarting": "Lokaler Server wird gestartet…",
 			"shellCache": {
-				"title": "Shell-Cache",
-				"description": "Laufwerksbasierte Caches des App-Fensters selbst — HTTP-Antworten, kompilierter Code und GPU-Shader — sowie etwaige heruntergeladene Updates. Das Leeren berührt nie Cookies, deine Einstellungen oder Offline-Daten, und die App lädt sofort vom lokalen Server neu. Ein heruntergeladenes, installationsbereites Update bleibt unberührt.",
+				"title": "Temporäre App-Dateien",
+				"description": "Temporäre Dateien, die die App auf deinem Gerät speichert, während sie läuft — etwa die Bilder und Dateien, die in der Oberfläche verwendet werden — sowie heruntergeladene Updates. Beim Löschen holt sich die App einfach wieder, was sie braucht: dein Anmeldestatus, dein Aussehen und Offline-Daten bleiben unberührt. Ein heruntergeladenes, installationsbereites Update bleibt erhalten.",
 				"currentSize": "{{size}}",
 				"unavailable": "Nicht verfügbar",
-				"clear": "Cache leeren",
-				"clearing": "Leeren…",
-				"confirmTitle": "Shell-Cache leeren?",
-				"confirmDescription": "Das App-Fenster lädt seine Dateien beim nächsten Besuch erneut vom lokalen Server. Cookies, Einstellungen und Offline-Daten werden nie berührt. Ein heruntergeladenes, installationsbereites Update bleibt unberührt.",
-				"toastCleared": "Shell-Cache geleert — {{bytes}} freigegeben.",
-				"clearFailed": "Der Shell-Cache konnte nicht geleert werden."
+				"clear": "Temporäre Dateien löschen",
+				"clearing": "Löschen…",
+				"confirmTitle": "Temporäre App-Dateien löschen?",
+				"confirmDescription": "Die App holt sich beim nächsten Verwenden einfach wieder, was sie braucht. Dein Anmeldestatus, dein Aussehen und Offline-Daten bleiben unberührt. Ein heruntergeladenes, installationsbereites Update bleibt erhalten.",
+				"toastCleared": "Temporäre App-Dateien gelöscht — {{bytes}} freigegeben.",
+				"clearFailed": "Die temporären App-Dateien konnten nicht gelöscht werden."
 			}
 		},
 		"usage": {
@@ -480,13 +480,13 @@
 			"confirmDescription": "Dies löscht alle Systemeinstellungen einschließlich Design, Sprache, Schriftart und Datumsformat. Die Seite wird mit Standardwerten neu geladen. Dies kann nicht rückgängig gemacht werden."
 		},
 		"systemCache": {
-			"title": "Browser-Cache",
-			"description": "Lokale Daten im Browser — Service-Worker-Caches, localStorage und IndexedDB (Offline-Nutzungswarteschlange, Dokumententwürfe). Der Server wird nie berührt; die Seite wird danach neu geladen.",
+			"title": "Browserdaten",
+			"description": "App-Daten, die in deinem Browser gespeichert sind — Aussehen (Design, Sprache), Offline-Nutzungsdaten und gespeicherte Dokumententwürfe. Beim Löschen wird die Seite neu geladen und das Aussehen auf die Standardeinstellungen zurückgesetzt; Ressourcen und Sammlungen auf dem Server bleiben unberührt.",
 			"clear": "Alles leeren",
 			"clearing": "Leeren…",
-			"resetting": "Browser-Cache geleert. Wird neu geladen…",
-			"confirmTitle": "Browser-Cache leeren?",
-			"confirmDescription": "Dies löscht alle lokalen Daten im Browser, einschließlich Design- und Spracheinstellungen, Offline-Nutzungseinträge und gespeicherte Dokumententwürfe, und lädt dann die Seite neu. Dies kann nicht rückgängig gemacht werden."
+			"resetting": "Browserdaten gelöscht. Die Seite wird neu geladen…",
+			"confirmTitle": "Browserdaten löschen?",
+			"confirmDescription": "Dies löscht alle im Browser gespeicherten App-Daten, einschließlich Aussehen (Design, Sprache), Offline-Nutzungsdaten und Dokumententwürfe, und lädt die Seite anschließend mit den Standardeinstellungen neu. Ressourcen und Sammlungen auf dem Server bleiben unberührt. Dies kann nicht rückgängig gemacht werden."
 		}
 	},
 	"plugin": {

@@ -135,7 +135,7 @@ describe("ShellCachePanel", () => {
 		await user.click(await screen.findByTestId("desktop-shell-cache-clear"))
 		const dialog = await screen.findByRole("dialog")
 		await user.click(
-			within(dialog).getByRole("button", { name: "Clear cache" }),
+			within(dialog).getByRole("button", { name: "Clear temporary files" }),
 		)
 
 		await waitFor(() => {

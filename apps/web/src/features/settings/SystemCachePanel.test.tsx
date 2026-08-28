@@ -34,8 +34,6 @@ describe("SystemCachePanel", () => {
 		await user.click(within(dialog).getByRole("button", { name: "Clear all" }))
 
 		expect(mockedReset).toHaveBeenCalledTimes(1)
-		expect(mockedReset).toHaveBeenCalledWith(
-			"Browser cache cleared. Reloading…",
-		)
+		expect(mockedReset).toHaveBeenCalledWith("Browser data cleared. Reloading…")
 	})
 })

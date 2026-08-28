@@ -428,16 +428,16 @@
 			"updatePhaseSwapping": "Reemplazando los archivos del servidor…",
 			"updatePhaseStarting": "Iniciando el servidor local…",
 			"shellCache": {
-				"title": "Caché del shell",
-				"description": "Cachés en disco de la propia ventana de la app — respuestas HTTP, código compilado y sombreadores de GPU — además de cualquier actualización descargada. Al limpiar nunca se tocan las cookies, tus preferencias ni los datos sin conexión, y la app vuelve a obtener los datos del servidor local de inmediato. Una actualización descargada lista para instalar no se toca.",
+				"title": "Archivos temporales de la app",
+				"description": "Archivos temporales que la app guarda en tu equipo mientras se ejecuta, como las imágenes y el código usados en la interfaz, además de cualquier actualización descargada. Al borrarlos, la app simplemente vuelve a obtener lo que necesita: tu sesión iniciada, la apariencia y los datos sin conexión no se tocan. Una actualización descargada lista para instalar se mantiene.",
 				"currentSize": "{{size}}",
 				"unavailable": "No disponible",
-				"clear": "Limpiar caché",
-				"clearing": "Limpiando…",
-				"confirmTitle": "¿Limpiar la caché del shell?",
-				"confirmDescription": "La ventana de la app volverá a obtener sus archivos del servidor local en la próxima visita. Las cookies, las preferencias y los datos sin conexión nunca se tocan. Una actualización descargada lista para instalar no se toca.",
-				"toastCleared": "Caché del shell limpiada — {{bytes}} liberados.",
-				"clearFailed": "No se pudo limpiar la caché del shell."
+				"clear": "Borrar archivos temporales",
+				"clearing": "Borrando…",
+				"confirmTitle": "¿Borrar los archivos temporales de la app?",
+				"confirmDescription": "La app volverá a obtener lo que necesite la próxima vez que la uses. Tu sesión iniciada, la apariencia y los datos sin conexión no se tocan. Una actualización descargada lista para instalar se mantiene.",
+				"toastCleared": "Archivos temporales de la app borrados — {{bytes}} liberados.",
+				"clearFailed": "No se pudieron borrar los archivos temporales de la app."
 			}
 		},
 		"usage": {
@@ -480,13 +480,13 @@
 			"confirmDescription": "Esto eliminará todas las preferencias del sistema, incluidos tema, idioma, fuente y formato de fecha. La página se recargará con valores predeterminados. Esto no se puede deshacer."
 		},
 		"systemCache": {
-			"title": "Caché del navegador",
-			"description": "Datos locales del lado del navegador — cachés de service worker, localStorage e IndexedDB (cola de uso sin conexión, borradores de documentos). El servidor nunca se toca; luego la página se recarga.",
+			"title": "Datos en el navegador",
+			"description": "Lo que la app guarda en tu navegador: preferencias de apariencia (tema, idioma), registros de uso sin conexión y borradores de documentos guardados. Al borrarlos, la página se recarga y la interfaz vuelve a los valores predeterminados; los recursos y las colecciones del servidor no se tocan.",
 			"clear": "Limpiar todo",
 			"clearing": "Limpiando…",
-			"resetting": "Caché del navegador limpiada. Recargando…",
-			"confirmTitle": "¿Limpiar la caché del navegador?",
-			"confirmDescription": "Esto eliminará todos los datos locales del navegador, incluidas las preferencias de tema e idioma, los registros de uso sin conexión y los borradores guardados de documentos, y luego recargará la página. Esto no se puede deshacer."
+			"resetting": "Datos del navegador borrados. Recargando…",
+			"confirmTitle": "¿Borrar los datos del navegador?",
+			"confirmDescription": "Esto borra todos los datos que la app guarda en tu navegador, incluidas las preferencias de apariencia (tema, idioma), los registros de uso sin conexión y los borradores de documentos guardados, y luego recarga la página con la interfaz en los valores predeterminados. Los recursos y las colecciones del servidor no se tocan. Esto no se puede deshacer."
 		}
 	},
 	"plugin": {
