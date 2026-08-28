@@ -3,10 +3,14 @@
  * pixels. The thumb is scaled proportionally into the clamp window:
  * artwork smaller than `min` is upscaled to the floor (a 4×4 logo stays
  * recognisable), artwork larger than `max` is downscaled to the ceiling
- * (an 8K banner never blows the card out). `imageMeta.width/height` —
- * already shipped with the tag list — seeds the size before the browser
- * reports the rendered thumb's natural dimensions; the two must stay
- * consistent, so tweak both when either changes.
+ * (an 8K banner never blows the card out).
+ *
+ * Dimensions come from `imageMeta.width/height` — shipped with the tag
+ * list — and are the single source of truth: the browser's natural thumb
+ * size is deliberately NOT applied on load, so the card never resizes
+ * mid-open (a late re-measure re-positions the floating card and reads
+ * as a double animation). When meta is missing, the max box is used as
+ * the placeholder.
  */
 export const TAG_HOVER_IMAGE_MIN = { width: 64, height: 64 } as const
 export const TAG_HOVER_IMAGE_MAX = { width: 240, height: 200 } as const

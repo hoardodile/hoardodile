@@ -1926,7 +1926,7 @@
 			"linkPlaceholder": "https://…",
 			"linkHint": "Enlace opcional a la página canónica de la etiqueta — se muestra en la vista previa al pasar el cursor.",
 			"uploadImage": "Subir imagen…",
-			"replaceImage": "Cambiar imagen…",
+			"editImage": "Editar imagen…",
 			"imageDialogTitle": "Imagen de la etiqueta"
 		},
 		"card": {

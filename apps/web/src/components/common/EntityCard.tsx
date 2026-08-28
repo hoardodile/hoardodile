@@ -124,7 +124,7 @@ export const EntityCard = forwardRef<HTMLDivElement, EntityCardProps>(
 								</Button>
 							}
 						/>
-						<DropdownMenuContent align="end">
+						<DropdownMenuContent align="end" className="min-w-48">
 							<DropdownMenuItem
 								onClick={() => setEditOpen(true)}
 								data-testid={

@@ -207,6 +207,7 @@ function TraitPickerRow(props: TraitPickerRowProps) {
 					key={td.id}
 					color={td.color}
 					size="md"
+					display="button"
 					onClick={() => onPick(td.id)}
 					suffix={t(`traits.kind.${td.kind}`)}
 					data-testid={

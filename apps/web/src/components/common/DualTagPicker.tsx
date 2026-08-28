@@ -182,6 +182,7 @@ export function DualTagPicker(props: DualTagPickerProps) {
 							color={cat.color}
 							size="md"
 							active={resolvedActiveCategoryId === cat.id}
+							display="button"
 							onClick={() => handleCategoryClick(cat.id)}
 							data-testid={
 								testId !== undefined ? `${testId}-cat-${cat.id}` : undefined
@@ -211,6 +212,7 @@ export function DualTagPicker(props: DualTagPickerProps) {
 										size={size}
 										active={selectedSet.has(tag.id)}
 										disabled={disabledSet.has(tag.id)}
+										display="button"
 										onClick={() => onChange([tag.id])}
 										data-testid={
 											testId !== undefined
@@ -245,6 +247,7 @@ export function DualTagPicker(props: DualTagPickerProps) {
 						color={cat.color}
 						size="md"
 						active={resolvedActiveCategoryId === cat.id}
+						display="button"
 						onClick={() => handleCategoryClick(cat.id)}
 					>
 						{cat.name}
@@ -297,6 +300,7 @@ export function DualTagPicker(props: DualTagPickerProps) {
 										size={size}
 										active
 										disabled={disabledSet.has(tag.id)}
+										display="button"
 										onClick={() => handleTagToggle(tag.id)}
 									>
 										{tag.name}
@@ -317,6 +321,7 @@ export function DualTagPicker(props: DualTagPickerProps) {
 									color={tag.color}
 									size={size}
 									disabled={disabledSet.has(tag.id)}
+									display="button"
 									onClick={() => handleTagToggle(tag.id)}
 								>
 									{tag.name}

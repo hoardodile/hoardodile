@@ -102,6 +102,7 @@ export function FontPicker(props: FontPickerProps) {
 								key={p.id}
 								size="md"
 								active={active}
+								display="button"
 								onClick={() => toggleWebPreset(p.id, p.name)}
 							>
 								<span style={{ fontFamily: p.name }}>
@@ -122,6 +123,7 @@ export function FontPicker(props: FontPickerProps) {
 							key={tag}
 							size="md"
 							active={active}
+							display="button"
 							onClick={() => toggleTag(tag)}
 						>
 							<span style={{ fontFamily: tag }}>{tag}</span>
@@ -137,6 +139,7 @@ export function FontPicker(props: FontPickerProps) {
 							key={tag}
 							size="md"
 							active={active}
+							display="button"
 							onClick={() => toggleTag(tag)}
 						>
 							<span style={{ fontFamily: tag }}>{tag}</span>

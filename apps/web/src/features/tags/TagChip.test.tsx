@@ -42,7 +42,22 @@ describe("TagChip", () => {
 		expect(container.firstElementChild).toHaveTextContent("tag")
 	})
 
-	test("an onClick handler promotes the chip to a real button", async () => {
+	test("display='button' renders a real button and fires onClick", async () => {
+		const user = userEvent.setup()
+		const onClick = vi.fn()
+		render(
+			<TagChip color="" display="button" onClick={onClick} data-testid="chip">
+				hello
+			</TagChip>,
+		)
+		const el = screen.getByTestId("chip")
+		expect(el.tagName).toBe("BUTTON")
+		expect(el.className).toContain("cursor-pointer")
+		await user.click(el)
+		expect(onClick).toHaveBeenCalledTimes(1)
+	})
+
+	test("an onClick handler alone never promotes — the element stays a span", async () => {
 		const user = userEvent.setup()
 		const onClick = vi.fn()
 		render(
@@ -51,7 +66,8 @@ describe("TagChip", () => {
 			</TagChip>,
 		)
 		const el = screen.getByTestId("chip")
-		expect(el.tagName).toBe("BUTTON")
+		expect(el.tagName).toBe("SPAN")
+		expect(el.className).not.toContain("cursor-pointer")
 		await user.click(el)
 		expect(onClick).toHaveBeenCalledTimes(1)
 	})

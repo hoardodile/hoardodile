@@ -67,6 +67,7 @@ export function ColorPicker(props: ColorPickerProps) {
 							<TagChip
 								color={style}
 								active={active}
+								display="button"
 								onClick={onPick}
 								title={loose(t)(`categories.panel.specialStyle.${style}`)}
 							>

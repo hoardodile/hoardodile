@@ -1926,7 +1926,7 @@
 			"linkPlaceholder": "https://…",
 			"linkHint": "タグの正典ページへの任意リンク — ホバープレビューに表示されます。",
 			"uploadImage": "画像をアップロード…",
-			"replaceImage": "画像を変更…",
+			"editImage": "画像を編集…",
 			"imageDialogTitle": "タグ画像"
 		},
 		"card": {

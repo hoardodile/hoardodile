@@ -43,12 +43,21 @@ type TagChipBaseProps = {
 	    against a sibling (e.g. the category rail's chevron). */
 	readonly roundedRight?: boolean
 	/**
+	 * Root element mode: `"inline"` (default) renders a plain `<span>`,
+	 * `"button"` a real `<button type="button">`. The element is chosen
+	 * only from this prop (or `render`) — passing an `onClick` never
+	 * changes the element, so interactive wrappers (hover cards,
+	 * popovers) that merge click handlers onto the chip cannot swap its
+	 * DOM node mid-interaction.
+	 */
+	readonly display?: "inline" | "button"
+	/**
 	 * Polymorphic root: pass a `render={<button ... />}` element to render
 	 * the chip as that element. The chip's own classes, style, handlers,
 	 * texture and icon merge onto it, and the chip's children become the
 	 * element's children — so the render element should carry only its own
-	 * props. When omitted, an `onClick` handler promotes the chip to a
-	 * plain `<button type="button">`.
+	 * props. Wins over `display`; `display="button"` is the plain way to
+	 * get a real button without supplying a render element.
 	 */
 	readonly render?: ReactElement<Record<string, unknown>>
 	/**
@@ -76,9 +85,15 @@ const tagChipLabelClassName =
  * The one tag chip: a single rounded pill (inline-flex, `rounded-sm`,
  * `px-2 py-1`, 12px text) that may carry an icon and a special SVG
  * texture. It renders as a span by default; interactive surfaces pass
- * `render={<button ... />}` (or just `onClick`, which promotes to a
- * button) and the chip's styling lands on that element — one element in
- * the DOM plus a single text wrapper, no deeper nesting.
+ * `display="button"` (or `render={<button ... />}` for a custom root,
+ * e.g. a navigation anchor) and the chip's styling lands on that
+ * element — one element in the DOM plus a single text wrapper, no
+ * deeper nesting.
+ *
+ * The root element is decided purely by `display`/`render` — never by
+ * the presence of an `onClick`, so a chip's DOM element cannot change
+ * between renders (the hover-card trigger merge in {@link TagChipHover}
+ * relies on this).
  *
  * Coloring is delegated to {@link resolveTagChipSurface} so cards,
  * pickers, the doc editor and the character pills all share one
@@ -97,6 +112,7 @@ export const TagChip = forwardRef<HTMLElement, TagChipProps>(
 			active,
 			icon,
 			roundedRight,
+			display,
 			render,
 			suffix,
 			children,
@@ -110,7 +126,10 @@ export const TagChip = forwardRef<HTMLElement, TagChipProps>(
 				? undefined
 				: resolveTagChipSurface(color ?? "", active === true)
 
-		const isInteractive = render !== undefined || rest.onClick !== undefined
+		// The root element is fixed by the display mode / render slot —
+		// an onClick merged on by an interactive wrapper must never swap
+		// the chip's element (see the component doc comment).
+		const interactiveRoot = display === "button" || render !== undefined
 
 		const stateClass =
 			border === "dashed"
@@ -154,7 +173,7 @@ export const TagChip = forwardRef<HTMLElement, TagChipProps>(
 			"inline-flex min-w-0 max-w-full items-center justify-center gap-1.5 rounded-sm text-xs font-normal leading-none disabled:pointer-events-none disabled:opacity-50",
 			size === "md" ? "px-2 py-1.5" : "px-2 py-1",
 			roundedRight === false && "rounded-r-none",
-			isInteractive && "cursor-pointer",
+			interactiveRoot && "cursor-pointer",
 			surface?.className,
 			stateClass,
 			className,
@@ -172,7 +191,7 @@ export const TagChip = forwardRef<HTMLElement, TagChipProps>(
 			})
 		}
 
-		if (rest.onClick !== undefined) {
+		if (display === "button") {
 			return (
 				<button
 					type="button"

@@ -377,6 +377,7 @@ function AddRelationshipTypePicker(props: {
 								className="inline size-3"
 							/>
 						}
+						display="button"
 						onClick={() => onPick(type.id)}
 						data-testid={`charactership-add-${type.id}`}
 					>

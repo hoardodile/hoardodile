@@ -55,11 +55,11 @@ import {
 	reorderTagMutation,
 	siblingGroupsQueryOptions,
 	TagChip,
+	TagChipHover,
 	type TagSiblingGroup,
 	tagListWithCountsQueryOptions,
 } from "@/features/tags"
 import { MergeTagsDialog } from "@/features/tags/MergeTagsDialog"
-import { TagChipHover } from "@/features/tags/TagChipHover"
 import { TagImageEditDialog } from "@/features/tags/TagImageEditDialog"
 import { useDeleteMutation } from "@/hooks/useDeleteMutation"
 import { useReorderMutation } from "@/hooks/useReorderMutation"
@@ -486,13 +486,6 @@ function TagCard(props: {
 				chip={
 					<TagChipHover tagId={tag.id}>
 						<TagChip
-							title={
-								(tag.link?.length ?? 0) === 0 &&
-								tag.imageMeta === undefined &&
-								tag.intro.trim() === ""
-									? tag.name
-									: undefined
-							}
 							color={tag.color}
 							border={unused ? "dashed" : undefined}
 							icon={
@@ -521,7 +514,7 @@ function TagCard(props: {
 						>
 							<Icon icon={Gallery} />
 							{imageSlotHasFile(tag.imageMeta) === true
-								? t("tags.edit.replaceImage")
+								? t("tags.edit.editImage")
 								: t("tags.edit.uploadImage")}
 						</DropdownMenuItem>
 						<DropdownMenuItem

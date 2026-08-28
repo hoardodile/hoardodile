@@ -52,6 +52,7 @@ export function DualChipList(props: DualChipListProps) {
 								icon={item.icon}
 								size={size}
 								active
+								display="button"
 								onClick={() => onToggle(item.id)}
 							>
 								{item.label}
@@ -76,6 +77,7 @@ export function DualChipList(props: DualChipListProps) {
 								color={item.color ?? ""}
 								icon={item.icon}
 								size={size}
+								display="button"
 								onClick={() => onToggle(item.id)}
 							>
 								{item.label}

@@ -6,13 +6,13 @@ import {
 	PreviewCardPositioner,
 	PreviewCardTrigger,
 } from "@hoardodile/ui/components/preview-card"
-import { type ReactElement, useEffect, useRef, useState } from "react"
+import { type ReactElement, useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { ExternalLink } from "@/components/common/ExternalLink"
 import { apiPaths } from "@/lib/paths"
 import { hostnameOf, withScheme } from "@/lib/url"
 import { useTagList } from "./store"
-import { clampDisplaySize, type DisplaySize } from "./tagHoverSpec"
+import { clampDisplaySize, TAG_HOVER_IMAGE_MAX } from "./tagHoverSpec"
 
 export type TagChipHoverProps = {
 	/** The tag (display) id to resolve preview data for. */
@@ -35,83 +35,24 @@ export type TagChipHoverProps = {
  * with nothing to show render bare, keeping decorative chips free of any
  * hover cost; chips that do have content get a subtle ring on hover so
  * the affordance exists without disturbing the chip's static look.
+ *
+ * Open/close/anchoring/animations are owned entirely by Base UI's
+ * preview-card state machine (uncontrolled). The trigger clones the chip
+ * into itself and merges its popup-interaction props onto it — including
+ * the dismiss `onClick`, a no-op with the default `referencePress`.
+ * `TagChip`'s root element is fixed by its `display` prop, never by the
+ * presence of an `onClick`, so the merge can never swap the chip's
+ * element under the hover listeners.
  */
-const HOVER_OPEN_DELAY = 200
-const HOVER_CLOSE_DELAY = 120
-
 export function TagChipHover(props: TagChipHoverProps) {
 	const { tagId, children, className } = props
 	const { t } = useTranslation()
 	const tags = useTagList()
 	const tag = tags.find((candidate) => candidate.id === tagId)
-	const [open, setOpen] = useState(false)
 	const [imgFailed, setImgFailed] = useState(false)
-	const [naturalSize, setNaturalSize] = useState<DisplaySize | undefined>(
-		undefined,
-	)
-	const openTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-	const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-	function clearTimers() {
-		if (openTimer.current !== null) clearTimeout(openTimer.current)
-		if (closeTimer.current !== null) clearTimeout(closeTimer.current)
-		openTimer.current = null
-		closeTimer.current = null
-	}
-
-	function handlePointerEnter() {
-		clearTimers()
-		openTimer.current = setTimeout(() => setOpen(true), HOVER_OPEN_DELAY)
-	}
-
-	function handlePointerLeave() {
-		clearTimers()
-		closeTimer.current = setTimeout(() => setOpen(false), HOVER_CLOSE_DELAY)
-	}
-
-	function handleFocus() {
-		clearTimers()
-		openTimer.current = setTimeout(() => setOpen(true), HOVER_OPEN_DELAY)
-	}
-
-	function handleBlur() {
-		clearTimers()
-		closeTimer.current = setTimeout(() => setOpen(false), HOVER_CLOSE_DELAY)
-	}
-
-	// Clicks are never intercepted: Base UI reports trigger presses but we
-	// ignore them, so navigation/selection stays on the chip. The open
-	// state is fully owned here — Base UI's internal hover state machine
-	// stays inert (it can wedge in the sortable management panel: the
-	// close animation never completes and re-hovering never re-opens).
-	function handleOpenChange(_next: boolean, _details: { reason?: string }) {
-		// Intentionally no-op: the controlled `open` is the only source
-		// of truth, and our own mouse/focus handlers drive it.
-	}
-
-	// Escape closes the card (keyboard dismissal parity with the
-	// previously built-in behaviour).
-	useEffect(() => {
-		if (!open) return
-		function onKeyDown(event: KeyboardEvent) {
-			if (event.key === "Escape") setOpen(false)
-		}
-		window.addEventListener("keydown", onKeyDown)
-		return () => window.removeEventListener("keydown", onKeyDown)
-	}, [open])
-
-	// The hover state is owned here instead of Base UI's interactive
-	// trigger: its open/close state machine can wedge in the sortable
-	// management panel (close animation never completes, so re-hovering
-	// never re-opens until the component remounts). Timers are cleared on
-	// unmount so a removed chip never leaks a pending open.
-	useEffect(() => clearTimers, [])
 
 	useEffect(() => {
 		setImgFailed(false)
-		setNaturalSize(undefined)
-		setOpen(false)
-		clearTimers()
 	}, [tagId])
 
 	if (tag === undefined) return children
@@ -130,21 +71,21 @@ export function TagChipHover(props: TagChipHoverProps) {
 		hasImage && tag.imageMeta !== undefined && !isEmptyMeta(tag.imageMeta)
 			? tag.imageMeta
 			: undefined
-	// Seed from the server-reported dimensions, calibrate on load.
-	const seedSize =
+	// The artwork size comes from the server-reported dimensions only —
+	// a single source of truth. Re-measuring on `load` made the card
+	// change size mid-open (layout shift + floating re-positioning reads
+	// as a double animation), so the natural size is never applied.
+	const artSize =
 		artMeta !== undefined
 			? clampDisplaySize(artMeta.width ?? 1, artMeta.height ?? 1)
-			: undefined
-	const artSize = naturalSize ?? seedSize ?? clampDisplaySize(1, 1)
+			: { width: TAG_HOVER_IMAGE_MAX.width, height: TAG_HOVER_IMAGE_MAX.height }
 
 	return (
-		<PreviewCard open={open} onOpenChange={handleOpenChange}>
+		<PreviewCard>
 			<PreviewCardTrigger
+				delay={200}
+				closeDelay={120}
 				render={children}
-				onMouseEnter={handlePointerEnter}
-				onMouseLeave={handlePointerLeave}
-				onFocus={handleFocus}
-				onBlur={handleBlur}
 				className="transition-shadow hover:ring-1 hover:ring-primary/20 focus-visible:ring-1 focus-visible:ring-primary/20"
 			/>
 			<PreviewCardPortal>
@@ -152,8 +93,6 @@ export function TagChipHover(props: TagChipHoverProps) {
 					<PreviewCardPopup
 						aria-label={t("tags.card.aria", { name: tag.name })}
 						className="w-fit overflow-hidden p-0"
-						onMouseEnter={clearTimers}
-						onMouseLeave={handlePointerLeave}
 					>
 						<div className="flex w-fit flex-col gap-2 p-3">
 							{thumbSrc !== undefined && !imgFailed ? (
@@ -164,15 +103,6 @@ export function TagChipHover(props: TagChipHoverProps) {
 									aria-hidden
 									width={artSize.width}
 									height={artSize.height}
-									onLoad={(event) => {
-										const img = event.currentTarget
-										setNaturalSize(
-											clampDisplaySize(
-												img.naturalWidth || 1,
-												img.naturalHeight || 1,
-											),
-										)
-									}}
 									onError={() => setImgFailed(true)}
 									className="mx-auto rounded-md object-contain"
 									data-testid={`tag-hover-art-${tag.id}`}

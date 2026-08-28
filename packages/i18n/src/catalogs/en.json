@@ -1926,7 +1926,7 @@
 			"linkPlaceholder": "https://…",
 			"linkHint": "Optional link to the tag's canonical page — shown in the hover preview.",
 			"uploadImage": "Upload image…",
-			"replaceImage": "Replace image…",
+			"editImage": "Edit image…",
 			"imageDialogTitle": "Tag image"
 		},
 		"card": {

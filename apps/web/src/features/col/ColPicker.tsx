@@ -108,6 +108,7 @@ function ColPickerList(props: ColPickerListProps) {
 							key={c.id}
 							active={active}
 							color={c.color}
+							display="button"
 							onClick={() => toggle(value, c.id, onChange)}
 							title={title}
 							data-testid={`collection-picker-chip-${c.id}`}

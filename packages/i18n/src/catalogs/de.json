@@ -1926,7 +1926,7 @@
 			"linkPlaceholder": "https://…",
 			"linkHint": "Optionaler Link zur kanonischen Seite des Tags — erscheint in der Hover-Vorschau.",
 			"uploadImage": "Bild hochladen…",
-			"replaceImage": "Bild ersetzen…",
+			"editImage": "Bild bearbeiten…",
 			"imageDialogTitle": "Tag-Bild"
 		},
 		"card": {
