@@ -38,6 +38,8 @@ describe("parseDesktopConfig", () => {
 		expect(parsed.sharedFolderRoot).toBe("C:/docs")
 		expect(parsed.sharedFolderEnabled).toBe(false)
 		expect(parsed.resourceVersion).toBeNull()
+		expect(parsed.windowBounds).toBeNull()
+		expect(parsed.windowMaximized).toBe(false)
 	})
 
 	it("keeps a persisted port, library path, and shared folder", () => {
@@ -96,6 +98,72 @@ describe("parseDesktopConfig", () => {
 		expect(explicitNull.resourceVersion).toBeNull()
 	})
 
+	it("keeps a persisted windowBounds and windowMaximized", () => {
+		const parsed = parseDesktopConfig(
+			{
+				windowBounds: {
+					x: 120,
+					y: 80,
+					width: 1600,
+					height: 900,
+				},
+				windowMaximized: true,
+			},
+			"C:/lib",
+			"C:/docs",
+		)
+		expect(parsed.windowBounds).toEqual({
+			x: 120,
+			y: 80,
+			width: 1600,
+			height: 900,
+		})
+		expect(parsed.windowMaximized).toBe(true)
+	})
+
+	it("normalizes unknown positions to null and defaults invalid sizes", () => {
+		const parsed = parseDesktopConfig(
+			{
+				windowBounds: { width: 1280, height: 720 },
+				windowMaximized: false,
+			},
+			"C:/lib",
+			"C:/docs",
+		)
+		expect(parsed.windowBounds).toEqual({
+			x: null,
+			y: null,
+			width: 1280,
+			height: 720,
+		})
+		expect(parsed.windowBounds).not.toBeNull()
+		// A stored object with only some keys keeps the known coordinates
+		// and normalizes the missing one to null.
+		const partial = parseDesktopConfig(
+			{ windowBounds: { x: 42, width: 1024, height: 768 } },
+			"C:/lib",
+			"C:/docs",
+		)
+		expect(partial.windowBounds).toEqual({
+			x: 42,
+			y: null,
+			width: 1024,
+			height: 768,
+		})
+		const invalid = parseDesktopConfig(
+			{ windowBounds: { x: 0, y: 0, width: -10, height: 720 } },
+			"C:/lib",
+			"C:/docs",
+		)
+		expect(invalid.windowBounds).toBeNull()
+		const explicitNull = parseDesktopConfig(
+			{ windowBounds: null },
+			"C:/lib",
+			"C:/docs",
+		)
+		expect(explicitNull.windowBounds).toBeNull()
+	})
+
 	it("keeps a persisted requireSignInOnLaunch false", () => {
 		const parsed = parseDesktopConfig(
 			{ requireSignInOnLaunch: false },
@@ -122,6 +190,8 @@ describe("writeDesktopConfig", () => {
 		const file = join(dir, "desktop.json")
 		const config = defaultDesktopConfig("C:/lib", "C:/docs")
 		config.wizardComplete = true
+		config.windowBounds = { x: 10, y: 20, width: 1400, height: 800 }
+		config.windowMaximized = true
 		writeDesktopConfig(file, config)
 		const raw: unknown = JSON.parse(readFileSync(file, "utf8"))
 		expect(raw).toMatchObject({
@@ -133,6 +203,8 @@ describe("writeDesktopConfig", () => {
 			portPreferred: 3000,
 			lanEnabled: false,
 			closeAction: "ask",
+			windowBounds: { x: 10, y: 20, width: 1400, height: 800 },
+			windowMaximized: true,
 		})
 	})
 })

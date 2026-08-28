@@ -1,6 +1,7 @@
 import { join } from "node:path"
 import type { SupportedLanguage } from "@hoardodile/i18n"
-import { app, BrowserWindow, nativeTheme, shell } from "electron"
+import { app, BrowserWindow, nativeTheme, screen, shell } from "electron"
+import type { WindowBounds } from "./config.ts"
 import {
 	devServerErrorMessage,
 	rendererCrashedMessage,
@@ -12,6 +13,7 @@ import {
 	wizardWindowDecision,
 } from "./urls.ts"
 import { windowBackgroundColor } from "./window-background.ts"
+import { resolveInitialBounds } from "./window-state.ts"
 
 export type WindowKind = "wizard" | "app"
 
@@ -57,6 +59,13 @@ export type CreateWindowOptions = {
 	readonly shellPage?: ShellPageTarget
 	/** App windows: UI language for shell-page messages (fallback: system). */
 	readonly language?: SupportedLanguage
+	/**
+	 * App windows: persisted bounds (DIP) to restore, validated against
+	 * the current display layout; `null`/absent → the window-kind default.
+	 */
+	readonly initialBounds?: WindowBounds | null
+	/** App windows: start maximized (applied before the first show). */
+	readonly maximized?: boolean
 }
 
 export function createDesktopWindow(
@@ -68,14 +77,26 @@ export function createDesktopWindow(
 	// renders at its designed size next to the panel instead of being
 	// squeezed into the leftover ~1040px.
 	const devToolsDockWidth = 600
-	const width =
+	const defaultWidth =
 		options.kind === "wizard"
 			? 520
 			: 1440 + (app.isPackaged ? 0 : devToolsDockWidth)
-	const height = options.kind === "wizard" ? 640 : 1080
+	const defaultHeight = options.kind === "wizard" ? 640 : 1080
+	const initial = resolveInitialBounds(
+		options.initialBounds ?? null,
+		screen.getAllDisplays().map((display) => display.workArea),
+		{
+			minWidth: options.kind === "wizard" ? 440 : 800,
+			minHeight: options.kind === "wizard" ? 520 : 560,
+			defaultWidth,
+			defaultHeight,
+		},
+	)
 	const win = new BrowserWindow({
-		width,
-		height,
+		width: initial.width,
+		height: initial.height,
+		...(initial.x !== undefined ? { x: initial.x } : {}),
+		...(initial.y !== undefined ? { y: initial.y } : {}),
 		minWidth: options.kind === "wizard" ? 440 : 800,
 		minHeight: options.kind === "wizard" ? 520 : 560,
 		show: false,
@@ -123,6 +144,12 @@ export function createDesktopWindow(
 	})
 
 	win.once("ready-to-show", () => {
+		// Maximize before the first show so the user never sees the
+		// un-maximized frame flash past; the restored bounds are the
+		// normal-state bounds, so un-maximizing returns to them.
+		if (options.maximized === true && !win.isDestroyed()) {
+			win.maximize()
+		}
 		// DevTools is on demand in dev (caption-bar button, IPC
 		// `desktop:window:toggle-devtools`); never auto-open — an
 		// always-on DevTools panel prints Chromium-internal protocol

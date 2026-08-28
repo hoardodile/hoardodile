@@ -79,6 +79,7 @@ import {
 	preloadPath,
 	type ShellPageTarget,
 } from "./window.ts"
+import { captureBounds } from "./window-state.ts"
 
 const HEALTH_LOG_LIMIT = 200_000
 
@@ -149,6 +150,65 @@ function resolveViteNodeCli(workspaceRoot: string): string {
 
 function persist(runtime: Runtime): void {
 	writeDesktopConfig(runtime.configPath, runtime.config)
+}
+
+const WINDOW_STATE_DEBOUNCE_MS = 400
+const windowStateTimers = new WeakMap<
+	BrowserWindow,
+	ReturnType<typeof setTimeout>
+>()
+
+/**
+ * Persist the app window's normal-state bounds + maximized flag
+ * (debounced — a drag-resize floods `resize`/`move`). `close` flushes
+ * synchronously (it also covers quit/relaunch, whose `app.quit()` pass
+ * closes the window through this event), and every intentional `destroy`
+ * (tray hide, sidecar crash, LAN failure) must flush first: `destroy()`
+ * skips `close`, so the debounce would otherwise lose the last geometry.
+ */
+function scheduleWindowStatePersist(
+	runtime: Runtime,
+	win: BrowserWindow,
+): void {
+	const existing = windowStateTimers.get(win)
+	if (existing !== undefined) clearTimeout(existing)
+	windowStateTimers.set(
+		win,
+		setTimeout(() => {
+			windowStateTimers.delete(win)
+			flushWindowState(runtime, win)
+		}, WINDOW_STATE_DEBOUNCE_MS),
+	)
+}
+
+function flushWindowState(
+	runtime: Runtime,
+	win: BrowserWindow | undefined,
+): void {
+	if (win === undefined || win.isDestroyed()) return
+	const timer = windowStateTimers.get(win)
+	if (timer !== undefined) {
+		clearTimeout(timer)
+		windowStateTimers.delete(win)
+	}
+	runtime.config = {
+		...runtime.config,
+		windowBounds: captureBounds(win),
+		windowMaximized: win.isMaximized(),
+	}
+	// Window-state persistence must never take the shell down: a failing
+	// write here runs from the resize debounce timer and the `close`
+	// event — an uncaught throw would crash the main process (or leave
+	// the window un-closable when the IPC handler inline-flushes).
+	try {
+		persist(runtime)
+	} catch (err) {
+		console.error(
+			`[desktop] failed to persist window state: ${
+				err instanceof Error ? err.message : String(err)
+			}`,
+		)
+	}
 }
 
 function broadcastUpdate(runtime: Runtime, state: DesktopUpdateState): void {
@@ -383,7 +443,11 @@ async function applyLanChange(
 		runtime.config = previous
 		persist(runtime)
 		runtime.crashed = true
-		runtime.window?.destroy()
+		const win = runtime.window
+		if (win !== undefined) {
+			flushWindowState(runtime, win)
+			win.destroy()
+		}
 		runtime.window = undefined
 		rebuildSidecarTray(runtime)
 		const message = err instanceof Error ? err.message : String(err)
@@ -469,7 +533,11 @@ async function quitApp(runtime: Runtime): Promise<void> {
 }
 
 async function restartSidecar(runtime: Runtime): Promise<void> {
-	runtime.window?.destroy()
+	const win = runtime.window
+	if (win !== undefined) {
+		flushWindowState(runtime, win)
+		win.destroy()
+	}
 	runtime.window = undefined
 	try {
 		runtime.sidecar = await spawnSidecar(runtime)
@@ -527,7 +595,11 @@ async function spawnSidecar(runtime: Runtime): Promise<SidecarHandle> {
 function onSidecarCrash(runtime: Runtime): void {
 	if (runtime.quitting) return
 	runtime.crashed = true
-	runtime.window?.destroy()
+	const win = runtime.window
+	if (win !== undefined) {
+		flushWindowState(runtime, win)
+		win.destroy()
+	}
 	runtime.window = undefined
 	if (runtime.tray !== undefined) {
 		rebuildTrayMenu(
@@ -594,8 +666,15 @@ async function openAppWindow(runtime: Runtime): Promise<void> {
 		iconPath: runtime.iconPath,
 		shellPage: shellPageTarget(runtime),
 		language: runtime.language,
+		initialBounds: runtime.config.windowBounds,
+		maximized: runtime.config.windowMaximized,
 	})
 	bindWindowMaximizeEvents(win)
+	// Window geometry persistence: the tray-hide/relaunch paths destroy
+	// the window, so the normal bounds + maximized flag ride desktop.json.
+	win.on("resize", () => scheduleWindowStatePersist(runtime, win))
+	win.on("move", () => scheduleWindowStatePersist(runtime, win))
+	win.on("close", () => flushWindowState(runtime, win))
 	win.on("closed", () => {
 		if (runtime.window === win) runtime.window = undefined
 	})
@@ -891,8 +970,13 @@ async function boot(): Promise<void> {
 			}
 			// Hide to tray: destroy is intentional — it skips the close
 			// guard (the renderer already decided) and the app keeps
-			// running under the tray with the session intact.
-			runtime.window?.destroy()
+			// running under the tray with the session intact. Flush the
+			// last geometry first: destroy() never emits `close`.
+			const win = runtime.window
+			if (win !== undefined) {
+				flushWindowState(runtime, win)
+				win.destroy()
+			}
 		},
 		setLanguage(language) {
 			runtime.language = language

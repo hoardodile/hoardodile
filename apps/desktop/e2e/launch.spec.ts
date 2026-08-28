@@ -1,4 +1,4 @@
-import { existsSync } from "node:fs"
+import { existsSync, readFileSync } from "node:fs"
 import { join } from "node:path"
 import { expect, test } from "@playwright/test"
 import { expectShellRendered } from "./app-shell.ts"
@@ -67,12 +67,33 @@ test("first run → claim → relaunch persistence", async () => {
 			true,
 		)
 		expect(existsSync(join(first.userDataDir, "desktop.json"))).toBe(true)
+
+		// Window geometry persistence: resize explicitly — the relaunch
+		// below must come back at the same size and store the bounds.
+		const bounds = { x: 96, y: 72, width: 1120, height: 700 }
+		await first.app.evaluate(({ BrowserWindow }, next) => {
+			const win = BrowserWindow.getAllWindows()[0]
+			if (win === undefined) throw new Error("no app window")
+			win.setBounds(next)
+		}, bounds)
+		// Wait out the debounced persistence (400 ms) plus a write tick.
+		await expect
+			.poll(() =>
+				first.app.evaluate(({ BrowserWindow }) => {
+					const win = BrowserWindow.getAllWindows()[0]
+					if (win === undefined) return null
+					const b = win.getBounds()
+					return b.width === 1120 && b.height === 700
+				}),
+			)
+			.toBe(true)
 	} finally {
 		await first.close()
 	}
 
 	// 4. relaunch on the same profile: the wizard is done, the session
-	// cookie survived, and the library is the same tree.
+	// cookie survived, the library came back, and the window geometry was
+	// restored from desktop.json.
 	const second = await launchDesktop({
 		userDataDir: first.userDataDir,
 		libraryDir: first.libraryDir,
@@ -86,6 +107,22 @@ test("first run → claim → relaunch persistence", async () => {
 			.toBe(true)
 		const appWin = appWindow(second.app, second.url)
 		await expectShellRendered(appWin, { timeout: 120_000 })
+
+		const restored = await second.app.evaluate(({ BrowserWindow }) => {
+			const win = BrowserWindow.getAllWindows()[0]
+			if (win === undefined) throw new Error("no app window")
+			const b = win.getBounds()
+			return { width: b.width, height: b.height }
+		})
+		expect(restored).toEqual({ width: 1120, height: 700 })
+		expect(
+			JSON.parse(
+				readFileSync(join(second.userDataDir, "desktop.json"), "utf8"),
+			),
+		).toMatchObject({
+			windowBounds: { width: 1120, height: 700 },
+			windowMaximized: false,
+		})
 	} finally {
 		await second.close()
 	}

@@ -6,6 +6,17 @@ export const DEFAULT_PORT = 3000
 
 export type CloseAction = "ask" | "tray" | "quit"
 
+/**
+ * One persistable app-window geometry. `x`/`y` are `null` when the
+ * position was never captured (or became unusable); both are DIP.
+ */
+export type WindowBounds = {
+	readonly x: number | null
+	readonly y: number | null
+	readonly width: number
+	readonly height: number
+}
+
 export type DesktopConfig = {
 	wizardComplete: boolean
 	libraryPath: string
@@ -29,7 +40,21 @@ export type DesktopConfig = {
 	autoUpdate: boolean
 	/** Version of the applied resource payload (server tree), `null` when still on the installer's tree. */
 	resourceVersion: string | null
+	/**
+	 * Last app-window bounds (DIP), restored at the next window creation.
+	 * `null` until a window has been captured once.
+	 */
+	windowBounds: WindowBounds | null
+	/** Whether the app window was maximized when it was last captured. */
+	windowMaximized: boolean
 }
+
+const windowBoundsSchema = z.object({
+	x: z.number().int().nullish(),
+	y: z.number().int().nullish(),
+	width: z.number().int().positive(),
+	height: z.number().int().positive(),
+})
 
 const storedConfigSchema = z.object({
 	wizardComplete: z.boolean(),
@@ -46,6 +71,8 @@ const storedConfigSchema = z.object({
 	requireSignInOnWindowOpen: z.boolean(),
 	autoUpdate: z.boolean(),
 	resourceVersion: z.string().nullable(),
+	windowBounds: windowBoundsSchema.nullable().optional(),
+	windowMaximized: z.boolean().optional(),
 })
 
 export function defaultDesktopConfig(
@@ -78,6 +105,10 @@ export function defaultDesktopConfig(
 		// No resource layer had been applied yet — the shipped tree is the
 		// installer's. Set once the first resource update lands.
 		resourceVersion: null,
+		// No window geometry captured yet; the first resize/move/close
+		// records it.
+		windowBounds: null,
+		windowMaximized: false,
 	}
 }
 
@@ -111,6 +142,36 @@ export function parseDesktopConfig(
 			defaults.requireSignInOnWindowOpen,
 		autoUpdate: parsed.data.autoUpdate ?? defaults.autoUpdate,
 		resourceVersion: parsed.data.resourceVersion ?? defaults.resourceVersion,
+		windowBounds: normalizeWindowBounds(parsed.data.windowBounds),
+		windowMaximized: parsed.data.windowMaximized ?? defaults.windowMaximized,
+	}
+}
+
+/** Normalize a stored bounds object (x/y nullish → `null`). */
+function normalizeWindowBounds(value: unknown): WindowBounds | null {
+	if (value === undefined || value === null) return null
+	const candidate = value as Partial<WindowBounds>
+	if (
+		typeof candidate.width !== "number" ||
+		typeof candidate.height !== "number" ||
+		!Number.isInteger(candidate.width) ||
+		!Number.isInteger(candidate.height) ||
+		candidate.width <= 0 ||
+		candidate.height <= 0
+	) {
+		return null
+	}
+	return {
+		x:
+			typeof candidate.x === "number" && Number.isInteger(candidate.x)
+				? candidate.x
+				: null,
+		y:
+			typeof candidate.y === "number" && Number.isInteger(candidate.y)
+				? candidate.y
+				: null,
+		width: candidate.width,
+		height: candidate.height,
 	}
 }
 
