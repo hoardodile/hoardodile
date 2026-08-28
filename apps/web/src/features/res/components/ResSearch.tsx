@@ -6,6 +6,7 @@ import { Icon } from "@hoardodile/ui/components/icon"
 import { ListEmptyRow } from "@hoardodile/ui/components/list-empty-row"
 import { PaginationBar } from "@hoardodile/ui/components/pagination-bar"
 import { Skeleton } from "@hoardodile/ui/components/skeleton"
+import { Spinner } from "@hoardodile/ui/components/spinner"
 import { toast } from "@hoardodile/ui/components/toast"
 import {
 	Download,
@@ -13,7 +14,11 @@ import {
 	TrashBinMinimalistic,
 } from "@hoardodile/ui/icons/registry"
 import { pageCountOf } from "@hoardodile/ui/lib/pagination"
-import { keepPreviousData, useQuery } from "@tanstack/react-query"
+import {
+	keepPreviousData,
+	useInfiniteQuery,
+	useQuery,
+} from "@tanstack/react-query"
 import { useNavigate } from "@tanstack/react-router"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
@@ -43,11 +48,17 @@ import {
 	fetchResourceListCardsByIds,
 	hardDeleteManyResourcesMutation,
 	invalidateResources,
+	masonryNextPageParam,
 	resKeys,
 	resListCardsByIdsQueryOptions,
 	resListCardsQueryOptions,
 	softDeleteManyResourcesMutation,
 } from "../api"
+import {
+	distributeMasonry,
+	MASONRY_COLUMN_PX,
+	masonryColumnCount,
+} from "../utils/masonry"
 import type { ResSearchState } from "../utils/searchState"
 import { RESOURCE_SEARCH_DEFAULTS } from "../utils/searchState"
 import {
@@ -59,8 +70,15 @@ import {
 
 const MAX_BULK_PACK_DOWNLOAD = 150
 
-/** Masonry column width â€” cards cap their covers at this. */
-const MASONRY_COLUMN_PX = 280
+/**
+ * Prefetch horizon: the masonry loads the next page before the user reaches
+ * the bottom. The sentinel sits below the columns; expanding the observer's
+ * root toward the scroll direction by this much (a fraction of the viewport)
+ * makes the next fetch start well ahead of the edge — about 1.5 viewport
+ * heights of lead — so scrolling into the new cards never waits on a network
+ * round-trip or stalls at the bottom.
+ */
+const MASONRY_PREFETCH_ROOT_MARGIN = "0px 0px 150% 0px"
 
 import { ResCard } from "./ResCard"
 import { ResFilterBar } from "./ResFilterBar"
@@ -204,6 +222,18 @@ function ResSearchInner(props: ResSearchInnerProps) {
 	} = state
 
 	const [previewId, setPreviewId] = useState("")
+	// Masonry infinite scroll: `page` is the fixed position the top pager
+	// shows AND the URL page — it is changed only by explicit actions
+	// (top-pager jump, filter/view reset to 1). Scrolling to load more never
+	// advances `page`, so the URL and the pager stay put. `masonrySession`
+	// bumps on every hard reset so the infinite query gets a fresh key instead
+	// of reusing previously appended pages.
+	const [masonrySession, bumpMasonrySession] = useState(0)
+	const masonrySentinelRef = useRef<HTMLDivElement | null>(null)
+	// Number of masonry columns: measured from the container so cards always
+	// fill the width exactly like the old CSS `columns-[280px]` layout did.
+	const [masonryCols, setMasonryCols] = useState(1)
+	const masonryContainerRef = useRef<HTMLDivElement | null>(null)
 	const handlePreviewRequest = useCallback(
 		(resource: ResCardData) => setPreviewId(resource.id),
 		[],
@@ -226,7 +256,19 @@ function ResSearchInner(props: ResSearchInnerProps) {
 	}, [bulkSelectOn, showOnlySelected, patchStateInner])
 
 	const patchState = useCallback(
-		(partial: Partial<ResSearchState>, opts?: { push?: boolean }) => {
+		(partialArg: Partial<ResSearchState>, opts?: { push?: boolean }) => {
+			let partial = partialArg
+			// Masonry: changing anything that defines the result set (any key
+			// other than the page marker) starts a fresh infinite list from
+			// page 1. Scroll-driven `page` advances pass through untouched so
+			// they append, not reset.
+			if (
+				view === "masonry" &&
+				Object.keys(partial).some((key) => key !== "page")
+			) {
+				bumpMasonrySession((n) => n + 1)
+				partial = { ...partial, page: 1 }
+			}
 			if (partial.trash !== undefined && partial.trash !== trash) {
 				setBulkIds([])
 				patchStateInner({ ...partial, showOnlySelected: false }, opts)
@@ -245,7 +287,17 @@ function ResSearchInner(props: ResSearchInnerProps) {
 			}
 			patchStateInner(partial, opts)
 		},
-		[trash, contentPluginId, patchStateInner],
+		[trash, contentPluginId, view, patchStateInner],
+	)
+
+	// Masonry top-pager jump: reset the list to the chosen page and continue
+	// infinite-loading from it. User-initiated, so it pushes a history entry.
+	const jumpToPage = useCallback(
+		(page: number) => {
+			bumpMasonrySession((n) => n + 1)
+			patchState({ page }, { push: true })
+		},
+		[patchState],
 	)
 
 	// Panel placement stages rail edits in a draft and applies them on
@@ -481,16 +533,75 @@ function ResSearchInner(props: ResSearchInnerProps) {
 						ids: sortedSelectedIds,
 					})
 				: fetchResourceListCards({ ...listFilters, trash }),
-		enabled: !showOnlySelected || sortedSelectedIds.length > 0,
-		placeholderData: keepPreviousData,
+		enabled:
+			view === "grid" && (!showOnlySelected || sortedSelectedIds.length > 0),
+		placeholderData: view === "grid" ? keepPreviousData : undefined,
 		staleTime: 2_000,
 	})
 
-	const rows = listQuery.data?.rows ?? []
-	const total = listQuery.data?.total ?? 0
+	// Masonry infinite list. The key pins the result set + the current
+	// `page` (the top-pager position, changed only on explicit resets/jumps)
+	// plus a session token so a hard reset never reuses appended pages:
+	// `page` never advances on scroll, so the key stays stable and appends
+	// stack instead of resetting. `initialPageParam` mirrors `page` so a jump
+	// restarts there, and `getNextPageParam` stops at the last page.
+	const masonryQuery = useInfiniteQuery({
+		queryKey: [
+			...resKeys.listCardsInfinite({
+				trash,
+				...listFilters,
+				...(showOnlySelected ? { ids: sortedSelectedIds } : {}),
+			}),
+			view,
+			masonrySession,
+		],
+		queryFn: ({ pageParam }) =>
+			showOnlySelected
+				? fetchResourceListCardsByIds({
+						...listFilters,
+						page: pageParam,
+						trash,
+						ids: sortedSelectedIds,
+					})
+				: fetchResourceListCards({ ...listFilters, page: pageParam, trash }),
+		initialPageParam: page,
+		enabled:
+			view === "masonry" && (!showOnlySelected || sortedSelectedIds.length > 0),
+		getNextPageParam: masonryNextPageParam,
+		// A silent refresh must not drop the pages already accumulated by the
+		// user; only an explicit invalidation (a resource mutation / SSE event)
+		// resets the list back to the current position page.
+		staleTime: Number.POSITIVE_INFINITY,
+	})
+
+	const gridRows = listQuery.data?.rows ?? []
+	const gridTotal = listQuery.data?.total ?? 0
+	const masonryRows =
+		view === "masonry"
+			? (masonryQuery.data?.pages.flatMap((page) => page.rows) ?? [])
+			: []
+	const masonryTotal =
+		view === "masonry" ? (masonryQuery.data?.pages[0]?.total ?? 0) : 0
+	const rows = view === "masonry" ? masonryRows : gridRows
+	const total = view === "masonry" ? masonryTotal : gridTotal
 	const pageCount = pageCountOf(total, size)
 
+	const masonryIsLoading = view === "masonry" && masonryQuery.isLoading
+	const masonryHasNext =
+		view === "masonry" && (masonryQuery.hasNextPage ?? false)
+	const masonryIsLoadingMore =
+		view === "masonry" && masonryQuery.isFetchingNextPage
+	// Distribute the accumulated rows across fixed columns. Because
+	// `distributeMasonry` is a pure function of `rows` in order, appending
+	// never reassigns a card that is already placed — the masonry appends
+	// downward instead of rebalancing the columns (fixes the CSS-`columns`
+	// reflow that read as "content replaced").
+	const masonryColumns =
+		view === "masonry" ? distributeMasonry(rows, masonryCols) : []
+
+	// Grid: when a filter overshoots the last page, back off one page.
 	useEffect(() => {
+		if (view !== "grid") return
 		if (listQuery.isPlaceholderData) return
 		if (rows.length === 0 && total > 0) {
 			const target = Math.max(1, page - 1)
@@ -498,7 +609,50 @@ function ResSearchInner(props: ResSearchInnerProps) {
 				patchState({ page: target }, { push: true })
 			}
 		}
-	}, [listQuery.isPlaceholderData, page, rows.length, total, patchState])
+	}, [view, listQuery.isPlaceholderData, page, rows.length, total, patchState])
+
+	// Masonry column count follows the container width (matches the old
+	// `columns-[280px]` density) so cards always fill the whole row.
+	useEffect(() => {
+		if (view !== "masonry") return
+		const el = masonryContainerRef.current
+		if (el === null) return
+		const measure = () => setMasonryCols(masonryColumnCount(el.clientWidth))
+		measure()
+		const observer = new ResizeObserver(measure)
+		observer.observe(el)
+		return () => observer.disconnect()
+	}, [view])
+
+	// Prefetch before the bottom: observe a sentinel below the columns with a
+	// generous root margin, so the next page starts loading while the user is
+	// still well above the edge. Re-armed whenever the row count changes so a
+	// short first page keeps filling the viewport without a blank gap.
+	const masonryFetchingRef = useRef(false)
+	masonryFetchingRef.current = masonryQuery.isFetchingNextPage
+	useEffect(() => {
+		if (view !== "masonry") return
+		if (masonryIsLoading || masonryRows.length === 0 || !masonryHasNext) return
+		const el = masonrySentinelRef.current
+		if (el === null) return
+		const observer = new IntersectionObserver(
+			(entries) => {
+				if (!entries.some((entry) => entry.isIntersecting)) return
+				if (masonryFetchingRef.current) return
+				void masonryQuery.fetchNextPage()
+			},
+			{ rootMargin: MASONRY_PREFETCH_ROOT_MARGIN },
+		)
+		observer.observe(el)
+		return () => observer.disconnect()
+	}, [
+		view,
+		masonryIsLoading,
+		masonryRows.length,
+		masonryHasNext,
+		masonrySession,
+		masonryQuery.fetchNextPage,
+	])
 
 	const hardBulkExpected = String(bulkIds.length)
 	const showBulkToolbar = allowInternalBulk && bulkSelectOn && !showOnlySelected
@@ -670,7 +824,11 @@ function ResSearchInner(props: ResSearchInnerProps) {
 					<PaginationBar
 						page={page}
 						pageCount={pageCount}
-						onChangePage={(p) => patchState({ page: p }, { push: true })}
+						onChangePage={
+							view === "masonry"
+								? jumpToPage
+								: (p) => patchState({ page: p }, { push: true })
+						}
 						totalLabel={t("resources.search.itemCount", { count: total })}
 					/>
 				</div>
@@ -714,45 +872,68 @@ function ResSearchInner(props: ResSearchInnerProps) {
 					)}
 				</ul>
 			) : (
-				<ul className="mt-8 columns-[280px] gap-6" data-testid="resource-list">
-					{rows.length === 0 ? (
-						listQuery.isLoading ? (
-							<ResListSkeleton />
+				<>
+					<div
+						ref={masonryContainerRef}
+						className="mt-8 flex items-start gap-6"
+						data-testid="resource-list"
+					>
+						{rows.length === 0 ? (
+							<div className="w-full">
+								{masonryIsLoading ? (
+									<MasonrySkeleton />
+								) : (
+									<ListEmptyRow>
+										{trash
+											? t("resources.search.trashEmpty")
+											: t("resources.search.empty")}
+									</ListEmptyRow>
+								)}
+							</div>
 						) : (
-							<li className="break-inside-avoid">
-								<ListEmptyRow>
-									{trash
-										? t("resources.search.trashEmpty")
-										: t("resources.search.empty")}
-								</ListEmptyRow>
-							</li>
-						)
-					) : (
-						rows.map((r) => (
-							<li key={r.id} className="mb-6 break-inside-avoid">
-								<ResCard
-									resource={r}
-									selection={resolveCardSelection(
-										effectiveMulti ?? selection,
-										r.id,
-									)}
-									onPreviewRequest={handlePreviewRequest}
-									onOpenCard={
-										onOpenCard !== undefined
-											? (card) => onOpenCard(r.id, card)
-											: undefined
-									}
-									// Masonry columns cap the cover's width â€”
-									// the mirror of the pinned strip's
-									// fit-height, on the other axis.
-									thumbFitWidth={MASONRY_COLUMN_PX}
-								/>
-							</li>
-						))
-					)}
-				</ul>
+							masonryColumns.map((colCards, columnIndex) => (
+								<ul
+									key={columnIndex}
+									className="flex w-0 flex-1 flex-col gap-6"
+								>
+									{colCards.map((r) => (
+										<li key={r.id} className="flex w-full justify-center">
+											<ResCard
+												resource={r}
+												selection={resolveCardSelection(
+													effectiveMulti ?? selection,
+													r.id,
+												)}
+												onPreviewRequest={handlePreviewRequest}
+												onOpenCard={
+													onOpenCard !== undefined
+														? (card) => onOpenCard(r.id, card)
+														: undefined
+												}
+												// Column width caps the cover, the mirror
+												// of the pinned strip's fit-height.
+												thumbFitWidth={MASONRY_COLUMN_PX}
+											/>
+										</li>
+									))}
+								</ul>
+							))
+						)}
+					</div>
+					{rows.length > 0 && (masonryHasNext || masonryIsLoadingMore) ? (
+						<div
+							className="mt-6 flex items-center justify-center gap-2"
+							aria-hidden
+						>
+							{masonryIsLoadingMore ? (
+								<Spinner className="size-5 animate-spin text-muted-foreground" />
+							) : null}
+							<div ref={masonrySentinelRef} className="h-px w-px" />
+						</div>
+					) : null}
+				</>
 			)}
-			{pageCount > 1 ? (
+			{view === "grid" && pageCount > 1 ? (
 				<div className="mt-8">
 					<PaginationBar
 						page={page}
@@ -767,10 +948,14 @@ function ResSearchInner(props: ResSearchInnerProps) {
 				page={page}
 				size={size}
 				total={total}
+				infinite={view === "masonry"}
 				previewId={previewId}
 				onChangePreviewId={setPreviewId}
 				onChangePage={(p) =>
-					patchState({ page: p }, { push: previewId === "" })
+					patchState(
+						{ page: p },
+						{ push: view !== "masonry" && previewId === "" },
+					)
 				}
 			/>
 
@@ -840,5 +1025,44 @@ function ResListSkeleton() {
 				</li>
 			))}
 		</>
+	)
+}
+
+/** Waterfall-form skeleton for the masonry view: variable-height cards in the
+    same column layout as the real list, enough of them to fill the screen so
+    a load / filter change / refresh never shows a blank gap. */
+function MasonrySkeleton() {
+	const shapes = [
+		"aspect-[3/4]",
+		"aspect-square",
+		"aspect-[4/3]",
+		"aspect-[16/9]",
+		"aspect-[3/4]",
+		"aspect-[5/4]",
+	]
+	return (
+		<ul
+			className="min-h-[calc(100svh-8rem)] columns-[280px] gap-6"
+			data-testid="resource-masonry-skeleton"
+		>
+			{Array.from({ length: 20 }, (_, index) => (
+				<li key={index} className="mb-6 break-inside-avoid">
+					<div className="flex flex-col gap-1.5">
+						<Skeleton
+							className={`animate-skel rounded-xl ${shapes[index % shapes.length]}`}
+						/>
+						<Skeleton className="animate-skel h-3.5 w-3/4" />
+						<div className="flex gap-1.5">
+							<Skeleton className="animate-skel h-4.5 w-14 rounded-full" />
+							<Skeleton className="animate-skel h-4.5 w-18 rounded-full" />
+						</div>
+						<div className="flex justify-between">
+							<Skeleton className="animate-skel h-2.5 w-14" />
+							<Skeleton className="animate-skel h-2.5 w-24" />
+						</div>
+					</div>
+				</li>
+			))}
+		</ul>
 	)
 }

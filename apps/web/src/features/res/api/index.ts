@@ -44,6 +44,8 @@ export const resKeys = {
 	list: (input: ResListKeyInput) => [...resKeys.all, "list", input] as const,
 	listCards: (input: ResListKeyInput) =>
 		[...resKeys.all, "listCards", input] as const,
+	listCardsInfinite: (input: ResListKeyInput) =>
+		[...resKeys.all, "listCardsInfinite", input] as const,
 	listCardsByIds: (input: ResListKeyInput) =>
 		[...resKeys.all, "listCardsByIds", input] as const,
 	detail: (id: string) => [...resKeys.all, "detail", id] as const,
@@ -80,6 +82,17 @@ export const importKeys = {
 export type ResCardListResult = ListPageResult<ResCard>
 
 export const RESOURCE_PAGE_SIZE = DEFAULT_PAGE_SIZE
+
+/**
+ * Next-page cursor for the masonry infinite list. Keeps fetching until the
+ * current page's offset covers the total; a page that fills the last batch
+ * (or a zero-total list) stops the pager.
+ */
+export function masonryNextPageParam(
+	page: ResCardListResult,
+): number | undefined {
+	return page.page * page.size < page.total ? page.page + 1 : undefined
+}
 
 type ResListOptions = {
 	readonly query: string

@@ -106,13 +106,20 @@ export type ResSearchPreviewDialogProps = {
 	readonly page: number
 	readonly size: number
 	readonly total: number
+	/**
+	 * Infinite (masonry) mode: `rows` are already the accumulated cross-page
+	 * list. Prev/next then navigate within those loaded rows only — never
+	 * across a page boundary — so the cross-page bootstrap (`resolveCrossPage`)
+	 * is bypassed.
+	 */
+	readonly infinite?: boolean
 	readonly previewId: string
 	readonly onChangePreviewId: (id: string) => void
 	readonly onChangePage: (page: number) => void
 }
 
 export function ResSearchPreviewDialog(props: ResSearchPreviewDialogProps) {
-	const { rows, page, size, total, previewId } = props
+	const { rows, page, size, total, previewId, infinite } = props
 	const { t } = useTranslation()
 	const previewOpen = previewId !== ""
 	const pageCount = pageCountOf(total, size)
@@ -142,13 +149,17 @@ export function ResSearchPreviewDialog(props: ResSearchPreviewDialogProps) {
 		: -1
 
 	const canPrev =
-		previewOpen && (previewIndex > 0 || (previewIndex === 0 && page > 1))
+		infinite === true
+			? previewOpen && previewIndex > 0
+			: previewOpen && (previewIndex > 0 || (previewIndex === 0 && page > 1))
 	const canNext =
-		previewOpen &&
-		(previewIndex >= 0
-			? previewIndex < rows.length - 1 ||
-				(previewIndex === rows.length - 1 && page < pageCount)
-			: page < pageCount)
+		infinite === true
+			? previewOpen && previewIndex >= 0 && previewIndex < rows.length - 1
+			: previewOpen &&
+				(previewIndex >= 0
+					? previewIndex < rows.length - 1 ||
+						(previewIndex === rows.length - 1 && page < pageCount)
+					: page < pageCount)
 
 	const [pendingCrossPage, setPendingCrossPage] = useState<
 		PendingCrossPage | undefined
@@ -234,7 +245,7 @@ export function ResSearchPreviewDialog(props: ResSearchPreviewDialogProps) {
 			}
 			return
 		}
-		if (page > 1) {
+		if (infinite !== true && page > 1) {
 			setPendingCrossPage(startCrossPage("prev", rowsKey))
 			props.onChangePage(Math.max(1, page - 1))
 		}
@@ -251,7 +262,7 @@ export function ResSearchPreviewDialog(props: ResSearchPreviewDialogProps) {
 			}
 			return
 		}
-		if (page < pageCount) {
+		if (infinite !== true && page < pageCount) {
 			setPendingCrossPage(startCrossPage("next", rowsKey))
 			props.onChangePage(Math.min(pageCount, page + 1))
 		}
