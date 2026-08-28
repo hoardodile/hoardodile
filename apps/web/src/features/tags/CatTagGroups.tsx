@@ -2,6 +2,7 @@ import { cn } from "@hoardodile/ui/lib/utils"
 import { Fragment } from "react"
 import { useTranslation } from "react-i18next"
 import type { TagGroup } from "./buildTagGroups"
+import { TagChipHover } from "./TagChipHover"
 import { TagChipLink } from "./TagChipLink"
 
 export type CatTagGroupsProps = {
@@ -62,13 +63,15 @@ export function CatTagGroups(props: CatTagGroupsProps) {
 						{group.tags.map((tag) => {
 							const virtual = tag.virtual === true
 							const chip = (
-								<TagChipLink
-									id={tag.id}
-									type={type}
-									name={tag.name}
-									color={virtual ? "" : tag.color}
-									className={cn("max-w-30", virtual && "opacity-60")}
-								/>
+								<TagChipHover tagId={tag.id}>
+									<TagChipLink
+										id={tag.id}
+										type={type}
+										name={tag.name}
+										color={virtual ? "" : tag.color}
+										className={cn("max-w-30", virtual && "opacity-60")}
+									/>
+								</TagChipHover>
 							)
 							return virtual ? (
 								<span

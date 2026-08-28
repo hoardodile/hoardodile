@@ -1,4 +1,5 @@
 import type { Tag } from "@hoardodile/schemas"
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { render, screen } from "@testing-library/react"
 import type { ReactNode } from "react"
 import { describe, expect, test, vi } from "vitest"
@@ -39,9 +40,20 @@ const groups = [
 	},
 ]
 
+function renderGrouped() {
+	const qc = new QueryClient({
+		defaultOptions: { queries: { retry: false } },
+	})
+	return render(
+		<QueryClientProvider client={qc}>
+			<CatTagGroups type="resource" groups={groups} />
+		</QueryClientProvider>,
+	)
+}
+
 describe("CatTagGroups", () => {
 	test("virtual tags render weakened with the virtual marker", () => {
-		render(<CatTagGroups type="resource" groups={groups} />)
+		renderGrouped()
 		expect(screen.getByTestId("virtual-tag-t2")).toBeDefined()
 		expect(screen.getByText("virtual")).toBeDefined()
 		expect(screen.queryByTestId("virtual-tag-t1")).toBeNull()

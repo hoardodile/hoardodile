@@ -1,5 +1,7 @@
 import { type QueryClient, queryOptions } from "@tanstack/react-query"
+import { apiPutBlob } from "@/lib/http"
 import { makeInvalidator } from "@/lib/makeInvalidator"
+import { apiPaths } from "@/lib/paths"
 import { idMutation, trpcMutation, trpcQuery } from "@/trpc/factory"
 
 export const tagKeys = {
@@ -179,4 +181,24 @@ export function bulkAttachToCharactersMutation() {
 
 export function bulkDetachFromCharactersMutation() {
 	return trpcMutation("tag", "bulkDetachFromCharacter")
+}
+
+// ── Non-tRPC image endpoint ────────────────────────────────────────────────
+
+/**
+ * Upload the tag's image slot via the shared image-slot HTTP surface
+ * (`PUT /api/tags/:id/images/image`).
+ *
+ * @throws Error when the server rejects the upload.
+ */
+export async function uploadTagImage(
+	tagId: string,
+	blob: Blob,
+	filename: string,
+): Promise<void> {
+	const response = await apiPutBlob(apiPaths.tags.image(tagId), blob, filename)
+	if (!response.ok) {
+		const text = await response.text().catch(() => "")
+		throw new Error(text || `image upload failed (${response.status})`)
+	}
 }

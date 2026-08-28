@@ -205,3 +205,63 @@ function logFilesFromTrpcJson(body: unknown): string[] | undefined {
 	}
 	return contents
 }
+
+/** Tiny 1×1 opaque PNG — enough for the thumbnail pipeline to render. */
+export const TINY_PNG = Buffer.from(
+	"iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+	"base64",
+)
+
+/** Generic raw-JSON tRPC call (mutations); returns the parsed envelope. */
+export async function trpcPost(
+	request: APIRequestContext,
+	cookie: string,
+	procedure: string,
+	data: unknown,
+): Promise<unknown> {
+	const res = await request.post(`${SERVER}/trpc/${procedure}`, {
+		headers: { cookie },
+		data,
+	})
+	const body: unknown = await res.json().catch(() => undefined)
+	if (!res.ok()) {
+		throw new Error(
+			`${procedure} failed: ${res.status()} ${JSON.stringify(body)}`,
+		)
+	}
+	// tRPC reports procedure failures as HTTP 200 with an error envelope.
+	if (body !== null && typeof body === "object" && "error" in body) {
+		throw new Error(
+			`${procedure} tRPC error: ${JSON.stringify(
+				(body as Record<string, unknown>).error,
+			)}`,
+		)
+	}
+	return body
+}
+
+/**
+ * Uploads the tag's image slot directly against the shared image-slot
+ * HTTP surface (the crop dialog is covered by unit tests; the e2e
+ * focuses on what the chip surfaces render).
+ */
+export async function putTagImage(
+	request: APIRequestContext,
+	cookie: string,
+	tagId: string,
+	buffer: Buffer,
+): Promise<void> {
+	const res = await request.put(`${SERVER}/api/tags/${tagId}/images/image`, {
+		headers: {
+			cookie,
+			"content-type": "application/octet-stream",
+			"x-filename": "art.png",
+		},
+		data: buffer,
+	})
+	if (!res.ok()) {
+		throw new Error(
+			`tag image upload failed: ${res.status()} ${await res.text()}`,
+		)
+	}
+}

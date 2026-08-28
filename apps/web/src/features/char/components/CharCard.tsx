@@ -40,6 +40,7 @@ import {
 	tagKeys,
 	tagsForCharacterQueryOptions,
 } from "@/features/tags"
+import { TagChipHover } from "@/features/tags/TagChipHover"
 import { TagChipLink } from "@/features/tags/TagChipLink"
 import { formatTraitValue } from "@/features/traits/formatTraitValue"
 import { useSaveMutation } from "@/hooks/useSaveMutation"
@@ -252,15 +253,16 @@ export const CharCard = memo(function CharCard(props: CharCardProps) {
 			{pinnedTags.length > 0 ? (
 				<div className="flex flex-wrap gap-1.5">
 					{pinnedTags.map((tag) => (
-						<TagChipLink
-							key={tag.id}
-							id={tag.id}
-							type="character"
-							name={tag.name}
-							color={tag.color}
-							virtual={tag.virtual}
-							className="max-w-25"
-						/>
+						<TagChipHover key={tag.id} tagId={tag.id}>
+							<TagChipLink
+								id={tag.id}
+								type="character"
+								name={tag.name}
+								color={tag.color}
+								virtual={tag.virtual}
+								className="max-w-25"
+							/>
+						</TagChipHover>
 					))}
 				</div>
 			) : null}

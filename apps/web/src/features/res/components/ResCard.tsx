@@ -11,6 +11,7 @@ import { ResCollectionChips } from "@/features/col/ResColChips"
 import { resolveManifestName, usePluginList } from "@/features/plugin"
 import { useResDisplayResource } from "@/features/res/hooks/useResDisplayResource"
 import { useDateFormatter } from "@/features/settings/datePrefs"
+import { TagChipHover } from "@/features/tags/TagChipHover"
 import { TagChipLink } from "@/features/tags/TagChipLink"
 import { formatBytes } from "@/lib/formatBytes"
 import { stopActiveMediaPreview } from "./mediaPlayback"
@@ -327,15 +328,16 @@ export const ResCard = memo(function ResCard(props: ResCardProps) {
 						className="max-w-25"
 					/>
 					{pinnedTags.map((tag) => (
-						<TagChipLink
-							key={tag.id}
-							id={tag.id}
-							type="resource"
-							name={tag.name}
-							color={tag.color}
-							virtual={tag.virtual}
-							className="max-w-25"
-						/>
+						<TagChipHover key={tag.id} tagId={tag.id}>
+							<TagChipLink
+								id={tag.id}
+								type="resource"
+								name={tag.name}
+								color={tag.color}
+								virtual={tag.virtual}
+								className="max-w-25"
+							/>
+						</TagChipHover>
 					))}
 				</div>
 			) : null}

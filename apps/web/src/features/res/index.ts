@@ -1,3 +1,4 @@
+export { withScheme } from "@/lib/url"
 export * from "./api"
 export type { ResCardProps } from "./components/ResCard"
 export { ResCard } from "./components/ResCard"
@@ -10,7 +11,7 @@ export {
 } from "./components/ResPreviewDialog"
 export { ResSearch, ResSearchRouted } from "./components/ResSearch"
 export { ResThumb } from "./components/ResThumb"
-export { SourceChip, withScheme } from "./components/SourceChip"
+export { SourceChip } from "./components/SourceChip"
 export {
 	SOURCE_NAME_DATALIST_ID,
 	SourceNameSuggest,

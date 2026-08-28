@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react"
 import { describe, expect, it } from "vitest"
-import { SourceChip, withScheme } from "./SourceChip"
+import { withScheme } from "@/lib/url"
+import { SourceChip } from "./SourceChip"
 
 describe("withScheme", () => {
 	it("prepends https:// when the scheme is missing", () => {

@@ -62,6 +62,7 @@ import {
 import { buildTagGroups, tagsForResourceQueryOptions } from "@/features/tags"
 import { CatTagGroups } from "@/features/tags/CatTagGroups"
 import { TagChip } from "@/features/tags/TagChip"
+import { TagChipHover } from "@/features/tags/TagChipHover"
 import { TagChipLink } from "@/features/tags/TagChipLink"
 import { EntityUsageStats } from "@/features/usage/components/EntityUsageStats"
 import { useUsageTracker } from "@/features/usage/useUsageTracker"
@@ -406,15 +407,16 @@ function ResDetailRoute() {
 				>
 					{pluginName !== undefined ? <TagChip>{pluginName}</TagChip> : null}
 					{resource.pinnedTags.map((tag) => (
-						<TagChipLink
-							key={tag.id}
-							id={tag.id}
-							type="resource"
-							name={tag.name}
-							color={tag.color}
-							virtual={tag.virtual}
-							className="max-w-25"
-						/>
+						<TagChipHover key={tag.id} tagId={tag.id}>
+							<TagChipLink
+								id={tag.id}
+								type="resource"
+								name={tag.name}
+								color={tag.color}
+								virtual={tag.virtual}
+								className="max-w-25"
+							/>
+						</TagChipHover>
 					))}
 				</div>
 			) : null}

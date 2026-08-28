@@ -7,7 +7,6 @@ import {
 	DropdownMenuItem,
 	DropdownMenuSeparator,
 } from "@hoardodile/ui/components/dropdown-menu"
-import { DropdownSelect } from "@hoardodile/ui/components/dropdown-select"
 import { Icon } from "@hoardodile/ui/components/icon"
 import { ManagementEmpty } from "@hoardodile/ui/components/management-empty"
 import { PanelToolbar } from "@hoardodile/ui/components/panel-toolbar"
@@ -26,7 +25,7 @@ import {
 	TrashBinMinimalistic,
 } from "@hoardodile/ui/icons/registry"
 import { cn } from "@hoardodile/ui/lib/utils"
-import { type QueryClient, useQuery } from "@tanstack/react-query"
+import { useQuery } from "@tanstack/react-query"
 import { forwardRef, useEffect, useMemo, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { AddEntityMetaPill } from "@/components/common/AddEntityMetaPill"
@@ -52,13 +51,11 @@ import {
 	createTagMutation,
 	deleteTagMutation,
 	forceDeleteTagMutation,
-	invalidateTags,
 	reorderTagMutation,
 	siblingGroupsQueryOptions,
 	TagChip,
 	type TagSiblingGroup,
 	tagListWithCountsQueryOptions,
-	updateTagMutation,
 } from "@/features/tags"
 import { MergeTagsDialog } from "@/features/tags/MergeTagsDialog"
 import { useDeleteMutation } from "@/hooks/useDeleteMutation"
@@ -77,12 +74,9 @@ import {
 	type TagWithCounts,
 	tagHasNoCharOrResUsage,
 } from "./panelModel"
+import { invalidateCategoriesAndTags, useCategoryOptions } from "./panelShared"
+import { TagEditDialog } from "./TagEditDialog"
 import { effectiveTagCounts, tagRowLabel } from "./utils/tagRowLabel"
-
-async function invalidateCategoriesAndTags(qc: QueryClient): Promise<void> {
-	await invalidateCategories(qc)
-	await invalidateTags(qc)
-}
 
 const KIND_TABS = CATEGORY_KIND_TABS
 
@@ -701,111 +695,6 @@ function AddTagDialog(props: {
 
 // ── Edit dialogs ────────────────────────────────────────────────────────────
 
-function TagEditDialog(props: {
-	readonly tag: TagWithCounts
-	readonly open: boolean
-	readonly onOpenChange: (open: boolean) => void
-}) {
-	const { tag, open, onOpenChange } = props
-	const { t } = useTranslation()
-	const [catId, setCategoryId] = useState<string>(tag.catId)
-	const categories = useCategoryOptions()
-	const tagsQ = useQuery(tagListWithCountsQueryOptions())
-	const [collision, setCollision] = useState<TagWithCounts | undefined>(
-		undefined,
-	)
-	const [mergeOpen, setMergeOpen] = useState(false)
-
-	useEffect(() => {
-		if (!open) return
-		setCategoryId(tag.catId)
-		setCollision(undefined)
-	}, [open, tag.catId])
-
-	function handleSaveError(
-		_input: unknown,
-		payload: { readonly name?: string },
-	) {
-		const inputName = payload.name?.trim() ?? ""
-		const colliding = (tagsQ.data ?? []).find(
-			(c) =>
-				c.id !== tag.id && c.catId === catId && c.name.trim() === inputName,
-		)
-		setCollision(colliding)
-	}
-
-	return (
-		<>
-			<EntityMetaEditDialog
-				entityId={tag.id}
-				open={open}
-				onOpenChange={onOpenChange}
-				title={t("categories.dialog.editTagTitle")}
-				mutationOptions={updateTagMutation()}
-				invalidate={invalidateCategoriesAndTags}
-				initialDraft={() => entityMetaFromEntity(tag)}
-				buildPayload={(id, draft) => ({
-					...buildEntityMetaUpdatePayload(id, draft),
-					catId,
-				})}
-				onSaveError={handleSaveError}
-				contentTestId={`tag-edit-${tag.id}`}
-				saveTestId={`tag-save-${tag.id}`}
-				nameTestId={`tag-name-${tag.id}`}
-				testIdPrefix={`tag-${tag.id}`}
-				canSave={(draft) =>
-					draft.name.trim() !== tag.name ||
-					draft.intro !== tag.intro ||
-					draft.color !== tag.color ||
-					draft.pinned !== tag.pinned ||
-					catId !== tag.catId
-				}
-			>
-				<DropdownSelect
-					value={catId}
-					onValueChange={(value) => {
-						setCategoryId(value)
-						setCollision(undefined)
-					}}
-					data-testid={`tag-category-${tag.id}`}
-					options={categories.map((c) => ({
-						value: c.id,
-						label: c.name,
-					}))}
-				/>
-				{collision !== undefined ? (
-					<div
-						className="flex items-center justify-between gap-3 rounded-lg bg-muted/60 px-3 py-2"
-						data-testid={`tag-merge-offer-${tag.id}`}
-					>
-						<span className="text-xs leading-5 text-secondary-foreground">
-							{t("tags.merge.collision", { name: collision.name })}
-						</span>
-						<Button
-							type="button"
-							variant="ghost"
-							onClick={() => setMergeOpen(true)}
-							data-testid={`tag-merge-offer-button-${tag.id}`}
-						>
-							<BranchingPathsUp className="size-4" aria-hidden />
-							{t("tags.merge.offer")}
-						</Button>
-					</div>
-				) : null}
-			</EntityMetaEditDialog>
-			{collision !== undefined ? (
-				<MergeTagsDialog
-					source={tag}
-					open={mergeOpen}
-					onOpenChange={setMergeOpen}
-					initialTargetId={collision.id}
-					onMerged={() => onOpenChange(false)}
-				/>
-			) : null}
-		</>
-	)
-}
-
 function CategoryEditDialog(props: {
 	readonly category: CatWithCounts
 	readonly open: boolean
@@ -836,11 +725,6 @@ function CategoryEditDialog(props: {
 			}
 		/>
 	)
-}
-
-function useCategoryOptions(): readonly Category[] {
-	const q = useQuery(catListWithCountsQueryOptions())
-	return q.data ?? []
 }
 
 function buildTagDependencyMessage(

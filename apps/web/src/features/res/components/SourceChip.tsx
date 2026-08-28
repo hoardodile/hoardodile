@@ -2,19 +2,7 @@ import { Link } from "@hoardodile/ui/icons/registry"
 import { useTranslation } from "react-i18next"
 import { ExternalLink } from "@/components/common/ExternalLink"
 import { TagChip } from "@/features/tags/TagChip"
-
-/** Prepend `https://` when the user pasted a scheme-less address. */
-export function withScheme(url: string): string {
-	return /^[a-z][a-z0-9+.-]*:/i.test(url) ? url : `https://${url}`
-}
-
-function hostnameOf(url: string): string | undefined {
-	try {
-		return new URL(withScheme(url)).hostname.replace(/^www\./, "")
-	} catch {
-		return undefined
-	}
-}
+import { hostnameOf, withScheme } from "@/lib/url"
 
 export type SourceChipProps = {
 	readonly sourceName?: string

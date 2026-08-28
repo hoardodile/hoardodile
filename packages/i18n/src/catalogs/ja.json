@@ -1921,6 +1921,18 @@
 		}
 	},
 	"tags": {
+		"edit": {
+			"linkLabel": "ウェブリンク",
+			"linkPlaceholder": "https://…",
+			"linkHint": "タグの正典ページへの任意リンク — ホバープレビューに表示されます。",
+			"imageSection": "画像",
+			"editImage": "画像を編集",
+			"imageDialogTitle": "タグ画像"
+		},
+		"card": {
+			"openLink": "リンクを開く",
+			"aria": "タグプレビュー: {{name}}"
+		},
 		"picker": {
 			"noCategories": "まだカテゴリがありません。",
 			"selectedHeader": "選択中:",

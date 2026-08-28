@@ -2,9 +2,11 @@ import { cn } from "@hoardodile/ui/lib/utils"
 import {
 	type ComponentPropsWithoutRef,
 	cloneElement,
+	forwardRef,
 	type MouseEvent,
 	type ReactElement,
 	type ReactNode,
+	type Ref,
 } from "react"
 import { SpecialTagSurface } from "./SpecialTagSurface"
 import { resolveTagChipSurface } from "./tagSurface"
@@ -81,111 +83,120 @@ const tagChipLabelClassName =
  * Coloring is delegated to {@link resolveTagChipSurface} so cards,
  * pickers, the doc editor and the character pills all share one
  * definition of "what a colored tag looks like".
+ *
+ * The chip forwards its root ref so composition wrappers (e.g. the
+ * {@link TagChipHover} preview-card trigger, which clones the chip and
+ * attaches a DOM ref for anchoring) can reach the actual element.
  */
-export function TagChip(props: TagChipProps) {
-	const {
-		color,
-		size = "sm",
-		border,
-		active,
-		icon,
-		roundedRight,
-		render,
-		suffix,
-		children,
-		className,
-		style,
-		onMouseDown,
-		...rest
-	} = props
-	const surface =
-		border !== undefined
-			? undefined
-			: resolveTagChipSurface(color ?? "", active === true)
-
-	const isInteractive = render !== undefined || rest.onClick !== undefined
-
-	const stateClass =
-		border === "dashed"
-			? active === true
-				? "border border-transparent bg-accent text-foreground"
-				: "border border-dashed border-border-strong text-muted-foreground hover:text-secondary-foreground"
-			: undefined
-
-	// Texture and icon are the chip's own decoration, so they lead the
-	// children even when the root element is swapped (render / button).
-	const content = (
-		<>
-			{surface !== undefined && surface.texture !== null && (
-				<SpecialTagSurface
-					style={surface.texture}
-					active={active}
-					className="absolute inset-0 -z-10 overflow-hidden rounded-[inherit]"
-				/>
-			)}
-			{icon !== undefined && (
-				// Flex row: the slot accepts several icons as a fragment
-				// (e.g. a kind glyph + the pin), and flex keeps the
-				// blockified preflight svgs on one line.
-				<span className="flex shrink-0 items-center gap-1 text-muted-foreground">
-					{icon}
-				</span>
-			)}
-			<span className={tagChipLabelClassName}>
-				{children}
-				{suffix !== undefined ? (
-					<>
-						<span className="font-bold mx-0.5">·</span>
-						<span className="shrink-0 opacity-70">{suffix}</span>
-					</>
-				) : null}
-			</span>
-		</>
-	)
-
-	const chipClassName = cn(
-		"inline-flex min-w-0 max-w-full items-center justify-center gap-1.5 rounded-sm text-xs font-normal leading-none disabled:pointer-events-none disabled:opacity-50",
-		size === "md" ? "px-2 py-1.5" : "px-2 py-1",
-		roundedRight === false && "rounded-r-none",
-		isInteractive && "cursor-pointer",
-		surface?.className,
-		stateClass,
-		className,
-	)
-	const chipStyle = { ...surface?.style, ...style }
-
-	if (render !== undefined) {
-		return cloneElement(render, {
-			...rest,
-			className: chipClassName,
-			style: chipStyle,
+export const TagChip = forwardRef<HTMLElement, TagChipProps>(
+	function TagChip(props, ref) {
+		const {
+			color,
+			size = "sm",
+			border,
+			active,
+			icon,
+			roundedRight,
+			render,
+			suffix,
+			children,
+			className,
+			style,
 			onMouseDown,
-			children: content,
-		})
-	}
+			...rest
+		} = props
+		const surface =
+			border !== undefined
+				? undefined
+				: resolveTagChipSurface(color ?? "", active === true)
 
-	if (rest.onClick !== undefined) {
+		const isInteractive = render !== undefined || rest.onClick !== undefined
+
+		const stateClass =
+			border === "dashed"
+				? active === true
+					? "border border-transparent bg-accent text-foreground"
+					: "border border-dashed border-border-strong text-muted-foreground hover:text-secondary-foreground"
+				: undefined
+
+		// Texture and icon are the chip's own decoration, so they lead the
+		// children even when the root element is swapped (render / button).
+		const content = (
+			<>
+				{surface !== undefined && surface.texture !== null && (
+					<SpecialTagSurface
+						style={surface.texture}
+						active={active}
+						className="absolute inset-0 -z-10 overflow-hidden rounded-[inherit]"
+					/>
+				)}
+				{icon !== undefined && (
+					// Flex row: the slot accepts several icons as a fragment
+					// (e.g. a kind glyph + the pin), and flex keeps the
+					// blockified preflight svgs on one line.
+					<span className="flex shrink-0 items-center gap-1 text-muted-foreground">
+						{icon}
+					</span>
+				)}
+				<span className={tagChipLabelClassName}>
+					{children}
+					{suffix !== undefined ? (
+						<>
+							<span className="font-bold mx-0.5">·</span>
+							<span className="shrink-0 opacity-70">{suffix}</span>
+						</>
+					) : null}
+				</span>
+			</>
+		)
+
+		const chipClassName = cn(
+			"inline-flex min-w-0 max-w-full items-center justify-center gap-1.5 rounded-sm text-xs font-normal leading-none disabled:pointer-events-none disabled:opacity-50",
+			size === "md" ? "px-2 py-1.5" : "px-2 py-1",
+			roundedRight === false && "rounded-r-none",
+			isInteractive && "cursor-pointer",
+			surface?.className,
+			stateClass,
+			className,
+		)
+		const chipStyle = { ...surface?.style, ...style }
+
+		if (render !== undefined) {
+			return cloneElement(render, {
+				...rest,
+				ref,
+				className: chipClassName,
+				style: chipStyle,
+				onMouseDown,
+				children: content,
+			})
+		}
+
+		if (rest.onClick !== undefined) {
+			return (
+				<button
+					type="button"
+					ref={ref as Ref<HTMLButtonElement>}
+					className={chipClassName}
+					style={chipStyle}
+					onMouseDown={onMouseDown}
+					{...rest}
+				>
+					{content}
+				</button>
+			)
+		}
+
 		return (
-			<button
-				type="button"
+			<span
+				ref={ref as Ref<HTMLSpanElement>}
 				className={chipClassName}
 				style={chipStyle}
 				onMouseDown={onMouseDown}
 				{...rest}
 			>
 				{content}
-			</button>
+			</span>
 		)
-	}
-
-	return (
-		<span
-			className={chipClassName}
-			style={chipStyle}
-			onMouseDown={onMouseDown}
-			{...rest}
-		>
-			{content}
-		</span>
-	)
-}
+	},
+)

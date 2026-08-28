@@ -1921,6 +1921,18 @@
 		}
 	},
 	"tags": {
+		"edit": {
+			"linkLabel": "Enlace del sitio",
+			"linkPlaceholder": "https://…",
+			"linkHint": "Enlace opcional a la página canónica de la etiqueta — se muestra en la vista previa al pasar el cursor.",
+			"imageSection": "Imagen",
+			"editImage": "Editar imagen",
+			"imageDialogTitle": "Imagen de la etiqueta"
+		},
+		"card": {
+			"openLink": "Abrir enlace",
+			"aria": "Vista previa de la etiqueta: {{name}}"
+		},
 		"picker": {
 			"noCategories": "Aún no hay categorías.",
 			"selectedHeader": "Seleccionadas:",

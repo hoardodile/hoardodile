@@ -123,6 +123,7 @@ Quiet and thin, styled per engine — the one place the implementation must be e
 
 - **Dialog width tiers.** `sm` 384 / `md` 448 / `lg` 672 / `xl` 768 / `2xl` 896. Confirmations never leave the narrow slot; edit hubs, pickers and selectors get the wide tiers.
 - **Z-index order.** z-10 card corner badges → z-20 sticky page headers and floating hint cards → z-40 click catchers and anchored popovers → z-50 the dialog layer. A trigger owns one anchored popover and any number of dialogs, but only one surface is open at a time.
+- **Preview cards.** Read-only hover previews (tag chips) are anchored popovers: portal to the overlay layer, `side="top"` with collision flipping, one surface open at a time. Hover or keyboard focus opens them; clicks are never intercepted — navigation triggers keep press = click, so previews never swallow a click-through (and touch devices simply don't get them, matching the desktop hover-card convention).
 - **Click catcher.** A transparent fixed `z-40` layer below the dialog layer and above anchored cards closes popovers on outside clicks — never blurred.
 - **Media viewers opt out.** Lightbox-style surfaces own an opaque `bg-black/85` fill and never reuse the dialog layer; the dialog scrim (`bg-foreground/5` + `backdrop-blur-sm`) is a static surface definition, not a motion effect.
 - **Dialog anatomy.** The card floats at `bg-card` + hairline + `rounded-2xl` + `shadow-dialog`. The body is the only scrolling region (`flex-1 overflow-y-auto`), header carries `p-5` with no bottom padding, the footer parts from the body with an inset hairline (`mx-5`, never edge to edge), and `gap-4` holds the three parts apart. **Three-button footers** split the bar: the secondary function key sits at the left edge, cancel and the primary action stay right-aligned. `flush` drops body padding for two-pane editors.
@@ -160,7 +161,7 @@ Motion is **feedback, not ornament** — it confirms that state changed, preserv
 
 | Surface | Enter | Exit |
 | --- | --- | --- |
-| Menu / popover / tooltip | fade + 4px rise, `--duration-2 --ease-out` | fade, `--duration-1 --ease-in` |
+| Menu / popover / tooltip / preview card | fade + 4px rise, `--duration-2 --ease-out` | fade, `--duration-1 --ease-in` |
 | Panel overlay (<1440px) | slide 24px from right + fade, `--duration-3 --ease-out` | `--duration-2 --ease-in` |
 | Dialog | fade + `scale(0.98→1)`, `--duration-3 --ease-out` | `--duration-2 --ease-in` |
 | Sidebar drawer (`max-sidebar`) | spring (stiffness ~380, damping ~38) or slide `--duration-4 --ease-out` | `--duration-2 --ease-in` |

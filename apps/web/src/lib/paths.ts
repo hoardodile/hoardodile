@@ -25,6 +25,11 @@ export const apiPaths = {
 			`/api/characters/${id}/thumb/${variant}`,
 	},
 
+	tags: {
+		image: (id: string) => `/api/tags/${id}/images/image`,
+		thumb: (id: string) => `/api/tags/${id}/thumb/image`,
+	},
+
 	resources: {
 		cover: (id: string) => `/api/resources/${id}/cover`,
 		files: (id: string, filename: string) =>

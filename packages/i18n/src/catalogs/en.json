@@ -1921,6 +1921,18 @@
 		}
 	},
 	"tags": {
+		"edit": {
+			"linkLabel": "Website link",
+			"linkPlaceholder": "https://…",
+			"linkHint": "Optional link to the tag's canonical page — shown in the hover preview.",
+			"imageSection": "Image",
+			"editImage": "Edit image",
+			"imageDialogTitle": "Tag image"
+		},
+		"card": {
+			"openLink": "Open link",
+			"aria": "Tag preview: {{name}}"
+		},
 		"picker": {
 			"noCategories": "No categories yet.",
 			"selectedHeader": "Selected:",

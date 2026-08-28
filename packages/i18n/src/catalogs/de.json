@@ -1921,6 +1921,18 @@
 		}
 	},
 	"tags": {
+		"edit": {
+			"linkLabel": "Weblink",
+			"linkPlaceholder": "https://…",
+			"linkHint": "Optionaler Link zur kanonischen Seite des Tags — erscheint in der Hover-Vorschau.",
+			"imageSection": "Bild",
+			"editImage": "Bild bearbeiten",
+			"imageDialogTitle": "Tag-Bild"
+		},
+		"card": {
+			"openLink": "Link öffnen",
+			"aria": "Tag-Vorschau: {{name}}"
+		},
 		"picker": {
 			"noCategories": "Noch keine Kategorien.",
 			"selectedHeader": "Ausgewählt:",
