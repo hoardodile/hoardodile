@@ -58,6 +58,8 @@ import {
 	tagListWithCountsQueryOptions,
 } from "@/features/tags"
 import { MergeTagsDialog } from "@/features/tags/MergeTagsDialog"
+import { TagChipHover } from "@/features/tags/TagChipHover"
+import { TagImageMenuButton } from "@/features/tags/TagImageMenuButton"
 import { useDeleteMutation } from "@/hooks/useDeleteMutation"
 import { useReorderMutation } from "@/hooks/useReorderMutation"
 import { i18n } from "@/i18n"
@@ -480,19 +482,36 @@ function TagCard(props: {
 				testIdPrefix="tag"
 				triggerTestId={`tag-chip-${tag.id}`}
 				chip={
-					<TagChip
-						title={tag.name}
-						color={tag.color}
-						border={unused ? "dashed" : undefined}
-						icon={
-							tag.pinned ? (
-								<Pin className="inline size-3" aria-hidden />
-							) : undefined
-						}
-						className="max-w-full"
-					>
-						{label.name}
-					</TagChip>
+					<div className="flex min-w-0 items-center gap-1">
+						<TagChipHover tagId={tag.id}>
+							<TagChip
+								title={
+									(tag.link?.length ?? 0) === 0 &&
+									tag.imageMeta === undefined &&
+									tag.intro.trim() === ""
+										? tag.name
+										: undefined
+								}
+								color={tag.color}
+								border={unused ? "dashed" : undefined}
+								icon={
+									tag.pinned ? (
+										<Pin className="inline size-3" aria-hidden />
+									) : undefined
+								}
+								className="max-w-full"
+							>
+								{label.name}
+							</TagChip>
+						</TagChipHover>
+						<TagImageMenuButton
+							tagId={tag.id}
+							tagName={tag.name}
+							imageMeta={tag.imageMeta}
+							updatedAt={tag.updatedAt}
+							className="shrink-0"
+						/>
+					</div>
 				}
 				meta={
 					unused ? (

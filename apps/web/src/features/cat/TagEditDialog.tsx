@@ -1,4 +1,4 @@
-import { imageSlotHasFile, MAX_URL_LENGTH } from "@hoardodile/schemas"
+import { MAX_URL_LENGTH } from "@hoardodile/schemas"
 import { Button } from "@hoardodile/ui/components/button"
 import { DropdownSelect } from "@hoardodile/ui/components/dropdown-select"
 import { Input } from "@hoardodile/ui/components/input"
@@ -13,22 +13,21 @@ import {
 	updateTagMutation,
 } from "@/features/tags"
 import { MergeTagsDialog } from "@/features/tags/MergeTagsDialog"
-import { TagImageEditDialog } from "@/features/tags/TagImageEditDialog"
 import {
 	buildEntityMetaUpdatePayload,
 	entityMetaFromEntity,
 } from "@/lib/entityMetaDraft"
-import { apiPaths } from "@/lib/paths"
 import type { TagWithCounts } from "./panelModel"
 import { invalidateCategoriesAndTags, useCategoryOptions } from "./panelShared"
 
 /**
  * Edit dialog for one tag: the shared entity-meta form plus the
- * tag-specific fields — the category select, the external link and the
- * image editor entry point. The link is kept in local state below the
- * shared draft because the draft schema is category-agnostic; the save
- * payload merges it in and the save gate treats a trimmed difference as
- * dirty.
+ * tag-specific fields — the category select and the external link. The
+ * link is kept in local state below the shared draft because the draft
+ * schema is category-agnostic; the save payload merges it in and the
+ * save gate treats a trimmed difference as dirty. Tag art is managed
+ * through the card's own image button (see {@link TagImageMenuButton}),
+ * so the metadata dialog stays focused.
  */
 export function TagEditDialog(props: {
 	readonly tag: TagWithCounts
@@ -40,7 +39,6 @@ export function TagEditDialog(props: {
 	const originalLink = tag.link ?? ""
 	const [catId, setCategoryId] = useState<string>(tag.catId)
 	const [linkDraft, setLinkDraft] = useState<string>(originalLink)
-	const [imageOpen, setImageOpen] = useState(false)
 	const categories = useCategoryOptions()
 	const tagsQ = useQuery(tagListWithCountsQueryOptions())
 	const [collision, setCollision] = useState<TagWithCounts | undefined>(
@@ -54,11 +52,6 @@ export function TagEditDialog(props: {
 		setLinkDraft(tag.link ?? "")
 		setCollision(undefined)
 	}, [open, tag.catId, tag.link])
-
-	const hasImage = imageSlotHasFile(tag.imageMeta) === true
-	const thumbSrc = hasImage
-		? `${apiPaths.tags.thumb(tag.id)}?v=${tag.updatedAt}`
-		: undefined
 
 	function handleSaveError(
 		_input: unknown,
@@ -133,27 +126,6 @@ export function TagEditDialog(props: {
 						{t("tags.edit.linkHint")}
 					</p>
 				</div>
-				<div className="flex items-center gap-3">
-					<Label className="text-xs font-normal text-muted-foreground">
-						{t("tags.edit.imageSection")}
-					</Label>
-					{thumbSrc !== undefined ? (
-						<img
-							src={thumbSrc}
-							alt={t("tags.edit.imageSection")}
-							className="size-8 rounded-sm bg-muted object-contain"
-						/>
-					) : null}
-					<Button
-						type="button"
-						variant="outline"
-						size="sm"
-						onClick={() => setImageOpen(true)}
-						data-testid={`tag-edit-image-${tag.id}`}
-					>
-						{t("tags.edit.editImage")}
-					</Button>
-				</div>
 				{collision !== undefined ? (
 					<div
 						className="flex items-center justify-between gap-3 rounded-lg bg-muted/60 px-3 py-2"
@@ -174,14 +146,6 @@ export function TagEditDialog(props: {
 					</div>
 				) : null}
 			</EntityMetaEditDialog>
-			{imageOpen ? (
-				<TagImageEditDialog
-					open
-					tagId={tag.id}
-					tagName={tag.name}
-					onOpenChange={setImageOpen}
-				/>
-			) : null}
 			{collision !== undefined ? (
 				<MergeTagsDialog
 					source={tag}

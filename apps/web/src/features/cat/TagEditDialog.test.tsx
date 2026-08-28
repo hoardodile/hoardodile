@@ -118,15 +118,4 @@ describe("TagEditDialog", () => {
 		})
 		await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false))
 	})
-
-	test("opens the image editor dialog from the image action", async () => {
-		const user = userEvent.setup()
-		const onOpenChange = vi.fn()
-		render(<TagEditDialog tag={tag} open onOpenChange={onOpenChange} />, {
-			wrapper: createWrapper(),
-		})
-
-		await user.click(screen.getByTestId("tag-edit-image-tag-1"))
-		expect(await screen.findByText("Harbor — Tag image")).toBeInTheDocument()
-	})
 })

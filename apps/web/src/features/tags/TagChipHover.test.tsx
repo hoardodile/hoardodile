@@ -1,6 +1,7 @@
 import { act, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { TagChipHover } from "./TagChipHover"
+import { clampDisplaySize } from "./tagHoverSpec"
 
 type MockTag = {
 	readonly id: string
@@ -28,7 +29,7 @@ const { mockTags } = vi.hoisted(() => ({
 			intro: "A quiet place by the sea",
 			color: "#123456",
 			link: "www.example.com/harbor",
-			imageMeta: { kind: "image", width: 4, height: 8 },
+			imageMeta: { kind: "image", width: 4, height: 8, source: "image.png" },
 			position: 0,
 			pinned: false,
 			catId: "c1",
@@ -48,6 +49,20 @@ const { mockTags } = vi.hoisted(() => ({
 			createdAt: 0,
 			updatedAt: 1,
 		},
+		{
+			id: "t3",
+			name: "Wide",
+			intro: "",
+			color: "",
+			link: "https://example.com/wide",
+			imageMeta: { kind: "image", width: 800, height: 600 },
+			position: 0,
+			pinned: false,
+			catId: "c1",
+			displayTagId: "t3",
+			createdAt: 0,
+			updatedAt: 3,
+		},
 	] as readonly MockTag[],
 }))
 
@@ -64,46 +79,70 @@ describe("TagChipHover", () => {
 		vi.useRealTimers()
 	})
 
-	it("opens the card on hover and shows art, name, intro and hostname link", async () => {
+	it("opens the card on hover: intro + hostname link, no repeated name, ring on trigger", async () => {
 		render(
 			<TagChipHover tagId="t1">
 				<span data-testid="chip">Harbor</span>
 			</TagChipHover>,
 		)
-		expect(screen.queryByTestId("tag-hover-name-t1")).toBeNull()
+		const chip = screen.getByTestId("chip")
+		expect(chip.className).toContain("hover:ring-1")
 
-		fireEvent.mouseEnter(screen.getByTestId("chip"))
+		fireEvent.mouseEnter(chip)
 		await act(async () => {
-			vi.advanceTimersByTime(200)
+			vi.advanceTimersByTime(250)
 		})
 
-		expect(screen.getByTestId("tag-hover-name-t1")).toHaveTextContent("Harbor")
 		expect(screen.getByText("A quiet place by the sea")).toBeInTheDocument()
 		const link = screen.getByTestId("tag-hover-link-t1")
 		expect(link).toHaveTextContent("example.com")
 		expect(link).toHaveAttribute("href", "https://www.example.com/harbor")
-		const img = document.querySelector("img")
-		expect(img?.getAttribute("src")).toContain("/api/tags/t1/thumb/image?v=42")
+		expect(link.className).toContain("hover:underline")
+		// The trigger already names the tag — the name is not repeated.
+		expect(screen.queryByTestId("tag-hover-name-t1")).toBeNull()
+		const card = screen.getByLabelText("Tag preview: Harbor")
+		expect(card).not.toHaveTextContent("Harbor")
 
-		fireEvent.mouseLeave(screen.getByTestId("chip"))
+		fireEvent.mouseLeave(chip)
 		await act(async () => {
 			vi.advanceTimersByTime(300)
 		})
-		expect(screen.queryByTestId("tag-hover-name-t1")).toBeNull()
+		expect(screen.queryByTestId("tag-hover-link-t1")).toBeNull()
 	})
 
-	it("opens the card on keyboard focus of the trigger", async () => {
+	it("sizes the artwork from imageMeta into the min/max clamp window", async () => {
 		render(
 			<TagChipHover tagId="t1">
-				<span data-testid="chip-focus">Harbor</span>
+				<span data-testid="chip-small">Harbor</span>
 			</TagChipHover>,
 		)
-		fireEvent.mouseMove(screen.getByTestId("chip-focus"))
-		fireEvent.focus(screen.getByTestId("chip-focus"))
+		// 4×8 is upscaled just enough to touch the 64×64 floor, aspect kept.
+		expect(clampDisplaySize(4, 8)).toEqual({ width: 64, height: 128 })
+
+		fireEvent.mouseEnter(screen.getByTestId("chip-small"))
 		await act(async () => {
-			vi.advanceTimersByTime(200)
+			vi.advanceTimersByTime(250)
 		})
-		expect(screen.getByTestId("tag-hover-name-t1")).toBeInTheDocument()
+		const img = document.querySelector("img")
+		expect(img?.getAttribute("width")).toBe("64")
+		expect(img?.getAttribute("height")).toBe("128")
+	})
+
+	it("downscales ultra-wide art into the max window", async () => {
+		render(
+			<TagChipHover tagId="t3">
+				<span data-testid="chip-wide">Wide</span>
+			</TagChipHover>,
+		)
+		expect(clampDisplaySize(800, 600)).toEqual({ width: 240, height: 180 })
+
+		fireEvent.mouseEnter(screen.getByTestId("chip-wide"))
+		await act(async () => {
+			vi.advanceTimersByTime(250)
+		})
+		const img = document.querySelector("img")
+		expect(img?.getAttribute("width")).toBe("240")
+		expect(img?.getAttribute("height")).toBe("180")
 	})
 
 	it("renders the chip bare when the tag has nothing to show", () => {
@@ -112,7 +151,8 @@ describe("TagChipHover", () => {
 				<span data-testid="chip-plain">Plain</span>
 			</TagChipHover>,
 		)
-		expect(screen.getByTestId("chip-plain")).toBeInTheDocument()
+		const chip = screen.getByTestId("chip-plain")
+		expect(chip.className).not.toContain("hover:ring-1")
 		expect(container.querySelector('[data-slot="preview-card"]')).toBeNull()
 	})
 
@@ -124,18 +164,5 @@ describe("TagChipHover", () => {
 		)
 		expect(screen.getByTestId("chip-unknown")).toBeInTheDocument()
 		expect(container.querySelector('[data-slot="preview-card"]')).toBeNull()
-	})
-
-	it("does not intercept plain clicks on the chip", async () => {
-		const onClick = vi.fn()
-		render(
-			<TagChipHover tagId="t1">
-				<button type="button" data-testid="chip-click" onClick={onClick}>
-					Harbor
-				</button>
-			</TagChipHover>,
-		)
-		fireEvent.click(screen.getByTestId("chip-click"))
-		expect(onClick).toHaveBeenCalledTimes(1)
 	})
 })

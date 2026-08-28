@@ -41,6 +41,7 @@ import { tagErrorMessage } from "./errors"
 import { RuleAddDialog } from "./RuleAddDialog"
 import { RulesTree, type RulesTreeBranch } from "./RulesTree"
 import { TagChip } from "./TagChip"
+import { TagChipHover } from "./TagChipHover"
 
 /**
  * Tag rules management (M2 + M3) — the Tags tab's second block: two
@@ -443,13 +444,15 @@ function aliasBranches(
 			id: group.displayTagId,
 			searchText: display?.name ?? group.displayTagId,
 			chip: (
-				<TagChip
-					color={display?.color ?? ""}
-					border={display === undefined ? "dashed" : undefined}
-					icon={<Icon icon={Crown} size="sm" aria-hidden />}
-				>
-					{display?.name ?? group.displayTagId}
-				</TagChip>
+				<TagChipHover tagId={group.displayTagId}>
+					<TagChip
+						color={display?.color ?? ""}
+						border={display === undefined ? "dashed" : undefined}
+						icon={<Icon icon={Crown} size="sm" aria-hidden />}
+					>
+						{display?.name ?? group.displayTagId}
+					</TagChip>
+				</TagChipHover>
 			),
 			testId: `tag-rules-display-${group.displayTagId}`,
 			expandTestId: `tag-rules-alias-expand-${group.displayTagId}`,
@@ -468,7 +471,11 @@ function aliasBranches(
 					(member): RulesTreeBranch => ({
 						id: member.id,
 						searchText: member.name,
-						chip: <TagChip color={member.color}>{member.name}</TagChip>,
+						chip: (
+							<TagChipHover tagId={member.id}>
+								<TagChip color={member.color}>{member.name}</TagChip>
+							</TagChipHover>
+						),
 						testId: `tag-rules-member-${member.id}`,
 						expandTestId: `tag-rules-alias-expand-${member.id}`,
 						moreTestId: `tag-rules-member-more-${member.id}`,

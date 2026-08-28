@@ -57,11 +57,12 @@ test.describe("tag hover preview", () => {
 		const chip = page.getByRole("link", { name: "HoverTag" })
 		await expect(chip).toBeVisible({ timeout: 15_000 })
 
-		// Hover opens the card with art, name, intro and the hostname link.
+		// Hover opens the card with art, intro and the hostname link — the
+		// name is not repeated (the trigger says it) and the art src points
+		// at the tag thumb with the cache-buster.
 		await chip.hover()
-		const card = page.getByTestId(`tag-hover-name-${tagId}`)
+		const card = page.getByLabel(`Tag preview: HoverTag`)
 		await expect(card).toBeVisible()
-		await expect(card).toContainText("HoverTag")
 		await expect(page.getByText("A tiny e2e tag")).toBeVisible()
 		const linkRow = page.getByTestId(`tag-hover-link-${tagId}`)
 		await expect(linkRow).toHaveText("example.com")
@@ -69,6 +70,7 @@ test.describe("tag hover preview", () => {
 			"href",
 			"https://www.example.com/hover",
 		)
+		await expect(card).not.toContainText("HoverTag")
 		const art = page.locator('[data-slot="preview-card-content"] img')
 		await expect(art).toBeAttached()
 		await expect(art).toHaveAttribute(

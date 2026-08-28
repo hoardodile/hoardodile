@@ -17,8 +17,8 @@ import { chromium } from "@playwright/test"
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const SHOTS = resolve(__dirname, ".playwright", "manual-screenshots")
-const API = "http://127.0.0.1:3000"
-const WEB = "http://127.0.0.1:5173"
+const API = process.env.MANUAL_API_URL ?? "http://127.0.0.1:3000"
+const WEB = process.env.MANUAL_WEB_URL ?? "http://127.0.0.1:5173"
 const PASSWORD = "correct horse battery staple"
 
 const TINY_PNG = Buffer.from(
@@ -128,14 +128,14 @@ const charId = idFromTrpcJson(
 await trpcPost(cookie, "tag.attachToCharacter", { entityId: charId, tagId })
 await putTagImage(cookie, tagId)
 
-// ── 1. Tags management: the edit dialog with the link field + image row ────
+// ── 1. Tags management: card image button → dropdown → crop panel ─────────
 // The entity rows carry `aria-disabled="true"` while drag is off (dnd-kit
 // sortable semantics), so Playwright's enabled-check needs `force`.
 await page.goto(`${WEB}/settings/custom`)
-await page.getByTestId(`tag-chip-${tagId}`).click({ force: true })
-await page.getByTestId(`tag-open-edit-${tagId}`).click()
-await page.getByTestId(`tag-edit-${tagId}`).waitFor()
-await page.screenshot({ path: shot("01-tag-edit-link.png"), fullPage: false })
+await page.getByTestId(`tag-image-menu-${tagId}`).click({ force: true })
+await page.getByTestId(`tag-image-menu-item-${tagId}`).click()
+await page.getByText("ManualTag — Tag image").waitFor()
+await page.screenshot({ path: shot("01-tag-image-crop.png"), fullPage: false })
 await page.keyboard.press("Escape")
 
 // ── 2. Character detail: hover the chip → full card ────────────────────────
@@ -143,17 +143,17 @@ await page.goto(`${WEB}/characters/${charId}`)
 const chip = page.getByRole("link", { name: "ManualTag" })
 await chip.waitFor({ timeout: 15_000 })
 await chip.hover()
-await page.getByTestId(`tag-hover-name-${tagId}`).waitFor({ timeout: 5_000 })
+await page.getByTestId(`tag-hover-link-${tagId}`).waitFor({ timeout: 5_000 })
 await page.screenshot({ path: shot("02-hover-card-with-art.png") })
 await page.mouse.move(10, 10)
-await page.getByTestId(`tag-hover-name-${tagId}`).waitFor({ state: "hidden" })
+await page.getByTestId(`tag-hover-link-${tagId}`).waitFor({ state: "hidden" })
 
 // ── 3. Same card after the art is removed (text-only) ──────────────────────
 await deleteTagImage(cookie, tagId)
 await page.reload()
 await chip.waitFor()
 await chip.hover()
-await page.getByTestId(`tag-hover-name-${tagId}`).waitFor({ timeout: 5_000 })
+await page.getByTestId(`tag-hover-link-${tagId}`).waitFor({ timeout: 5_000 })
 await page.screenshot({ path: shot("03-hover-text-only.png") })
 await page.mouse.move(10, 10)
 
@@ -165,13 +165,13 @@ await page.evaluate(() => {
 })
 await chip.waitFor()
 await chip.hover()
-await page.getByTestId(`tag-hover-name-${tagId}`).waitFor({ timeout: 5_000 })
+await page.getByTestId(`tag-hover-link-${tagId}`).waitFor({ timeout: 5_000 })
 await page.screenshot({ path: shot("04-hover-dark.png") })
 
 await browser.close()
 console.log("manual screenshots written to", SHOTS, "— existence check:")
 for (const name of [
-	"01-tag-edit-link.png",
+	"01-tag-image-crop.png",
 	"02-hover-card-with-art.png",
 	"03-hover-text-only.png",
 	"04-hover-dark.png",
