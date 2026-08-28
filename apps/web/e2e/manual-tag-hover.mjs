@@ -128,12 +128,12 @@ const charId = idFromTrpcJson(
 await trpcPost(cookie, "tag.attachToCharacter", { entityId: charId, tagId })
 await putTagImage(cookie, tagId)
 
-// ── 1. Tags management: card image button → dropdown → crop panel ─────────
+// ── 1. Tags management: More menu → image item → crop panel ────────────────
 // The entity rows carry `aria-disabled="true"` while drag is off (dnd-kit
 // sortable semantics), so Playwright's enabled-check needs `force`.
 await page.goto(`${WEB}/settings/custom`)
-await page.getByTestId(`tag-image-menu-${tagId}`).click({ force: true })
-await page.getByTestId(`tag-image-menu-item-${tagId}`).click()
+await page.getByTestId(`tag-chip-${tagId}`).click({ force: true })
+await page.getByTestId(`tag-edit-image-${tagId}`).click()
 await page.getByText("ManualTag — Tag image").waitFor()
 await page.screenshot({ path: shot("01-tag-image-crop.png"), fullPage: false })
 await page.keyboard.press("Escape")

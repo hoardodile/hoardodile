@@ -1,7 +1,7 @@
 import { useSortable } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
 import type { Category, CatKind } from "@hoardodile/schemas"
-import { MAX_SEARCH_QUERY_LENGTH } from "@hoardodile/schemas"
+import { imageSlotHasFile, MAX_SEARCH_QUERY_LENGTH } from "@hoardodile/schemas"
 import { Button } from "@hoardodile/ui/components/button"
 import {
 	DropdownMenuItem,
@@ -18,6 +18,7 @@ import { Add } from "@hoardodile/ui/icons/actions"
 import {
 	BranchingPathsUp,
 	Copy,
+	Gallery,
 	HamburgerMenu,
 	MoveToFolder,
 	Pen,
@@ -59,7 +60,7 @@ import {
 } from "@/features/tags"
 import { MergeTagsDialog } from "@/features/tags/MergeTagsDialog"
 import { TagChipHover } from "@/features/tags/TagChipHover"
-import { TagImageMenuButton } from "@/features/tags/TagImageMenuButton"
+import { TagImageEditDialog } from "@/features/tags/TagImageEditDialog"
 import { useDeleteMutation } from "@/hooks/useDeleteMutation"
 import { useReorderMutation } from "@/hooks/useReorderMutation"
 import { i18n } from "@/i18n"
@@ -446,6 +447,7 @@ function TagCard(props: {
 	const { t } = useTranslation()
 	const [moveOpen, setMoveOpen] = useState(false)
 	const [mergeOpen, setMergeOpen] = useState(false)
+	const [imageOpen, setImageOpen] = useState(false)
 	const groups = useSiblingGroupMap()
 	const group = groups.get(tag.id)
 	const tagsQ = useQuery(tagListWithCountsQueryOptions())
@@ -482,36 +484,27 @@ function TagCard(props: {
 				testIdPrefix="tag"
 				triggerTestId={`tag-chip-${tag.id}`}
 				chip={
-					<div className="flex min-w-0 items-center gap-1">
-						<TagChipHover tagId={tag.id}>
-							<TagChip
-								title={
-									(tag.link?.length ?? 0) === 0 &&
-									tag.imageMeta === undefined &&
-									tag.intro.trim() === ""
-										? tag.name
-										: undefined
-								}
-								color={tag.color}
-								border={unused ? "dashed" : undefined}
-								icon={
-									tag.pinned ? (
-										<Pin className="inline size-3" aria-hidden />
-									) : undefined
-								}
-								className="max-w-full"
-							>
-								{label.name}
-							</TagChip>
-						</TagChipHover>
-						<TagImageMenuButton
-							tagId={tag.id}
-							tagName={tag.name}
-							imageMeta={tag.imageMeta}
-							updatedAt={tag.updatedAt}
-							className="shrink-0"
-						/>
-					</div>
+					<TagChipHover tagId={tag.id}>
+						<TagChip
+							title={
+								(tag.link?.length ?? 0) === 0 &&
+								tag.imageMeta === undefined &&
+								tag.intro.trim() === ""
+									? tag.name
+									: undefined
+							}
+							color={tag.color}
+							border={unused ? "dashed" : undefined}
+							icon={
+								tag.pinned ? (
+									<Pin className="inline size-3" aria-hidden />
+								) : undefined
+							}
+							className="max-w-full"
+						>
+							{label.name}
+						</TagChip>
+					</TagChipHover>
 				}
 				meta={
 					unused ? (
@@ -522,6 +515,15 @@ function TagCard(props: {
 				}
 				extraMenuItems={
 					<>
+						<DropdownMenuItem
+							onClick={() => setImageOpen(true)}
+							data-testid={`tag-edit-image-${tag.id}`}
+						>
+							<Icon icon={Gallery} />
+							{imageSlotHasFile(tag.imageMeta) === true
+								? t("tags.edit.replaceImage")
+								: t("tags.edit.uploadImage")}
+						</DropdownMenuItem>
 						<DropdownMenuItem
 							onClick={handleCopy}
 							data-testid={`tag-copy-${tag.id}`}
@@ -560,6 +562,14 @@ function TagCard(props: {
 					source={tag}
 					open={mergeOpen}
 					onOpenChange={setMergeOpen}
+				/>
+			) : null}
+			{imageOpen ? (
+				<TagImageEditDialog
+					open
+					tagId={tag.id}
+					tagName={tag.name}
+					onOpenChange={setImageOpen}
 				/>
 			) : null}
 		</>

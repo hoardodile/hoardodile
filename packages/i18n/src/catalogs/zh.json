@@ -1925,7 +1925,6 @@
 			"linkLabel": "网页链接",
 			"linkPlaceholder": "https://…",
 			"linkHint": "标签对应权威页面的可选链接——在悬停预览中展示。",
-			"imageSection": "图片",
 			"uploadImage": "上传图片…",
 			"replaceImage": "更换图片…",
 			"imageDialogTitle": "标签图片"
