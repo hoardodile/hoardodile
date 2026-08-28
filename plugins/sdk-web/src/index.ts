@@ -62,6 +62,7 @@ export {
 	invalidatePushKeys,
 	PROTOCOL_VERSION,
 	pluginMethods,
+	pluginRequestTimeouts,
 	pluginThemePalettes,
 } from "./protocol.ts"
 export {

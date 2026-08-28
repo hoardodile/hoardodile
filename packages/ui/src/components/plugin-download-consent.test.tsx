@@ -123,4 +123,17 @@ describe("PluginDownloadConsentDialog", () => {
 			await screen.findByRole("button", { name: "允许" }),
 		).toBeInTheDocument()
 	})
+
+	it("forwards stacking overrides to the overlay and content", async () => {
+		renderDialog({
+			overlayClassName: "z-[70]",
+			contentClassName: "z-[70]",
+		})
+		expect(await screen.findByTestId("plugin-download-consent")).toHaveClass(
+			"z-[70]",
+		)
+		// The overlay carries the same raised stack class, so the question
+		// stays above a host layer that sits over the default dialog stack.
+		expect(document.querySelectorAll('[class*="z-[70]"]').length).toBeGreaterThanOrEqual(2)
+	})
 })

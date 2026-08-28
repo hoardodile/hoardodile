@@ -50,6 +50,14 @@ export type PluginDownloadConsentDialogProps = {
 	readonly onAllow: (ticketId: string, remember: boolean) => void
 	/** Byte formatter; defaults to `"<n> B"`. */
 	readonly formatBytes?: (bytes: number) => string
+	/**
+	 * Overlay stacking override. Hosts with a layer above the standard
+	 * dialog stack (e.g. the app's plugin preview window at z-60) pass a
+	 * higher value so the consent question stays visible and clickable.
+	 */
+	readonly overlayClassName?: string
+	/** Content stacking override; see {@link overlayClassName}. */
+	readonly contentClassName?: string
 }
 
 /**
@@ -84,6 +92,8 @@ export function PluginDownloadConsentDialog(
 			onOpenChange={(open) => {
 				if (!open && activeId !== null) onDeny(activeId)
 			}}
+			overlayClassName={props.overlayClassName}
+			contentClassName={props.contentClassName}
 			title={
 				entry === null || itemCount <= 1
 					? t("pluginDownload.title", undefined)

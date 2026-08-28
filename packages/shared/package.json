@@ -12,7 +12,8 @@
 		"./dayjs": "./src/dayjs.ts",
 		"./usage-period": "./src/usage-period.ts",
 		"./desktop": "./src/desktop.ts",
-		"./net-proxy": "./src/net-proxy.ts"
+		"./net-proxy": "./src/net-proxy.ts",
+		"./trpc-timeouts": "./src/trpc-timeouts.ts"
 	},
 	"scripts": {
 		"dev": "tsc --noEmit --watch --preserveWatchOutput",
