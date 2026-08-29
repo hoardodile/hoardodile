@@ -576,7 +576,11 @@ export function PinnedSectionSettingsDialog(
 						<Button type="button" variant="secondary" onClick={handleCancel}>
 							{t("common.cancel")}
 						</Button>
-						<Button type="button" onClick={handleDone}>
+						<Button
+							type="button"
+							onClick={handleDone}
+							data-testid="pinned-done-button"
+						>
 							{t("overview.pinned.settings.done")}
 						</Button>
 					</div>

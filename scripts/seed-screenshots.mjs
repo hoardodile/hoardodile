@@ -8,13 +8,15 @@
  *   pnpm seed:screenshots -- --reuse
  *   pnpm seed:screenshots -- --out ./somewhere
  *   pnpm seed:screenshots -- --skip-download
+ *   pnpm seed:screenshots -- --lang en,zh
+ *   pnpm seed:screenshots -- --lang zh --lang de
  */
 
 import { spawn } from "node:child_process"
 import { existsSync } from "node:fs"
 import { join, resolve } from "node:path"
 
-import { captureDemo } from "./lib/capture-demo.mjs"
+import { captureDemo, SUPPORTED_LANGUAGES } from "./lib/capture-demo.mjs"
 import { removeWithRetry } from "./lib/fs.mjs"
 import { killTree, needsShell, run } from "./lib/process.mjs"
 import { tmpPath, WORKSPACE_ROOT } from "./lib/workspace.mjs"
@@ -24,16 +26,48 @@ const VITE_PORT = "5174"
 const VITE_HOST = "localhost"
 const WAIT_HTTP_MS = 120_000
 
+function parseLangList(value) {
+	const codes = value
+		.split(",")
+		.map((item) => item.trim())
+		.filter((item) => item.length > 0)
+	if (codes.length === 0) {
+		throw new Error("seed:screenshots: --lang requires a language code")
+	}
+	for (const code of codes) {
+		if (!SUPPORTED_LANGUAGES.includes(code)) {
+			throw new Error(
+				`seed:screenshots: unsupported language ${JSON.stringify(code)} (supported: ${SUPPORTED_LANGUAGES.join(", ")})`,
+			)
+		}
+	}
+	return codes
+}
+
 function parseArgs(argv) {
 	let reuse = false
 	let skipDownload = false
 	let outDir = tmpPath("demo-screenshots")
+	const langs = []
 	for (let i = 0; i < argv.length; i += 1) {
 		const arg = argv[i]
 		if (arg === undefined) continue
 		if (arg === "--reuse") reuse = true
 		else if (arg === "--skip-download") skipDownload = true
-		else if (arg === "--out") {
+		else if (arg === "--lang") {
+			const next = argv[i + 1]
+			if (next === undefined || next.startsWith("--")) {
+				throw new Error("seed:screenshots: --lang requires a language code")
+			}
+			langs.push(...parseLangList(next))
+			i += 1
+		} else if (arg.startsWith("--lang=")) {
+			const value = arg.slice("--lang=".length)
+			if (value.length === 0) {
+				throw new Error("seed:screenshots: --lang requires a language code")
+			}
+			langs.push(...parseLangList(value))
+		} else if (arg === "--out") {
 			const next = argv[i + 1]
 			if (next === undefined || next.startsWith("--")) {
 				throw new Error("seed:screenshots: --out requires a directory path")
@@ -49,9 +83,10 @@ function parseArgs(argv) {
 		} else if (arg === "--help" || arg === "-h") {
 			process.stdout.write(
 				[
-					"Usage: pnpm seed:screenshots [-- --reuse] [-- --skip-download] [-- --out <dir>]",
-					"Wipe tmp/demo-storage, seed, capture desktop-styled screenshots to tmp/demo-screenshots.",
+					"Usage: pnpm seed:screenshots [-- --reuse] [-- --skip-download] [-- --out <dir>] [-- --lang <codes>]",
+					"Wipe tmp/demo-storage, seed, capture desktop-styled screenshots to tmp/demo-screenshots/<lang>.",
 					"--reuse keeps an already-seeded library (UI-only recapture).",
+					"--lang <codes> captures one or more UI languages (comma-separated, repeatable; default: en).",
 				].join("\n"),
 			)
 			process.stdout.write("\n")
@@ -60,7 +95,13 @@ function parseArgs(argv) {
 			throw new Error(`seed:screenshots: unknown argument ${arg}`)
 		}
 	}
-	return { reuse, skipDownload, outDir }
+	const uniqueLangs = [...new Set(langs)]
+	return {
+		reuse,
+		skipDownload,
+		outDir,
+		langs: uniqueLangs.length > 0 ? uniqueLangs : ["en"],
+	}
 }
 
 function pluginDist(name) {
@@ -161,14 +202,41 @@ async function main() {
 				previewEnv,
 			),
 		)
+		// The web `dev` script runs these generators before Vite; invoke Vite
+		// directly via `exec` with the options inline (no `--` separator). A
+		// `pnpm run dev -- <args>` appends a stray `--` that Vite v8 treats as
+		// the end of option parsing, so `--port` would be ignored and Vite
+		// would bind its config default instead of VITE_PORT.
+		run(
+			"pnpm",
+			[
+				"-F",
+				"@hoardodile/web",
+				"exec",
+				"node",
+				"../../scripts/generate-licenses.mjs",
+			],
+			{ cwd: WORKSPACE_ROOT },
+		)
+		run(
+			"pnpm",
+			[
+				"-F",
+				"@hoardodile/web",
+				"exec",
+				"node",
+				"../../scripts/generate-solar-lazy-index.mjs",
+			],
+			{ cwd: WORKSPACE_ROOT },
+		)
 		children.push(
 			spawnSvc(
 				"web",
 				[
 					"-F",
 					"@hoardodile/web",
-					"dev",
-					"--",
+					"exec",
+					"vite",
 					"--host",
 					VITE_HOST,
 					"--port",
@@ -180,12 +248,17 @@ async function main() {
 		)
 		await waitForHttp(`http://127.0.0.1:${SERVER_PORT}/health`, WAIT_HTTP_MS)
 		await waitForHttp(`http://${VITE_HOST}:${VITE_PORT}/`, WAIT_HTTP_MS)
-		await captureDemo({
-			baseUrl: `http://${VITE_HOST}:${VITE_PORT}`,
-			outDir: args.outDir,
-			storageRoot,
-		})
-		console.log(`[seed:screenshots] done → ${args.outDir}`)
+		for (const lang of args.langs) {
+			await captureDemo({
+				baseUrl: `http://${VITE_HOST}:${VITE_PORT}`,
+				outDir: join(args.outDir, lang),
+				storageRoot,
+				lang,
+			})
+		}
+		const langsLabel =
+			args.langs.length === 1 ? args.langs[0] : args.langs.join(", ")
+		console.log(`[seed:screenshots] done → ${args.outDir} (${langsLabel})`)
 	} finally {
 		stopAll()
 	}

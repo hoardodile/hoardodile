@@ -16,6 +16,17 @@ const VIEWPORT = { width: 1600, height: 900 }
 const FIRST_GOTO_MS = 180_000
 const SETTLE_MS = 400
 
+// Must match @hoardodile/i18n SUPPORTED_LANGUAGES (packages/i18n/src/core.ts).
+export const SUPPORTED_LANGUAGES = ["en", "zh", "ja", "de", "es"]
+/** Browser locale (BCP-47 region variant) for each supported UI language. */
+const LOCALES = {
+	en: "en-US",
+	zh: "zh-CN",
+	ja: "ja-JP",
+	de: "de-DE",
+	es: "es-ES",
+}
+
 /**
  * Same shape as `installDesktopBridge` in AppShell.test.tsx. Runs in the
  * page before `main.tsx` reads `isHoardodileDesktop()`.
@@ -27,6 +38,8 @@ function installDesktopBridge() {
 		minimize() {},
 		toggleMaximize() {},
 		close() {},
+		toggleDevtools() {},
+		retryLoad() {},
 		async isMaximized() {
 			return false
 		},
@@ -42,31 +55,88 @@ function installDesktopBridge() {
 				return () => undefined
 			},
 			async check() {},
+			async apply() {},
 			async quitAndInstall() {},
 		},
 		async pickLibraryFolder() {
 			return undefined
 		},
 		async relaunch() {},
+		async openLogsFolder() {
+			return false
+		},
 		async getConfig() {
 			return {
 				libraryPath: "",
 				sharedFolderRoot: "",
 				sharedFolderEnabled: false,
+				port: 0,
+				lanEnabled: false,
 				autoStart: false,
 				startInTray: false,
+				closeAction: "ask",
+				requireSignInOnLaunch: false,
+				requireSignInOnWindowOpen: false,
 				autoUpdate: false,
 				portable: false,
+				resourceVersion: null,
 			}
 		},
 		async setConfig() {},
+		async setCloseAction() {},
+		setLanguage() {},
+		async getLanguage() {
+			return undefined
+		},
+		openExternal() {},
+		registerAppRoutes() {},
+		async closeWithAction() {},
 		async changeLibraryFolder() {},
 		async setSharedFolderRoot() {},
 		async setSharedFolderEnabled() {},
+		async getLanInfo() {
+			return {
+				enabled: false,
+				port: 0,
+				preferredPort: 0,
+				addresses: [],
+			}
+		},
+		async checkLanEnabled() {
+			return { ok: false, reason: "no-admin-password" }
+		},
+		async setLanEnabled() {
+			return { ok: false, reason: "no-admin-password" }
+		},
+		async setLanPort() {},
+		async getShellCacheSize() {
+			return 0
+		},
+		async clearShellCache() {
+			return 0
+		},
 		async completeWizard() {},
 		async getWizardDefaults() {
 			return { libraryPath: "" }
 		},
+	}
+}
+
+/**
+ * Capture boot prefs, applied before the SPA boots (see
+ * apps/web/src/i18n/index.ts, which reads the language pref from
+ * localStorage at module load):
+ * - `language` drives the UI language.
+ * - `app.lastRoute` is the desktop last-route restore key; clearing it
+ *   prevents a full `page.goto("/")` from re-arming the restore and
+ *   redirecting back to the previously visited route.
+ */
+function installCapturePrefs(lang) {
+	try {
+		localStorage.setItem("language", lang)
+		localStorage.removeItem("app.lastRoute")
+	} catch {
+		// localStorage is best-effort here; ignore quota / origin errors.
 	}
 }
 
@@ -106,22 +176,36 @@ function sleep(ms) {
 }
 
 async function waitForImages(page) {
-	await page.evaluate(async () => {
-		const pending = [...document.images].filter((img) => !img.complete)
-		await Promise.all(
-			pending.map(
-				(img) =>
-					new Promise((resolve) => {
-						img.addEventListener("load", resolve, { once: true })
-						img.addEventListener("error", resolve, { once: true })
-					}),
-			),
-		)
-	})
+	try {
+		await page.evaluate(async () => {
+			const pending = [...document.images].filter((img) => !img.complete)
+			await Promise.all(
+				pending.map(
+					(img) =>
+						new Promise((resolve) => {
+							img.addEventListener("load", resolve, { once: true })
+							img.addEventListener("error", resolve, { once: true })
+						}),
+				),
+			)
+		})
+	} catch {
+		// The page can reload (e.g. Vite HMR) or navigate while we wait on the
+		// image-load promise; treat that as "nothing pending" and continue.
+	}
 }
 
 async function settle(page) {
 	await page.getByTestId("desktop-caption-bar").waitFor({ timeout: 30_000 })
+	// The first-paint splash (index.html #app-splash) is removed by the app
+	// once the boot route + queries settle; wait for it so a just-loaded page
+	// screenshots the real content instead of the logo overlay. A deadline
+	// inside the app guarantees removal, so a short timeout is only a safety
+	// net for the locator.
+	await page
+		.locator("#app-splash")
+		.waitFor({ state: "detached", timeout: 15_000 })
+		.catch(() => {})
 	await Promise.race([waitForImages(page), sleep(10_000)])
 	await sleep(SETTLE_MS)
 }
@@ -152,10 +236,14 @@ async function signIn(page, baseUrl) {
 
 async function pinOverviewFilter(page, title) {
 	await page.getByTestId("resource-pin-overview-settings").click()
-	const dialog = page.getByRole("dialog")
+	// A success toast also has role="dialog", so scope to the pinned-settings
+	// dialog (the only one containing the pinned-add-button).
+	const dialog = page
+		.getByRole("dialog")
+		.filter({ has: page.getByTestId("pinned-add-button") })
 	await dialog.waitFor({ timeout: 10_000 })
 	if ((await dialog.getByText(title, { exact: true }).count()) > 0) {
-		await dialog.getByRole("button", { name: "Done" }).click()
+		await dialog.getByTestId("pinned-done-button").click()
 		await dialog.waitFor({ state: "hidden" })
 		return
 	}
@@ -163,7 +251,7 @@ async function pinOverviewFilter(page, title) {
 	const titleInput = dialog.locator('input[id^="pinned-title-"]')
 	await titleInput.waitFor({ timeout: 10_000 })
 	await titleInput.fill(title)
-	await dialog.getByRole("button", { name: "Done" }).click()
+	await dialog.getByTestId("pinned-done-button").click()
 	await dialog.waitFor({ state: "hidden" })
 }
 
@@ -172,11 +260,18 @@ async function pinOverviewFilter(page, title) {
  *   readonly baseUrl: string
  *   readonly outDir: string
  *   readonly storageRoot: string
+ *   readonly lang?: string
  * }} opts
  */
 export async function captureDemo(opts) {
-	const { baseUrl, outDir, storageRoot } = opts
+	const { baseUrl, outDir, storageRoot, lang = "en" } = opts
+	if (!SUPPORTED_LANGUAGES.includes(lang)) {
+		throw new Error(
+			`captureDemo: unsupported language ${JSON.stringify(lang)} (supported: ${SUPPORTED_LANGUAGES.join(", ")})`,
+		)
+	}
 	mkdirSync(outDir, { recursive: true })
+	console.log(`[seed:screenshots] capturing locale ${lang} → ${outDir}`)
 	const manifest = readManifest(storageRoot)
 	const earthId = namedId(manifest.resources, "地球相册")
 	const monaId = namedId(manifest.resources, "蒙娜丽莎")
@@ -188,10 +283,11 @@ export async function captureDemo(opts) {
 	const browser = await chromium.launch({ headless: true })
 	const context = await browser.newContext({
 		viewport: VIEWPORT,
-		locale: "en-US",
+		locale: LOCALES[lang],
 		deviceScaleFactor: 1,
 	})
 	await context.addInitScript(installDesktopBridge)
+	await context.addInitScript(installCapturePrefs, lang)
 	const page = await context.newPage()
 	page.setDefaultTimeout(30_000)
 
