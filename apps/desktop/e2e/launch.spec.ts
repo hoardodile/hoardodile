@@ -19,6 +19,23 @@ import { appWindow, E2E_PASSWORD, launchDesktop } from "./launch.ts"
  */
 test("first run → claim → relaunch persistence", async () => {
 	const first = await launchDesktop()
+	// Window geometry persistence: resize explicitly — the relaunch below
+	// must come back at the same size and store the bounds.
+	//
+	// The size is drawn from the window's display work area: the restore
+	// path clamps a window back into that area (resolveInitialBounds), and
+	// the GitHub Windows runner's display is only 1024 px wide — a hardcoded
+	// 1120 resurrects as 1024. Deriving the size keeps the round-trip
+	// assertion display-agnostic.
+	const target = await first.app.evaluate(({ screen }) => {
+		const area = screen.getPrimaryDisplay().workArea
+		return {
+			x: 96,
+			y: 72,
+			width: Math.min(1200, area.width - 40),
+			height: Math.min(760, area.height - 40),
+		}
+	})
 	try {
 		// 1. wizard: the library path defaults to Documents/hoardodile.
 		const wizard = await first.app.firstWindow()
@@ -68,14 +85,13 @@ test("first run → claim → relaunch persistence", async () => {
 		)
 		expect(existsSync(join(first.userDataDir, "desktop.json"))).toBe(true)
 
-		// Window geometry persistence: resize explicitly — the relaunch
-		// below must come back at the same size and store the bounds.
-		const bounds = { x: 96, y: 72, width: 1120, height: 700 }
+		// Resize explicitly — the relaunch below must come back at the
+		// same size and store the bounds.
 		await first.app.evaluate(({ BrowserWindow }, next) => {
 			const win = BrowserWindow.getAllWindows()[0]
 			if (win === undefined) throw new Error("no app window")
 			win.setBounds(next)
-		}, bounds)
+		}, target)
 		// Wait out the debounced persistence (400 ms) plus a write tick.
 		await expect
 			.poll(() =>
@@ -83,7 +99,7 @@ test("first run → claim → relaunch persistence", async () => {
 					const win = BrowserWindow.getAllWindows()[0]
 					if (win === undefined) return null
 					const b = win.getBounds()
-					return b.width === 1120 && b.height === 700
+					return b.width === target.width && b.height === target.height
 				}),
 			)
 			.toBe(true)
@@ -114,13 +130,13 @@ test("first run → claim → relaunch persistence", async () => {
 			const b = win.getBounds()
 			return { width: b.width, height: b.height }
 		})
-		expect(restored).toEqual({ width: 1120, height: 700 })
+		expect(restored).toEqual({ width: target.width, height: target.height })
 		expect(
 			JSON.parse(
 				readFileSync(join(second.userDataDir, "desktop.json"), "utf8"),
 			),
 		).toMatchObject({
-			windowBounds: { width: 1120, height: 700 },
+			windowBounds: { width: target.width, height: target.height },
 			windowMaximized: false,
 		})
 	} finally {
