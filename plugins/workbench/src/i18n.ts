@@ -7,6 +7,7 @@ import {
 } from "@hoardodile/i18n"
 import { createI18n } from "@hoardodile/i18n/create-i18n"
 import { WORKBENCH_CATALOGS } from "@hoardodile/i18n/workbench"
+import { setI18n } from "react-i18next"
 
 /**
  * The wizard-like workbench chrome i18n instance: the shared
@@ -30,6 +31,13 @@ export const i18n = createI18n({
 		]),
 	),
 })
+
+// Bind as react-i18next's default instance, exactly like the web SPA
+// (apps/web/src/i18n/index.ts): the workspace keeps more than one
+// physical copy of `react-i18next`, so the chrome's own `useTranslation`
+// ("workbench", "ui") must not rely on the provider bound to a different
+// copy. The cast bridges those copies — the instance is copy-agnostic.
+setI18n(i18n as unknown as Parameters<typeof setI18n>[0])
 
 /** Apply the configured language to the instance. */
 export function applyLanguage(language: SupportedLanguage | undefined): void {

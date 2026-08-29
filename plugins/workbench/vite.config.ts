@@ -86,10 +86,12 @@ export default defineConfig({
 	],
 	server: {
 		// Same bind as serveWorkbench/serve.mjs: the documented URL is
-		// http://127.0.0.1:5199 (vite 8 would default to ::1 only).
+		// http://127.0.0.1:5199 (vite 8 would default to ::1 only). Not
+		// strict: if 5199 is taken, vite rebinds to the next free port and
+		// prints it, so a stale workbench never aborts the dev server.
 		host: "127.0.0.1",
 		port: 5199,
-		strictPort: true,
+		strictPort: false,
 	},
 	build: {
 		chunkSizeWarningLimit: Infinity,

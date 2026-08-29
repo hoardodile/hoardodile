@@ -25,6 +25,9 @@ import {
 
 const DIST_DIR = resolve(dirname(fileURLToPath(import.meta.url)))
 
+/** How many ports to probe upward from the requested one before giving up. */
+const MAX_PORT_ATTEMPTS = 20
+
 /**
  * Serve the published workbench on `port`. Pass `providers` for real
  * data (the CLI does), or `dataDir` for the plain-directory default.
@@ -76,11 +79,34 @@ export function serveWorkbench(opts) {
 		})()
 	})
 
-	return new Promise((resolveStart) => {
-		server.listen(port, host, () => {
-			console.log(`[workbench] serving on http://${host}:${port}`)
+	return new Promise((resolveStart, rejectStart) => {
+		let attempt = port
+		function onListening() {
+			server.off("error", onError)
+			const address = server.address()
+			const bound =
+				address === null || typeof address === "string" ? attempt : address.port
+			console.log(`[workbench] serving on http://${host}:${bound}`)
 			resolveStart(server)
-		})
+		}
+		function onError(err) {
+			if (err.code === "EADDRINUSE" && attempt - port < MAX_PORT_ATTEMPTS) {
+				attempt += 1
+				console.warn(
+					`[workbench] port ${attempt - 1} in use — rebinding to ${attempt}`,
+				)
+				// This listener already fired (a `once`), so re-arm it for the
+				// retry; the single `listening` listener below is reused as-is.
+				server.once("error", onError)
+				setImmediate(() => server.listen(attempt, host))
+			} else {
+				server.off("listening", onListening)
+				rejectStart(err)
+			}
+		}
+		server.once("listening", onListening)
+		server.once("error", onError)
+		server.listen(attempt, host)
 	})
 }
 

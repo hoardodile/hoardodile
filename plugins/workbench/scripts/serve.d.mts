@@ -136,7 +136,11 @@ export type ServeWorkbenchOptions = {
 		| Promise<WorkbenchHookSnapshot | undefined>
 		| WorkbenchHookSnapshot
 		| undefined
-	/** Port to listen on. Defaults to 5199. */
+	/**
+	 * Preferred port to listen on. Defaults to 5199. If the port is in use
+	 * the server rebinds to the next free port (bounded) and the printed
+	 * URL reports the actual one; read `server.address()` for it.
+	 */
 	readonly port?: number
 	/** Bind host. Defaults to 127.0.0.1. */
 	readonly host?: string

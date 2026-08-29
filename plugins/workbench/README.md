@@ -11,7 +11,9 @@ You normally never touch this package directly. `hoardodile plugin dev`
 watch-builds a plugin, captures its server-side hook results from the
 real worker sandbox, renders preview variants and video frames with the
 production pipeline, and serves the workbench at
-http://127.0.0.1:5199.
+http://127.0.0.1:5199. If that port is already in use, the server rebinds
+to the next free port (and prints the real URL after it) instead of
+aborting, so a stale workbench never blocks a new one.
 
 Terminal dev tooling (MIT) — like `@hoardodile/host`, it is not part of
 the SDK closure and never enters a shipped plugin bundle.
