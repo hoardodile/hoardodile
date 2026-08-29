@@ -6,6 +6,7 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@hoardodile/ui/components/dropdown-menu"
+import { TagChip } from "@hoardodile/ui/components/tag-chip"
 import { AltArrowDown } from "@hoardodile/ui/icons/registry"
 import { useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
@@ -14,7 +15,6 @@ import {
 	CharSelectorDialog,
 	useCharactersByIds,
 } from "@/features/char/components/CharSelectorDialog"
-import { TagChip } from "./TagChip"
 import { TagPickDialog } from "./TagPickDialog"
 import { useTagsById } from "./TagSinglePicker"
 

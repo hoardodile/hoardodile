@@ -1,7 +1,7 @@
 import { GroupLabel } from "@hoardodile/ui/components/group-label"
+import { TagChip, type TagChipSize } from "@hoardodile/ui/components/tag-chip"
 import type { ReactNode } from "react"
 import { useTranslation } from "react-i18next"
-import { TagChip, type TagChipSize } from "@/features/tags/TagChip"
 
 export type DualChipItem = {
 	readonly id: string

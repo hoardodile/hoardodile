@@ -1,6 +1,9 @@
+import {
+	DEFAULT_COLOR_PRESETS,
+	TAG_SPECIAL_STYLES,
+} from "@hoardodile/ui/lib/colors"
 import { fireEvent, render, screen } from "@testing-library/react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import { DEFAULT_COLOR_PRESETS, TAG_SPECIAL_STYLES } from "@/lib/colors"
 import { prefKeys } from "@/lib/keys"
 import { prefSyncStore } from "@/lib/prefSyncStore"
 import { ColorPicker } from "./ColorPicker"

@@ -1,11 +1,11 @@
-import { cn } from "@hoardodile/ui/lib/utils"
-import type { CSSProperties } from "react"
+import { getSpecialTagStyleConfig } from "@hoardodile/ui/components/special-tag-surface"
 import {
 	computeTagChipColors,
 	isSpecialTagStyle,
 	type TagSpecialStyle,
-} from "@/lib/colors"
-import { getSpecialTagStyleConfig } from "./SpecialTagSurface"
+} from "@hoardodile/ui/lib/colors"
+import { cn } from "@hoardodile/ui/lib/utils"
+import type { CSSProperties } from "react"
 
 export type ResolvedTagChipSurface = {
 	readonly className: string

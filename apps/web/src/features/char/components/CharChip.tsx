@@ -1,10 +1,10 @@
 import type { Character } from "@hoardodile/schemas"
+import { SpecialTagSurface } from "@hoardodile/ui/components/special-tag-surface"
+import { resolveTagChipSurface } from "@hoardodile/ui/lib/tag-surface"
 import { cn } from "@hoardodile/ui/lib/utils"
 import { useNavigate } from "@tanstack/react-router"
 import type { CSSProperties, ReactNode } from "react"
 import { useTranslation } from "react-i18next"
-import { SpecialTagSurface } from "@/features/tags/SpecialTagSurface"
-import { resolveTagChipSurface } from "@/features/tags/tagSurface"
 import { isHoardodileDesktop } from "@/lib/desktop"
 import { CharThumb } from "./CharThumb"
 

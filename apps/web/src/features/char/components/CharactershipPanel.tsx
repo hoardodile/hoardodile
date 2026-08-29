@@ -15,6 +15,7 @@ import {
 } from "@hoardodile/ui/components/dropdown-menu"
 import { Input } from "@hoardodile/ui/components/input"
 import { Surface } from "@hoardodile/ui/components/surface"
+import { TagChip } from "@hoardodile/ui/components/tag-chip"
 import { toast } from "@hoardodile/ui/components/toast"
 import {
 	Tooltip,
@@ -38,7 +39,6 @@ import {
 import { useTranslation } from "react-i18next"
 import { AddGridPill } from "@/components/common/AddGridPill"
 import { useConfirmDialog } from "@/components/common/useConfirmDialog"
-import { TagChip } from "@/features/tags/TagChip"
 import { TagChipLink } from "@/features/tags/TagChipLink"
 import { errorMessage } from "@/lib/errors"
 import { randomUUID } from "@/lib/randomUUID"

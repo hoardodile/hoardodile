@@ -1,4 +1,9 @@
 export type { TagFilterMode } from "@hoardodile/shared"
+export type {
+	TagChipProps,
+	TagChipSize,
+} from "@hoardodile/ui/components/tag-chip"
+export { TagChip } from "@hoardodile/ui/components/tag-chip"
 export * from "./api"
 export type { BulkTagsDialogProps } from "./BulkTagsDialog"
 export { BulkTagsDialog } from "./BulkTagsDialog"
@@ -7,8 +12,6 @@ export { buildTagGroups } from "./buildTagGroups"
 export type { CatTagGroupsProps } from "./CatTagGroups"
 export { CatTagGroups } from "./CatTagGroups"
 export { useTagList, useTagStoreStatus } from "./store"
-export type { TagChipProps, TagChipSize } from "./TagChip"
-export { TagChip } from "./TagChip"
 export type { TagChipHoverProps } from "./TagChipHover"
 export { TagChipHover } from "./TagChipHover"
 export type { TagChipLinkProps } from "./TagChipLink"

@@ -1,11 +1,11 @@
 import type { EntityMetaDraft } from "@hoardodile/schemas"
 import { AppDialog } from "@hoardodile/ui/components/app-dialog"
 import { Button } from "@hoardodile/ui/components/button"
+import { TagChip } from "@hoardodile/ui/components/tag-chip"
 import { Add } from "@hoardodile/ui/icons/actions"
 import type { QueryClient, UseMutationOptions } from "@tanstack/react-query"
 import { type ReactNode, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { TagChip } from "@/features/tags/TagChip"
 import { useDelayedReset } from "@/hooks/useDelayedReset"
 import { useSaveMutation } from "@/hooks/useSaveMutation"
 import {

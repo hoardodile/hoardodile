@@ -8,6 +8,7 @@ import { Icon } from "@hoardodile/ui/components/icon"
 import { ListEmptyRow } from "@hoardodile/ui/components/list-empty-row"
 import { PillTabs } from "@hoardodile/ui/components/pill-tabs"
 import { SectionLabel } from "@hoardodile/ui/components/section-label"
+import { TagChip } from "@hoardodile/ui/components/tag-chip"
 import { Add } from "@hoardodile/ui/icons/actions"
 import { Crown, TrashBinMinimalistic } from "@hoardodile/ui/icons/registry"
 import { useQuery } from "@tanstack/react-query"
@@ -40,7 +41,6 @@ import {
 import { tagErrorMessage } from "./errors"
 import { RuleAddDialog } from "./RuleAddDialog"
 import { RulesTree, type RulesTreeBranch } from "./RulesTree"
-import { TagChip } from "./TagChip"
 import { TagChipHover } from "./TagChipHover"
 
 /**

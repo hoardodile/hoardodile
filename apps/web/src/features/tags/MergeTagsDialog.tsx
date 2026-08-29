@@ -1,5 +1,6 @@
 import { AppDialog } from "@hoardodile/ui/components/app-dialog"
 import { Button } from "@hoardodile/ui/components/button"
+import { TagChip } from "@hoardodile/ui/components/tag-chip"
 import { toast } from "@hoardodile/ui/components/toast"
 import { ArrowRight } from "@hoardodile/ui/icons/registry"
 import { useQuery } from "@tanstack/react-query"
@@ -19,7 +20,6 @@ import {
 	tagMergePreviewQueryOptions,
 } from "./api"
 import { tagErrorMessage } from "./errors"
-import { TagChip } from "./TagChip"
 import { TagSinglePicker } from "./TagSinglePicker"
 
 export type MergeTagsDialogProps = {

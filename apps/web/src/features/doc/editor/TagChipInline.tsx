@@ -1,8 +1,8 @@
 import type { BlockNoteEditor } from "@blocknote/core"
 import { createReactInlineContentSpec } from "@blocknote/react"
+import { TagChip } from "@hoardodile/ui/components/tag-chip"
 import { NodeSelection } from "prosemirror-state"
 import type { MouseEvent } from "react"
-import { TagChip } from "@/features/tags/TagChip"
 
 /**
  * Inline `tagChip`: a rounded, tinted chip with fixed text content.

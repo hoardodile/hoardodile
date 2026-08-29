@@ -4,14 +4,14 @@ import {
 	DropdownMenuTrigger,
 } from "@hoardodile/ui/components/dropdown-menu"
 import { Icon } from "@hoardodile/ui/components/icon"
+import { SpecialTagSurface } from "@hoardodile/ui/components/special-tag-surface"
 import { AltArrowDown, Pin } from "@hoardodile/ui/icons/registry"
-import { cn } from "@hoardodile/ui/lib/utils"
-import type { KeyboardEvent, ReactNode } from "react"
-import { SpecialTagSurface } from "@/features/tags/SpecialTagSurface"
 import {
 	type ResolvedTagChipSurface,
 	resolveTagChipSurface,
-} from "@/features/tags/tagSurface"
+} from "@hoardodile/ui/lib/tag-surface"
+import { cn } from "@hoardodile/ui/lib/utils"
+import type { KeyboardEvent, ReactNode } from "react"
 
 /**
  * The rail group's tint — shared between the chip half and the glued

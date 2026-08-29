@@ -1,7 +1,7 @@
+import { TagChip, type TagChipSize } from "@hoardodile/ui/components/tag-chip"
 import { cn } from "@hoardodile/ui/lib/utils"
 import { Link } from "@tanstack/react-router"
 import { forwardRef, type ReactNode } from "react"
-import { TagChip, type TagChipSize } from "./TagChip"
 
 export type TagChipLinkProps = {
 	readonly id: string

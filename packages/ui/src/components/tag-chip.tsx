@@ -8,8 +8,8 @@ import {
 	type ReactNode,
 	type Ref,
 } from "react"
-import { SpecialTagSurface } from "./SpecialTagSurface"
-import { resolveTagChipSurface } from "./tagSurface"
+import { SpecialTagSurface } from "@hoardodile/ui/components/special-tag-surface"
+import { resolveTagChipSurface } from "@hoardodile/ui/lib/tag-surface"
 
 /** The two sanctioned chip sizes: `sm` (default, `px-2 py-1`) for cards and
     inline rows, `md` (`px-2 py-1.5`) for the filterer facets (Categories,

@@ -1,14 +1,14 @@
 import { ColorPicker as ColorPickerShell } from "@hoardodile/ui/components/color-picker"
-import { useTranslation } from "react-i18next"
-import { jsonCodec } from "@/features/prefs"
-import { TagChip } from "@/features/tags/TagChip"
-import { usePrefSync } from "@/hooks/usePrefSync"
-import { loose } from "@/i18n"
+import { TagChip } from "@hoardodile/ui/components/tag-chip"
 import {
 	DEFAULT_COLOR_PRESETS,
 	isSpecialTagStyle,
 	TAG_SPECIAL_STYLES,
-} from "@/lib/colors"
+} from "@hoardodile/ui/lib/colors"
+import { useTranslation } from "react-i18next"
+import { jsonCodec } from "@/features/prefs"
+import { usePrefSync } from "@/hooks/usePrefSync"
+import { loose } from "@/i18n"
 import { prefKeys } from "@/lib/keys"
 
 export type ColorPickerProps = {

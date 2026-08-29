@@ -1,8 +1,8 @@
 import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { describe, expect, test, vi } from "vitest"
-import { TAG_SPECIAL_STYLES } from "@/lib/colors"
-import { TagChip } from "./TagChip"
+import { TAG_SPECIAL_STYLES } from "@hoardodile/ui/lib/colors"
+import { TagChip } from "./tag-chip"
 
 function mockBoundingRect(width: number, height: number) {
 	const original = Element.prototype.getBoundingClientRect

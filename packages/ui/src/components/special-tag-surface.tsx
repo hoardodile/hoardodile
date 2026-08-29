@@ -1,6 +1,6 @@
 import { cn } from "@hoardodile/ui/lib/utils"
 import { useId } from "react"
-import type { TagSpecialStyle } from "@/lib/colors"
+import type { TagSpecialStyle } from "@hoardodile/ui/lib/colors"
 import { goldConfig } from "./special/gold"
 import { kintsugiConfig } from "./special/kintsugi"
 import { oilslickConfig } from "./special/oilslick"
@@ -31,7 +31,7 @@ export function getSpecialTagStyleConfig(
 /**
  * SVG background surface for special tag styles.
  *
- * Each style owns a self-contained SVG renderer in `features/tags/special/`.
+ * Each style owns a self-contained SVG renderer in `src/components/special/`.
  * This component only picks the right renderer from the registry and applies
  * positioning; all styling (filters, colors, shadows) lives in the renderer or
  * the chip container config.

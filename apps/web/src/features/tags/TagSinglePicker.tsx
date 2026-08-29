@@ -1,8 +1,8 @@
 import type { CatKind, Tag } from "@hoardodile/schemas"
+import { TagChip } from "@hoardodile/ui/components/tag-chip"
 import { AltArrowDown } from "@hoardodile/ui/icons/registry"
 import { useMemo, useState } from "react"
 import { useTagList } from "./store"
-import { TagChip } from "./TagChip"
 import { TagPickDialog } from "./TagPickDialog"
 
 export type TagSinglePickerProps = {

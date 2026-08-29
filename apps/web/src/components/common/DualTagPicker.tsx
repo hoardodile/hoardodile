@@ -1,5 +1,6 @@
 import type { CatKind, Tag } from "@hoardodile/schemas"
 import { GroupLabel } from "@hoardodile/ui/components/group-label"
+import { TagChip, type TagChipSize } from "@hoardodile/ui/components/tag-chip"
 import { useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { AddEntityMetaPill } from "@/components/common/AddEntityMetaPill"
@@ -11,7 +12,6 @@ import {
 } from "@/features/cat"
 import { createTagMutation, invalidateTags } from "@/features/tags/api"
 import { useTagList, useTagStoreStatus } from "@/features/tags/store"
-import { TagChip, type TagChipSize } from "@/features/tags/TagChip"
 import { collapseTags } from "@/features/tags/utils/collapse"
 import {
 	filterCategoriesByKind,

@@ -1,6 +1,6 @@
 import { FontPicker as FontPickerShell } from "@hoardodile/ui/components/font-picker"
+import { TagChip } from "@hoardodile/ui/components/tag-chip"
 import { useTranslation } from "react-i18next"
-import { TagChip } from "@/features/tags/TagChip"
 import {
 	buildFontFamily,
 	EXTRA_FONT_TAGS,

@@ -1,7 +1,7 @@
+import { TagChip } from "@hoardodile/ui/components/tag-chip"
 import { Link } from "@hoardodile/ui/icons/registry"
 import { useTranslation } from "react-i18next"
 import { ExternalLink } from "@/components/common/ExternalLink"
-import { TagChip } from "@/features/tags/TagChip"
 import { hostnameOf, withScheme } from "@/lib/url"
 
 export type SourceChipProps = {

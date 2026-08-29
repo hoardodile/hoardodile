@@ -1,5 +1,6 @@
 import type { TraitDef } from "@hoardodile/schemas"
 import { Button } from "@hoardodile/ui/components/button"
+import { TagChip } from "@hoardodile/ui/components/tag-chip"
 import {
 	Tooltip,
 	TooltipContent,
@@ -11,7 +12,6 @@ import { keyBy } from "es-toolkit"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { AddGridPill } from "@/components/common/AddGridPill"
-import { TagChip } from "@/features/tags/TagChip"
 import { TagChipLink } from "@/features/tags/TagChipLink"
 import { TraitAddDialog } from "@/features/traits/TraitAddDialog"
 import { TraitValueField } from "./TraitValueField"
