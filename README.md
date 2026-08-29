@@ -29,9 +29,7 @@ Requires Node.js 24 and pnpm.
 docker compose up -d   # http://localhost:3000
 ```
 
-- Data lives in the named volume `hoardodile-data` (mounted at `/data`); `docker compose down -v` **deletes it** — bind-mount `./data:/data` if you prefer an inspectable directory. The image runs as a non-root user and declares a HEALTHCHECK (`docker compose ps` shows the state).
-- Upgrade = rebuild/re-pull the image and `docker compose up -d`; migrations run on next start. The bundled gallery/pdf plugins are seeds: uninstalling one keeps the bundled original and stays uninstalled for this library until you restore it — fully offline — from **Settings → Plugins → Bundled plugins** (a newer image does not re-ship them).
-- Behind a TLS reverse proxy set `FORCE_HTTPS=true` and drop `SESSION_SECURE_COOKIE=false` from `environment`; see [`.env.example`](.env.example) for the full env surface. Custom plugins: mount your plugin zip/dir under `/app/plugins/<slug>` (never overwrite the bundled seeds) and install it in the UI. To distribute your own plugins, publish GitHub releases and point **Settings → Marketplace** at a registry repo (built-in default: [`hoardodile/marketplace`](https://github.com/hoardodile/marketplace)) — see [`packages/cli/README.md`](packages/cli/README.md).
+Your library lives in a Docker volume named `hoardodile-data` (mounted at `/data`); `docker compose down -v` deletes it.
 
 ## Agent Skills
 

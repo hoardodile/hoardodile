@@ -29,9 +29,7 @@ pnpm start # http://127.0.0.1:3000
 docker compose up -d   # http://localhost:3000
 ```
 
-- 数据保存在命名卷 `hoardodile-data`（挂载于 `/data`）；`docker compose down -v` 会**删除数据**——如需直接查看目录，可用 bind mount `./data:/data`。镜像以非 root 用户运行，自带 HEALTHCHECK（`docker compose ps` 可查看状态）。
-- 升级 = 重新构建/拉取镜像后 `docker compose up -d`，迁移在下次启动时自动执行。内置的 gallery/pdf 插件是种子插件：卸载不会删除打包原件，且对该库保持卸载状态，直到你在 **设置 → 插件市场 → 捆绑插件** 中离线还原（新镜像不会自动重新下发）。
-- 若放在 TLS 反向代理之后，请设置 `FORCE_HTTPS=true` 并从 `environment` 中移除 `SESSION_SECURE_COOKIE=false`；完整环境变量见 [`.env.example`](.env.example)。自定义插件：将插件目录挂载到 `/app/plugins/<slug>`（不要覆盖内置种子插件），然后在界面中安装；若要分发自己的插件，用 GitHub Release 发布并把“设置 → 插件市场”指向你的注册单仓库（内置默认为 [`hoardodile/marketplace`](https://github.com/hoardodile/marketplace)）——见 [`packages/cli/README.md`](packages/cli/README.md)。
+数据保存在 Docker 卷 `hoardodile-data`（挂载于 `/data`）；`docker compose down -v` 会删除数据。
 
 ## AI 技能
 
