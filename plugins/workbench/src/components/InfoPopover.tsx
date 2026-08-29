@@ -73,7 +73,7 @@ export function InfoPopover(props: {
 				: Object.keys(snap.errors).join(", ")
 
 	return (
-		<Popover>
+		<Popover closeOnBlur>
 			<Tooltip>
 				<TooltipTrigger
 					render={

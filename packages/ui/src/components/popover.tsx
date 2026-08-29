@@ -8,6 +8,7 @@ function Popover({
   open,
   defaultOpen,
   onOpenChange,
+  closeOnBlur = false,
   ...props
 }: Omit<PopoverPrimitive.Root.Props, "onOpenChange"> & {
   /**
@@ -18,12 +19,23 @@ function Popover({
     open: boolean,
     eventDetails?: PopoverPrimitive.Root.ChangeEventDetails,
   ) => void
+} & {
+  /**
+   * Close the popover when the window loses focus. Needed for surfaces
+   * that overlay a cross-origin iframe: Base UI closes on a parent-document
+   * `pointerdown`, which a click inside a sandboxed plugin iframe never
+   * reaches, so without this the plugin click leaves the popover open.
+   * Opt-in so app-wide popovers keep their current behavior.
+   */
+  closeOnBlur?: boolean
 }) {
   const [uncontrolledOpen, setUncontrolledOpen] = React.useState(
     defaultOpen ?? false,
   )
   const isControlled = open !== undefined
   const currentOpen = isControlled ? open : uncontrolledOpen
+  const handleOpenChangeRef = React.useRef(handleOpenChange)
+  handleOpenChangeRef.current = handleOpenChange
   function handleOpenChange(
     next: boolean,
     eventDetails?: PopoverPrimitive.Root.ChangeEventDetails,
@@ -32,6 +44,15 @@ function Popover({
     onOpenChange?.(next, eventDetails)
   }
   useMobileBackToClose(currentOpen, handleOpenChange)
+  // A sandboxed plugin iframe click moves focus into the iframe and blurs
+  // the host window; that blur is the only parent-side signal for a
+  // cross-origin iframe interaction, so close on it when opted in.
+  React.useEffect(() => {
+    if (!currentOpen || !closeOnBlur) return
+    const onWindowBlur = () => handleOpenChangeRef.current(false)
+    window.addEventListener("blur", onWindowBlur)
+    return () => window.removeEventListener("blur", onWindowBlur)
+  }, [currentOpen, closeOnBlur])
   return (
     <PopoverPrimitive.Root
       data-slot="popover"

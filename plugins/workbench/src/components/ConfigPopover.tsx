@@ -74,7 +74,7 @@ export function ConfigPopover(props: {
 	}))
 
 	return (
-		<Popover>
+		<Popover closeOnBlur>
 			<Tooltip>
 				<TooltipTrigger
 					render={
