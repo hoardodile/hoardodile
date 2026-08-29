@@ -570,6 +570,32 @@ describe("MarketplacePanel", () => {
 		expect(within(dialog).queryByText("Intro heading")).not.toBeInTheDocument()
 	})
 
+	it("resolves intro image references against the release download URL", async () => {
+		installClient({
+			config: { registryRepo: "me/registry" },
+			snapshot: {
+				...SNAPSHOT,
+				plugins: [
+					{
+						...SNAPSHOT.plugins[0]!,
+						latest: {
+							...SNAPSHOT.plugins[0]!.latest!,
+							intro: { en: "# Intro\n\n![shot](shot.png)" },
+						},
+					},
+				],
+			},
+		})
+		renderPanel()
+
+		await user.click(await screen.findByTestId(`marketplace-view-${PLUGIN_ID}`))
+		const dialog = await screen.findByTestId("marketplace-detail-dialog")
+		const img = within(dialog).getByAltText("shot")
+		expect(img.getAttribute("src")).toBe(
+			"https://github.com/me/cat-viewer/releases/download/v1.2.3/shot.png",
+		)
+	})
+
 	it("shows a hint when the release ships no intro and keeps the release notes tab", async () => {
 		installClient({
 			config: { registryRepo: "me/registry" },

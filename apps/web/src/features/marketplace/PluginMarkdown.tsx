@@ -40,14 +40,23 @@ function resolveLinkHref(href: string, repo: string): string {
 }
 
 /** Resolve a markdown image: absolute/data URIs pass through, relative
-    paths resolve against the repo root on `raw.githubusercontent.com`. */
-function resolveImageSrc(src: string, repo: string): string {
+    paths resolve against `imageBaseUrl` when provided (the release-download
+    base for intro assets), else against the repo root on
+    `raw.githubusercontent.com`. */
+function resolveImageSrc(
+	src: string,
+	repo: string,
+	imageBaseUrl: string | undefined,
+): string {
 	if (
 		src.startsWith("http://") ||
 		src.startsWith("https://") ||
 		src.startsWith("data:")
 	) {
 		return src
+	}
+	if (imageBaseUrl !== undefined) {
+		return `${imageBaseUrl}${src.replace(/^\//, "")}`
 	}
 	return `https://raw.githubusercontent.com/${repo}/HEAD/${src.replace(/^\//, "")}`
 }
@@ -61,8 +70,17 @@ function resolveImageSrc(src: string, repo: string): string {
 export function PluginMarkdown(props: {
 	readonly repo: string
 	readonly markdown: string
+	/**
+	 * Base URL relative image references resolve against. The intro tab
+	 * passes the release-download base
+	 * (`https://github.com/<repo>/releases/download/<tag>/`) so intro images
+	 * (published as flat release assets) render from the release itself.
+	 * When omitted, relative images resolve against the repo root on
+	 * `raw.githubusercontent.com` (release notes / README behavior).
+	 */
+	readonly imageBaseUrl?: string
 }) {
-	const { repo, markdown } = props
+	const { repo, markdown, imageBaseUrl } = props
 	return (
 		<div className={MARKDOWN_CLASSES}>
 			<Markdown
@@ -85,7 +103,7 @@ export function PluginMarkdown(props: {
 					},
 					img: ({ node: _node, src, alt, ...rest }) => (
 						<img
-							src={resolveImageSrc(src ?? "", repo)}
+							src={resolveImageSrc(src ?? "", repo, imageBaseUrl)}
 							alt={alt}
 							loading="lazy"
 							{...rest}

@@ -47,6 +47,15 @@ export function securityReportUrl(repo: string): string {
 	return `https://github.com/${repo}/security/advisories/new`
 }
 
+/**
+ * `owner/repo` + release tag → the base URL release assets are served from.
+ * The intro `PluginMarkdown` resolves relative image references against it,
+ * so intro images (published as flat release assets) render from the release.
+ */
+export function releaseDownloadBase(repo: string, tag: string): string {
+	return `https://github.com/${repo}/releases/download/${tag}/`
+}
+
 /** `v1.2.3 · Jan 2, 2025` — the version+date meta line under a title. */
 export function versionDateLine(
 	latest:
@@ -123,6 +132,13 @@ export function MarketplaceDetailDialog(props: {
 	const introContent = pickIntroMarkdown(latest?.intro, i18n.language)
 	const introLanguages =
 		latest?.intro === undefined ? [] : Object.keys(latest.intro)
+	// The intro render resolves relative images against the release's
+	// download base (intro assets are published with each release). `latest`
+	// is non-null whenever `introContent` is, but TS cannot track that link.
+	const introImageBase =
+		latest === undefined
+			? undefined
+			: releaseDownloadBase(plugin.repo, latest.tag)
 	const canInstall =
 		installedVersion === undefined &&
 		compatible &&
@@ -367,6 +383,7 @@ export function MarketplaceDetailDialog(props: {
 										<PluginMarkdown
 											repo={plugin.repo}
 											markdown={introContent}
+											imageBaseUrl={introImageBase}
 										/>
 									) : (
 										<p className="text-xs text-muted-foreground">

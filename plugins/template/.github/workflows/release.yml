@@ -43,12 +43,15 @@ jobs:
       - name: Package the release artifacts
         run: pnpm exec hoardodile plugin package --skip-build
 
+      - name: Gate the introduction (intro/ must be flat, images by bare filename)
+        run: pnpm intro:check
+
       - name: Publish the GitHub release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           files=$(ls release/*)
-          if ls intro.*.md >/dev/null 2>&1; then
-            files="$files intro.*.md"
+          if [ -d intro ]; then
+            files="$files intro/*"
           fi
           gh release create "$GITHUB_REF_NAME" $files --generate-notes
