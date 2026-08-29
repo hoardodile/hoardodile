@@ -1,13 +1,12 @@
 import { pluginThemePalettes } from "@hoardodile/sdk-web"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import {
-	describeViewport,
 	loadWorkbenchConfig,
 	resolveWorkbenchLanguage,
 	resolveWorkbenchTheme,
 	saveWorkbenchConfig,
-	viewportPresetId,
 	WORKBENCH_DEFAULTS,
+	WORKBENCH_PRESENTATION_MODES,
 	WORKBENCH_STORAGE_KEY,
 	type WorkbenchConfig,
 } from "./config.ts"
@@ -70,8 +69,8 @@ describe("WORKBENCH_DEFAULTS", () => {
 		// i18n: system language with the "en" fallback, no font pref.
 		expect(WORKBENCH_DEFAULTS.language).toBe("system")
 		expect(WORKBENCH_DEFAULTS.fontFamily).toBe("")
-		// App preview: the iframe fills the dialog surface.
-		expect(WORKBENCH_DEFAULTS.viewport).toEqual({ width: null, height: null })
+		// App preview: the plugin iframe fills the workbench surface.
+		expect(WORKBENCH_DEFAULTS.mode).toBe("bare")
 	})
 })
 
@@ -104,16 +103,28 @@ describe("resolveWorkbenchLanguage", () => {
 	})
 })
 
-describe("viewport helpers", () => {
-	it("describes the viewport for the readout", () => {
-		expect(describeViewport({ width: null, height: null })).toBe("Fill")
-		expect(describeViewport({ width: 375, height: 667 })).toBe("375×667")
+describe("presentation mode", () => {
+	it("is bare by default", () => {
+		expect(WORKBENCH_DEFAULTS.mode).toBe("bare")
+		expect(WORKBENCH_PRESENTATION_MODES).toEqual(["bare", "desktop", "mobile"])
 	})
 
-	it("matches presets by dimensions, else custom", () => {
-		expect(viewportPresetId({ width: null, height: null })).toBe("fill")
-		expect(viewportPresetId({ width: 768, height: 1024 })).toBe("tablet")
-		expect(viewportPresetId({ width: 900, height: 700 })).toBe("custom")
+	it("round-trips the known modes and rejects unknown ones", () => {
+		localStorage.setItem(
+			WORKBENCH_STORAGE_KEY,
+			JSON.stringify({ mode: "desktop" }),
+		)
+		expect(loadWorkbenchConfig().mode).toBe("desktop")
+		localStorage.setItem(
+			WORKBENCH_STORAGE_KEY,
+			JSON.stringify({ mode: "mobile" }),
+		)
+		expect(loadWorkbenchConfig().mode).toBe("mobile")
+		localStorage.setItem(
+			WORKBENCH_STORAGE_KEY,
+			JSON.stringify({ mode: "hypervision" }),
+		)
+		expect(loadWorkbenchConfig().mode).toBe("bare")
 	})
 })
 
@@ -125,7 +136,7 @@ describe("persistence", () => {
 			iconStyle: "linear",
 			language: "zh",
 			fontFamily: "Georgia, serif",
-			viewport: { width: 1024, height: 768 },
+			mode: "mobile",
 		}
 		saveWorkbenchConfig(config)
 		expect(loadWorkbenchConfig()).toEqual(config)
@@ -145,7 +156,7 @@ describe("persistence", () => {
 				iconStyle: "neon",
 				language: "fr",
 				fontFamily: 42,
-				viewport: { width: null, height: null },
+				mode: "hypervision",
 			}),
 		)
 		expect(loadWorkbenchConfig()).toEqual(WORKBENCH_DEFAULTS)
@@ -160,25 +171,14 @@ describe("persistence", () => {
 		expect(loaded.palette).toBe("azure")
 		expect(loaded.fontFamily).toBe("Verdana")
 		expect(loaded.themeMode).toBe("system")
-		expect(loaded.viewport).toEqual({ width: null, height: null })
+		expect(loaded.mode).toBe("bare")
 	})
 
-	it("clamps viewport dimensions to the sane range", () => {
+	it("treats a legacy viewport config as invalid and falls back to bare", () => {
 		localStorage.setItem(
 			WORKBENCH_STORAGE_KEY,
 			JSON.stringify({ viewport: { width: 100, height: 99999 } }),
 		)
-		expect(loadWorkbenchConfig().viewport).toEqual({ width: 320, height: 3840 })
-	})
-
-	it("treats a half-defined viewport as invalid", () => {
-		localStorage.setItem(
-			WORKBENCH_STORAGE_KEY,
-			JSON.stringify({ viewport: { width: null, height: 600 } }),
-		)
-		expect(loadWorkbenchConfig().viewport).toEqual({
-			width: null,
-			height: null,
-		})
+		expect(loadWorkbenchConfig().mode).toBe("bare")
 	})
 })

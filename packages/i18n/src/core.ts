@@ -24,6 +24,20 @@ export function isSupportedLanguage(value: string): value is SupportedLanguage {
 }
 
 /**
+ * Catalog key for each supported language's display name in its own
+ * script (`language.english` → "English", `language.chinese` → "中文", …).
+ * The `language.*` catalog keys are named (not BCP-47 codes), so build the
+ * `t()` key through this map rather than interpolating the code.
+ */
+export const LANGUAGE_LABEL_KEYS = {
+	en: "language.english",
+	zh: "language.chinese",
+	ja: "language.japanese",
+	de: "language.german",
+	es: "language.spanish",
+} as const satisfies Record<SupportedLanguage, string>
+
+/**
  * Map a BCP-47 locale string (e.g. `navigator.language`,
  * `app.getLocale()`, a stored pref) onto the supported set, taking the
  * base code: `"ja-JP"` → `"ja"`, `"de-DE"` → `"de"`, `"es-MX"` → `"es"`,

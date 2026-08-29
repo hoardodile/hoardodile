@@ -10,34 +10,38 @@ import { Refresh } from "@hoardodile/ui/icons/registry"
 import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import type { WorkbenchConfig } from "../config.ts"
-import type { WorkbenchManifest, WorkbenchResource } from "../context.ts"
+import type {
+	ResourceContext,
+	WorkbenchManifest,
+	WorkbenchResource,
+} from "../context.ts"
 import { ConfigPopover } from "./ConfigPopover.tsx"
+import { type FullscreenAPI, FullscreenButton } from "./FullscreenButton.tsx"
+import { InfoPopover } from "./InfoPopover.tsx"
 
 /**
- * The chrome strip: hairline on the canvas, metadata right-aligned and
- * muted (DESIGN.md — Metadata is quiet). The plugin label and the status
- * line keep the ids `scripts/smoke.mjs` reads (#plugin-name,
- * #hook-status), so the end-to-end test is unchanged.
+ * The chrome strip: hairline on the canvas, controls right-aligned and
+ * muted (DESIGN.md — Metadata is quiet). The plugin label keeps the id
+ * `scripts/smoke.mjs` reads (#plugin-name); the hook status and the rest
+ * of the metadata live in the InfoPopover (#hook-status) so the bar stays
+ * lean on narrow screens.
  */
 export function Toolbar(props: {
 	readonly manifest: WorkbenchManifest | null
 	readonly resources: readonly WorkbenchResource[]
 	readonly resource: WorkbenchResource | undefined
-	readonly status: string
-	readonly viewportLabel: string
+	readonly ctx: ResourceContext | null
 	readonly config: WorkbenchConfig
+	readonly fullscreen: FullscreenAPI
 	readonly onConfigChange: (patch: Partial<WorkbenchConfig>) => void
 	readonly onSelect: (resId: string) => void
 	readonly onReload: () => void
 }) {
-	const { manifest, resources, resource, status, viewportLabel, config } = props
+	const { manifest, resources, resource, ctx, config, fullscreen } = props
 	const { t: tw } = useTranslation("workbench")
 
 	return (
 		<header className="flex h-nav shrink-0 items-center gap-3 border-b border-border px-4">
-			<span className="text-ui text-muted-foreground">
-				{tw("toolbar.plugin")}
-			</span>
 			<span
 				id="plugin-name"
 				className="min-w-0 truncate text-ui text-secondary-foreground"
@@ -53,14 +57,8 @@ export function Toolbar(props: {
 				/>
 			) : null}
 			<span className="min-w-0 flex-1" />
-			<span
-				id="hook-status"
-				className="min-w-0 truncate text-xs text-muted-foreground"
-			>
-				{status}
-			</span>
 			<span className="shrink-0 text-xs whitespace-nowrap text-muted-foreground">
-				{viewportLabel}
+				{tw(`mode.${config.mode}`)}
 			</span>
 			<Tooltip>
 				<TooltipTrigger
@@ -77,6 +75,13 @@ export function Toolbar(props: {
 				/>
 				<TooltipContent>{tw("toolbar.reloadHint")}</TooltipContent>
 			</Tooltip>
+			<FullscreenButton api={fullscreen} />
+			<InfoPopover
+				manifest={manifest}
+				resource={resource}
+				ctx={ctx}
+				mode={config.mode}
+			/>
 			<ConfigPopover config={config} onChange={props.onConfigChange} />
 		</header>
 	)
@@ -123,7 +128,7 @@ function ResourcePicker(props: {
 					onValueChange={onSelect}
 					options={resources.map((r) => ({ value: r.id, label: r.name }))}
 					aria-label={tw("toolbar.resource")}
-					triggerClassName="max-w-64"
+					triggerClassName="max-w-40 md:max-w-64"
 				/>
 			</span>
 		</span>

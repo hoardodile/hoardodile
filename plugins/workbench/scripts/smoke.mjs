@@ -41,6 +41,10 @@ try {
 
 	await page.goto(baseUrl, { waitUntil: "networkidle" })
 	console.log(`plugin label: ${await page.textContent("#plugin-name")}`)
+	// The hook status line lives inside the Info popover — open it first so
+	// the smoke test can assert the sandbox verdict the workbench shows.
+	await page.click('[data-testid="workbench-info"]')
+	await page.waitForSelector("#hook-status", { timeout: 10_000 })
 	console.log(`hooks: ${await page.textContent("#hook-status")}`)
 
 	// The plugin iframe must mount (context push → paint).

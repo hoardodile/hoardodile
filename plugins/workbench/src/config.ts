@@ -36,9 +36,10 @@ export type WorkbenchIconStyle = PluginIframeContext["iconStyle"]
  * - `fontFamily: ""` — `apps/web/src/lib/fonts.ts`: with no font pref the
  *   context payload is `{ family: "", cssPaths: [] }` (`PRESET_FONTS` is
  *   empty, so `cssPaths` is always empty).
- * - viewport `fill` — the app preview dialog sizes the iframe to the
- *   placeholder geometry, i.e. "as large as the surface allows"
- *   (`apps/web/src/features/res/components/ResPreviewDialog.tsx`).
+ * - `mode: "bare"` — the workbench's own presentation default: render the
+ *   plugin edge-to-edge (no padding / rounded corners / card chrome).
+ *   `"desktop"` is the app preview shape (a padded, rounded, shadowed
+ *   card); `"mobile"` is a phone-width card.
  *
  * Persisted to localStorage under {@link WORKBENCH_STORAGE_KEY} — a
  * workbench-only key, never the app's pref keys.
@@ -47,11 +48,12 @@ export type WorkbenchIconStyle = PluginIframeContext["iconStyle"]
 export type WorkbenchThemeMode = "system" | "light" | "dark"
 export type WorkbenchResolvedTheme = "light" | "dark"
 
-export type WorkbenchViewport = {
-	/** `null` = fill the stage (the app preview default). */
-	readonly width: number | null
-	readonly height: number | null
-}
+/** How the plugin iframe is presented in the stage. */
+export type WorkbenchPresentationMode = "bare" | "desktop" | "mobile"
+
+/** The presentation mode id set, in display order (config + stage options). */
+export const WORKBENCH_PRESENTATION_MODES: readonly WorkbenchPresentationMode[] =
+	["bare", "desktop", "mobile"]
 
 export type WorkbenchConfig = {
 	readonly themeMode: WorkbenchThemeMode
@@ -65,7 +67,8 @@ export type WorkbenchConfig = {
 	 * (the system stack).
 	 */
 	readonly fontFamily: string
-	readonly viewport: WorkbenchViewport
+	/** Plugin iframe presentation: `bare` (edge-to-edge), `desktop`, `mobile`. */
+	readonly mode: WorkbenchPresentationMode
 }
 
 export const WORKBENCH_STORAGE_KEY = "hoardodile.workbench.config"
@@ -76,7 +79,7 @@ export const WORKBENCH_DEFAULTS: WorkbenchConfig = {
 	iconStyle: "duotone",
 	language: "system",
 	fontFamily: "",
-	viewport: { width: null, height: null },
+	mode: "bare",
 }
 
 /**
@@ -94,29 +97,6 @@ export const resolveWorkbenchLanguage = resolveSystemLanguage
  * no mirrored label constants; components read them via `useTranslation`.
  */
 
-export type ViewportPreset = {
-	/** Preset id: `"fill"` or a named dimension set. */
-	readonly id: "fill" | "phone" | "tablet" | "small" | "wide"
-	readonly width: number | null
-	readonly height: number | null
-}
-
-/** Dev-tool presets; the default (`fill`) follows the app preview.
- *  Display names come from the `workbench` catalog (`workbench.viewport.*`). */
-export const VIEWPORT_PRESETS: readonly ViewportPreset[] = [
-	{ id: "fill", width: null, height: null },
-	{ id: "phone", width: 375, height: 667 },
-	{ id: "tablet", width: 768, height: 1024 },
-	{ id: "small", width: 800, height: 600 },
-	{ id: "wide", width: 1200, height: 800 },
-]
-
-/** Custom-size fallback used when switching from Fill to custom (px). */
-export const CUSTOM_VIEWPORT_DEFAULT = { width: 1200, height: 800 } as const
-
-export const VIEWPORT_MIN_PX = 320
-export const VIEWPORT_MAX_PX = 3840
-
 /** Resolve the theme mode exactly like the app's `ThemeProvider`. */
 export function resolveWorkbenchTheme(
 	mode: WorkbenchThemeMode,
@@ -125,43 +105,14 @@ export function resolveWorkbenchTheme(
 	return mode === "system" ? (prefersDark ? "dark" : "light") : mode
 }
 
-/**
- * Display line for the viewport, e.g. `"Fill"` or `"900×700"`.
- * `fillLabel` carries the localized fill copy (or the English default).
- */
-export function describeViewport(
-	viewport: WorkbenchViewport,
-	fillLabel = "Fill",
-): string {
-	if (viewport.width === null || viewport.height === null) return fillLabel
-	return `${viewport.width}×${viewport.height}`
-}
-
-/**
- * The preset whose dimensions match, or `"custom"`. Used to drive the
- * viewport dropdown from the (possibly user-typed) dimensions.
- */
-export function viewportPresetId(viewport: WorkbenchViewport): string {
-	const { width, height } = viewport
-	for (const preset of VIEWPORT_PRESETS) {
-		if (preset.width === width && preset.height === height) return preset.id
-	}
-	return "custom"
-}
-
-function clampViewportSize(value: number): number {
-	return Math.min(VIEWPORT_MAX_PX, Math.max(VIEWPORT_MIN_PX, value))
-}
-
-function isViewport(value: unknown): value is WorkbenchViewport {
-	if (typeof value !== "object" || value === null) return false
-	const candidate = value as { width?: unknown; height?: unknown }
-	const isSize = (v: unknown) =>
-		v === null || (typeof v === "number" && Number.isFinite(v))
-	if (!isSize(candidate.width) || !isSize(candidate.height)) return false
-	return candidate.width === null
-		? candidate.height === null
-		: candidate.height !== null
+/** True when `value` is one of {@link WORKBENCH_PRESENTATION_MODES}. */
+export function isPresentationMode(
+	value: unknown,
+): value is WorkbenchPresentationMode {
+	return (
+		typeof value === "string" &&
+		(WORKBENCH_PRESENTATION_MODES as readonly string[]).includes(value)
+	)
 }
 
 function normalizeConfig(raw: unknown): WorkbenchConfig {
@@ -195,16 +146,10 @@ function normalizeConfig(raw: unknown): WorkbenchConfig {
 		typeof candidate.fontFamily === "string"
 			? candidate.fontFamily
 			: WORKBENCH_DEFAULTS.fontFamily
-	let viewport = WORKBENCH_DEFAULTS.viewport
-	if (isViewport(candidate.viewport) && candidate.viewport !== undefined) {
-		const v = candidate.viewport
-		viewport = {
-			width: v.width === null ? null : clampViewportSize(Math.round(v.width)),
-			height:
-				v.height === null ? null : clampViewportSize(Math.round(v.height)),
-		}
-	}
-	return { themeMode, palette, iconStyle, language, fontFamily, viewport }
+	const mode = isPresentationMode(candidate.mode)
+		? candidate.mode
+		: WORKBENCH_DEFAULTS.mode
+	return { themeMode, palette, iconStyle, language, fontFamily, mode }
 }
 
 /** Read the persisted config; corrupt or unknown values fall back to the app defaults. */

@@ -1,3 +1,4 @@
+import { LANGUAGE_LABEL_KEYS } from "@hoardodile/i18n"
 import { pluginThemePalettes } from "@hoardodile/sdk-web"
 import { Button } from "@hoardodile/ui/components/button"
 import { DropdownSelect } from "@hoardodile/ui/components/dropdown-select"
@@ -21,23 +22,12 @@ import {
 	TooltipTrigger,
 } from "@hoardodile/ui/components/tooltip"
 import { Settings } from "@hoardodile/ui/icons/registry"
-import { cn } from "@hoardodile/ui/lib/utils"
-import type { KeyboardEvent as ReactKeyboardEvent } from "react"
-import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import {
-	CUSTOM_VIEWPORT_DEFAULT,
-	VIEWPORT_MAX_PX,
-	VIEWPORT_MIN_PX,
-	VIEWPORT_PRESETS,
-	viewportPresetId,
 	WORKBENCH_LANGUAGES,
+	WORKBENCH_PRESENTATION_MODES,
 	type WorkbenchConfig,
 } from "../config.ts"
-
-function clampViewportSize(value: number): number {
-	return Math.min(VIEWPORT_MAX_PX, Math.max(VIEWPORT_MIN_PX, value))
-}
 
 /**
  * The config surface: every field maps to one iframe configuration item,
@@ -54,21 +44,6 @@ export function ConfigPopover(props: {
 	// default namespace; the workbench's own copy from the workbench ns.
 	const { t } = useTranslation()
 	const { t: tw } = useTranslation("workbench")
-	const viewport = config.viewport
-	const viewportIsFill = viewport.width === null || viewport.height === null
-	const viewportDims = {
-		width: viewport.width === null ? "" : String(viewport.width),
-		height: viewport.height === null ? "" : String(viewport.height),
-	}
-	// Local draft while typing: the config only commits on blur/Enter, so
-	// typing "1200" never passes through clamped intermediates.
-	const [draft, setDraft] = useState<{ width: string; height: string } | null>(
-		null,
-	)
-	useEffect(() => {
-		setDraft(null)
-	}, [viewport.width, viewport.height])
-	const draftDims = draft ?? viewportDims
 
 	const themeModeOptions = [
 		{ value: "system", label: t("theme.mode.system") },
@@ -89,46 +64,14 @@ export function ConfigPopover(props: {
 		{ value: "system", label: tw("popover.system") },
 		...WORKBENCH_LANGUAGES.map((code) => ({
 			value: code,
-			label: t(`language.${code}`),
+			label: t(LANGUAGE_LABEL_KEYS[code]),
 		})),
 	]
 
-	const viewportOptions = [
-		...VIEWPORT_PRESETS.map((preset) => ({
-			value: preset.id,
-			label: `${tw(`viewport.${preset.id}`)}${
-				preset.width === null ? "" : ` ${preset.width}×${preset.height}`
-			}`,
-		})),
-		{ value: "custom", label: tw("popover.custom") },
-	]
-
-	function commitViewportDims(): void {
-		if (draft === null) return
-		const parsedW = draft.width === "" ? null : Number(draft.width)
-		const parsedH = draft.height === "" ? null : Number(draft.height)
-		const validW = parsedW !== null && Number.isFinite(parsedW)
-		const validH = parsedH !== null && Number.isFinite(parsedH)
-		if (validW && validH) {
-			onChange({
-				viewport: {
-					width: clampViewportSize(Math.round(parsedW)),
-					height: clampViewportSize(Math.round(parsedH)),
-				},
-			})
-		} else if (!validW && !validH) {
-			// Both fields cleared: back to Fill.
-			onChange({ viewport: { width: null, height: null } })
-		}
-		// One side emptied: keep the current dims until both are valid or
-		// empty — a half-edited custom size is not actionable.
-		setDraft(null)
-	}
-
-	function commitOnEnter(event: ReactKeyboardEvent<HTMLInputElement>): void {
-		if (event.key !== "Enter") return
-		event.currentTarget.blur()
-	}
+	const modeOptions = WORKBENCH_PRESENTATION_MODES.map((mode) => ({
+		value: mode,
+		label: tw(`mode.${mode}`),
+	}))
 
 	return (
 		<Popover>
@@ -143,7 +86,9 @@ export function ConfigPopover(props: {
 									aria-label={tw("popover.settingsAria")}
 								>
 									<Icon icon={Settings} className="text-secondary-foreground" />
-									{tw("popover.configure")}
+									<span className="max-md:hidden">
+										{tw("popover.configure")}
+									</span>
 								</Button>
 							}
 						/>
@@ -151,7 +96,7 @@ export function ConfigPopover(props: {
 				/>
 				<TooltipContent>{tw("popover.tooltip")}</TooltipContent>
 			</Tooltip>
-			<PopoverContent align="end" className="w-80">
+			<PopoverContent align="end" className="w-80 max-w-[calc(100vw-2rem)]">
 				<PopoverHeader>
 					<PopoverTitle>{tw("popover.title")}</PopoverTitle>
 					<PopoverDescription>{tw("popover.description")}</PopoverDescription>
@@ -159,12 +104,13 @@ export function ConfigPopover(props: {
 
 				<SectionLabel>{tw("popover.sectionAppearance")}</SectionLabel>
 				<div className="flex flex-col gap-3">
-					<div className="flex items-center justify-between gap-3">
+					<div className="flex flex-wrap items-center justify-between gap-3">
 						<Label className="text-xs">{t("theme.modeLabel")}</Label>
 						<PillTabs
 							value={config.themeMode}
 							items={themeModeOptions}
 							onChange={(value) => onChange({ themeMode: value })}
+							className="flex-wrap"
 						/>
 					</div>
 					<div className="flex items-center justify-between gap-3">
@@ -226,71 +172,15 @@ export function ConfigPopover(props: {
 
 				<Separator />
 
-				<SectionLabel>{tw("popover.sectionViewport")}</SectionLabel>
-				<div className="flex flex-col gap-2">
-					<div className="flex items-center justify-between gap-3">
-						<Label className="text-xs">{tw("popover.size")}</Label>
-						<DropdownSelect
-							value={viewportPresetId(viewport)}
-							onValueChange={(value) => {
-								const preset = VIEWPORT_PRESETS.find((p) => p.id === value)
-								if (value === "custom") {
-									const base = viewportIsFill
-										? CUSTOM_VIEWPORT_DEFAULT
-										: viewport
-									onChange({
-										viewport: {
-											width: base.width,
-											height: base.height,
-										},
-									})
-								} else if (preset !== undefined) {
-									onChange({
-										viewport: {
-											width: preset.width,
-											height: preset.height,
-										},
-									})
-								}
-							}}
-							options={viewportOptions}
-							aria-label={tw("popover.size")}
-						/>
-					</div>
-					<div className="flex items-center gap-2">
-						<Input
-							className={cn("w-20", viewportIsFill && "opacity-50")}
-							type="number"
-							min={VIEWPORT_MIN_PX}
-							max={VIEWPORT_MAX_PX}
-							placeholder="—"
-							disabled={viewportIsFill}
-							value={draftDims.width}
-							onChange={(event) =>
-								setDraft({ ...draftDims, width: event.target.value })
-							}
-							onBlur={commitViewportDims}
-							onKeyDown={commitOnEnter}
-							aria-label={tw("popover.viewportWidth")}
-						/>
-						<span className="text-xs text-muted-foreground">×</span>
-						<Input
-							className={cn("w-20", viewportIsFill && "opacity-50")}
-							type="number"
-							min={VIEWPORT_MIN_PX}
-							max={VIEWPORT_MAX_PX}
-							placeholder="—"
-							disabled={viewportIsFill}
-							value={draftDims.height}
-							onChange={(event) =>
-								setDraft({ ...draftDims, height: event.target.value })
-							}
-							onBlur={commitViewportDims}
-							onKeyDown={commitOnEnter}
-							aria-label={tw("popover.viewportHeight")}
-						/>
-						<span className="text-xs text-muted-foreground">px</span>
-					</div>
+				<SectionLabel>{tw("popover.sectionPresentation")}</SectionLabel>
+				<div className="flex items-center justify-between gap-3">
+					<Label className="text-xs">{tw("popover.mode")}</Label>
+					<PillTabs
+						value={config.mode}
+						items={modeOptions}
+						onChange={(value) => onChange({ mode: value })}
+						className="flex-wrap"
+					/>
 				</div>
 			</PopoverContent>
 		</Popover>

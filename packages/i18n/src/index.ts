@@ -59,6 +59,7 @@ export { UI_CATALOGS, uiCatalogFor } from "./catalogs/ui.ts"
 export { CATALOGS, catalogFor } from "./catalogs.ts"
 export {
 	isSupportedLanguage,
+	LANGUAGE_LABEL_KEYS,
 	resolveSystemLanguage,
 	SUPPORTED_LANGUAGES,
 	type SupportedLanguage,

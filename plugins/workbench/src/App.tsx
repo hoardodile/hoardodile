@@ -3,10 +3,10 @@ import { applyTheme } from "@hoardodile/sdk-web"
 import { PluginDownloadConsentDialog } from "@hoardodile/ui/components/plugin-download-consent"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
+import { useContainerFullscreen } from "./components/FullscreenButton.tsx"
 import { Stage } from "./components/Stage.tsx"
 import { Toolbar } from "./components/Toolbar.tsx"
 import {
-	describeViewport,
 	loadWorkbenchConfig,
 	resolveWorkbenchLanguage,
 	resolveWorkbenchTheme,
@@ -16,7 +16,6 @@ import {
 import { useDownloadConsentEntry } from "./consent-bridge.ts"
 import {
 	buildContext,
-	describeContext,
 	fetchContext,
 	fetchJson,
 	type IframePresentation,
@@ -67,6 +66,7 @@ export function App() {
 	const frameRef = useRef<HTMLDivElement | null>(null)
 	const mountedRef = useRef<Mounted | null>(null)
 	const consentEntry = useDownloadConsentEntry()
+	const fullscreenAPI = useContainerFullscreen(frameRef)
 
 	// Bootstrap: the plugin manifest first, then the resource list. A dev
 	// server without the route (or without a captured snapshot yet) still
@@ -135,7 +135,9 @@ export function App() {
 	)
 
 	// The workbench chrome follows the same theme the plugin sees — the
-	// dev sees exactly what the plugin sees.
+	// dev sees exactly what the plugin sees. `applyTheme` (from
+	// `@hoardodile/sdk-web`) now also syncs `color-scheme` on the document,
+	// so native chrome (scrollbars, form controls) matches the live theme.
 	useEffect(() => {
 		applyTheme(
 			presentation.resolvedTheme,
@@ -204,24 +206,21 @@ export function App() {
 	const { t: tw } = useTranslation("workbench")
 
 	return (
-		<div className="flex h-full flex-col">
+		<div className="flex h-full flex-col bg-background">
 			<Toolbar
 				manifest={manifest}
 				resources={resources}
 				resource={resource}
-				// describeContext output stays English on purpose: it is a
-				// developer diagnostic line (scripts/smoke-published.mjs
-				// asserts "detect ok").
-				status={context === null ? tw("app.loading") : describeContext(context)}
-				viewportLabel={describeViewport(config.viewport, tw("viewport.fill"))}
+				ctx={context}
 				config={config}
+				fullscreen={fullscreenAPI}
 				onConfigChange={patchConfig}
 				onSelect={setSelectedId}
 				onReload={() => setReloadNonce((n) => n + 1)}
 			/>
 			{bootstrapError !== null ? (
 				<Stage
-					viewport={config.viewport}
+					mode={config.mode}
 					loading={false}
 					frameRef={frameRef}
 					emptyTitle={tw("app.failedTitle")}
@@ -229,7 +228,7 @@ export function App() {
 				/>
 			) : resource === undefined ? (
 				<Stage
-					viewport={config.viewport}
+					mode={config.mode}
 					loading={false}
 					frameRef={frameRef}
 					emptyTitle={tw("app.noResources")}
@@ -237,7 +236,7 @@ export function App() {
 				/>
 			) : (
 				<Stage
-					viewport={config.viewport}
+					mode={config.mode}
 					loading={context === null}
 					frameRef={frameRef}
 				/>

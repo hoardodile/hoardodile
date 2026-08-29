@@ -2,20 +2,13 @@ import { DropdownSelect } from "@hoardodile/ui/components/dropdown-select"
 import { useTranslation } from "react-i18next"
 import {
 	isSupportedLanguage,
+	LANGUAGE_LABEL_KEYS,
 	resolveSystemLanguage,
 	SUPPORTED_LANGUAGES,
 	type SupportedLanguage,
 } from "@/i18n"
 import { prefKeys } from "@/lib/keys"
 import { prefSync } from "@/lib/prefSync"
-
-const LANGUAGE_LABEL_KEY = {
-	en: "language.english",
-	zh: "language.chinese",
-	ja: "language.japanese",
-	de: "language.german",
-	es: "language.spanish",
-} as const satisfies Record<SupportedLanguage, string>
 
 /**
  * Settings panel for selecting the active UI language. Persists the choice
@@ -38,7 +31,7 @@ export function LanguageSettingsPanel() {
 			}}
 			options={SUPPORTED_LANGUAGES.map((code) => ({
 				value: code,
-				label: t(LANGUAGE_LABEL_KEY[code]),
+				label: t(LANGUAGE_LABEL_KEYS[code]),
 			}))}
 			aria-label={t("language.label")}
 			data-testid="language-select"

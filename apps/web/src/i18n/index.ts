@@ -1,6 +1,7 @@
 import {
 	createI18n,
 	isSupportedLanguage,
+	LANGUAGE_LABEL_KEYS,
 	resolveSystemLanguage,
 	SUPPORTED_LANGUAGES,
 	type SupportedLanguage,
@@ -11,7 +12,12 @@ import { prefKeys } from "@/lib/keys"
 import { prefSync } from "@/lib/prefSync"
 
 export type { SupportedLanguage }
-export { isSupportedLanguage, resolveSystemLanguage, SUPPORTED_LANGUAGES }
+export {
+	isSupportedLanguage,
+	LANGUAGE_LABEL_KEYS,
+	resolveSystemLanguage,
+	SUPPORTED_LANGUAGES,
+}
 
 /** Typed translate function (`t` from `useTranslation`), for helpers that
  *  receive it as a parameter and call it with catalog keys. */

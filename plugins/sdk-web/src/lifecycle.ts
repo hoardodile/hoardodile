@@ -155,6 +155,12 @@ export function applyTheme(
 	// `data-icon-style` drives the grayscale rule in `@hoardodile/ui/theme.css`;
 	// `linear` only matters to the host's own icon registry.
 	root.dataset.iconStyle = iconStyle
+	// The plugin document's canvas follows the theme's color-scheme. Without
+	// this the html/body stay transparent but the *canvas* paints the
+	// browser default (white) even in dark mode, so a transparent plugin
+	// (e.g. the media gallery) occludes the host's themed surface. Syncing
+	// color-scheme makes the canvas match `resolvedTheme`.
+	root.style.colorScheme = resolvedTheme
 }
 
 // The plugin bundle's theme.css only defines a `--font-sans` fallback;
