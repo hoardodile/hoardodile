@@ -180,39 +180,86 @@ export function buildContext(
 }
 
 /**
- * Hook-verdict parts for the info popover: each entry is one status badge
- * (e.g. `"detect ok"`, `"10 files"`, `"cover 010-wide.png"`). Stays English
- * on purpose (developer diagnostics; `scripts/smoke-published.mjs` asserts
- * "detect ok").
+ * One diagnostic row for the info popover's Hooks section. Each kind is a
+ * distinct fact; the renderer maps a kind to a label/value pair (plus a
+ * tooltip for the error message), so heterogeneous results are no longer
+ * flattened into identical chips.
  */
-export function describeHookParts(ctx: ResourceContext): readonly string[] {
+export type HookDiagnosticRow =
+	| {
+			readonly kind: "detect"
+			readonly ok: boolean
+			readonly reasons?: readonly string[]
+	  }
+	| { readonly kind: "files"; readonly count: number }
+	| { readonly kind: "cover"; readonly file: string }
+	| { readonly kind: "hashes"; readonly count: number }
+	| { readonly kind: "meta"; readonly hook: "sourceMeta" | "searchMeta" }
+	| { readonly kind: "error"; readonly hook: string; readonly message: string }
+
+/**
+ * Structured hook-verdict rows for the info popover: detection first,
+ * then the plugin hooks that yielded data, then the failed hooks last so
+ * they are not missed. Meta hooks are reported as *provided* only when a
+ * value was captured — the snapshot cannot distinguish an unimplemented
+ * hook from one that returned empty, so absence is simply omitted. Render
+ * capabilities belong to the Capabilities section and are deliberately
+ * not repeated here (DESIGN.md — metadata is quiet).
+ */
+export function describeHookDiagnostics(
+	ctx: ResourceContext,
+): readonly HookDiagnosticRow[] {
 	const snapshot = ctx.snapshot
-	if (snapshot === null) return ["no hook snapshot"]
-	const parts = [
-		snapshot.detect.ok
-			? "detect ok"
-			: `detect miss (${(snapshot.detect.reasons ?? []).join(", ")})`,
+	if (snapshot === null) return []
+	const rows: HookDiagnosticRow[] = [
+		{
+			kind: "detect",
+			ok: snapshot.detect.ok,
+			reasons: snapshot.detect.reasons,
+		},
 	]
 	if (snapshot.files !== undefined) {
-		parts.push(`${snapshot.files.length} files`)
+		rows.push({ kind: "files", count: snapshot.files.length })
 	} else if (snapshot.fileStats.count !== undefined) {
-		parts.push(`${snapshot.fileStats.count} files`)
+		rows.push({ kind: "files", count: snapshot.fileStats.count })
 	}
-	if (snapshot.sourceMeta !== undefined) parts.push("sourceMeta")
-	if (snapshot.searchMeta !== undefined) parts.push("searchMeta")
 	if (snapshot.coverLocal !== undefined) {
-		parts.push(`cover ${snapshot.coverLocal}`)
+		rows.push({ kind: "cover", file: snapshot.coverLocal })
 	}
 	if (snapshot.imageHashes !== undefined) {
-		parts.push(`${snapshot.imageHashes.length} hashes`)
+		rows.push({ kind: "hashes", count: snapshot.imageHashes.length })
 	}
-	if (!ctx.capabilities.preview) parts.push("no preview render")
-	if (!ctx.capabilities.frame) parts.push("no frame render")
-	for (const hook of Object.keys(snapshot.errors)) parts.push(`${hook} failed`)
-	return parts
+	if (snapshot.sourceMeta !== undefined)
+		rows.push({ kind: "meta", hook: "sourceMeta" })
+	if (snapshot.searchMeta !== undefined)
+		rows.push({ kind: "meta", hook: "searchMeta" })
+	for (const [hook, message] of Object.entries(snapshot.errors)) {
+		rows.push({ kind: "error", hook, message })
+	}
+	return rows
 }
 
 /** Short status line describing what the dev server reported. */
 export function describeContext(ctx: ResourceContext): string {
-	return describeHookParts(ctx).join(" · ")
+	if (ctx.snapshot === null) return "no hook snapshot"
+	return describeHookDiagnostics(ctx).map(describeRow).join(" · ")
+}
+
+function describeRow(row: HookDiagnosticRow): string {
+	switch (row.kind) {
+		case "detect":
+			return row.ok
+				? "detect ok"
+				: `detect miss (${(row.reasons ?? []).join(", ")})`
+		case "files":
+			return `${row.count} files`
+		case "cover":
+			return `cover ${row.file}`
+		case "hashes":
+			return `${row.count} hashes`
+		case "meta":
+			return row.hook
+		case "error":
+			return `${row.hook} failed: ${row.message}`
+	}
 }

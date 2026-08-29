@@ -10,7 +10,6 @@ import {
 } from "@hoardodile/ui/components/popover"
 import { SectionLabel } from "@hoardodile/ui/components/section-label"
 import { Separator } from "@hoardodile/ui/components/separator"
-import { TagChip } from "@hoardodile/ui/components/tag-chip"
 import {
 	Tooltip,
 	TooltipContent,
@@ -20,7 +19,8 @@ import { InfoCircle } from "@hoardodile/ui/icons/registry"
 import { useTranslation } from "react-i18next"
 import type { WorkbenchPresentationMode } from "../config.ts"
 import {
-	describeHookParts,
+	describeHookDiagnostics,
+	type HookDiagnosticRow,
 	type ResourceContext,
 	type WorkbenchManifest,
 	type WorkbenchResource,
@@ -42,7 +42,7 @@ export function InfoPopover(props: {
 }) {
 	const { manifest, resource, ctx, mode } = props
 	const { t: tw } = useTranslation("workbench")
-	const hookParts = ctx === null ? [tw("app.loading")] : describeHookParts(ctx)
+	const hookRows = ctx === null ? null : describeHookDiagnostics(ctx)
 
 	return (
 		<Popover closeOnBlur>
@@ -111,12 +111,16 @@ export function InfoPopover(props: {
 				<Separator />
 
 				<SectionLabel>{tw("popover.sectionHook")}</SectionLabel>
-				<div id="hook-status" className="flex flex-wrap gap-1.5">
-					{hookParts.map((part) => (
-						<TagChip key={part} color="">
-							{part}
-						</TagChip>
-					))}
+				<div id="hook-status" className="flex flex-col gap-1.5">
+					{hookRows === null ? (
+						<p className="text-xs text-muted-foreground">{tw("app.loading")}</p>
+					) : hookRows.length === 0 ? (
+						<p className="text-xs text-muted-foreground">
+							{tw("popover.emptyHookSnapshot")}
+						</p>
+					) : (
+						hookRows.map((row) => <HookRow key={keyFor(row)} row={row} />)
+					)}
 				</div>
 
 				<Separator />
@@ -142,12 +146,78 @@ export function InfoPopover(props: {
 	)
 }
 
-function InfoRow(props: { readonly label: string; readonly value: string }) {
-	const { label, value } = props
+function HookRow(props: { readonly row: HookDiagnosticRow }) {
+	const { row } = props
+	const { t: tw } = useTranslation("workbench")
+
+	switch (row.kind) {
+		case "detect":
+			return (
+				<InfoRow
+					label={tw("popover.hookDetect")}
+					value={
+						row.ok
+							? tw("popover.hookOk")
+							: row.reasons?.length
+								? tw("popover.hookMissReasons", {
+										reasons: row.reasons.join(", "),
+									})
+								: tw("popover.hookMiss")
+					}
+				/>
+			)
+		case "files":
+			return (
+				<InfoRow label={tw("popover.hookFiles")} value={String(row.count)} />
+			)
+		case "cover":
+			return <InfoRow label={tw("popover.hookCover")} value={row.file} />
+		case "hashes":
+			return (
+				<InfoRow label={tw("popover.hookHashes")} value={String(row.count)} />
+			)
+		case "meta":
+			return <InfoRow label={row.hook} value={tw("popover.hookProvided")} />
+		case "error":
+			return (
+				<InfoRow
+					label={`${row.hook} ${tw("popover.hookFailed")}`}
+					value={row.message}
+					title={row.message}
+				/>
+			)
+	}
+}
+
+function keyFor(row: HookDiagnosticRow): string {
+	switch (row.kind) {
+		case "detect":
+			return "detect"
+		case "files":
+			return "files"
+		case "cover":
+			return "cover"
+		case "hashes":
+			return "hashes"
+		case "meta":
+			return `meta:${row.hook}`
+		case "error":
+			return `error:${row.hook}`
+	}
+}
+
+function InfoRow(props: {
+	readonly label: string
+	readonly value: string
+	readonly title?: string
+}) {
+	const { label, value, title } = props
 	return (
 		<div className="flex items-baseline justify-between gap-3">
 			<span className="text-xs text-muted-foreground">{label}</span>
-			<span className="min-w-0 truncate text-xs text-foreground">{value}</span>
+			<span title={title} className="min-w-0 truncate text-xs text-foreground">
+				{value}
+			</span>
 		</div>
 	)
 }
