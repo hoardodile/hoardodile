@@ -1,5 +1,33 @@
 # Changelog
 
+## [0.1.3](https://github.com/hoardodile/hoardodile/compare/v0.1.2...v0.1.3) (2026-08-29)
+
+### Features
+
+* **create-plugin:** add release-it one-click publish to the plugin template ([cc51313](https://github.com/hoardodile/hoardodile/commit/cc51313d1257e7d233e6cd82c25e3746ebd94504))
+* **desktop:** persist and restore the app window bounds and maximized state ([313ff34](https://github.com/hoardodile/hoardodile/commit/313ff3498c9dc17cbecad07d9bc182b08b4a5970))
+* **host:** tag storage layout and versioned folder-ops support ([b08e70f](https://github.com/hoardodile/hoardodile/commit/b08e70f2c321358488f8938de15d5e3390c26e11))
+* **plugins:** post-install onInstall hook for one-shot consent-gated downloads ([62183a0](https://github.com/hoardodile/hoardodile/commit/62183a0745b116a2dbd2d3318a3c2a86b48de5bc))
+* **server:** tag art slots, external link and archive-aware deletion ([434a49c](https://github.com/hoardodile/hoardodile/commit/434a49cd407f19a4927801c92d29ea705e67da67))
+* **web:** per-plugin marketplace update dots and cross-registry update provenance ([2679f88](https://github.com/hoardodile/hoardodile/commit/2679f8874ac50931100b636b3e962106b806e950))
+* **web:** prefetched infinite masonry for resource search ([7eb1be7](https://github.com/hoardodile/hoardodile/commit/7eb1be721c2fa4f3ebb7cf6d6ef0fc5920bfadc1))
+* **web:** tag link and art editing with hover preview cards ([4540ea0](https://github.com/hoardodile/hoardodile/commit/4540ea0f0bde268191489fe9cf65623ae5f4e3d2))
+* **web:** unify tag hover previews and move art editing to the card ([c92b2c9](https://github.com/hoardodile/hoardodile/commit/c92b2c9d12c8dd0bcc8ca0e173affec4c3d0dd0a))
+
+### Bug Fixes
+
+* **desktop:** stop offering Copy LAN address in the tray menu ([1652dbb](https://github.com/hoardodile/hoardodile/commit/1652dbbb8038faac7af59d50a857c64918d8342a))
+* **server:** retry transient Windows renames during plugin installs ([4016080](https://github.com/hoardodile/hoardodile/commit/401608084d946d1e3aab5ad4158fb17391d1750d))
+* **server:** trust authed plugin asset requests for consent delivery ([3234795](https://github.com/hoardodile/hoardodile/commit/323479569319108ed882f45a2159568a8ee4e470))
+* **web:** deliver plugin download consent without depending on the SSE stream ([48f6303](https://github.com/hoardodile/hoardodile/commit/48f63039eb3ddbfcabf41e82c411353a6a66b489))
+* **web:** hard-cut the boot splash to the app ([ec1270c](https://github.com/hoardodile/hoardodile/commit/ec1270c9f85683858e2b877de5c19365bd2a926f))
+* **web:** keep the tag preview hover state self-managed ([652dfe8](https://github.com/hoardodile/hoardodile/commit/652dfe87fd751552575daea6f67d20c9f4a7c4d9))
+* **web:** make plugin download consent usable over plugin previews ([0d3572c](https://github.com/hoardodile/hoardodile/commit/0d3572cceb03f857823e63bd0ed560fae273c7c8))
+* **web:** rename the shell-cache surface to app temporary files ([559d177](https://github.com/hoardodile/hoardodile/commit/559d1770c11ae08d5719b1b29276b92c0defa183))
+* **web:** seat the marketplace function key at an outer footer edge ([514ecd5](https://github.com/hoardodile/hoardodile/commit/514ecd52b0021790984ce622df373dbef0ed807e))
+* **web:** unclip marketplace update dots and seat them on the button corner ([9a8888d](https://github.com/hoardodile/hoardodile/commit/9a8888db8fc75e0e20aa7c7c68292e43dec58e1c))
+* **workbench:** reject private IP-literal vault targets like the app server ([8f97676](https://github.com/hoardodile/hoardodile/commit/8f97676acb98e7f8ae6821d5fdbf57f63c6c1814))
+
 ## [0.1.2](https://github.com/hoardodile/hoardodile/compare/v0.1.1...v0.1.2) (2026-08-27)
 
 ### Features
