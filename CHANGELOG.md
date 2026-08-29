@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.1.4](https://github.com/hoardodile/hoardodile/compare/v0.1.3...v0.1.4) (2026-08-29)
+
+### Features
+
+* **marketplace:** render release intro images and gate the intro folder ([e8892fa](https://github.com/hoardodile/hoardodile/commit/e8892fa16551988f936fd29126286d344a587616))
+* **scripts:** capture demo screenshots per UI language ([959f158](https://github.com/hoardodile/hoardodile/commit/959f158313e8a57361be6a4d0dc3591a95bfbcb8))
+* **server:** make the plugin-marketplace cache windows env-configurable ([c2a68f7](https://github.com/hoardodile/hoardodile/commit/c2a68f71a9e4fe0379b00c197ac3a611edfe5747))
+* **workbench:** plugin dev chrome - modes, info, fullscreen, live theme sync ([f9b4948](https://github.com/hoardodile/hoardodile/commit/f9b494858e89d23f18600bc2530063f40c46347e)), references [#hook-status](https://github.com/hoardodile/hoardodile/issues/hook-status)
+
+### Bug Fixes
+
+* **desktop:** pass the derived window bounds into the main-process poll evaluate ([f0ca423](https://github.com/hoardodile/hoardodile/commit/f0ca423ed4fe88b0e7cf9b2e43fb5d9749da5664))
+* **ui:** close popover on window blur via opt-in closeOnBlur ([a0de987](https://github.com/hoardodile/hoardodile/commit/a0de987d45d332afe7764abc3882f555c66291c1))
+* **workbench:** bind the i18n default instance and rebind on port conflict ([073b398](https://github.com/hoardodile/hoardodile/commit/073b398a865973f1182216a6f6b809793d077957))
+
 ## [0.1.3](https://github.com/hoardodile/hoardodile/compare/v0.1.2...v0.1.3) (2026-08-29)
 
 ### Features
