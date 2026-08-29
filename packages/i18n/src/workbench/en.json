@@ -43,17 +43,7 @@
 		"capPreview": "Preview render",
 		"capFrame": "Frame render",
 		"yes": "Yes",
-		"no": "No",
-		"hookDetect": "Detect",
-		"hookFiles": "Files",
-		"hookSourceMeta": "sourceMeta",
-		"hookSearchMeta": "searchMeta",
-		"hookCover": "Cover",
-		"hookHashes": "Image hashes",
-		"hookErrors": "Errors",
-		"ok": "OK",
-		"miss": "detect miss",
-		"none": "None"
+		"no": "No"
 	},
 	"mode": {
 		"bare": "Bare",

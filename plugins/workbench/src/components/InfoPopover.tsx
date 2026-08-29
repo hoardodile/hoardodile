@@ -10,6 +10,7 @@ import {
 } from "@hoardodile/ui/components/popover"
 import { SectionLabel } from "@hoardodile/ui/components/section-label"
 import { Separator } from "@hoardodile/ui/components/separator"
+import { TagChip } from "@hoardodile/ui/components/tag-chip"
 import {
 	Tooltip,
 	TooltipContent,
@@ -19,7 +20,7 @@ import { InfoCircle } from "@hoardodile/ui/icons/registry"
 import { useTranslation } from "react-i18next"
 import type { WorkbenchPresentationMode } from "../config.ts"
 import {
-	describeContext,
+	describeHookParts,
 	type ResourceContext,
 	type WorkbenchManifest,
 	type WorkbenchResource,
@@ -41,36 +42,7 @@ export function InfoPopover(props: {
 }) {
 	const { manifest, resource, ctx, mode } = props
 	const { t: tw } = useTranslation("workbench")
-	const snap = ctx?.snapshot ?? null
-	const status = ctx === null ? tw("app.loading") : describeContext(ctx)
-	const yesno = (value: boolean) => tw(value ? "popover.yes" : "popover.no")
-	// Presence is unknown when there is no captured snapshot, so these read
-	// "—" instead of a misleading "no".
-	const present = (value: boolean) => (snap === null ? "—" : yesno(value))
-	const detectValue =
-		snap === null
-			? "—"
-			: snap.detect.ok
-				? tw("popover.ok")
-				: snap.detect.reasons?.length
-					? `${tw("popover.miss")} (${snap.detect.reasons.join(", ")})`
-					: tw("popover.miss")
-	const fileCountValue =
-		snap === null
-			? "—"
-			: String(snap.files?.length ?? snap.fileStats.count ?? 0)
-	const hashValue =
-		snap === null
-			? "—"
-			: snap.imageHashes === undefined
-				? tw("popover.no")
-				: String(snap.imageHashes.length)
-	const errorsValue =
-		snap === null
-			? "—"
-			: Object.keys(snap.errors).length === 0
-				? tw("popover.none")
-				: Object.keys(snap.errors).join(", ")
+	const hookParts = ctx === null ? [tw("app.loading")] : describeHookParts(ctx)
 
 	return (
 		<Popover closeOnBlur>
@@ -139,26 +111,12 @@ export function InfoPopover(props: {
 				<Separator />
 
 				<SectionLabel>{tw("popover.sectionHook")}</SectionLabel>
-				<span id="hook-status" className="block text-xs text-foreground">
-					{status}
-				</span>
-				<div className="mt-1.5 flex flex-col gap-1.5">
-					<InfoRow label={tw("popover.hookDetect")} value={detectValue} />
-					<InfoRow label={tw("popover.hookFiles")} value={fileCountValue} />
-					<InfoRow
-						label={tw("popover.hookSourceMeta")}
-						value={present(snap?.sourceMeta !== undefined)}
-					/>
-					<InfoRow
-						label={tw("popover.hookSearchMeta")}
-						value={present(snap?.searchMeta !== undefined)}
-					/>
-					<InfoRow
-						label={tw("popover.hookCover")}
-						value={present(snap?.coverLocal !== undefined)}
-					/>
-					<InfoRow label={tw("popover.hookHashes")} value={hashValue} />
-					<InfoRow label={tw("popover.hookErrors")} value={errorsValue} />
+				<div id="hook-status" className="flex flex-wrap gap-1.5">
+					{hookParts.map((part) => (
+						<TagChip key={part} color="">
+							{part}
+						</TagChip>
+					))}
 				</div>
 
 				<Separator />

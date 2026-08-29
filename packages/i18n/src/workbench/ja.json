@@ -43,17 +43,7 @@
 		"capPreview": "プレビュー描画",
 		"capFrame": "フレーム描画",
 		"yes": "はい",
-		"no": "いいえ",
-		"hookDetect": "検出",
-		"hookFiles": "ファイル",
-		"hookSourceMeta": "sourceMeta",
-		"hookSearchMeta": "searchMeta",
-		"hookCover": "カバー",
-		"hookHashes": "画像ハッシュ",
-		"hookErrors": "エラー",
-		"ok": "OK",
-		"miss": "検出ミス",
-		"none": "なし"
+		"no": "いいえ"
 	},
 	"mode": {
 		"bare": "余白なし",

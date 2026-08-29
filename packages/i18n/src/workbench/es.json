@@ -43,17 +43,7 @@
 		"capPreview": "Render de vista previa",
 		"capFrame": "Render de fotograma",
 		"yes": "Sí",
-		"no": "No",
-		"hookDetect": "Detección",
-		"hookFiles": "Archivos",
-		"hookSourceMeta": "sourceMeta",
-		"hookSearchMeta": "searchMeta",
-		"hookCover": "Portada",
-		"hookHashes": "Hashes de imagen",
-		"hookErrors": "Errores",
-		"ok": "OK",
-		"miss": "detección fallida",
-		"none": "Ninguno"
+		"no": "No"
 	},
 	"mode": {
 		"bare": "Sin marco",

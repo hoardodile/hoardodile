@@ -43,17 +43,7 @@
 		"capPreview": "预览渲染",
 		"capFrame": "帧渲染",
 		"yes": "是",
-		"no": "否",
-		"hookDetect": "检测",
-		"hookFiles": "文件",
-		"hookSourceMeta": "sourceMeta",
-		"hookSearchMeta": "searchMeta",
-		"hookCover": "封面",
-		"hookHashes": "图片哈希",
-		"hookErrors": "错误",
-		"ok": "OK",
-		"miss": "未检测到",
-		"none": "无"
+		"no": "否"
 	},
 	"mode": {
 		"bare": "无内边距",

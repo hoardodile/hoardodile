@@ -179,10 +179,15 @@ export function buildContext(
 	}
 }
 
-/** Short status line describing what the dev server reported. */
-export function describeContext(ctx: ResourceContext): string {
+/**
+ * Hook-verdict parts for the info popover: each entry is one status badge
+ * (e.g. `"detect ok"`, `"10 files"`, `"cover 010-wide.png"`). Stays English
+ * on purpose (developer diagnostics; `scripts/smoke-published.mjs` asserts
+ * "detect ok").
+ */
+export function describeHookParts(ctx: ResourceContext): readonly string[] {
 	const snapshot = ctx.snapshot
-	if (snapshot === null) return "no hook snapshot"
+	if (snapshot === null) return ["no hook snapshot"]
 	const parts = [
 		snapshot.detect.ok
 			? "detect ok"
@@ -204,5 +209,10 @@ export function describeContext(ctx: ResourceContext): string {
 	if (!ctx.capabilities.preview) parts.push("no preview render")
 	if (!ctx.capabilities.frame) parts.push("no frame render")
 	for (const hook of Object.keys(snapshot.errors)) parts.push(`${hook} failed`)
-	return parts.join(" · ")
+	return parts
+}
+
+/** Short status line describing what the dev server reported. */
+export function describeContext(ctx: ResourceContext): string {
+	return describeHookParts(ctx).join(" · ")
 }

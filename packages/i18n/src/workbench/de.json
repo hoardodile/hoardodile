@@ -43,17 +43,7 @@
 		"capPreview": "Vorschau-Rendering",
 		"capFrame": "Frame-Rendering",
 		"yes": "Ja",
-		"no": "Nein",
-		"hookDetect": "Erkennung",
-		"hookFiles": "Dateien",
-		"hookSourceMeta": "sourceMeta",
-		"hookSearchMeta": "searchMeta",
-		"hookCover": "Cover",
-		"hookHashes": "Bild-Hashes",
-		"hookErrors": "Fehler",
-		"ok": "OK",
-		"miss": "Erkennung fehlgeschlagen",
-		"none": "Keine"
+		"no": "Nein"
 	},
 	"mode": {
 		"bare": "Pur",
