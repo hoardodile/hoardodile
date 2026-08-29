@@ -93,14 +93,16 @@ test("first run → claim → relaunch persistence", async () => {
 			win.setBounds(next)
 		}, target)
 		// Wait out the debounced persistence (400 ms) plus a write tick.
+		// `target` rides the evaluate argument, never the closure — the
+		// callback runs in the main process, which cannot see test-scope vars.
 		await expect
 			.poll(() =>
-				first.app.evaluate(({ BrowserWindow }) => {
+				first.app.evaluate(({ BrowserWindow }, next) => {
 					const win = BrowserWindow.getAllWindows()[0]
 					if (win === undefined) return null
 					const b = win.getBounds()
-					return b.width === target.width && b.height === target.height
-				}),
+					return b.width === next.width && b.height === next.height
+				}, target),
 			)
 			.toBe(true)
 	} finally {
