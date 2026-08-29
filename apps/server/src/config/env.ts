@@ -113,6 +113,9 @@ function looksLikeFilePath(value: string): boolean {
 	return value.includes("/") || value.includes("\\")
 }
 
+/** One day in milliseconds — the default plugin-marketplace cache windows. */
+const DAY_MS = 24 * 60 * 60_000
+
 const envSchema = z
 	.object({
 		NODE_ENV: z
@@ -367,6 +370,39 @@ const envSchema = z
 				typeof v === "boolean" ? v : v === "true" || v === "1",
 			)
 			.default(false),
+		/**
+		 * How long the plugin-marketplace catalog snapshot is served from
+		 * memory before it is rebuilt. Defaults to a day: the raw
+		 * `registry.json`/`manifest.json` fetches are unquota'd, but the
+		 * whole snapshot rebuild re-reads every manifest, so a long window
+		 * keeps repeated catalog opens cheap.
+		 */
+		MARKETPLACE_CACHE_TTL_MS: z.coerce
+			.number()
+			.int()
+			.positive()
+			.default(DAY_MS),
+		/**
+		 * How long one repo's `releases/latest` payload is trusted (and
+		 * persisted to disk). This is the ONLY quota-hungry call (60/hour
+		 * unauthenticated per IP), so the release layer is cached
+		 * independently from the snapshot layer. Defaults to a day.
+		 */
+		MARKETPLACE_RELEASE_CACHE_TTL_MS: z.coerce
+			.number()
+			.int()
+			.positive()
+			.default(DAY_MS),
+		/**
+		 * After a GitHub 403/429, skip the API for this long per repo.
+		 * Defaults to a day so a rate-limited catalog entry does not keep
+		 * retrying the API on every rebuild.
+		 */
+		MARKETPLACE_RATE_LIMIT_COOLDOWN_MS: z.coerce
+			.number()
+			.int()
+			.positive()
+			.default(DAY_MS),
 		/**
 		 * Explicit outbound proxy for plugin downloads and the plugin
 		 * marketplace, e.g. `http://127.0.0.1:7897` (only `http://`

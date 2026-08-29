@@ -72,6 +72,32 @@ test("loadEnv defaults auto snapshot vars to enabled / keep 3", () => {
 	expect(env.MIN_FREE_DISK_BYTES).toBe(5 * 1024 * 1024 * 1024)
 })
 
+test("loadEnv defaults the marketplace cache windows to one day", () => {
+	const env = loadEnv({})
+	expect(env.MARKETPLACE_CACHE_TTL_MS).toBe(24 * 60 * 60_000)
+	expect(env.MARKETPLACE_RELEASE_CACHE_TTL_MS).toBe(24 * 60 * 60_000)
+	expect(env.MARKETPLACE_RATE_LIMIT_COOLDOWN_MS).toBe(24 * 60 * 60_000)
+})
+
+test("loadEnv parses marketplace cache window overrides", () => {
+	const env = loadEnv({
+		MARKETPLACE_CACHE_TTL_MS: "600000",
+		MARKETPLACE_RELEASE_CACHE_TTL_MS: "3600000",
+		MARKETPLACE_RATE_LIMIT_COOLDOWN_MS: "7200000",
+	} satisfies NodeJS.ProcessEnv)
+	expect(env.MARKETPLACE_CACHE_TTL_MS).toBe(600_000)
+	expect(env.MARKETPLACE_RELEASE_CACHE_TTL_MS).toBe(3_600_000)
+	expect(env.MARKETPLACE_RATE_LIMIT_COOLDOWN_MS).toBe(7_200_000)
+})
+
+test("loadEnv rejects a non-positive marketplace cache window", () => {
+	expect(() =>
+		loadEnv({
+			MARKETPLACE_CACHE_TTL_MS: "0",
+		} satisfies NodeJS.ProcessEnv),
+	).toThrow(/Invalid environment/)
+})
+
 test("loadEnv parses auto snapshot overrides", () => {
 	const env = loadEnv({
 		AUTO_SNAPSHOT_ENABLED: "false",

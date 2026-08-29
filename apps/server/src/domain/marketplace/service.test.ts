@@ -117,6 +117,11 @@ function makeFixture() {
 		tmpDir: root,
 		maxInstallBytes: 1024 * 1024,
 		releaseCacheFile: join(root, "releases.json"),
+		// Pin short windows so the deterministic-clock tests do not wait
+		// out the production default (a day).
+		cacheTtlMs: 10 * 60_000,
+		releaseCacheTtlMs: 60 * 60_000,
+		rateLimitCooldownMs: 60 * 60_000,
 		now: () => clock,
 	})
 
@@ -276,6 +281,66 @@ describe("createMarketplaceService.refresh", () => {
 		expect(apiCalls(f)).toBe(2)
 	})
 
+	test("defaults the catalog caches to a day when no TTL is configured", async () => {
+		const f = fixture!
+		f.prefs.set("marketplace.registryRepo", "me/registry")
+		f.addJson(rawUrl("me", "registry", "HEAD", "registry.json"), {
+			version: 1,
+			plugins: ["me/cat"],
+		})
+		f.addJson(rawUrl("me", "cat", "HEAD", "manifest.json"), MANIFEST)
+		f.addJson("https://api.github.com/repos/me/cat/releases/latest", RELEASE)
+
+		const registryCalls = () =>
+			f.fetcher.fetchToFile.mock.calls.filter(([url]) =>
+				String(url).includes("registry.json"),
+			).length
+
+		// A service built with no TTL deps inherits the one-day default.
+		const defaulted = createMarketplaceService({
+			prefs: {
+				get: (key: string) =>
+					f.prefs.has(key)
+						? { key, value: f.prefs.get(key)!, updatedAt: 0 }
+						: undefined,
+				set: (key: string, value: string) => {
+					f.prefs.set(key, value)
+					return { key, value, updatedAt: 0 }
+				},
+				remove: (key: string) => {
+					f.prefs.delete(key)
+				},
+			},
+			sources: f.sources,
+			fetcher: f.fetcher,
+			installer: f.installer,
+			rescan: f.rescan,
+			postInstall: f.postInstall,
+			tmpDir: f.root,
+			maxInstallBytes: 1024 * 1024,
+			releaseCacheFile: join(f.root, "releases.json"),
+			now: () => f.clock(),
+		})
+
+		await defaulted.refresh(false)
+		expect(registryCalls()).toBe(1)
+		expect(apiCalls(f)).toBe(1)
+
+		// 23 h later both the snapshot and the release layer are still
+		// inside the day window — no refetch, no API call.
+		f.advance(23 * 60 * 60_000)
+		await defaulted.refresh(false)
+		expect(registryCalls()).toBe(1)
+		expect(apiCalls(f)).toBe(1)
+
+		// Past a day the snapshot is rebuilt and the release TTL has also
+		// lapsed, so the API is asked again.
+		f.advance(60 * 60_000 + 1)
+		await defaulted.refresh(false)
+		expect(registryCalls()).toBe(2)
+		expect(apiCalls(f)).toBe(2)
+	})
+
 	test("shares a single in-flight refresh between concurrent callers", async () => {
 		const f = fixture!
 		f.prefs.set("marketplace.registryRepo", "me/registry")
@@ -381,6 +446,9 @@ describe("createMarketplaceService.refresh", () => {
 			tmpDir: f.root,
 			maxInstallBytes: 1024 * 1024,
 			releaseCacheFile: join(f.root, "releases.json"),
+			cacheTtlMs: 10 * 60_000,
+			releaseCacheTtlMs: 60 * 60_000,
+			rateLimitCooldownMs: 60 * 60_000,
 			now: () => f.clock(),
 		})
 		const snapshot = await second.refresh(false)

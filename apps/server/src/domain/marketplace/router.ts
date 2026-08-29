@@ -8,7 +8,7 @@ const setConfigInput = z.object({
 })
 
 const snapshotInput = z.object({
-	/** Bypass the server-side 10-minute cache. */
+	/** Bypass the server-side cache. */
 	force: z.boolean().optional(),
 })
 
@@ -23,7 +23,7 @@ export function buildMarketplaceRouter(deps: {
 		}),
 		/**
 		 * Catalog snapshot: registry + per-plugin manifests + latest
-		 * releases. Cached server-side (10 min, single-flight); the UI
+		 * releases. Cached server-side (default window: a day); the UI
 		 * loads it on page open and the refresh button forces.
 		 */
 		snapshot: authedProcedure

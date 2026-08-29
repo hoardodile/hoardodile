@@ -25,11 +25,12 @@ export function marketplaceSetConfigMutation() {
 }
 
 /**
- * Catalog snapshot. The server answers from its 10-minute cache unless it
- * has none; the refresh button calls with `{ force: true }` (see
- * {@link marketplaceRefreshMutation}) and writes the result into the same
- * query key. The client never retries — the catalog is fetched once on
- * page open, and a failed fetch stays failed until the user refreshes.
+ * Catalog snapshot. The server answers from its cached snapshot (default
+ * window: a day) unless it has none; the refresh button calls with
+ * `{ force: true }` (see {@link marketplaceRefreshMutation}) and writes
+ * the result into the same query key. The client never retries — the
+ * catalog is fetched once on page open, and a failed fetch stays failed
+ * until the user refreshes.
  */
 export function marketplaceSnapshotQueryOptions() {
 	return {

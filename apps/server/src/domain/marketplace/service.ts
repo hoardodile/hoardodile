@@ -46,16 +46,15 @@ import {
  * plugin vault downloads use.
  */
 
-const CACHE_TTL_MS = 10 * 60_000
 /**
- * How long one repo's `releases/latest` payload is trusted. The API is
- * the ONLY quota-hungry call (60/hour unauthenticated per IP), so the
- * release layer is cached independently from the snapshot layer (whose
- * registry/manifest fetches are raw URLs, no quota).
+ * Cache windows for the marketplace. All three are env-configurable via
+ * `createMarketplaceService` deps and default to a day — the GitHub
+ * `releases/latest` API is the only quota-hungry hop (60/hour
+ * unauthenticated per IP), so long windows keep the catalog cheap to
+ * reopen. A forced refresh (the Settings button) still bypasses the
+ * release window and degrades to cached data on failure.
  */
-const RELEASE_CACHE_TTL_MS = 60 * 60_000
-/** After a GitHub 403/429, skip the API for this long per repo. */
-const RATE_LIMIT_COOLDOWN_MS = 60 * 60_000
+const DAY_MS = 24 * 60 * 60_000
 const MAX_RAW_BYTES = 512 * 1024
 const MAX_API_BYTES = 2 * 1024 * 1024
 const MAX_SHA256_BYTES = 8 * 1024
@@ -145,9 +144,15 @@ export type MarketplaceServiceDeps = {
 	/**
 	 * Persistent release-cache file (`local/cache/marketplace-releases.json`).
 	 * Survives server restarts so the quota-hungry GitHub API is asked at
-	 * most once per repo per hour.
+	 * most once per repo per cache window.
 	 */
 	readonly releaseCacheFile: string
+	/** Snapshot cache window in ms (defaults to `DAY_MS`). */
+	readonly cacheTtlMs?: number
+	/** Per-repo `releases/latest` cache window in ms (defaults to `DAY_MS`). */
+	readonly releaseCacheTtlMs?: number
+	/** Post-403/429 API cooldown in ms (defaults to `DAY_MS`). */
+	readonly rateLimitCooldownMs?: number
 	readonly now?: () => number
 }
 
@@ -160,9 +165,9 @@ export type MarketplaceService = {
 	/** `null` disables the marketplace and clears the cache. */
 	setConfig(registryRepo: string | null): void
 	/**
-	 * Snapshot of the curated marketplace. Served from a 10-minute
-	 * in-memory cache unless `force` (the "refresh now" button); a single
-	 * in-flight refresh is shared by concurrent callers.
+	 * Snapshot of the curated marketplace. Served from an in-memory cache
+	 * (default window: one day) unless `force` (the "refresh now" button);
+	 * a single in-flight refresh is shared by concurrent callers.
 	 */
 	refresh(force: boolean): Promise<MarketSnapshot>
 	/** Download + validate + install a release asset (install or update). */
@@ -233,6 +238,9 @@ export function createMarketplaceService(
 		releaseCacheFile,
 	} = deps
 	const now = deps.now ?? Date.now
+	const cacheTtlMs = deps.cacheTtlMs ?? DAY_MS
+	const releaseCacheTtlMs = deps.releaseCacheTtlMs ?? DAY_MS
+	const rateLimitCooldownMs = deps.rateLimitCooldownMs ?? DAY_MS
 	const limiter: ConcurrencyLimiter = createConcurrencyLimiter(
 		API_FETCH_CONCURRENCY,
 	)
@@ -326,7 +334,7 @@ export function createMarketplaceService(
 		const repo = currentRepo()
 		if (!force) {
 			const cached = cache.get(repo)
-			if (cached !== undefined && now() - cached.fetchedAt < CACHE_TTL_MS) {
+			if (cached !== undefined && now() - cached.fetchedAt < cacheTtlMs) {
 				return cached.snapshot
 			}
 		}
@@ -634,16 +642,16 @@ export function createMarketplaceService(
 	}
 
 	/**
-	 * One repo's latest release — cached per repo for an hour (and
-	 * persisted to disk) because the GitHub API call is the only
-	 * quota-hungry fetch. A rate-limited API degrades to the stale cached
-	 * payload instead of erroring (flagged as degraded); the cooldown
-	 * marker suppresses further API attempts for the hour.
+	 * One repo's latest release — cached per repo for the cache window
+	 * (default one day, and persisted to disk) because the GitHub API call
+	 * is the only quota-hungry fetch. A rate-limited API degrades to the
+	 * stale cached payload instead of erroring (flagged as degraded); the
+	 * cooldown marker suppresses further API attempts for the same window.
 	 *
 	 * The manual "refresh now" passes `bypass = true`: it re-checks the
-	 * API regardless of the one-hour TTL (the whole catalog refreshes,
-	 * including release info), but still respects the rate-limit cooldown
-	 * and degrades to cached data on any other failure.
+	 * API regardless of the TTL (the whole catalog refreshes, including
+	 * release info), but still respects the rate-limit cooldown and
+	 * degrades to cached data on any other failure.
 	 */
 	async function loadLatest(
 		repo: string,
@@ -657,7 +665,7 @@ export function createMarketplaceService(
 			cached?.latest !== undefined &&
 			cached.fetchedAt !== undefined &&
 			cached.rateLimitedUntil === undefined &&
-			now() - cached.fetchedAt < RELEASE_CACHE_TTL_MS
+			now() - cached.fetchedAt < releaseCacheTtlMs
 		) {
 			return { latest: cached.latest, degraded: false }
 		}
@@ -674,7 +682,7 @@ export function createMarketplaceService(
 				if (err instanceof MarketFetchError && err.kind === "rate_limited") {
 					releaseCache.set(repo, {
 						...(cached !== undefined ? { ...cached } : {}),
-						rateLimitedUntil: now() + RATE_LIMIT_COOLDOWN_MS,
+						rateLimitedUntil: now() + rateLimitCooldownMs,
 					})
 					markReleaseCacheDirty()
 					if (cached?.latest !== undefined) {

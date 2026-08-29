@@ -28,11 +28,14 @@ async function marketplacePluginImpl(app: FastifyInstance): Promise<void> {
 			maxInstallBytes: app.env.PLUGIN_UPLOAD_MAX_BYTES,
 			// Under `local/cache/` so it clears with the cache and
 			// survives server restarts — keeps the quota-hungry API at
-			// one call per repo per hour.
+			// one call per repo per cache window.
 			releaseCacheFile: join(
 				app.paths.local.cache(),
 				"marketplace-releases.json",
 			),
+			cacheTtlMs: app.env.MARKETPLACE_CACHE_TTL_MS,
+			releaseCacheTtlMs: app.env.MARKETPLACE_RELEASE_CACHE_TTL_MS,
+			rateLimitCooldownMs: app.env.MARKETPLACE_RATE_LIMIT_COOLDOWN_MS,
 		}),
 	)
 }
