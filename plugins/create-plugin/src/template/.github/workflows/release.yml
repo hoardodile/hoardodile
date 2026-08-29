@@ -1,5 +1,13 @@
 name: release
 
+# Normally the tag is produced by `pnpm release <version>` (release-it bumps
+# package.json + manifest.json, writes CHANGELOG.md, commits, tags and pushes).
+# This workflow is the publisher: on tag push it builds, packages
+# (`release/<id>-<version>.zip` + `.sha256`) and creates a *published* GitHub
+# release the marketplace picks up — so no local GITHUB_TOKEN or `gh` CLI is
+# needed. Pushing the tag manually (`git tag v<version> && git push origin
+# v<version>`) still works as a fallback.
+
 on:
   push:
     tags: ["v*"]

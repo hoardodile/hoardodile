@@ -18,6 +18,7 @@ catalog:
   # Electron e2e driving (`_electron`); keep in lockstep with
   # @playwright/test above.
   playwright: 1.62.1
+  '@release-it/conventional-changelog': ^12.0.0
   '@rolldown/plugin-babel': ^0.2.3
   '@tailwindcss/vite': ^4.3.3
   '@testing-library/jest-dom': ^7.0.1
@@ -38,6 +39,7 @@ catalog:
   react-i18next: ^17.0.12
   react-use: ^17.6.1
   '@solar-icons/react': ^2.1.0
+  release-it: ^21.0.2
   tailwindcss: ^4.3.3
   tar: ^7.4.3
   tsup: ^8.5.1

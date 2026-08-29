@@ -29,16 +29,24 @@ detect hook through the same sandboxed worker the server uses.
 
 ## Releases
 
-Bump `version` in `manifest.json` on user-visible changes, then:
+Bump `version` in `manifest.json` on user-visible changes, then release with
+one command:
 
 ```bash
-git tag v<version> && git push origin v<version>
+pnpm release <version>
 ```
 
-The tag must match `v<manifest.version>` — `.github/workflows/release.yml`
-builds, runs `hoardodile plugin package` (`release/<id>-<version>.zip` +
-`.sha256`) and publishes the GitHub release. Your version is independent of
-the hoardodile app version.
+release-it bumps `package.json` **and** `manifest.json` (kept in lockstep by
+`scripts/sync-version.mjs`), writes `CHANGELOG.md` from Conventional Commits,
+commits `chore(release): v<version>`, tags and pushes. Run it on `main` with a
+clean working tree. `.github/workflows/release.yml` then builds, runs
+`hoardodile plugin package` (`release/<id>-<version>.zip` + `.sha256`) and
+publishes the GitHub release. The tag must match `v<manifest.version>` — the
+workflow fails otherwise. Your version is independent of the hoardodile app
+version.
+
+Pushing the tag by hand still works as a fallback:
+`git tag v<version> && git push origin v<version>`.
 
 ## Marketplace publishing
 

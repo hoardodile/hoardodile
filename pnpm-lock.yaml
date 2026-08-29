@@ -9,6 +9,9 @@ catalogs:
     '@playwright/test':
       specifier: ^1.62.1
       version: 1.62.1
+    '@release-it/conventional-changelog':
+      specifier: ^12.0.0
+      version: 12.0.0
     '@rolldown/plugin-babel':
       specifier: ^0.2.3
       version: 0.2.3
@@ -72,6 +75,9 @@ catalogs:
     react-use:
       specifier: ^17.6.1
       version: 17.6.1
+    release-it:
+      specifier: ^21.0.2
+      version: 21.0.2
     tailwindcss:
       specifier: ^4.3.3
       version: 4.3.3
@@ -1248,6 +1254,9 @@ importers:
       '@hoardodile/workbench':
         specifier: workspace:*
         version: link:../workbench
+      '@release-it/conventional-changelog':
+        specifier: 'catalog:'
+        version: 12.0.0(conventional-commits-filter@6.0.1)(conventional-commits-parser@7.1.2)(release-it@21.0.2(@types/node@26.2.0)(magicast@0.5.4)(supports-color@7.2.0))
       '@types/node':
         specifier: 'catalog:'
         version: 26.2.0
@@ -1260,6 +1269,9 @@ importers:
       jsdom:
         specifier: 'catalog:'
         version: 30.0.1(@noble/hashes@2.3.0)
+      release-it:
+        specifier: 'catalog:'
+        version: 21.0.2(@types/node@26.2.0)(magicast@0.5.4)(supports-color@7.2.0)
       typescript:
         specifier: 'catalog:'
         version: 7.0.2
