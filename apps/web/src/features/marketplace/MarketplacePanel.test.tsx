@@ -398,6 +398,49 @@ describe("MarketplacePanel", () => {
 		).toBeInTheDocument()
 	})
 
+	it("searches the catalog by name and description", async () => {
+		installClient({ config: { registryRepo: "me/registry" } })
+		renderPanel()
+
+		await screen.findByTestId(`marketplace-plugin-${PLUGIN_ID}`)
+		const input = screen.getByTestId("marketplace-search")
+
+		// Name match keeps the card.
+		fireEvent.change(input, { target: { value: "cat" } })
+		await waitFor(() => {
+			expect(
+				screen.getByTestId(`marketplace-plugin-${PLUGIN_ID}`),
+			).toBeInTheDocument()
+		})
+
+		// Description match keeps the card.
+		fireEvent.change(input, { target: { value: "shows" } })
+		await waitFor(() => {
+			expect(
+				screen.getByTestId(`marketplace-plugin-${PLUGIN_ID}`),
+			).toBeInTheDocument()
+		})
+
+		// A query that matches nothing hides the card and shows the no-results hint.
+		fireEvent.change(input, { target: { value: "zzz" } })
+		await waitFor(() => {
+			expect(
+				screen.queryByTestId(`marketplace-plugin-${PLUGIN_ID}`),
+			).not.toBeInTheDocument()
+		})
+		expect(
+			screen.getByText("No plugins match your search."),
+		).toBeInTheDocument()
+
+		// Clearing the query restores the catalog.
+		fireEvent.change(input, { target: { value: "" } })
+		await waitFor(() => {
+			expect(
+				screen.getByTestId(`marketplace-plugin-${PLUGIN_ID}`),
+			).toBeInTheDocument()
+		})
+	})
+
 	it("keeps a quiet chip and no install action when there is no release", async () => {
 		installClient({
 			config: { registryRepo: "me/registry" },

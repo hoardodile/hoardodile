@@ -8,7 +8,7 @@ Hoardodile 是一个现代数字囤积工具，旨在囤积和预览任意形式
 
 - **囤积任意内容** — 通过可扩展内容插件支持各种格式与媒体类型。
 - **就地预览** — 直接在内容库中浏览和预览资源。
-- **插件市场** — 通过“设置 → 插件市场”发现并安装内容插件（内置默认注册单：[`hoardodile/marketplace`](https://github.com/hoardodile/marketplace)）。
+- **插件市场** — 通过“设置 → 插件市场”发现并安装内容插件（内置默认注册表：[`hoardodile/marketplace`](https://github.com/hoardodile/marketplace)）。
 - **桌面应用** — Windows / Linux / macOS 安装包自带自动更新；也可运行自托管网页版或 Docker 镜像。
 - **自托管且隐私优先** — 数据保留在自有存储中，始终由你掌控。
 

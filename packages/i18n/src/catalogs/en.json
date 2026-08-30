@@ -647,6 +647,8 @@
 		"filterInstalled": "Installed",
 		"filterUpdates": "Updates",
 		"emptyFilterHint": "No plugins match this filter.",
+		"searchPlaceholder": "Search plugins",
+		"searchEmpty": "No plugins match your search.",
 		"requiresAppVersion": "Requires hoardodile ≥ v{{version}}",
 		"incompatibleAppVersion": "This plugin requires hoardodile ≥ v{{require}}; this host runs v{{current}}",
 		"registryActive": "Current registry: {{url}}"

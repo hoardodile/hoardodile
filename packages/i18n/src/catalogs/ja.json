@@ -647,6 +647,8 @@
 		"filterInstalled": "インストール済み",
 		"filterUpdates": "更新",
 		"emptyFilterHint": "このフィルターに一致するプラグインはありません。",
+		"searchPlaceholder": "プラグインを検索",
+		"searchEmpty": "検索に一致するプラグインはありません。",
 		"requiresAppVersion": "hoardodile ≥ v{{version}} が必要",
 		"incompatibleAppVersion": "このプラグインには hoardodile ≥ v{{require}} が必要です（このホストは v{{current}}）",
 		"registryActive": "現在のレジストリ：{{url}}"

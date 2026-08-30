@@ -18,6 +18,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
+import { SearchField } from "@/components/common/SearchField"
 import { PluginTileIcon } from "@/features/plugin/icons/plugin-tile-icon"
 import {
 	resolveManifestDescription,
@@ -26,6 +27,7 @@ import {
 import { PermissionMarks } from "@/features/plugin/PluginSettingsPanel"
 import { PluginUninstallDialog } from "@/features/plugin/PluginUninstallDialog"
 import { pluginListAllQueryOptions } from "@/features/plugin/pluginApi"
+import { matchesPluginQuery } from "@/features/plugin/pluginFilter"
 import { errorMessage } from "@/lib/errors"
 import { isNewer } from "@/lib/versions"
 import { isMinAppSatisfied, marketUpdateAvailable } from "./compat"
@@ -72,6 +74,7 @@ export function MarketplacePanel() {
 	const installedQuery = useQuery(pluginListAllQueryOptions())
 	const [view, setView] = useState<MarketplaceView>("grid")
 	const [filter, setFilter] = useState<MarketplaceFilter>("all")
+	const [query, setQuery] = useState("")
 	const [refreshConfirmOpen, setRefreshConfirmOpen] = useState(false)
 	const [installTarget, setInstallTarget] = useState<InstallTarget | null>(null)
 	const [detailTarget, setDetailTarget] = useState<MarketPlugin | null>(null)
@@ -105,6 +108,22 @@ export function MarketplacePanel() {
 	)
 
 	const plugins = (snapshotQuery.data?.plugins ?? []).filter((plugin) => {
+		// Search first (name + description, additionally id), then filter.
+		if (
+			!matchesPluginQuery(
+				{
+					id: plugin.id,
+					name: resolveManifestName(plugin.manifest, i18n.language),
+					description: resolveManifestDescription(
+						plugin.manifest,
+						i18n.language,
+					),
+				},
+				query,
+			)
+		) {
+			return false
+		}
 		if (filter === "all") return true
 		const installedVersion = installedById.get(plugin.id)?.manifest.version
 		if (filter === "installed") return installedVersion !== undefined
@@ -148,7 +167,41 @@ export function MarketplacePanel() {
 				</div>
 			) : (
 				<>
-					<div className="flex items-center justify-between gap-2">
+					<div className="flex flex-col gap-2">
+						<div className="flex items-center justify-between gap-2">
+							<SearchField
+								value={query}
+								onCommit={setQuery}
+								placeholder={t("marketplace.searchPlaceholder")}
+								className="w-64"
+								testId="marketplace-search"
+							/>
+							<div className="flex items-center gap-2">
+								<PillTabs<MarketplaceFilter>
+									value={filter}
+									onChange={setFilter}
+									items={filterItems}
+								/>
+								<IconToggle
+									options={viewOptions}
+									value={view}
+									onChange={setView}
+								/>
+								<Button
+									variant="secondary"
+									size="sm"
+									onClick={() => setRefreshConfirmOpen(true)}
+									disabled={refreshMut.isPending}
+									data-testid="marketplace-refresh"
+								>
+									<Icon
+										icon={Refresh}
+										className={refreshMut.isPending ? "animate-spin" : ""}
+									/>
+									{t("marketplace.refresh")}
+								</Button>
+							</div>
+						</div>
 						<p className="text-xs text-muted-foreground">
 							{t("marketplace.refreshedAt", {
 								time:
@@ -159,37 +212,14 @@ export function MarketplacePanel() {
 											),
 							})}
 						</p>
-						<div className="flex items-center gap-2">
-							<PillTabs<MarketplaceFilter>
-								value={filter}
-								onChange={setFilter}
-								items={filterItems}
-							/>
-							<IconToggle
-								options={viewOptions}
-								value={view}
-								onChange={setView}
-							/>
-							<Button
-								variant="secondary"
-								size="sm"
-								onClick={() => setRefreshConfirmOpen(true)}
-								disabled={refreshMut.isPending}
-								data-testid="marketplace-refresh"
-							>
-								<Icon
-									icon={Refresh}
-									className={refreshMut.isPending ? "animate-spin" : ""}
-								/>
-								{t("marketplace.refresh")}
-							</Button>
-						</div>
 					</div>
 
 					{plugins.length === 0 &&
 						(snapshotQuery.data?.plugins.length ?? 0) > 0 && (
 							<p className="text-sm text-muted-foreground">
-								{t("marketplace.emptyFilterHint")}
+								{query.trim().length > 0
+									? t("marketplace.searchEmpty")
+									: t("marketplace.emptyFilterHint")}
 							</p>
 						)}
 					{snapshotQuery.data?.plugins.length === 0 && (
