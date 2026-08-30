@@ -13,7 +13,10 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { afterEach, describe, expect, it } from "vitest"
-import { contentHashTree as buildHash } from "../../../../scripts/lib/shell-hash.mjs"
+import {
+	contentHashTree as buildHash,
+	SHELL_HASH_BOUNDARY,
+} from "../../../../scripts/lib/shell-hash.mjs"
 import { contentHashTree, installedShellHash } from "./shell-hash.ts"
 
 const scratch: string[] = []
@@ -126,5 +129,28 @@ describe("installedShellHash", () => {
 		mkdirSync(root, { recursive: true })
 		scratch.push(join(root, ".."))
 		expect(installedShellHash(root)).toBeUndefined()
+	})
+})
+
+describe("shell-hash boundary", () => {
+	it("agrees with the installed client hash", async () => {
+		const root = fixtureTree()
+		// The release manifest's shellHash (build) must equal what the
+		// packaged client recomputes via installedShellHash; the v0.1.5
+		// regression computed one side without the boundary, misrouting a
+		// content release to the full updater.
+		expect(await buildHash(root, SHELL_HASH_BOUNDARY)).toBe(
+			installedShellHash(root),
+		)
+	})
+
+	it("is non-trivial (excludes the wizard subtree and .map files)", async () => {
+		const root = fixtureTree()
+		// Reproduces the exact condition that broke the release: a boundary
+		// hash differs from a whole-tree hash, so a consumer that forgets
+		// the boundary silently diverges from the manifest/client.
+		expect(await buildHash(root, SHELL_HASH_BOUNDARY)).not.toBe(
+			await buildHash(root),
+		)
 	})
 })

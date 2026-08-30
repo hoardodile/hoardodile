@@ -45,7 +45,10 @@ import {
 	packFileNames,
 	resolvePackTarget,
 } from "../../../scripts/lib/resource-pack-targets.mjs"
-import { contentHashTree } from "../../../scripts/lib/shell-hash.mjs"
+import {
+	contentHashTree,
+	SHELL_HASH_BOUNDARY,
+} from "../../../scripts/lib/shell-hash.mjs"
 
 const desktopRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..")
 const workspaceRoot = resolve(desktopRoot, "../..")
@@ -120,10 +123,7 @@ const version = args.version ?? rootVersion
 // the asar's own out/ subtree with the SAME exclusions — byte-identical
 // when the installed shell is this release's shell. Content-only churn
 // (sourcemaps, wizard) never flips a release to the full channel.
-const shellHash = await contentHashTree(shellOutDir, {
-	excludePrefixes: ["wizard"],
-	excludeExtensions: [".map"],
-})
+const shellHash = await contentHashTree(shellOutDir, SHELL_HASH_BOUNDARY)
 
 const marker = {
 	schema: 1,

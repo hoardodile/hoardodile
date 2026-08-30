@@ -15,6 +15,19 @@ import { createHash } from "node:crypto"
 import { existsSync, readdirSync, readFileSync } from "node:fs"
 import { join } from "node:path"
 
+/**
+ * The shell-runtime boundary the resource channel's `shellHash` counts.
+ * `wizard` (a content page, not the shell) and `*.map` (never affect
+ * runtime) are excluded on every side — the pack builder, the verify gate,
+ * the e2e fixture and the client (apps/desktop/src/main/shell-hash.ts).
+ * One export so a release cannot ship with those consumers disagreeing (a
+ * drift misroutes a content release to the full updater).
+ */
+export const SHELL_HASH_BOUNDARY = Object.freeze({
+	excludePrefixes: ["wizard"],
+	excludeExtensions: [".map"],
+})
+
 export async function contentHashTree(rootDir, options = {}) {
 	const excludes = options.excludePrefixes ?? []
 	const excludedExtensions = options.excludeExtensions ?? []

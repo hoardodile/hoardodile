@@ -32,7 +32,7 @@ import {
 	packFileNames,
 	resolvePackTarget,
 } from "./lib/resource-pack-targets.mjs"
-import { contentHashTree } from "./lib/shell-hash.mjs"
+import { contentHashTree, SHELL_HASH_BOUNDARY } from "./lib/shell-hash.mjs"
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..")
 const desktopRoot = join(root, "apps", "desktop")
@@ -254,7 +254,7 @@ check(
 )
 
 // shellHash must be reproducible from the shell bundle itself.
-const actualShellHash = await contentHashTree(shellOutDir)
+const actualShellHash = await contentHashTree(shellOutDir, SHELL_HASH_BOUNDARY)
 check(
 	actualShellHash === manifest.shellHash,
 	"shellHash does not match a fresh hash of the shell bundle (out/)",

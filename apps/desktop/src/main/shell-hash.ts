@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto"
 import { existsSync, readdirSync, readFileSync } from "node:fs"
 import { join } from "node:path"
+import { SHELL_HASH_BOUNDARY } from "../../../../scripts/lib/shell-hash.mjs"
 
 /**
  * Content hash over a directory tree: sorted relative paths + file bytes
@@ -13,7 +14,10 @@ import { join } from "node:path"
  * bytes churn with every bundled dependency and never affect runtime).
  *
  * MUST stay byte-identical with the build-side hasher
- * (scripts/lib/shell-hash.mjs) — change both together.
+ * (scripts/lib/shell-hash.mjs) — change both together. The shell-runtime
+ * boundary options (wizard + .map) are the single `SHELL_HASH_BOUNDARY`
+ * export shared by the build, the verify gate, the e2e fixture and here,
+ * so they cannot drift apart.
  */
 export function contentHashTree(
 	rootDir: string,
@@ -84,8 +88,5 @@ export function contentHashTree(
 export function installedShellHash(outRoot?: string): string | undefined {
 	const root = outRoot ?? join(process.resourcesPath, "app.asar", "out")
 	if (!existsSync(join(root, "main", "index.js"))) return undefined
-	return contentHashTree(root, {
-		excludePrefixes: ["wizard"],
-		excludeExtensions: [".map"],
-	})
+	return contentHashTree(root, SHELL_HASH_BOUNDARY)
 }

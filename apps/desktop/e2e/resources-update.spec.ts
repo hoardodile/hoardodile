@@ -13,7 +13,10 @@ import { tmpdir } from "node:os"
 import { dirname, join, resolve } from "node:path"
 import { expect, test } from "@playwright/test"
 import * as tar from "tar"
-import { contentHashTree } from "../../../scripts/lib/shell-hash.mjs"
+import {
+	contentHashTree,
+	SHELL_HASH_BOUNDARY,
+} from "../../../scripts/lib/shell-hash.mjs"
 import { expectShellRendered, navigateInShell } from "./app-shell.ts"
 import {
 	appWindow,
@@ -121,8 +124,13 @@ test.beforeAll(async () => {
 	).version
 
 	// The installed shell's identity: content hash of out/ — the same
-	// bytes the packaged asar carries.
-	const shellHash = await contentHashTree(join(desktopRoot, "out"))
+	// bytes the packaged asar carries, over the same shell-runtime boundary
+	// the client hashes (installedShellHash)/the pack builder emits, so the
+	// fixture routes to the resource channel rather than the full updater.
+	const shellHash = await contentHashTree(
+		join(desktopRoot, "out"),
+		SHELL_HASH_BOUNDARY,
+	)
 	const installedMarker = JSON.parse(
 		readFileSync(join(resourcesDir, "resources-version.json"), "utf8"),
 	)
