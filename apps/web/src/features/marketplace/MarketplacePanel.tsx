@@ -16,6 +16,7 @@ import {
 	Widget2,
 } from "@hoardodile/ui/icons/registry"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import type { TFunction } from "i18next"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { SearchField } from "@/components/common/SearchField"
@@ -357,11 +358,15 @@ function MarketplaceCatalogSkeleton() {
 }
 
 /** Friendly short line for an error entry (rate limits get user-friendly
-    copy; the raw message never changes for anything else). */
-function errorLineFor(
-	plugin: MarketPlugin,
-	t: (key: string) => string,
-): string {
+    copy; the raw message never changes for anything else). A rate-limited
+    entry with a known version reads as "a new version was published but it
+    is not actionable yet" rather than a bare "info unavailable". */
+function errorLineFor(plugin: MarketPlugin, t: TFunction): string {
+	if (plugin.rateLimited === true && plugin.latest?.version !== undefined) {
+		return t("marketplace.updateUnavailableRateLimited", {
+			version: plugin.latest.version,
+		})
+	}
 	if (plugin.errorKind === "rate_limited" || plugin.rateLimited === true) {
 		return t("marketplace.errorRateLimitedShort")
 	}

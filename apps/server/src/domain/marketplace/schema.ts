@@ -57,6 +57,12 @@ export type MarketLatest = {
 	readonly publishedAt: string | null
 	/** Release body, truncated. */
 	readonly notes: string | null
+	/**
+	 * Present when the release payload was fetched (installable/updatable).
+	 * Absent on a rate-limited *version-only* entry: the version/tag came from
+	 * the free `releases.atom` feed, but the asset could not be fetched, so
+	 * install/update is blocked until the API recovers.
+	 */
 	readonly assetName?: string
 	readonly assetUrl?: string
 	/** Contents of the `<asset>.sha256` sidecar, when the release ships one. */
@@ -95,9 +101,11 @@ export type MarketPlugin = {
 	 */
 	readonly errorKind?: "rate_limited" | "failed" | "missing"
 	/**
-	 * True when the shown release payload was served from the cache after
-	 * the GitHub API rate limit hit — `state` stays `ok` (data is usable)
-	 * but may be stale; the UI flags it on the card.
+	 * True when the shown release payload was served from the cache or from
+	 * the free `releases.atom` feed after the GitHub API rate limit hit —
+	 * `state` stays `ok` (data is usable) but the release info may be stale
+	 * or, for a version-only entry, not installable; the UI flags it on the
+	 * card and notes a new version may be waiting.
 	 */
 	readonly rateLimited?: boolean
 }

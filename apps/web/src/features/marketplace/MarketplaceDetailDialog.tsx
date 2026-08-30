@@ -120,9 +120,12 @@ export function MarketplaceDetailDialog(props: {
 	const latest = plugin.state === "ok" ? plugin.latest : undefined
 	const installedVersion = props.installed?.manifest.version
 	const compatible = isMinAppSatisfied(plugin.manifest)
+	// An update is actionable only when the newer release's asset was fetched;
+	// a rate-limited version-only release is surfaced as a notice, not a button.
 	const updateAvailable =
 		props.onUpdate !== undefined &&
-		marketUpdateAvailable(plugin, installedVersion)
+		marketUpdateAvailable(plugin, installedVersion) &&
+		latest?.assetUrl !== undefined
 	const [tab, setTab] = useState<MarketplaceTab>("intro")
 
 	useEffect(() => {
@@ -143,6 +146,19 @@ export function MarketplaceDetailDialog(props: {
 		installedVersion === undefined &&
 		compatible &&
 		latest?.assetUrl !== undefined
+	// The rate-limit signal the ticker shows: a known (but not yet actioned)
+	// version reads differently from a plain "info unavailable" notice.
+	const rateLimitedMessage = (() => {
+		if (plugin.rateLimited === true && latest?.version !== undefined) {
+			return t("marketplace.updateUnavailableRateLimited", {
+				version: latest.version,
+			})
+		}
+		if (plugin.errorKind === "rate_limited" || plugin.rateLimited === true) {
+			return t("marketplace.errorRateLimitedShort")
+		}
+		return plugin.error ?? ""
+	})()
 
 	return (
 		<AppDialog
@@ -237,10 +253,7 @@ export function MarketplaceDetailDialog(props: {
 								title={plugin.error}
 							>
 								<span className="whitespace-nowrap px-3">
-									{plugin.errorKind === "rate_limited" ||
-									plugin.rateLimited === true
-										? t("marketplace.errorRateLimitedShort")
-										: (plugin.error ?? "")}
+									{rateLimitedMessage}
 								</span>
 							</span>
 						))}
@@ -324,11 +337,6 @@ export function MarketplaceDetailDialog(props: {
 											</ExternalLink>
 										</MetadataRow>
 									)}
-									<MetadataRow label={t("marketplace.manifestVersion")}>
-										<span className="font-mono">
-											v{plugin.manifest.version}
-										</span>
-									</MetadataRow>
 									{latest?.assetName !== undefined && (
 										<MetadataRow label={t("marketplace.packageAsset")}>
 											<span className="break-all font-mono">

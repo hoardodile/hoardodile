@@ -37,7 +37,11 @@ import {
  * - registry file + each plugin's `manifest.json`: `raw.githubusercontent.com`
  *   (no API quota; ref fallback `HEAD` → `main` → `master`);
  * - latest release info: `api.github.com/repos/<repo>/releases/latest`
- *   (the only API-quota-hungry call, one per plugin);
+ *   (the only API-quota-hungry call, one per plugin). When that API is
+ *   rate-limited, the marketplace falls back to the free GitHub releases
+ *   feed (`github.com/<repo>/releases.atom`, a web endpoint — no API quota)
+ *   to learn the true latest release tag, so the UI can still tell the user
+ *   a new version was published even though its asset is not fetchable yet;
  * - install/update assets: the release's `browser_download_url`
  *   (a direct `github.com` download, no API quota).
  *
@@ -59,6 +63,8 @@ const MAX_RAW_BYTES = 512 * 1024
 const MAX_API_BYTES = 2 * 1024 * 1024
 const MAX_SHA256_BYTES = 8 * 1024
 const MAX_INTRO_BYTES = 256 * 1024
+/** Byte cap for the free GitHub releases feed (rate-limit fallback). */
+const MAX_ATOM_BYTES = 256 * 1024
 /** Release-body cap for the dedicated Release notes tab (still bounded by the payload cap). */
 const NOTES_MAX_LENGTH = 128_000
 const REFS = ["HEAD", "main", "master"] as const
@@ -648,13 +654,21 @@ export function createMarketplaceService(
 	 * stale cached payload instead of erroring (flagged as degraded); the
 	 * cooldown marker suppresses further API attempts for the same window.
 	 *
+	 * So the user still learns a new version was published even under the
+	 * rate limit, a rate-limited refresh first asks the free `releases.atom`
+	 * feed for the true latest tag. When that tag differs from the cached
+	 * release (or there is none), the marketplace surfaces a version-only
+	 * {@link MarketLatest} (asset omitted) flagged `degraded` — the UI shows
+	 * the version and notes the install/update is temporarily unavailable.
+	 * When the feed tag matches the cached payload the cache is current and
+	 * its asset is kept, so an update stays possible from cache.
+	 *
 	 * The manual "refresh now" passes `bypass = true`: it re-checks the
-	 * API regardless of the TTL (the whole catalog refreshes, including
-	 * release info) AND bypasses the rate-limit cooldown — the user has
-	 * explicitly asked to retry, so a single bounded pass re-hits the API
-	 * and re-arms the cooldown if the limit is still in effect. Automatic
-	 * (non-force) rebuilds still honor the cooldown so they never hammer
-	 * the API. Any other failure still degrades to cached data.
+	 * API regardless of the TTL AND bypasses the rate-limit cooldown — the
+	 * user has explicitly asked to retry, so a single bounded pass re-hits
+	 * the API and re-arms the cooldown if the limit is still in effect.
+	 * Automatic (non-force) rebuilds still honor the cooldown so they never
+	 * hammer the API. Any other failure still degrades to cached data.
 	 */
 	async function loadLatest(
 		repo: string,
@@ -678,6 +692,7 @@ export function createMarketplaceService(
 		if (!cooldownActive || bypass) {
 			try {
 				const latest = await fetchRelease(repo, manifest)
+				// A fresh API answer is authoritative — drop any feed-learned tag.
 				releaseCache.set(repo, { latest, fetchedAt: now() })
 				markReleaseCacheDirty()
 				return { latest, degraded: false }
@@ -688,16 +703,28 @@ export function createMarketplaceService(
 						rateLimitedUntil: now() + rateLimitCooldownMs,
 					})
 					markReleaseCacheDirty()
-					if (cached?.latest !== undefined) {
-						return { latest: cached.latest, degraded: true }
-					}
 				} else if (bypass && cached?.latest !== undefined) {
 					// A forced refresh that fails keeps serving the cached
 					// payload rather than dropping the entry.
 					return { latest: cached.latest, degraded: false }
+				} else {
+					throw err
 				}
-				throw err
 			}
+		}
+
+		// Rate-limited (or within the cooldown): learn the true latest tag
+		// from the free releases feed so the version is still visible.
+		const known = await fetchLatestReleaseEntry(repo)
+		if (known !== undefined) {
+			if (cached?.latest !== undefined && cached.latest.tag === known.tag) {
+				// The cached payload is already the current release — keep its
+				// asset so install/update still works from cache.
+				return { latest: cached.latest, degraded: true }
+			}
+			// A newer (or first) release with no fetchable asset — surface the
+			// version only; the UI notes it is not yet actionable.
+			return { latest: latestFromAtom(repo, known), degraded: true }
 		}
 
 		if (cached?.latest !== undefined) {
@@ -707,6 +734,24 @@ export function createMarketplaceService(
 			"rate_limited",
 			"GitHub API rate limit hit — no cached release data yet",
 		)
+	}
+
+	/** Fetch + parse the first entry of the repo's `releases.atom` feed. */
+	async function fetchLatestReleaseEntry(
+		repo: string,
+	): Promise<
+		{ readonly tag: string; readonly publishedAt: string | null } | undefined
+	> {
+		try {
+			const text = await fetchTextBestEffort([atomReleaseUrl(repo)], {
+				maxBytes: MAX_ATOM_BYTES,
+				headers: { "User-Agent": USER_AGENT },
+			})
+			return parseAtomFirstEntry(text)
+		} catch {
+			// No feed (a repo without a release), blocked or over-limit — stay quiet.
+			return undefined
+		}
 	}
 
 	async function fetchRelease(
@@ -899,6 +944,71 @@ function rawUrls(repo: string, path: string): string[] {
 
 function apiReleaseUrl(repo: string): string {
 	return `https://api.github.com/repos/${repo}/releases/latest`
+}
+
+/** The free GitHub releases feed — a web endpoint, so it does not consume
+    the REST API quota that rate-limits {@link apiReleaseUrl}. */
+function atomReleaseUrl(repo: string): string {
+	return `https://github.com/${repo}/releases.atom`
+}
+
+/**
+ * Parse the latest release tag out of a GitHub `releases.atom` feed — the
+ * first `<entry>` is the newest published release. The tag is taken from
+ * the entry's `rel="alternate"` link (the authoritative `releases/tag/<tag>`
+ * URL, immune to entity/whitespace issues in the title), falling back to
+ * the `title` element. Returns `undefined` on any structural mismatch so a
+ * feed change degrades to the existing behavior instead of throwing.
+ */
+export function parseAtomFirstEntry(
+	xml: string,
+): { readonly tag: string; readonly publishedAt: string | null } | undefined {
+	const first = /<entry>[\s\S]*?<\/entry>/.exec(xml)?.[0]
+	if (first === undefined) return undefined
+	const title = /<title[^>]*>([^<]*)<\/title>/.exec(first)?.[1]
+	// The alternate link carries the authoritative `releases/tag/<tag>` URL;
+	// match the element first so attribute order never matters.
+	const linkEl = /<link\b[^>]*\brel="alternate"[^>]*>/.exec(first)?.[0]
+	const alternateHref =
+		linkEl === undefined ? undefined : /href="([^"]*)"/.exec(linkEl)?.[1]
+	const tag = tagFromUrl(alternateHref) ?? title?.trim()
+	if (tag === undefined || tag.length === 0) return undefined
+	const publishedAt = /<updated>([^<]*)<\/updated>/.exec(first)?.[1] ?? null
+	return { tag, publishedAt }
+}
+
+/** Extract `<owner>/<repo>/releases/tag/<tag>` from an alternate link href. */
+function tagFromUrl(rawUrl: string | undefined): string | undefined {
+	if (rawUrl === undefined) return undefined
+	try {
+		const path = new URL(rawUrl).pathname
+		const marker = "/releases/tag/"
+		const idx = path.lastIndexOf(marker)
+		if (idx === -1) return undefined
+		const tag = path.slice(idx + marker.length)
+		return tag.length > 0 ? decodeURIComponent(tag) : undefined
+	} catch {
+		return undefined
+	}
+}
+
+/**
+ * A version-only {@link MarketLatest} built from the free feed's latest tag:
+ * the version is real (a published release), but the asset / notes / sha /
+ * intro are unknown — the rate limit kept us from fetching them, so
+ * install/update stays blocked until the API recovers.
+ */
+function latestFromAtom(
+	repo: string,
+	known: { readonly tag: string; readonly publishedAt: string | null },
+): MarketLatest {
+	return {
+		tag: known.tag,
+		version: known.tag.replace(/^v/, ""),
+		releaseUrl: `https://github.com/${repo}/releases/tag/${known.tag}`,
+		publishedAt: known.publishedAt,
+		notes: null,
+	}
 }
 
 function pickZipAsset(

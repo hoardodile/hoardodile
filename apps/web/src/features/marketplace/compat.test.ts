@@ -44,6 +44,14 @@ describe("marketUpdateAvailable", () => {
 		).toBe(true)
 	})
 
+	it("signals an update for a rate-limited version-only release (version known, no asset)", () => {
+		// The free `releases.atom` fallback supplies a version without an
+		// asset — the badge/filter/dot must still surface the update.
+		const plugin = marketPlugin({ latestVersion: "1.3.0" })
+		expect(plugin.latest).toEqual({ version: "1.3.0" })
+		expect(marketUpdateAvailable(plugin, "1.2.3")).toBe(true)
+	})
+
 	it("is false when not installed, up to date or without a release", () => {
 		expect(marketUpdateAvailable(marketPlugin(), undefined)).toBe(false)
 		expect(

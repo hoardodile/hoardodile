@@ -28,6 +28,11 @@ export function isMinAppSatisfied(
  * the release is newer AND compatible with the current app. The single
  * source of truth shared by the card's ⋯ menu, the "Updates" filter and
  * the sidebar update badge.
+ *
+ * A rate-limited plugin keeps `state: "ok"` with a known (version-only)
+ * release, so a newer version is still signaled here even when its asset
+ * could not be fetched — the user learns an update is waiting; the update
+ * button itself is gated separately on the asset being present.
  */
 export function marketUpdateAvailable(
 	plugin: {

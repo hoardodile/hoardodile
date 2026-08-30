@@ -557,14 +557,76 @@ describe("MarketplacePanel", () => {
 		renderPanel()
 
 		// A rate-limited entry still shows data, but the card owns a
-		// scrolling danger strip so the staleness is never silent.
+		// scrolling danger strip telling the user a newer version is known
+		// yet not actioned (rate limit) — the staleness is never silent.
 		const strip = await screen.findByTestId(
 			`marketplace-card-error-${PLUGIN_ID}`,
 		)
-		expect(strip).toHaveTextContent("Latest release info unavailable")
-		expect(screen.queryByText(/rate limit/i)).toBeNull()
+		expect(strip).toHaveTextContent(
+			"v1.2.3 has been published, but updating is temporarily unavailable",
+		)
 		expect(
 			screen.getByTestId(`marketplace-view-${PLUGIN_ID}`),
+		).toBeInTheDocument()
+	})
+
+	it("flags a rate-limited version-only release: shows the version but no update action", async () => {
+		// The free releases.atom fallback yields a version without an asset —
+		// the card/dialog must surface the version + a can't-update notice
+		// while refusing to offer an update (no asset to download yet).
+		const versionOnlyLatest = {
+			tag: "v1.3.0",
+			version: "1.3.0",
+			releaseUrl: "https://github.com/me/cat-viewer/releases/tag/v1.3.0",
+			publishedAt: "2025-02-01T00:00:00Z",
+			notes: null,
+		}
+		installClient({
+			config: { registryRepo: "me/registry" },
+			snapshot: {
+				...SNAPSHOT,
+				plugins: [
+					{
+						...SNAPSHOT.plugins[0]!,
+						state: "ok",
+						latest: versionOnlyLatest,
+						rateLimited: true,
+						error: undefined,
+					},
+				],
+			},
+			installed: [installedRow("1.2.3")],
+		})
+		renderPanel()
+
+		// Card: still shows a version + the update dot, plus a rate-limit strip.
+		const card = await screen.findByTestId(`marketplace-plugin-${PLUGIN_ID}`)
+		expect(within(card).getByText(/v1\.3\.0 · /)).toBeInTheDocument()
+		expect(
+			screen.getByTestId(`marketplace-update-dot-${PLUGIN_ID}`),
+		).toBeInTheDocument()
+		expect(
+			await screen.findByTestId(`marketplace-card-error-${PLUGIN_ID}`),
+		).toHaveTextContent(
+			"v1.3.0 has been published, but updating is temporarily unavailable",
+		)
+
+		// Detail: the version is known, but there is no update action (no asset).
+		await user.click(screen.getByTestId(`marketplace-view-${PLUGIN_ID}`))
+		const dialog = await screen.findByTestId("marketplace-detail-dialog")
+		expect(
+			within(dialog).getByText(/Latest release v1\.3\.0/),
+		).toBeInTheDocument()
+		expect(
+			within(dialog).queryByTestId("marketplace-detail-update"),
+		).not.toBeInTheDocument()
+		expect(
+			within(dialog).getByTestId("marketplace-dialog-error"),
+		).toHaveTextContent(
+			"v1.3.0 has been published, but updating is temporarily unavailable",
+		)
+		expect(
+			within(dialog).getByTestId("marketplace-detail-uninstall"),
 		).toBeInTheDocument()
 	})
 

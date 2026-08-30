@@ -5,7 +5,11 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import { DEFAULT_MARKETPLACE_REPO } from "./schema.ts"
-import { createMarketplaceService, normalizeRepoAddress } from "./service.ts"
+import {
+	createMarketplaceService,
+	normalizeRepoAddress,
+	parseAtomFirstEntry,
+} from "./service.ts"
 
 const PLUGIN_ID = "44444444-4444-4444-8444-444444444444"
 const MANIFEST = {
@@ -35,6 +39,20 @@ const RELEASE = {
 
 function sha256(text: string): string {
 	return createHash("sha256").update(text).digest("hex")
+}
+
+/** A GitHub `releases.atom` feed with a single release entry (the latest). */
+function atomFeed(tag: string, publishedAt = "2025-01-02T03:04:05Z"): string {
+	return `<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <entry>
+    <id>tag:github.com,2008:Repository/1234</id>
+    <updated>${publishedAt}</updated>
+    <link rel="alternate" type="text/html" href="https://github.com/me/cat/releases/tag/${tag}"/>
+    <title>${tag}</title>
+    <content type="html">Notes</content>
+  </entry>
+</feed>`
 }
 
 function makeFixture() {
@@ -191,6 +209,50 @@ describe("normalizeRepoAddress", () => {
 		"https://example.com/me/repo",
 	])("rejects %s", (input) => {
 		expect(() => normalizeRepoAddress(input)).toThrow()
+	})
+})
+
+describe("parseAtomFirstEntry", () => {
+	test("reads the latest tag from the first entry's alternate link", () => {
+		const entry = parseAtomFirstEntry(
+			atomFeed("v1.2.3", "2025-01-02T03:04:05Z"),
+		)
+		expect(entry).toEqual({
+			tag: "v1.2.3",
+			publishedAt: "2025-01-02T03:04:05Z",
+		})
+	})
+
+	test("falls back to the title when the alternate link is missing", () => {
+		const feed = `<?xml version="1.0"?><feed xmlns="http://www.w3.org/2005/Atom"><entry><title>v1.4.0</title></entry></feed>`
+		expect(parseAtomFirstEntry(feed)).toEqual({
+			tag: "v1.4.0",
+			publishedAt: null,
+		})
+	})
+
+	test("ignores self-closing link elements and attribute order", () => {
+		const feed = `<?xml version="1.0"?><feed><entry><link type="text/html" rel="alternate" href="https://github.com/me/cat/releases/tag/v2.0.0"/><title>Release</title></entry></feed>`
+		expect(parseAtomFirstEntry(feed)?.tag).toBe("v2.0.0")
+	})
+
+	test("reads a title carrying an attribute and absent updated as null", () => {
+		const feed = `<?xml version="1.0"?><feed><entry><title type="html">v2.1.0</title><updated>2025-03-01T00:00:00Z</updated></entry></feed>`
+		expect(parseAtomFirstEntry(feed)).toEqual({
+			tag: "v2.1.0",
+			publishedAt: "2025-03-01T00:00:00Z",
+		})
+		const noDate = `<?xml version="1.0"?><feed><entry><title>v2.2.0</title></entry></feed>`
+		expect(parseAtomFirstEntry(noDate)).toEqual({
+			tag: "v2.2.0",
+			publishedAt: null,
+		})
+	})
+
+	test("returns undefined for a feed with no entry or malformed markup", () => {
+		expect(parseAtomFirstEntry("<feed></feed>")).toBeUndefined()
+		expect(parseAtomFirstEntry("not a feed")).toBeUndefined()
+		expect(parseAtomFirstEntry(atomFeed(""))).toBeUndefined()
 	})
 })
 
@@ -545,6 +607,157 @@ describe("createMarketplaceService.refresh", () => {
 		expect(snapshot.plugins[0]?.state).toBe("error")
 		expect(snapshot.plugins[0]?.error).toContain("rate limit")
 		expect(snapshot.plugins[0]?.errorKind).toBe("rate_limited")
+	})
+
+	test("a rate-limited API with no cached release surfaces the version from the releases.atom feed", async () => {
+		const f = fixture!
+		f.prefs.set("marketplace.registryRepo", "me/registry")
+		f.addJson(rawUrl("me", "registry", "HEAD", "registry.json"), {
+			version: 1,
+			plugins: ["me/cat"],
+		})
+		f.addJson(rawUrl("me", "cat", "HEAD", "manifest.json"), MANIFEST)
+		// The API is rate-limited, but the free releases feed still lists a tag.
+		f.add("https://github.com/me/cat/releases.atom", atomFeed("v1.2.3"))
+		f.fetcher.fetchToFile.mockImplementation(
+			async (u: string, target: string) => {
+				if (u.includes("api.github.com")) {
+					throw new Error(`plugin download returned HTTP 403: ${u}`)
+				}
+				const body = f.routes.get(u)
+				if (body === undefined) {
+					throw new Error(`plugin download returned HTTP 404: ${u}`)
+				}
+				await writeFile(target, body)
+				return { sizeBytes: Buffer.byteLength(body), sha256: sha256(body) }
+			},
+		)
+
+		const snapshot = await f.service.refresh(true)
+		const plugin = snapshot.plugins[0]!
+		// The version is real (a published release) though the asset is unknown.
+		expect(plugin.state).toBe("ok")
+		expect(plugin.latest?.tag).toBe("v1.2.3")
+		expect(plugin.latest?.version).toBe("1.2.3")
+		expect(plugin.latest?.assetUrl).toBeUndefined()
+		expect(plugin.latest?.publishedAt).toBe("2025-01-02T03:04:05Z")
+		expect(plugin.rateLimited).toBe(true)
+		expect(plugin.error).toBeUndefined()
+		// The free releases feed (not the rate-limited API) supplied the tag.
+		expect(f.fetcher.fetchToFile).toHaveBeenCalledWith(
+			"https://github.com/me/cat/releases.atom",
+			expect.any(String),
+			expect.any(Object),
+		)
+	})
+
+	test("a rate-limited API with a stale cached release and a newer feed tag surfaces the newer version-only release", async () => {
+		const f = fixture!
+		f.prefs.set("marketplace.registryRepo", "me/registry")
+		f.addJson(rawUrl("me", "registry", "HEAD", "registry.json"), {
+			version: 1,
+			plugins: ["me/cat"],
+		})
+		f.addJson(rawUrl("me", "cat", "HEAD", "manifest.json"), MANIFEST)
+		f.addJson("https://api.github.com/repos/me/cat/releases/latest", RELEASE)
+		// Seed the cache with the old release, then a newer feed tag appears.
+		await f.service.refresh(false)
+		f.add("https://github.com/me/cat/releases.atom", atomFeed("v1.3.0"))
+		f.fetcher.fetchToFile.mockImplementation(
+			async (u: string, target: string) => {
+				if (u.includes("api.github.com")) {
+					throw new Error(`plugin download returned HTTP 403: ${u}`)
+				}
+				const body = f.routes.get(u)
+				if (body === undefined) {
+					throw new Error(`plugin download returned HTTP 404: ${u}`)
+				}
+				await writeFile(target, body)
+				return { sizeBytes: Buffer.byteLength(body), sha256: sha256(body) }
+			},
+		)
+
+		const snapshot = await f.service.refresh(true)
+		const plugin = snapshot.plugins[0]!
+		// The newer feed tag wins over the stale cache: version is known, asset is not.
+		expect(plugin.state).toBe("ok")
+		expect(plugin.latest?.version).toBe("1.3.0")
+		expect(plugin.latest?.assetUrl).toBeUndefined()
+		expect(plugin.rateLimited).toBe(true)
+	})
+
+	test("a rate-limited API with a feed tag matching the cached release keeps the cached asset", async () => {
+		const f = fixture!
+		f.prefs.set("marketplace.registryRepo", "me/registry")
+		f.addJson(rawUrl("me", "registry", "HEAD", "registry.json"), {
+			version: 1,
+			plugins: ["me/cat"],
+		})
+		f.addJson(rawUrl("me", "cat", "HEAD", "manifest.json"), MANIFEST)
+		f.addJson("https://api.github.com/repos/me/cat/releases/latest", RELEASE)
+		await f.service.refresh(false)
+		// The feed agrees with the cached tag — the cache is still current, so
+		// its asset is kept and an update stays possible from cache.
+		f.add("https://github.com/me/cat/releases.atom", atomFeed("v1.2.3"))
+		f.fetcher.fetchToFile.mockImplementation(
+			async (u: string, target: string) => {
+				if (u.includes("api.github.com")) {
+					throw new Error(`plugin download returned HTTP 403: ${u}`)
+				}
+				const body = f.routes.get(u)
+				if (body === undefined) {
+					throw new Error(`plugin download returned HTTP 404: ${u}`)
+				}
+				await writeFile(target, body)
+				return { sizeBytes: Buffer.byteLength(body), sha256: sha256(body) }
+			},
+		)
+
+		const snapshot = await f.service.refresh(true)
+		const plugin = snapshot.plugins[0]!
+		expect(plugin.state).toBe("ok")
+		expect(plugin.latest?.version).toBe("1.2.3")
+		expect(plugin.latest?.assetUrl).toBe(
+			RELEASE.assets[0]!.browser_download_url,
+		)
+		expect(plugin.rateLimited).toBe(true)
+	})
+
+	test("a rate-limited API with an empty atom feed degrades to the cached release", async () => {
+		const f = fixture!
+		f.prefs.set("marketplace.registryRepo", "me/registry")
+		f.addJson(rawUrl("me", "registry", "HEAD", "registry.json"), {
+			version: 1,
+			plugins: ["me/cat"],
+		})
+		f.addJson(rawUrl("me", "cat", "HEAD", "manifest.json"), MANIFEST)
+		f.addJson("https://api.github.com/repos/me/cat/releases/latest", RELEASE)
+		await f.service.refresh(false)
+		// The feed answers but carries no entry — nothing to learn from it,
+		// so the marketplace keeps the cached payload (asset still usable).
+		f.add("https://github.com/me/cat/releases.atom", "<feed></feed>")
+		f.fetcher.fetchToFile.mockImplementation(
+			async (u: string, target: string) => {
+				if (u.includes("api.github.com")) {
+					throw new Error(`plugin download returned HTTP 403: ${u}`)
+				}
+				const body = f.routes.get(u)
+				if (body === undefined) {
+					throw new Error(`plugin download returned HTTP 404: ${u}`)
+				}
+				await writeFile(target, body)
+				return { sizeBytes: Buffer.byteLength(body), sha256: sha256(body) }
+			},
+		)
+
+		const snapshot = await f.service.refresh(true)
+		const plugin = snapshot.plugins[0]!
+		expect(plugin.state).toBe("ok")
+		expect(plugin.latest?.version).toBe("1.2.3")
+		expect(plugin.latest?.assetUrl).toBe(
+			RELEASE.assets[0]!.browser_download_url,
+		)
+		expect(plugin.rateLimited).toBe(true)
 	})
 
 	test("a repo with no manifest lands in the errors list instead of the catalog", async () => {
