@@ -76,7 +76,7 @@ kind labels, etc.) are referenced from the `ui` block:
 ```jsonc
 "i18n": {
   "name": { "en": "PDF", "zh": "PDF", "ja": "PDF", "de": "PDF", "es": "PDF" },
-  "description": { "en": "Online PDF reader.", "zh": "在线 PDF 阅读器。", "ja": "オンライン PDF リーダー。", "de": "Online-PDF-Reader.", "es": "Lector de PDF en línea." },
+  "description": { "en": "Online PDF reader.", "zh": "PDF 阅读器。", "ja": "オンライン PDF リーダー。", "de": "Online-PDF-Reader.", "es": "Lector de PDF en línea." },
   "pagesLabel": { "en": "pages", "zh": "页", "ja": "ページ", "de": "Seiten", "es": "páginas" }
 }
 ```

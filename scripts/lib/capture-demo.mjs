@@ -303,6 +303,10 @@ export async function captureDemo(opts) {
 		await pinOverviewFilter(page, "深空档案")
 		await pinOverviewFilter(page, "画廊")
 
+		// Each capture navigation performs a full reload. Clear the desktop
+		// one-shot route restore before opening `/`, otherwise the reload can
+		// redirect straight back to the resources page we just captured.
+		await page.evaluate(() => window.localStorage.removeItem("app.lastRoute"))
 		await openPath(page, baseUrl, "/")
 		await page.getByTestId("overview-library-stat-strip").waitFor({
 			timeout: 30_000,

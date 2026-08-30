@@ -1,7 +1,7 @@
 {
 	"id": "f8ef0814-0f0f-4083-a5f1-6d95d79bc99e",
 	"name": "PDF",
-	"description": "Online PDF reader.",
+	"description": "PDF reader.",
 	"version": "0.1.4",
 	"permissions": {
 		"sourceMeta": true,
@@ -13,8 +13,8 @@
 			"zh": "PDF"
 		},
 		"description": {
-			"en": "Online PDF reader.",
-			"zh": "在线 PDF 阅读器。"
+			"en": "PDF reader.",
+			"zh": "PDF 阅读器。"
 		},
 		"pagesLabel": {
 			"en": "pages",
