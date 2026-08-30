@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.1.5](https://github.com/hoardodile/hoardodile/compare/v0.1.4...v0.1.5) (2026-08-30)
+
+### Features
+
+* **desktop:** hot-update content releases and reopen instead of restart ([451b770](https://github.com/hoardodile/hoardodile/commit/451b770f937c501c7df365a6e798ecbf1c3e7d1e))
+* **res:** bulk-replace a content plugin with a target detect gate ([66b4e03](https://github.com/hoardodile/hoardodile/commit/66b4e0300934c311aa7828cf7616154d5560b7b7))
+* **web:** search the plugin marketplace by name and description ([3b70e3f](https://github.com/hoardodile/hoardodile/commit/3b70e3f2ab2cc2ff2230dd40ab22896ca1194d86))
+
+### Bug Fixes
+
+* **marketplace:** let the manual refresh bypass the release rate-limit cooldown ([1e7cd00](https://github.com/hoardodile/hoardodile/commit/1e7cd0029bdca48433a843457504c2e978a4f979))
+* **res:** truncate a leftover plugin id in the basic-info selector ([db78537](https://github.com/hoardodile/hoardodile/commit/db78537bb8fca1ebf24683e6a205020bff98d4d3))
+* **web:** show a visible document-editor skeleton while the body loads ([1cee3cf](https://github.com/hoardodile/hoardodile/commit/1cee3cf8a0082735f2b099e3cfca8249886b5ee0))
+
 ## [0.1.4](https://github.com/hoardodile/hoardodile/compare/v0.1.3...v0.1.4) (2026-08-29)
 
 ### Features

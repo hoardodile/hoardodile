@@ -1,6 +1,6 @@
 {
 	"name": "@hoardodile/host-web",
-	"version": "0.1.4",
+	"version": "0.1.5",
 	"license": "MIT",
 	"description": "Browser-side hoardodile host runtime: host-core protocol router and the offline mock host.",
 	"keywords": [

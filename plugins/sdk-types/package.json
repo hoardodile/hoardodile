@@ -1,6 +1,6 @@
 {
 	"name": "@hoardodile/sdk-types",
-	"version": "0.1.4",
+	"version": "0.1.5",
 	"license": "MIT",
 	"description": "Plugin manifest contract, shared types and constants for hoardodile content plugins.",
 	"keywords": [
