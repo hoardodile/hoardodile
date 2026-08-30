@@ -21,7 +21,13 @@ import { makeInvalidator } from "@/lib/makeInvalidator"
 import { apiPaths } from "@/lib/paths"
 import { prefSync } from "@/lib/prefSync"
 import { normalizeTimeZonePref, resolveBrowserTimeZone } from "@/lib/timezone"
-import { idMutation, trpcMutate, trpcMutation, trpcQuery } from "@/trpc/factory"
+import {
+	idMutation,
+	trpcMutate,
+	trpcMutation,
+	trpcQuery,
+	trpcQueryOptions,
+} from "@/trpc/factory"
 
 export type ResListKeyInput = {
 	readonly trash: boolean
@@ -58,6 +64,7 @@ export const resKeys = {
 	similarWithin: (id: string) => [...resKeys.all, "similarWithin", id] as const,
 	duplicateImages: (id: string) =>
 		[...resKeys.all, "duplicateImages", id] as const,
+	usage: ["resource", "contentPluginUsage"] as const,
 	imageSearch: (sessionId: string) =>
 		[...resKeys.all, "imageSearch", sessionId] as const,
 	memories: (input: ResMemoriesInput) =>
@@ -388,6 +395,21 @@ export function hardDeleteManyResourcesMutation() {
 
 export function setResourceContentPluginIdMutation() {
 	return trpcMutation("resource", "setContentPluginId")
+}
+
+export function replaceContentPluginMutation() {
+	return trpcMutation("resource", "replaceContentPlugin")
+}
+
+/** Distinct content plugin ids across live resources plus their counts. */
+export function contentPluginUsageQueryOptions() {
+	return trpcQueryOptions({
+		namespace: "resource",
+		procedure: "contentPluginUsage",
+		input: undefined,
+		queryKey: resKeys.usage,
+		staleTime: 30_000,
+	})
 }
 
 export function resDislikeMutation() {

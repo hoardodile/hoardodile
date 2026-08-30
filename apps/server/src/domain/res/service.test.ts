@@ -165,7 +165,7 @@ import {
 	type StoragePaths,
 } from "src/infra/storage/paths.ts"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
-import { resources } from "./schema.ts"
+import { resourceHashes, resourceMeta, resources } from "./schema.ts"
 import { createResourceService, type ResService } from "./service.ts"
 
 function createTestRegistry() {
@@ -885,6 +885,296 @@ describe("resource service", () => {
 			await svc.create({ name: "unbound" })
 			expect(svc.countByContentPluginId(TEST_BUILTIN_ID)).toBe(2)
 			expect(svc.countByContentPluginId(IMAGE_PLUGIN_ID)).toBe(0)
+		})
+
+		test("replaceContentPlugin switches only the intended resources and clears derived meta atomically", async () => {
+			const a = await svc.create({
+				name: "a",
+				contentPluginId: IMAGE_PLUGIN_ID,
+			})
+			const b = await svc.create({
+				name: "b",
+				contentPluginId: IMAGE_PLUGIN_ID,
+			})
+			// Owned by a different plugin — must be untouched.
+			const c = await svc.create({ name: "c", contentPluginId: TEXT_PLUGIN_ID })
+			// Trashed resource bound to the source plugin — must be excluded.
+			const d = await svc.create({
+				name: "d",
+				contentPluginId: IMAGE_PLUGIN_ID,
+			})
+			await svc.softDelete(d.id)
+
+			// Give `a` a derived meta row so the atomic clear is observable.
+			dbh.db
+				.insert(resourceMeta)
+				.values({
+					resourceId: a.id,
+					sourceMeta: JSON.stringify({ coverKind: "image" }),
+					builtAt: 1,
+				})
+				.run()
+
+			const result = await svc.replaceContentPlugin({
+				fromPluginId: IMAGE_PLUGIN_ID,
+				toPluginId: TEST_BUILTIN_ID,
+				rebuild: "defer",
+			})
+			expect(result.affected).toBe(2)
+
+			const pluginOf = (id: string): string | null =>
+				dbh.db.select().from(resources).where(eq(resources.id, id)).get()
+					?.contentPluginId ?? null
+			expect(pluginOf(a.id)).toBe(TEST_BUILTIN_ID)
+			expect(pluginOf(b.id)).toBe(TEST_BUILTIN_ID)
+			expect(pluginOf(c.id)).toBe(TEXT_PLUGIN_ID)
+			expect(pluginOf(d.id)).toBe(IMAGE_PLUGIN_ID)
+
+			const metaRow = dbh.db
+				.select()
+				.from(resourceMeta)
+				.where(eq(resourceMeta.resourceId, a.id))
+				.get()
+			expect(metaRow?.sourceMeta).toBeNull()
+			expect(metaRow?.coverMeta).toBeNull()
+		})
+
+		test("replaceContentPlugin defers a rebuild (defer) or enqueues it immediately (immediate)", async () => {
+			// Bound to the source plugin (no sourceMeta capability) so the
+			// rebuild on the builtin target is what produces meta.
+			await svc.create({ name: "a", contentPluginId: IMAGE_PLUGIN_ID })
+			await svc.drainMetaQueue()
+			const baseline = getMetaBuildCalls()
+
+			// Defer runs no extra rebuild.
+			await svc.replaceContentPlugin({
+				fromPluginId: IMAGE_PLUGIN_ID,
+				toPluginId: TEST_BUILTIN_ID,
+				rebuild: "defer",
+			})
+			await svc.drainMetaQueue()
+			expect(getMetaBuildCalls()).toBe(baseline)
+
+			// Immediate enqueues at least one additional rebuild pass.
+			await svc.create({ name: "b", contentPluginId: IMAGE_PLUGIN_ID })
+			await svc.drainMetaQueue()
+			const afterCreateB = getMetaBuildCalls()
+			await svc.replaceContentPlugin({
+				fromPluginId: IMAGE_PLUGIN_ID,
+				toPluginId: TEST_BUILTIN_ID,
+				rebuild: "immediate",
+			})
+			await svc.drainMetaQueue()
+			expect(getMetaBuildCalls()).toBeGreaterThan(afterCreateB)
+		})
+
+		test("replaceContentPlugin rejects a same plugin and an unavailable target", async () => {
+			await svc.create({ name: "a", contentPluginId: IMAGE_PLUGIN_ID })
+
+			await expect(
+				svc.replaceContentPlugin({
+					fromPluginId: IMAGE_PLUGIN_ID,
+					toPluginId: IMAGE_PLUGIN_ID,
+					rebuild: "defer",
+				}),
+			).rejects.toMatchObject({
+				code: "CONFLICT",
+				kind: "resources.replace_content_plugin.same_plugin",
+			})
+
+			await expect(
+				svc.replaceContentPlugin({
+					fromPluginId: IMAGE_PLUGIN_ID,
+					toPluginId: "99999999-9999-4999-8999-999999999999",
+					rebuild: "defer",
+				}),
+			).rejects.toMatchObject({
+				code: "VALIDATION",
+				kind: "resources.replace_content_plugin.unknown_target",
+			})
+		})
+
+		test("listContentPluginUsage returns distinct content plugin ids with live counts", async () => {
+			await svc.create({ name: "a", contentPluginId: IMAGE_PLUGIN_ID })
+			await svc.create({ name: "b", contentPluginId: IMAGE_PLUGIN_ID })
+			await svc.create({ name: "c", contentPluginId: TEXT_PLUGIN_ID })
+			const trashed = await svc.create({
+				name: "d",
+				contentPluginId: IMAGE_PLUGIN_ID,
+			})
+			await svc.softDelete(trashed.id)
+
+			const usage = svc.listContentPluginUsage()
+			expect(usage).toHaveLength(2)
+			expect(usage).toEqual(
+				expect.arrayContaining([
+					{ pluginId: IMAGE_PLUGIN_ID, count: 2 },
+					{ pluginId: TEXT_PLUGIN_ID, count: 1 },
+				]),
+			)
+		})
+
+		test("replaceContentPlugin treats a source with no resources as a no-op", async () => {
+			const result = await svc.replaceContentPlugin({
+				fromPluginId: IMAGE_PLUGIN_ID,
+				toPluginId: TEST_BUILTIN_ID,
+				rebuild: "defer",
+			})
+			expect(result.affected).toBe(0)
+		})
+
+		test("replaceContentPlugin migrates an orphaned (unregistered) source", async () => {
+			const orphanId = "99999999-9999-4999-8999-999999999999"
+			const r = await svc.create({ name: "orphan", contentPluginId: orphanId })
+			const result = await svc.replaceContentPlugin({
+				fromPluginId: orphanId,
+				toPluginId: TEST_BUILTIN_ID,
+				rebuild: "defer",
+			})
+			expect(result.affected).toBe(1)
+			const contentPluginOf = (id: string): string | null =>
+				dbh.db.select().from(resources).where(eq(resources.id, id)).get()
+					?.contentPluginId ?? null
+			expect(contentPluginOf(r.id)).toBe(TEST_BUILTIN_ID)
+		})
+
+		test("replaceContentPlugin rejects a disabled target", async () => {
+			const custom = svcWith(registryWithDisabledPlugin())
+			await expect(
+				custom.replaceContentPlugin({
+					fromPluginId: TEST_BUILTIN_ID,
+					toPluginId: IMAGE_PLUGIN_ID,
+					rebuild: "defer",
+				}),
+			).rejects.toMatchObject({
+				code: "VALIDATION",
+				kind: "resources.replace_content_plugin.unknown_target",
+			})
+		})
+
+		test("replaceContentPlugin rejects a missing target", async () => {
+			const custom = svcWith(registryWithMissingPlugin())
+			await expect(
+				custom.replaceContentPlugin({
+					fromPluginId: TEST_BUILTIN_ID,
+					toPluginId: IMAGE_PLUGIN_ID,
+					rebuild: "defer",
+				}),
+			).rejects.toMatchObject({
+				code: "VALIDATION",
+				kind: "resources.replace_content_plugin.unknown_target",
+			})
+		})
+
+		test("listContentPluginUsage excludes an empty-string content plugin id", async () => {
+			await svc.create({ name: "a", contentPluginId: IMAGE_PLUGIN_ID })
+			// An empty-string `content_plugin_id` is a "no plugin assigned"
+			// residue, not a source to migrate away from.
+			dbh.db
+				.insert(resources)
+				.values({
+					id: "r-empty-residue",
+					name: "empty",
+					contentPluginId: "",
+					createdAt: 1,
+					updatedAt: 1,
+				})
+				.run()
+			const usage = svc.listContentPluginUsage()
+			expect(usage).toEqual([{ pluginId: IMAGE_PLUGIN_ID, count: 1 }])
+		})
+
+		test("replaceContentPlugin defers hashes: clears hashesMeta but keeps old plugin hash rows", async () => {
+			const r = await svc.create({
+				name: "hashes",
+				contentPluginId: IMAGE_PLUGIN_ID,
+			})
+			dbh.db
+				.insert(resourceHashes)
+				.values({
+					resourceId: r.id,
+					pluginId: IMAGE_PLUGIN_ID,
+					scope: "a.png",
+					type: "sha256",
+					value: "ab",
+					bits: 8,
+				})
+				.run()
+			dbh.db
+				.insert(resourceMeta)
+				.values({
+					resourceId: r.id,
+					hashesMeta: JSON.stringify({ v: 1 }),
+					builtAt: 1,
+				})
+				.run()
+
+			await svc.replaceContentPlugin({
+				fromPluginId: IMAGE_PLUGIN_ID,
+				toPluginId: TEST_BUILTIN_ID,
+				rebuild: "defer",
+			})
+
+			// hashesMeta is cleared (a rebuild is now pending)…
+			const meta = dbh.db
+				.select()
+				.from(resourceMeta)
+				.where(eq(resourceMeta.resourceId, r.id))
+				.get()
+			expect(meta?.hashesMeta).toBeNull()
+			// …but the old-plugin hash row survives until the lazy rebuild
+			// replaces it (the documented deferred-rebuild contract).
+			const hashes = dbh.db
+				.select()
+				.from(resourceHashes)
+				.where(eq(resourceHashes.resourceId, r.id))
+				.all()
+			expect(hashes).toHaveLength(1)
+			expect(hashes[0]?.pluginId).toBe(IMAGE_PLUGIN_ID)
+		})
+
+		test("replaceContentPlugin skips resources the target plugin cannot detect", async () => {
+			await svc.create({ name: "plain", contentPluginId: TEST_BUILTIN_ID })
+			// IMAGE_PLUGIN_ID's detector wants image files; this resource has
+			// none, so it must stay on the source plugin.
+			const result = await svc.replaceContentPlugin({
+				fromPluginId: TEST_BUILTIN_ID,
+				toPluginId: IMAGE_PLUGIN_ID,
+				rebuild: "defer",
+			})
+			expect(result.affected).toBe(0)
+			expect(result.failures).toHaveLength(1)
+			expect(result.failures[0]?.reasons.length).toBeGreaterThan(0)
+		})
+
+		test("replaceContentPlugin replaces only the resources the target accepts", async () => {
+			const withImage = await svc.create({
+				name: "img",
+				contentPluginId: TEST_BUILTIN_ID,
+			})
+			await seedResourceArtifact({ db: dbh, paths }, withImage.id, [
+				{ name: "page.png", bytes: Buffer.alloc(0) },
+			])
+			const noImage = await svc.create({
+				name: "txt",
+				contentPluginId: TEST_BUILTIN_ID,
+			})
+
+			const result = await svc.replaceContentPlugin({
+				fromPluginId: TEST_BUILTIN_ID,
+				toPluginId: IMAGE_PLUGIN_ID,
+				rebuild: "defer",
+			})
+			expect(result.affected).toBe(1)
+			expect(result.failures).toHaveLength(1)
+			expect(result.failures[0]?.id).toBe(noImage.id)
+
+			const pluginOf = (id: string): string | null =>
+				dbh.db.select().from(resources).where(eq(resources.id, id)).get()
+					?.contentPluginId ?? null
+			expect(pluginOf(withImage.id)).toBe(IMAGE_PLUGIN_ID)
+			// The rejected one stays on the source plugin.
+			expect(pluginOf(noImage.id)).toBe(TEST_BUILTIN_ID)
 		})
 	})
 })

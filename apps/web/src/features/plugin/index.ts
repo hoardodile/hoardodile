@@ -36,3 +36,4 @@ export {
 	pluginUpdateMutation,
 	systemPrefRemoveAllMutation,
 } from "./pluginApi"
+export { ReplaceContentPluginDialog } from "./ReplaceContentPluginDialog"

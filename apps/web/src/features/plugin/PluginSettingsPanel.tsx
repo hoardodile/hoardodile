@@ -61,6 +61,7 @@ import {
 	Restart,
 	Sun,
 	TestTube,
+	TransferHorizontal,
 	TrashBinMinimalistic,
 	Upload,
 	Widget2,
@@ -126,6 +127,7 @@ import {
 	uploadPlugin,
 } from "./pluginApi"
 import { matchesPluginQuery } from "./pluginFilter"
+import { ReplaceContentPluginDialog } from "./ReplaceContentPluginDialog"
 
 export { PluginUninstallDialog } from "./PluginUninstallDialog"
 
@@ -163,6 +165,7 @@ export function PluginPageActions() {
 	const { t, i18n } = useTranslation()
 	const qc = useQueryClient()
 	const [isUploading, setUploading] = useState(false)
+	const [replaceDialogOpen, setReplaceDialogOpen] = useState(false)
 	const fileInputRef = useRef<HTMLInputElement>(null)
 	const installConfirm = useConfirmDialog<{
 		file: File
@@ -260,6 +263,14 @@ export function PluginPageActions() {
 					/>
 					{t("plugins.rescan")}
 				</Button>
+				<Button
+					variant="secondary"
+					onClick={() => setReplaceDialogOpen(true)}
+					data-testid="plugin-replace-content"
+				>
+					<Icon icon={TransferHorizontal} />
+					{t("plugins.replaceContentAction")}
+				</Button>
 			</div>
 			<p className="mb-3 -mt-2 text-tiny text-muted-foreground">
 				{t("plugins.pageHint")}
@@ -307,6 +318,11 @@ export function PluginPageActions() {
 						</div>
 					) : undefined
 				}
+			/>
+
+			<ReplaceContentPluginDialog
+				open={replaceDialogOpen}
+				onOpenChange={setReplaceDialogOpen}
 			/>
 		</>
 	)

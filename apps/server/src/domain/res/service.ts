@@ -26,7 +26,7 @@ import type {
 } from "@hoardodile/sdk-types"
 import { err, isErr, ok, type Result } from "@hoardodile/sdk-types"
 import type { ListPageInput, ListPageResult } from "@hoardodile/shared"
-import { conflict, isDomainError } from "@hoardodile/shared"
+import { conflict, invalid, isDomainError } from "@hoardodile/shared"
 import { buildCharacterFiles } from "src/domain/char/files.ts"
 import { ensureCharImageMeta } from "src/domain/char/image-meta.ts"
 import { buildCharacterRepository } from "src/domain/char/repo.ts"
@@ -37,6 +37,7 @@ import type {
 	TraceActionDetail,
 	UserAction,
 } from "src/domain/trace/actions.ts"
+import { createConcurrencyLimiter } from "src/infra/concurrency-limiter.ts"
 import type { SqliteDb } from "src/infra/db/connection.ts"
 import { runStages, type Stage } from "src/infra/pipeline/run-stages.ts"
 import type { MutableRef } from "src/infra/runtime-context.ts"
@@ -90,6 +91,11 @@ export type SetContentPluginIdResult = Result<
 	{ readonly resource: Resource },
 	{ readonly failure: Extract<Detection, { ok: false }> }
 >
+
+/** Bounded concurrency for the bulk-replace detect gate — a large set must
+    stay responsive without spinning up an unbounded number of sandboxed
+    plugin detectors at once. */
+const REPLACE_DETECT_CONCURRENCY = 4
 
 export type ResServiceDeps = ClockDeps & {
 	readonly db: SqliteDb
@@ -271,6 +277,38 @@ export type ResService = ResCoverStore &
 		relatedByTags(id: string, limit: number): Promise<readonly ResCard[]>
 		/** Live resources currently bound to the given content plugin. */
 		countByContentPluginId(pluginId: string): number
+		/**
+		 * Bulk-switch every live resource owned by `fromPluginId` to
+		 * `toPluginId`. Each resource is first checked against the target
+		 * plugin's detector; only resources it can actually recognize are
+		 * switched (plugin id swapped and derived metadata atomically
+		 * cleared, one transaction). Resources the target rejects stay on
+		 * the source plugin and are reported in `failures`. `rebuild` then
+		 * decides whether the meta rebuild is enqueued immediately
+		 * (`"immediate"` → background) or deferred to the lazy per-resource
+		 * flow (`"defer"` → rebuilt when the user next sees it). Returns the
+		 * number switched and the skipped resources.
+		 */
+		replaceContentPlugin(input: {
+			readonly fromPluginId: PluginManifestId
+			readonly toPluginId: PluginManifestId
+			readonly rebuild: "immediate" | "defer"
+		}): Promise<{
+			readonly affected: number
+			readonly failures: readonly {
+				readonly id: string
+				readonly reasons: readonly string[]
+			}[]
+		}>
+		/**
+		 * Distinct content plugin ids across live resources, with the count
+		 * each owns — feeds the bulk-replace source picker; ids not in the
+		 * live registry are the orphaned (deleted) plugins.
+		 */
+		listContentPluginUsage(): readonly {
+			readonly pluginId: string
+			readonly count: number
+		}[]
 		/**
 		 * "On this day" cards: resources created on the given month-day in
 		 * previous years, most recent first (capped inside the service).
@@ -1036,6 +1074,105 @@ export function createResourceService(deps: ResServiceDeps): ResService {
 		await files.clearLocalDerivatives(id).catch(() => {})
 	}
 
+	async function replaceContentPlugin(input: {
+		readonly fromPluginId: PluginManifestId
+		readonly toPluginId: PluginManifestId
+		readonly rebuild: "immediate" | "defer"
+	}): Promise<{
+		readonly affected: number
+		readonly failures: readonly {
+			readonly id: string
+			readonly reasons: readonly string[]
+		}[]
+	}> {
+		const { fromPluginId, toPluginId, rebuild } = input
+		if (fromPluginId === toPluginId) {
+			throw conflict(
+				"resources.replace_content_plugin.same_plugin",
+				"source and target content plugin must differ",
+			)
+		}
+		// The target must be a healthy plugin — otherwise `getEffectiveEntry`
+		// silently resolves to the builtin and we would migrate content onto
+		// a plugin that does not own it.
+		if (pluginHooks.getEffectiveEntry(toPluginId).id !== toPluginId) {
+			throw invalid(
+				"resources.replace_content_plugin.unknown_target",
+				"target content plugin is not available",
+			)
+		}
+		// Only replace resources the target plugin can actually recognize:
+		// each candidate runs its detector first (bounded concurrency), and a
+		// rejected (or unreadable) resource stays on the source plugin. For
+		// every accepted one, the plugin-id swap + derived-meta clear are one
+		// DB transaction, so the operation never leaves an intermediate "id
+		// moved but stale metadata still claims the new plugin" state.
+		const candidates = repo.listResourcesByContentPluginId(fromPluginId)
+		const limiter = createConcurrencyLimiter(REPLACE_DETECT_CONCURRENCY)
+		const results = await Promise.all(
+			candidates.map((candidate) =>
+				limiter.run(async () => {
+					const gate = await detectForReplacement(
+						candidate.id,
+						candidate.fileVersion,
+						toPluginId,
+					)
+					if (!gate.ok) {
+						return {
+							kind: "failed" as const,
+							id: candidate.id,
+							reasons: gate.reasons,
+						}
+					}
+					repo.replaceContentPlugin(candidate.id, toPluginId, now())
+					await files.clearLocalDerivatives(candidate.id).catch(() => {})
+					if (rebuild === "immediate") {
+						metaOps.enqueueFullMetaRebuild(candidate.id)
+					}
+					return { kind: "replaced" as const }
+				}),
+			),
+		)
+		const affected = results.filter((r) => r.kind === "replaced").length
+		const failures = results
+			.filter((r) => r.kind === "failed")
+			.map((r) => ({ id: r.id, reasons: r.reasons }))
+		return { affected, failures }
+	}
+
+	/**
+	 * Run the target plugin's detector for one candidate resource. A
+	 * rejected detector (or a resource that cannot be read) is treated as
+	 * "must not be replaced" — never a hard throw from the bulk operation.
+	 */
+	async function detectForReplacement(
+		id: string,
+		fileVersion: number,
+		toPluginId: PluginManifestId,
+	): Promise<{ readonly ok: boolean; readonly reasons: readonly string[] }> {
+		try {
+			const api = await access.apiFor(id, fileVersion)
+			const result = await pluginHooks.detectForPlugin(api, toPluginId)
+			return result.ok
+				? { ok: true, reasons: [] }
+				: { ok: false, reasons: result.reasons.slice() }
+		} catch (err) {
+			return {
+				ok: false,
+				reasons: [
+					`resource not accessible: ${err instanceof Error ? err.message : String(err)}`,
+				],
+			}
+		}
+	}
+
+	function listContentPluginUsage(): readonly {
+		readonly pluginId: string
+		readonly count: number
+	}[] {
+		return repo.listContentPluginUsage()
+	}
+
 	async function setCover(
 		id: string,
 		ext: string,
@@ -1186,6 +1323,8 @@ export function createResourceService(deps: ResServiceDeps): ResService {
 		getFileVersion: async (id) => repo.findById(id).fileVersion,
 		relatedByTags: async (id, limit) => relatedByTags(id, limit),
 		countByContentPluginId: (pluginId) => repo.countByContentPluginId(pluginId),
+		replaceContentPlugin,
+		listContentPluginUsage,
 		memories,
 		listSourceNames,
 		similarImages: (id) => hashService.similarImages(id),

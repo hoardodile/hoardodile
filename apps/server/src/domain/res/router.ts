@@ -108,6 +108,31 @@ export function buildResourceRouter(deps: ResourceRouterDeps) {
 			.mutation(({ input }) =>
 				service.setContentPluginId(input.id, input.contentPluginId),
 			),
+		/**
+		 * Bulk-switch every live resource owned by one content plugin to
+		 * another. `rebuild` is `"immediate"` (enqueue a background meta
+		 * rebuild) or `"defer"` (leave metadata cleared, rebuilt lazily when
+		 * the user next sees the resource). The plugin-id swap + derived-meta
+		 * clear are atomic per resource.
+		 */
+		replaceContentPlugin: writeProcedure
+			.input(
+				z.object({
+					fromPluginId: pluginManifestId,
+					toPluginId: pluginManifestId,
+					rebuild: z.enum(["immediate", "defer"]),
+				}),
+			)
+			.mutation(({ input }) => service.replaceContentPlugin(input)),
+		/**
+		 * Distinct content plugin ids across live resources plus their count.
+		 * Backs the bulk-replace source picker: ids not in the live plugin
+		 * registry are the orphaned (deleted) plugins the user can migrate
+		 * content away from.
+		 */
+		contentPluginUsage: authedProcedure.query(() =>
+			service.listContentPluginUsage(),
+		),
 		listFiles: authedProcedure.input(idInput).query(async ({ input }) => {
 			try {
 				return await service.listFiles(input.id)

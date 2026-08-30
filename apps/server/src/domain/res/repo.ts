@@ -257,11 +257,29 @@ export type ResRepository = {
 	insert(id: string, values: ResDbValues, ts: number, fileVersion: number): void
 	patch(id: string, fields: ResDbPatch, joins?: ResJoinPatch): void
 	patchMeta(id: string, fields: ResMetaPatch, builtAt: number): void
+	/** Atomically switch a resource's content plugin and clear its derived meta in one transaction. */
+	replaceContentPlugin(id: string, pluginId: string, ts: number): void
 	remove(id: string): void
 	/** Set all rebuildable meta columns to NULL on every row. */
 	clearAllMeta(): void
 	/** Live resources currently bound to the given content plugin. */
 	countByContentPluginId(pluginId: string): number
+	/**
+	 * Ids (plus file version, for building the per-resource API) of live
+	 * (non-trashed) resources bound to the given content plugin.
+	 */
+	listResourcesByContentPluginId(
+		pluginId: string,
+	): readonly { readonly id: string; readonly fileVersion: number }[]
+	/**
+	 * Distinct content plugin ids across live resources, with the number of
+	 * resources each owns. Feeds the bulk "replace content plugin" picker —
+	 * ids not in the live plugin registry are the orphaned (deleted) ones.
+	 */
+	listContentPluginUsage(): readonly {
+		readonly pluginId: string
+		readonly count: number
+	}[]
 	/** Replace every hash row of the resource with `entries` (empty clears). */
 	replaceHashes(
 		resourceId: string,
@@ -991,6 +1009,49 @@ export function buildResourceRepository(
 			.run()
 	}
 
+	/**
+	 * Atomically switch a resource's content plugin and clear its derived
+	 * metadata in one transaction — the "replace plugin id + delete the
+	 * original metadata" step must never leave an intermediate state where
+	 * the id moved but the old metadata still claims the new plugin.
+	 * `fileStats` is plugin-independent and stable, so it is left intact
+	 * (mirrors {@link clearAllMeta}).
+	 */
+	function replaceContentPlugin(
+		id: string,
+		pluginId: string,
+		ts: number,
+	): void {
+		client.transaction((tx) => {
+			tx.update(resources)
+				.set({ contentPluginId: pluginId, updatedAt: ts })
+				.where(eq(resources.id, id))
+				.run()
+			const clear = {
+				sourceMeta: null,
+				coverMeta: null,
+				searchMeta: null,
+				hashesMeta: null,
+				builtAt: ts,
+			}
+			const existing = tx
+				.select()
+				.from(resourceMeta)
+				.where(eq(resourceMeta.resourceId, id))
+				.get()
+			if (existing === undefined) {
+				tx.insert(resourceMeta)
+					.values({ resourceId: id, fileStats: null, ...clear })
+					.run()
+			} else {
+				tx.update(resourceMeta)
+					.set(clear)
+					.where(eq(resourceMeta.resourceId, id))
+					.run()
+			}
+		})
+	}
+
 	function clearAllMeta(): void {
 		const ts = Date.now()
 		client
@@ -1015,6 +1076,47 @@ export function buildResourceRepository(
 			.where(eq(resources.contentPluginId, pluginId))
 			.get()
 		return row?.total ?? 0
+	}
+
+	/** Ids (plus file version) of live (non-trashed) resources bound to the given content plugin. */
+	function listResourcesByContentPluginId(
+		pluginId: string,
+	): readonly { readonly id: string; readonly fileVersion: number }[] {
+		return client
+			.select({ id: resources.id, fileVersion: resources.fileVersion })
+			.from(resources)
+			.where(
+				and(
+					eq(resources.contentPluginId, pluginId),
+					isNull(resources.deletedAt),
+				),
+			)
+			.all()
+			.map((row) => ({ id: row.id, fileVersion: row.fileVersion }))
+	}
+
+	/** Distinct content plugin ids across live resources, with their counts. */
+	function listContentPluginUsage(): readonly {
+		readonly pluginId: string
+		readonly count: number
+	}[] {
+		return client
+			.select({ pluginId: resources.contentPluginId, total: count() })
+			.from(resources)
+			.where(
+				and(
+					isNull(resources.deletedAt),
+					isNotNull(resources.contentPluginId),
+					// An empty string is a "no plugin assigned" residue, not a
+					// source to migrate away from — it would otherwise surface
+					// as a `value:""` option that collides with the select
+					// placeholder.
+					ne(resources.contentPluginId, ""),
+				),
+			)
+			.groupBy(resources.contentPluginId)
+			.all()
+			.map((row) => ({ pluginId: row.pluginId as string, count: row.total }))
 	}
 
 	function replaceHashes(
@@ -1144,9 +1246,12 @@ export function buildResourceRepository(
 		insert,
 		patch,
 		patchMeta,
+		replaceContentPlugin,
 		remove,
 		clearAllMeta,
 		countByContentPluginId,
+		listResourcesByContentPluginId,
+		listContentPluginUsage,
 		replaceHashes,
 		listHashes,
 		listHashesOfType,
