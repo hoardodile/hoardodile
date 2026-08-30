@@ -650,8 +650,11 @@ export function createMarketplaceService(
 	 *
 	 * The manual "refresh now" passes `bypass = true`: it re-checks the
 	 * API regardless of the TTL (the whole catalog refreshes, including
-	 * release info), but still respects the rate-limit cooldown and
-	 * degrades to cached data on any other failure.
+	 * release info) AND bypasses the rate-limit cooldown — the user has
+	 * explicitly asked to retry, so a single bounded pass re-hits the API
+	 * and re-arms the cooldown if the limit is still in effect. Automatic
+	 * (non-force) rebuilds still honor the cooldown so they never hammer
+	 * the API. Any other failure still degrades to cached data.
 	 */
 	async function loadLatest(
 		repo: string,
@@ -672,7 +675,7 @@ export function createMarketplaceService(
 		const cooldownActive =
 			cached?.rateLimitedUntil !== undefined && cached.rateLimitedUntil > now()
 
-		if (!cooldownActive) {
+		if (!cooldownActive || bypass) {
 			try {
 				const latest = await fetchRelease(repo, manifest)
 				releaseCache.set(repo, { latest, fetchedAt: now() })

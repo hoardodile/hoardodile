@@ -396,7 +396,11 @@ const envSchema = z
 		/**
 		 * After a GitHub 403/429, skip the API for this long per repo.
 		 * Defaults to a day so a rate-limited catalog entry does not keep
-		 * retrying the API on every rebuild.
+		 * retrying the quota-hungry `releases/latest` call on every rebuild —
+		 * the market asks the API at most once per repo per day. The manual
+		 * "refresh now" bypasses this cooldown entirely (a user-triggered
+		 * retry); automatic rebuilds still honor it so they never hammer the
+		 * API.
 		 */
 		MARKETPLACE_RATE_LIMIT_COOLDOWN_MS: z.coerce
 			.number()

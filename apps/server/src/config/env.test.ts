@@ -76,6 +76,8 @@ test("loadEnv defaults the marketplace cache windows to one day", () => {
 	const env = loadEnv({})
 	expect(env.MARKETPLACE_CACHE_TTL_MS).toBe(24 * 60 * 60_000)
 	expect(env.MARKETPLACE_RELEASE_CACHE_TTL_MS).toBe(24 * 60 * 60_000)
+	// The rate-limit cooldown is one day — the market asks the API at most
+	// once per repo per day (the manual "refresh now" bypasses it).
 	expect(env.MARKETPLACE_RATE_LIMIT_COOLDOWN_MS).toBe(24 * 60 * 60_000)
 })
 

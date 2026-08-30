@@ -396,17 +396,60 @@ describe("createMarketplaceService.refresh", () => {
 		expect(snapshot.errors).toEqual([])
 		expect(apiCalls(f)).toBe(2)
 
-		// Cooldown: another rebuild skips the API entirely.
-		await f.service.refresh(true)
+		// Within the cooldown an AUTO (non-force) rebuild skips the API
+		// entirely and keeps serving the degraded entry. Advance past the
+		// 10-minute snapshot cache so the release layer is actually hit.
+		f.advance(20 * 60_000)
+		const auto = await f.service.refresh(false)
 		expect(apiCalls(f)).toBe(2)
+		expect(auto.plugins[0]?.rateLimited).toBe(true)
 
-		// Once the cooldown lapses it retries (and still degrades).
+		// A FORCED refresh is a manual retry: it bypasses the cooldown and
+		// re-hits the API once (still 403 → re-arms the cooldown, degrades).
+		const forced = await f.service.refresh(true)
+		expect(apiCalls(f)).toBe(3)
+		expect(forced.plugins[0]?.state).toBe("ok")
+		expect(forced.plugins[0]?.rateLimited).toBe(true)
+
+		// Once the cooldown lapses it retries (and still degrades while 403).
 		f.advance(60 * 60_000 + 1)
 		const after = await f.service.refresh(true)
-		expect(apiCalls(f)).toBe(3)
+		expect(apiCalls(f)).toBe(4)
 		expect(after.plugins[0]?.state).toBe("ok")
 		expect(after.plugins[0]?.latest?.version).toBe("1.2.3")
 		expect(after.plugins[0]?.rateLimited).toBe(true)
+	})
+
+	test("a forced refresh with no cached release and a 403 reports a rate-limited error", async () => {
+		const f = fixture!
+		f.prefs.set("marketplace.registryRepo", "me/registry")
+		f.addJson(rawUrl("me", "registry", "HEAD", "registry.json"), {
+			version: 1,
+			plugins: ["me/cat"],
+		})
+		f.addJson(rawUrl("me", "cat", "HEAD", "manifest.json"), MANIFEST)
+		f.fetcher.fetchToFile.mockImplementation(
+			async (u: string, target: string) => {
+				if (u.includes("api.github.com")) {
+					throw new Error(`plugin download returned HTTP 403: ${u}`)
+				}
+				const body = f.routes.get(u)
+				if (body === undefined) {
+					throw new Error(`plugin download returned HTTP 404: ${u}`)
+				}
+				await writeFile(target, body)
+				return { sizeBytes: Buffer.byteLength(body), sha256: sha256(body) }
+			},
+		)
+
+		const snapshot = await f.service.refresh(true)
+		expect(apiCalls(f)).toBe(1)
+		// No cached payload to degrade to — the entry surfaces as an error,
+		// classified as rate-limited (the cooldown is re-armed).
+		expect(snapshot.plugins[0]?.state).toBe("error")
+		expect(snapshot.plugins[0]?.errorKind).toBe("rate_limited")
+		expect(snapshot.plugins[0]?.latest).toBeUndefined()
+		expect(snapshot.plugins[0]?.rateLimited).toBeUndefined()
 	})
 
 	test("persists the release cache to disk across service restarts", async () => {
