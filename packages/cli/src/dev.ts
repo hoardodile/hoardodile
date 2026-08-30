@@ -316,6 +316,29 @@ function resolveSource(
 	return directorySource(dataDir, extractCacheDir)
 }
 
+/**
+ * Framed, easy-to-spot startup notice for the workbench URL. The plugin
+ * watcher and vite print continuously, so a plain log line scrolls away;
+ * a bordered banner keeps the address findable at the end of the startup
+ * burst. ANSI colour is only emitted on a TTY so redirected logs and CI
+ * stay clean.
+ */
+function printWorkbenchBanner(url: string): void {
+	const ansi = process.stdout.isTTY
+	const headline = "Workbench running — open in your browser:"
+	const urlLineText = `  ${url}`
+	const hint =
+		"(edits rebuild automatically — reload the page. Ctrl+C to stop.)"
+	const width = Math.max(headline.length, urlLineText.length, hint.length) + 2
+	const content = (line: string) => `│  ${line.padEnd(width - 2)}│`
+	const urlLine = content(urlLineText)
+	console.log(`\n┌${"─".repeat(width)}┐`)
+	console.log(content(headline))
+	console.log(ansi ? urlLine.replace(url, `\x1b[1;36m${url}\x1b[0m`) : urlLine)
+	console.log(content(hint))
+	console.log(`└${"─".repeat(width)}┘`)
+}
+
 export async function executeDev(opts: DevOptions): Promise<number> {
 	const pluginDir = resolvePluginDir(opts.pluginDir)
 	const distDir = join(pluginDir, "dist")
@@ -348,9 +371,17 @@ export async function executeDev(opts: DevOptions): Promise<number> {
 	// emits manifest.json, index.html and main.js into dist/. Serving the
 	// source root instead would hand the iframe raw .tsx.
 	const { serveWorkbench } = await loadWorkbenchServe(pluginDir)
+	// The workbench may rebind to a free port, so the printed URL must be
+	// the actual one. Capture it via `onReady` and only surface it after
+	// the build settles, so the plugin's vite watch-build output does not
+	// scroll it off-screen.
+	let workbenchUrl = `http://127.0.0.1:${opts.port}`
 	const server = await serveWorkbench({
 		pluginDir: distDir,
 		port: opts.port,
+		onReady: (url: string) => {
+			workbenchUrl = url
+		},
 		// User-consented dev downloads land in the plugin's own scratch
 		// vault, next to the extraction cache — never in the read-only
 		// storage root or the data dir.
@@ -385,6 +416,10 @@ export async function executeDev(opts: DevOptions): Promise<number> {
 			"[hoardodile] no dist/main.js appeared within 60s — is the build working?",
 		)
 	}
+
+	// Surface the workbench URL last, after the initial build/capture burst,
+	// framed so it is not lost among the watcher and vite output.
+	printWorkbenchBanner(workbenchUrl)
 
 	await new Promise<void>((resolveStop) => {
 		const stop = () => {
