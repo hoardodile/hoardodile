@@ -132,6 +132,7 @@
 			"marketplace": "マーケット",
 			"marketplaceUpdatesBadge": "プラグインの更新があります",
 			"feedbackAbout": "フィードバックと情報",
+			"updateAvailableBadge": "利用可能な更新があります",
 			"help": "ヘルプ"
 		},
 		"syncDueBadge": "同期リマインダー期限が来ています",
@@ -317,13 +318,16 @@
 			"latest": "最新バージョンです。",
 			"outdated": "バージョン {{version}} が利用可能です。",
 			"viewRelease": "リリースを表示",
+			"updateAvailable": "新しいバージョン {{version}} が利用可能です。",
 			"updateError": "更新の確認に失敗しました。後でもう一度お試しください。",
 			"downloading": "ダウンロード中… {{percent}}%",
-			"updateReady": "バージョン {{version}} のインストール準備が完了しました。",
-			"updateReadyResources": "リソース v{{version}} の適用準備が完了しました。",
+			"updateReady": "バージョン {{version}} の準備が完了しました。",
+			"updateReadyResources": "バージョン {{version}} の準備が完了しました。",
+			"updateFullReason": "アプリを閉じて開き直して更新を完了してください。",
+			"updateResourcesReason": "この更新は自動で完了します。アプリはそのまま使用できます。",
 			"applyResources": "適用する",
 			"resourcesVersion": "リソース v{{version}}",
-			"restartToUpdate": "再起動",
+			"restartToUpdate": "アプリを開き直す",
 			"portableHint": "ポータブル版は GitHub から新しい zip をダウンロードして更新します。"
 		},
 		"connections": {
@@ -410,7 +414,7 @@
 			},
 			"autoUpdate": {
 				"title": "自動更新",
-				"description": "GitHub リリースをバックグラウンドでダウンロードします。再起動は常に確認されます。"
+				"description": "GitHub リリースをバックグラウンドでダウンロードします。アプリを開き直す前に確認されます。"
 			},
 			"closeAction": {
 				"title": "ウィンドウを閉じるとき",
@@ -419,9 +423,9 @@
 				"tray": "トレイに隠す",
 				"quit": "アプリを終了"
 			},
-			"updateBanner": "バージョン {{version}} のインストール準備が完了しました。",
-			"updateBannerResources": "リソース v{{version}} の適用準備が完了しました。",
-			"updateBannerRestart": "再起動",
+			"updateBanner": "バージョン {{version}} の準備が完了しました。",
+			"updateBannerResources": "バージョン {{version}} の準備が完了しました。",
+			"updateBannerRestart": "アプリを開き直す",
 			"updateBannerApply": "適用する",
 			"updateApplying": "リソース更新を適用しています…",
 			"updatePhaseStopping": "ローカルサーバーを停止しています…",
@@ -2273,8 +2277,8 @@
 			"changeLibrary": "ライブラリを変更…",
 			"copyLanAddress": "LAN アドレスをコピー",
 			"restartServer": "サーバーを再起動",
-			"updateReady": "更新準備完了 — 開いて再起動",
-			"updateReadyResources": "リソース更新準備完了 — 開いて適用",
+			"updateReady": "更新準備完了 — アプリを開き直す",
+			"updateReadyResources": "更新準備完了 — 開いて適用",
 			"quit": "終了",
 			"tooltipServerStopped": "hoardodile — サーバー停止",
 			"tooltipUpdateReady": "hoardodile — 更新準備完了",
@@ -2307,7 +2311,7 @@
 			"startInTray": "トレイで起動",
 			"startInTrayHint": "トレイから「開く」を選択するまでウィンドウは表示されません。",
 			"continue": "続ける",
-			"missingBridge": "デスクトップブリッジが見つかりません。アプリを再起動してください。"
+			"missingBridge": "アプリを起動できませんでした。アプリを開き直してください。"
 		}
 	}
 }

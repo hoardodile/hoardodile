@@ -132,6 +132,7 @@
 			"marketplace": "Marktplatz",
 			"marketplaceUpdatesBadge": "Plugin-Updates verfügbar",
 			"feedbackAbout": "Feedback & Über",
+			"updateAvailableBadge": "Update verfügbar",
 			"help": "Hilfe"
 		},
 		"syncDueBadge": "Eine Sync-Erinnerung ist fällig",
@@ -317,13 +318,16 @@
 			"latest": "Du verwendest die neueste Version.",
 			"outdated": "Version {{version}} ist verfügbar.",
 			"viewRelease": "Release ansehen",
+			"updateAvailable": "Eine neue Version {{version}} ist verfügbar.",
 			"updateError": "Die Update-Prüfung ist fehlgeschlagen. Bitte versuche es später erneut.",
 			"downloading": "Herunterladen… {{percent}}%",
-			"updateReady": "Version {{version}} ist zum Installieren bereit.",
-			"updateReadyResources": "Ressourcen v{{version}} sind zum Anwenden bereit.",
+			"updateReady": "Version {{version}} ist bereit.",
+			"updateReadyResources": "Version {{version}} ist bereit.",
+			"updateFullReason": "Erneut öffnen, um die Aktualisierung abzuschließen.",
+			"updateResourcesReason": "Diese Aktualisierung läuft von selbst — du kannst die App weiter verwenden.",
 			"applyResources": "Anwenden",
 			"resourcesVersion": "Ressourcen v{{version}}",
-			"restartToUpdate": "Neu starten",
+			"restartToUpdate": "App erneut öffnen",
 			"portableHint": "Portable Versionen werden aktualisiert, indem du ein neues ZIP von GitHub herunterlädst."
 		},
 		"connections": {
@@ -410,7 +414,7 @@
 			},
 			"autoUpdate": {
 				"title": "Automatische Updates",
-				"description": "GitHub-Releases im Hintergrund herunterladen. Ein Neustart wird immer bestätigt."
+				"description": "GitHub-Releases im Hintergrund herunterladen. Vor dem erneuten Öffnen der App wirst du gefragt."
 			},
 			"closeAction": {
 				"title": "Beim Schließen des Fensters",
@@ -419,9 +423,9 @@
 				"tray": "Im Infobereich ausblenden",
 				"quit": "App beenden"
 			},
-			"updateBanner": "Version {{version}} ist zum Installieren bereit.",
-			"updateBannerResources": "Ressourcen v{{version}} sind zum Anwenden bereit.",
-			"updateBannerRestart": "Neu starten",
+			"updateBanner": "Version {{version}} ist bereit.",
+			"updateBannerResources": "Version {{version}} ist bereit.",
+			"updateBannerRestart": "App erneut öffnen",
 			"updateBannerApply": "Anwenden",
 			"updateApplying": "Ressourcen-Update wird angewendet…",
 			"updatePhaseStopping": "Lokaler Server wird beendet…",
@@ -2273,8 +2277,8 @@
 			"changeLibrary": "Bibliothek wechseln…",
 			"copyLanAddress": "LAN-Adresse kopieren",
 			"restartServer": "Server neu starten",
-			"updateReady": "Update bereit — Öffnen zum Neustart",
-			"updateReadyResources": "Ressourcen-Update bereit — Öffnen zum Anwenden",
+			"updateReady": "Update bereit — App erneut öffnen",
+			"updateReadyResources": "Update bereit — Öffnen zum Anwenden",
 			"quit": "Beenden",
 			"tooltipServerStopped": "hoardodile — Server gestoppt",
 			"tooltipUpdateReady": "hoardodile — Update bereit",
@@ -2307,7 +2311,7 @@
 			"startInTray": "Im Infobereich starten",
 			"startInTrayHint": "Kein Fenster, bis du im Infobereich „Öffnen“ wählst.",
 			"continue": "Weiter",
-			"missingBridge": "Desktop-Brücke fehlt. Starte die App neu."
+			"missingBridge": "Die App konnte nicht gestartet werden. Öffne die App erneut."
 		}
 	}
 }

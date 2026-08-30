@@ -28,7 +28,11 @@ import {
 import { useTranslation } from "react-i18next"
 import { SearchField } from "@/components/common/SearchField"
 import { DesktopCaptionBar } from "@/components/layout/DesktopCaptionBar"
-import { DesktopUpdateBanner } from "@/components/layout/DesktopUpdateBanner"
+import {
+	DesktopUpdateBannerRow,
+	DesktopUpdateOverlay,
+} from "@/components/layout/DesktopUpdateBanner"
+import { useUpdateAvailable } from "@/components/layout/useDesktopUpdate"
 import { charListCardsQueryOptions } from "@/features/char/api"
 import { commentListQueryOptions } from "@/features/comments/api"
 import { docTreeQueryOptions } from "@/features/doc/api"
@@ -74,6 +78,7 @@ export function AppShell(props: AppShellProps) {
 	const belowPanel = useBelowPanel()
 	const panelClaimed = usePanelSlotClaimed()
 	const topbarClaimed = useTopbarSlotClaimed()
+	const { available: updateAvailable } = useUpdateAvailable()
 	const [drawerOpen, setDrawerOpen] = useState(false)
 	const [moduleVisible, setModuleVisible] = useState(true)
 	const searchInputRef = useRef<HTMLInputElement>(null)
@@ -132,7 +137,7 @@ export function AppShell(props: AppShellProps) {
 		return (
 			<div className="flex h-full min-h-0 flex-col">
 				<DesktopCaptionBar />
-				<DesktopUpdateBanner />
+				<DesktopUpdateOverlay />
 				<div className="min-h-0 flex-1 overflow-hidden">{props.children}</div>
 			</div>
 		)
@@ -161,6 +166,7 @@ export function AppShell(props: AppShellProps) {
 					moduleVisible={moduleVisible}
 					onShowModule={sidebarModeValue.showModule}
 					searchInputRef={searchInputRef}
+					updateAvailable={updateAvailable}
 				/>
 			</aside>
 			<div className="flex min-w-0 flex-1 flex-col">
@@ -170,11 +176,15 @@ export function AppShell(props: AppShellProps) {
 				<DesktopCaptionBar
 					leading={
 						isMobile ? (
-							<SidebarMenuButton caption onClick={() => setDrawerOpen(true)} />
+							<SidebarMenuButton
+								caption
+								updateAvailable={updateAvailable}
+								onClick={() => setDrawerOpen(true)}
+							/>
 						) : undefined
 					}
 				/>
-				<DesktopUpdateBanner />
+				<DesktopUpdateOverlay />
 				<div className="flex min-h-0 min-w-0 flex-1">
 					<div className="flex min-w-0 flex-1 flex-col">
 						{/* The top row hosts route chrome (e.g. the document
@@ -242,6 +252,7 @@ export function AppShell(props: AppShellProps) {
 					moduleVisible={moduleVisible}
 					onShowModule={sidebarModeValue.showModule}
 					onNavigate={closeDrawer}
+					updateAvailable={updateAvailable}
 				/>
 			</MobileDrawer>
 		</div>
@@ -261,6 +272,8 @@ type NavigationProgressProps = {
 function SidebarMenuButton(props: {
 	readonly onClick: () => void
 	readonly caption?: boolean
+	/** Carry the update-available dot (sidebar is hidden below the breakpoint). */
+	readonly updateAvailable?: boolean
 }) {
 	const { t } = useTranslation()
 	return (
@@ -268,14 +281,22 @@ function SidebarMenuButton(props: {
 			type="button"
 			aria-label={t("appShell.openMenu")}
 			data-testid="app-sidebar-open"
-			className={
+			className={cn(
+				"relative flex items-center justify-center text-secondary-foreground hover:bg-muted transition-colors duration-150 focus:outline-none focus-visible:outline-none focus-visible:ring-0",
 				props.caption === true
-					? "flex h-nav w-[46px] items-center justify-center text-secondary-foreground hover:bg-muted hover:text-foreground focus:outline-none focus-visible:outline-none focus-visible:ring-0"
-					: "flex size-9 items-center justify-center rounded-lg text-secondary-foreground transition-colors duration-150 hover:bg-muted"
-			}
+					? "h-nav w-[46px] hover:text-foreground"
+					: "size-9 rounded-lg",
+			)}
 			onClick={props.onClick}
 		>
 			<HamburgerMenu className="size-4" strokeWidth={1.6} />
+			{props.updateAvailable === true ? (
+				<span
+					className="absolute right-0.5 top-0.5 size-1.5 rounded-full bg-destructive"
+					role="img"
+					aria-label={t("appShell.nav.updateAvailableBadge")}
+				/>
+			) : null}
 		</button>
 	)
 }
@@ -308,6 +329,8 @@ type SidebarContentProps = {
 	readonly onShowModule: () => void
 	readonly searchInputRef?: Ref<HTMLInputElement>
 	readonly onNavigate?: () => void
+	/** Whether the About row carries the update-available dot. */
+	readonly updateAvailable?: boolean
 }
 
 function SidebarContent(props: SidebarContentProps) {
@@ -412,6 +435,10 @@ function SidebarContent(props: SidebarContentProps) {
 			</div>
 			{!moduleView && (
 				<div className="mt-auto shrink-0 pb-3">
+					{/* The update-ready strip sits above the Settings rows (the
+					    row the user expects an update to surface on); only the
+					    About row carries the passive update-available dot. */}
+					<DesktopUpdateBannerRow />
 					<nav
 						aria-label={t("appShell.secondaryNav")}
 						className="flex flex-col gap-1"
@@ -454,6 +481,8 @@ function SidebarContent(props: SidebarContentProps) {
 								pathname: props.pathname,
 								to: "/settings/about",
 							})}
+							alert={props.updateAvailable === true}
+							alertLabel={t("appShell.nav.updateAvailableBadge")}
 							onNavigate={props.onNavigate}
 						/>
 					</nav>

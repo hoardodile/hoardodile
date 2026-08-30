@@ -1,0 +1,53 @@
+{
+	"desktopShell": {
+		"tray": {
+			"open": "打开",
+			"changeLibrary": "更换存储文件夹…",
+			"copyLanAddress": "复制局域网地址",
+			"restartServer": "重启服务器",
+			"updateReady": "更新已就绪——重新打开应用",
+			"updateReadyResources": "更新已就绪——打开以应用",
+			"quit": "退出",
+			"tooltipServerStopped": "hoardodile —— 服务器已停止",
+			"tooltipUpdateReady": "hoardodile —— 更新已就绪",
+			"copied": "局域网地址已复制到剪贴板。"
+		},
+		"errorPage": {
+			"rendererCrashed": "应用窗口崩溃了。点击重试即可重新加载——数据和内置服务都是安全的。",
+			"serverError": "无法连接服务器。服务器可能仍在启动，或已停止。稍候片刻后点击重试，或在托盘中使用「重启服务器」。",
+			"devServerError": "开发服务器未运行。请在另一个终端运行 `pnpm dev`，然后点击重试。"
+		},
+		"dialog": {
+			"lanPasswordRequired": "请先设置管理员密码，再启用局域网访问。",
+			"cancel": "取消",
+			"serverStoppedBody": "服务器已停止。请在托盘中使用「重启服务器」。",
+			"serverNotRunningMessage": "服务器未运行。",
+			"restartServer": "重启服务器",
+			"serverFailedToStart": "服务器启动失败：\n{{message}}"
+		},
+		"shell": {
+			"serverUnreachable": "无法连接服务器",
+			"retry": "重试"
+		},
+		"wizard": {
+			"title": "欢迎使用 hoardodile",
+			"intro": "选择这台电脑存放归档的位置。之后可以在设置或托盘里更换文件夹。",
+			"library": "存储文件夹",
+			"browse": "浏览",
+			"autoStart": "开机启动",
+			"autoStartHint": "登录 Windows 时打开 hoardodile。",
+			"startInTray": "启动到托盘",
+			"startInTrayHint": "在托盘中选择打开之前不显示窗口。",
+			"continue": "继续",
+			"missingBridge": "应用无法启动，请重新打开应用。"
+		}
+	},
+	"closeConfirm": {
+		"title": "关闭 hoardodile？",
+		"description": "除非选择退出，应用会继续在托盘运行。",
+		"tray": "最小化到托盘",
+		"quit": "退出应用",
+		"cancel": "取消",
+		"remember": "记住我的选择"
+	}
+}

@@ -115,10 +115,15 @@ const rootVersion = JSON.parse(
 ).version
 const version = args.version ?? rootVersion
 
-// shellHash = content hash of the shell bundle (out/**). The client
-// recomputes it over the asar's own out/ subtree — byte-identical when
-// the installed shell is this release's shell.
-const shellHash = await contentHashTree(shellOutDir)
+// shellHash = content hash of the shell runtime boundary (out/main +
+// out/preload, no sourcemaps, no wizard). The client recomputes it over
+// the asar's own out/ subtree with the SAME exclusions — byte-identical
+// when the installed shell is this release's shell. Content-only churn
+// (sourcemaps, wizard) never flips a release to the full channel.
+const shellHash = await contentHashTree(shellOutDir, {
+	excludePrefixes: ["wizard"],
+	excludeExtensions: [".map"],
+})
 
 const marker = {
 	schema: 1,

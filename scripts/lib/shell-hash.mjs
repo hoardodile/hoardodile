@@ -6,7 +6,9 @@
  *
  * `excludePrefixes` (optional) skips entries whose relative path equals a
  * prefix or starts with `<prefix>/` — used by layer identities
- * (server-dist must not include server/node_modules).
+ * (server-dist must not include server/node_modules). `excludeExtensions`
+ * skips files whose relative path ends with one of the given extensions
+ * (used to keep sourcemaps out of the shell hash).
  */
 
 import { createHash } from "node:crypto"
@@ -15,11 +17,19 @@ import { join } from "node:path"
 
 export async function contentHashTree(rootDir, options = {}) {
 	const excludes = options.excludePrefixes ?? []
+	const excludedExtensions = options.excludeExtensions ?? []
 	const hash = createHash("sha256")
 
 	function isExcluded(relPath) {
 		for (const prefix of excludes) {
 			if (relPath === prefix || relPath.startsWith(`${prefix}/`)) return true
+		}
+		return false
+	}
+
+	function isExcludedFile(relPath) {
+		for (const ext of excludedExtensions) {
+			if (relPath.endsWith(ext)) return true
 		}
 		return false
 	}
@@ -36,6 +46,7 @@ export async function contentHashTree(rootDir, options = {}) {
 				hash.update(`${relPath}/\0`)
 				await walk(full, relPath)
 			} else if (entry.isFile()) {
+				if (isExcludedFile(relPath)) continue
 				hash.update(`${relPath}\0`)
 				hash.update(readFileSync(full))
 			} else {

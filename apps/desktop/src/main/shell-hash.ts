@@ -8,20 +8,34 @@ import { join } from "node:path"
  * `excludePrefixes` skips entries whose relative path equals a prefix or
  * starts with `<prefix>/` — layer identities (server-dist must not
  * include server/node_modules) and the shell bundle hash both use it.
+ * `excludeExtensions` skips files whose relative path ends with one of the
+ * given extensions (used to keep sourcemaps out of the shell hash: `.map`
+ * bytes churn with every bundled dependency and never affect runtime).
  *
  * MUST stay byte-identical with the build-side hasher
  * (scripts/lib/shell-hash.mjs) — change both together.
  */
 export function contentHashTree(
 	rootDir: string,
-	options: { readonly excludePrefixes?: readonly string[] } = {},
+	options: {
+		readonly excludePrefixes?: readonly string[]
+		readonly excludeExtensions?: readonly string[]
+	} = {},
 ): string {
 	const excludes = options.excludePrefixes ?? []
+	const excludedExtensions = options.excludeExtensions ?? []
 	const hash = createHash("sha256")
 
 	function isExcluded(relPath: string): boolean {
 		for (const prefix of excludes) {
 			if (relPath === prefix || relPath.startsWith(`${prefix}/`)) return true
+		}
+		return false
+	}
+
+	function isExcludedFile(relPath: string): boolean {
+		for (const ext of excludedExtensions) {
+			if (relPath.endsWith(ext)) return true
 		}
 		return false
 	}
@@ -38,6 +52,7 @@ export function contentHashTree(
 				hash.update(`${relPath}/\0`)
 				walk(full, relPath)
 			} else if (entry.isFile()) {
+				if (isExcludedFile(relPath)) continue
 				hash.update(`${relPath}\0`)
 				hash.update(readFileSync(full))
 			} else {
@@ -59,11 +74,18 @@ export function contentHashTree(
  * Hash of the current shell bundle as installed: the release manifest's
  * `shellHash` is computed over `out/**` at build time, and Electron's
  * asar-transparent fs reads the packaged asar as the same directory
- * tree — identical inputs, identical hash. Returns `undefined` when the
- * layout is not a packaged asar (dev runs never use the resource channel).
+ * tree — identical inputs, identical hash. Only the shell **runtime**
+ * boundary is counted: `out/wizard` (a content page, not the shell) and
+ * `*.map` (never affect runtime) are excluded, so bundling churn there
+ * never misroutes a content-only release to the full channel. Returns
+ * `undefined` when the layout is not a packaged asar (dev runs never use
+ * the resource channel).
  */
 export function installedShellHash(outRoot?: string): string | undefined {
 	const root = outRoot ?? join(process.resourcesPath, "app.asar", "out")
 	if (!existsSync(join(root, "main", "index.js"))) return undefined
-	return contentHashTree(root)
+	return contentHashTree(root, {
+		excludePrefixes: ["wizard"],
+		excludeExtensions: [".map"],
+	})
 }

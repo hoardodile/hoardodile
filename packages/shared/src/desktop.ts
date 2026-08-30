@@ -26,6 +26,12 @@ export type DesktopUpdateState =
 			readonly channel: DesktopUpdateChannel
 			readonly version: string
 	  }
+	/**
+	 * A newer version exists but nothing is downloading or applying yet —
+	 * the passive "there's an update" signal. Emitted when auto-update is
+	 * off (the user must act), and as the pre-download state.
+	 */
+	| { readonly status: "available"; readonly version: string }
 	| {
 			readonly status: "applying"
 			readonly channel: "resources"

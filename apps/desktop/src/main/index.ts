@@ -3,8 +3,7 @@ import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
 import type { SupportedLanguage } from "@hoardodile/i18n"
 import { resolveSystemLanguage } from "@hoardodile/i18n"
-import { catalogFor } from "@hoardodile/i18n/catalogs"
-import { uiCatalogFor } from "@hoardodile/i18n/catalogs/ui"
+import { shellCatalogFor } from "@hoardodile/i18n/catalogs/shell"
 import type {
 	DesktopUpdateState,
 	DesktopWizardResult,
@@ -394,7 +393,7 @@ async function setLanEnabled(
 			if (check.reason === "no-admin-password") {
 				// The native box is only for the case the renderer cannot
 				// explain without a restart attempt; weak consent stays in-app.
-				const catalog = catalogFor(runtime.language)
+				const catalog = shellCatalogFor(runtime.language)
 				dialog.showErrorBox(
 					"hoardodile",
 					catalog.desktopShell.dialog.lanPasswordRequired,
@@ -448,7 +447,7 @@ async function applyLanChange(
 		const message = err instanceof Error ? err.message : String(err)
 		dialog.showErrorBox(
 			"hoardodile",
-			catalogFor(
+			shellCatalogFor(
 				runtime.language,
 			).desktopShell.dialog.serverFailedToStart.replace(
 				"{{message}}",
@@ -532,7 +531,7 @@ async function restartSidecar(runtime: Runtime): Promise<void> {
 		const message = err instanceof Error ? err.message : String(err)
 		dialog.showErrorBox(
 			"hoardodile",
-			catalogFor(
+			shellCatalogFor(
 				runtime.language,
 			).desktopShell.dialog.serverFailedToStart.replace(
 				"{{message}}",
@@ -588,7 +587,8 @@ function onSidecarCrash(runtime: Runtime): void {
 	}
 	new Notification({
 		title: "hoardodile",
-		body: catalogFor(runtime.language).desktopShell.dialog.serverStoppedBody,
+		body: shellCatalogFor(runtime.language).desktopShell.dialog
+			.serverStoppedBody,
 	}).show()
 }
 
@@ -612,7 +612,7 @@ async function resolveAppUrl(runtime: Runtime): Promise<string | undefined> {
 
 async function openAppWindow(runtime: Runtime): Promise<void> {
 	if (runtime.crashed || runtime.sidecar === undefined) {
-		const catalog = catalogFor(runtime.language)
+		const catalog = shellCatalogFor(runtime.language)
 		const { response } = await dialog.showMessageBox({
 			type: "warning",
 			title: "hoardodile",
@@ -687,7 +687,7 @@ async function openAppWindow(runtime: Runtime): Promise<void> {
 
 /** Localized close-confirm copy for the native dialog; the SPA pushes the language via the bridge. */
 function closeDialogStrings(language: SupportedLanguage | undefined) {
-	const ui = uiCatalogFor(language)
+	const ui = shellCatalogFor(language)
 	return {
 		title: ui.closeConfirm.title,
 		description: ui.closeConfirm.description,
@@ -700,7 +700,7 @@ function closeDialogStrings(language: SupportedLanguage | undefined) {
 
 /** Localized tray copy — same language source as the close dialog. */
 function trayStrings(language: SupportedLanguage | undefined) {
-	const catalog = catalogFor(language)
+	const catalog = shellCatalogFor(language)
 	return {
 		open: catalog.desktopShell.tray.open,
 		changeLibrary: catalog.desktopShell.tray.changeLibrary,
@@ -1056,7 +1056,7 @@ async function boot(): Promise<void> {
 		const message = err instanceof Error ? err.message : String(err)
 		dialog.showErrorBox(
 			"hoardodile",
-			catalogFor(
+			shellCatalogFor(
 				runtime.language,
 			).desktopShell.dialog.serverFailedToStart.replace(
 				"{{message}}",

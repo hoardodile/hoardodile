@@ -408,18 +408,86 @@ describe("resource channel check", () => {
 		cleanup()
 	})
 
-	it("does nothing when disabled unless the check is manual", async () => {
+	it("reports availability (no download) when disabled, and stages on manual", async () => {
 		const fixture = await buildFixture()
 		const manifest = await manifestFor(fixture)
 		fakeFetch(fixture, manifest)
 		const deps = makeDeps(fixture, { enabled: false })
 
 		const channel = startResourceChannel(deps)
+		// Disabled still probes the manifest, but only reports availability —
+		// no layer download, no staging.
+		expect(await channel.check()).toBe("none")
+		expect(deps.emitted.at(-1)).toEqual({
+			status: "available",
+			version: VERSION,
+		})
+		expect(
+			mockFetch.mock.calls.filter((call) =>
+				String(call[0]).includes("-layer-"),
+			),
+		).toHaveLength(0)
+
+		mockFetch.mockClear()
+		deps.emitted.length = 0
+
+		// A manual check bypasses the gate and stages → ready.
+		await channel.check(true)
+		expect(deps.emitted.at(-1)).toEqual({
+			status: "ready",
+			channel: "resources",
+			version: VERSION,
+		})
+
+		cleanup()
+	})
+
+	it("reports availability (not full) for a shell change when disabled, never downloading", async () => {
+		// A release that needs a full install must still surface the dot when
+		// auto-update is off, but must not download a layer or run full.
+		const fixture = await buildFixture()
+		const manifest = await manifestFor(fixture, { shellHash: "sha256:bbbb" })
+		fakeFetch(fixture, manifest)
+		const deps = makeDeps(fixture, { enabled: false })
+
+		const channel = startResourceChannel(deps)
+		expect(await channel.check()).toBe("none")
+		expect(deps.emitted.at(-1)).toEqual({
+			status: "available",
+			version: VERSION,
+		})
+		expect(
+			mockFetch.mock.calls.filter((call) =>
+				String(call[0]).includes("-layer-"),
+			),
+		).toHaveLength(0)
+
+		cleanup()
+	})
+
+	it("reports latest (no dot) when disabled and the manifest is not newer", async () => {
+		const fixture = await buildFixture()
+		const manifest = await manifestFor(fixture, { version: "1.0.0" })
+		fakeFetch(fixture, manifest)
+		const deps = makeDeps(fixture, { enabled: false })
+
+		const channel = startResourceChannel(deps)
+		expect(await channel.check()).toBe("none")
+		expect(deps.emitted.at(-1)).toEqual({ status: "latest" })
+
+		cleanup()
+	})
+
+	it("never probes in dev runs", async () => {
+		const fixture = await buildFixture()
+		const manifest = await manifestFor(fixture)
+		fakeFetch(fixture, manifest)
+		const deps = makeDeps(fixture, { dev: true })
+
+		const channel = startResourceChannel(deps)
 		expect(await channel.check()).toBe("none")
 		expect(mockFetch).not.toHaveBeenCalled()
-
-		await channel.check(true)
-		expect(mockFetch).toHaveBeenCalled()
+		expect(deps.emitted).toHaveLength(0)
 
 		cleanup()
 	})

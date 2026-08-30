@@ -6,6 +6,7 @@ import { describe, expect, it } from "vitest"
 import {
 	compareVersions,
 	decideChannel,
+	decideChannelReason,
 	isResourcePackManifest,
 	neededLayers,
 	type ResourcePackManifest,
@@ -83,6 +84,28 @@ describe("decideChannel", () => {
 		expect(decideChannel(manifest(), local(), available)).toBe("resources")
 	})
 
+	it("keeps a content-only release on the resource channel (regression: 0.1.3→0.1.4 false 'shell changed')", () => {
+		// Only the packaged server/plugin layers differ; the shell runtime and
+		// the Electron pin are byte-identical. This is exactly a content-only
+		// release and must stay on the hot resource channel — bundling churn
+		// (catalogs, wizard, sourcemaps) must never flip it to full.
+		const contentOnly = manifest({
+			layers: manifest().layers.map((layer) => ({
+				...layer,
+				identity: `sha256:${layer.name}-changed`,
+			})),
+		})
+		expect(decideChannel(contentOnly, local(), available)).toBe("resources")
+		// A shell change (even with identical content) is still full.
+		expect(
+			decideChannel(
+				contentOnly,
+				local({ shellHash: "sha256:changed" }),
+				available,
+			),
+		).toBe("full")
+	})
+
 	it("routes a shell change to the full channel", () => {
 		expect(
 			decideChannel(manifest({ shellHash: "sha256:bbbb" }), local(), available),
@@ -141,6 +164,34 @@ describe("decideChannel", () => {
 		expect(
 			decideChannel(manifest(), local({ shellHash: undefined }), available),
 		).toBe("full")
+	})
+})
+
+describe("decideChannelReason", () => {
+	const reason = (
+		manifestOverrides: Partial<ResourcePackManifest> = {},
+		localOverrides: Partial<Parameters<typeof decideChannel>[1]> = {},
+		support: { available: boolean } = available,
+	) =>
+		decideChannelReason(
+			manifest(manifestOverrides),
+			local(localOverrides),
+			support,
+		)
+
+	it("names each branch for a reachable plan", () => {
+		expect(reason()).toBe("pack-available")
+		expect(reason({ version: "0.9.0" })).toBe("up-to-date")
+		expect(reason({}, {}, { available: false })).toBe("no-support")
+		expect(reason({}, { shellHash: undefined })).toBe("no-shell-hash")
+		expect(reason({ shellHash: "sha256:bbbb" })).toBe("shell-changed")
+		expect(reason({ electronVersion: "44.0.0" })).toBe("electron-changed")
+	})
+
+	it("reports electron as the reason when both change", () => {
+		expect(
+			reason({ shellHash: "sha256:bbbb", electronVersion: "44.0.0" }),
+		).toBe("electron-changed")
 	})
 })
 

@@ -132,6 +132,7 @@
 			"marketplace": "插件市场",
 			"marketplaceUpdatesBadge": "插件有可用更新",
 			"feedbackAbout": "反馈与关于",
+			"updateAvailableBadge": "有可用更新",
 			"help": "帮助"
 		},
 		"syncDueBadge": "有同步提醒待处理",
@@ -317,13 +318,16 @@
 			"latest": "已是最新版本。",
 			"outdated": "发现新版本 {{version}}。",
 			"viewRelease": "查看发布页",
+			"updateAvailable": "新版本 {{version}} 已可用。",
 			"updateError": "检查更新失败，请稍后重试。",
 			"downloading": "正在下载… {{percent}}%",
-			"updateReady": "版本 {{version}} 已就绪，可以安装。",
-			"updateReadyResources": "资源 v{{version}} 已就绪，可以应用。",
+			"updateReady": "版本 {{version}} 已就绪。",
+			"updateReadyResources": "版本 {{version}} 已就绪。",
+			"updateFullReason": "重新打开应用以完成更新。",
+			"updateResourcesReason": "此更新会自动完成，你可以继续使用应用。",
 			"applyResources": "应用",
 			"resourcesVersion": "资源 v{{version}}",
-			"restartToUpdate": "重启",
+			"restartToUpdate": "重新打开应用",
 			"portableHint": "便携版请从 GitHub 下载新的压缩包来更新。"
 		},
 		"connections": {
@@ -410,7 +414,7 @@
 			},
 			"autoUpdate": {
 				"title": "自动更新",
-				"description": "在后台下载 GitHub 发行版。重启前始终需要确认。"
+				"description": "在后台下载 GitHub 发行版。重新打开应用前会先征得你的确认。"
 			},
 			"closeAction": {
 				"title": "关闭窗口时",
@@ -419,9 +423,9 @@
 				"tray": "最小化到托盘",
 				"quit": "退出应用"
 			},
-			"updateBanner": "版本 {{version}} 已就绪，可以安装。",
-			"updateBannerResources": "资源 v{{version}} 已就绪，可以应用。",
-			"updateBannerRestart": "重启",
+			"updateBanner": "版本 {{version}} 已就绪。",
+			"updateBannerResources": "版本 {{version}} 已就绪。",
+			"updateBannerRestart": "重新打开应用",
 			"updateBannerApply": "应用",
 			"updateApplying": "正在应用资源更新…",
 			"updatePhaseStopping": "正在停止本地服务…",
@@ -2273,8 +2277,8 @@
 			"changeLibrary": "更换存储文件夹…",
 			"copyLanAddress": "复制局域网地址",
 			"restartServer": "重启服务器",
-			"updateReady": "更新已就绪——重启以完成",
-			"updateReadyResources": "资源更新已就绪——打开以应用",
+			"updateReady": "更新已就绪——重新打开应用",
+			"updateReadyResources": "更新已就绪——打开以应用",
 			"quit": "退出",
 			"tooltipServerStopped": "hoardodile —— 服务器已停止",
 			"tooltipUpdateReady": "hoardodile —— 更新已就绪",
@@ -2307,7 +2311,7 @@
 			"startInTray": "启动到托盘",
 			"startInTrayHint": "在托盘中选择打开之前不显示窗口。",
 			"continue": "继续",
-			"missingBridge": "桌面桥接不可用。请重启应用。"
+			"missingBridge": "应用无法启动，请重新打开应用。"
 		}
 	}
 }

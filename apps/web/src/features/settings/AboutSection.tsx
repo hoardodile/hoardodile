@@ -1,6 +1,5 @@
 import type {
 	DesktopShellConfig,
-	DesktopUpdateState,
 	HoardodileDesktopBridge,
 } from "@hoardodile/shared/desktop"
 import { Button } from "@hoardodile/ui/components/button"
@@ -18,6 +17,7 @@ import type { ReactNode } from "react"
 import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { ExternalLink } from "@/components/common/ExternalLink"
+import { useUpdateAvailable } from "@/components/layout/useDesktopUpdate"
 import {
 	APP_DEVELOPER_NAME,
 	APP_DEVELOPER_URL,
@@ -114,15 +114,21 @@ function DesktopAboutSection(props: {
 }) {
 	const { desktop } = props
 	const { t } = useTranslation()
-	const [state, setState] = useState<DesktopUpdateState>({ status: "idle" })
+	const {
+		state: updateState,
+		version: availableVersion,
+		markUpdateSeen,
+	} = useUpdateAvailable()
 	const [shellConfig, setShellConfig] = useState<DesktopShellConfig | null>(
 		null,
 	)
+	const state = updateState ?? { status: "idle" }
 
+	// Opening About acknowledges the current update: the availability
+	// badge stays hidden for this version and only re-arms on a newer one.
 	useEffect(() => {
-		void desktop.updates.status().then(setState)
-		return desktop.updates.onStatus(setState)
-	}, [desktop])
+		if (availableVersion !== undefined) markUpdateSeen(availableVersion)
+	}, [availableVersion, markUpdateSeen])
 
 	useEffect(() => {
 		void desktop.getConfig().then(setShellConfig)
@@ -176,6 +182,14 @@ function DesktopAboutSection(props: {
 					{t("me.about.checking")}
 				</p>
 			) : null}
+			{state.status === "available" ? (
+				<p
+					className="mt-3 text-tiny text-muted-foreground"
+					data-testid="me-about-update-available"
+				>
+					{t("me.about.updateAvailable", { version: state.version })}
+				</p>
+			) : null}
 			{state.status === "downloading" ? (
 				<p className="mt-3 text-tiny text-muted-foreground">
 					{t("me.about.downloading", {
@@ -189,28 +203,35 @@ function DesktopAboutSection(props: {
 				</p>
 			) : null}
 			{state.status === "ready" ? (
-				<div className="mt-3 flex flex-wrap items-center gap-3">
-					<p className="text-tiny" data-testid="me-about-outdated">
+				<div className="mt-3">
+					<div className="flex flex-wrap items-center gap-3">
+						<p className="text-tiny" data-testid="me-about-outdated">
+							{resourcesReady
+								? t("me.about.updateReadyResources", {
+										version: state.version,
+									})
+								: t("me.about.updateReady", { version: state.version })}
+						</p>
+						<Button
+							size="sm"
+							className="[-webkit-app-region:no-drag]"
+							onClick={() => {
+								void (resourcesReady
+									? desktop.updates.apply()
+									: desktop.updates.quitAndInstall())
+							}}
+							data-testid="me-about-restart"
+						>
+							{resourcesReady
+								? t("me.about.applyResources")
+								: t("me.about.restartToUpdate")}
+						</Button>
+					</div>
+					<p className="mt-2 text-tiny text-muted-foreground">
 						{resourcesReady
-							? t("me.about.updateReadyResources", {
-									version: state.version,
-								})
-							: t("me.about.updateReady", { version: state.version })}
+							? t("me.about.updateResourcesReason")
+							: t("me.about.updateFullReason")}
 					</p>
-					<Button
-						size="sm"
-						className="[-webkit-app-region:no-drag]"
-						onClick={() => {
-							void (resourcesReady
-								? desktop.updates.apply()
-								: desktop.updates.quitAndInstall())
-						}}
-						data-testid="me-about-restart"
-					>
-						{resourcesReady
-							? t("me.about.applyResources")
-							: t("me.about.restartToUpdate")}
-					</Button>
 				</div>
 			) : null}
 			{state.status === "applying" ? (

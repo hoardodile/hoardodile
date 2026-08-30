@@ -30,6 +30,7 @@ import {
 import { contentHashTree, installedShellHash } from "./shell-hash.ts"
 import {
 	decideChannel,
+	decideChannelReason,
 	isResourcePackManifest,
 	LAYER_SPECS,
 	neededLayers,
@@ -105,7 +106,6 @@ export function startResourceChannel(
 	return {
 		async check(manual = false) {
 			if (deps.dev) return "none"
-			if (!enabled && !manual) return "none"
 			if (!deps.support.available) return "full"
 			const slug = resourcePackSlug(deps.platform)
 			if (slug === undefined) return "full"
@@ -125,8 +125,19 @@ export function startResourceChannel(
 				electronVersion: deps.electronVersion,
 			}
 			const plan = decideChannel(manifest, local, deps.support)
+			const reason = decideChannelReason(manifest, local, deps.support)
+			// Never a mystery: record the channel verdict and why it was
+			// reached so a "full" fallback is diagnosable from the log.
+			console.log(`[desktop] resource update decision: ${plan} (${reason})`)
 			if (plan === "none") {
 				deps.emit({ status: "latest" })
+				return "none"
+			}
+			// A newer version exists. With auto-update off and not a manual
+			// check, surface availability for the red dot without staging or
+			// downloading anything — the full channel must not auto-run.
+			if (!enabled && !manual) {
+				deps.emit({ status: "available", version: manifest.version })
 				return "none"
 			}
 			if (plan === "full") return "full"

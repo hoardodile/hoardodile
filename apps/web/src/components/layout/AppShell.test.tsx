@@ -10,7 +10,8 @@ import {
 import { fireEvent, render, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeAll, describe, expect, it } from "vitest"
-import type { HoardodileDesktopBridge } from "@/lib/desktop"
+import { APP_VERSION } from "@/lib/appInfo"
+import type { DesktopUpdateState, HoardodileDesktopBridge } from "@/lib/desktop"
 import { prefKeys } from "@/lib/keys"
 import { prefSync } from "@/lib/prefSync"
 import type { TRPCClient } from "@/trpc/client"
@@ -510,6 +511,132 @@ describe("AppShell desktop caption", () => {
 	})
 })
 
+describe("AppShell update badge & banner", () => {
+	const defaultMatchMedia = window.matchMedia
+
+	afterEach(() => {
+		Reflect.deleteProperty(window, "hoardodileDesktop")
+		window.matchMedia = defaultMatchMedia
+		localStorage.removeItem(prefKeys.updateLastSeenVersion)
+	})
+
+	it("renders the update-ready strip in the sidebar footer above Settings", async () => {
+		installDesktopBridge({
+			status: "ready",
+			channel: "resources",
+			version: "9.9.9",
+		})
+		const { container, findByTestId } = renderAppShell("/")
+		const sidebar = await findByTestId("app-sidebar")
+		const banner = await findByTestId("desktop-update-banner")
+
+		expect(sidebar.contains(banner)).toBe(true)
+		const settings = sidebar.querySelector('a[href="/settings"]')
+		expect(settings).not.toBeNull()
+		expect(
+			banner.compareDocumentPosition(settings!) &
+				Node.DOCUMENT_POSITION_FOLLOWING,
+		).toBeTruthy()
+		expect(
+			container.querySelector('[data-testid="desktop-update-restart"]'),
+		).not.toBeNull()
+	})
+
+	it("shows the update-available dot on the About row", async () => {
+		installDesktopBridge({ status: "available", version: "9.9.9" })
+		const { container, findByTestId } = renderAppShell("/")
+		await findByTestId("app-sidebar")
+
+		const about = container.querySelector('a[href="/settings/about"]')
+		expect(
+			about?.querySelector('[role="img"][aria-label="Update available"]'),
+		).not.toBeNull()
+	})
+
+	it("moves the update dot onto the menu button when the sidebar is hidden", async () => {
+		installDesktopBridge({ status: "available", version: "9.9.9" })
+		window.matchMedia = makeMatchMedia({ [SIDEBAR_QUERY]: true })
+		const { findByTestId } = renderAppShell("/")
+		const toggle = await findByTestId("app-sidebar-open")
+		expect(
+			toggle.querySelector('[role="img"][aria-label="Update available"]'),
+		).not.toBeNull()
+	})
+
+	it("hides the dot once the update version has already been seen", async () => {
+		localStorage.setItem(prefKeys.updateLastSeenVersion, "9.9.9")
+		installDesktopBridge({ status: "available", version: "9.9.9" })
+		const { container, findByTestId } = renderAppShell("/")
+		await findByTestId("app-sidebar")
+		expect(
+			container.querySelector('[role="img"][aria-label="Update available"]'),
+		).toBeNull()
+	})
+
+	it("shows no dot when the available version is not newer than the running app", async () => {
+		installDesktopBridge({ status: "available", version: APP_VERSION })
+		const { container, findByTestId } = renderAppShell("/")
+		await findByTestId("app-sidebar")
+		expect(
+			container.querySelector('[role="img"][aria-label="Update available"]'),
+		).toBeNull()
+		expect(
+			container.querySelector('[data-testid="desktop-update-banner"]'),
+		).toBeNull()
+	})
+
+	it("renders no banner or overlay for a portable build", async () => {
+		installDesktopBridge(
+			{ status: "ready", channel: "resources", version: "9.9.9" },
+			{ portable: true },
+		)
+		const { container, findByTestId } = renderAppShell("/")
+		await findByTestId("app-sidebar")
+		expect(
+			container.querySelector('[data-testid="desktop-update-banner"]'),
+		).toBeNull()
+		expect(
+			container.querySelector('[data-testid="desktop-update-applying"]'),
+		).toBeNull()
+	})
+
+	it("shows the applying overlay with the stopping phase", async () => {
+		installDesktopBridge({
+			status: "applying",
+			channel: "resources",
+			phase: "stopping",
+		})
+		const { findByTestId } = renderAppShell("/")
+		const overlay = await findByTestId("desktop-update-applying")
+		expect(overlay).toBeInTheDocument()
+		const phase = await findByTestId("desktop-update-applying-phase")
+		expect(phase).toHaveTextContent("Stopping the local server")
+	})
+
+	it("labels the banner Apply for a resources update and Reopen the app for a full install", async () => {
+		installDesktopBridge({
+			status: "ready",
+			channel: "resources",
+			version: "9.9.9",
+		})
+		const resourcesButton = await (await renderAppShell("/")).findByTestId(
+			"desktop-update-restart",
+		)
+		expect(resourcesButton).toHaveTextContent("Apply")
+	})
+
+	it("labels the banner Reopen the app for a full install", async () => {
+		installDesktopBridge({
+			status: "ready",
+			channel: "full",
+			version: "9.9.9",
+		})
+		const { findByTestId } = renderAppShell("/")
+		const button = await findByTestId("desktop-update-restart")
+		expect(button).toHaveTextContent("Reopen the app")
+	})
+})
+
 /**
  * matchMedia stub where each query matches per `matchesByQuery`, mirroring
  * the default stub's shape so media-query hooks get a deterministic answer.
@@ -527,7 +654,10 @@ function makeMatchMedia(matchesByQuery: Record<string, boolean>) {
 	})) as typeof window.matchMedia
 }
 
-function installDesktopBridge() {
+function installDesktopBridge(
+	status: DesktopUpdateState = { status: "idle" },
+	options: { readonly portable?: boolean } = {},
+) {
 	const bridge: HoardodileDesktopBridge = {
 		isDesktop: true,
 		platform: "desktop",
@@ -542,9 +672,9 @@ function installDesktopBridge() {
 			return () => undefined
 		},
 		updates: {
-			portable: false,
+			portable: options.portable ?? false,
 			async status() {
-				return { status: "idle" }
+				return status
 			},
 			onStatus() {
 				return () => undefined

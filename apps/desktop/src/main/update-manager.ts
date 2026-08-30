@@ -53,7 +53,7 @@ export function startUpdateManager(options: {
 
 	function scheduleBackgroundChecks(): void {
 		clearTimers()
-		if (!enabled || dev) return
+		if (dev) return
 		timers.push(
 			setTimeout(() => {
 				void check().catch(() => undefined)
@@ -83,12 +83,18 @@ export function startUpdateManager(options: {
 			if (resource !== undefined) {
 				handleState({ status: "checking", channel: "resources" })
 				const verdict = await resource.check(manual)
-				if (verdict === "full") {
+				// With auto-update off the resource channel only probes
+				// availability; never let the full channel auto-download in
+				// that case (the user wants to stay on the current version).
+				if (verdict === "full" && (enabled || manual)) {
 					handleState({ status: "checking", channel: "full" })
 					await full.check()
 				}
 				return
 			}
+			// No resource channel (read-only install): only probe on a manual
+			// check or when auto-update is on — never auto-download when off.
+			if (!enabled && !manual) return
 			handleState({ status: "checking", channel: "full" })
 			await full.check()
 		} finally {

@@ -1,0 +1,53 @@
+{
+	"desktopShell": {
+		"tray": {
+			"open": "Öffnen",
+			"changeLibrary": "Bibliothek wechseln…",
+			"copyLanAddress": "LAN-Adresse kopieren",
+			"restartServer": "Server neu starten",
+			"updateReady": "Update bereit — App erneut öffnen",
+			"updateReadyResources": "Update bereit — Öffnen zum Anwenden",
+			"quit": "Beenden",
+			"tooltipServerStopped": "hoardodile — Server gestoppt",
+			"tooltipUpdateReady": "hoardodile — Update bereit",
+			"copied": "LAN-Adresse in die Zwischenablage kopiert."
+		},
+		"errorPage": {
+			"rendererCrashed": "Das App-Fenster ist abgestürzt. Drücke „Erneut versuchen“, um es neu zu laden — deine Daten und der eingebettete Server sind sicher.",
+			"serverError": "Der Server konnte nicht erreicht werden. Er startet möglicherweise noch oder wurde gestoppt. Warte einen Moment und drücke Erneut versuchen, oder verwende Server neu starten aus dem Infobereich.",
+			"devServerError": "Der Entwicklungsserver läuft nicht. Starte `pnpm dev` in einem anderen Terminal und drücke dann Erneut versuchen."
+		},
+		"dialog": {
+			"lanPasswordRequired": "Lege zuerst ein Admin-Passwort fest, bevor du den lokalen Netzwerkzugriff aktivierst.",
+			"cancel": "Abbrechen",
+			"serverStoppedBody": "Der Server wurde gestoppt. Verwende Server neu starten aus dem Infobereich.",
+			"serverNotRunningMessage": "Der Server läuft nicht.",
+			"restartServer": "Server neu starten",
+			"serverFailedToStart": "Server konnte nicht gestartet werden:\n{{message}}"
+		},
+		"shell": {
+			"serverUnreachable": "Server nicht erreichbar",
+			"retry": "Erneut versuchen"
+		},
+		"wizard": {
+			"title": "Willkommen bei hoardodile",
+			"intro": "Wähle, wo dieser Computer das Archiv speichert. Du kannst den Ordner später in den Einstellungen oder im Infobereich ändern.",
+			"library": "Bibliotheksordner",
+			"browse": "Durchsuchen",
+			"autoStart": "Mit Windows starten",
+			"autoStartHint": "hoardodile öffnen, wenn du dich anmeldest.",
+			"startInTray": "Im Infobereich starten",
+			"startInTrayHint": "Kein Fenster, bis du im Infobereich „Öffnen“ wählst.",
+			"continue": "Weiter",
+			"missingBridge": "Die App konnte nicht gestartet werden. Öffne die App erneut."
+		}
+	},
+	"closeConfirm": {
+		"title": "hoardodile schließen?",
+		"description": "Die App läuft im Infobereich weiter, außer du beendest sie.",
+		"tray": "Im Infobereich ausblenden",
+		"quit": "App beenden",
+		"cancel": "Abbrechen",
+		"remember": "Meine Auswahl merken"
+	}
+}

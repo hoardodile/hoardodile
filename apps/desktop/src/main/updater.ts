@@ -34,7 +34,7 @@ export function startFullUpdater(options: {
 		}
 	}
 
-	autoUpdater.autoInstallOnAppQuit = false
+	autoUpdater.autoInstallOnAppQuit = true
 	autoUpdater.autoRunAppAfterInstall = true
 	autoUpdater.autoDownload = true
 

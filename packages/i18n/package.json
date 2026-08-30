@@ -46,6 +46,11 @@
 			"development": "./src/catalogs/ui.ts",
 			"default": "./dist/catalogs/ui.js"
 		},
+		"./catalogs/shell": {
+			"types": "./dist/catalogs/shell.d.ts",
+			"development": "./src/catalogs/shell.ts",
+			"default": "./dist/catalogs/shell.js"
+		},
 		"./workbench": {
 			"types": "./dist/catalogs/workbench.d.ts",
 			"development": "./src/catalogs/workbench.ts",

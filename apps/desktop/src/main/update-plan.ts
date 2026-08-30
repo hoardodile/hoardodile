@@ -73,11 +73,13 @@ export type UpdatePlan = "none" | "resources" | "full"
 /**
  * Decide what a newer release means for this client:
  * - the manifest is older or equal to what's installed → nothing;
- * - shell (asar) and Electron runtime are byte-identical to the
- *   manifest's → the resource pack can replace the sidecar payload in
- *   place (layers carry node/ server/ plugins/ and the marker);
- * - anything else (shell changed, Electron bumped, channel disabled in
- *   this install shape) → the full installer path, as before.
+ * - shell runtime (main/preload bundle modules, `.map` and the wizard page
+ *   excluded — content-only churn must not count) and Electron runtime are
+ *   byte-identical to the manifest's → the resource pack can replace the
+ *   sidecar payload in place (layers carry node/ server/ plugins/ and the
+ *   marker);
+ * - anything else (shell runtime changed, Electron bumped, channel disabled
+ *   in this install shape) → the full installer path, as before.
  */
 export function decideChannel(
 	manifest: ResourcePackManifest,
@@ -95,6 +97,35 @@ export function decideChannel(
 		return "resources"
 	}
 	return "full"
+}
+
+/**
+ * Why {@link decideChannel} chose the plan it did — a stable, loggable
+ * reason so a "full" fallback is never a mystery. Mirrors the exact
+ * branch order of {@link decideChannel}; keep the two in sync.
+ */
+export type ChannelReason =
+	| "up-to-date"
+	| "pack-available"
+	| "no-support"
+	| "no-shell-hash"
+	| "shell-changed"
+	| "electron-changed"
+
+export function decideChannelReason(
+	manifest: ResourcePackManifest,
+	local: LocalUpdateState,
+	support: { readonly available: boolean },
+): ChannelReason {
+	if (!support.available) return "no-support"
+	const installed = local.resourceVersion ?? local.appVersion
+	if (compareVersions(manifest.version, installed) <= 0) return "up-to-date"
+	if (local.shellHash === undefined) return "no-shell-hash"
+	const shell = manifest.shellHash === local.shellHash
+	const electron = manifest.electronVersion === local.electronVersion
+	if (shell && electron) return "pack-available"
+	if (!electron) return "electron-changed"
+	return "shell-changed"
 }
 
 /**

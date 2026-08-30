@@ -14,7 +14,7 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { afterEach, describe, expect, it } from "vitest"
 import { contentHashTree as buildHash } from "../../../../scripts/lib/shell-hash.mjs"
-import { contentHashTree } from "./shell-hash.ts"
+import { contentHashTree, installedShellHash } from "./shell-hash.ts"
 
 const scratch: string[] = []
 
@@ -28,8 +28,11 @@ function fixtureTree(): string {
 	const root = join(mkdtempSync(join(tmpdir(), "hd-shell-hash-")), "out")
 	mkdirSync(join(root, "main"), { recursive: true })
 	mkdirSync(join(root, "preload"), { recursive: true })
+	mkdirSync(join(root, "wizard"), { recursive: true })
 	writeFileSync(join(root, "main", "index.js"), 'console.log("hi")')
-	writeFileSync(join(root, "preload", "index.js"), "pre")
+	writeFileSync(join(root, "main", "index.js.map"), "map-main")
+	writeFileSync(join(root, "preload", "index.cjs"), "pre")
+	writeFileSync(join(root, "wizard", "index.html"), "<html>wizard</html>")
 	writeFileSync(join(root, "README.txt"), "zz")
 	scratch.push(join(root, ".."))
 	return root
@@ -49,6 +52,12 @@ describe("contentHashTree", () => {
 		)
 	})
 
+	it("matches the build-side hasher with excludeExtensions", async () => {
+		const root = fixtureTree()
+		const options = { excludeExtensions: [".map"] }
+		expect(contentHashTree(root, options)).toBe(await buildHash(root, options))
+	})
+
 	it("excludes exact prefixes and their subtrees", () => {
 		const root = fixtureTree()
 		const full = contentHashTree(root)
@@ -60,6 +69,14 @@ describe("contentHashTree", () => {
 		expect(contentHashTree(root, { excludePrefixes: ["main"] })).toBe(
 			withoutMain,
 		)
+	})
+
+	it("ignores .map files even when their content changes", () => {
+		const root = fixtureTree()
+		const opts = { excludeExtensions: [".map"] }
+		const before = contentHashTree(root, opts)
+		writeFileSync(join(root, "main", "index.js.map"), "changed-map")
+		expect(contentHashTree(root, opts)).toBe(before)
 	})
 
 	it("is deterministic", () => {
@@ -86,5 +103,28 @@ describe("contentHashTree", () => {
 		expect(() =>
 			contentHashTree(join(tmpdir(), "definitely-missing")),
 		).toThrow()
+	})
+})
+
+describe("installedShellHash", () => {
+	it("roots the shell hash on the runtime boundary, excluding wizard and .map", () => {
+		const root = fixtureTree() // out/{main,preload,wizard} + .map files
+		// Exclude the wizard subtree: a change to it must not change the hash.
+		const before = installedShellHash(root)
+		writeFileSync(join(root, "wizard", "index.html"), "changed")
+		expect(installedShellHash(root)).toBe(before)
+		// A sourcemap change must be ignored too.
+		writeFileSync(join(root, "main", "index.js.map"), "changed-map")
+		expect(installedShellHash(root)).toBe(before)
+		// A real shell runtime change must still flip the hash.
+		writeFileSync(join(root, "main", "index.js"), 'console.log("bye")')
+		expect(installedShellHash(root)).not.toBe(before)
+	})
+
+	it("returns undefined when the shell layout is not a packaged asar", () => {
+		const root = join(mkdtempSync(join(tmpdir(), "hd-shell-hash-")), "out")
+		mkdirSync(root, { recursive: true })
+		scratch.push(join(root, ".."))
+		expect(installedShellHash(root)).toBeUndefined()
 	})
 })

@@ -10,6 +10,7 @@ import {
 	APP_VERSION,
 	APP_WEBSITE_URL,
 } from "@/lib/appInfo"
+import { prefKeys } from "@/lib/keys"
 import { AboutSection } from "./AboutSection"
 import { BugReportSection, FeatureRequestSection } from "./FeedbackSections"
 
@@ -200,6 +201,69 @@ describe("Settings → About", () => {
 		).toHaveTextContent("Resources v9.9.9")
 		fireEvent.click(restart)
 		await waitFor(() => expect(applied).toHaveBeenCalledTimes(1))
+	})
+
+	test("explains the update reason per channel", async () => {
+		// Resources: updates automatically, keep using the app.
+		bridgeMock.mockReturnValue(
+			desktopBridge({
+				status: "ready",
+				channel: "resources",
+				version: "9.9.9",
+			}),
+		)
+		const { unmount } = render(<AboutSection />)
+		await screen.findByTestId("me-about-outdated")
+		expect(screen.getByText(/keep using the app/)).toBeInTheDocument()
+		unmount()
+
+		// Full: reopen the app to finish updating.
+		bridgeMock.mockReturnValue(
+			desktopBridge({ status: "ready", channel: "full", version: "9.9.9" }),
+		)
+		render(<AboutSection />)
+		await screen.findByTestId("me-about-outdated")
+		expect(
+			screen.getByText(/reopen the app to finish updating/i),
+		).toBeInTheDocument()
+	})
+
+	test("reports a newer version is available when auto-update is off", async () => {
+		bridgeMock.mockReturnValue(
+			desktopBridge({ status: "available", version: "9.9.9" }),
+		)
+		render(<AboutSection />)
+		const available = await screen.findByTestId("me-about-update-available")
+		expect(available).toHaveTextContent("9.9.9")
+	})
+
+	test("marks the seen update version when About is opened", async () => {
+		localStorage.removeItem(prefKeys.updateLastSeenVersion)
+		bridgeMock.mockReturnValue(
+			desktopBridge({ status: "available", version: "9.9.9" }),
+		)
+		render(<AboutSection />)
+		await screen.findByTestId("me-about-update-available")
+		await waitFor(() =>
+			expect(localStorage.getItem(prefKeys.updateLastSeenVersion)).toBe(
+				"9.9.9",
+			),
+		)
+		localStorage.removeItem(prefKeys.updateLastSeenVersion)
+	})
+
+	test("shows the applying phase in the desktop About block", async () => {
+		bridgeMock.mockReturnValue(
+			desktopBridge({
+				status: "applying",
+				channel: "resources",
+				phase: "swapping",
+			}),
+		)
+		render(<AboutSection />)
+		await waitFor(() =>
+			expect(screen.getByText(/Replacing server files/)).toBeInTheDocument(),
+		)
 	})
 })
 

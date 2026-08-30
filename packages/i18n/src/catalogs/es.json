@@ -132,6 +132,7 @@
 			"marketplace": "Mercado",
 			"marketplaceUpdatesBadge": "Hay actualizaciones de plugins",
 			"feedbackAbout": "Comentarios y acerca",
+			"updateAvailableBadge": "Actualización disponible",
 			"help": "Ayuda"
 		},
 		"syncDueBadge": "Hay un recordatorio de sincronización pendiente",
@@ -317,13 +318,16 @@
 			"latest": "Ya tienes la versión más reciente.",
 			"outdated": "La versión {{version}} está disponible.",
 			"viewRelease": "Ver la publicación",
+			"updateAvailable": "Hay una nueva versión {{version}} disponible.",
 			"updateError": "La comprobación de actualizaciones falló. Inténtalo de nuevo más tarde.",
 			"downloading": "Descargando… {{percent}}%",
-			"updateReady": "La versión {{version}} está lista para instalar.",
-			"updateReadyResources": "Los recursos v{{version}} están listos para aplicar.",
+			"updateReady": "La versión {{version}} está lista.",
+			"updateReadyResources": "La versión {{version}} está lista.",
+			"updateFullReason": "Vuelve a abrir la aplicación para completar la actualización.",
+			"updateResourcesReason": "Esta actualización se aplica sola: puedes seguir usando la aplicación.",
 			"applyResources": "Aplicar",
 			"resourcesVersion": "Recursos v{{version}}",
-			"restartToUpdate": "Reiniciar",
+			"restartToUpdate": "Volver a abrir la aplicación",
 			"portableHint": "Las versiones portátiles se actualizan descargando un nuevo zip de GitHub."
 		},
 		"connections": {
@@ -410,7 +414,7 @@
 			},
 			"autoUpdate": {
 				"title": "Actualizaciones automáticas",
-				"description": "Descarga las publicaciones de GitHub en segundo plano. El reinicio siempre se confirma."
+				"description": "Descarga las publicaciones de GitHub en segundo plano. Se te preguntará antes de volver a abrir la app."
 			},
 			"closeAction": {
 				"title": "Al cerrar la ventana",
@@ -419,9 +423,9 @@
 				"tray": "Ocultar en la bandeja",
 				"quit": "Salir de la app"
 			},
-			"updateBanner": "La versión {{version}} está lista para instalar.",
-			"updateBannerResources": "Los recursos v{{version}} están listos para aplicar.",
-			"updateBannerRestart": "Reiniciar",
+			"updateBanner": "La versión {{version}} está lista.",
+			"updateBannerResources": "La versión {{version}} está lista.",
+			"updateBannerRestart": "Volver a abrir la aplicación",
 			"updateBannerApply": "Aplicar",
 			"updateApplying": "Aplicando la actualización de recursos…",
 			"updatePhaseStopping": "Deteniendo el servidor local…",
@@ -2273,8 +2277,8 @@
 			"changeLibrary": "Cambiar biblioteca…",
 			"copyLanAddress": "Copiar dirección LAN",
 			"restartServer": "Reiniciar servidor",
-			"updateReady": "Actualización lista — Abrir para reiniciar",
-			"updateReadyResources": "Actualización de recursos lista — Abrir para aplicar",
+			"updateReady": "Actualización lista — Volver a abrir la app",
+			"updateReadyResources": "Actualización lista — Abrir para aplicar",
 			"quit": "Salir",
 			"tooltipServerStopped": "hoardodile — servidor detenido",
 			"tooltipUpdateReady": "hoardodile — actualización lista",
@@ -2307,7 +2311,7 @@
 			"startInTray": "Iniciar en la bandeja",
 			"startInTrayHint": "No se abre ninguna ventana hasta que elijas Abrir desde la bandeja.",
 			"continue": "Continuar",
-			"missingBridge": "Falta el puente de escritorio. Reinicia la app."
+			"missingBridge": "No se pudo iniciar la app. Vuelve a abrir la app."
 		}
 	}
 }

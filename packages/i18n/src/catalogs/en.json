@@ -132,6 +132,7 @@
 			"marketplace": "Marketplace",
 			"marketplaceUpdatesBadge": "Plugin updates available",
 			"feedbackAbout": "Feedback & About",
+			"updateAvailableBadge": "Update available",
 			"help": "Help"
 		},
 		"syncDueBadge": "A sync reminder is due",
@@ -317,13 +318,16 @@
 			"latest": "You're on the latest version.",
 			"outdated": "Version {{version}} is available.",
 			"viewRelease": "View release",
+			"updateAvailable": "A new version {{version}} is available.",
 			"updateError": "Update check failed. Please try again later.",
 			"downloading": "Downloading… {{percent}}%",
-			"updateReady": "Version {{version}} is ready to install.",
-			"updateReadyResources": "Resources v{{version}} are ready to apply.",
+			"updateReady": "Version {{version}} is ready.",
+			"updateReadyResources": "Version {{version}} is ready.",
+			"updateFullReason": "Reopen the app to finish updating.",
+			"updateResourcesReason": "This updates automatically — you can keep using the app.",
 			"applyResources": "Apply",
 			"resourcesVersion": "Resources v{{version}}",
-			"restartToUpdate": "Restart",
+			"restartToUpdate": "Reopen the app",
 			"portableHint": "Portable builds update by downloading a new zip from GitHub."
 		},
 		"connections": {
@@ -410,7 +414,7 @@
 			},
 			"autoUpdate": {
 				"title": "Automatic updates",
-				"description": "Download GitHub releases in the background. Restart is always confirmed."
+				"description": "Download GitHub releases in the background. You'll be asked before the app reopens."
 			},
 			"closeAction": {
 				"title": "When closing the window",
@@ -419,9 +423,9 @@
 				"tray": "Hide to tray",
 				"quit": "Quit the app"
 			},
-			"updateBanner": "Version {{version}} is ready to install.",
-			"updateBannerResources": "Resources v{{version}} are ready to apply.",
-			"updateBannerRestart": "Restart",
+			"updateBanner": "Version {{version}} is ready.",
+			"updateBannerResources": "Version {{version}} is ready.",
+			"updateBannerRestart": "Reopen the app",
 			"updateBannerApply": "Apply",
 			"updateApplying": "Applying resources update…",
 			"updatePhaseStopping": "Stopping the local server…",
@@ -2273,8 +2277,8 @@
 			"changeLibrary": "Change library…",
 			"copyLanAddress": "Copy LAN address",
 			"restartServer": "Restart server",
-			"updateReady": "Update ready — Open to restart",
-			"updateReadyResources": "Resources update ready — Open to apply",
+			"updateReady": "Update ready — Reopen the app",
+			"updateReadyResources": "Update ready — Open to apply",
 			"quit": "Quit",
 			"tooltipServerStopped": "hoardodile — server stopped",
 			"tooltipUpdateReady": "hoardodile — update ready",
@@ -2307,7 +2311,7 @@
 			"startInTray": "Start in tray",
 			"startInTrayHint": "No window until you choose Open from the tray.",
 			"continue": "Continue",
-			"missingBridge": "Desktop bridge missing. Restart the app."
+			"missingBridge": "The app couldn't start. Reopen the app."
 		}
 	}
 }

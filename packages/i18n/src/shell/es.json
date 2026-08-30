@@ -1,0 +1,53 @@
+{
+	"desktopShell": {
+		"tray": {
+			"open": "Abrir",
+			"changeLibrary": "Cambiar biblioteca…",
+			"copyLanAddress": "Copiar dirección LAN",
+			"restartServer": "Reiniciar servidor",
+			"updateReady": "Actualización lista — Volver a abrir la app",
+			"updateReadyResources": "Actualización lista — Abrir para aplicar",
+			"quit": "Salir",
+			"tooltipServerStopped": "hoardodile — servidor detenido",
+			"tooltipUpdateReady": "hoardodile — actualización lista",
+			"copied": "Dirección LAN copiada al portapapeles."
+		},
+		"errorPage": {
+			"rendererCrashed": "La ventana de la aplicación se ha bloqueado. Pulsa Reintentar para recargarla: tus datos y el servidor integrado están a salvo.",
+			"serverError": "No se pudo conectar con el servidor. Puede que aún esté iniciando, o que se haya detenido. Espera un momento y pulsa Reintentar, o usa Reiniciar servidor desde la bandeja.",
+			"devServerError": "El servidor de desarrollo no está en ejecución. Inicia `pnpm dev` en otra terminal y pulsa Reintentar."
+		},
+		"dialog": {
+			"lanPasswordRequired": "Configura antes una contraseña de administrador antes de activar el acceso desde la red local.",
+			"cancel": "Cancelar",
+			"serverStoppedBody": "El servidor se detuvo. Usa Reiniciar servidor desde la bandeja.",
+			"serverNotRunningMessage": "El servidor no está en ejecución.",
+			"restartServer": "Reiniciar servidor",
+			"serverFailedToStart": "No se pudo iniciar el servidor:\n{{message}}"
+		},
+		"shell": {
+			"serverUnreachable": "Servidor inaccesible",
+			"retry": "Reintentar"
+		},
+		"wizard": {
+			"title": "Te damos la bienvenida a hoardodile",
+			"intro": "Elige dónde guarda este equipo el archivo. Puedes cambiar la carpeta más tarde desde Ajustes o la bandeja.",
+			"library": "Carpeta de la biblioteca",
+			"browse": "Explorar",
+			"autoStart": "Iniciar con Windows",
+			"autoStartHint": "Abre hoardodile cuando inicies sesión.",
+			"startInTray": "Iniciar en la bandeja",
+			"startInTrayHint": "No se abre ninguna ventana hasta que elijas Abrir desde la bandeja.",
+			"continue": "Continuar",
+			"missingBridge": "No se pudo iniciar la app. Vuelve a abrir la app."
+		}
+	},
+	"closeConfirm": {
+		"title": "¿Cerrar hoardodile?",
+		"description": "La app sigue ejecutándose en la bandeja a menos que la cierres.",
+		"tray": "Ocultar en la bandeja",
+		"quit": "Salir de la app",
+		"cancel": "Cancelar",
+		"remember": "Recordar mi elección"
+	}
+}

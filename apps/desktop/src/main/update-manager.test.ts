@@ -101,6 +101,27 @@ describe("update manager orchestration", () => {
 		expect(channels.resource?.check).toHaveBeenLastCalledWith(false)
 	})
 
+	it("does nothing when there is no resource channel and auto-update is off", async () => {
+		// A read-only install (no resource channel) with auto-update off must
+		// not probe or auto-download anything.
+		const channels: Channels = {
+			full: makeChannels("none").full,
+			resource: undefined,
+		}
+		const { manager } = makeManager(channels, { enabled: false })
+		await manager.check()
+		expect(channels.full.check).not.toHaveBeenCalled()
+	})
+
+	it("still runs the full channel on a manual check when auto-update is off", async () => {
+		// The About "check for updates" button is manual: it must bypass the
+		// gate and let a full-channel update download.
+		const channels = makeChannels("full")
+		const { manager } = makeManager(channels, { enabled: false })
+		await manager.check(true)
+		expect(channels.full.check).toHaveBeenCalledTimes(1)
+	})
+
 	it("no-ops while a check is in flight or an update is pending", async () => {
 		const channels = makeChannels("none")
 		const { manager } = makeManager(channels)
@@ -193,20 +214,26 @@ describe("update manager cadence", () => {
 		manager.dispose()
 	})
 
-	it("stops scheduling when disabled and resumes on enable", async () => {
+	it("probes on the cadence even when disabled but never auto-runs the full channel", async () => {
 		vi.useFakeTimers()
-		const channels = makeChannels("none")
+		const channels = makeChannels("full")
 		const { manager } = makeManager(channels, { enabled: false })
-		await vi.advanceTimersByTimeAsync(15_000)
-		expect(channels.resource?.check).not.toHaveBeenCalled()
 
-		manager.setEnabled(true)
+		// Disabled still probes the resource channel on boot (the availability
+		// dot needs it), but the full channel must never auto-run.
 		await vi.advanceTimersByTimeAsync(15_000)
 		expect(channels.resource?.check).toHaveBeenCalledTimes(1)
+		expect(channels.full.check).not.toHaveBeenCalled()
 
-		manager.setEnabled(false)
+		// The daily cadence continues too.
 		await vi.advanceTimersByTimeAsync(24 * 60 * 60 * 1000)
-		expect(channels.resource?.check).toHaveBeenCalledTimes(1)
+		expect(channels.resource?.check).toHaveBeenCalledTimes(2)
+		expect(channels.full.check).not.toHaveBeenCalled()
+
+		// Enabling resumes the full update path (resource returns "full").
+		manager.setEnabled(true)
+		await manager.check()
+		expect(channels.full.check).toHaveBeenCalledTimes(1)
 
 		manager.dispose()
 	})

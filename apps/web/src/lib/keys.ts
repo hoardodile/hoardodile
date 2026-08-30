@@ -38,6 +38,12 @@ export const prefKeys = {
 	authSessionIdleTimeoutSeconds: "auth.sessionIdleTimeoutSeconds",
 	searchLive: "search.live",
 	/**
+	 * Desktop-only: the user has already seen the update at this version
+	 * (opened About), so the update-available dot stays hidden until a
+	 * strictly newer release arrives. Never written or read in the browser.
+	 */
+	updateLastSeenVersion: "update.lastSeenVersion",
+	/**
 	 * Desktop-only: the last resolved route, so a reopened window (tray /
 	 * relaunch) returns to the page the user left. Never written or read
 	 * in the browser.

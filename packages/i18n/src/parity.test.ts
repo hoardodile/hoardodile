@@ -15,6 +15,7 @@
  * documented conventions in `src/core.ts` and the catalog registries.
  */
 import { describe, expect, it } from "vitest"
+import { SHELL_CATALOGS } from "./catalogs/shell.ts"
 import { UI_CATALOGS } from "./catalogs/ui.ts"
 import { WORKBENCH_CATALOGS } from "./catalogs/workbench.ts"
 import { CATALOGS } from "./catalogs.ts"
@@ -172,4 +173,44 @@ describe("i18n catalog parity", () => {
 	checkCatalogLockstep(CATALOGS)
 	checkCatalogLockstep(UI_CATALOGS)
 	checkCatalogLockstep(WORKBENCH_CATALOGS)
+	checkCatalogLockstep(SHELL_CATALOGS)
+})
+
+describe("shell catalog subset", () => {
+	// The shell bundle must carry only the `desktopShell` + `closeConfirm`
+	// subset, and those strings must exactly match their source catalogs so
+	// the shell and the app/`ui` surfaces never drift.
+	it("desktopShell entries match the app catalog for every language", () => {
+		const PREFIX = "desktopShell."
+		for (const [language, catalog] of Object.entries(SHELL_CATALOGS)) {
+			const shell = flatten(catalog)
+			const source = flatten(
+				CATALOGS[language as keyof typeof CATALOGS]
+					.desktopShell as unknown as Record<string, unknown>,
+			)
+			const sourceByKey = new Map(source.map((r) => [r.key, r.value]))
+			for (const entry of shell) {
+				if (!entry.key.startsWith(PREFIX)) continue
+				const expected = sourceByKey.get(entry.key.slice(PREFIX.length))
+				expect(expected, `${language}: ${entry.key}`).toBe(entry.value)
+			}
+		}
+	})
+
+	it("closeConfirm entries match the ui catalog for every language", () => {
+		const PREFIX = "closeConfirm."
+		for (const [language, catalog] of Object.entries(SHELL_CATALOGS)) {
+			const shell = flatten(catalog)
+			const source = flatten(
+				UI_CATALOGS[language as keyof typeof UI_CATALOGS]
+					.closeConfirm as unknown as Record<string, unknown>,
+			)
+			const sourceByKey = new Map(source.map((r) => [r.key, r.value]))
+			for (const entry of shell) {
+				if (!entry.key.startsWith(PREFIX)) continue
+				const expected = sourceByKey.get(entry.key.slice(PREFIX.length))
+				expect(expected, `${language}: ${entry.key}`).toBe(entry.value)
+			}
+		}
+	})
 })
