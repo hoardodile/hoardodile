@@ -96,13 +96,23 @@ export function ResEditPanel(props: ResEditPanelProps) {
 	const knownIds = new Set(list.map((p) => p.id))
 	// A resource whose plugin id the server has never seen (uninstalled
 	// without a settings record) would otherwise render a blank trigger —
-	// surface it as an explicit "missing" option instead.
+	// surface it as an explicit "missing" option instead. The residual id
+	// is a long UUID that would blow out the two-column field width, so
+	// render it truncated with the full id discoverable via title.
 	const unknownCurrent =
 		resource.contentPluginId !== null && !knownIds.has(resource.contentPluginId)
 			? [
 					{
 						value: resource.contentPluginId,
-						label: `${t("plugins.missing")} · ${resource.contentPluginId}`,
+						label: (
+							<span
+								title={resource.contentPluginId}
+								className="inline-flex min-w-0 align-baseline"
+							>
+								{t("plugins.missing")} ·{" "}
+								{shortPluginId(resource.contentPluginId)}
+							</span>
+						),
 					},
 				]
 			: []
@@ -314,4 +324,11 @@ export function ResEditPanel(props: ResEditPanelProps) {
 			) : null}
 		</Form>
 	)
+}
+
+/** Render a long plugin id compactly for the "missing" options — a UUID
+    would otherwise overflow the selector — keeping the full id discoverable
+    via the element's title. */
+function shortPluginId(id: string): string {
+	return id.length > 12 ? `${id.slice(0, 8)}…` : id
 }
