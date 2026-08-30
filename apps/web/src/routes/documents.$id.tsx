@@ -5,7 +5,6 @@ import {
 
 import { Input } from "@hoardodile/ui/components/input"
 import { MobileDrawer } from "@hoardodile/ui/components/mobile-drawer"
-import { Skeleton } from "@hoardodile/ui/components/skeleton"
 import { toast } from "@hoardodile/ui/components/toast"
 import { cn } from "@hoardodile/ui/lib/utils"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
@@ -16,6 +15,7 @@ import { useTranslation } from "react-i18next"
 import { docDetailPageQueryOptions } from "@/features/doc"
 import { DocDetailHeader } from "@/features/doc/components/DocDetailHeader"
 import { DocDetailMeta } from "@/features/doc/components/DocDetailMeta"
+import { DocEditorSkeleton } from "@/features/doc/components/DocEditorSkeleton"
 import type { HeadingInfo } from "@/features/doc/components/DocHeadingNav"
 import { DocNotFound } from "@/features/doc/components/DocNotFound"
 import {
@@ -410,7 +410,7 @@ function DocDetailRoute() {
 							// Same-height placeholder while the editor chunk
 							// loads; the deferred-mount skeleton inside
 							// DocEditorColumn takes over once it lands.
-							<Skeleton className="min-h-[50svh] w-full" />
+							<DocEditorSkeleton />
 						}
 					>
 						<DocEditorColumn

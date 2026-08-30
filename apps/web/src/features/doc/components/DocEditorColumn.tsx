@@ -1,4 +1,3 @@
-import { Skeleton } from "@hoardodile/ui/components/skeleton"
 import type { CSSProperties, Ref } from "react"
 import { memo } from "react"
 import { DocStatusBar } from "@/features/doc/components/DocStatusBar"
@@ -6,6 +5,7 @@ import {
 	DocEditor,
 	type DocEditorHandle,
 } from "@/features/doc/editor/DocEditor"
+import { DocEditorSkeleton } from "./DocEditorSkeleton"
 
 export type DocMainEditorProps = {
 	readonly value: Record<string, unknown> | undefined
@@ -96,9 +96,10 @@ export const DocEditorColumn = memo(function DocEditorColumn(
 		>
 			{!editorMounted ? (
 				// Same-height placeholder so the deferred editor mount does
-				// not shift the layout when it lands. Transparent so the
-				// loading area blends with the document background.
-				<Skeleton className="min-h-[50svh] w-full bg-transparent" />
+				// not shift the layout when it lands. Content-shaped so the
+				// sticky header and title paint over a readable skeleton
+				// instead of a blank void while the blocknote chunk loads.
+				<DocEditorSkeleton />
 			) : diffMode && diffEditor !== undefined ? (
 				diffEditor.value !== undefined ? (
 					<DocEditor
@@ -114,7 +115,7 @@ export const DocEditorColumn = memo(function DocEditorColumn(
 					// content is actually available — mounting empty and
 					// relying on the later diff apply would leave a blank
 					// compare view on any failure.
-					<Skeleton className="min-h-[50svh] w-full bg-transparent" />
+					<DocEditorSkeleton />
 				)
 			) : (
 				<DocEditor
