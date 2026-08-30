@@ -1,5 +1,5 @@
 import { createServer, type Server } from "node:http"
-import { afterEach, describe, expect, it } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
 import { serveWorkbench } from "../scripts/serve.mjs"
 
 /**
@@ -54,5 +54,35 @@ describe("serveWorkbench port rebind", () => {
 		expect(workbench.listening).toBe(true)
 		expect(bound).not.toBe(busyPort)
 		expect(bound).toBeGreaterThan(busyPort)
+	})
+
+	it("calls onReady with the bound URL and suppresses the default log", async () => {
+		const blocker = track(createServer(() => {}))
+		await new Promise<void>((resolveListen) =>
+			blocker.listen(0, "127.0.0.1", resolveListen),
+		)
+		const busyPort = boundPort(blocker)
+
+		const logSpy = vi.spyOn(console, "log").mockImplementation(() => {})
+		const onReady = vi.fn()
+		try {
+			const workbench = track(
+				await serveWorkbench({
+					port: busyPort,
+					host: "127.0.0.1",
+					providers: { resources: () => [] },
+					onReady,
+				}),
+			)
+			const bound = boundPort(workbench)
+			expect(workbench.listening).toBe(true)
+			expect(onReady).toHaveBeenCalledWith(`http://127.0.0.1:${bound}`)
+			expect(bound).not.toBe(busyPort)
+			expect(logSpy).not.toHaveBeenCalledWith(
+				expect.stringMatching(/serving on/),
+			)
+		} finally {
+			logSpy.mockRestore()
+		}
 	})
 })

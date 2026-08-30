@@ -34,7 +34,7 @@ const MAX_PORT_ATTEMPTS = 20
  * Returns the http.Server.
  */
 export function serveWorkbench(opts) {
-	const { pluginDir, dataDir, port = 5199, host = "127.0.0.1" } = opts
+	const { pluginDir, dataDir, port = 5199, host = "127.0.0.1", onReady } = opts
 	if (pluginDir === undefined) {
 		console.warn("[workbench] no plugin dir — pass --plugin <dist-dir>")
 	}
@@ -86,7 +86,13 @@ export function serveWorkbench(opts) {
 			const address = server.address()
 			const bound =
 				address === null || typeof address === "string" ? attempt : address.port
-			console.log(`[workbench] serving on http://${host}:${bound}`)
+			const url = `http://${host}:${bound}`
+			// The caller may own the startup message so it can print it only
+			// after the plugin build settles (the CLI does, otherwise vite's
+			// watch-build output buries the URL). Standalone servers keep the
+			// plain log line.
+			if (onReady) onReady(url)
+			else console.log(`[workbench] serving on ${url}`)
 			resolveStart(server)
 		}
 		function onError(err) {

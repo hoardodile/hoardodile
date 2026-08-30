@@ -142,8 +142,18 @@ export type ServeWorkbenchOptions = {
 	 * URL reports the actual one; read `server.address()` for it.
 	 */
 	readonly port?: number
-	/** Bind host. Defaults to 127.0.0.1. */
+	/**
+	 * Bind host. Defaults to 127.0.0.1.
+	 */
 	readonly host?: string
+	/**
+	 * Called once with the actual bound URL (`http://<host>:<port>`) once
+	 * the server is listening. When provided it replaces the default
+	 * `[workbench] serving on ...` log line — the caller owns the startup
+	 * message, so it can print it only after e.g. the plugin build has
+	 * settled, instead of being buried under the watcher's output.
+	 */
+	readonly onReady?: (url: string) => void
 }
 
 /**
