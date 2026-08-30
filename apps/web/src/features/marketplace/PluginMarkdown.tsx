@@ -41,7 +41,7 @@ function resolveLinkHref(href: string, repo: string): string {
 
 /** Resolve a markdown image: absolute/data URIs pass through, relative
     paths resolve against `imageBaseUrl` when provided (the release-download
-    base for intro assets), else against the repo root on
+    base for readme assets), else against the repo root on
     `raw.githubusercontent.com`. */
 function resolveImageSrc(
 	src: string,
@@ -62,7 +62,7 @@ function resolveImageSrc(
 }
 
 /**
- * Render plugin-supplied markdown (release intros, repo READMEs). Raw HTML
+ * Render plugin-supplied markdown (release readmes, repo READMEs). Raw HTML
  * is intentionally NOT parsed (no rehype-raw) — markdown only, so remote
  * content can never inject elements. Links go through {@link ExternalLink}
  * so the desktop shell opens them in the OS browser.
@@ -71,9 +71,9 @@ export function PluginMarkdown(props: {
 	readonly repo: string
 	readonly markdown: string
 	/**
-	 * Base URL relative image references resolve against. The intro tab
+	 * Base URL relative image references resolve against. The readme tab
 	 * passes the release-download base
-	 * (`https://github.com/<repo>/releases/download/<tag>/`) so intro images
+	 * (`https://github.com/<repo>/releases/download/<tag>/`) so readme images
 	 * (published as flat release assets) render from the release itself.
 	 * When omitted, relative images resolve against the repo root on
 	 * `raw.githubusercontent.com` (release notes / README behavior).

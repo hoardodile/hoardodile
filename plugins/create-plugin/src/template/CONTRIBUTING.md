@@ -51,8 +51,8 @@ Pushing the tag by hand still works as a fallback:
 ## Marketplace publishing
 
 1. Add the repository address to your registry repo's `registry.json`.
-2. Ship `intro.<locale>.md` files (see the README) so each release carries a
-   version-pinned introduction the app can show.
+2. Ship a `README.md` fallback plus `README.<locale>.md` files (see the
+   README) so each release carries a version-pinned readme the app can show.
 
 ## Issues and pull requests
 

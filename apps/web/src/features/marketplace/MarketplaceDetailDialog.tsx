@@ -30,7 +30,7 @@ export type MarketPlugin =
 export type InstalledPlugin = RouterOutputs["plugin"]["listAll"][number]
 
 /** The markdown tabs of the detail dialog. */
-type MarketplaceTab = "intro" | "release"
+type MarketplaceTab = "readme" | "release"
 
 /** `owner/repo` → its GitHub page URL (the display form the UI shows). */
 export function marketRepoUrl(repo: string): string {
@@ -49,8 +49,8 @@ export function securityReportUrl(repo: string): string {
 
 /**
  * `owner/repo` + release tag → the base URL release assets are served from.
- * The intro `PluginMarkdown` resolves relative image references against it,
- * so intro images (published as flat release assets) render from the release.
+ * The readme `PluginMarkdown` resolves relative image references against it,
+ * so readme images (published as flat release assets) render from the release.
  */
 export function releaseDownloadBase(repo: string, tag: string): string {
 	return `https://github.com/${repo}/releases/download/${tag}/`
@@ -79,22 +79,23 @@ export function versionDateLine(
 }
 
 /**
- * Pick the intro markdown for a UI language: exact locale → base language
- * (`zh-CN` → `zh`) → `en` → the only shipped language.
+ * Pick the readme markdown for a UI language: exact locale → base language
+ * (`zh-CN` → `zh`) → `en` (the bare `README.md` fallback) → the only
+ * shipped language.
  */
-function pickIntroMarkdown(
-	intro: Readonly<Record<string, string>> | undefined,
+export function pickReadmeMarkdown(
+	readme: Readonly<Record<string, string>> | undefined,
 	language: string,
 ): string | undefined {
-	if (intro === undefined) return undefined
-	const exact = intro[language]
+	if (readme === undefined) return undefined
+	const exact = readme[language]
 	if (exact !== undefined) return exact
 	const base = language.split("-")[0] ?? language
-	const partial = intro[base]
+	const partial = readme[base]
 	if (partial !== undefined) return partial
-	const english = intro.en
+	const english = readme.en
 	if (english !== undefined) return english
-	return Object.values(intro)[0]
+	return Object.values(readme)[0]
 }
 
 /**
@@ -126,19 +127,19 @@ export function MarketplaceDetailDialog(props: {
 		props.onUpdate !== undefined &&
 		marketUpdateAvailable(plugin, installedVersion) &&
 		latest?.assetUrl !== undefined
-	const [tab, setTab] = useState<MarketplaceTab>("intro")
+	const [tab, setTab] = useState<MarketplaceTab>("readme")
 
 	useEffect(() => {
-		if (props.open) setTab("intro")
+		if (props.open) setTab("readme")
 	}, [props.open, props.plugin.id])
 
-	const introContent = pickIntroMarkdown(latest?.intro, i18n.language)
-	const introLanguages =
-		latest?.intro === undefined ? [] : Object.keys(latest.intro)
-	// The intro render resolves relative images against the release's
-	// download base (intro assets are published with each release). `latest`
-	// is non-null whenever `introContent` is, but TS cannot track that link.
-	const introImageBase =
+	const readmeContent = pickReadmeMarkdown(latest?.readme, i18n.language)
+	const readmeLanguages =
+		latest?.readme === undefined ? [] : Object.keys(latest.readme)
+	// The readme render resolves relative images against the release's
+	// download base (readme assets are published with each release). `latest`
+	// is non-null whenever `readmeContent` is, but TS cannot track that link.
+	const readmeImageBase =
 		latest === undefined
 			? undefined
 			: releaseDownloadBase(plugin.repo, latest.tag)
@@ -266,9 +267,9 @@ export function MarketplaceDetailDialog(props: {
 				panelClassName="mt-3"
 				items={[
 					{
-						value: "intro",
-						label: t("marketplace.intro"),
-						testId: "marketplace-detail-tab-intro",
+						value: "readme",
+						label: t("marketplace.readme"),
+						testId: "marketplace-detail-tab-readme",
 						panel: (
 							<div className="flex flex-col gap-4">
 								<div className="flex flex-col gap-3">
@@ -351,10 +352,10 @@ export function MarketplaceDetailDialog(props: {
 											</span>
 										</MetadataRow>
 									)}
-									{introLanguages.length > 0 && (
+									{readmeLanguages.length > 0 && (
 										<MetadataRow label={t("marketplace.languages")}>
 											<span className="flex flex-wrap gap-1">
-												{introLanguages.map((locale) => (
+												{readmeLanguages.map((locale) => (
 													<MetaChip key={locale}>{locale}</MetaChip>
 												))}
 											</span>
@@ -387,15 +388,15 @@ export function MarketplaceDetailDialog(props: {
 								</div>
 
 								<div className="flex flex-col gap-1">
-									{introContent !== undefined ? (
+									{readmeContent !== undefined ? (
 										<PluginMarkdown
 											repo={plugin.repo}
-											markdown={introContent}
-											imageBaseUrl={introImageBase}
+											markdown={readmeContent}
+											imageBaseUrl={readmeImageBase}
 										/>
 									) : (
 										<p className="text-xs text-muted-foreground">
-											{t("marketplace.noIntro")}
+											{t("marketplace.noReadme")}
 										</p>
 									)}
 								</div>

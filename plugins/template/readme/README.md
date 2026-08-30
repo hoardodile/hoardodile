@@ -1,9 +1,9 @@
 # My plugin
 
-_Replace this introduction with a real overview: what content the plugin
+_Replace this readme with a real overview: what content the plugin
 detects, how it renders it, and where users see it._
 
-This introduction ships with **every GitHub release** — edit it per release so
+This readme ships with **every GitHub release** — edit it per release so
 each version presents its own notes in the marketplace.
 
 ## Features

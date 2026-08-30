@@ -290,7 +290,7 @@ describe("createMarketplaceService.refresh", () => {
 			version: "1.2.3",
 			assetName: `${PLUGIN_ID}-v1.2.3.zip`,
 		})
-		expect(plugin.latest?.intro).toBeUndefined()
+		expect(plugin.latest?.readme).toBeUndefined()
 		expect(plugin.permissions.sourceMeta).toBe(true)
 		// The full manifest rides the snapshot for the UI (i18n names,
 		// search-category popover) — same projection the plugins page uses.
@@ -822,7 +822,7 @@ describe("createMarketplaceService.refresh", () => {
 		expect(snapshot.plugins[0]?.latest?.sha256).toBe(sha256("zip"))
 	})
 
-	test("loads the release intro assets per locale", async () => {
+	test("loads the release readme assets per locale", async () => {
 		const f = fixture!
 		f.prefs.set("marketplace.registryRepo", "me/registry")
 		f.addJson(rawUrl("me", "registry", "HEAD", "registry.json"), {
@@ -835,14 +835,14 @@ describe("createMarketplaceService.refresh", () => {
 			assets: [
 				...RELEASE.assets,
 				{
-					name: "intro.en.md",
+					name: "README.md",
 					browser_download_url:
-						"https://github.com/me/cat/releases/download/v1.2.3/intro.en.md",
+						"https://github.com/me/cat/releases/download/v1.2.3/README.md",
 				},
 				{
-					name: "intro.zh-CN.md",
+					name: "README.zh-CN.md",
 					browser_download_url:
-						"https://github.com/me/cat/releases/download/v1.2.3/intro.zh-CN.md",
+						"https://github.com/me/cat/releases/download/v1.2.3/README.zh-CN.md",
 				},
 				{
 					name: "unrelated.md",
@@ -852,21 +852,21 @@ describe("createMarketplaceService.refresh", () => {
 			],
 		})
 		f.add(
-			"https://github.com/me/cat/releases/download/v1.2.3/intro.en.md",
-			"# Intro en",
+			"https://github.com/me/cat/releases/download/v1.2.3/README.md",
+			"# Readme",
 		)
 		f.add(
-			"https://github.com/me/cat/releases/download/v1.2.3/intro.zh-CN.md",
-			"# 介绍 zh",
+			"https://github.com/me/cat/releases/download/v1.2.3/README.zh-CN.md",
+			"# 说明 zh",
 		)
 
 		const snapshot = await f.service.refresh(false)
 
-		expect(snapshot.plugins[0]?.latest?.intro).toEqual({
-			en: "# Intro en",
-			"zh-CN": "# 介绍 zh",
+		expect(snapshot.plugins[0]?.latest?.readme).toEqual({
+			en: "# Readme",
+			"zh-CN": "# 说明 zh",
 		})
-		// Non-intro assets are never fetched.
+		// Non-readme assets are never fetched.
 		expect(
 			f.fetcher.fetchToFile.mock.calls.some(([url]) =>
 				String(url).includes("unrelated.md"),
@@ -874,7 +874,7 @@ describe("createMarketplaceService.refresh", () => {
 		).toBe(false)
 	})
 
-	test("a failing intro locale drops just that locale", async () => {
+	test("a failing readme locale drops just that locale", async () => {
 		const f = fixture!
 		f.prefs.set("marketplace.registryRepo", "me/registry")
 		f.addJson(rawUrl("me", "registry", "HEAD", "registry.json"), {
@@ -887,25 +887,81 @@ describe("createMarketplaceService.refresh", () => {
 			assets: [
 				...RELEASE.assets,
 				{
-					name: "intro.en.md",
+					name: "README.md",
 					browser_download_url:
-						"https://github.com/me/cat/releases/download/v1.2.3/intro.en.md",
+						"https://github.com/me/cat/releases/download/v1.2.3/README.md",
 				},
 				{
-					name: "intro.ja.md",
+					name: "README.ja.md",
 					browser_download_url:
-						"https://github.com/me/cat/releases/download/v1.2.3/intro.ja.md",
+						"https://github.com/me/cat/releases/download/v1.2.3/README.ja.md",
 				},
 			],
 		})
 		f.add(
-			"https://github.com/me/cat/releases/download/v1.2.3/intro.en.md",
-			"# Intro en",
+			"https://github.com/me/cat/releases/download/v1.2.3/README.md",
+			"# Readme",
 		)
 
-		// `intro.ja.md` is missing → only the English intro survives.
+		// `README.ja.md` is missing → only the English fallback survives.
 		const snapshot = await f.service.refresh(false)
-		expect(snapshot.plugins[0]?.latest?.intro).toEqual({ en: "# Intro en" })
+		expect(snapshot.plugins[0]?.latest?.readme).toEqual({ en: "# Readme" })
+	})
+
+	test("maps the bare README.md fallback to en", async () => {
+		const f = fixture!
+		f.prefs.set("marketplace.registryRepo", "me/registry")
+		f.addJson(rawUrl("me", "registry", "HEAD", "registry.json"), {
+			version: 1,
+			plugins: ["me/cat"],
+		})
+		f.addJson(rawUrl("me", "cat", "HEAD", "manifest.json"), MANIFEST)
+		f.addJson("https://api.github.com/repos/me/cat/releases/latest", {
+			...RELEASE,
+			assets: [
+				...RELEASE.assets,
+				{
+					name: "README.md",
+					browser_download_url:
+						"https://github.com/me/cat/releases/download/v1.2.3/README.md",
+				},
+			],
+		})
+		f.add(
+			"https://github.com/me/cat/releases/download/v1.2.3/README.md",
+			"# Readme",
+		)
+
+		const snapshot = await f.service.refresh(false)
+		expect(snapshot.plugins[0]?.latest?.readme).toEqual({ en: "# Readme" })
+	})
+
+	test("keeps only the shipped locale when there is no bare README.md", async () => {
+		const f = fixture!
+		f.prefs.set("marketplace.registryRepo", "me/registry")
+		f.addJson(rawUrl("me", "registry", "HEAD", "registry.json"), {
+			version: 1,
+			plugins: ["me/cat"],
+		})
+		f.addJson(rawUrl("me", "cat", "HEAD", "manifest.json"), MANIFEST)
+		f.addJson("https://api.github.com/repos/me/cat/releases/latest", {
+			...RELEASE,
+			assets: [
+				...RELEASE.assets,
+				{
+					name: "README.zh.md",
+					browser_download_url:
+						"https://github.com/me/cat/releases/download/v1.2.3/README.zh.md",
+				},
+			],
+		})
+		f.add(
+			"https://github.com/me/cat/releases/download/v1.2.3/README.zh.md",
+			"# 说明 zh",
+		)
+
+		const snapshot = await f.service.refresh(false)
+		expect(snapshot.plugins[0]?.latest?.readme).toEqual({ zh: "# 说明 zh" })
 	})
 
 	test("throws when the registry file fails validation", async () => {

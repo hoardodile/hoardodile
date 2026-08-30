@@ -72,7 +72,7 @@ const SNAPSHOT = {
 				assetName: `${PLUGIN_ID}-v1.2.3.zip`,
 				assetUrl: `https://github.com/me/cat-viewer/releases/download/v1.2.3/${PLUGIN_ID}-v1.2.3.zip`,
 				sha256: "abc123def456",
-				intro: { en: "# Intro heading\n\nIntro **body**." },
+				readme: { en: "# Readme heading\n\nReadme **body**." },
 			},
 			error: undefined,
 		},
@@ -665,17 +665,17 @@ describe("MarketplacePanel", () => {
 		expect(securityLink?.href).toContain(
 			"github.com/me/cat-viewer/security/advisories/new",
 		)
-		// Intro tab is the default and renders the release intro markdown.
-		expect(within(dialog).getByText("Intro heading")).toBeInTheDocument()
+		// Readme tab is the default and renders the release readme markdown.
+		expect(within(dialog).getByText("Readme heading")).toBeInTheDocument()
 		// Release notes tab switches to the release body markdown.
 		await user.click(
 			within(dialog).getByTestId("marketplace-detail-tab-release"),
 		)
 		expect(within(dialog).getByText("First release")).toBeInTheDocument()
-		expect(within(dialog).queryByText("Intro heading")).not.toBeInTheDocument()
+		expect(within(dialog).queryByText("Readme heading")).not.toBeInTheDocument()
 	})
 
-	it("resolves intro image references against the release download URL", async () => {
+	it("resolves readme image references against the release download URL", async () => {
 		installClient({
 			config: { registryRepo: "me/registry" },
 			snapshot: {
@@ -685,7 +685,7 @@ describe("MarketplacePanel", () => {
 						...SNAPSHOT.plugins[0]!,
 						latest: {
 							...SNAPSHOT.plugins[0]!.latest!,
-							intro: { en: "# Intro\n\n![shot](shot.png)" },
+							readme: { en: "# Readme\n\n![shot](shot.png)" },
 						},
 					},
 				],
@@ -701,7 +701,7 @@ describe("MarketplacePanel", () => {
 		)
 	})
 
-	it("shows a hint when the release ships no intro and keeps the release notes tab", async () => {
+	it("shows a hint when the release ships no readme and keeps the release notes tab", async () => {
 		installClient({
 			config: { registryRepo: "me/registry" },
 			snapshot: {
@@ -709,7 +709,7 @@ describe("MarketplacePanel", () => {
 				plugins: [
 					{
 						...SNAPSHOT.plugins[0]!,
-						latest: { ...SNAPSHOT.plugins[0]!.latest!, intro: undefined },
+						latest: { ...SNAPSHOT.plugins[0]!.latest!, readme: undefined },
 					},
 				],
 			},
@@ -718,9 +718,9 @@ describe("MarketplacePanel", () => {
 
 		await user.click(await screen.findByTestId(`marketplace-view-${PLUGIN_ID}`))
 		const dialog = await screen.findByTestId("marketplace-detail-dialog")
-		// No intro → the intro tab shows its hint…
+		// No readme → the readme tab shows its hint…
 		expect(
-			within(dialog).getByText("This release ships no introduction"),
+			within(dialog).getByText("This release ships no readme"),
 		).toBeInTheDocument()
 		// …and the release body lives in its own tab.
 		await user.click(

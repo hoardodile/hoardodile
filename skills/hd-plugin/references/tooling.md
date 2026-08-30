@@ -31,7 +31,7 @@ src/
   index.css            entry styles (e.g. @import "tailwindcss")
   __tests__/           vitest suites
 testdata/              sample resources for `plugin dev`
-intro.<locale>.md      per-release marketplace introduction (see below)
+README.md / README.<locale>.md   per-release marketplace readme — bare `README.md` is the fallback (see below)
 CONTRIBUTING.md        dev loop, releases, marketplace publishing
 SECURITY.md            private-advisory reporting policy
 .github/               CI, dependabot, issue templates, release workflow
@@ -163,17 +163,18 @@ Publishing is a tag, not a build:
 
 1. `hoardodile plugin package` (or the release workflow) produces
    `release/<id>-<version>.zip` + `.<sha256>`.
-2. Ship `intro.<locale>.md` files at the repo root for the languages you
-   support — the marketplace detail view shows the release's **Intro**
-   tab, resolved for the user's UI language (exact locale → base
-   language → `en` → the only shipped language), and the release body
-   always shows in **Release notes**. Use the app's language codes as
-   the file names (`intro.en.md`, `intro.zh.md`, `intro.ja.md`,
-   `intro.de.md`, `intro.es.md`).
+2. Ship a bare `README.md` fallback plus a `README.<locale>.md` file per
+   extra language in the `readme/` folder — the marketplace detail view
+   shows the release's **Readme** tab, resolved for the user's UI language
+   (exact locale → base language → the `README.md` fallback), and the
+   release body always shows in **Release notes**. `README.md` normally
+   carries the English text, so no `README.en.md` is needed; use the app's
+   language codes for the extra files (`README.zh.md`, `README.ja.md`,
+   `README.de.md`, `README.es.md`).
 3. Push a tag `v<version>` matching `manifest.json` — the template's
-   [`.github/workflows/release.yml`](../../../plugins/template/.github/workflows/release.yml) builds, runs `plugin package`, and
-   creates the GitHub release with the zip, the sha256 and every
-   `intro.*.md` asset.
+   [`.github/workflows/release.yml`](../../../plugins/template/.github/workflows/release.yml) builds, runs `plugin package`,
+   gates the `readme/` folder with `pnpm readme:check`, and creates the
+   GitHub release with the zip, the sha256 and every `README.*.md` asset.
 4. Add the repository address to your registry's `registry.json`.
 
 Requirements: all repos are public; tags follow `v<version>`. The app

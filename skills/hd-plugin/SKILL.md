@@ -75,8 +75,8 @@ lives in `references/`.
    - **Marketplace.** `hoardodile plugin package` produces
      `release/<id>-<version>.zip` plus a `.sha256` sidecar, then push a
      tag `v<version>` — the template's `release.yml` builds, packages,
-     and publishes the GitHub release (zip + sha256 + the `intro.*.md`
-     assets). Add the repository address to a registry `registry.json`
+     and publishes the GitHub release (zip + sha256 + the `README.*.md` assets; a bare `README.md` is the fallback)
+     Add the repository address to a registry `registry.json`
      (built-in default: [`hoardodile/marketplace`](https://github.com/hoardodile/marketplace)) and the app's
      **Settings → Marketplace** lists and installs it. Declare
      `minAppVersion` honestly: hosts below it refuse install/update

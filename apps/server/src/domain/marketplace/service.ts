@@ -62,7 +62,7 @@ const DAY_MS = 24 * 60 * 60_000
 const MAX_RAW_BYTES = 512 * 1024
 const MAX_API_BYTES = 2 * 1024 * 1024
 const MAX_SHA256_BYTES = 8 * 1024
-const MAX_INTRO_BYTES = 256 * 1024
+const MAX_README_BYTES = 256 * 1024
 /** Byte cap for the free GitHub releases feed (rate-limit fallback). */
 const MAX_ATOM_BYTES = 256 * 1024
 /** Release-body cap for the dedicated Release notes tab (still bounded by the payload cap). */
@@ -70,8 +70,8 @@ const NOTES_MAX_LENGTH = 128_000
 const REFS = ["HEAD", "main", "master"] as const
 const API_FETCH_CONCURRENCY = 5
 const USER_AGENT = "hoardodile-plugin-marketplace"
-/** Release-asset names for the author-published intro: `intro.<locale>.md`. */
-const INTRO_ASSET_RE = /^intro\.([A-Za-z0-9-]{1,20})\.md$/
+/** Release-asset names for the author-published readme: `README.<locale>.md` (bare `README.md` is the fallback). */
+const README_ASSET_RE = /^README\.([A-Za-z0-9-]{1,20})\.md$/
 
 /**
  * Hosts a marketplace install URL may land on. `github.com` is the
@@ -784,7 +784,7 @@ export function createMarketplaceService(
 			asset === undefined
 				? undefined
 				: await readSha256Sidecar(release.assets ?? [], asset.name)
-		const intro = await readIntroAssets(release.assets ?? [])
+		const readme = await readReadmeAssets(release.assets ?? [])
 		const latest: MarketLatest = {
 			tag: release.tag_name,
 			version,
@@ -794,37 +794,52 @@ export function createMarketplaceService(
 			assetName: asset?.name,
 			assetUrl: asset?.browser_download_url,
 			...(sidecar !== undefined ? { sha256: sidecar } : {}),
-			...(intro !== undefined ? { intro } : {}),
+			...(readme !== undefined ? { readme } : {}),
 		}
 		return latest
 	}
 
 	/**
-	 * The `intro.<locale>.md` release assets — the plugin's version-pinned
-	 * introduction, one markdown per locale. Best-effort per locale: a
-	 * missing/over-limit asset just drops that locale; all failures leave
-	 * `intro` unset rather than failing the catalog entry.
+	 * The `README.<locale>.md` release assets plus the bare `README.md`
+	 * fallback — the plugin's version-pinned readme, one markdown per
+	 * locale. The bare `README.md` is stored under the `en` key: English
+	 * normally lives there (no `README.en.md` is needed) and every other
+	 * language falls back to it. Best-effort per locale: a missing or
+	 * over-limit asset just drops that locale; all failures leave
+	 * `readme` unset rather than failing the catalog entry.
 	 */
-	async function readIntroAssets(
+	async function readReadmeAssets(
 		assets: readonly GithubAsset[],
 	): Promise<Readonly<Record<string, string>> | undefined> {
-		const intro: Record<string, string> = {}
+		const readme: Record<string, string> = {}
 		for (const asset of assets) {
-			const match = asset.name.match(INTRO_ASSET_RE)
-			if (match === null) continue
-			try {
-				intro[match[1]!] = await fetchTextBestEffort(
-					[asset.browser_download_url],
-					{
-						maxBytes: MAX_INTRO_BYTES,
+			const match = asset.name.match(README_ASSET_RE)
+			if (match !== null) {
+				try {
+					readme[match[1]!] = await fetchTextBestEffort(
+						[asset.browser_download_url],
+						{
+							maxBytes: MAX_README_BYTES,
+							headers: { "User-Agent": USER_AGENT },
+						},
+					)
+				} catch {
+					// Missing or over-limit readme — skip just this locale.
+				}
+				continue
+			}
+			if (asset.name === "README.md") {
+				try {
+					readme.en = await fetchTextBestEffort([asset.browser_download_url], {
+						maxBytes: MAX_README_BYTES,
 						headers: { "User-Agent": USER_AGENT },
-					},
-				)
-			} catch {
-				// Missing or over-limit intro — skip just this locale.
+					})
+				} catch {
+					// Missing or over-limit fallback readme — skip.
+				}
 			}
 		}
-		return Object.keys(intro).length === 0 ? undefined : intro
+		return Object.keys(readme).length === 0 ? undefined : readme
 	}
 
 	/**
@@ -995,7 +1010,7 @@ function tagFromUrl(rawUrl: string | undefined): string | undefined {
 /**
  * A version-only {@link MarketLatest} built from the free feed's latest tag:
  * the version is real (a published release), but the asset / notes / sha /
- * intro are unknown — the rate limit kept us from fetching them, so
+ * readme are unknown — the rate limit kept us from fetching them, so
  * install/update stays blocked until the API recovers.
  */
 function latestFromAtom(

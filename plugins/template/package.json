@@ -11,7 +11,7 @@
 		"detect:smoke": "hoardodile plugin run detect testdata --plugin-dir dist",
 		"lint": "tsc --noEmit",
 		"test": "vitest run",
-		"intro:check": "node scripts/check-intro.mjs",
+		"readme:check": "node scripts/check-readme.mjs",
 		"release": "node scripts/release.mjs"
 	},
 	"release-it": {

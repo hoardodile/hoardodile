@@ -68,11 +68,12 @@ export type MarketLatest = {
 	/** Contents of the `<asset>.sha256` sidecar, when the release ships one. */
 	readonly sha256?: string
 	/**
-	 * The release's `intro.<locale>.md` assets — the author-published,
-	 * version-pinned plugin introduction, locale → markdown. Absent when
-	 * the release ships none.
+	 * The release's `README.<locale>.md` assets plus the bare `README.md`
+	 * fallback — the author-published, version-pinned plugin readme,
+	 * locale → markdown (the bare `README.md` is stored under `en`).
+	 * Absent when the release ships none.
 	 */
-	readonly intro?: Readonly<Record<string, string>>
+	readonly readme?: Readonly<Record<string, string>>
 }
 
 export type MarketPlugin = {

@@ -82,7 +82,7 @@ function marketPlugin(id: string, name: string) {
 			notes: null,
 			assetName: `${id}-v1.2.3.zip`,
 			assetUrl: "",
-			intro: undefined,
+			readme: undefined,
 		},
 		error: undefined,
 	}
