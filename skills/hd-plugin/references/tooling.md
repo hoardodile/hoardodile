@@ -108,6 +108,16 @@ hoardodile plugin dev             # watch-build + workbench (http://127.0.0.1:51
   not verified, so `resolveAssetUrl` works unmodified. The same policy
   subset applies: http(s) only, ≤5 redirects, `WORKBENCH_VAULT_MAX_BYTES`
   cap (default 200 MiB), optional sha256 pin, atomic write.
+- **Plugin state in the workbench.** The workbench previews your plugin
+  against the real library **read-only**, so its stored `prefs` (settings)
+  and per-resource `cache` are seeded from the library. To develop from a
+  clean slate, open **Configure → Plugin state**: **Reset settings**
+  empties the plugin's prefs, **Clear cache** empties the current
+  resource's cache, and **Restore from library** brings the stored values
+  back (the reader reloads on each action). The cleared state is a
+  workbench-local override (localStorage), so it survives the Reload
+  button and resource switches until you restore — your real library is
+  never written to.
 
 ## Test data and fixtures
 

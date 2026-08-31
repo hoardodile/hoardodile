@@ -80,7 +80,10 @@ Messages/danmaku (require manifest permissions): `listMessages()`,
 `createDanmaku({ text, anchor, mode? })`. Prefs/cache: `getPref/setPref`,
 `getCache/setCache/listCache`, `invalidate(target)` for
 `"resource" | "resources" | "messages" | "danmaku"`. Anchor jumps from
-the host arrive via `onAnchorJump(cb)`.
+the host arrive via `onAnchorJump(cb)`. For quick dev iteration, the
+workbench's **Configure → Plugin state** resets your prefs and clears the
+current resource's cache (`Reset settings` / `Clear cache`, restored from
+the library via `Restore`) — see `tooling.md`.
 
 **Reactive hooks (`ReactivePluginAPI`, from `createPluginQueryAPI`)** —
 `useFileList()`, `useMessageList()`, `useCreateMessage()`,

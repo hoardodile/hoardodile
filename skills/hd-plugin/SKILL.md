@@ -4,7 +4,7 @@ description: Author hoardodile content plugins — manifest, server hooks, ifram
 license: MIT
 metadata:
   author: hoardodile
-  version: "1.4.0"
+  version: "1.5.0"
 ---
 
 # Hoardodile Plugin Development
