@@ -62,6 +62,19 @@ work without repeats.
 - `resolveFrameUrl(filename, timeMs)` — frame thumbnail at a timestamp;
   debounce scrubbing — each call decodes a frame.
 
+- `uploadCover({ file, filename, mimeType? })` — set the **permanent
+  cover** of the resource this plugin is bound to (the client counterpart
+  of the `coverLocal` hook, which only *resolves a path inside the
+  resource*). `file` is raw image bytes (`Blob`/`ArrayBuffer`); the cover
+  type is derived **server-side from `filename`'s extension** — the real
+  host always sends the body as `application/octet-stream`, so a
+  `mimeType` is accepted but never authoritative (name the file
+  `.png`/`.jpg`/`.webp`/…). The host performs the credentialed
+  `PUT /api/resources/:id/cover` on the plugin's behalf (the sandboxed
+  iframe has no session cookie), automatically scoped to the resource
+  you're bound to, then invalidates the resource caches so cover
+  tiles/cards refresh. Resolves to `{ path }`; a failed upload rejects.
+
 Messages/danmaku (require manifest permissions): `listMessages()`,
 `createMessage({ body, anchor? })`, `listDanmaku(filter?)`,
 `createDanmaku({ text, anchor, mode? })`. Prefs/cache: `getPref/setPref`,

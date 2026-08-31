@@ -1,10 +1,10 @@
 ---
 name: hd-plugin
-description: Author hoardodile content plugins — manifest, server hooks, iframe client, and the plugin toolchain. Use when building, extending, or debugging a hoardodile plugin, adding a new resource format, or wiring detect/sourceMeta/searchMeta/coverLocal/listFiles/imageHashes/onInstall, or publishing a plugin to the marketplace.
+description: Author hoardodile content plugins — manifest, server hooks, iframe client, and the plugin toolchain. Use when building, extending, or debugging a hoardodile plugin, adding a new resource format, or wiring detect/sourceMeta/searchMeta/coverLocal/listFiles/imageHashes/onInstall, setting a resource's permanent cover via the client uploadCover, or publishing a plugin to the marketplace.
 license: MIT
 metadata:
   author: hoardodile
-  version: "1.3.0"
+  version: "1.4.0"
 ---
 
 # Hoardodile Plugin Development
@@ -36,7 +36,7 @@ lives in `references/`.
 ## Workflow
 
 1. **Get the SDK.** The `@hoardodile/*` release set is on npm
-   (0.1.2) — `pnpm dlx create-hoardodile-plugin <name>` scaffolds a
+   (0.1.5) — `pnpm dlx create-hoardodile-plugin <name>` scaffolds a
    plugin prewired to the published SDK. Registry install only — no
    tarballs or `file:` overrides. Full details:
    `references/tooling.md`.
@@ -58,7 +58,9 @@ lives in `references/`.
 4. **Client side.** `src/hooks.ts` declares the typed API pair
    (`definePluginAPI`), `src/render.tsx` mounts it
    (`createPluginRoot`). Read files, resolve URLs, write anchors and
-   messages through the API. `references/client.md`.
+   messages, and set the resource's permanent cover via
+   `uploadCover({ file, filename })` through the API.
+   `references/client.md`.
 5. **Dev loop.** `hoardodile plugin dev` builds on watch and serves the
    workbench at `http://127.0.0.1:5199`, feeding real sandbox hook
    results into your iframe — no hoardodile server needed.

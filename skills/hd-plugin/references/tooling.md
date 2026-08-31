@@ -2,7 +2,7 @@
 
 ## Getting the SDK (bootstrap)
 
-The `@hoardodile/*` release set is on npm (0.1.2): the SDK closure
+The `@hoardodile/*` release set is on npm (0.1.5): the SDK closure
 (`sdk-{types,web,react,server}`, `ui`, `i18n`) plus the terminal
 packages (`cli`, `host`, `host-web`, `workbench`) and the
 `create-plugin` scaffolder. Install from the registry directly — no
@@ -160,6 +160,14 @@ registry repo's `registry.json`, which lists plugin repository addresses:
 ```
 
 Publishing is a tag, not a build:
+
+The template ships a one-click path: `pnpm release <version>` (release-it)
+bumps `package.json` **and** `manifest.json` in lockstep
+(`scripts/sync-version.mjs`), writes `CHANGELOG.md`, commits
+`chore(release): v<version>`, tags and pushes — then the tag triggers the
+same `release.yml` below. Pushing the tag by hand still works as a
+fallback (`git tag v<version> && git push origin v<version>`), but the
+tag must match `v<manifest.version>` or the workflow fails.
 
 1. `hoardodile plugin package` (or the release workflow) produces
    `release/<id>-<version>.zip` + `.<sha256>`.
