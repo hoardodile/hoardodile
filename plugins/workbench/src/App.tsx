@@ -25,6 +25,17 @@ import {
 } from "./context.ts"
 import { type Mounted, mountIframe, pushPresentation } from "./host.ts"
 import { i18n } from "./i18n.ts"
+import {
+	hasCacheOverride,
+	hasPrefOverride,
+	loadPluginStateOverrides,
+	savePluginStateOverrides,
+	seedState,
+	withClearedCache,
+	withClearedPrefs,
+	withoutCacheOverride,
+	withoutPrefOverride,
+} from "./plugin-state.ts"
 
 function readSystemDark(): boolean {
 	return window.matchMedia("(prefers-color-scheme: dark)").matches
@@ -56,6 +67,7 @@ export function App() {
 	const [config, setConfig] = useState<WorkbenchConfig>(() =>
 		loadWorkbenchConfig(),
 	)
+	const [overrides, setOverrides] = useState(() => loadPluginStateOverrides())
 	const [manifest, setManifest] = useState<WorkbenchManifest | null>(null)
 	const [bootstrapError, setBootstrapError] = useState<string | null>(null)
 	const [resources, setResources] = useState<readonly WorkbenchResource[]>([])
@@ -65,6 +77,7 @@ export function App() {
 	const [systemDark, setSystemDark] = useState(readSystemDark)
 	const frameRef = useRef<HTMLDivElement | null>(null)
 	const mountedRef = useRef<Mounted | null>(null)
+	const overridesRef = useRef(overrides)
 	const consentEntry = useDownloadConsentEntry()
 	const fullscreenAPI = useContainerFullscreen(frameRef)
 
@@ -156,6 +169,14 @@ export function App() {
 		saveWorkbenchConfig(config)
 	}, [config])
 
+	// Keep the latest plugin-state override for the mount effect (which
+	// reads it through a ref so an override change alone never remounts),
+	// and persist every change to the workbench-local override key.
+	useEffect(() => {
+		overridesRef.current = overrides
+		savePluginStateOverrides(overrides)
+	}, [overrides])
+
 	// Latest presentation for the initial context — the mount effect must
 	// not re-run (and remount the iframe) when a setting changes. A fresh
 	// iframe gets its presentation from the initial context; only later
@@ -170,14 +191,20 @@ export function App() {
 		if (manifest === null || resource === undefined || context === null) return
 		const container = frameRef.current
 		if (container === null) return
+		const ctx = seedState(
+			overridesRef.current,
+			manifest.id,
+			resource.id,
+			context,
+		)
 		const mounted = mountIframe({
 			manifest,
 			resource,
-			ctx: context,
+			ctx,
 			context: buildContext(
 				manifest.id,
 				resource,
-				context,
+				ctx,
 				presentationRef.current,
 			),
 			container,
@@ -203,6 +230,42 @@ export function App() {
 	const patchConfig = (patch: Partial<WorkbenchConfig>) => {
 		setConfig((prev) => ({ ...prev, ...patch }))
 	}
+
+	// Plugin-state management. Each action updates the workbench-local
+	// override (persisted by the effect above) and remounts the iframe via
+	// the existing reload path, so the plugin re-seeds from the cleared
+	// (empty) baseline instead of the read-only library state.
+	const handleResetSettings = () => {
+		if (manifest === null) return
+		setOverrides(withClearedPrefs(overrides, manifest.id))
+		setReloadNonce((n) => n + 1)
+	}
+	const handleClearCache = () => {
+		if (manifest === null || resource === undefined) return
+		setOverrides(withClearedCache(overrides, manifest.id, resource.id))
+		setReloadNonce((n) => n + 1)
+	}
+	const handleRestoreState = () => {
+		if (manifest === null) return
+		const next =
+			resource === undefined
+				? withoutPrefOverride(overrides, manifest.id)
+				: withoutCacheOverride(
+						withoutPrefOverride(overrides, manifest.id),
+						manifest.id,
+						resource.id,
+					)
+		setOverrides(next)
+		setReloadNonce((n) => n + 1)
+	}
+
+	const pluginState = {
+		prefsCleared: manifest !== null && hasPrefOverride(overrides, manifest.id),
+		cacheCleared:
+			manifest !== null &&
+			resource !== undefined &&
+			hasCacheOverride(overrides, manifest.id, resource.id),
+	}
 	const { t: tw } = useTranslation("workbench")
 
 	return (
@@ -213,10 +276,14 @@ export function App() {
 				resource={resource}
 				ctx={context}
 				config={config}
+				pluginState={pluginState}
 				fullscreen={fullscreenAPI}
 				onConfigChange={patchConfig}
 				onSelect={setSelectedId}
 				onReload={() => setReloadNonce((n) => n + 1)}
+				onResetSettings={handleResetSettings}
+				onClearCache={handleClearCache}
+				onRestoreState={handleRestoreState}
 			/>
 			{bootstrapError !== null ? (
 				<Stage

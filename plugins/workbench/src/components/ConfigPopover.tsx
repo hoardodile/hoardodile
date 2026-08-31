@@ -1,6 +1,7 @@
 import { LANGUAGE_LABEL_KEYS } from "@hoardodile/i18n"
 import { pluginThemePalettes } from "@hoardodile/sdk-web"
 import { Button } from "@hoardodile/ui/components/button"
+import { ConfirmDialog } from "@hoardodile/ui/components/confirm-dialog"
 import { DropdownSelect } from "@hoardodile/ui/components/dropdown-select"
 import { Icon } from "@hoardodile/ui/components/icon"
 import { Input } from "@hoardodile/ui/components/input"
@@ -21,13 +22,20 @@ import {
 	TooltipContent,
 	TooltipTrigger,
 } from "@hoardodile/ui/components/tooltip"
-import { Settings } from "@hoardodile/ui/icons/registry"
+import { Eraser, Restart, Settings } from "@hoardodile/ui/icons/registry"
+import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import {
 	WORKBENCH_LANGUAGES,
 	WORKBENCH_PRESENTATION_MODES,
 	type WorkbenchConfig,
 } from "../config.ts"
+
+/** Plugin-state override status surfaced in the popover. */
+export type PluginStateView = {
+	readonly prefsCleared: boolean
+	readonly cacheCleared: boolean
+}
 
 /**
  * The config surface: every field maps to one iframe configuration item,
@@ -38,8 +46,24 @@ import {
 export function ConfigPopover(props: {
 	readonly config: WorkbenchConfig
 	readonly onChange: (patch: Partial<WorkbenchConfig>) => void
+	readonly pluginState: PluginStateView
+	readonly disabled: boolean
+	readonly cacheDisabled: boolean
+	readonly onResetSettings: () => void
+	readonly onClearCache: () => void
+	readonly onRestoreState: () => void
 }) {
-	const { config, onChange } = props
+	const {
+		config,
+		onChange,
+		pluginState,
+		disabled,
+		cacheDisabled,
+		onResetSettings,
+		onClearCache,
+		onRestoreState,
+	} = props
+	const [confirm, setConfirm] = useState<"prefs" | "cache" | null>(null)
 	// Shared catalog keys (theme/icon/language option names) come from the
 	// default namespace; the workbench's own copy from the workbench ns.
 	const { t } = useTranslation()
@@ -74,115 +98,209 @@ export function ConfigPopover(props: {
 	}))
 
 	return (
-		<Popover closeOnBlur>
-			<Tooltip>
-				<TooltipTrigger
-					render={
-						<PopoverTrigger
-							render={
-								<Button
-									variant="outline"
-									size="sm"
-									aria-label={tw("popover.settingsAria")}
-								>
-									<Icon icon={Settings} className="text-secondary-foreground" />
-									<span className="max-md:hidden">
-										{tw("popover.configure")}
-									</span>
-								</Button>
-							}
-						/>
-					}
-				/>
-				<TooltipContent>{tw("popover.tooltip")}</TooltipContent>
-			</Tooltip>
-			<PopoverContent align="end" className="w-80 max-w-[calc(100vw-2rem)]">
-				<PopoverHeader>
-					<PopoverTitle>{tw("popover.title")}</PopoverTitle>
-					<PopoverDescription>{tw("popover.description")}</PopoverDescription>
-				</PopoverHeader>
+		<>
+			<Popover closeOnBlur>
+				<Tooltip>
+					<TooltipTrigger
+						render={
+							<PopoverTrigger
+								render={
+									<Button
+										variant="outline"
+										size="sm"
+										aria-label={tw("popover.settingsAria")}
+										data-testid="workbench-config"
+									>
+										<Icon
+											icon={Settings}
+											className="text-secondary-foreground"
+										/>
+										<span className="max-md:hidden">
+											{tw("popover.configure")}
+										</span>
+									</Button>
+								}
+							/>
+						}
+					/>
+					<TooltipContent>{tw("popover.tooltip")}</TooltipContent>
+				</Tooltip>
+				<PopoverContent align="end" className="w-80 max-w-[calc(100vw-2rem)]">
+					<PopoverHeader>
+						<PopoverTitle>{tw("popover.title")}</PopoverTitle>
+						<PopoverDescription>{tw("popover.description")}</PopoverDescription>
+					</PopoverHeader>
 
-				<SectionLabel>{tw("popover.sectionAppearance")}</SectionLabel>
-				<div className="flex flex-col gap-3">
-					<div className="flex flex-wrap items-center justify-between gap-3">
-						<Label className="text-xs">{t("theme.modeLabel")}</Label>
+					<SectionLabel>{tw("popover.sectionAppearance")}</SectionLabel>
+					<div className="flex flex-col gap-3">
+						<div className="flex flex-wrap items-center justify-between gap-3">
+							<Label className="text-xs">{t("theme.modeLabel")}</Label>
+							<PillTabs
+								value={config.themeMode}
+								items={themeModeOptions}
+								onChange={(value) => onChange({ themeMode: value })}
+								className="flex-wrap"
+							/>
+						</div>
+						<div className="flex items-center justify-between gap-3">
+							<Label className="text-xs">{t("theme.paletteLabel")}</Label>
+							<DropdownSelect
+								value={config.palette}
+								onValueChange={(value) =>
+									onChange({ palette: value as WorkbenchConfig["palette"] })
+								}
+								options={paletteOptions}
+								aria-label={t("theme.paletteLabel")}
+							/>
+						</div>
+					</div>
+
+					<Separator />
+
+					<SectionLabel>{tw("popover.sectionIcons")}</SectionLabel>
+					<div className="flex items-center justify-between gap-3">
+						<Label className="text-xs">{tw("popover.style")}</Label>
+						<DropdownSelect
+							value={config.iconStyle}
+							onValueChange={(value) =>
+								onChange({ iconStyle: value as WorkbenchConfig["iconStyle"] })
+							}
+							options={iconStyleOptions}
+							aria-label={tw("popover.style")}
+						/>
+					</div>
+
+					<Separator />
+
+					<SectionLabel>{tw("popover.sectionLanguage")}</SectionLabel>
+					<div className="flex items-center justify-between gap-3">
+						<Label className="text-xs">{tw("popover.uiLanguage")}</Label>
+						<DropdownSelect
+							value={config.language}
+							onValueChange={(value) => onChange({ language: value })}
+							options={languageOptions}
+							aria-label={tw("popover.sectionLanguage")}
+						/>
+					</div>
+
+					<Separator />
+
+					<SectionLabel>{tw("popover.sectionFont")}</SectionLabel>
+					<div className="flex flex-col gap-2">
+						<Label className="text-xs">{tw("popover.fontFamily")}</Label>
+						<Input
+							value={config.fontFamily}
+							onChange={(event) => onChange({ fontFamily: event.target.value })}
+							placeholder={tw("popover.fontFamilyPlaceholder")}
+							aria-label={tw("popover.fontFamily")}
+						/>
+						<p className="text-xs text-muted-foreground">
+							{tw("popover.fontFamilyHint")}
+						</p>
+					</div>
+
+					<Separator />
+
+					<SectionLabel>{tw("popover.sectionPresentation")}</SectionLabel>
+					<div className="flex items-center justify-between gap-3">
+						<Label className="text-xs">{tw("popover.mode")}</Label>
 						<PillTabs
-							value={config.themeMode}
-							items={themeModeOptions}
-							onChange={(value) => onChange({ themeMode: value })}
+							value={config.mode}
+							items={modeOptions}
+							onChange={(value) => onChange({ mode: value })}
 							className="flex-wrap"
 						/>
 					</div>
-					<div className="flex items-center justify-between gap-3">
-						<Label className="text-xs">{t("theme.paletteLabel")}</Label>
-						<DropdownSelect
-							value={config.palette}
-							onValueChange={(value) =>
-								onChange({ palette: value as WorkbenchConfig["palette"] })
-							}
-							options={paletteOptions}
-							aria-label={t("theme.paletteLabel")}
-						/>
+
+					<Separator />
+
+					<SectionLabel>{tw("popover.sectionPluginState")}</SectionLabel>
+					<div className="flex flex-col gap-3">
+						<p className="text-xs text-muted-foreground">
+							{tw("popover.pluginStateHint")}
+						</p>
+						<div className="flex items-center justify-between gap-3">
+							<Label className="text-xs">{tw("popover.columnSettings")}</Label>
+							<div className="flex items-center gap-2">
+								{pluginState.prefsCleared ? (
+									<span className="text-xs text-muted-foreground">
+										{tw("popover.prefsCleared")}
+									</span>
+								) : null}
+								<Button
+									variant="destructive"
+									size="sm"
+									data-testid="plugin-reset-settings"
+									onClick={() => setConfirm("prefs")}
+									disabled={disabled}
+								>
+									<Icon icon={Restart} />
+									{tw("popover.resetPrefs")}
+								</Button>
+							</div>
+						</div>
+						<div className="flex items-center justify-between gap-3">
+							<Label className="text-xs">{tw("popover.columnCache")}</Label>
+							<div className="flex items-center gap-2">
+								{pluginState.cacheCleared ? (
+									<span className="text-xs text-muted-foreground">
+										{tw("popover.cacheCleared")}
+									</span>
+								) : null}
+								<Button
+									variant="destructive"
+									size="sm"
+									data-testid="plugin-clear-cache"
+									onClick={() => setConfirm("cache")}
+									disabled={cacheDisabled}
+								>
+									<Icon icon={Eraser} />
+									{tw("popover.clearCache")}
+								</Button>
+							</div>
+						</div>
+						{pluginState.prefsCleared || pluginState.cacheCleared ? (
+							<Button
+								variant="ghost"
+								size="sm"
+								className="self-start"
+								data-testid="plugin-restore-state"
+								onClick={onRestoreState}
+								disabled={disabled}
+							>
+								{tw("popover.restoreState")}
+							</Button>
+						) : null}
 					</div>
-				</div>
+				</PopoverContent>
+			</Popover>
 
-				<Separator />
-
-				<SectionLabel>{tw("popover.sectionIcons")}</SectionLabel>
-				<div className="flex items-center justify-between gap-3">
-					<Label className="text-xs">{tw("popover.style")}</Label>
-					<DropdownSelect
-						value={config.iconStyle}
-						onValueChange={(value) =>
-							onChange({ iconStyle: value as WorkbenchConfig["iconStyle"] })
-						}
-						options={iconStyleOptions}
-						aria-label={tw("popover.style")}
-					/>
-				</div>
-
-				<Separator />
-
-				<SectionLabel>{tw("popover.sectionLanguage")}</SectionLabel>
-				<div className="flex items-center justify-between gap-3">
-					<Label className="text-xs">{tw("popover.uiLanguage")}</Label>
-					<DropdownSelect
-						value={config.language}
-						onValueChange={(value) => onChange({ language: value })}
-						options={languageOptions}
-						aria-label={tw("popover.sectionLanguage")}
-					/>
-				</div>
-
-				<Separator />
-
-				<SectionLabel>{tw("popover.sectionFont")}</SectionLabel>
-				<div className="flex flex-col gap-2">
-					<Label className="text-xs">{tw("popover.fontFamily")}</Label>
-					<Input
-						value={config.fontFamily}
-						onChange={(event) => onChange({ fontFamily: event.target.value })}
-						placeholder={tw("popover.fontFamilyPlaceholder")}
-						aria-label={tw("popover.fontFamily")}
-					/>
-					<p className="text-xs text-muted-foreground">
-						{tw("popover.fontFamilyHint")}
-					</p>
-				</div>
-
-				<Separator />
-
-				<SectionLabel>{tw("popover.sectionPresentation")}</SectionLabel>
-				<div className="flex items-center justify-between gap-3">
-					<Label className="text-xs">{tw("popover.mode")}</Label>
-					<PillTabs
-						value={config.mode}
-						items={modeOptions}
-						onChange={(value) => onChange({ mode: value })}
-						className="flex-wrap"
-					/>
-				</div>
-			</PopoverContent>
-		</Popover>
+			<ConfirmDialog
+				open={confirm !== null}
+				onOpenChange={(open) => {
+					if (!open) setConfirm(null)
+				}}
+				title={
+					confirm === "prefs"
+						? tw("popover.resetPrefsConfirmTitle")
+						: tw("popover.clearCacheConfirmTitle")
+				}
+				description={
+					confirm === "prefs"
+						? tw("popover.resetPrefsConfirmDescription")
+						: tw("popover.clearCacheConfirmDescription")
+				}
+				confirmLabel={
+					confirm === "prefs" ? tw("popover.reset") : tw("popover.clear")
+				}
+				isPending={false}
+				destructive
+				onConfirm={() => {
+					if (confirm === "prefs") onResetSettings()
+					else if (confirm === "cache") onClearCache()
+					setConfirm(null)
+				}}
+			/>
+		</>
 	)
 }

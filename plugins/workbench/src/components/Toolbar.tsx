@@ -15,7 +15,7 @@ import type {
 	WorkbenchManifest,
 	WorkbenchResource,
 } from "../context.ts"
-import { ConfigPopover } from "./ConfigPopover.tsx"
+import { ConfigPopover, type PluginStateView } from "./ConfigPopover.tsx"
 import { type FullscreenAPI, FullscreenButton } from "./FullscreenButton.tsx"
 import { InfoPopover } from "./InfoPopover.tsx"
 
@@ -32,10 +32,14 @@ export function Toolbar(props: {
 	readonly resource: WorkbenchResource | undefined
 	readonly ctx: ResourceContext | null
 	readonly config: WorkbenchConfig
+	readonly pluginState: PluginStateView
 	readonly fullscreen: FullscreenAPI
 	readonly onConfigChange: (patch: Partial<WorkbenchConfig>) => void
 	readonly onSelect: (resId: string) => void
 	readonly onReload: () => void
+	readonly onResetSettings: () => void
+	readonly onClearCache: () => void
+	readonly onRestoreState: () => void
 }) {
 	const { manifest, resources, resource, ctx, config, fullscreen } = props
 	const { t: tw } = useTranslation("workbench")
@@ -82,7 +86,16 @@ export function Toolbar(props: {
 				ctx={ctx}
 				mode={config.mode}
 			/>
-			<ConfigPopover config={config} onChange={props.onConfigChange} />
+			<ConfigPopover
+				config={config}
+				onChange={props.onConfigChange}
+				pluginState={props.pluginState}
+				disabled={manifest === null}
+				cacheDisabled={manifest === null || resource === undefined}
+				onResetSettings={props.onResetSettings}
+				onClearCache={props.onClearCache}
+				onRestoreState={props.onRestoreState}
+			/>
 		</header>
 	)
 }
