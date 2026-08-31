@@ -251,6 +251,14 @@ export function createIframeHostAPI<
 		return host.request("deleteAsset", { path })
 	}
 
+	function uploadCover(input: {
+		readonly file: Blob | ArrayBuffer
+		readonly filename: string
+		readonly mimeType?: string
+	}): Promise<{ readonly path: string }> {
+		return host.request("uploadCover", input)
+	}
+
 	function onAnchorJump(cb: (anchor: AnchorData) => void): () => void {
 		return host.subscribe("anchorJump", cb)
 	}
@@ -277,6 +285,7 @@ export function createIframeHostAPI<
 		download,
 		resolveAssetUrl,
 		deleteAsset,
+		uploadCover,
 		listMessages,
 		createMessage,
 		listDanmaku,

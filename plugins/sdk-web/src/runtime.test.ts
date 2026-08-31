@@ -1,9 +1,28 @@
 // @vitest-environment node
 import { describe, expect, test } from "vitest"
+import { createWebPluginAPI } from "./fixtures.ts"
 import { buildFileUrl, buildFrameUrl, resolveFilesBaseUrl } from "./urls.ts"
 
 const RES_ID = "res_1"
 const TOKEN = "tok-abc"
+
+describe("createWebPluginAPI stub", () => {
+	test("uploadCover resolves a cover path by default", async () => {
+		const api = createWebPluginAPI()
+		await expect(
+			api.uploadCover({ file: new ArrayBuffer(2), filename: "cover.png" }),
+		).resolves.toEqual({ path: "/api/resources/r-test/cover" })
+	})
+
+	test("uploadCover can be overridden", async () => {
+		const api = createWebPluginAPI({
+			uploadCover: async () => ({ path: "/custom/cover" }),
+		})
+		await expect(
+			api.uploadCover({ file: new Blob(), filename: "a.png" }),
+		).resolves.toEqual({ path: "/custom/cover" })
+	})
+})
 
 describe("resolveFilesBaseUrl", () => {
 	test("tokenized files root with trailing slash", () => {

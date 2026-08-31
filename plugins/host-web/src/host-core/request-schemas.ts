@@ -79,6 +79,14 @@ export const requestSchemas = {
 	[pluginMethods.deleteAsset]: z.object({
 		path: z.string().min(1).max(256),
 	}),
+	// The file travels as a Blob/ArrayBuffer via PostMessage structured
+	// clone; validation only checks the byte container + filename shape.
+	// The extension is verified server-side against IMAGE_EXTS.
+	[pluginMethods.uploadCover]: z.object({
+		file: z.union([z.instanceof(Blob), z.instanceof(ArrayBuffer)]),
+		filename: z.string().min(1).max(255),
+		mimeType: z.string().max(255).optional(),
+	}),
 	[pluginMethods.logInfo]: z.object({
 		message: z.string(),
 		data: z.record(z.string(), z.unknown()).optional(),

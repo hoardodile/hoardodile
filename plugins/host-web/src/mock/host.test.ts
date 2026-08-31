@@ -185,4 +185,45 @@ describe("createMockHost bridge", () => {
 			host.dispose()
 		}
 	}, 15_000)
+
+	test("uploadCover round-trips and reports the filename", async () => {
+		const onUploadCover = vi.fn()
+		const host = createMockHost({
+			targetWindow: window,
+			files: createInMemoryFileBackend(),
+			onUploadCover,
+		})
+		host.register(window, { pluginId: "test-plugin", resId: "r-1" })
+		try {
+			ensureHostBridge()
+			const api = createIframeHostAPI(buildContext())
+
+			const result = await api.uploadCover({
+				file: new ArrayBuffer(4),
+				filename: "cover.png",
+			})
+			expect(result).toEqual({ path: "/api/resources/r-1/cover" })
+			expect(onUploadCover).toHaveBeenCalledWith("r-1", "cover.png")
+		} finally {
+			host.dispose()
+		}
+	})
+
+	test("uploadCover rejects invalid params (file not a byte container)", async () => {
+		const host = createMockHost({
+			targetWindow: window,
+			files: createInMemoryFileBackend(),
+		})
+		host.register(window, { pluginId: "test-plugin", resId: "r-1" })
+		try {
+			ensureHostBridge()
+			const api = createIframeHostAPI(buildContext())
+
+			await expect(
+				api.uploadCover({ file: {} as never, filename: "" }),
+			).rejects.toThrow(/Invalid params for uploadCover/)
+		} finally {
+			host.dispose()
+		}
+	})
 })

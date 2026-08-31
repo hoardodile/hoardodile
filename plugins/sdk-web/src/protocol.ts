@@ -289,6 +289,24 @@ export type PluginRequests = {
 		readonly input: { readonly path: string }
 		readonly output: PluginAssetDeleteResult
 	}
+	/**
+	 * Set the permanent cover of the resource this plugin is bound to.
+	 * The plugin supplies raw image bytes (Blob/ArrayBuffer), a filename
+	 * whose extension drives the server's cover type check, and an
+	 * optional MIME type. The host performs the credentialed upload to
+	 * `PUT /api/resources/:id/cover` (octet-stream body + `X-Filename`),
+	 * so the sandboxed iframe never needs session cookies. Scoped to
+	 * `ctx.resId` by the host, so a plugin can only cover its own
+	 * resource. Returns the cover path on success.
+	 */
+	uploadCover: {
+		readonly input: {
+			readonly file: Blob | ArrayBuffer
+			readonly filename: string
+			readonly mimeType?: string
+		}
+		readonly output: { readonly path: string }
+	}
 }
 
 /** Type-safe push protocol table. */
@@ -390,6 +408,9 @@ export const pluginMethods = {
 	download: "download",
 	deleteAsset: "deleteAsset",
 
+	// Cover
+	uploadCover: "uploadCover",
+
 	// Logging — must match the PluginRequests keys exactly,
 	// otherwise plugin log calls are silently swallowed.
 	logInfo: "logInfo",
@@ -409,6 +430,7 @@ export const invalidatePushKeys = {
 export const pluginRequestTimeouts = {
 	readFile: 120_000,
 	download: 300_000,
+	uploadCover: 120_000,
 } as const satisfies Partial<Record<keyof PluginRequests, number>>
 
 /** Resolves to `T` only when `T` is `true`; otherwise a compile error. */

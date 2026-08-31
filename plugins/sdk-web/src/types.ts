@@ -179,6 +179,20 @@ export type WebPluginAPI<TSchema extends PluginSchema = PluginSchema> = {
 	 */
 	readonly deleteAsset: (path: string) => Promise<PluginAssetDeleteResult>
 
+	/**
+	 * Set the permanent cover of the resource this plugin is bound to.
+	 * Upload raw image bytes (Blob/ArrayBuffer) plus a filename whose
+	 * extension drives the server's cover type check; an optional MIME
+	 * overrides the default octet-stream body. The host performs the
+	 * credentialed upload on the plugin's behalf and invalidates the
+	 * resource caches so the new cover renders. Returns the cover path.
+	 */
+	readonly uploadCover: (input: {
+		readonly file: Blob | ArrayBuffer
+		readonly filename: string
+		readonly mimeType?: string
+	}) => Promise<{ readonly path: string }>
+
 	/** Messages. */
 	readonly listMessages: () => Promise<readonly Message[]>
 	readonly createMessage: (input: {

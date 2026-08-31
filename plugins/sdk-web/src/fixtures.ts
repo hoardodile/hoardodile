@@ -82,6 +82,7 @@ export function createWebPluginAPI(
 		},
 		resolveAssetUrl: (path) => `/plugin-assets/p-test/./${path}`,
 		deleteAsset: async () => ({ existed: false }),
+		uploadCover: async () => ({ path: "/api/resources/r-test/cover" }),
 		listMessages: async () => [],
 		createMessage: async () => {
 			throw new Error("createMessage stub not overridden")

@@ -80,6 +80,11 @@ export type MockHostOptions = {
 	 * never talks to it.
 	 */
 	readonly assetVault?: PluginAssetVaultMock
+	/**
+	 * Called after a plugin sets the cover of its bound resource (mock
+	 * only — there is no storage; the handler returns a synthetic path).
+	 */
+	readonly onUploadCover?: (resId: string, filename: string) => void
 }
 
 /**
@@ -270,6 +275,14 @@ export function createMockHost(opts: MockHostOptions): MockHost {
 				const vault = opts.assetVault
 				if (vault === undefined) throw unavailableAssetError("deleteAsset")
 				return vault.deleteAsset(params.path)
+			},
+		),
+		defineHandler(
+			pluginMethods.uploadCover,
+			requestSchemas[pluginMethods.uploadCover],
+			async (ctx, params) => {
+				opts.onUploadCover?.(ctx.resId, params.filename)
+				return { path: `/api/resources/${ctx.resId}/cover` }
 			},
 		),
 	]
