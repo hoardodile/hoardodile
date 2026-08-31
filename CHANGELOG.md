@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.1.7](https://github.com/hoardodile/hoardodile/compare/v0.1.6...v0.1.7) (2026-08-31)
+
+### Features
+
+* **workbench:** res-card chrome redesign + faithful card preview ([19c1030](https://github.com/hoardodile/hoardodile/commit/19c10309754121052d454d97810bfcbdcf82f6d3))
+* **workbench:** res-card preview via shared template renderer ([880306b](https://github.com/hoardodile/hoardodile/commit/880306b75a902f3cfc7e5358f904da417ae4069e))
+
+### Bug Fixes
+
+* **desktop:** make the resource-update e2e responsive-aware ([dad0b56](https://github.com/hoardodile/hoardodile/commit/dad0b56b3c9be9f255486d025d8dfd6f7fce668c))
+* **marketplace:** move the card version requirement into its footer strip ([6356a17](https://github.com/hoardodile/hoardodile/commit/6356a17f39c4087c1ad507d64603a3455591fe36))
+* **scripts:** wait for the doc editor to render before capture ([cee787a](https://github.com/hoardodile/hoardodile/commit/cee787ab7e75bbcf0dc257700a49bf54d4f3ee71))
+
 ## [0.1.6](https://github.com/hoardodile/hoardodile/compare/v0.1.5...v0.1.6) (2026-08-31)
 
 ### ⚠ BREAKING CHANGES
