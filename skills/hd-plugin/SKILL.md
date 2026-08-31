@@ -4,7 +4,7 @@ description: Author hoardodile content plugins — manifest, server hooks, ifram
 license: MIT
 metadata:
   author: hoardodile
-  version: "1.5.0"
+  version: "1.6.0"
 ---
 
 # Hoardodile Plugin Development
@@ -63,7 +63,11 @@ lives in `references/`.
    `references/client.md`.
 5. **Dev loop.** `hoardodile plugin dev` builds on watch and serves the
    workbench at `http://127.0.0.1:5199`, feeding real sandbox hook
-   results into your iframe — no hoardodile server needed.
+   results into your iframe — no hoardodile server needed. The top bar's
+   **Card** button opens a simulated resource card rendering your
+   `manifest.ui.card.<kind>` corner templates plus the cover, so you can
+   preview the card look offline; the cover kind (`image`/`video`/`audio`)
+   is sniffed from `coverLocal` to pick the matching `ui.card` block.
    `references/tooling.md`.
 6. **Test and benchmark.** Vitest against
    `createResourceAPIFixture<MySchema>()`, `detect:smoke` against

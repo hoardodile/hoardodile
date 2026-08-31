@@ -96,6 +96,16 @@ hoardodile plugin dev             # watch-build + workbench (http://127.0.0.1:51
   `coverLocal`) from the real sandbox and feeds them to the iframe — the
   same context the app would push. Its render cache lives in the
   workdir's `.hoardodile/` (gitignore it). No hoardodile server needed.
+- **Resource-card preview.** The top bar's **Card** button opens a dialog
+  showing a simulated resource card — the plugin's
+  `manifest.ui.card.<kind>` corner templates (`tl`/`bl`/`br`) rendered
+  against the resource (file stats, source/search meta) plus the cover.
+  The dev pipeline sniffs the cover source (`coverLocal`) to determine
+  the kind (`image`/`video`/`audio`, else `default`), so the block
+  matching the cover is used. Iterate on `manifest.ui.card` and
+  `coverLocal`, then reload to see the card — the app's shared
+  `@hoardodile/ui/res-card-template` renderer evaluates the same
+  `{{...}}` grammar in the app and the workbench.
 - **Plugin asset downloads in the workbench** work the same way as the
   app: the same consent dialog (Allow / Deny / remember-this-session),
   backed by the dev server instead of tRPC. Declare `"download": true`
@@ -111,13 +121,12 @@ hoardodile plugin dev             # watch-build + workbench (http://127.0.0.1:51
 - **Plugin state in the workbench.** The workbench previews your plugin
   against the real library **read-only**, so its stored `prefs` (settings)
   and per-resource `cache` are seeded from the library. To develop from a
-  clean slate, open **Configure → Plugin state**: **Reset settings**
-  empties the plugin's prefs, **Clear cache** empties the current
-  resource's cache, and **Restore from library** brings the stored values
-  back (the reader reloads on each action). The cleared state is a
-  workbench-local override (localStorage), so it survives the Reload
-  button and resource switches until you restore — your real library is
-  never written to.
+  clean slate, open the **Settings** dialog → **Plugin state**: **Reset**
+  empties the plugin's prefs, **Clear** empties the current resource's
+  cache, and **Restore from library** brings the stored values back (the
+  reader reloads on each action). The cleared state is a workbench-local
+  override (localStorage), so it survives the Reload button and resource
+  switches until you restore — your real library is never written to.
 
 ## Test data and fixtures
 
