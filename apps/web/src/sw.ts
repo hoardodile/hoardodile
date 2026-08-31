@@ -3,7 +3,10 @@ import { ExpirationPlugin } from "workbox-expiration"
 import { cleanupOutdatedCaches, precacheAndRoute } from "workbox-precaching"
 import { registerRoute } from "workbox-routing"
 import { CacheFirst } from "workbox-strategies"
-import { apiPaths } from "./lib/paths"
+import {
+	isResourceContentRequest,
+	normalizeResourceCacheKey,
+} from "./lib/sw-cache"
 
 const RES_CACHE_NAME = "hoardodile-res-v1"
 
@@ -42,33 +45,20 @@ const cacheOnlySuccess = {
 const normalizeCacheKey = {
 	cacheKeyWillBeUsed: async ({ request }) => {
 		const url = new URL(request.url)
-		// Strip path-based token from /files/<token>/<rest-of-path> and
-		// /extracted/<token>/<rest-of-path>. NOTE: keep the route family
-		// in sync with the server's auth preHandler and the workbench
-		// mounts (see apps/server/src/infra/http/plugin.ts).
-		url.pathname = url.pathname.replace(
-			/\/(?:files|extracted)\/([A-Za-z0-9_.-]+)\/(.+)/,
-			"/$1/$2",
-		)
-		// Strip base-url token from /files/<token>/ → /files/
-		url.pathname = url.pathname.replace(/\/files\/[^/]+\/$/, "/files/")
+		url.pathname = normalizeResourceCacheKey(url.pathname)
 		return url.toString()
 	},
 }
 
 // API resource content files and video frames
 registerRoute(
-	({ request, url }) => {
-		if (request.method !== "GET") return false
-		if (request.headers.has("range")) return false
-		if (url.origin !== self.location.origin) return false
-		if (!url.pathname.startsWith(apiPaths.resources.cover(""))) return false
-		return (
-			url.pathname.includes("/files/") ||
-			url.pathname.includes("/frame/") ||
-			url.pathname.includes("/extracted/")
-		)
-	},
+	({ request, url }) =>
+		isResourceContentRequest({
+			method: request.method,
+			pathname: url.pathname,
+			hasRange: request.headers.has("range"),
+			sameOrigin: url.origin === self.location.origin,
+		}),
 	new CacheFirst({
 		cacheName: RES_CACHE_NAME,
 		plugins: [
