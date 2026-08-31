@@ -17,7 +17,7 @@ import {
 } from "@hoardodile/ui/icons/registry"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import type { TFunction } from "i18next"
-import { useState } from "react"
+import { useLayoutEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { SearchField } from "@/components/common/SearchField"
 import { PluginTileIcon } from "@/features/plugin/icons/plugin-tile-icon"
@@ -386,6 +386,85 @@ function RequiresChip(props: { readonly plugin: MarketPlugin }) {
 	)
 }
 
+/** The card's single bottom strip — the full-width line the error ticker
+    lives on. It carries the "Requires hoardodile ≥ v…" line too, in a
+    quieter tone, so a gated action is never a mystery and the short line
+    never crowds the row of actions. Reuses the marketplace ticker when the
+    line is longer than the card: text that fits stays static and centered;
+    overflow scrolls seamlessly (and under reduced motion, stays put). */
+function MarketplaceCardFooterStrip(props: {
+	readonly plugin: MarketPlugin
+	readonly mode: "error" | "requires"
+}) {
+	const { t } = useTranslation()
+	const stripRef = useRef<HTMLSpanElement>(null)
+	const textRef = useRef<HTMLSpanElement>(null)
+	const [overflows, setOverflows] = useState(false)
+
+	const content =
+		props.mode === "error"
+			? errorLineFor(props.plugin, t)
+			: t("marketplace.requiresAppVersion", {
+					version: props.plugin.manifest.minAppVersion ?? "",
+				})
+
+	// Measure before paint so the strip opens in the right mode (static vs
+	// ticker) with no flash; re-measure on card resize / column change.
+	useLayoutEffect(() => {
+		const strip = stripRef.current
+		if (!strip) return
+		const measure = () => {
+			const text = textRef.current
+			if (!text) return
+			setOverflows(text.scrollWidth > strip.clientWidth)
+		}
+		measure()
+		const observer = new ResizeObserver(measure)
+		observer.observe(strip)
+		return () => observer.disconnect()
+	}, [])
+
+	const tone =
+		props.mode === "error" ? "text-destructive" : "text-muted-foreground"
+	const testId =
+		props.mode === "error"
+			? `marketplace-card-error-${props.plugin.id}`
+			: `marketplace-card-requires-${props.plugin.id}`
+
+	return (
+		<span
+			ref={stripRef}
+			className={`pointer-events-none absolute inset-x-0 bottom-0 flex h-4 items-center overflow-hidden bg-muted text-tiny ${tone} ${
+				overflows ? "" : "justify-center"
+			}`}
+			data-testid={testId}
+		>
+			{overflows ? (
+				<span className="market-ticker-track" aria-hidden>
+					{[0, 1].map((copy) => (
+						<span
+							key={copy}
+							className="flex shrink-0 items-center"
+							title={content}
+						>
+							<span
+								ref={copy === 0 ? textRef : undefined}
+								className="whitespace-nowrap px-3"
+							>
+								{content}
+							</span>
+						</span>
+					))}
+				</span>
+			) : (
+				<span ref={textRef} className="whitespace-nowrap px-3">
+					{content}
+				</span>
+			)}
+		</span>
+	)
+}
+
 /** Per-plugin update dot, mounted on the trigger's top-right corner —
     centered on the corner so it reads as one with the button, not a
     floating marker (the same signal the sidebar and tabs aggregate). */
@@ -417,6 +496,14 @@ function MarketplaceCard(props: {
 		isNewer(latest.version, installedVersion)
 	const requiresShown =
 		!compatible && (installedVersion === undefined || rawUpdate)
+	// The card owns one bottom strip: a real error, else the "requires a
+	// newer hoardodile" line — never both (the error is the louder signal).
+	const footerMode =
+		plugin.state === "error" || plugin.rateLimited === true
+			? "error"
+			: requiresShown
+				? "requires"
+				: null
 
 	return (
 		<div
@@ -431,25 +518,8 @@ function MarketplaceCard(props: {
 					{t("marketplace.installedBadge")}
 				</span>
 			)}
-			{(plugin.state === "error" || plugin.rateLimited === true) && (
-				<span
-					className="pointer-events-none absolute inset-x-0 bottom-0 flex h-3 items-center overflow-hidden bg-muted text-tiny text-destructive"
-					data-testid={`marketplace-card-error-${plugin.id}`}
-				>
-					<span className="market-ticker-track" aria-hidden>
-						{[0, 1].map((copy) => (
-							<span
-								key={copy}
-								className="flex shrink-0 items-center"
-								title={plugin.error}
-							>
-								<span className="whitespace-nowrap px-3">
-									{errorLineFor(plugin, t)}
-								</span>
-							</span>
-						))}
-					</span>
-				</span>
+			{footerMode !== null && (
+				<MarketplaceCardFooterStrip plugin={plugin} mode={footerMode} />
 			)}
 			<div className="flex items-center gap-2.5">
 				<PluginTileIcon
@@ -483,7 +553,6 @@ function MarketplaceCard(props: {
 							{t("marketplace.noRelease")}
 						</span>
 					)}
-					{requiresShown && <RequiresChip plugin={plugin} />}
 					<Button
 						size="sm"
 						variant="secondary"

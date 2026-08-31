@@ -504,6 +504,33 @@ describe("MarketplacePanel", () => {
 		).toBeInTheDocument()
 	})
 
+	it("puts the version requirement in the card's bottom strip, not the action row", async () => {
+		installClient({
+			config: { registryRepo: "me/registry" },
+			snapshot: {
+				...SNAPSHOT,
+				plugins: [
+					{
+						...SNAPSHOT.plugins[0]!,
+						manifest: {
+							...SNAPSHOT.plugins[0]!.manifest,
+							minAppVersion: "9.9.9",
+						},
+					},
+				],
+			},
+		})
+		renderPanel()
+
+		const strip = await screen.findByTestId(
+			`marketplace-card-requires-${PLUGIN_ID}`,
+		)
+		expect(strip).toHaveTextContent("Requires hoardodile ≥ v9.9.9")
+		// The action row no longer carries a requires chip of its own.
+		const row = screen.getByTestId(`marketplace-view-${PLUGIN_ID}`)
+		expect(within(row).queryByText(/Requires hoardodile/i)).toBeNull()
+	})
+
 	it("shows a standalone danger error line inside the card for a rate-limited entry", async () => {
 		installClient({
 			config: { registryRepo: "me/registry" },
