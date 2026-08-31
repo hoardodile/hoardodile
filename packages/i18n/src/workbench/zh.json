@@ -7,7 +7,10 @@
 		"cardPreviewAria": "预览资源卡片",
 		"cardPreviewHint": "模拟 res card——封面、卡片模板与元数据",
 		"enterFullscreen": "进入全屏",
-		"exitFullscreen": "退出全屏"
+		"exitFullscreen": "退出全屏",
+		"card": "卡片",
+		"settings": "设置",
+		"info": "信息"
 	},
 	"popover": {
 		"configure": "配置",

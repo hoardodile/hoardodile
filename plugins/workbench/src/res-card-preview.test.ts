@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest"
 import type { HookSnapshot, WorkbenchManifest } from "./context.ts"
 import {
+	buildMockCardMeta,
 	buildResCardAssetUrl,
+	formatMockDate,
 	pickCardSlotUi,
 	readSourceMetaDims,
 	resolveCoverKind,
@@ -113,5 +115,26 @@ describe("readSourceMetaDims", () => {
 			readSourceMetaDims(snapshot({ width: Number.NaN, height: 600 })),
 		).toBeUndefined()
 		expect(readSourceMetaDims(snapshot({ height: 600 }))).toBeUndefined()
+	})
+})
+
+describe("buildMockCardMeta", () => {
+	it("returns plausible fabricated metadata", () => {
+		const meta = buildMockCardMeta()
+		expect(meta.tags.length).toBeGreaterThan(0)
+		expect(meta.tags[0]).toHaveProperty("name")
+		expect(meta.tags[0]).toHaveProperty("color")
+		expect(meta.collections.length).toBeGreaterThan(0)
+		expect(meta.sourceUrl).toMatch(/^https?:\/\//)
+		expect(meta.sizeBytes).toBeGreaterThan(0)
+		expect(meta.createdAt).toBeLessThan(Date.now())
+	})
+})
+
+describe("formatMockDate", () => {
+	it("formats a timestamp as a locale string carrying the year", () => {
+		const ts = Date.UTC(2025, 8, 5, 14, 30)
+		expect(formatMockDate(ts, "en-US")).toContain("2025")
+		expect(formatMockDate(ts, "zh-CN")).toContain("2025")
 	})
 })

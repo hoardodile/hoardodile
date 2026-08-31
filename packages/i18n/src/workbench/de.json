@@ -7,7 +7,10 @@
 		"cardPreviewAria": "Ressourcen-Karte anzeigen",
 		"cardPreviewHint": "Simulierte res card — Cover, Kartentemplates und Metadaten",
 		"enterFullscreen": "Vollbild aktivieren",
-		"exitFullscreen": "Vollbild beenden"
+		"exitFullscreen": "Vollbild beenden",
+		"card": "Karte",
+		"settings": "Einstellungen",
+		"info": "Info"
 	},
 	"popover": {
 		"configure": "Konfigurieren",

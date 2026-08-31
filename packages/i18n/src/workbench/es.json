@@ -7,7 +7,10 @@
 		"cardPreviewAria": "Previsualizar tarjeta de recurso",
 		"cardPreviewHint": "Res card simulada — portada, plantillas y metadatos",
 		"enterFullscreen": "Entrar en pantalla completa",
-		"exitFullscreen": "Salir de pantalla completa"
+		"exitFullscreen": "Salir de pantalla completa",
+		"card": "Tarjeta",
+		"settings": "Ajustes",
+		"info": "Info"
 	},
 	"popover": {
 		"configure": "Configurar",

@@ -7,7 +7,10 @@
 		"cardPreviewAria": "Preview resource card",
 		"cardPreviewHint": "Simulated res card — cover, card templates and metadata",
 		"enterFullscreen": "Enter fullscreen",
-		"exitFullscreen": "Exit fullscreen"
+		"exitFullscreen": "Exit fullscreen",
+		"card": "Card",
+		"settings": "Settings",
+		"info": "Info"
 	},
 	"popover": {
 		"configure": "Configure",

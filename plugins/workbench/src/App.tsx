@@ -4,8 +4,9 @@ import { PluginDownloadConsentDialog } from "@hoardodile/ui/components/plugin-do
 import { useEffect, useMemo, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useContainerFullscreen } from "./components/FullscreenButton.tsx"
+import { MenuBar } from "./components/MenuBar.tsx"
 import { Stage } from "./components/Stage.tsx"
-import { Toolbar } from "./components/Toolbar.tsx"
+import { StatusBar } from "./components/StatusBar.tsx"
 import {
 	loadWorkbenchConfig,
 	resolveWorkbenchLanguage,
@@ -270,7 +271,7 @@ export function App() {
 
 	return (
 		<div className="flex h-full flex-col bg-background">
-			<Toolbar
+			<MenuBar
 				manifest={manifest}
 				resources={resources}
 				resource={resource}
@@ -309,6 +310,7 @@ export function App() {
 					frameRef={frameRef}
 				/>
 			)}
+			<StatusBar manifest={manifest} mode={config.mode} />
 			<PluginDownloadConsentDialog
 				entry={consentEntry}
 				onDeny={(ticketId) => decideDownloadConsent(ticketId, false)}

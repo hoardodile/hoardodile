@@ -7,7 +7,10 @@
 		"cardPreviewAria": "リソースカードをプレビュー",
 		"cardPreviewHint": "res card をシミュレート — 表紙・カードテンプレート・メタデータ",
 		"enterFullscreen": "全画面にする",
-		"exitFullscreen": "全画面を終了"
+		"exitFullscreen": "全画面を終了",
+		"card": "カード",
+		"settings": "設定",
+		"info": "情報"
 	},
 	"popover": {
 		"configure": "設定",

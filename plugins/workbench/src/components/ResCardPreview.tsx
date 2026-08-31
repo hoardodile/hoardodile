@@ -1,3 +1,5 @@
+import { TagChip } from "@hoardodile/ui/components/tag-chip"
+import { More } from "@hoardodile/ui/icons/actions"
 import {
 	Download,
 	Eye,
@@ -8,9 +10,11 @@ import {
 	Heart,
 	InfoCircle,
 	Magnifier,
+	MagnifierZoomIn,
 	MusicNotes,
 	Pause,
 	Play,
+	Repeat,
 	Star,
 	Tag,
 	VideoFrame,
@@ -18,6 +22,7 @@ import {
 } from "@hoardodile/ui/icons/registry"
 import { cn } from "@hoardodile/ui/lib/utils"
 import {
+	formatBytes,
 	type IconRef,
 	normalizeSolarGlyphName,
 	renderSlotBadges,
@@ -31,7 +36,9 @@ import type {
 	WorkbenchResource,
 } from "../context.ts"
 import {
+	buildMockCardMeta,
 	buildResCardAssetUrl,
+	formatMockDate,
 	pickCardSlotUi,
 	readSourceMetaDims,
 	resolveCoverKind,
@@ -60,10 +67,19 @@ const SYNC_ICONS: Readonly<
 	magnifier: Magnifier,
 	pause: Pause,
 	play: Play,
+	repeat: Repeat,
 	star: Star,
 	tag: Tag,
 }
 
+/**
+ * A faithful, non-interactive replica of the app's resource card: the real
+ * cover + the plugin's `manifest.ui.card` corner badges, plus fabricated
+ * app-level metadata (tags, collections, source, size, date)
+ * so the preview reads like a real in-app resource. Hover shows the
+ * cover wash + magnifier affordance and the name underline, but nothing
+ * is clickable — it is a visual preview.
+ */
 export function ResCardPreview(props: {
 	readonly manifest: WorkbenchManifest
 	readonly resource: WorkbenchResource
@@ -72,6 +88,7 @@ export function ResCardPreview(props: {
 }) {
 	const { manifest, resource, snapshot, locale } = props
 	const [coverFailed, setCoverFailed] = useState(false)
+	const mock = buildMockCardMeta()
 
 	const coverKind = resolveCoverKind(snapshot)
 	const slotUi = pickCardSlotUi(manifest, coverKind)
@@ -98,6 +115,7 @@ export function ResCardPreview(props: {
 
 	return (
 		<div className="flex flex-col gap-1">
+			{/* ── Thumbnail: cover + badges + hover (fake, no click) ── */}
 			<div
 				className={cn(
 					"group relative m-auto w-full max-w-sm overflow-hidden rounded-xl bg-muted",
@@ -119,6 +137,14 @@ export function ResCardPreview(props: {
 						onError={() => setCoverFailed(true)}
 					/>
 				) : null}
+				{/* Hover wash + magnifier: purely decorative (no click). */}
+				<div className="pointer-events-none absolute inset-0 rounded-xl bg-white opacity-0 transition-opacity duration-300 group-hover:opacity-20" />
+				<span className="pointer-events-none absolute top-2 right-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-foreground/90 text-background opacity-0 shadow-card transition-opacity duration-200 group-hover:opacity-100">
+					<MagnifierZoomIn className="size-4" />
+				</span>
+				<span className="pointer-events-none absolute top-11 right-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-foreground/90 text-background opacity-0 shadow-card transition-opacity duration-200 group-hover:opacity-100">
+					<More className="h-4 w-4" />
+				</span>
 				{tl.length > 0 ? (
 					<div className="absolute top-2 left-2 z-10 flex flex-col items-start gap-1">
 						{tl.map((badge, i) => (
@@ -141,9 +167,42 @@ export function ResCardPreview(props: {
 					</div>
 				) : null}
 			</div>
-			<div className="min-w-0">
-				<span className="block w-full truncate text-base font-medium">
+
+			{/* ── Name (hover underline, no navigation) ── */}
+			<div className="min-w-0 overflow-hidden">
+				<span className="block w-full truncate text-base font-medium hover:underline">
 					{resource.name}
+				</span>
+			</div>
+
+			{/* ── Pinned tags row (source + tags) ── */}
+			<div className="flex flex-wrap gap-1.5">
+				<TagChip color="" className="max-w-25">
+					{mock.sourceName}
+				</TagChip>
+				{mock.tags.map((tag) => (
+					<TagChip key={tag.name} color={tag.color} className="max-w-25">
+						{tag.name}
+					</TagChip>
+				))}
+			</div>
+
+			{/* ── Collection chips ── */}
+			{mock.collections.length > 0 ? (
+				<div className="mt-0.5 flex flex-wrap gap-1.5">
+					{mock.collections.map((col) => (
+						<TagChip key={col.name} color={col.color}>
+							{col.name}
+						</TagChip>
+					))}
+				</div>
+			) : null}
+
+			{/* ── File size & date ── */}
+			<div className="flex justify-between text-tiny text-muted-foreground">
+				<span className="truncate">{formatBytes(mock.sizeBytes)}</span>
+				<span className="shrink-0">
+					{formatMockDate(mock.createdAt, locale)}
 				</span>
 			</div>
 		</div>

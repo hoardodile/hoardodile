@@ -74,3 +74,44 @@ export function readSourceMetaDims(
 	}
 	return undefined
 }
+
+/**
+ * Fabricated app-level metadata for the simulated res card. The dev
+ * snapshot has the plugin's cover/dims/badges but no tag or character
+ * data, so the preview fills those with plausible mock values so the card
+ * reads like a real in-app resource. Purely presentational — no lookups.
+ */
+export type MockCardMeta = {
+	readonly tags: readonly { readonly name: string; readonly color: string }[]
+	readonly collections: readonly {
+		readonly name: string
+		readonly color: string
+	}[]
+	readonly sourceName: string
+	readonly sourceUrl: string
+	readonly sizeBytes: number
+	readonly createdAt: number
+}
+
+export function buildMockCardMeta(): MockCardMeta {
+	return {
+		tags: [
+			{ name: "photo", color: "#3b82f6" },
+			{ name: "import", color: "#10b981" },
+			{ name: "red", color: "#ef4444" },
+		],
+		collections: [{ name: "旅行", color: "#a855f7" }],
+		sourceName: "example.com",
+		sourceUrl: "https://example.com",
+		sizeBytes: 4_700_000,
+		createdAt: Date.now() - 2 * 86_400_000,
+	}
+}
+
+/** Format a mock timestamp as a locale-aware date + time (no dayjs). */
+export function formatMockDate(ts: number, locale: string): string {
+	return new Intl.DateTimeFormat(locale, {
+		dateStyle: "medium",
+		timeStyle: "short",
+	}).format(new Date(ts))
+}
