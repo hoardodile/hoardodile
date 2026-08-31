@@ -391,7 +391,7 @@
 				"localHint": "The address the desktop app uses — open it in a browser or copy it.",
 				"open": "Open in browser",
 				"portAdjustedTitle": "Port {{preferred}} is in use — the server is now listening on {{actual}}.",
-				"portAdjustedHint": "Open this address from other devices with the new port.",
+				"portAdjustedHint": "Apply to retry {{preferred}}, or keep using {{actual}}.",
 				"portAdjustedDismiss": "Dismiss",
 				"moreAddresses": "Other addresses ({{count}}) — virtual adapters and VPNs",
 				"noAddresses": "No reachable address found — check the network connection."

@@ -107,7 +107,7 @@ function LanSharingForm(props: {
 	})
 
 	const portValue = Number(portInput.trim())
-	const portDirty = portInput.trim() !== String(lan.preferredPort)
+	const portDirty = portInput.trim() !== String(lan.port)
 	const portValid =
 		Number.isInteger(portValue) && portValue >= 1 && portValue <= 65535
 	const portAdjusted = lan.port !== lan.preferredPort
@@ -351,7 +351,10 @@ function LanSharingForm(props: {
 									})}
 								</div>
 								<p className="mt-0.5 text-xs leading-5 text-muted-foreground">
-									{t("me.desktop.lan.portAdjustedHint")}
+									{t("me.desktop.lan.portAdjustedHint", {
+										preferred: lan.preferredPort,
+										actual: lan.port,
+									})}
 								</p>
 							</div>
 							<Button

@@ -70,7 +70,7 @@ import {
 	type UpdateManagerHandle,
 } from "./update-manager.ts"
 import { startFullUpdater } from "./updater.ts"
-import { isHttpReachable } from "./urls.ts"
+import { appUrlPreservingRoute, isHttpReachable } from "./urls.ts"
 import {
 	createDesktopWindow,
 	loadShellPage,
@@ -415,7 +415,10 @@ async function setLanEnabled(
  * listening port.
  */
 async function setLanPort(runtime: Runtime, port: number): Promise<void> {
-	if (port === runtime.config.portPreferred) return
+	// Only no-op when the request already matches the ACTUAL listening
+	// port, so re-applying a preferred port that a conflict fallback moved
+	// away actually restarts the sidecar and tries to reclaim it.
+	if (port === runtime.config.port) return
 	if (runtime.sidecar === undefined) {
 		throw new Error("sidecar is not running")
 	}
@@ -468,7 +471,11 @@ async function applyLanChange(
 		// it still fails).
 		if (process.env.HOARDODILE_WEB_URL === undefined) {
 			try {
-				await win.loadURL(handle.url)
+				// Keep the SPA route (path/query/hash) across the reload so a
+				// LAN toggle does not bounce the user off the settings route.
+				await win.loadURL(
+					appUrlPreservingRoute(win.webContents.getURL(), handle.url),
+				)
 			} catch {
 				await loadShellPage(
 					win,
@@ -1150,7 +1157,9 @@ async function boot(): Promise<void> {
 							// to the in-window error page + Retry.
 							const url = runtime.sidecar?.url
 							if (url !== undefined && win.webContents.getURL() !== url) {
-								await win.loadURL(url).catch(() => undefined)
+								await win
+									.loadURL(appUrlPreservingRoute(win.webContents.getURL(), url))
+									.catch(() => undefined)
 								return
 							}
 							win.webContents.reload()

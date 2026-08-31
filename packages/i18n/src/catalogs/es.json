@@ -391,7 +391,7 @@
 				"localHint": "La dirección que usa la aplicación de escritorio: ábrela en el navegador o cópiala.",
 				"open": "Abrir en el navegador",
 				"portAdjustedTitle": "El puerto {{preferred}} está en uso — el servidor ahora escucha en {{actual}}.",
-				"portAdjustedHint": "Abre esta dirección desde otros dispositivos con el nuevo puerto.",
+				"portAdjustedHint": "Pulsa «Aplicar» para reintentar {{preferred}}, o sigue usando {{actual}}.",
 				"portAdjustedDismiss": "Descartar",
 				"moreAddresses": "Otras direcciones ({{count}}) — adaptadores virtuales y VPN",
 				"noAddresses": "No se encontró ninguna dirección accesible — revisa la conexión de red."

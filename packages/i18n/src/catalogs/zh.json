@@ -391,7 +391,7 @@
 				"localHint": "桌面应用使用的地址——可在浏览器中打开，也可复制。",
 				"open": "在浏览器中打开",
 				"portAdjustedTitle": "端口 {{preferred}} 被占用，服务器已在 {{actual}} 上运行。",
-				"portAdjustedHint": "从其他设备访问时请使用新端口。",
+				"portAdjustedHint": "点“应用”可重试 {{preferred}}，或继续使用 {{actual}}。",
 				"portAdjustedDismiss": "关闭提示",
 				"moreAddresses": "其他地址（{{count}}）— 虚拟网卡、VPN 等",
 				"noAddresses": "没有找到可访问的地址，请检查网络连接。"

@@ -391,7 +391,7 @@
 				"localHint": "デスクトップアプリが使用するアドレス — ブラウザーで開くか、コピーしてください。",
 				"open": "ブラウザーで開く",
 				"portAdjustedTitle": "ポート {{preferred}} は使用中のため、サーバーは現在 {{actual}} で待ち受けています。",
-				"portAdjustedHint": "新しいポートで、他のデバイスからこのアドレスを開いてください。",
+				"portAdjustedHint": "「適用」で {{preferred}} を再試行できます。そのまま {{actual}} を使うのも選択肢です。",
 				"portAdjustedDismiss": "閉じる",
 				"moreAddresses": "その他のアドレス ({{count}}) — 仮想アダプターと VPN",
 				"noAddresses": "到達可能なアドレスが見つかりません — ネットワーク接続を確認してください。"

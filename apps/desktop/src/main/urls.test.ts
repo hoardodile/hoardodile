@@ -4,6 +4,7 @@
 
 import { describe, expect, it } from "vitest"
 import {
+	appUrlPreservingRoute,
 	appWindowDecision,
 	isHttpReachable,
 	isLocalhostHttp,
@@ -178,6 +179,50 @@ describe("wizardWindowDecision", () => {
 	it("denies non-http schemes", () => {
 		expect(wizardWindowDecision("file:///C:/tmp")).toBe("deny")
 		expect(wizardWindowDecision("about:blank")).toBe("deny")
+	})
+})
+
+describe("appUrlPreservingRoute", () => {
+	it("carries the current SPA route onto a new app URL", () => {
+		expect(
+			appUrlPreservingRoute(
+				"http://127.0.0.1:3000/settings/about?tab=general#top",
+				"http://127.0.0.1:4040/",
+			),
+		).toBe("http://127.0.0.1:4040/settings/about?tab=general#top")
+	})
+
+	it("preserves the route when only the port changed (port drift)", () => {
+		expect(
+			appUrlPreservingRoute(
+				"http://127.0.0.1:3000/resources/abc",
+				"http://127.0.0.1:3001/",
+			),
+		).toBe("http://127.0.0.1:3001/resources/abc")
+	})
+
+	it("keeps a plain root when the current frame is not the app", () => {
+		expect(appUrlPreservingRoute("about:blank", "http://127.0.0.1:3000/")).toBe(
+			"http://127.0.0.1:3000/",
+		)
+		expect(
+			appUrlPreservingRoute(
+				"https://github.com/hoardodile/hoardodile",
+				"http://127.0.0.1:3000/",
+			),
+		).toBe("http://127.0.0.1:3000/")
+		expect(
+			appUrlPreservingRoute(
+				"file:///C:/tmp/error.html",
+				"http://127.0.0.1:3000/",
+			),
+		).toBe("http://127.0.0.1:3000/")
+	})
+
+	it("falls back to the raw appUrl when it is not http(s)", () => {
+		expect(
+			appUrlPreservingRoute("http://127.0.0.1:3000/login", "about:blank"),
+		).toBe("about:blank")
 	})
 })
 

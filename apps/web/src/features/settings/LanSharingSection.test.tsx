@@ -267,8 +267,10 @@ describe("LanSharingSection", () => {
 		await screen.findByTestId("desktop-lan-no-addresses")
 	})
 
-	it("shows a prominent notice when the listening port differs from the preferred port", async () => {
+	it("shows a prominent notice and lets the user reclaim the preferred port when the listening port differs", async () => {
+		const setLanPort = vi.fn(async () => {})
 		installBridge({
+			setLanPort,
 			async getLanInfo() {
 				return {
 					enabled: true,
@@ -283,7 +285,15 @@ describe("LanSharingSection", () => {
 		expect(screen.getByTestId("desktop-lan-port-adjusted")).toHaveTextContent(
 			/4040/,
 		)
-		expect(screen.getByTestId("desktop-lan-port-apply")).toBeDisabled()
+		// The input shows the preferred port (3000) but the actual port drifted
+		// to 4040, so Apply is enabled — clicking it reclaims the preferred port
+		// instead of being a silent no-op.
+		const apply = screen.getByTestId("desktop-lan-port-apply")
+		expect(apply).toBeEnabled()
+		fireEvent.click(apply)
+		await waitFor(() => {
+			expect(setLanPort).toHaveBeenCalledWith(3000)
+		})
 	})
 
 	it("hides the port-adjusted notice while sharing is off", async () => {

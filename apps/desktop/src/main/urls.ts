@@ -119,6 +119,30 @@ function decodeSegment(segment: string): string {
 }
 
 /**
+ * Target URL for reloading the app window into `appUrl` after a sidecar
+ * change while keeping the SPA route: when the window is currently on the
+ * app's loopback origin, carry its pathname/search/hash over so a reload
+ * (LAN toggle, resource-swap apply, port drift) does not bounce the user
+ * back to the index route. Non-app current URLs (`about:blank`, shell
+ * pages, foreign hosts) fall back to the raw `appUrl` (its root).
+ */
+export function appUrlPreservingRoute(
+	currentUrl: string,
+	appUrl: string,
+): string {
+	const current = tryParseHttp(currentUrl)
+	if (current === undefined || !isLoopbackHostname(current.hostname)) {
+		return appUrl
+	}
+	const target = tryParseHttp(appUrl)
+	if (target === undefined) return appUrl
+	target.pathname = current.pathname
+	target.search = current.search
+	target.hash = current.hash
+	return target.toString()
+}
+
+/**
  * App-window policy. `appRoutes` are the SPA route patterns registered via
  * the preload bridge; when the list is empty (SPA not yet booted, e.g. the
  * in-window error page) only the app root `/` may keep the window, and the

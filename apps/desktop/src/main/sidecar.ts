@@ -1,4 +1,5 @@
 import { type ChildProcess, spawn } from "node:child_process"
+import { createServer } from "node:net"
 import { setTimeout as delay } from "node:timers/promises"
 import getPort from "get-port"
 import type { DesktopConfig } from "./config.ts"
@@ -34,6 +35,39 @@ function sidecarHost(config: DesktopConfig): SidecarHost {
 	return config.lanEnabled ? "0.0.0.0" : "127.0.0.1"
 }
 
+/**
+ * Whether a fresh `listen` on `port` would succeed right now. An in-place
+ * sidecar restart (LAN toggle, resource-swap apply) usually reuses the same
+ * port, but its predecessor's sockets linger briefly between stop and
+ * rebind (e.g. TIME_WAIT on Windows). `get-port`'s availability probe does
+ * not survive that linger and reports the port busy, which silently drifts
+ * the listening port. A real `listen` on the same host/port *does* succeed
+ * through the linger (Node binds with SO_REUSEADDR), so probe the actual
+ * bind semantics instead of relying on `get-port`'s check.
+ */
+export async function resolveListenPort(
+	host: SidecarHost,
+	preferredPort: number,
+): Promise<number> {
+	if (await canBind(host, preferredPort)) return preferredPort
+	return await getPort({ host })
+}
+
+async function canBind(host: SidecarHost, port: number): Promise<boolean> {
+	const server = createServer()
+	try {
+		await new Promise<void>((resolve, reject) => {
+			server.once("error", reject)
+			server.listen({ host, port }, () => resolve())
+		})
+		return true
+	} catch {
+		return false
+	} finally {
+		await new Promise<void>((resolve) => server.close(() => resolve()))
+	}
+}
+
 export async function startSidecar(
 	options: StartSidecarOptions,
 ): Promise<SidecarHandle> {
@@ -57,10 +91,7 @@ async function spawnSidecarOnce(
 	preferredPort: number,
 	host: SidecarHost,
 ): Promise<SidecarHandle> {
-	const port = await getPort({
-		port: preferredPort,
-		host,
-	})
+	const port = await resolveListenPort(host, preferredPort)
 	if (port !== options.config.port) options.persistPort(port)
 	const shutdownToken = createShutdownToken()
 	const env = buildSidecarEnv({

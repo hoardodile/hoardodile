@@ -391,7 +391,7 @@
 				"localHint": "Die Adresse der Desktop-App — im Browser öffnen oder kopieren.",
 				"open": "Im Browser öffnen",
 				"portAdjustedTitle": "Port {{preferred}} ist belegt — der Server lauscht jetzt auf {{actual}}.",
-				"portAdjustedHint": "Öffne diese Adresse von anderen Geräten mit dem neuen Port.",
+				"portAdjustedHint": "Mit „Anwenden“ {{preferred}} erneut versuchen oder weiter {{actual}} verwenden.",
 				"portAdjustedDismiss": "Ausblenden",
 				"moreAddresses": "Weitere Adressen ({{count}}) — virtuelle Adapter und VPNs",
 				"noAddresses": "Keine erreichbare Adresse gefunden — prüfe die Netzwerkverbindung."
