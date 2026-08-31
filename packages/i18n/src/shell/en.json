@@ -6,7 +6,7 @@
 			"copyLanAddress": "Copy LAN address",
 			"restartServer": "Restart server",
 			"updateReady": "Update ready — Reopen the app",
-			"updateReadyResources": "Update ready — Open to apply",
+			"updateReadyResources": "Update ready — No need to reopen",
 			"quit": "Quit",
 			"tooltipServerStopped": "hoardodile — server stopped",
 			"tooltipUpdateReady": "hoardodile — update ready",

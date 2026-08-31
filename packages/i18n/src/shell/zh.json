@@ -6,7 +6,7 @@
 			"copyLanAddress": "复制局域网地址",
 			"restartServer": "重启服务器",
 			"updateReady": "更新已就绪——重新打开应用",
-			"updateReadyResources": "更新已就绪——打开以应用",
+			"updateReadyResources": "更新已就绪——无需重新打开",
 			"quit": "退出",
 			"tooltipServerStopped": "hoardodile —— 服务器已停止",
 			"tooltipUpdateReady": "hoardodile —— 更新已就绪",

@@ -127,7 +127,9 @@ test.describe("desktop update banner & badge (real browser)", () => {
 		const banner = page.getByTestId("desktop-update-banner")
 		await expect(banner).toBeVisible()
 		await expect(sidebar.locator(banner)).toHaveCount(1)
-		await expect(page.getByTestId("desktop-update-restart")).toHaveText("Apply")
+		await expect(page.getByTestId("desktop-update-restart")).toHaveText(
+			"Apply update",
+		)
 	})
 
 	test("ready full shows Reopen the app", async ({ page }) => {

@@ -622,7 +622,7 @@ describe("AppShell update badge & banner", () => {
 		const resourcesButton = await (await renderAppShell("/")).findByTestId(
 			"desktop-update-restart",
 		)
-		expect(resourcesButton).toHaveTextContent("Apply")
+		expect(resourcesButton).toHaveTextContent("Apply update")
 	})
 
 	it("labels the banner Reopen the app for a full install", async () => {

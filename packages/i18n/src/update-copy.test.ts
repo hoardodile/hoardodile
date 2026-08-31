@@ -20,6 +20,8 @@ const UPDATE_KEYS: readonly (readonly string[])[] = [
 	["me", "desktop", "updateBanner"],
 	["me", "desktop", "updateBannerResources"],
 	["me", "desktop", "updateBannerRestart"],
+	["me", "desktop", "updateBannerApply"],
+	["me", "desktop", "updateApplying"],
 	["me", "desktop", "autoUpdate", "description"],
 	["desktopShell", "tray", "updateReady"],
 	["desktopShell", "tray", "updateReadyResources"],
@@ -36,9 +38,19 @@ function valueAt(obj: unknown, path: readonly string[]): string | undefined {
 }
 
 describe("update copy stays simple and user-friendly", () => {
-	const FORBIDDEN = [/restart/i, /重启/, /app\s+shell/i, /应用壳/i]
+	const FORBIDDEN = [
+		/restart/i,
+		/重启/,
+		/app\s+shell/i,
+		/应用壳/i,
+		/resource/i,
+		/资源/,
+		/リソース/,
+		/recurso/i,
+		/ressourc/i,
+	]
 
-	it("never uses 'restart/重启' or 'app shell/应用壳' in app-reopen copy", () => {
+	it("never uses 'restart/重启', 'app shell/应用壳' or 'resource/资源' in update copy", () => {
 		for (const [language, catalog] of Object.entries(CATALOGS)) {
 			for (const path of UPDATE_KEYS) {
 				const value = valueAt(catalog, path)

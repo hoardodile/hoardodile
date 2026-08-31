@@ -195,10 +195,10 @@ describe("Settings → About", () => {
 		)
 		render(<AboutSection />)
 		const restart = await screen.findByTestId("me-about-restart")
-		expect(restart).toHaveTextContent("Apply")
+		expect(restart).toHaveTextContent("Apply update")
 		expect(
 			await screen.findByTestId("me-about-resources-version"),
-		).toHaveTextContent("Resources v9.9.9")
+		).toHaveTextContent("Content v9.9.9")
 		fireEvent.click(restart)
 		await waitFor(() => expect(applied).toHaveBeenCalledTimes(1))
 	})
