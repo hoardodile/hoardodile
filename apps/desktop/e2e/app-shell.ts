@@ -49,6 +49,21 @@ export async function expectShellRendered(
 }
 
 /**
+ * Reveal the shell's sidebar content the way a user would, regardless of the
+ * viewport: the sidebar itself at/above the sidebar breakpoint, the drawer
+ * below it. The GitHub Windows runner clamps the app window below that
+ * breakpoint, so the sidebar (and everything in it — the update banner, the
+ * Settings rows, nav links) sits in a `display:none` container until the
+ * drawer is opened. Every sidebar-only assertion must go through this so a
+ * clamped CI viewport doesn't read a present-but-hidden element.
+ */
+export async function openShellContent(appWin: Page): Promise<void> {
+	if (!(await appWin.getByTestId("app-sidebar").isVisible())) {
+		await appWin.getByTestId("app-sidebar-open").click()
+	}
+}
+
+/**
  * Navigate through the sidebar the way a user would: nav rows live in the
  * sidebar, or in the drawer when the viewport is below the breakpoint —
  * a browser-tab `goto` would hit the shell's window-navigation policy.
@@ -57,8 +72,6 @@ export async function navigateInShell(
 	appWin: Page,
 	linkName: string,
 ): Promise<void> {
-	if (!(await appWin.getByTestId("app-sidebar").isVisible())) {
-		await appWin.getByTestId("app-sidebar-open").click()
-	}
+	await openShellContent(appWin)
 	await appWin.getByRole("link", { name: linkName }).click()
 }

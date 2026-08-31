@@ -104,7 +104,7 @@ jobs:
       - name: Set up buildx (the gha cache backend needs its container driver)
         uses: docker/setup-buildx-action@v4
       - name: Build image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           push: false

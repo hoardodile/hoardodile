@@ -17,7 +17,11 @@ import {
 	contentHashTree,
 	SHELL_HASH_BOUNDARY,
 } from "../../../scripts/lib/shell-hash.mjs"
-import { expectShellRendered, navigateInShell } from "./app-shell.ts"
+import {
+	expectShellRendered,
+	navigateInShell,
+	openShellContent,
+} from "./app-shell.ts"
 import {
 	appWindow,
 	E2E_PASSWORD,
@@ -452,10 +456,22 @@ test("resource update applies in place against a fixture feed", async () => {
 				channel: "resources",
 				version: FIXTURE_VERSION,
 			})
-		await expect(appWin.getByTestId("desktop-update-banner")).toBeVisible()
+		// The banner lives in the sidebar footer, which the shell hides below
+		// the sidebar breakpoint (the GitHub Windows runner clamps the window
+		// there) — reveal the sidebar content first, then narrow to the one
+		// visible banner (it also renders in the hidden sidebar aside and,
+		// once opened, in the drawer), or the assertion would hit a hidden
+		// element or a strict-mode duplicate.
+		await openShellContent(appWin)
+		await expect(
+			appWin.getByTestId("desktop-update-banner").filter({ visible: true }),
+		).toBeVisible()
 
 		// Apply: overlay phases, then swap + sidecar restart + reload.
-		await appWin.getByTestId("desktop-update-restart").click()
+		await appWin
+			.getByTestId("desktop-update-restart")
+			.filter({ visible: true })
+			.click()
 		await expect(appWin.getByTestId("desktop-update-applying")).toBeVisible({
 			timeout: 60_000,
 		})
