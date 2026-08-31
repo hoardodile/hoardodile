@@ -1,52 +1,50 @@
 # Hoardodile
 
-Hoardodile is a modern digital hoarding tool for self-hosted archivists. It lets you hoard and preview any kind of digital content — images, documents, videos, web pages, and more — in one private library.
+<p align="center">
+  <img src="./docs/images/hoardodile-demo.png" alt="Hoardodile library" width="740" />
+</p>
+
+A modern digital hoarding tool. It collects images, documents, video, audio, PDFs and more into **one private library** — browse and preview everything in place, on your own storage.
 
 [中文说明 →](./README.zh-CN.md)
 
 ## Features
 
-- **Hoard any content** — extensible content plugins support different formats and media types.
-- **Preview in place** — browse and preview resources directly from your library.
-- **Plugin marketplace** — discover and install content plugins from **Settings → Marketplace** (built-in default registry: [`hoardodile/marketplace`](https://github.com/hoardodile/marketplace)).
-- **Desktop app** — Windows / Linux / macOS installers with an auto-updater; or run the self-hosted web version / Docker image.
-- **Self-hosted & private** — your data stays on your own storage, under your control.
+- **Hoard any content** — extensible content plugins cover images, documents, video, audio, PDFs, comics, novels and archives.
+- **Preview in place** — open a resource where it is: a viewer, a reader, a file tree.
+- **Plugin marketplace** — install more content plugins from **Settings → Marketplace**.
+- **Desktop or self-hosted** — Windows, macOS, Linux installers, or run it yourself.
+- **Private by default** — your data stays on your storage, with no telemetry.
 
-## Quick Start
+## Get it
+
+**Desktop** — [download the latest release](https://github.com/hoardodile/hoardodile/releases).
+
+**Self-hosted** — `docker compose up -d` ([details](#self-host)).
+
+---
+
+## Self-host
+
+Requires **Node 24** and **pnpm**.
 
 ```bash
 pnpm install
-cp .env.example .env   # Windows: copy .env.example .env
+cp .env.example .env
 pnpm build
-pnpm start # http://127.0.0.1:3000
+pnpm start    # http://127.0.0.1:3000
 ```
 
-Requires Node.js 24 and pnpm.
-
-## Deploy with Docker
+## Agent skills
 
 ```bash
-docker compose up -d   # http://localhost:3000
+npx skills add hoardodile/hoardodile@hd-plugin
+npx skills add hoardodile/hoardodile@hd-plugin-design
 ```
-
-Your library lives in a Docker volume named `hoardodile-data` (mounted at `/data`); `docker compose down -v` deletes it.
-
-## Agent Skills
-
-The `skills` CLI (open agent skills ecosystem) installs this repo's agent skills straight from GitHub:
-
-```bash
-npx skills add hoardodile/hoardodile@hd-plugin         # author content plugins
-npx skills add hoardodile/hoardodile@hd-plugin-design  # plugin UI design system (@hoardodile/ui)
-npx skills add hoardodile/hoardodile --list             # list all skills in this repo
-```
-
-- `hd-plugin` — author hoardodile content plugins: manifest, server hooks, iframe client, toolchain.
-- `hd-plugin-design` — the plugin UI design system built on [`@hoardodile/ui`](https://www.npmjs.com/package/@hoardodile/ui).
 
 ## Contributions
 
-Pull requests are not accepted at this time. Bug reports and feature ideas are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md).
+Bug reports and feature ideas are welcome via [issues](https://github.com/hoardodile/hoardodile/issues); pull requests are not accepted at this time.
 
 ## License
 
