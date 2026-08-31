@@ -4,6 +4,8 @@
 		"reloadAria": "Recargar plugin",
 		"reloadHint": "Recargar — volver a montar con la compilación actual",
 		"resource": "Recurso",
+		"cardPreviewAria": "Previsualizar tarjeta de recurso",
+		"cardPreviewHint": "Res card simulada — portada, plantillas y metadatos",
 		"enterFullscreen": "Entrar en pantalla completa",
 		"exitFullscreen": "Salir de pantalla completa"
 	},
@@ -67,6 +69,9 @@
 		"emptyHookSnapshot": "Sin captura de hooks",
 		"capPreview": "Render de vista previa",
 		"capFrame": "Render de fotograma",
+		"capCover": "Render de portada",
+		"cardPreviewTitle": "Tarjeta de recurso",
+		"cardPreviewDescription": "Cómo se muestra el recurso como res card — portada, plantillas y metadatos.",
 		"yes": "Sí",
 		"no": "No"
 	},

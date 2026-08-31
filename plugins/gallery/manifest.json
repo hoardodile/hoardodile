@@ -69,12 +69,12 @@
 				{
 					"key": "animation",
 					"label": "{{t('animationKindLabel')}}",
-					"icon": "{{icon('Sparkle')}}"
+					"icon": "{{icon('Video')}}"
 				},
 				{
 					"key": "video",
 					"label": "{{t('videoKindLabel')}}",
-					"icon": "{{icon('Video')}}"
+					"icon": "{{icon('VideoFramePlayHorizontal')}}"
 				},
 				{
 					"key": "audio",

@@ -4,6 +4,8 @@
 		"reloadAria": "プラグインを再読み込み",
 		"reloadHint": "再読み込み — 現在のビルドで再マウント",
 		"resource": "リソース",
+		"cardPreviewAria": "リソースカードをプレビュー",
+		"cardPreviewHint": "res card をシミュレート — 表紙・カードテンプレート・メタデータ",
 		"enterFullscreen": "全画面にする",
 		"exitFullscreen": "全画面を終了"
 	},
@@ -67,6 +69,9 @@
 		"emptyHookSnapshot": "フックスナップショットなし",
 		"capPreview": "プレビュー描画",
 		"capFrame": "フレーム描画",
+		"capCover": "表紙描画",
+		"cardPreviewTitle": "リソースカード",
+		"cardPreviewDescription": "リソースが res card として描画される様子 — 表紙・カードテンプレート・メタデータ。",
 		"yes": "はい",
 		"no": "いいえ"
 	},

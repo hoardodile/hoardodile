@@ -46,6 +46,11 @@
 			"development": "./src/hooks/*",
 			"default": "./dist/hooks/*.js"
 		},
+		"./res-card-template": {
+			"types": "./dist/res-card-template/index.d.ts",
+			"development": "./src/res-card-template/index.ts",
+			"default": "./dist/res-card-template/index.js"
+		},
 		"./viewport": {
 			"types": "./dist/viewport.d.ts",
 			"development": "./src/viewport.ts",
@@ -77,8 +82,10 @@
 		"@dnd-kit/sortable": "^10.0.0",
 		"@dnd-kit/utilities": "^3.2.2",
 		"@hoardodile/i18n": "workspace:*",
+		"@hoardodile/sdk-types": "workspace:*",
 		"@solar-icons/react": "catalog:",
 		"class-variance-authority": "^0.7.1",
+		"pretty-bytes": "^7.1.1",
 		"clsx": "^2.1.1",
 		"react-hook-form": "^7.86.0",
 		"react-image-crop": "^11.1.2",

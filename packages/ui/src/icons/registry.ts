@@ -170,6 +170,7 @@ import { UserPlusIcon as UserPlusBoldWeight } from "@solar-icons/react/bold/user
 import { UsersGroupRoundedIcon as UsersGroupRoundedBoldWeight } from "@solar-icons/react/bold/users-group-rounded"
 import { UsersGroupTwoRoundedIcon as UsersGroupTwoRoundedBoldWeight } from "@solar-icons/react/bold/users-group-two-rounded"
 import { VideoFrameIcon as VideoFrameBoldWeight } from "@solar-icons/react/bold/video-frame"
+import { VideoFramePlayHorizontalIcon as VideoFramePlayHorizontalBoldWeight } from "@solar-icons/react/bold/video-frame-play-horizontal"
 import { Widget2Icon as Widget2BoldWeight } from "@solar-icons/react/bold/widget-2"
 import { Widget5Icon as Widget5BoldWeight } from "@solar-icons/react/bold/widget-5"
 import { WindowFrameIcon as WindowFrameBoldWeight } from "@solar-icons/react/bold/window-frame"
@@ -312,6 +313,7 @@ import { UserPlusIcon as UserPlusBoldDuotone } from "@solar-icons/react/bold-duo
 import { UsersGroupRoundedIcon as UsersGroupRoundedBoldDuotone } from "@solar-icons/react/bold-duotone/users-group-rounded"
 import { UsersGroupTwoRoundedIcon as UsersGroupTwoRoundedBoldDuotone } from "@solar-icons/react/bold-duotone/users-group-two-rounded"
 import { VideoFrameIcon as VideoFrameBoldDuotone } from "@solar-icons/react/bold-duotone/video-frame"
+import { VideoFramePlayHorizontalIcon as VideoFramePlayHorizontalBoldDuotone } from "@solar-icons/react/bold-duotone/video-frame-play-horizontal"
 import { Widget2Icon as Widget2BoldDuotone } from "@solar-icons/react/bold-duotone/widget-2"
 import { Widget5Icon as Widget5BoldDuotone } from "@solar-icons/react/bold-duotone/widget-5"
 import { WindowFrameIcon as WindowFrameBoldDuotone } from "@solar-icons/react/bold-duotone/window-frame"
@@ -453,6 +455,7 @@ import { UserPlusIcon as UserPlusLinear } from "@solar-icons/react/linear/user-p
 import { UsersGroupRoundedIcon as UsersGroupRoundedLinear } from "@solar-icons/react/linear/users-group-rounded"
 import { UsersGroupTwoRoundedIcon as UsersGroupTwoRoundedLinear } from "@solar-icons/react/linear/users-group-two-rounded"
 import { VideoFrameIcon as VideoFrameLinear } from "@solar-icons/react/linear/video-frame"
+import { VideoFramePlayHorizontalIcon as VideoFramePlayHorizontalLinear } from "@solar-icons/react/linear/video-frame-play-horizontal"
 import { Widget2Icon as Widget2Linear } from "@solar-icons/react/linear/widget-2"
 import { Widget5Icon as Widget5Linear } from "@solar-icons/react/linear/widget-5"
 import { WindowFrameIcon as WindowFrameLinear } from "@solar-icons/react/linear/window-frame"
@@ -1153,6 +1156,11 @@ export const VideoFrame = createIcon({
 	bold: VideoFrameBoldWeight,
 	boldDuotone: VideoFrameBoldDuotone,
 	linear: VideoFrameLinear,
+})
+export const VideoFramePlayHorizontal = createIcon({
+	bold: VideoFramePlayHorizontalBoldWeight,
+	boldDuotone: VideoFramePlayHorizontalBoldDuotone,
+	linear: VideoFramePlayHorizontalLinear,
 })
 export const Widget2 = createIcon({
 	bold: Widget2BoldWeight,

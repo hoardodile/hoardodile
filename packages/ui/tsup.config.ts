@@ -17,6 +17,8 @@ export default defineConfig({
 		"!src/icons/*.test.{ts,tsx}",
 		"src/components/*.tsx",
 		"!src/components/*.test.tsx",
+		"src/res-card-template/*.{ts,tsx}",
+		"!src/res-card-template/*.test.{ts,tsx}",
 	],
 	format: ["esm"],
 	dts: true,

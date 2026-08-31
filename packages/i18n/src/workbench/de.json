@@ -4,6 +4,8 @@
 		"reloadAria": "Plugin neu laden",
 		"reloadHint": "Neu laden — mit dem aktuellen Build neu einbinden",
 		"resource": "Ressource",
+		"cardPreviewAria": "Ressourcen-Karte anzeigen",
+		"cardPreviewHint": "Simulierte res card — Cover, Kartentemplates und Metadaten",
 		"enterFullscreen": "Vollbild aktivieren",
 		"exitFullscreen": "Vollbild beenden"
 	},
@@ -67,6 +69,9 @@
 		"emptyHookSnapshot": "Kein Hook-Snapshot",
 		"capPreview": "Vorschau-Rendering",
 		"capFrame": "Frame-Rendering",
+		"capCover": "Cover-Rendering",
+		"cardPreviewTitle": "Ressourcen-Karte",
+		"cardPreviewDescription": "Wie die Ressource als res card dargestellt wird — Cover, Kartentemplates und Metadaten.",
 		"yes": "Ja",
 		"no": "Nein"
 	},

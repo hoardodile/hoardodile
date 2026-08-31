@@ -20,6 +20,10 @@ import {
 	renderSlotBadges,
 	type TemplateContext,
 } from "@/features/res/template/render"
+import {
+	buildPluginAssetUrl,
+	Icon,
+} from "@/features/res/template/template-icons"
 import { AUDIO_TILE_HEIGHT, ResAudioPlayer } from "./ResAudioPlayer"
 import { ResThumb } from "./ResThumb"
 import { ResVideoHover } from "./ResVideoHover"
@@ -152,6 +156,8 @@ export function ResMediaThumb(props: ResMediaThumbProps) {
 		pluginId: contentPluginId ?? "",
 		manifest: cardUi?.manifest ?? {},
 		iconClassName: "size-3.5",
+		renderIcon: (ref, className) => Icon({ icon: ref, className }),
+		buildAssetUrl: buildPluginAssetUrl,
 	}
 
 	const tlBadges = cardUi?.slotUi?.tl

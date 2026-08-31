@@ -1,19 +1,12 @@
 import type { PluginManifest, SearchKind } from "@hoardodile/sdk-types"
-import { renderCardTemplate } from "@/features/res/template/render"
-
-function resolveLocaleString(
-	value: string | Record<string, string>,
-	locale: string,
-): string {
-	if (typeof value === "string") return value
-	const exact = value[locale]
-	if (exact !== undefined) return exact
-	const base = locale.split("-")[0] ?? locale
-	const partial = value[base]
-	if (partial !== undefined) return partial
-	const first = Object.values(value)[0]
-	return first ?? ""
-}
+import {
+	renderCardTemplate,
+	resolveLocaleString,
+} from "@/features/res/template/render"
+import {
+	buildPluginAssetUrl,
+	Icon,
+} from "@/features/res/template/template-icons"
 
 /**
  * Resolve a plugin's display name: prefer `i18n.name` if present,
@@ -56,7 +49,13 @@ export function renderSearchKindLabel(
 	const rendered = renderCardTemplate(
 		kind.label,
 		{ file: undefined, source: undefined, searchMeta: undefined },
-		{ locale, pluginId, manifest },
+		{
+			locale,
+			pluginId,
+			manifest,
+			renderIcon: (ref, className) => Icon({ icon: ref, className }),
+			buildAssetUrl: buildPluginAssetUrl,
+		},
 	)
 	if (rendered === null || rendered === undefined || rendered === "") {
 		return kind.key
@@ -82,7 +81,14 @@ export function renderSearchKindIcon(args: {
 	const rendered = renderCardTemplate(
 		kind.icon,
 		{ file: undefined, source: undefined, searchMeta: undefined },
-		{ locale, pluginId, manifest, iconClassName },
+		{
+			locale,
+			pluginId,
+			manifest,
+			iconClassName,
+			renderIcon: (ref, className) => Icon({ icon: ref, className }),
+			buildAssetUrl: buildPluginAssetUrl,
+		},
 	)
 	if (rendered === null || rendered === undefined || rendered === "") {
 		return undefined

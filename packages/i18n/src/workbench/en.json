@@ -4,6 +4,8 @@
 		"reloadAria": "Reload plugin",
 		"reloadHint": "Reload — re-mount with the current build",
 		"resource": "Resource",
+		"cardPreviewAria": "Preview resource card",
+		"cardPreviewHint": "Simulated res card — cover, card templates and metadata",
 		"enterFullscreen": "Enter fullscreen",
 		"exitFullscreen": "Exit fullscreen"
 	},
@@ -67,6 +69,9 @@
 		"emptyHookSnapshot": "No hook snapshot",
 		"capPreview": "Preview render",
 		"capFrame": "Frame render",
+		"capCover": "Cover render",
+		"cardPreviewTitle": "Resource card",
+		"cardPreviewDescription": "How the resource renders as a res card — cover, card templates and metadata.",
 		"yes": "Yes",
 		"no": "No"
 	},

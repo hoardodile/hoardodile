@@ -16,6 +16,7 @@ export type WorkbenchHookSnapshot = {
 	readonly sourceMeta: unknown
 	readonly searchMeta: unknown
 	readonly coverLocal: string | undefined
+	readonly coverKind?: string
 	readonly files: readonly unknown[] | undefined
 	readonly fileStats: {
 		readonly count?: number
@@ -112,6 +113,7 @@ export type WorkbenchProviders = {
 		path: string,
 		timeMs: number,
 	) => Promise<WorkbenchRendered | undefined>
+	readonly cover?: (resId: string) => Promise<WorkbenchRendered | undefined>
 }
 
 /** Options for {@link serveWorkbench}. */

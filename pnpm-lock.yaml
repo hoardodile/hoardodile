@@ -744,6 +744,9 @@ importers:
       '@hoardodile/i18n':
         specifier: workspace:*
         version: link:../i18n
+      '@hoardodile/sdk-types':
+        specifier: workspace:*
+        version: link:../../plugins/sdk-types
       '@solar-icons/react':
         specifier: 'catalog:'
         version: 2.1.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -756,6 +759,9 @@ importers:
       i18next:
         specifier: 'catalog:'
         version: 26.4.0(typescript@5.9.3)
+      pretty-bytes:
+        specifier: ^7.1.1
+        version: 7.1.1
       react:
         specifier: 'catalog:'
         version: 19.2.8

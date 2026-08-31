@@ -8,7 +8,7 @@ import {
 
 function makeCtx(
 	snapshot: HookSnapshot | null,
-	capabilities: { preview?: boolean; frame?: boolean } = {},
+	capabilities: { preview?: boolean; frame?: boolean; cover?: boolean } = {},
 ): ResourceContext {
 	return {
 		resId: "res-1",
@@ -17,6 +17,7 @@ function makeCtx(
 		capabilities: {
 			preview: capabilities.preview ?? true,
 			frame: capabilities.frame ?? true,
+			cover: capabilities.cover ?? true,
 		},
 	}
 }

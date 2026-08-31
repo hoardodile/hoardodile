@@ -14,7 +14,12 @@ import {
 	Star,
 	Tag,
 	VideoFrame,
+	VideoFramePlayHorizontal,
 } from "@hoardodile/ui/icons/registry"
+import {
+	type IconRef,
+	parseIconRef as parseIconRefBase,
+} from "@hoardodile/ui/res-card-template"
 import type { ComponentType } from "react"
 import { createElement } from "react"
 import { resolveSolarIconComponent } from "@/features/plugin/icons/solar-icon"
@@ -36,6 +41,7 @@ const SYNC_ICONS: Readonly<
 	file: FileText,
 	"file-text": FileText,
 	"video-frame": VideoFrame,
+	"video-frame-play-horizontal": VideoFramePlayHorizontal,
 	filter: Filter,
 	folder: Folder,
 	gallery: Gallery,
@@ -49,47 +55,21 @@ const SYNC_ICONS: Readonly<
 	tag: Tag,
 }
 
-export type IconRef =
-	| { readonly kind: "icon"; readonly name: string }
-	| { readonly kind: "asset"; readonly url: string }
+/** Resolve a manifest-relative asset path to this app's asset URL. */
+export function buildPluginAssetUrl(pluginId: string, path: string): string {
+	return apiPaths.plugins.asset(pluginId, path)
+}
 
 /**
- * Parse a manifest-level icon string into a render-ready ref.
- *
- *   `<SolarGlyph>`       — Solar glyph name (manifest/template icons are
- *                          Solar-only; PascalCase and the legacy whitelist
- *                          names normalize to the kebab glyph)
- *   `<relative/path>`    — `/api/plugins/<pluginId>/<path>` (leading `./` stripped)
- *
- * Empty inputs, schemes (`http(s)`, `data:`), `..`-shaped paths and any
- * string that cannot name a glyph return `undefined`. The renderer treats
- * that as "nothing" — icon resolution never throws.
+ * Parse a manifest-level icon string into a render-ready ref, resolving
+ * asset paths against this app's asset routing. The shared grammar and
+ * Solar-name normalization live in `@hoardodile/ui/res-card-template`.
  */
 export function parseIconRef(
 	raw: string,
 	pluginId: string,
 ): IconRef | undefined {
-	const trimmed = raw.trim()
-	if (trimmed.length === 0) return undefined
-	if (
-		trimmed.startsWith("http://") ||
-		trimmed.startsWith("https://") ||
-		trimmed.startsWith("data:")
-	) {
-		return undefined
-	}
-	if (
-		trimmed.includes(".") ||
-		trimmed.includes("/") ||
-		trimmed.includes("\\")
-	) {
-		const rel = trimmed.replace(/^\.[\\/]/, "")
-		if (rel.length === 0 || rel.split("/").includes("..")) return undefined
-		return { kind: "asset", url: apiPaths.plugins.asset(pluginId, rel) }
-	}
-	const name = normalizeSolarGlyphName(trimmed)
-	if (name === undefined) return undefined
-	return { kind: "icon", name }
+	return parseIconRefBase(raw, pluginId, buildPluginAssetUrl)
 }
 
 export type IconProps = {

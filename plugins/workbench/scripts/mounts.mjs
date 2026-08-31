@@ -442,6 +442,7 @@ function workbenchApiMount(providers) {
 				capabilities: {
 					preview: providers.preview !== undefined,
 					frame: providers.frame !== undefined,
+					cover: providers.cover !== undefined,
 				},
 			})
 			return true

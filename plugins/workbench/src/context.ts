@@ -3,6 +3,7 @@ import type {
 	Danmaku,
 	FileStats,
 	Message,
+	PluginManifest,
 	SearchMeta,
 } from "@hoardodile/sdk-types"
 import type { PluginIframeContext } from "@hoardodile/sdk-web"
@@ -25,6 +26,10 @@ export type WorkbenchManifest = {
 	readonly permissions?: {
 		readonly download?: boolean
 	}
+	/** Manifest-declared UI (card templates, search kinds, …). */
+	readonly ui?: PluginManifest["ui"]
+	/** Manifest i18n table used by `{{t('key')}}` template calls. */
+	readonly i18n?: PluginManifest["i18n"]
 }
 
 export type WorkbenchResource = {
@@ -47,6 +52,7 @@ export type HookSnapshot = {
 	readonly sourceMeta: unknown
 	readonly searchMeta: unknown
 	readonly coverLocal?: string
+	readonly coverKind?: string
 	readonly files: readonly unknown[] | undefined
 	readonly fileStats: FileStats
 	readonly imageHashes?: readonly unknown[]
@@ -69,6 +75,7 @@ export type ResourceContext = {
 	readonly capabilities: {
 		readonly preview: boolean
 		readonly frame: boolean
+		readonly cover: boolean
 	}
 }
 
@@ -93,7 +100,7 @@ export async function fetchContext(resId: string): Promise<ResourceContext> {
 			resId,
 			snapshot: null,
 			state: null,
-			capabilities: { preview: false, frame: false },
+			capabilities: { preview: false, frame: false, cover: false },
 		}
 	}
 }

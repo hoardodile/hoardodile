@@ -135,6 +135,10 @@ export function InfoPopover(props: {
 						label={tw("popover.capFrame")}
 						value={tw(ctx?.capabilities.frame ? "popover.yes" : "popover.no")}
 					/>
+					<InfoRow
+						label={tw("popover.capCover")}
+						value={tw(ctx?.capabilities.cover ? "popover.yes" : "popover.no")}
+					/>
 				</div>
 
 				<Separator />

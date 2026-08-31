@@ -73,7 +73,7 @@ function makeCtx(state: ResourceContext["state"]): ResourceContext {
 		resId: "r-1",
 		snapshot: null,
 		state,
-		capabilities: { preview: false, frame: false },
+		capabilities: { preview: false, frame: false, cover: false },
 	}
 }
 
@@ -177,7 +177,11 @@ describe("seedState (context join)", () => {
 		expect(out.state?.name).toBe("Sunset")
 		expect(out.resId).toBe("r-1")
 		expect(out.snapshot).toBe(null)
-		expect(out.capabilities).toEqual({ preview: false, frame: false })
+		expect(out.capabilities).toEqual({
+			preview: false,
+			frame: false,
+			cover: false,
+		})
 	})
 
 	it("an empty override shadows the non-empty seeded value", () => {

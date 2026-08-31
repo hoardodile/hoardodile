@@ -278,6 +278,7 @@ export function App() {
 				config={config}
 				pluginState={pluginState}
 				fullscreen={fullscreenAPI}
+				locale={presentation.language}
 				onConfigChange={patchConfig}
 				onSelect={setSelectedId}
 				onReload={() => setReloadNonce((n) => n + 1)}

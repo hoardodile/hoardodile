@@ -2,16 +2,42 @@
  * @vitest-environment node
  */
 
+import { createElement } from "react"
 import { describe, expect, test } from "vitest"
+import { type IconRef, normalizeSolarGlyphName } from "./icon.ts"
 import {
+	type RenderIcon,
 	renderCardTemplate,
 	renderSlotBadges,
 	resolveLocaleString,
-} from "./render.ts"
+	type TemplateContext,
+} from "./index.ts"
 
-function makeCtx(
-	overrides?: Partial<import("./render.ts").TemplateContext>,
-): import("./render.ts").TemplateContext {
+// A deterministic in-memory icon renderer: a fixed set of "known" Solar
+// glyphs (what the app's renderer considers resolvable) draw a React
+// element (so mixed templates stay arrays), unknown glyphs and
+// unresolvable assets return null. This keeps the renderer tests focused
+// on evaluation, not the icon implementation.
+const KNOWN_GLYPHS = new Set([
+	"video-frame",
+	"music-notes",
+	"gallery",
+	"heart",
+	"play",
+	"file-text",
+])
+
+function renderIcon(ref: IconRef): ReturnType<RenderIcon> {
+	if (ref.kind === "asset") {
+		return createElement("span", null, `asset:${ref.url}`)
+	}
+	const name = normalizeSolarGlyphName(ref.name)
+	return name !== undefined && KNOWN_GLYPHS.has(name)
+		? createElement("span", null, `icon:${name}`)
+		: null
+}
+
+function makeCtx(overrides?: Partial<TemplateContext>): TemplateContext {
 	return {
 		locale: "en",
 		pluginId: "test-plugin",
@@ -31,6 +57,8 @@ function makeCtx(
 			},
 		},
 		iconClassName: "h-4 w-4",
+		renderIcon,
+		buildAssetUrl: (pluginId, path) => `/assets/${pluginId}/${path}`,
 		...overrides,
 	}
 }

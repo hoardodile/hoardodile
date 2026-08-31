@@ -2,11 +2,19 @@ import { Button } from "@hoardodile/ui/components/button"
 import { DropdownSelect } from "@hoardodile/ui/components/dropdown-select"
 import { Icon } from "@hoardodile/ui/components/icon"
 import {
+	Popover,
+	PopoverContent,
+	PopoverDescription,
+	PopoverHeader,
+	PopoverTitle,
+	PopoverTrigger,
+} from "@hoardodile/ui/components/popover"
+import {
 	Tooltip,
 	TooltipContent,
 	TooltipTrigger,
 } from "@hoardodile/ui/components/tooltip"
-import { Refresh } from "@hoardodile/ui/icons/registry"
+import { Box, Refresh } from "@hoardodile/ui/icons/registry"
 import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import type { WorkbenchConfig } from "../config.ts"
@@ -18,6 +26,7 @@ import type {
 import { ConfigPopover, type PluginStateView } from "./ConfigPopover.tsx"
 import { type FullscreenAPI, FullscreenButton } from "./FullscreenButton.tsx"
 import { InfoPopover } from "./InfoPopover.tsx"
+import { ResCardPreview } from "./ResCardPreview.tsx"
 
 /**
  * The chrome strip: hairline on the canvas, controls right-aligned and
@@ -34,6 +43,7 @@ export function Toolbar(props: {
 	readonly config: WorkbenchConfig
 	readonly pluginState: PluginStateView
 	readonly fullscreen: FullscreenAPI
+	readonly locale: string
 	readonly onConfigChange: (patch: Partial<WorkbenchConfig>) => void
 	readonly onSelect: (resId: string) => void
 	readonly onReload: () => void
@@ -41,7 +51,8 @@ export function Toolbar(props: {
 	readonly onClearCache: () => void
 	readonly onRestoreState: () => void
 }) {
-	const { manifest, resources, resource, ctx, config, fullscreen } = props
+	const { manifest, resources, resource, ctx, config, fullscreen, locale } =
+		props
 	const { t: tw } = useTranslation("workbench")
 
 	return (
@@ -80,6 +91,12 @@ export function Toolbar(props: {
 				<TooltipContent>{tw("toolbar.reloadHint")}</TooltipContent>
 			</Tooltip>
 			<FullscreenButton api={fullscreen} />
+			<CardPreviewPopover
+				manifest={manifest}
+				resource={resource}
+				ctx={ctx}
+				locale={locale}
+			/>
 			<InfoPopover
 				manifest={manifest}
 				resource={resource}
@@ -145,5 +162,61 @@ function ResourcePicker(props: {
 				/>
 			</span>
 		</span>
+	)
+}
+
+/**
+ * Top-right icon button that opens a popover simulating the resource's
+ * res card — real generated cover + the plugin's manifest card templates
+ * + the hook snapshot metadata — so the dev can walk the metadata → cover
+ * → card pipeline offline. Hidden until the manifest, resource and hook
+ * snapshot are all available.
+ */
+function CardPreviewPopover(props: {
+	readonly manifest: WorkbenchManifest | null
+	readonly resource: WorkbenchResource | undefined
+	readonly ctx: ResourceContext | null
+	readonly locale: string
+}) {
+	const { manifest, resource, ctx, locale } = props
+	const { t: tw } = useTranslation("workbench")
+	if (manifest === null || resource === undefined || ctx === null) return null
+
+	return (
+		<Popover closeOnBlur>
+			<Tooltip>
+				<TooltipTrigger
+					render={
+						<PopoverTrigger
+							render={
+								<Button
+									variant="ghost"
+									size="icon-sm"
+									aria-label={tw("toolbar.cardPreviewAria")}
+									data-testid="workbench-card-preview"
+								>
+									<Icon icon={Box} />
+								</Button>
+							}
+						/>
+					}
+				/>
+				<TooltipContent>{tw("toolbar.cardPreviewHint")}</TooltipContent>
+			</Tooltip>
+			<PopoverContent align="end" className="w-80 max-w-[calc(100vw-2rem)]">
+				<PopoverHeader>
+					<PopoverTitle>{tw("popover.cardPreviewTitle")}</PopoverTitle>
+					<PopoverDescription>
+						{tw("popover.cardPreviewDescription")}
+					</PopoverDescription>
+				</PopoverHeader>
+				<ResCardPreview
+					manifest={manifest}
+					resource={resource}
+					snapshot={ctx.snapshot}
+					locale={locale}
+				/>
+			</PopoverContent>
+		</Popover>
 	)
 }

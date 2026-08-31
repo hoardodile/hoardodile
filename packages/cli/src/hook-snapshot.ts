@@ -30,6 +30,15 @@ export type PluginHookSnapshot = {
 	readonly sourceMeta: unknown
 	readonly searchMeta: unknown
 	readonly coverLocal: string | undefined
+	/**
+	 * The resource's cover kind (`image` | `video` | `audio`), sniffed
+	 * from the cover source the plugin's `coverLocal` hook picked. The
+	 * host app selects the manifest's `ui.card.<kind>` block from the
+	 * comparable `coverMeta.kind`, so the workbench needs this to render
+	 * the same card templates. `undefined` when there is no cover source
+	 * or the file cannot be classified as a cover kind.
+	 */
+	readonly coverKind?: string
 	readonly files: readonly unknown[] | undefined
 	readonly fileStats: FileStats
 	readonly imageHashes?: readonly unknown[]
@@ -133,6 +142,9 @@ async function collectHookResults(opts: {
 		: undefined
 	const fileStats =
 		(await attempt("fileStats", () => measureFileStats(api))) ?? {}
+	// Sniff the selected cover source so the workbench can pick the same
+	// `ui.card.<kind>` block the host app does from `coverMeta.kind`.
+	const coverKind = await sniffCoverKind(api, coverLocal, attempt)
 
 	return {
 		pluginId: target.id,
@@ -140,12 +152,27 @@ async function collectHookResults(opts: {
 		sourceMeta: meta?.sourceMeta?.value,
 		searchMeta: meta?.searchMeta?.value,
 		coverLocal,
+		coverKind,
 		files,
 		fileStats,
 		imageHashes: hashes?.hashes,
 		errors,
 		capturedAt: Date.now(),
 	}
+}
+
+/** Sniff the cover source's kind (image/video/audio), or `undefined`. */
+async function sniffCoverKind(
+	api: ResourceAPI,
+	coverLocal: string | undefined,
+	attempt: <T>(hook: string, run: () => Promise<T>) => Promise<T | undefined>,
+): Promise<string | undefined> {
+	if (coverLocal === undefined) return undefined
+	const probe = await attempt("coverKind", () => api.sniff(coverLocal!))
+	const kind = probe?.kind
+	return kind === "image" || kind === "video" || kind === "audio"
+		? kind
+		: undefined
 }
 
 /**

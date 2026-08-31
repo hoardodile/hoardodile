@@ -7,6 +7,10 @@ import { useTranslation } from "react-i18next"
 import { pluginListAllQueryOptions } from "@/features/plugin"
 import { resDetailCardQueryOptions } from "@/features/res"
 import { renderCardTemplate } from "@/features/res/template/render"
+import {
+	buildPluginAssetUrl,
+	Icon as RenderIcon,
+} from "@/features/res/template/template-icons"
 import { useAnchorJump } from "./useAnchorJump"
 
 export type CommentAnchorChipProps = Readonly<{
@@ -80,7 +84,13 @@ function useAnchorLabel(anchor: ResAnchor): string {
 			searchMeta: undefined,
 			data: anchor.data,
 		},
-		{ locale, pluginId: pluginId ?? "", manifest: manifest ?? {} },
+		{
+			locale,
+			pluginId: pluginId ?? "",
+			manifest: manifest ?? {},
+			renderIcon: (ref, className) => RenderIcon({ icon: ref, className }),
+			buildAssetUrl: buildPluginAssetUrl,
+		},
 	)
 	if (rendered === null || rendered === undefined) return ""
 	if (typeof rendered === "string") return rendered

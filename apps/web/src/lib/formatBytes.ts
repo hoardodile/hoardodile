@@ -1,18 +1,7 @@
-import prettyBytes from "pretty-bytes"
-
 /**
  * Format a non-negative byte count as a short human-readable string
- * via {@link prettyBytes} with binary conversion (base 1024) and JEDEC
- * labels (`4.5 KB`, `1.2 MB`, `930 GB`) — IEC `KiB`/`MiB`/`GiB` mapped
- * to `KB`/`MB`/`GB`. Matches how Windows and most disk tools report
- * sizes, without switching to decimal (base 1000) units.
- *
- * Returns the empty string for `undefined` so callers can splat the value
- * into a template without conditional checks. Negative or non-finite
- * inputs are clamped to `0 B`.
+ * (binary, JEDEC labels — `4.5 KB`, `1.2 MB`). Canonical implementation
+ * lives in `@hoardodile/ui` so the res-card template renderer (which its
+ * `bytes(...)` pipe needs) shares it verbatim.
  */
-export function formatBytes(bytes: number | undefined): string {
-	if (bytes === undefined) return ""
-	if (!Number.isFinite(bytes) || bytes <= 0) return "0 B"
-	return prettyBytes(bytes, { binary: true }).replaceAll("iB", "B")
-}
+export { formatBytes } from "@hoardodile/ui/res-card-template"

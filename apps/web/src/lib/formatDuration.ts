@@ -37,16 +37,7 @@ export function formatDurationMs(ms: number): string {
  * Format a duration in milliseconds as a media clock — `m:ss`, or
  * `h:mm:ss` past the hour. Used by the plugin card templates
  * (`{{duration(...)}}`) and the card's inline audio player, so both
- * read the same way.
+ * read the same way. Canonical implementation lives in
+ * `@hoardodile/ui` (shared with the res-card template renderer).
  */
-export function formatClockDuration(ms: number): string {
-	if (!Number.isFinite(ms) || ms < 0) return ""
-	const totalSeconds = Math.floor(ms / 1000)
-	const hours = Math.floor(totalSeconds / 3600)
-	const minutes = Math.floor((totalSeconds % 3600) / 60)
-	const seconds = totalSeconds % 60
-	if (hours > 0) {
-		return `${hours}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`
-	}
-	return `${minutes}:${String(seconds).padStart(2, "0")}`
-}
+export { formatClockDuration } from "@hoardodile/ui/res-card-template"
