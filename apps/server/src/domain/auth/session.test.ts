@@ -171,4 +171,58 @@ describe("session store (iron-session)", () => {
 		)
 		expect(await store.verifyToken(token.sealed, 1_000 + 2_000)).toBeUndefined()
 	})
+
+	describe("file token reuse (stable content URL)", () => {
+		test("returns the same token for the same scope+ttl while still valid", async () => {
+			const a = await store.createToken(
+				86_400,
+				{ kind: "res", id: "res-1" },
+				1_000,
+			)
+			const b = await store.createToken(
+				86_400,
+				{ kind: "res", id: "res-1" },
+				1_000,
+			)
+			expect(b.sealed).toBe(a.sealed)
+		})
+
+		test("reuses the token when called at a later time inside the TTL", async () => {
+			const a = await store.createToken(
+				86_400,
+				{ kind: "res", id: "res-1" },
+				1_000,
+			)
+			const b = await store.createToken(
+				86_400,
+				{ kind: "res", id: "res-1" },
+				60_000,
+			)
+			expect(b.sealed).toBe(a.sealed)
+		})
+
+		test("mints a fresh token for a different scope", async () => {
+			const a = await store.createToken(
+				86_400,
+				{ kind: "res", id: "res-1" },
+				1_000,
+			)
+			const b = await store.createToken(
+				86_400,
+				{ kind: "plugin", id: "res-1" },
+				1_000,
+			)
+			expect(b.sealed).not.toBe(a.sealed)
+		})
+
+		test("mints a fresh token once the cached one expires", async () => {
+			const a = await store.createToken(1, { kind: "res", id: "res-1" }, 1_000)
+			const b = await store.createToken(
+				1,
+				{ kind: "res", id: "res-1" },
+				1_000 + 2_000,
+			)
+			expect(b.sealed).not.toBe(a.sealed)
+		})
+	})
 })

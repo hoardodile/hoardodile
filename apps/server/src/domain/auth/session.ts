@@ -192,6 +192,48 @@ export function createSessionStore(opts: SessionStoreOptions): SessionStore {
 	const password = opts.password
 	const tokenKey = deriveTokenKey(password)
 
+	// In-memory reuse cache for stateless file tokens. A token is bound to a
+	// single resource/plugin scope, so re-minting it on every call only
+	// changes the URL (the embedded random nonce) — the web client then has
+	// to re-download the resource content every open because the cache key
+	// moved. Reusing the same token for its TTL keeps the content URL stable,
+	// so the browser's HTTP cache (immutable, 1 y for resource files) can
+	// serve it instead. This is a reuse cache, not a deny-list: tokens remain
+	// stateless HMACs and their scope + expiry are still enforced on verify.
+	const TOKEN_CACHE_MAX = 5_000
+	const tokenCache = new Map<string, FileToken>()
+
+	function tokenCacheKey(ttlSeconds: number, scope: TokenScope): string {
+		return `${scope.kind}:${scope.id}:${ttlSeconds}`
+	}
+
+	async function issueToken(
+		ttlSeconds: number,
+		scope: TokenScope,
+		now: number = Date.now(),
+	): Promise<FileToken> {
+		const key = tokenCacheKey(ttlSeconds, scope)
+		const cached = tokenCache.get(key)
+		if (cached !== undefined && cached.expiresAt > now) {
+			return cached
+		}
+		const token = createToken(tokenKey, ttlSeconds, scope, now)
+		tokenCache.set(key, token)
+		if (tokenCache.size > TOKEN_CACHE_MAX) {
+			for (const [cacheKey, entry] of tokenCache) {
+				if (entry.expiresAt <= now) tokenCache.delete(cacheKey)
+			}
+			// Still over? Evict the oldest-cached entries (Map preserves
+			// insertion order) rather than growing unbounded.
+			while (tokenCache.size > TOKEN_CACHE_MAX) {
+				const oldest = tokenCache.keys().next().value
+				if (oldest === undefined) break
+				tokenCache.delete(oldest)
+			}
+		}
+		return token
+	}
+
 	async function seal(payload: SessionPayload): Promise<string> {
 		return sealData(payload, { password, ttl: 0 })
 	}
@@ -267,8 +309,7 @@ export function createSessionStore(opts: SessionStoreOptions): SessionStore {
 		read,
 		touch,
 		rotate,
-		createToken: (ttlSeconds, scope, now) =>
-			Promise.resolve(createToken(tokenKey, ttlSeconds, scope, now)),
+		createToken: (ttlSeconds, scope, now) => issueToken(ttlSeconds, scope, now),
 		verifyToken: (sealed, now) =>
 			Promise.resolve(verifyToken(tokenKey, sealed, now)),
 	}
