@@ -349,6 +349,18 @@ export async function captureDemo(opts) {
 
 		await openPath(page, baseUrl, `/documents/${notesId}`)
 		await page.getByTestId("document-title").waitFor({ timeout: 30_000 })
+		// The BlockNote editor bundle is lazy-loaded. Wait for the
+		// DocEditorSkeleton placeholder to clear and the editor itself to
+		// render, so the capture is never a skeleton.
+		await page
+			.locator('[data-testid="document-editor-skeleton"]')
+			.waitFor({ state: "detached", timeout: 90_000 })
+			.catch(() => {})
+		await page
+			.locator("[data-doc-zoom-root] .bn-editor")
+			.first()
+			.waitFor({ state: "visible", timeout: 90_000 })
+			.catch(() => {})
 		await screenshot(page, outDir, "09-documents.png")
 
 		await openPath(page, baseUrl, "/settings/custom")
