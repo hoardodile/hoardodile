@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.1.6](https://github.com/hoardodile/hoardodile/compare/v0.1.5...v0.1.6) (2026-08-31)
+
+### ⚠ BREAKING CHANGES
+
+* **marketplace:** release assets are README.md / README.<locale>.md (was intro.<locale>.md); the old intro form is no longer recognized.
+
+### Features
+
+* **cli:** show a prominent workbench URL banner in plugin dev ([10adbd0](https://github.com/hoardodile/hoardodile/commit/10adbd026ec34d4e7f1fa554b5f70dfd4398c81d))
+* **marketplace:** fall back to the releases feed under a rate limit ([6389931](https://github.com/hoardodile/hoardodile/commit/63899312f548f2f464be5a467f67a70c716ecc0d))
+* **marketplace:** rename plugin intro to README with bare fallback ([1e9594a](https://github.com/hoardodile/hoardodile/commit/1e9594a243b15a4e3f0eb80e999916de308950f9))
+* **sdk-web:** add cover upload to the plugin render layer ([b308993](https://github.com/hoardodile/hoardodile/commit/b308993603fec3f5f6733f03656ad403dad500c6))
+* **workbench:** reset plugin settings and clear plugin cache in Configure ([45a20b2](https://github.com/hoardodile/hoardodile/commit/45a20b2307345a369297050ec4ce2d97542c8127))
+* **workbench:** support an onReady hook on serveWorkbench ([860c1ab](https://github.com/hoardodile/hoardodile/commit/860c1ab0fd89af5903597a9d87344f145d445f90))
+
+### Bug Fixes
+
+* **desktop:** keep the resource-pack shell hash on one shell-runtime boundary ([fefc5cf](https://github.com/hoardodile/hoardodile/commit/fefc5cf22b17e9c8831b68fcbb39d7c1e3f880a2))
+* **server:** reuse file tokens so plugin preview content URLs stay stable ([46ef663](https://github.com/hoardodile/hoardodile/commit/46ef663ff8554949c4f71a4f7423cde41e2d1eee))
+* **web:** make the service worker resource-content cache route match ([c4a80b3](https://github.com/hoardodile/hoardodile/commit/c4a80b386b6c36a25e0a5b572e04a11a20ff3ec2))
+
 ## [0.1.5](https://github.com/hoardodile/hoardodile/compare/v0.1.4...v0.1.5) (2026-08-30)
 
 ### Features
