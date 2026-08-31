@@ -13,7 +13,7 @@ The app validates it on install (Settings → Plugins) and rescans.
   "name": "My Plugin",           // REQUIRED — user-facing (i18n overrides it)
   "description": "What it claims.",
   "version": "0.0.0",
-  "minAppVersion": "0.1.1",      // optional — lowest hoardodile release this
+  "minAppVersion": "0.1.6",      // optional — lowest hoardodile release this
                                  //   plugin runs on; absent = every version
   "icon": "box",                 // optional — Solar glyph name (three weights,
                                  //   follows the user's icon style preference)
@@ -29,7 +29,7 @@ The app validates it on install (Settings → Plugins) and rescans.
 **`version`**: the plugin's own version; the app shows it (Settings →
 Plugins) — bump it on user-visible changes.
 **`minAppVersion`**: the lowest hoardodile release the plugin runs on
-(e.g. `"0.1.1"`). Hosts below it refuse to install or update the plugin —
+(e.g. `"0.1.6"`). Hosts below it refuse to install or update the plugin —
 the marketplace hides the install/update entries and the zip upload is
 blocked with an explanation — so declare it honestly and bump it only when
 the plugin really needs a newer app. Omit it for plugins that support every
