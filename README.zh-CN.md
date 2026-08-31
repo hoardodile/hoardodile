@@ -20,10 +20,6 @@
 
 **桌面版** — [下载最新版本](https://github.com/hoardodile/hoardodile/releases)。
 
-**自托管** — `docker compose up -d`（[详见下方](#自托管)）。
-
----
-
 ## 自托管
 
 需要 **Node 24** 与 **pnpm**。

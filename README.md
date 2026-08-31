@@ -20,10 +20,6 @@ A modern digital hoarding tool. It collects images, documents, video, audio, PDF
 
 **Desktop** — [download the latest release](https://github.com/hoardodile/hoardodile/releases).
 
-**Self-hosted** — `docker compose up -d` ([details](#self-host)).
-
----
-
 ## Self-host
 
 Requires **Node 24** and **pnpm**.
