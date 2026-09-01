@@ -139,21 +139,45 @@ afterEach(() => {
 })
 
 describe("LanSharingSection", () => {
-	it("shows one primary address with a QR code when sharing is on", async () => {
+	it("shows the active HTTP address with a QR code when sharing is on", async () => {
 		installBridge()
 		render(<LanSharingSection />)
 		await screen.findByTestId("desktop-lan-section")
 		await waitFor(() => {
-			expect(screen.getByTestId("desktop-lan-primary-url")).toHaveTextContent(
+			expect(screen.getByTestId("desktop-lan-http-url")).toHaveTextContent(
 				"http://192.168.1.20:3000/",
 			)
 		})
-		expect(screen.getByTestId("desktop-lan-copy-primary")).toBeInTheDocument()
+		expect(screen.getByTestId("desktop-lan-copy-http")).toBeInTheDocument()
+		expect(screen.queryByTestId("desktop-lan-https-url")).toBeNull()
 		expect(screen.queryByTestId("desktop-lan-more-addresses")).toBeNull()
 		expect(document.querySelector("svg")).not.toBeNull()
 	})
 
-	it("toggles the HTTPS scheme and updates the shown LAN URL", async () => {
+	it("shows both the HTTP and HTTPS addresses when HTTPS is enabled", async () => {
+		installBridge({
+			async getLanInfo() {
+				return lanInfo({
+					https: true,
+					addresses: [{ interfaceName: "Ethernet", address: "192.168.1.20" }],
+				})
+			},
+		})
+		render(<LanSharingSection />)
+		await screen.findByTestId("desktop-lan-section")
+		await waitFor(() => {
+			expect(screen.getByTestId("desktop-lan-http-url")).toHaveTextContent(
+				"http://192.168.1.20:3000/",
+			)
+		})
+		expect(screen.getByTestId("desktop-lan-https-url")).toHaveTextContent(
+			"https://192.168.1.20:3001/",
+		)
+		expect(screen.getByTestId("desktop-lan-copy-http")).toBeInTheDocument()
+		expect(screen.getByTestId("desktop-lan-copy-https")).toBeInTheDocument()
+	})
+
+	it("toggles the HTTPS scheme and reveals the HTTPS address", async () => {
 		const setLanHttpsMock = vi.fn(async (_enabled: boolean) => {})
 		let https = false
 		installBridge({
@@ -172,16 +196,17 @@ describe("LanSharingSection", () => {
 		const toggle = await screen.findByTestId("desktop-lan-https")
 		expect(toggle).not.toBeChecked()
 		await waitFor(() => {
-			expect(screen.getByTestId("desktop-lan-primary-url")).toHaveTextContent(
+			expect(screen.getByTestId("desktop-lan-http-url")).toHaveTextContent(
 				"http://192.168.1.20:3000/",
 			)
 		})
+		expect(screen.queryByTestId("desktop-lan-https-url")).toBeNull()
 		fireEvent.click(toggle)
 		await waitFor(() => {
 			expect(setLanHttpsMock).toHaveBeenCalledWith(true)
 		})
 		await waitFor(() => {
-			expect(screen.getByTestId("desktop-lan-primary-url")).toHaveTextContent(
+			expect(screen.getByTestId("desktop-lan-https-url")).toHaveTextContent(
 				"https://192.168.1.20:3001/",
 			)
 		})
@@ -217,13 +242,13 @@ describe("LanSharingSection", () => {
 		)
 		expect(screen.getByTestId("desktop-lan-copy-local")).toBeInTheDocument()
 		expect(screen.getByTestId("desktop-lan-open-local")).toBeInTheDocument()
-		expect(screen.queryByTestId("desktop-lan-primary-url")).toBeNull()
+		expect(screen.queryByTestId("desktop-lan-http-url")).toBeNull()
 	})
 
 	it("keeps the localhost address while sharing is on", async () => {
 		installBridge()
 		render(<LanSharingSection />)
-		await screen.findByTestId("desktop-lan-primary-url")
+		await screen.findByTestId("desktop-lan-http-url")
 		expect(screen.getByTestId("desktop-lan-local-url")).toHaveTextContent(
 			"http://127.0.0.1:3000/",
 		)
@@ -286,8 +311,8 @@ describe("LanSharingSection", () => {
 			},
 		})
 		render(<LanSharingSection />)
-		await screen.findByTestId("desktop-lan-primary-url")
-		expect(screen.getByTestId("desktop-lan-primary-url")).toHaveTextContent(
+		await screen.findByTestId("desktop-lan-http-url")
+		expect(screen.getByTestId("desktop-lan-http-url")).toHaveTextContent(
 			"http://192.168.3.60:3000/",
 		)
 		const summary = screen.getByTestId("desktop-lan-more-addresses")

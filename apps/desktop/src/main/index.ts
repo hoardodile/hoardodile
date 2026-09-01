@@ -37,7 +37,7 @@ import {
 	registerIpc,
 } from "./ipc.ts"
 import { computeLanAddresses } from "./lan.ts"
-import { type LanProxyHandle, startLanProxy } from "./lan-proxy.ts"
+import { type LanProxyHandle, probePort, startLanProxy } from "./lan-proxy.ts"
 import {
 	findWorkspaceRoot,
 	packagedLayout,
@@ -533,10 +533,9 @@ async function syncLanProxy(runtime: Runtime): Promise<void> {
 
 /** Resolve a free LAN HTTP port on 0.0.0.0, preferring the user's requested port. */
 async function resolveLanPort(runtime: Runtime): Promise<number> {
-	return await getPort({
-		host: "0.0.0.0",
-		port: runtime.config.lanPreferredPort,
-	})
+	const preferred = runtime.config.lanPreferredPort
+	if (await probePort("0.0.0.0", preferred)) return preferred
+	return await getPort({ host: "0.0.0.0" })
 }
 
 /** Resolve a free LAN HTTPS port on 0.0.0.0, avoiding the HTTP port used above. */
@@ -545,11 +544,10 @@ async function resolveLanHttpsPort(
 	avoidPort: number,
 ): Promise<number> {
 	const preferred = runtime.config.lanHttpsPreferredPort
-	let port = await getPort({ host: "0.0.0.0", port: preferred })
-	if (port === avoidPort) {
-		port = await getPort({ host: "0.0.0.0", port: preferred + 1 })
+	if ((await probePort("0.0.0.0", preferred)) && preferred !== avoidPort) {
+		return preferred
 	}
-	return port
+	return await getPort({ host: "0.0.0.0" })
 }
 
 async function relaunchApp(runtime: Runtime): Promise<void> {

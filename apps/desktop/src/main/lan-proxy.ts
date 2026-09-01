@@ -99,20 +99,65 @@ export function startLanProxy(
 			socket.on("close", () => sockets.delete(socket))
 		})
 	}
-	return Promise.all([
-		listen(httpServer, options.lanPort),
-		listen(httpsServer, options.httpsPort),
-	]).then(() => {
-		state.httpPort = (httpServer.address() as AddressInfo).port
-		state.httpsPort = (httpsServer.address() as AddressInfo).port
+	return (async () => {
+		const httpPort = await listenWithFallback(httpServer, options.lanPort)
+		const httpsPort = await listenWithFallback(httpsServer, options.httpsPort)
+		state.httpPort = httpPort
+		state.httpsPort = httpsPort
 		return {
-			port: state.httpPort,
-			httpsPort: state.httpsPort,
+			port: httpPort,
+			httpsPort,
 			server: httpServer,
 			httpsServer,
 			close: () => closeServer([httpServer, httpsServer], sockets),
 		}
-	})
+	})()
+}
+
+/**
+ * True when `port` is bindable on `host` right now. Uses a real `listen`
+ * (Node sets SO_REUSEADDR), so a port released a moment ago — e.g. a just
+ * closed proxy that a client keep-alive held — is reported reusable, which
+ * `get-port`'s availability probe does not reliably do. The probe always
+ * closes its temporary server.
+ */
+export async function probePort(host: string, port: number): Promise<boolean> {
+	const server = createServer()
+	try {
+		await new Promise<void>((resolve, reject) => {
+			server.once("error", reject)
+			server.listen({ host, port }, () => resolve())
+		})
+		return true
+	} catch {
+		return false
+	} finally {
+		await closeServer([server], new Set())
+	}
+}
+
+/** `listen(server, preferred)`; on EADDRINUSE fall back to the next free port. */
+async function listenWithFallback(
+	server: Server,
+	preferred: number,
+): Promise<number> {
+	try {
+		await listen(server, preferred)
+		return (server.address() as AddressInfo).port
+	} catch (err) {
+		if ((err as { code?: string }).code !== "EADDRINUSE") throw err
+		for (
+			let candidate = preferred + 1;
+			candidate < preferred + 2000;
+			candidate++
+		) {
+			if (await probePort("0.0.0.0", candidate)) {
+				await listen(server, candidate)
+				return candidate
+			}
+		}
+		throw err
+	}
 }
 
 function handle(

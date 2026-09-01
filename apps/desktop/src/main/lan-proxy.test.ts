@@ -10,7 +10,7 @@ import { createServer as createNetServer } from "node:net"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { afterEach, describe, expect, it } from "vitest"
-import { type LanProxyHandle, startLanProxy } from "./lan-proxy.ts"
+import { type LanProxyHandle, probePort, startLanProxy } from "./lan-proxy.ts"
 import { ensureLanCert } from "./tls-cert.ts"
 
 const handles: LanProxyHandle[] = []
@@ -30,10 +30,11 @@ afterEach(async () => {
 
 async function listenUpstream(
 	handler: Parameters<typeof createServer>[1],
+	host = "127.0.0.1",
 ): Promise<number> {
 	const server = createServer(handler)
 	upstreams.push(server)
-	await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve))
+	await new Promise<void>((resolve) => server.listen(0, host, resolve))
 	return (server.address() as AddressInfo).port
 }
 
@@ -283,6 +284,25 @@ describe("startLanProxy", () => {
 		expect(res.status).toBe(502)
 	})
 
+	it("forwards a non-2xx upstream status (SPA-unavailable 503) verbatim", async () => {
+		await withUpstream(
+			(_req, res) => {
+				res.writeHead(503, {
+					"content-type": "text/html; charset=utf-8",
+					"x-app-status": "spa-unavailable",
+				})
+				res.end("<h1>Service Unavailable</h1>")
+			},
+			async (up) => {
+				const served = await startProxy(false, up)
+				const res = await httpRaw(served.http, "/")
+				expect(res.status).toBe(503)
+				expect(res.body).toContain("Service Unavailable")
+				expect(res.headers["x-app-status"]).toBe("spa-unavailable")
+			},
+		)
+	})
+
 	it("overwrites a forged X-Forwarded-For with the real peer address", async () => {
 		await withUpstream(
 			(req, res) =>
@@ -311,5 +331,48 @@ describe("startLanProxy", () => {
 		handles.push(second)
 		expect(second.port).toBe(served.http)
 		expect(second.httpsPort).toBe(served.https)
+	})
+
+	it("reuses the SAME ports across repeated close/open (apply 3002 -> 3003 -> 3002)", async () => {
+		const httpPort = await freePort()
+		const httpsPort = await freePort()
+		for (let i = 0; i < 3; i++) {
+			const handle = await startLanProxy({
+				sidecarPort: 1,
+				lanPort: httpPort,
+				httpsPort,
+				lanHttps: false,
+				...certMaterial(),
+			})
+			handles.push(handle)
+			expect(handle.port).toBe(httpPort)
+			expect(handle.httpsPort).toBe(httpsPort)
+			await handle.close()
+			handles.pop()
+		}
+	})
+
+	it("probePort reports a just-released port reusable and a held port unusable", async () => {
+		const p = await freePort()
+		expect(await probePort("0.0.0.0", p)).toBe(true)
+		const held = await listenUpstream((_req, res) => res.end(), "0.0.0.0")
+		expect(await probePort("0.0.0.0", held)).toBe(false)
+	})
+
+	it("falls back to a new port when the preferred LAN port is held (EADDRINUSE)", async () => {
+		const held = await listenUpstream((_req, res) => res.end(), "0.0.0.0")
+		let httpsPort = 20000
+		while (!(await probePort("0.0.0.0", httpsPort))) httpsPort += 1
+		const handle = await startLanProxy({
+			sidecarPort: 1,
+			lanPort: held,
+			httpsPort,
+			lanHttps: false,
+			...certMaterial(),
+		})
+		handles.push(handle)
+		expect(handle.port).not.toBe(held)
+		expect(handle.port).toBeGreaterThan(0)
+		expect(handle.httpsPort).toBe(httpsPort)
 	})
 })

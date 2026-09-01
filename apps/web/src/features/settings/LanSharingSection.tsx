@@ -269,6 +269,8 @@ function LanSharingForm(props: {
 		label: entry.address,
 		address: entry.address,
 		url: `${servingScheme}://${entry.address}:${servingPort}/`,
+		httpUrl: `http://${entry.address}:${lan.lanPort}/`,
+		httpsUrl: `https://${entry.address}:${lan.lanHttpsPort}/`,
 		interfaceName: entry.interfaceName,
 	}))
 	const primary = urls[0]
@@ -456,23 +458,44 @@ function LanSharingForm(props: {
 										<p className="text-xs leading-5 text-muted-foreground">
 											{t("me.desktop.lan.primaryHint")}
 										</p>
-										<div
-											className="mt-1 break-all text-ui font-semibold text-foreground"
-											data-testid="desktop-lan-primary-url"
-										>
-											{primary.url}
+										<div className="mt-2 flex flex-col gap-3">
+											<div>
+												<div
+													className="break-all text-ui font-semibold text-foreground"
+													data-testid="desktop-lan-http-url"
+												>
+													{primary.httpUrl}
+												</div>
+												<Button
+													variant="secondary"
+													className="mt-1 [-webkit-app-region:no-drag]"
+													onClick={() => handleCopy(primary.httpUrl)}
+													data-testid="desktop-lan-copy-http"
+												>
+													<Icon icon={Copy} />
+													{t("me.desktop.lan.copy")}
+												</Button>
+											</div>
+											{lan.https ? (
+												<div>
+													<div
+														className="break-all text-ui font-semibold text-foreground"
+														data-testid="desktop-lan-https-url"
+													>
+														{primary.httpsUrl}
+													</div>
+													<Button
+														variant="secondary"
+														className="mt-1 [-webkit-app-region:no-drag]"
+														onClick={() => handleCopy(primary.httpsUrl)}
+														data-testid="desktop-lan-copy-https"
+													>
+														<Icon icon={Copy} />
+														{t("me.desktop.lan.copy")}
+													</Button>
+												</div>
+											) : null}
 										</div>
-										<Button
-											variant="secondary"
-											className="mt-2 [-webkit-app-region:no-drag]"
-											onClick={() => {
-												handleCopy(primary.url)
-											}}
-											data-testid="desktop-lan-copy-primary"
-										>
-											<Icon icon={Copy} />
-											{t("me.desktop.lan.copy")}
-										</Button>
 									</div>
 								</div>
 							) : (
