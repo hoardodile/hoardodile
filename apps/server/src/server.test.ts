@@ -1067,7 +1067,7 @@ describe("buildServer lifecycle (9a)", () => {
 		}
 	})
 
-	test("without a webRoot the SPA is not mounted and / 404s cleanly", async () => {
+	test("without a webRoot the SPA is not mounted and / degrades to a clean 503", async () => {
 		const env = loadEnv({
 			NODE_ENV: "test",
 			LOG_LEVEL: "silent",
@@ -1084,7 +1084,8 @@ describe("buildServer lifecycle (9a)", () => {
 				url: "/",
 				remoteAddress: "127.0.0.1",
 			})
-			expect(rootRes.statusCode).toBe(404)
+			expect(rootRes.statusCode).toBe(503)
+			expect(rootRes.headers["content-type"]).toContain("text/html")
 			expect(rootRes.body).not.toContain("ENOENT")
 			expect(rootRes.body).not.toContain("no such file")
 
@@ -1136,6 +1137,43 @@ describe("buildServer lifecycle (9a)", () => {
 			})
 			expect(swRes.statusCode).toBe(200)
 			expect(swRes.body).toContain("__WB_MANIFEST")
+			// The worker must not be served immutable, or a RES_CACHE_NAME bump
+			// would never reach clients.
+			expect(swRes.headers["cache-control"]).toBe("no-cache")
+		} finally {
+			await built.close()
+		}
+	})
+
+	test("a thrown 500 is sanitized: no internal message or code leaks to the client", async () => {
+		const env = loadEnv({
+			NODE_ENV: "test",
+			LOG_LEVEL: "silent",
+			STORAGE_ROOT: root,
+			DATABASE_URL: dbFilePath,
+		} satisfies NodeJS.ProcessEnv)
+
+		const built = await buildServer({ env })
+		// Register before ready so the route throws within the request pipeline.
+		built.app.get("/boom", () => {
+			throw new Error("secret '/srv/hoardodile/apps/web/dist/index.html'")
+		})
+		try {
+			await built.app.ready()
+
+			const res = await built.app.inject({
+				method: "GET",
+				url: "/boom",
+				remoteAddress: "127.0.0.1",
+			})
+			expect(res.statusCode).toBe(500)
+			const body = res.body
+			expect(body).not.toContain("secret")
+			expect(body).not.toContain("internal")
+			expect(body).not.toContain("index.html")
+			const json = res.json() as { message?: string; code?: string }
+			expect(json.message).toBe("Internal Server Error")
+			expect(json.code).toBeUndefined()
 		} finally {
 			await built.close()
 		}

@@ -153,6 +153,13 @@ function main() {
 		}
 	}
 
+	// The staged server must actually ship the SPA bundle; the packaged app
+	// resolves `/` from this `web/` tree, so a missing index.html would leave
+	// the desktop with no web UI (a clean 503 at `/`).
+	if (!existsSync(join(serverDir, "web", "index.html"))) {
+		missing.push("web/index.html (bundled SPA)")
+	}
+
 	checkNodeRuntime(layout, missing)
 
 	const asarPath = resolve(

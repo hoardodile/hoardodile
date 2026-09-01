@@ -2,13 +2,7 @@
  * @vitest-environment node
  */
 
-import {
-	existsSync,
-	mkdirSync,
-	mkdtempSync,
-	rmSync,
-	writeFileSync,
-} from "node:fs"
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { fileURLToPath } from "node:url"
@@ -138,13 +132,8 @@ describe("workspaceLayout", () => {
 			join(workspaceRoot, "plugins", "gallery", "dist"),
 			join(workspaceRoot, "plugins", "pdf", "dist"),
 		])
-		// On this machine apps/web/dist exists only if the SPA has been
-		// built; the dev LAN flow needs it (or the sidecar 404s at `/`).
-		const distExists = existsSync(
-			join(workspaceRoot, "apps", "web", "dist", "index.html"),
-		)
-		expect(layout.webRoot).toBe(
-			distExists ? join(workspaceRoot, "apps", "web", "dist") : undefined,
-		)
+		// `webRoot` is always the dev SPA dir; the sidecar's own web-root
+		// resolution is the single authority on whether the build is mounted.
+		expect(layout.webRoot).toBe(join(workspaceRoot, "apps", "web", "dist"))
 	})
 })

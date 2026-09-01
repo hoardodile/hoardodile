@@ -5,6 +5,7 @@ import cookie from "@fastify/cookie"
 import cors from "@fastify/cors"
 import { fastifyTRPCPlugin } from "@trpc/server/adapters/fastify"
 import Fastify, {
+	type FastifyError,
 	type FastifyInstance,
 	type FastifyReply,
 	LogController,
@@ -36,6 +37,7 @@ import { type DbHandles, openDb } from "src/infra/db/connection.ts"
 import { volumeStatsOf } from "src/infra/disk.ts"
 import { authConfiguredPlugin } from "src/infra/http/auth-configured.ts"
 import { sendFile } from "src/infra/http/conditional-request.ts"
+import { toSafeErrorBody } from "src/infra/http/error-response.ts"
 import { healthPlugin } from "src/infra/http/health.ts"
 import { protectedHttpPlugin } from "src/infra/http/plugin.ts"
 import { pluginRenderPlugin } from "src/infra/http/plugin-render.ts"
@@ -206,6 +208,13 @@ export async function buildServer(
 
 	installDrainingMiddleware(app)
 	subscribeContextReload(app, opts.onContextReloaded ?? defaultContextReloaded)
+
+	// Sanitize the client-facing error body: internal messages (which can
+	// carry absolute filesystem paths) and error codes must never leak over
+	// HTTP. Fastify still logs the full error server-side.
+	app.setErrorHandler((error: FastifyError, _req, reply) => {
+		return reply.status(error.statusCode ?? 500).send(toSafeErrorBody(error))
+	})
 
 	return buildResult(app)
 }
@@ -497,22 +506,36 @@ async function registerStaticAssets(
 	app: FastifyInstance,
 	webRoot: string | undefined,
 ): Promise<void> {
-	if (webRoot === undefined) return
-	const { default: fastifyStatic } = await import("@fastify/static")
-	await app.register(fastifyStatic, {
-		root: webRoot,
-		prefix: "/",
-		immutable: true,
-	})
+	// The SPA surface is registered even when no web root is mounted, so a
+	// missing/stale build always degrades to a single clean 503 (never a mix
+	// of 404 for "no mount" and 500 for a `stat` ENOENT). Static file serving
+	// (@fastify/static) is only registered when a web root is available.
+	const mountedRoot = webRoot !== undefined ? webRoot : null
 
-	const indexHtml = (): string => join(webRoot, "index.html")
+	// Absolute `index.html` path when the build is actually served, or
+	// `undefined` when there is no mount or the SPA build is absent.
+	const spaIndexPath = (): string | undefined => {
+		if (mountedRoot === null) return undefined
+		const html = join(mountedRoot, "index.html")
+		return existsSync(html) ? html : undefined
+	}
+
+	if (mountedRoot !== null) {
+		const { default: fastifyStatic } = await import("@fastify/static")
+		await app.register(fastifyStatic, {
+			root: mountedRoot,
+			prefix: "/",
+			immutable: true,
+		})
+	}
 
 	app.get("/", (_, reply) => {
 		// Clickjacking guard for the SPA shell; plugin pages get their own
 		// stricter CSP from the plugin-render route.
 		reply.header("content-security-policy", "frame-ancestors 'self'")
-		if (!existsSync(indexHtml())) return sendSpaUnavailable(reply)
-		return sendFile(reply, indexHtml(), {
+		const html = spaIndexPath()
+		if (html === undefined) return sendSpaUnavailable(reply)
+		return sendFile(reply, html, {
 			contentType: "text/html",
 			cacheControl: "no-cache",
 			conditional: { headers: reply.request.headers },
@@ -522,10 +545,16 @@ async function registerStaticAssets(
 	// SW lives at `/sw.js` (scope `/`). `@fastify/static` ships static
 	// assets with `immutable` headers but the Service Worker file itself
 	// must be quickly invalidated when `RES_CACHE_NAME` is bumped — set
-	// `no-cache` so browsers always revalidate the worker script.
+	// `no-cache` so browsers always revalidate the worker script. Without
+	// `cacheControl: false` the plugin would overwrite `no-cache` with its
+	// immutable header.
 	app.get("/sw.js", (_, reply) => {
 		reply.header("cache-control", "no-cache")
-		return reply.sendFile("sw.js")
+		if (mountedRoot === null || !existsSync(join(mountedRoot, "sw.js"))) {
+			void reply.code(404).send()
+			return
+		}
+		return reply.sendFile("sw.js", { cacheControl: false })
 	})
 
 	app.setNotFoundHandler((req, reply) => {
@@ -539,7 +568,7 @@ async function registerStaticAssets(
 		}
 		reply.header("cache-control", "no-cache")
 		reply.header("content-security-policy", "frame-ancestors 'self'")
-		if (!existsSync(indexHtml())) {
+		if (spaIndexPath() === undefined) {
 			void sendSpaUnavailable(reply)
 			return
 		}

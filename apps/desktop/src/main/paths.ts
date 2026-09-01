@@ -80,7 +80,11 @@ export function workspaceLayout(options: {
 			join(workspaceRoot, "plugins"),
 			"dist",
 		),
-		webRoot: existsSync(join(webDist, "index.html")) ? webDist : undefined,
+		// `webRoot` is always the dev SPA dir. The sidecar's own web-root
+		// resolution (server `config/web-root.ts`) is the single authority on
+		// whether the build is actually mounted — this just tells the sidecar
+		// where the prebuilt SPA lives.
+		webRoot: webDist,
 	}
 }
 
