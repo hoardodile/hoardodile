@@ -1,4 +1,4 @@
-import { existsSync } from "node:fs"
+import { existsSync, statSync } from "node:fs"
 import { join } from "node:path"
 import { setTimeout } from "node:timers/promises"
 import cookie from "@fastify/cookie"
@@ -501,6 +501,19 @@ function sendSpaUnavailable(reply: FastifyReply): FastifyReply {
 	return reply
 }
 
+/**
+ * True when `path` names a regular file. Unlike a bare `existsSync`, a
+ * directory (or a path we cannot stat) is treated as unavailable so a
+ * broken build degrades cleanly instead of streaming a directory (EISDIR).
+ */
+function isRegularFile(path: string): boolean {
+	try {
+		return statSync(path).isFile()
+	} catch {
+		return false
+	}
+}
+
 /** Serve bundled web assets. */
 async function registerStaticAssets(
 	app: FastifyInstance,
@@ -517,7 +530,7 @@ async function registerStaticAssets(
 	const spaIndexPath = (): string | undefined => {
 		if (mountedRoot === null) return undefined
 		const html = join(mountedRoot, "index.html")
-		return existsSync(html) ? html : undefined
+		return isRegularFile(html) ? html : undefined
 	}
 
 	if (mountedRoot !== null) {
@@ -550,7 +563,7 @@ async function registerStaticAssets(
 	// immutable header.
 	app.get("/sw.js", (_, reply) => {
 		reply.header("cache-control", "no-cache")
-		if (mountedRoot === null || !existsSync(join(mountedRoot, "sw.js"))) {
+		if (mountedRoot === null || !isRegularFile(join(mountedRoot, "sw.js"))) {
 			void reply.code(404).send()
 			return
 		}

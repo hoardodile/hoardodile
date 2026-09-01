@@ -1096,6 +1096,135 @@ describe("buildServer lifecycle (9a)", () => {
 			})
 			expect(health.statusCode).toBe(200)
 			expect(health.json()).toEqual({ ok: true })
+
+			// With no web root the service worker is simply not served.
+			const swRes = await built.app.inject({
+				method: "GET",
+				url: "/sw.js",
+				remoteAddress: "127.0.0.1",
+			})
+			expect(swRes.statusCode).toBe(404)
+			expect(swRes.body).not.toContain("ENOENT")
+		} finally {
+			await built.close()
+		}
+	})
+
+	test("SPA route Accept boundaries: / is the explicit route, deep routes follow Accept", async () => {
+		const env = loadEnv({
+			NODE_ENV: "test",
+			LOG_LEVEL: "silent",
+			STORAGE_ROOT: root,
+			DATABASE_URL: dbFilePath,
+		} satisfies NodeJS.ProcessEnv)
+
+		const built = await buildServer({ env })
+		try {
+			await built.app.ready()
+
+			// `/` is always the explicit SPA entry route, so a missing build
+			// returns 503 regardless of the Accept header (not a 404).
+			const rootJson = await built.app.inject({
+				method: "GET",
+				url: "/",
+				headers: { accept: "application/json" },
+				remoteAddress: "127.0.0.1",
+			})
+			expect(rootJson.statusCode).toBe(503)
+
+			// Only HTML navigations fall back to the SPA. A deep clean path
+			// with an explicit JSON accept is treated as an asset/API request.
+			const deepJson = await built.app.inject({
+				method: "GET",
+				url: "/resources/1",
+				headers: { accept: "application/json" },
+				remoteAddress: "127.0.0.1",
+			})
+			expect(deepJson.statusCode).toBe(404)
+
+			// A browser-style HTML navigation on a deep clean path degrades to
+			// the same clean 503.
+			const deepHtml = await built.app.inject({
+				method: "GET",
+				url: "/resources/1",
+				headers: { accept: "text/html" },
+				remoteAddress: "127.0.0.1",
+			})
+			expect(deepHtml.statusCode).toBe(503)
+			expect(deepHtml.headers["content-type"]).toContain("text/html")
+			expect(deepHtml.body).not.toContain("ENOENT")
+		} finally {
+			await built.close()
+		}
+	})
+
+	test("a directory named index.html (or sw.js) degrades cleanly instead of 500", async () => {
+		// Broken build: `/index.html` exists but is a directory, so it must be
+		// treated as unavailable, not streamed (EISDIR -> masked 500).
+		const webRoot = join(root, "web-dist-dir-index")
+		mkdirSync(join(webRoot, "index.html"), { recursive: true })
+		mkdirSync(join(webRoot, "sw.js"), { recursive: true })
+
+		const env = loadEnv({
+			NODE_ENV: "test",
+			LOG_LEVEL: "silent",
+			STORAGE_ROOT: root,
+			DATABASE_URL: dbFilePath,
+		} satisfies NodeJS.ProcessEnv)
+
+		const built = await buildServer({ env, webRoot })
+		try {
+			await built.app.ready()
+
+			const rootRes = await built.app.inject({
+				method: "GET",
+				url: "/",
+				remoteAddress: "127.0.0.1",
+			})
+			expect(rootRes.statusCode).toBe(503)
+			expect(rootRes.headers["content-type"]).toContain("text/html")
+			expect(rootRes.body).not.toContain("ENOENT")
+			expect(rootRes.body).not.toContain("no such file")
+
+			const swRes = await built.app.inject({
+				method: "GET",
+				url: "/sw.js",
+				remoteAddress: "127.0.0.1",
+			})
+			expect(swRes.statusCode).toBe(404)
+			expect(swRes.body).not.toContain("ENOENT")
+		} finally {
+			await built.close()
+		}
+	})
+
+	test("HEAD / with a built SPA is served (Fastify auto-HEAD)", async () => {
+		const webRoot = join(root, "web-dist-head")
+		mkdirSync(webRoot, { recursive: true })
+		writeFileSync(
+			join(webRoot, "index.html"),
+			"<!doctype html><html><body data-testid=spa>ok</body></html>",
+			"utf8",
+		)
+
+		const env = loadEnv({
+			NODE_ENV: "test",
+			LOG_LEVEL: "silent",
+			STORAGE_ROOT: root,
+			DATABASE_URL: dbFilePath,
+		} satisfies NodeJS.ProcessEnv)
+
+		const built = await buildServer({ env, webRoot })
+		try {
+			await built.app.ready()
+
+			const headRes = await built.app.inject({
+				method: "HEAD",
+				url: "/",
+				remoteAddress: "127.0.0.1",
+			})
+			expect(headRes.statusCode).toBe(200)
+			expect(headRes.headers["content-type"]).toContain("text/html")
 		} finally {
 			await built.close()
 		}
