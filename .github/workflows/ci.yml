@@ -48,9 +48,10 @@ jobs:
       # license hook in CI is the policy gate only.
       - name: Guard node pollution in SDK d.ts
         run: node scripts/guard-node-pollution.mjs
-      # The create-plugin scaffold embeds a copy of plugins/template.
-      - name: Check embedded template drift
-        run: pnpm -F @hoardodile/create-plugin template:check
+      # The create-plugin scaffolder ships a copy of plugins/template inside
+      # its dist (generated at build time); assert the build produced it.
+      - name: Check embedded template was generated
+        run: test -f plugins/create-plugin/dist/template/package.json
       # Validate the publish closure and produce the release tarballs.
       - name: Pack SDK tarballs
         run: pnpm sdks:pack

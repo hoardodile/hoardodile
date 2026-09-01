@@ -1,0 +1,13 @@
+{
+	"$schema": "https://turbo.build/schema.json",
+	"extends": ["//"],
+	"tasks": {
+		"build": {
+			// copy-template.mjs copies plugins/template into dist/template. The
+			// source lives outside this package dir, so declare a task-graph edge
+			// to it — otherwise turbo could serve a cached build whose embedded
+			// template is stale when plugins/template changes.
+			"dependsOn": ["^build", "@hoardodile/plugin-template#build"]
+		}
+	}
+}

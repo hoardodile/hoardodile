@@ -5,6 +5,17 @@ Copy this directory to start your own plugin.
 
 ## Quick start
 
+Prefer the scaffolder — it regenerates the manifest id, rewrites
+`manifest.json`/`package.json` and injects the toolchain config
+(`biome.json`):
+
+```bash
+pnpm dlx create-hoardodile-plugin my-plugin   # or: hoardodile plugin create my-plugin
+```
+
+To start from the repo copy instead (never edit it in place — CI compiles
+this copy), add a `biome.json` and a fresh manifest UUID yourself:
+
 ```bash
 # 1. Copy the template (never edit it in place — CI compiles this copy)
 cp -r plugins/template my-plugin
@@ -61,7 +72,11 @@ server uses — the exact production execution path.
   release.
 - The plugin's version is independent of the hoardodile release
   version; bump it on user-visible changes.
-- Dev loop: Node ≥ 24, pnpm 11.
+- Dev loop: Node ≥ 24, pnpm 11. Toolchain mirrors hoardodile: `biome`
+  (format + lint via `pnpm format` / `pnpm lint`), `lefthook` (git hooks —
+  `commit-msg` Conventional Commits + `pre-commit` biome/tsc; installed by
+  `pnpm install` in a git repo, or `lefthook install` by hand), `vitest`, and
+  `release-it` (writes `CHANGELOG.md`, tags `v<version>`).
 
 ## Deploying
 

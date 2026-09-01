@@ -35,13 +35,19 @@ README.md / README.<locale>.md   per-release marketplace readme — bare `README
 CONTRIBUTING.md        dev loop, releases, marketplace publishing
 SECURITY.md            private-advisory reporting policy
 .github/               CI, dependabot, issue templates, release workflow
+biome.json              formatter + linter (injected by the scaffolder; pnpm format / pnpm lint)
+lefthook.yml            git hooks (commit-msg Conventional Commits, pre-commit biome/tsc)
+AGENTS.md               agent instructions (uppercase, per repo convention)
 .nvmrc / .gitignore    Node 24 pin / artifact ignores
 ```
 
 Standard scripts (template): `dev` = `hoardodile plugin dev`;
 `build` = `hoardodile plugin build`; `watch` = `… --watch`;
 `test` = `vitest run`; `detect:smoke` = `hoardodile plugin run detect
-testdata --plugin-dir dist`; `lint` = `tsc --noEmit`. Runtime
+testdata --plugin-dir dist`; `lint` = `biome check . && tsc --noEmit`;
+`format` = `biome check --write`; `lint-staged` = the pre-commit biome
+pass; `postinstall` installs `lefthook` hooks when the repo has a
+`.git`. Runtime
 dependencies: `@hoardodile/sdk-{types,server,react}` (+ `react`,
 `react-dom`, and [`@hoardodile/ui`](https://www.npmjs.com/package/@hoardodile/ui) for UI); devDependencies:
 `@hoardodile/cli`, `@hoardodile/host`, `@hoardodile/host-web`,

@@ -1,14 +1,17 @@
 # hoardodile plugin template
 
-Minimal end-to-end content plugin: `detect` → `sourceMeta` → iframe render. Copy this directory to start your own plugin — never edit it in place (the create-plugin scaffolder embeds a synced copy; CI compiles it).
+Minimal end-to-end content plugin: `detect` → `sourceMeta` → iframe render. Copy this directory to start your own plugin — never edit it in place (the create-plugin scaffolder embeds a copy of it; CI compiles it).
 
 ## Commands
 
 - `pnpm build` — build `dist/` (client + server bundle + manifest).
 - `pnpm dev` — watch-build + serve the workbench at http://127.0.0.1:5199 (data from `testdata/`, one sandboxed `detect` on startup).
 - `pnpm test` — Vitest against the in-memory fixture API; `pnpm run detect:smoke` — sandboxed `detect` against `testdata/` (needs a build first).
+- `pnpm lint` — `biome check .` + `tsc --noEmit`; `pnpm format` — `biome check --write`; `pnpm lint-staged` — the pre-commit biome pass.
 - `hoardodile plugin <run|package|dev>` — run hooks through the same worker sandbox the server uses (`run`), zip `dist/` into `release/<id>-<version>.zip` (`package`), or the offline dev workbench (`dev`).
 - `pnpm readme:check` — gate the marketplace `readme/` folder (flat, ships one `README.md` fallback per locale). `pnpm release <version>` — release-it bumps version, writes `CHANGELOG.md`, tags `v<version>`, and the tag workflow builds/packages/uploads the GitHub release assets.
+
+Git hooks (`lefthook.yml`, installed by `postinstall` when this is a git repo): `commit-msg` enforces the Conventional Commits format that feeds the changelog; `pre-commit` runs biome + `tsc` on staged files.
 
 Scaffold a new plugin with `pnpm dlx create-hoardodile-plugin <name>`; it rewrites `manifest.json`/`package.json` and installs deps.
 

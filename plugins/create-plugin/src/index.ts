@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
  * `create-hoardodile-plugin` — scaffold a new content plugin from the
- * embedded template copy (`src/template/`, kept in sync with
- * `plugins/template` by scripts/sync-template.mjs).
+ * template copy shipped in `dist/template`, generated from the canonical
+ * `plugins/template` by scripts/copy-template.mjs at build time.
  *
  * Flow: interactive prompts (name, id auto-generated) → copy template →
  * rewrite manifest + package.json → install dependencies → validate the
@@ -36,7 +36,9 @@ import {
 	text,
 } from "@clack/prompts"
 import { pluginManifest } from "@hoardodile/sdk-types/schema"
+import { STANDALONE_BIOME_JSON } from "./biome-template.ts"
 import {
+	allowBuildsYaml,
 	rewriteManifest,
 	rewritePackageJson,
 	tarballOverridesYaml,
@@ -57,10 +59,16 @@ function writeJson(path: string, value: unknown): void {
 	writeFileSync(path, `${JSON.stringify(value, null, "\t")}\n`)
 }
 
-function writeTarballOverrides(targetDir: string, tarballsDir: string): void {
+function writeWorkspaceConfig(targetDir: string, tarballsDir?: string): void {
+	// pnpm 11 blocks dependency install scripts and ignores the package.json
+	// `pnpm.onlyBuiltDependencies` field, so approve them through an
+	// allowBuilds workspace file. The --tarballs path also rewires the SDK
+	// deps to the packed tarballs (same allowBuilds, plus file: overrides).
 	writeFileSync(
 		join(targetDir, "pnpm-workspace.yaml"),
-		tarballOverridesYaml(tarballsDir, SELF_VERSION),
+		tarballsDir !== undefined
+			? tarballOverridesYaml(tarballsDir, SELF_VERSION)
+			: allowBuildsYaml(),
 	)
 }
 
@@ -138,6 +146,10 @@ export async function main() {
 			sdkVersion: SELF_VERSION,
 		}),
 	)
+	// A standalone plugin repo has no root biome.json (biome rejects a nested
+	// config when the monorepo's root one exists), so the scaffolder ships the
+	// toolchain config directly into each generated plugin.
+	writeFileSync(join(targetDir, "biome.json"), STANDALONE_BIOME_JSON)
 
 	const parsed = pluginManifest.safeParse(
 		JSON.parse(readFileSync(manifestPath, "utf8")),
@@ -150,8 +162,8 @@ export async function main() {
 
 	if (tarballsDir !== undefined) {
 		log.step(`Rewiring SDK deps to tarballs in ${tarballsDir}`)
-		writeTarballOverrides(targetDir, tarballsDir)
 	}
+	writeWorkspaceConfig(targetDir, tarballsDir)
 
 	try {
 		await runInstall(targetDir)

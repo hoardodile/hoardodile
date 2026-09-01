@@ -1,0 +1,12 @@
+commit-msg:
+  jobs:
+    - name: verify-commit
+      run: node scripts/verify-commit.mjs {1}
+
+pre-commit:
+  parallel: true
+  jobs:
+    - name: lint-staged
+      run: pnpm lint-staged
+    - name: lint
+      run: pnpm lint

@@ -45,7 +45,7 @@ plugins/
   host/        App-side runtime host — sandbox, hooks, storage (src/hoard/ + src/media/)
   host-web/    Browser-side host runtime (protocol router, mock host)
   workbench/   Offline dev tool (`hoardodile plugin dev`)
-  create-plugin/  Interactive scaffolder (embeds a copy of template/)
+  create-plugin/  Interactive scaffolder (embeds a build-time copy of template/)
   file/        Built-in fallback plugin
   gallery/     Official preinstalled media gallery
   pdf/         Official preinstalled PDF reader
@@ -69,7 +69,7 @@ scripts/       Root dev/license/guard/version scripts
 
 ## Generated files — never hand-edit
 
-`apps/server/src/infra/db/migrations/`, `CHANGELOG.md`, `pnpm-lock.yaml`, `plugins/create-plugin/src/sdk-deps.gen.ts`, `plugins/create-plugin/src/template/` (edit the source `plugins/template`; `scripts/sync-template.mjs` regenerates the copy). `apps/web/src/routeTree.gen.ts` and `apps/web/public/{licenses.json,LICENSE}` are not committed at all — they regenerate before their consumers (route tree: every web build/lint/test; notices: the web dev/build chain).
+`apps/server/src/infra/db/migrations/`, `CHANGELOG.md`, `pnpm-lock.yaml`, `plugins/create-plugin/src/sdk-deps.gen.ts`, `plugins/create-plugin/dist/template/` (generated from `plugins/template` by `scripts/copy-template.mjs` at build time — edit `plugins/template`). `apps/web/src/routeTree.gen.ts` and `apps/web/public/{licenses.json,LICENSE}` are not committed at all — they regenerate before their consumers (route tree: every web build/lint/test; notices: the web dev/build chain).
 
 Drizzle migration pitfalls: split add+drop into two `db:generate` runs; `ADD COLUMN` silently drops FK actions like `ON DELETE CASCADE` — verify the SQL.
 

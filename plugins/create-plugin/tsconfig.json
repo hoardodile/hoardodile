@@ -4,6 +4,5 @@
 		"lib": ["ESNext"],
 		"types": ["node"]
 	},
-	"include": ["src/**/*.ts", "scripts/**/*.mjs"],
-	"exclude": ["src/template"]
+	"include": ["src/**/*.ts", "scripts/**/*.mjs"]
 }

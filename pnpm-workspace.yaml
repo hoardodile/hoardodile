@@ -14,6 +14,7 @@ allowBuilds:
   ffmpeg-static: true
   lefthook: true
 catalog:
+  '@biomejs/biome': 2.5.10
   '@playwright/test': ^1.62.1
   # Electron e2e driving (`_electron`); keep in lockstep with
   # @playwright/test above.
@@ -34,6 +35,8 @@ catalog:
   https-proxy-agent: ^7.0.6
   i18next: ^26.4.0
   jsdom: ^30.0.1
+  lefthook: ^2.1.10
+  lint-staged: ^17.3.0
   react: ^19.2.8
   react-dom: ^19.2.8
   react-i18next: ^17.0.12

@@ -8,11 +8,14 @@ import { SDK_DEP_NAMES } from "./sdk-deps.gen.ts"
 
 /** Concrete versions for the catalog: specs the template uses. */
 export const THIRD_PARTY_VERSIONS: Readonly<Record<string, string>> = {
+	"@biomejs/biome": "2.5.10",
 	"@release-it/conventional-changelog": "^12.0.0",
 	"@types/node": "^26.2.0",
 	"@types/react": "^19.2.18",
 	"@types/react-dom": "^19.2.4",
 	jsdom: "^30.0.1",
+	lefthook: "^2.1.10",
+	"lint-staged": "^17.3.0",
 	react: "^19.2.8",
 	"react-dom": "^19.2.8",
 	"release-it": "^21.0.2",
@@ -54,6 +57,7 @@ export type PackageJson = {
 	version?: string
 	dependencies?: Record<string, string>
 	devDependencies?: Record<string, string>
+	postinstall?: string
 }
 
 export function tarballSpec(
@@ -119,15 +123,35 @@ export function rewritePackageJson(
 }
 
 /**
- * Install-script dependencies that land in a scaffolded plugin through
- * host's optionalDependencies (the same names as the root workspace's
- * allowBuilds). pnpm refuses to run their build scripts without an
- * explicit approval, so the generated workspace approves them up front.
+ * A standalone (non-workspace) plugin repo needs its build-script approvals in
+ * a `pnpm-workspace.yaml`: pnpm 11 blocks dependency install scripts by
+ * default and ignores the equivalent package.json `pnpm.onlyBuiltDependencies`
+ * field. The scaffolder writes this file on the normal registry path (the
+ * --tarballs path writes an equivalent `allowBuilds` alongside its overrides).
+ */
+export function allowBuildsYaml(): string {
+	const builds = ALLOWED_BUILDS.map((dep) => `  '${dep}': true`).join("\n")
+	return [
+		"# Approve the install scripts pnpm 11 blocks by default: host's optional",
+		"# binaries (ffmpeg/ffprobe/7-Zip) and lefthook's platform binary.",
+		"allowBuilds:",
+		builds,
+		"",
+	].join("\n")
+}
+
+/**
+ * Install-script dependencies that land in a scaffolded plugin: host's
+ * optional binaries plus lefthook (the git-hooks runner, whose postinstall
+ * fetches the platform binary). pnpm refuses to run their build scripts
+ * without an explicit approval, so the generated workspace approves them
+ * all up front (mirroring the root workspace's allowBuilds).
  */
 const ALLOWED_BUILDS = [
 	"@derhuerst/ffprobe-static",
 	"@hoardodile/7z-bin",
 	"ffmpeg-static",
+	"lefthook",
 ]
 
 export function tarballOverridesYaml(
@@ -141,7 +165,8 @@ export function tarballOverridesYaml(
 	return [
 		"# Redirect the cross-SDK 0.0.0 specs packed into the tarballs to the",
 		"# sibling tarballs in this workspace; approve the install scripts of",
-		"# host's optional binaries (ffmpeg/ffprobe/7-Zip) so pnpm runs them.",
+		"# host's optional binaries (ffmpeg/ffprobe/7-Zip) and lefthook so pnpm",
+		"# runs them.",
 		"overrides:",
 		lines,
 		"allowBuilds:",

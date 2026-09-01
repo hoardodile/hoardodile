@@ -36,10 +36,9 @@
 	},
 	"scripts": {
 		"prepack": "pnpm build",
-		"build": "node scripts/sync-template.mjs && tsup && node scripts/copy-template.mjs",
+		"build": "tsup && node scripts/copy-template.mjs",
 		"lint": "tsc --noEmit",
-		"test": "vitest run",
-		"template:check": "node scripts/sync-template.mjs --check"
+		"test": "vitest run"
 	},
 	"dependencies": {
 		"@clack/prompts": "^1.7.0",
