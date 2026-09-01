@@ -12,7 +12,7 @@ A modern digital hoarding tool. It collects images, documents, video, audio, PDF
 
 - **Hoard any content** — extensible content plugins cover images, documents, video, audio, PDFs, comics, novels and archives.
 - **Preview in place** — open a resource where it is: a viewer, a reader, a file tree.
-- **Plugin marketplace** — install more content plugins from **Settings → Marketplace**.
+- **Plugin marketplace** — install more content plugins from **Settings → Marketplace**, from manga and novel readers to Live2D, Spine and DragonBones skeleton-animation plugins.
 - **Desktop or self-hosted** — Windows, macOS, Linux installers, or run it yourself.
 - **Private by default** — your data stays on your storage, with no telemetry.
 
