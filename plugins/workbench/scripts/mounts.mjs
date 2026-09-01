@@ -115,10 +115,27 @@ function notFound(res) {
 	res.end("not found")
 }
 
+/** `{ sizeBytes }` for a file under `root`, or `undefined` when missing/not a file. */
+function statFile(root, path) {
+	const abs = safeJoin(root, path)
+	if (abs === undefined || !existsSync(abs)) return undefined
+	const info = statSync(abs)
+	return info.isFile() ? { sizeBytes: info.size } : undefined
+}
+
+/** Raw bytes for a file under `root`, or `undefined` when missing/not a file. */
+function readFile(root, path) {
+	const abs = safeJoin(root, path)
+	if (abs === undefined || !existsSync(abs)) return undefined
+	if (statSync(abs).isDirectory()) return undefined
+	return readFileSync(abs)
+}
+
 /**
  * Providers over one plain directory — the offline default, and what a
  * standalone `serve.mjs --data <dir>` uses. The directory stands in for
- * a single resource.
+ * a single resource (this is the "one data item" shape; see
+ * {@link createResourceDirProviders} for a folder of resources).
  */
 export function createDirectoryProviders(dataDir, resId = "workbench") {
 	const root = resolve(dataDir)
@@ -126,17 +143,51 @@ export function createDirectoryProviders(dataDir, resId = "workbench") {
 		resources: () => [{ id: resId, name: "Workbench" }],
 		files: {
 			list: () => walkFiles(root),
-			stat: (_resId, path) => {
-				const abs = safeJoin(root, path)
-				if (abs === undefined || !existsSync(abs)) return undefined
-				const info = statSync(abs)
-				return info.isFile() ? { sizeBytes: info.size } : undefined
+			stat: (_resId, path) => statFile(root, path),
+			read: (_resId, path) => readFile(root, path),
+		},
+	}
+}
+
+/**
+ * Providers over a folder whose direct subfolders are individual
+ * resources — the "consolidate my test data" shape. Each subfolder is
+ * one resource named by its basename; `files` reads are scoped to that
+ * subfolder, so a workbench with a many-item `testdata/` can switch
+ * between them in the resource list. A subfolder that is missing (or a
+ * traversal attempt) resolves to an empty list / `undefined`, never
+ * reading outside the root.
+ */
+export function createResourceDirProviders(resourceRoot) {
+	const root = resolve(resourceRoot)
+	const resources = () =>
+		readdirSync(root, { withFileTypes: true })
+			.filter((entry) => entry.isDirectory())
+			.map((entry) => ({ id: entry.name, name: entry.name }))
+			.sort((a, b) => a.name.localeCompare(b.name))
+	const subdirFor = (resId) => {
+		const abs = safeJoin(root, resId)
+		if (abs === undefined) return undefined
+		try {
+			return statSync(abs).isDirectory() ? abs : undefined
+		} catch {
+			return undefined
+		}
+	}
+	return {
+		resources,
+		files: {
+			list: (resId) => {
+				const dir = subdirFor(resId)
+				return dir === undefined ? [] : walkFiles(dir)
 			},
-			read: (_resId, path) => {
-				const abs = safeJoin(root, path)
-				if (abs === undefined || !existsSync(abs)) return undefined
-				if (statSync(abs).isDirectory()) return undefined
-				return readFileSync(abs)
+			stat: (resId, path) => {
+				const dir = subdirFor(resId)
+				return dir === undefined ? undefined : statFile(dir, path)
+			},
+			read: (resId, path) => {
+				const dir = subdirFor(resId)
+				return dir === undefined ? undefined : readFile(dir, path)
 			},
 		},
 	}

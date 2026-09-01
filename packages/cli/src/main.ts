@@ -271,6 +271,11 @@ export const main = defineCommand({
 							description:
 								"Data directory served as a single resource. Defaults to <plugin-dir>/testdata when it exists.",
 						},
+						resourceDir: {
+							type: "string",
+							description:
+								"Directory whose direct subfolders each become a resource (a folder of many test-data items). Mutually exclusive with --data and --storage.",
+						},
 						storage: {
 							type: "string",
 							description:
@@ -290,6 +295,7 @@ export const main = defineCommand({
 						return executeDev({
 							pluginDir: args.pluginDir ?? "",
 							dataDir: args.data,
+							resourceRootDir: args.resourceDir,
 							storageDir: args.storage,
 							resId: args.res,
 							port: args.port === undefined ? 5199 : parsePort(args.port),

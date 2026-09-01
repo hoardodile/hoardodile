@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useContainerFullscreen } from "./components/FullscreenButton.tsx"
 import { MenuBar } from "./components/MenuBar.tsx"
+import { ResourceList } from "./components/ResourceList.tsx"
 import { Stage } from "./components/Stage.tsx"
 import { StatusBar } from "./components/StatusBar.tsx"
 import {
@@ -270,47 +271,56 @@ export function App() {
 	const { t: tw } = useTranslation("workbench")
 
 	return (
-		<div className="flex h-full flex-col bg-background">
-			<MenuBar
-				manifest={manifest}
-				resources={resources}
-				resource={resource}
-				ctx={context}
-				config={config}
-				pluginState={pluginState}
-				fullscreen={fullscreenAPI}
-				locale={presentation.language}
-				onConfigChange={patchConfig}
-				onSelect={setSelectedId}
-				onReload={() => setReloadNonce((n) => n + 1)}
-				onResetSettings={handleResetSettings}
-				onClearCache={handleClearCache}
-				onRestoreState={handleRestoreState}
-			/>
-			{bootstrapError !== null ? (
-				<Stage
-					mode={config.mode}
-					loading={false}
-					frameRef={frameRef}
-					emptyTitle={tw("app.failedTitle")}
-					emptyDescription={bootstrapError}
+		<div className="flex h-full bg-background">
+			{resources.length >= 2 ? (
+				<ResourceList
+					resources={resources}
+					resource={resource}
+					onSelect={setSelectedId}
 				/>
-			) : resource === undefined ? (
-				<Stage
-					mode={config.mode}
-					loading={false}
-					frameRef={frameRef}
-					emptyTitle={tw("app.noResources")}
-					emptyDescription={tw("app.noResourcesHint")}
+			) : null}
+			<div className="flex min-h-0 min-w-0 flex-1 flex-col">
+				<MenuBar
+					manifest={manifest}
+					resources={resources}
+					resource={resource}
+					ctx={context}
+					config={config}
+					pluginState={pluginState}
+					fullscreen={fullscreenAPI}
+					locale={presentation.language}
+					onConfigChange={patchConfig}
+					onSelect={setSelectedId}
+					onReload={() => setReloadNonce((n) => n + 1)}
+					onResetSettings={handleResetSettings}
+					onClearCache={handleClearCache}
+					onRestoreState={handleRestoreState}
 				/>
-			) : (
-				<Stage
-					mode={config.mode}
-					loading={context === null}
-					frameRef={frameRef}
-				/>
-			)}
-			<StatusBar manifest={manifest} mode={config.mode} />
+				{bootstrapError !== null ? (
+					<Stage
+						mode={config.mode}
+						loading={false}
+						frameRef={frameRef}
+						emptyTitle={tw("app.failedTitle")}
+						emptyDescription={bootstrapError}
+					/>
+				) : resource === undefined ? (
+					<Stage
+						mode={config.mode}
+						loading={false}
+						frameRef={frameRef}
+						emptyTitle={tw("app.noResources")}
+						emptyDescription={tw("app.noResourcesHint")}
+					/>
+				) : (
+					<Stage
+						mode={config.mode}
+						loading={context === null}
+						frameRef={frameRef}
+					/>
+				)}
+				<StatusBar manifest={manifest} mode={config.mode} />
+			</div>
 			<PluginDownloadConsentDialog
 				entry={consentEntry}
 				onDeny={(ticketId) => decideDownloadConsent(ticketId, false)}

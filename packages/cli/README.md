@@ -84,6 +84,21 @@ All these fetches go through the app's user proxy when one is
 configured (auto-detected from the proxy env vars / OS system proxy;
 `HOARDODILE_PROXY` overrides) — destinations stay GitHub-only.
 
+## plugin dev
+
+`plugin dev` watch-builds the plugin and serves it at
+`http://127.0.0.1:5199` (rebinds to the next free port if taken). Data
+comes from one of three sources:
+
+- `--data <dir>` — one resource: the directory itself.
+- `--storage <root>` — a real hoardodile library, opened **read-only**.
+- `--resource-dir <dir>` — a folder whose direct subfolders are the
+  individual resources (a many-item `testdata/`), switchable in the
+  workbench resource list. Mutually exclusive with `--data`/`--storage`.
+
+With any option omitted, `<plugin-dir>/testdata` is used when it exists.
+`--res <id>` opens a specific resource first when serving `--storage`.
+
 ## Install
 
 ```bash

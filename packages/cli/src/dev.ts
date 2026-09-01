@@ -1,5 +1,5 @@
 import { type ChildProcess, spawn } from "node:child_process"
-import { existsSync, readFileSync, watch } from "node:fs"
+import { existsSync, readdirSync, readFileSync, statSync, watch } from "node:fs"
 import { createRequire } from "node:module"
 import { join, resolve, sep } from "node:path"
 import { pathToFileURL } from "node:url"
@@ -14,6 +14,7 @@ import { createRenderProviders } from "./render-providers.ts"
 import {
 	buildArchiveResourceAPI,
 	buildCliResourceAPI,
+	CliError,
 	EXIT_ERROR,
 	EXIT_PASS,
 } from "./runner.ts"
@@ -40,6 +41,8 @@ import { openStorage, type StorageReader } from "./storage.ts"
 export type DevOptions = {
 	readonly pluginDir: string
 	readonly dataDir?: string
+	/** A folder whose direct subfolders are individual resources. Mutually exclusive with `dataDir`/`storageDir`. */
+	readonly resourceRootDir?: string
 	/** Real hoardodile storage root, opened read-only. */
 	readonly storageDir?: string
 	/** Resource to open first when serving a storage root. */
@@ -220,6 +223,50 @@ function storageSource(
 }
 
 /**
+ * A source over a folder whose direct subfolders are individual
+ * resources — the "consolidate my test data" shape. Each subfolder is
+ * one resource (named by its basename); `apiFor` builds a per-resource
+ * container only when the id resolves to a real subfolder inside `root`
+ * (a traversal id resolves to nothing, never escapes the root).
+ */
+export function resourceRootSource(
+	resourceRoot: string,
+	extractCacheDir?: string,
+): ResourceSource {
+	const root = resolve(resourceRoot)
+	const listResources = () =>
+		readdirSync(root, { withFileTypes: true })
+			.filter((entry) => entry.isDirectory())
+			.map((entry) => ({ id: entry.name, name: entry.name }))
+			.sort((a, b) => a.name.localeCompare(b.name))
+	const subdirFor = (resId: string): string | undefined => {
+		const abs = join(root, resId)
+		if (abs !== root && !abs.startsWith(root + sep)) return undefined
+		try {
+			return statSync(abs).isDirectory() ? abs : undefined
+		} catch {
+			return undefined
+		}
+	}
+	const apis = new Map<string, ResourceAPI | undefined>()
+	return {
+		list: listResources,
+		apiFor(resId) {
+			if (apis.has(resId)) return apis.get(resId)
+			const dir = subdirFor(resId)
+			const api =
+				dir === undefined
+					? undefined
+					: buildCliResourceAPI(dir, { extractCacheDir })
+			apis.set(resId, api)
+			return api
+		},
+		stateFor: () => undefined,
+		extractCacheDir,
+	}
+}
+
+/**
  * Holds the latest sandboxed hook results per resource. Recaptures are
  * serialised and coalesced: a rebuild burst must not spawn a worker per
  * written file, and two overlapping captures would race for the slot.
@@ -291,10 +338,29 @@ function watchDistForRebuilds(
 }
 
 /** Resolve the data source from the flags, preferring a real library. */
-function resolveSource(
+export function resolveSource(
 	opts: DevOptions & { readonly pluginDir: string },
 ): ResourceSource | undefined {
 	const extractCacheDir = join(opts.pluginDir, ".hoardodile", "extract")
+	if (
+		opts.resourceRootDir !== undefined &&
+		(opts.dataDir !== undefined || opts.storageDir !== undefined)
+	) {
+		throw new CliError(
+			"--resource-dir is mutually exclusive with --data and --storage",
+		)
+	}
+	if (opts.resourceRootDir !== undefined) {
+		const root = resolve(opts.resourceRootDir)
+		if (!existsSync(root)) {
+			console.warn(
+				`[hoardodile] no resource dir found at ${root} — mount one with --resource-dir (or --storage <hoardodile-root>).`,
+			)
+			return undefined
+		}
+		console.log(`[hoardodile] resource dir: ${root}`)
+		return resourceRootSource(root, extractCacheDir)
+	}
 	if (opts.storageDir !== undefined) {
 		const root = resolve(opts.storageDir)
 		const storage = openStorage(root)

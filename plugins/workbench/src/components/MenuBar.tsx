@@ -1,5 +1,4 @@
 import { Button } from "@hoardodile/ui/components/button"
-import { DropdownSelect } from "@hoardodile/ui/components/dropdown-select"
 import { Icon } from "@hoardodile/ui/components/icon"
 import {
 	Tooltip,
@@ -14,6 +13,7 @@ import {
 	Refresh,
 	Settings,
 } from "@hoardodile/ui/icons/registry"
+import { cn } from "@hoardodile/ui/lib/utils"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import type { WorkbenchConfig } from "../config.ts"
@@ -95,7 +95,7 @@ export function MenuBar(props: {
 					{tw("toolbar.card")}
 				</Button>
 				{resource !== undefined && resources.length >= 2 ? (
-					<ResourcePicker
+					<ResourceChipList
 						resource={resource}
 						resources={resources}
 						onSelect={onSelect}
@@ -202,8 +202,14 @@ export function MenuBar(props: {
 	)
 }
 
-/** Resource selector (text-only dropdown, no cover thumbnail). */
-function ResourcePicker(props: {
+/**
+ * Narrow-layout resource selector: a single-line horizontal chip row
+ * (below the `sidebar` breakpoint, where the resource list collapses out
+ * of the stage). Wide layout uses the sidebar's {@link ResourceList} in
+ * `App` instead. A chip row keeps the one-line toolbar height; many
+ * resources scroll horizontally rather than wrapping.
+ */
+function ResourceChipList(props: {
 	readonly resource: WorkbenchResource
 	readonly resources: readonly WorkbenchResource[]
 	readonly onSelect: (resId: string) => void
@@ -211,12 +217,32 @@ function ResourcePicker(props: {
 	const { resource, resources, onSelect } = props
 	const { t: tw } = useTranslation("workbench")
 	return (
-		<DropdownSelect
-			value={resource.id}
-			onValueChange={onSelect}
-			options={resources.map((r) => ({ value: r.id, label: r.name }))}
+		<nav
+			data-testid="workbench-resource-chips"
 			aria-label={tw("toolbar.resource")}
-			triggerClassName="max-w-40 md:max-w-64"
-		/>
+			className="hidden max-w-64 items-center gap-1 overflow-x-auto max-sidebar:flex"
+		>
+			{resources.map((r) => {
+				const selected = r.id === resource.id
+				return (
+					<button
+						key={r.id}
+						type="button"
+						data-testid="workbench-resource-chip"
+						data-resource-id={r.id}
+						aria-pressed={selected}
+						onClick={() => onSelect(r.id)}
+						className={cn(
+							"h-control shrink-0 rounded-full px-3 text-xs whitespace-nowrap",
+							selected
+								? "bg-muted text-foreground"
+								: "text-secondary-foreground hover:bg-muted",
+						)}
+					>
+						{r.name}
+					</button>
+				)
+			})}
+		</nav>
 	)
 }

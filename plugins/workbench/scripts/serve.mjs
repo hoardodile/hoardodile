@@ -7,7 +7,11 @@
  *
  * Usage:
  *   node serve.mjs --plugin <plugin-dist-dir> --data <data-dir> [--port 5199]
- *                  [--snapshot <hooks.json>]
+ *                  [--resource-dir <dir>] [--snapshot <hooks.json>]
+ *
+ * `--data` serves one resource (the directory itself); `--resource-dir`
+ * serves a folder whose direct subfolders are the resources (a many-item
+ * testdata/), switchable in the workbench resource list.
  *
  * Also exported so the plugin CLI's `dev` subcommand can serve the
  * workbench with richer providers (real storage, preview variants,
@@ -20,6 +24,7 @@ import { fileURLToPath } from "node:url"
 import {
 	contentTypeOf,
 	createDirectoryProviders,
+	createResourceDirProviders,
 	createWorkbenchMounts,
 } from "./mounts.mjs"
 
@@ -34,17 +39,32 @@ const MAX_PORT_ATTEMPTS = 20
  * Returns the http.Server.
  */
 export function serveWorkbench(opts) {
-	const { pluginDir, dataDir, port = 5199, host = "127.0.0.1", onReady } = opts
+	const {
+		pluginDir,
+		dataDir,
+		resourceDir,
+		port = 5199,
+		host = "127.0.0.1",
+		onReady,
+	} = opts
 	if (pluginDir === undefined) {
 		console.warn("[workbench] no plugin dir — pass --plugin <dist-dir>")
 	}
 	const base =
 		opts.providers ??
-		(dataDir === undefined
-			? { resources: () => [] }
-			: createDirectoryProviders(dataDir))
-	if (opts.providers === undefined && dataDir === undefined) {
-		console.warn("[workbench] no data dir — pass --data <data-dir>")
+		(resourceDir !== undefined
+			? createResourceDirProviders(resourceDir)
+			: dataDir === undefined
+				? { resources: () => [] }
+				: createDirectoryProviders(dataDir))
+	if (
+		opts.providers === undefined &&
+		dataDir === undefined &&
+		resourceDir === undefined
+	) {
+		console.warn(
+			"[workbench] no data dir — pass --data <data-dir> or --resource-dir <dir>",
+		)
 	}
 	// A snapshot provider passed on its own (the classic `--snapshot`
 	// shape) still works: it is just one more provider.
@@ -165,6 +185,7 @@ if (isMain) {
 	await serveWorkbench({
 		pluginDir: flagValue("--plugin"),
 		dataDir: flagValue("--data"),
+		resourceDir: flagValue("--resource-dir"),
 		port: Number(flagValue("--port") ?? 5199),
 		snapshot,
 	})

@@ -20,10 +20,12 @@ the SDK closure and never enters a shipped plugin bundle.
 
 ## Page
 
-The chrome strip shows the plugin name, the resource picker (with the
-rendered cover thumbnail, hidden automatically when the render pipeline
-is not wired), the hook status line and the current viewport. The plugin
-iframe floats as the design system's card surface on the canvas.
+The chrome strip shows the plugin name, the resource list, the hook
+status line and the current viewport. With multiple resources the list
+is a left sidebar (`w-sidebar`, dense single-line rows) at the `sidebar`
+breakpoint and collapses to a horizontal chip row in the toolbar below
+it; a single resource renders one row/chip. The plugin iframe floats as
+the design system's card surface on the canvas.
 
 ### Iframe settings
 
@@ -73,7 +75,7 @@ published `dist/`):
 
 | Provider | Feeds |
 | --- | --- |
-| `resources()` | the resource picker |
+| `resources()` | the resource list (sidebar / toolbar chips) |
 | `files` | `/data` reads and the plugin file URL shape |
 | `snapshot(resId)` | sandboxed `detect` / `sourceMeta` / `searchMeta` / `listFiles` / `coverLocal` / `imageHashes` |
 | `state(resId)` | seeds the mock host with the resource's comments, danmaku, prefs and cache |
@@ -91,6 +93,19 @@ side:
 ```bash
 node dist/serve.mjs --plugin ./dist --data ./testdata --port 5199
 ```
+
+`--data` serves one resource (the directory itself). To switch between
+many items from one folder, use `--resource-dir` — every direct subfolder
+becomes a resource, named by its basename, and the page lists them in the
+resource list:
+
+```bash
+node dist/serve.mjs --plugin ./dist --resource-dir ./testdata --port 5199
+```
+
+Both are the directory shape of the same `resources()`/`files` providers;
+`--data` keeps its single-resource meaning, `--resource-dir` is the
+consolidated "folder of many resources" shape.
 
 ### Routes
 

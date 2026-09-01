@@ -4,6 +4,7 @@
 		"reloadAria": "プラグインを再読み込み",
 		"reloadHint": "再読み込み — 現在のビルドで再マウント",
 		"resource": "リソース",
+		"resources": "リソース",
 		"cardPreviewAria": "リソースカードをプレビュー",
 		"cardPreviewHint": "res card をシミュレート — 表紙・カードテンプレート・メタデータ",
 		"enterFullscreen": "全画面にする",

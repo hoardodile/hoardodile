@@ -9,11 +9,13 @@ import { defineConfig } from "vite"
 // module, so a route can never exist in only one of them.
 import {
 	createDirectoryProviders,
+	createResourceDirProviders,
 	createWorkbenchMounts,
 } from "./scripts/mounts.mjs"
 
 const pluginDir = process.env.WORKBENCH_PLUGIN_DIR
 const dataDir = process.env.WORKBENCH_DATA_DIR
+const resourceDir = process.env.WORKBENCH_RESOURCE_DIR
 const snapshotFile = process.env.WORKBENCH_SNAPSHOT_FILE
 
 /**
@@ -42,13 +44,15 @@ function workbenchMountsPlugin(): Plugin {
 					"[workbench] WORKBENCH_PLUGIN_DIR not set — no plugin bundle mounted",
 				)
 			}
-			if (dataDir === undefined) {
+			if (dataDir === undefined && resourceDir === undefined) {
 				console.warn("[workbench] WORKBENCH_DATA_DIR not set — no data mounted")
 			}
 			const providers = {
-				...(dataDir === undefined
-					? { resources: () => [] }
-					: createDirectoryProviders(dataDir)),
+				...(dataDir !== undefined
+					? createDirectoryProviders(dataDir)
+					: resourceDir !== undefined
+						? createResourceDirProviders(resourceDir)
+						: { resources: () => [] }),
 				...(snapshotFile === undefined
 					? {}
 					: { snapshot: fileSnapshot(snapshotFile) }),

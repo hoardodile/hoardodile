@@ -125,6 +125,13 @@ export type ServeWorkbenchOptions = {
 	 * directory providers; ignored when `providers` is given.
 	 */
 	readonly dataDir?: string
+	/**
+	 * Root whose direct subfolders are individual resources (a folder of
+	 * many test-data items), switchable in the workbench resource list.
+	 * Shorthand for the resource-directory providers; ignored when
+	 * `providers` is given.
+	 */
+	readonly resourceDir?: string
 	/** Real data sources. `hoardodile plugin dev` supplies these. */
 	readonly providers?: WorkbenchProviders
 	/**
@@ -169,4 +176,13 @@ export function serveWorkbench(opts: ServeWorkbenchOptions): Promise<Server>
 export function createDirectoryProviders(
 	dataDir: string,
 	resId?: string,
+): WorkbenchProviders
+
+/**
+ * Providers over a folder whose direct subfolders are individual
+ * resources — each subfolder is one resource named by its basename, and
+ * `files` reads are scoped to it.
+ */
+export function createResourceDirProviders(
+	resourceRoot: string,
 ): WorkbenchProviders
