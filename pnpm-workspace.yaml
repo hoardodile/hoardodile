@@ -43,6 +43,7 @@ catalog:
   react-use: ^17.6.1
   '@solar-icons/react': ^2.1.0
   release-it: ^21.0.2
+  sharp: ^0.35.3
   tailwindcss: ^4.3.3
   tar: ^7.4.3
   tsup: ^8.5.1
