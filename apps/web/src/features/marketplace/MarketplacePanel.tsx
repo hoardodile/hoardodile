@@ -169,15 +169,16 @@ export function MarketplacePanel() {
 			) : (
 				<>
 					<div className="flex flex-col gap-2">
-						<div className="flex items-center justify-between gap-2">
-							<SearchField
-								value={query}
-								onCommit={setQuery}
-								placeholder={t("marketplace.searchPlaceholder")}
-								className="w-64"
-								testId="marketplace-search"
-							/>
-							<div className="flex items-center gap-2">
+						<div className="flex flex-wrap items-center gap-2">
+							<div className="min-w-40 flex-1">
+								<SearchField
+									value={query}
+									onCommit={setQuery}
+									placeholder={t("marketplace.searchPlaceholder")}
+									testId="marketplace-search"
+								/>
+							</div>
+							<div className="flex flex-wrap items-center gap-2">
 								<PillTabs<MarketplaceFilter>
 									value={filter}
 									onChange={setFilter}
