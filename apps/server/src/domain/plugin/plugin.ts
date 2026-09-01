@@ -15,7 +15,11 @@ import {
 	writeVersioned,
 } from "@hoardodile/host/hoard"
 import { PLUGIN_READ_FILE_MAX_BYTES } from "@hoardodile/sdk-types/plugin"
-import { describeProxy, resolveProxyConfig } from "@hoardodile/shared/net-proxy"
+import {
+	createProxyResolver,
+	describeProxy,
+	resolveProxyConfig,
+} from "@hoardodile/shared/net-proxy"
 import type { FastifyInstance, FastifyPluginAsync } from "fastify"
 import fp from "fastify-plugin"
 import "src/infra/fastify-augment.ts"
@@ -88,21 +92,25 @@ async function pluginDomainImpl(app: FastifyInstance): Promise<void> {
 
 	// The app-wide outbound proxy: auto-detected (env vars, then the OS
 	// system proxy) with an explicit HOARDODILE_PROXY override — one
-	// resolution shared by every network service.
-	const proxyConfig = resolveProxyConfig(process.env, process.platform)
-	app.log.info({ proxy: describeProxy(proxyConfig) }, "outbound proxy")
+	// resolution shared by every network service. Re-read on demand (with
+	// a short cache) so a proxy enabled or changed after boot is picked
+	// up by the next marketplace fetch / plugin download with no restart.
+	const proxyResolver = createProxyResolver(() =>
+		resolveProxyConfig(process.env, process.platform),
+	)
+	app.log.info({ proxy: describeProxy(proxyResolver()) }, "outbound proxy")
 
 	const downloader = createPluginDownloader({
 		maxBytes: app.env.PLUGIN_DOWNLOAD_MAX_BYTES,
 		timeoutMs: 60_000,
 		allowPrivate: app.env.PLUGIN_DOWNLOAD_ALLOW_PRIVATE,
-		proxy: proxyConfig,
+		proxy: proxyResolver,
 	})
 	app.decorate("pluginDownloader", downloader)
 	app.decorate(
 		"outboundNetwork",
 		createOutboundNetwork({
-			config: proxyConfig,
+			config: proxyResolver,
 			fetcher: downloader,
 			tmpDir: app.paths.local.tmp(),
 		}),

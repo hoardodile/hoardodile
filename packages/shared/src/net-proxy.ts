@@ -156,6 +156,32 @@ export function resolveProxyConfig(
 	return { http: null, https: null, bypass: envBypass(env), source: "none" }
 }
 
+/**
+ * A lazily re-resolved outbound proxy provider. `resolve` re-runs the
+ * app-wide proxy resolution (env + OS); the result is cached for `ttlMs`
+ * and re-read once the TTL elapses. Long-lived server processes use this
+ * so a proxy enabled or changed after boot takes effect on the next
+ * request without a restart — while the only costly probe (the OS
+ * system-proxy `reg`/`scutil` subprocess) runs at most once per TTL.
+ */
+export type ProxyResolver = () => ProxyConfig
+
+export function createProxyResolver(
+	resolve: () => ProxyConfig,
+	opts?: { readonly ttlMs?: number; readonly now?: () => number },
+): ProxyResolver {
+	const ttlMs = opts?.ttlMs ?? 5_000
+	const now = opts?.now ?? Date.now
+	let cached: { readonly config: ProxyConfig; readonly at: number } | undefined
+	return () => {
+		const at = now()
+		if (cached !== undefined && at - cached.at < ttlMs) return cached.config
+		const config = resolve()
+		cached = { config, at }
+		return config
+	}
+}
+
 function firstValidEnvProxy(
 	env: ProxyEnv,
 	names: readonly string[],

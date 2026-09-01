@@ -34,7 +34,7 @@ import { pipeline } from "node:stream/promises"
 import { pluginAssetError } from "@hoardodile/sdk-types"
 import {
 	isPublicAddress,
-	type ProxyConfig,
+	type ProxyResolver,
 	proxyAgentFor,
 	proxyFor,
 	proxyTargetAllowed,
@@ -48,12 +48,15 @@ export type PluginDownloaderDeps = {
 	/** Allow private/loopback addresses (explicit env opt-in). */
 	readonly allowPrivate: boolean
 	/**
-	 * App-wide outbound proxy config (see `resolveProxyConfig`). When a
-	 * target is routed through the proxy, its hostname is still vetted
-	 * locally first (public address, or a trusted GitHub host when local
-	 * DNS is unusable) and TLS keeps validating the target certificate.
+	 * App-wide outbound proxy provider (see `resolveProxyConfig`); the
+	 * downloader re-reads it per request so a proxy enabled or changed
+	 * after boot is picked up (the marketplace's "refresh now" included)
+	 * without a restart. When a target is routed through the proxy, its
+	 * hostname is still vetted locally first (public address, or a
+	 * trusted GitHub host when local DNS is unusable) and TLS keeps
+	 * validating the target certificate.
 	 */
-	readonly proxy?: ProxyConfig | null
+	readonly proxy?: ProxyResolver | null
 }
 
 export type PluginDownloader = {
@@ -161,11 +164,11 @@ export function createPluginDownloader(
 	}
 
 	/**
-	 * The proxy for `url` per the app-wide config, or `null` for direct
-	 * fetches (no proxy, loopback, bypass entries).
+	 * The proxy for `url` per the current proxy resolution, or `null` for
+	 * direct fetches (no proxy, loopback, bypass entries).
 	 */
 	function proxyForTarget(url: URL): URL | null {
-		return deps.proxy == null ? null : proxyFor(url, deps.proxy!)
+		return deps.proxy == null ? null : proxyFor(url, deps.proxy())
 	}
 
 	/**

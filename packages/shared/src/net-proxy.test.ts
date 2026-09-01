@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest"
 import {
 	bypassMatches,
+	createProxyResolver,
 	defaultSystemSnapshot,
 	describeProxy,
 	GITHUB_ASSET_HOSTS,
@@ -359,5 +360,86 @@ describe("proxy env helpers", () => {
 		)
 		expect(config.source).toBe("env")
 		expect(config.bypass).toEqual(["internal", ".corp"])
+	})
+})
+
+describe("createProxyResolver", () => {
+	test("caches the resolved config for the TTL window", () => {
+		let calls = 0
+		const resolver = createProxyResolver(
+			() => {
+				calls += 1
+				return resolveProxyConfig(
+					{ HOARDODILE_PROXY: "http://127.0.0.1:7897" },
+					"linux",
+				)
+			},
+			{ ttlMs: 10_000, now: () => 0 },
+		)
+		resolver()
+		expect(resolver()).toBe(resolver())
+		expect(calls).toBe(1)
+	})
+
+	test("re-resolves after the TTL elapses", () => {
+		let calls = 0
+		let t = 0
+		const resolver = createProxyResolver(
+			() => {
+				calls += 1
+				return resolveProxyConfig({}, "linux", () => null)
+			},
+			{ ttlMs: 1_000, now: () => t },
+		)
+		resolver()
+		t = 1_000
+		resolver()
+		expect(calls).toBe(2)
+	})
+
+	test("returns the fresh value once the underlying resolution changes", () => {
+		let on = true
+		const resolver = createProxyResolver(
+			() =>
+				resolveProxyConfig(
+					on
+						? { HOARDODILE_PROXY: "http://127.0.0.1:7897" }
+						: { HOARDODILE_PROXY: "off" },
+					"linux",
+				),
+			{ ttlMs: 0 },
+		)
+		expect(resolver().https?.host).toBe("127.0.0.1:7897")
+		on = false
+		expect(resolver().https).toBeNull()
+	})
+
+	test("returns the same object and stays on the cache across many calls", () => {
+		let calls = 0
+		const resolver = createProxyResolver(
+			() => {
+				calls += 1
+				return resolveProxyConfig({}, "linux", () => null)
+			},
+			{ ttlMs: 10_000 },
+		)
+		const first = resolver()
+		for (let i = 0; i < 25; i += 1) expect(resolver()).toBe(first)
+		expect(calls).toBe(1)
+	})
+
+	test("ttlMs 0 forces a re-resolve on every call", () => {
+		let calls = 0
+		const resolver = createProxyResolver(
+			() => {
+				calls += 1
+				return resolveProxyConfig({}, "linux", () => null)
+			},
+			{ ttlMs: 0 },
+		)
+		resolver()
+		resolver()
+		resolver()
+		expect(calls).toBe(3)
 	})
 })

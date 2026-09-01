@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto"
 import { mkdir, rm } from "node:fs/promises"
 import { join } from "node:path"
-import type { ProxyConfig } from "@hoardodile/shared/net-proxy"
+import type { ProxyResolver } from "@hoardodile/shared/net-proxy"
 import type { PluginDownloader } from "src/domain/plugin/downloader.ts"
 
 export type OutboundNetworkInfo = {
@@ -33,16 +33,17 @@ const PROBE_URL =
 	"https://raw.githubusercontent.com/hoardodile/marketplace/HEAD/registry.json"
 
 export function createOutboundNetwork(deps: {
-	readonly config: ProxyConfig
+	readonly config: ProxyResolver
 	readonly fetcher: PluginDownloader
 	readonly tmpDir: string
 }): OutboundNetwork {
 	function info(): OutboundNetworkInfo {
+		const config = deps.config()
 		return {
-			source: deps.config.source,
-			httpHost: deps.config.http?.host ?? null,
-			httpsHost: deps.config.https?.host ?? null,
-			bypassCount: deps.config.bypass.length,
+			source: config.source,
+			httpHost: config.http?.host ?? null,
+			httpsHost: config.https?.host ?? null,
+			bypassCount: config.bypass.length,
 		}
 	}
 
