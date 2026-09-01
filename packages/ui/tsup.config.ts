@@ -26,7 +26,16 @@ export default defineConfig({
 	clean: true,
 	target: "esnext",
 	platform: "browser",
-	splitting: false,
+	// Multiple entries import each other (e.g. `image-crop-panel` imports
+	// `app-dialog` for `DialogFooterActions`). Without splitting, tsup inlines
+	// that shared module into every entry, so the `@hoardodile/ui` dist ends up
+	// with TWO copies of the `DialogFooterActionsContext` React context. A
+	// production bundle then gives `<AppDialog>`'s provider and
+	// `<ImageCropPanel>`'s consumer different context instances, so the crop
+	// action stops landing in the dialog footer (it falls back to inline,
+	// split from the footer's Cancel by the hairline). Keep splitting on so
+	// shared modules (and React singletons) exist exactly once.
+	splitting: true,
 	treeshake: true,
 	// CSS ships as-is (Tailwind processes it in each consumer's build);
 	// leave the @imports of the Tailwind toolchain unresolved.
