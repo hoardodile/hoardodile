@@ -54,4 +54,5 @@ jobs:
           if [ -d readme ]; then
             files="$files readme/*"
           fi
-          gh release create "$GITHUB_REF_NAME" $files --generate-notes
+          node scripts/release-notes.mjs > /tmp/hd-release-notes.md
+          gh release create "$GITHUB_REF_NAME" $files --notes-file /tmp/hd-release-notes.md
