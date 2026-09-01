@@ -26,14 +26,10 @@ export function resolveTapZone(width: number, offsetX: number): TapZone {
 
 /** CSS cursor advertising what a click in this zone would do. */
 export function cursorForTapZone(zone: TapZone): string {
-	switch (zone) {
-		case "prev":
-			return "w-resize"
-		case "next":
-			return "e-resize"
-		case "center":
-			return "default"
-	}
+	// The prev/next step zones are clickable (pointer); the neutral centre
+	// band is deliberately inert (default) so pinch-zoom is never misread
+	// as a clickable link.
+	return zone === "center" ? "default" : "pointer"
 }
 
 export function exceedsTapTolerance(

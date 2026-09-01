@@ -32,9 +32,9 @@ describe("resolveTapZone", () => {
 })
 
 describe("cursorForTapZone", () => {
-	it("advertises the step direction", () => {
-		expect(cursorForTapZone("prev")).toBe("w-resize")
-		expect(cursorForTapZone("next")).toBe("e-resize")
+	it("advertises the step zones as clickable and the centre band as neutral", () => {
+		expect(cursorForTapZone("prev")).toBe("pointer")
+		expect(cursorForTapZone("next")).toBe("pointer")
 		expect(cursorForTapZone("center")).toBe("default")
 	})
 })
