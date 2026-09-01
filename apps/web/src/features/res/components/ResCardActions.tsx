@@ -24,7 +24,7 @@ import {
 	UndoRightRound,
 	UsersGroupTwoRounded,
 } from "@hoardodile/ui/icons/registry"
-import { type QueryClient, useQueryClient } from "@tanstack/react-query"
+import type { QueryClient } from "@tanstack/react-query"
 import { Link } from "@tanstack/react-router"
 import { useCallback, useState } from "react"
 import { useTranslation } from "react-i18next"
@@ -35,8 +35,6 @@ import {
 	hardDeleteResourceMutation,
 	invalidateResources,
 	resDislikeMutation,
-	resFilesQueryOptions,
-	resFileUrl,
 	resKeys,
 	resSourceZipUrl,
 	restoreResourceMutation,
@@ -79,8 +77,6 @@ export function ResCardActions(props: ResCardActionsProps) {
 	const resId = resource.id
 	const resName = resource.name
 	const isTrashed = resource.deletedAt !== undefined
-	const count = resource.fileStats?.count
-	const qc = useQueryClient()
 	const { t } = useTranslation()
 	const [hardDeleteOpen, setHardDeleteOpen] = useState(false)
 	const [openDialog, setOpenDialog] = useState<DialogKind | undefined>(
@@ -230,7 +226,7 @@ export function ResCardActions(props: ResCardActionsProps) {
 					<DropdownMenuItem
 						closeOnClick={false}
 						onClick={() => {
-							void downloadResource({ qc, resId, count })
+							void downloadResource({ resId })
 						}}
 						data-testid={`resource-action-download-${resId}`}
 					>
@@ -365,29 +361,18 @@ export function ResCardActions(props: ResCardActionsProps) {
 }
 
 type DownloadResourceArgs = {
-	readonly qc: QueryClient
 	readonly resId: string
-	readonly count: number | undefined
 }
 
 /**
- * Browser download for a resource; filenames come from the server's
- * Content-Disposition. Single-file resources hit `/files/...`; otherwise
- * `source.zip`.
+ * Browser download for a resource; the filename comes from the server's
+ * Content-Disposition. Always packs the entire `resources/<id>` data
+ * folder into one `source.zip` — independent of the file count and of
+ * which content plugin renders the resource, so the download is complete
+ * and stable (a single-archive resource stays whole; it is never
+ * unwrapped into individual inner files).
  */
-async function downloadResource(args: DownloadResourceArgs): Promise<void> {
-	const { qc, resId, count } = args
-	if (count === 1) {
-		const files = await qc.fetchQuery(resFilesQueryOptions(resId))
-		const only = files[0]
-		if (only !== undefined) {
-			const filename = typeof only === "string" ? only : only.filename
-			if (typeof filename === "string" && filename.length > 0) {
-				triggerDownload(resFileUrl(resId, filename))
-				return
-			}
-		}
-	}
+export function downloadResource({ resId }: DownloadResourceArgs): void {
 	triggerDownload(resSourceZipUrl(resId))
 }
 
