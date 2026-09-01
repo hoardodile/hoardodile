@@ -2,7 +2,7 @@
 	"id": "665cfbdd-1db6-48f5-9d53-1008b8cb84c3",
 	"name": "Gallery",
 	"description": "Official media gallery plugin",
-	"version": "0.1.9",
+	"version": "0.1.10",
 	"icon": "gallery-wide",
 	"permissions": {
 		"sourceMeta": true,

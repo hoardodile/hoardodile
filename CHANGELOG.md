@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.10](https://github.com/hoardodile/hoardodile/compare/v0.1.9...v0.1.10) (2026-09-01)
+
+### Bug Fixes
+
+* **server:** re-resolve the outbound proxy per request ([7ed8abc](https://github.com/hoardodile/hoardodile/commit/7ed8abc6fcdd5143ea772bca335e04ea1c69009b))
+
 ## [0.1.9](https://github.com/hoardodile/hoardodile/compare/v0.1.8...v0.1.9) (2026-09-01)
 
 ### Features
