@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.1.8](https://github.com/hoardodile/hoardodile/compare/v0.1.7...v0.1.8) (2026-09-01)
+
+### ⚠ BREAKING CHANGES
+
+* **plugin:** unify archive container addressing through /files
+
+### Features
+
+* **create-plugin:** harden plugin template tooling and de-dupe embedded copy ([3529956](https://github.com/hoardodile/hoardodile/commit/3529956f42c951333794e95db221c85a892cfe2f))
+* **i18n:** user-friendly wording for the hot-update copy ([78a8043](https://github.com/hoardodile/hoardodile/commit/78a804342a734ec0c55578aeea7b86cdc8122d56))
+* **plugin:** unify archive container addressing through /files ([b2ef9d9](https://github.com/hoardodile/hoardodile/commit/b2ef9d957a8394144316212ba8cd783683af1893))
+* **workbench:** add a switchable resource list and --resource-dir mode ([21abfd4](https://github.com/hoardodile/hoardodile/commit/21abfd4c479ea58fa45ccb656a4711c361866c3e))
+
+### Bug Fixes
+
+* **desktop:** reclaim LAN port and preserve the route across sidecar reloads ([77d8a48](https://github.com/hoardodile/hoardodile/commit/77d8a48a4208933fb6ffce163d7b61e14448505d))
+* **desktop:** standardize release asset filenames ([e0bdc12](https://github.com/hoardodile/hoardodile/commit/e0bdc12d6e2a9c0be05ee995f6d93f05abfd58c6))
+* **ui:** split the ui package so the dialog footer context is shared ([ef02a9d](https://github.com/hoardodile/hoardodile/commit/ef02a9d12d825133acab69083141b8cf7c508175))
+* **web:** always download the whole resource source as a zip ([16b5b0f](https://github.com/hoardodile/hoardodile/commit/16b5b0fcfe21f4ba4b421c6d1f6e7d57f7c23f88))
+* **web:** wrap the marketplace search row on narrow screens ([00f1f77](https://github.com/hoardodile/hoardodile/commit/00f1f775f53d93cd6c1575d7fba26c19bafbf5ff))
+
 ## [0.1.7](https://github.com/hoardodile/hoardodile/compare/v0.1.6...v0.1.7) (2026-08-31)
 
 ### Features
