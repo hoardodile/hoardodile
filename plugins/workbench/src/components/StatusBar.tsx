@@ -15,7 +15,7 @@ export function StatusBar(props: {
 	const { t: tw } = useTranslation("workbench")
 
 	return (
-		<footer className="flex h-8 shrink-0 items-center gap-3 border-t border-border px-4 text-xs text-muted-foreground">
+		<footer className="flex h-8 shrink-0 items-center gap-3 border-t border-border px-4 text-xs text-muted-foreground max-sidebar:hidden">
 			<span
 				id="plugin-name"
 				className="min-w-0 truncate text-ui text-secondary-foreground"

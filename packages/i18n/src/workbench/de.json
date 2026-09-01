@@ -5,6 +5,8 @@
 		"reloadHint": "Neu laden — mit dem aktuellen Build neu einbinden",
 		"resource": "Ressource",
 		"resources": "Ressourcen",
+		"resourcesAria": "Ressourcen anzeigen",
+		"resourcesHint": "Die eingebundene Ressource wechseln",
 		"cardPreviewAria": "Ressourcen-Karte anzeigen",
 		"cardPreviewHint": "Simulierte res card — Cover, Kartentemplates und Metadaten",
 		"enterFullscreen": "Vollbild aktivieren",

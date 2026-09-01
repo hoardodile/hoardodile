@@ -34,10 +34,10 @@
 	},
 	"scripts": {
 		"prepack": "pnpm build",
-		"dev": "node scripts/dev.mjs",
-		"build": "vite build && node scripts/copy-serve.mjs",
-		"lint": "tsc --noEmit",
-		"test": "vitest run"
+		"dev": "node ../../scripts/generate-solar-lazy-index.mjs --pkg ./package.json --out ./src/icons && node scripts/dev.mjs",
+		"build": "node ../../scripts/generate-solar-lazy-index.mjs --pkg ./package.json --out ./src/icons && vite build && node scripts/copy-serve.mjs",
+		"lint": "node ../../scripts/generate-solar-lazy-index.mjs --pkg ./package.json --out ./src/icons && tsc --noEmit",
+		"test": "node ../../scripts/generate-solar-lazy-index.mjs --pkg ./package.json --out ./src/icons && vitest run"
 	},
 	"devDependencies": {
 		"@hoardodile/host-web": "workspace:*",
@@ -47,6 +47,7 @@
 		"@hoardodile/ui": "workspace:*",
 		"@playwright/test": "catalog:",
 		"@rolldown/plugin-babel": "catalog:",
+		"@solar-icons/react": "catalog:",
 		"@tailwindcss/vite": "catalog:",
 		"@types/node": "catalog:",
 		"@types/react": "catalog:",

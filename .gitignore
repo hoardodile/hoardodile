@@ -38,6 +38,10 @@ apps/web/src/routeTree.gen.ts
 # mirrors the installed @solar-icons/react version.
 apps/web/src/features/plugin/icons/solar-names.generated.ts
 apps/web/src/features/plugin/icons/solar-loaders.generated.ts
+# Same generator also emits the workbench's own copy before its dev/build/
+# lint/test chain — never committed either.
+plugins/workbench/src/icons/solar-names.generated.ts
+plugins/workbench/src/icons/solar-loaders.generated.ts
 
 # Third-party notices generated before the web dev/build chain
 # (scripts/generate-licenses.mjs): runtime assets only, never committed.

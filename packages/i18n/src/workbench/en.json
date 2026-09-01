@@ -5,6 +5,8 @@
 		"reloadHint": "Reload — re-mount with the current build",
 		"resource": "Resource",
 		"resources": "Resources",
+		"resourcesAria": "Show resources",
+		"resourcesHint": "Switch the mounted resource",
 		"cardPreviewAria": "Preview resource card",
 		"cardPreviewHint": "Simulated res card — cover, card templates and metadata",
 		"enterFullscreen": "Enter fullscreen",

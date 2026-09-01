@@ -5,6 +5,8 @@
 		"reloadHint": "Recargar — volver a montar con la compilación actual",
 		"resource": "Recurso",
 		"resources": "Recursos",
+		"resourcesAria": "Mostrar recursos",
+		"resourcesHint": "Cambiar el recurso montado",
 		"cardPreviewAria": "Previsualizar tarjeta de recurso",
 		"cardPreviewHint": "Res card simulada — portada, plantillas y metadatos",
 		"enterFullscreen": "Entrar en pantalla completa",

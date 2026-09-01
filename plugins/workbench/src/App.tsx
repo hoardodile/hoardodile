@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useContainerFullscreen } from "./components/FullscreenButton.tsx"
 import { MenuBar } from "./components/MenuBar.tsx"
-import { ResourceList } from "./components/ResourceList.tsx"
+import { ResourceSidebar } from "./components/ResourceSidebar.tsx"
 import { Stage } from "./components/Stage.tsx"
 import { StatusBar } from "./components/StatusBar.tsx"
 import {
@@ -74,6 +74,7 @@ export function App() {
 	const [bootstrapError, setBootstrapError] = useState<string | null>(null)
 	const [resources, setResources] = useState<readonly WorkbenchResource[]>([])
 	const [selectedId, setSelectedId] = useState<string>()
+	const [resourcesOpen, setResourcesOpen] = useState(false)
 	const [reloadNonce, setReloadNonce] = useState(0)
 	const [context, setContext] = useState<ResourceContext | null>(null)
 	const [systemDark, setSystemDark] = useState(readSystemDark)
@@ -233,6 +234,13 @@ export function App() {
 		setConfig((prev) => ({ ...prev, ...patch }))
 	}
 
+	// Selecting a resource from the sidebar switches the mounted resource and
+	// closes the picker (docked panel collapses / drawer closes).
+	const handleSelectResource = (id: string) => {
+		setSelectedId(id)
+		setResourcesOpen(false)
+	}
+
 	// Plugin-state management. Each action updates the workbench-local
 	// override (persisted by the effect above) and remounts the iframe via
 	// the existing reload path, so the plugin re-seeds from the cleared
@@ -271,56 +279,66 @@ export function App() {
 	const { t: tw } = useTranslation("workbench")
 
 	return (
-		<div className="flex h-full bg-background">
-			{resources.length >= 2 ? (
-				<ResourceList
-					resources={resources}
-					resource={resource}
-					onSelect={setSelectedId}
-				/>
-			) : null}
-			<div className="flex min-h-0 min-w-0 flex-1 flex-col">
-				<MenuBar
-					manifest={manifest}
-					resources={resources}
-					resource={resource}
-					ctx={context}
-					config={config}
-					pluginState={pluginState}
-					fullscreen={fullscreenAPI}
-					locale={presentation.language}
-					onConfigChange={patchConfig}
-					onSelect={setSelectedId}
-					onReload={() => setReloadNonce((n) => n + 1)}
-					onResetSettings={handleResetSettings}
-					onClearCache={handleClearCache}
-					onRestoreState={handleRestoreState}
-				/>
-				{bootstrapError !== null ? (
-					<Stage
-						mode={config.mode}
-						loading={false}
-						frameRef={frameRef}
-						emptyTitle={tw("app.failedTitle")}
-						emptyDescription={bootstrapError}
+		<div className="flex h-full flex-col bg-background">
+			{/* Full-width top bar: the sidebar never covers it. */}
+			<MenuBar
+				manifest={manifest}
+				resources={resources}
+				resource={resource}
+				ctx={context}
+				config={config}
+				pluginState={pluginState}
+				fullscreen={fullscreenAPI}
+				locale={presentation.language}
+				resourcesOpen={resourcesOpen}
+				onConfigChange={patchConfig}
+				onToggleResources={() => setResourcesOpen((v) => !v)}
+				onReload={() => setReloadNonce((n) => n + 1)}
+				onResetSettings={handleResetSettings}
+				onClearCache={handleClearCache}
+				onRestoreState={handleRestoreState}
+			/>
+			{/* Middle row: the docked resource sidebar (between the bars) and
+			    the plugin stage. Only shown while there are multiple resources
+			    to switch between. */}
+			<div className="flex min-h-0 min-w-0 flex-1">
+				{resources.length >= 2 ? (
+					<ResourceSidebar
+						open={resourcesOpen}
+						onOpenChange={setResourcesOpen}
+						resources={resources}
+						selectedId={resource?.id}
+						onSelect={handleSelectResource}
 					/>
-				) : resource === undefined ? (
-					<Stage
-						mode={config.mode}
-						loading={false}
-						frameRef={frameRef}
-						emptyTitle={tw("app.noResources")}
-						emptyDescription={tw("app.noResourcesHint")}
-					/>
-				) : (
-					<Stage
-						mode={config.mode}
-						loading={context === null}
-						frameRef={frameRef}
-					/>
-				)}
-				<StatusBar manifest={manifest} mode={config.mode} />
+				) : null}
+				<div className="flex min-h-0 min-w-0 flex-1 flex-col">
+					{bootstrapError !== null ? (
+						<Stage
+							mode={config.mode}
+							loading={false}
+							frameRef={frameRef}
+							emptyTitle={tw("app.failedTitle")}
+							emptyDescription={bootstrapError}
+						/>
+					) : resource === undefined ? (
+						<Stage
+							mode={config.mode}
+							loading={false}
+							frameRef={frameRef}
+							emptyTitle={tw("app.noResources")}
+							emptyDescription={tw("app.noResourcesHint")}
+						/>
+					) : (
+						<Stage
+							mode={config.mode}
+							loading={context === null}
+							frameRef={frameRef}
+						/>
+					)}
+				</div>
 			</div>
+			{/* Full-width bottom bar: the sidebar never covers it. */}
+			<StatusBar manifest={manifest} mode={config.mode} />
 			<PluginDownloadConsentDialog
 				entry={consentEntry}
 				onDeny={(ticketId) => decideDownloadConsent(ticketId, false)}

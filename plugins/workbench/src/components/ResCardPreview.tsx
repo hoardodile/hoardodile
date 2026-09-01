@@ -35,6 +35,7 @@ import type {
 	WorkbenchManifest,
 	WorkbenchResource,
 } from "../context.ts"
+import { resolveSolarIconComponent } from "../icons/solar-icon"
 import {
 	buildMockCardMeta,
 	buildResCardAssetUrl,
@@ -45,8 +46,11 @@ import {
 } from "../res-card-preview.ts"
 
 // The workbench's res-card badge renderer. Solar glyph names resolve
-// through a small synchronously-imported registry set (the same one the
-// app's card uses for the common glyphs); unknown glyphs draw nothing.
+// through a small synchronously-imported registry set first (the same one
+// the app's card uses for the common glyphs — no async hop, no flash on
+// first paint); anything else resolves through the lazy full-set index, so
+// any installed Solar glyph renders with the same three-weight/`mode`/
+// icon-style semantics. Unknown glyphs draw nothing.
 // Manifest-relative `asset('path')` references resolve to the `/data`
 // mount for the selected resource.
 const SYNC_ICONS: Readonly<
@@ -231,6 +235,8 @@ function renderIcon(ref: IconRef, className?: string): ReactNode {
 	const name = normalizeSolarGlyphName(ref.name)
 	if (name === undefined) return null
 	const Sync = SYNC_ICONS[name]
-	if (Sync === undefined) return null
-	return <Sync className={className} />
+	if (Sync !== undefined) return <Sync className={className} />
+	const Lazy = resolveSolarIconComponent(name)
+	if (Lazy === undefined) return null
+	return <Lazy className={className} />
 }

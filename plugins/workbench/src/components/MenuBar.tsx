@@ -5,15 +5,16 @@ import {
 	TooltipContent,
 	TooltipTrigger,
 } from "@hoardodile/ui/components/tooltip"
+import { useBelowSidebar } from "@hoardodile/ui/hooks/use-mobile"
 import {
 	Box,
+	Gallery,
 	InfoCircle,
 	Maximize,
 	Minimize,
 	Refresh,
 	Settings,
 } from "@hoardodile/ui/icons/registry"
-import { cn } from "@hoardodile/ui/lib/utils"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import type { WorkbenchConfig } from "../config.ts"
@@ -30,10 +31,13 @@ import { InfoDialog } from "./InfoDialog.tsx"
 type DialogKind = "card" | "settings" | "info"
 
 /**
- * The workbench title bar: the resource picker on the left and, on the
- * right, text buttons for the resource card and iframe settings plus icon
- * buttons for plugin info, reload and fullscreen. The three detail
- * surfaces open as dialogs so the chrome stays lean.
+ * The workbench title bar: on the left, a Resources drawer toggle (shown
+ * only below the sidebar breakpoint, where the resource sidebar is a
+ * drawer — at wide widths the sidebar is always docked and needs no
+ * toggle) plus text buttons for the iframe settings and the resource card;
+ * on the right, icon buttons for plugin info, reload and fullscreen. The
+ * three detail surfaces open as dialogs so the chrome stays lean. Below
+ * the sidebar breakpoint the button text collapses away (icon-only bars).
  */
 export function MenuBar(props: {
 	readonly manifest: WorkbenchManifest | null
@@ -44,8 +48,9 @@ export function MenuBar(props: {
 	readonly pluginState: PluginStateView
 	readonly fullscreen: FullscreenAPI
 	readonly locale: string
+	readonly resourcesOpen: boolean
 	readonly onConfigChange: (patch: Partial<WorkbenchConfig>) => void
-	readonly onSelect: (resId: string) => void
+	readonly onToggleResources: () => void
 	readonly onReload: () => void
 	readonly onResetSettings: () => void
 	readonly onClearCache: () => void
@@ -60,8 +65,9 @@ export function MenuBar(props: {
 		pluginState,
 		fullscreen,
 		locale,
+		resourcesOpen,
 		onConfigChange,
-		onSelect,
+		onToggleResources,
 		onReload,
 		onResetSettings,
 		onClearCache,
@@ -71,10 +77,30 @@ export function MenuBar(props: {
 	const [dialog, setDialog] = useState<DialogKind | null>(null)
 	const closeDialog = () => setDialog(null)
 	const cardReady = manifest !== null && resource !== undefined && ctx !== null
+	const belowSidebar = useBelowSidebar()
 
 	return (
 		<>
 			<header className="flex h-nav shrink-0 items-center gap-2 border-b border-border px-2">
+				{belowSidebar && resources.length >= 2 ? (
+					<Tooltip>
+						<TooltipTrigger
+							render={
+								<Button
+									variant="ghost"
+									size="icon-sm"
+									aria-label={tw("toolbar.resourcesAria")}
+									data-testid="workbench-resources"
+									aria-expanded={resourcesOpen}
+									onClick={onToggleResources}
+								>
+									<Icon icon={Gallery} />
+								</Button>
+							}
+						/>
+						<TooltipContent>{tw("toolbar.resources")}</TooltipContent>
+					</Tooltip>
+				) : null}
 				<Button
 					variant="ghost"
 					size="sm"
@@ -82,7 +108,7 @@ export function MenuBar(props: {
 					onClick={() => setDialog("settings")}
 				>
 					<Icon icon={Settings} />
-					{tw("toolbar.settings")}
+					<span className="max-sidebar:hidden">{tw("toolbar.settings")}</span>
 				</Button>
 				<Button
 					variant="ghost"
@@ -92,15 +118,8 @@ export function MenuBar(props: {
 					onClick={() => setDialog("card")}
 				>
 					<Icon icon={Box} />
-					{tw("toolbar.card")}
+					<span className="max-sidebar:hidden">{tw("toolbar.card")}</span>
 				</Button>
-				{resource !== undefined && resources.length >= 2 ? (
-					<ResourceChipList
-						resource={resource}
-						resources={resources}
-						onSelect={onSelect}
-					/>
-				) : null}
 
 				<span className="min-w-0 flex-1" />
 
@@ -199,50 +218,5 @@ export function MenuBar(props: {
 				locale={locale}
 			/>
 		</>
-	)
-}
-
-/**
- * Narrow-layout resource selector: a single-line horizontal chip row
- * (below the `sidebar` breakpoint, where the resource list collapses out
- * of the stage). Wide layout uses the sidebar's {@link ResourceList} in
- * `App` instead. A chip row keeps the one-line toolbar height; many
- * resources scroll horizontally rather than wrapping.
- */
-function ResourceChipList(props: {
-	readonly resource: WorkbenchResource
-	readonly resources: readonly WorkbenchResource[]
-	readonly onSelect: (resId: string) => void
-}) {
-	const { resource, resources, onSelect } = props
-	const { t: tw } = useTranslation("workbench")
-	return (
-		<nav
-			data-testid="workbench-resource-chips"
-			aria-label={tw("toolbar.resource")}
-			className="hidden max-w-64 items-center gap-1 overflow-x-auto max-sidebar:flex"
-		>
-			{resources.map((r) => {
-				const selected = r.id === resource.id
-				return (
-					<button
-						key={r.id}
-						type="button"
-						data-testid="workbench-resource-chip"
-						data-resource-id={r.id}
-						aria-pressed={selected}
-						onClick={() => onSelect(r.id)}
-						className={cn(
-							"h-control shrink-0 rounded-full px-3 text-xs whitespace-nowrap",
-							selected
-								? "bg-muted text-foreground"
-								: "text-secondary-foreground hover:bg-muted",
-						)}
-					>
-						{r.name}
-					</button>
-				)
-			})}
-		</nav>
 	)
 }

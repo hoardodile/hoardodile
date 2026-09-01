@@ -27,17 +27,30 @@ import { createRequire } from "node:module"
 import { dirname, join, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 
+function arg(name, fallback) {
+	const idx = process.argv.indexOf(`--${name}`)
+	if (idx === -1 || idx + 1 >= process.argv.length) return fallback
+	return process.argv[idx + 1]
+}
+
 const WORKSPACE_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..")
-const OUT_DIR = resolve(WORKSPACE_ROOT, "apps/web/src/features/plugin/icons")
+
+// Target the correct consumer package. Defaults keep the web's historical
+// behaviour (unchanged); the workbench passes `--pkg ./package.json
+// --out ./src/icons`. The resolver is anchored on the target package's own
+// package.json so the installed @solar-icons/react resolves through that
+// package's dependency tree (each consumer declares it itself).
+const pkgFile = resolve(
+	arg("pkg", join(WORKSPACE_ROOT, "apps/web/package.json")),
+)
+const OUT_DIR = resolve(
+	arg("out", join(WORKSPACE_ROOT, "apps/web/src/features/plugin/icons")),
+)
 const NAMES_FILE = join(OUT_DIR, "solar-names.generated.ts")
 const LOADERS_FILE = join(OUT_DIR, "solar-loaders.generated.ts")
 
-// Resolve the package through apps/web's own dependency tree (the script
-// itself lives outside any package that carries the dependency).
-const requireFromWeb = createRequire(
-	join(WORKSPACE_ROOT, "apps/web/package.json"),
-)
-const pkgPath = requireFromWeb.resolve("@solar-icons/react/package.json")
+const requireFromPkg = createRequire(pkgFile)
+const pkgPath = requireFromPkg.resolve("@solar-icons/react/package.json")
 const pkg = JSON.parse(readFileSync(pkgPath, "utf8"))
 
 const WEIGHTS = [
@@ -174,7 +187,7 @@ export function loadSolarGlyph(name: string): Promise<IconType> | undefined {
 	writeFileSync(NAMES_FILE, namesOut)
 	writeFileSync(LOADERS_FILE, loadersOut)
 	console.log(
-		`[web] solar glyph index generated (${names.length} glyphs x 3 weights) -> ${NAMES_FILE}, ${LOADERS_FILE}`,
+		`[solar] glyph index generated (${names.length} glyphs x 3 weights) -> ${NAMES_FILE}, ${LOADERS_FILE}`,
 	)
 }
 
