@@ -1,6 +1,6 @@
 {
 	"name": "@hoardodile/cli",
-	"version": "0.1.8",
+	"version": "0.1.9",
 	"license": "MIT",
 	"description": "hoardodile developer CLI: build, run, benchmark and develop content plugins.",
 	"keywords": [

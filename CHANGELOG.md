@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.1.9](https://github.com/hoardodile/hoardodile/compare/v0.1.8...v0.1.9) (2026-09-01)
+
+### Features
+
+* **desktop:** harden LAN port resolution and surface share URLs to copy ([7ee27e1](https://github.com/hoardodile/hoardodile/commit/7ee27e10e3fda04e0131634cac2180c338f46ce7))
+* **desktop:** LAN share via embedded proxy — HTTP default, opt-in HTTPS ([719743c](https://github.com/hoardodile/hoardodile/commit/719743cacddce9b4f1eac1b9c7ce6a1b38bcaf1f))
+* **workbench:** lazily load the full Solar glyph set and restyle the resource picker ([a8880f2](https://github.com/hoardodile/hoardodile/commit/a8880f2680168c2e217fe1fefb8e012f76ce02b4))
+
+### Bug Fixes
+
+* **ci:** copy the plugin template scripts before the docker install ([b50bacf](https://github.com/hoardodile/hoardodile/commit/b50bacfa3f0947e837f235c3a44dda8001b424d9))
+* **plugin-gallery:** pointer cursor on the viewer's prev/next step zones ([01ba5ad](https://github.com/hoardodile/hoardodile/commit/01ba5ad5d1921985f227e8269b56ab0b61af48f8))
+* **server:** harden SPA servability checks and add boundary tests ([01c8aed](https://github.com/hoardodile/hoardodile/commit/01c8aed62fc22a85eca7b2fe160658b2957e150d))
+* **server:** harden SPA serving and mask internal error details ([6d0a1d8](https://github.com/hoardodile/hoardodile/commit/6d0a1d8f80875566de4277cd6af24c0839b2f192))
+* **server:** serve cleanly when the SPA build is missing ([bbd1c5d](https://github.com/hoardodile/hoardodile/commit/bbd1c5d84c89aca2e403521c3c98cb9df34d791b))
+
 ## [0.1.8](https://github.com/hoardodile/hoardodile/compare/v0.1.7...v0.1.8) (2026-09-01)
 
 ### ⚠ BREAKING CHANGES

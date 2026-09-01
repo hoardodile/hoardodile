@@ -2,7 +2,7 @@
 	"id": "f8ef0814-0f0f-4083-a5f1-6d95d79bc99e",
 	"name": "PDF",
 	"description": "PDF reader.",
-	"version": "0.1.8",
+	"version": "0.1.9",
 	"permissions": {
 		"sourceMeta": true,
 		"message": true

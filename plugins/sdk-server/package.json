@@ -1,6 +1,6 @@
 {
 	"name": "@hoardodile/sdk-server",
-	"version": "0.1.8",
+	"version": "0.1.9",
 	"license": "MIT",
 	"description": "Authoring SDK for hoardodile content plugins: definePlugin, detectors and helpers.",
 	"keywords": [
