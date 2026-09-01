@@ -1,0 +1,32 @@
+name: Deploy website
+
+# When a hoardodile GitHub Release is PUBLISHED (the draft the tag-push
+# release.yml created is finalized), dispatch a rebuild of the static
+# marketing site so it re-fetches the new release and its download asset
+# links — the site bakes LATEST_VERSION/ASSETS at build time
+# (website/scripts/fetch-release.mjs), so it must rebuild to pick up a new
+# release. This fires on `published`, not on the tag push that only creates
+# the draft, so the site never builds against an unpublished version.
+#
+# Requires a secret `SITE_DEPLOY_TOKEN` (a PAT with access to
+# hoardodile/hoardodile-site — classic `repo` scope, or a fine-grained token
+# with Contents:write + Metadata:read). The repo's GITHUB_TOKEN cannot
+# dispatch to another repository. The site repo's pages.yml listens for the
+# matching `deploy-site` event_type.
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Trigger the website rebuild
+        env:
+          GH_TOKEN: ${{ secrets.SITE_DEPLOY_TOKEN }}
+        run: gh api repos/hoardodile/hoardodile-site/dispatches -f event_type=deploy-site
