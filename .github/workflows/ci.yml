@@ -41,6 +41,11 @@ jobs:
       # built from join()/resolve()/sep (or exempted with path-guard-exempt).
       - name: Guard portable test paths
         run: node scripts/guard-portable-tests.mjs
+      # The Dockerfile's manifest-first install must copy every file a
+      # workspace package's install-time lifecycle script references, or the
+      # container build dies with MODULE_NOT_FOUND (see scripts/guard-docker-postinstall.mjs).
+      - name: Guard Docker manifest-first install
+        run: node scripts/guard-docker-postinstall.mjs
       - name: Build
         run: pnpm build
       # Generated artifacts are never committed (routeTree regenerates

@@ -36,6 +36,13 @@ WORKDIR /app
 # Manifest-first install (Turborepo's monorepo Dockerfile pattern) keeps
 # the dependency layer cached until a manifest or the lockfile changes.
 # When a new workspace package is added, add its package.json here too.
+#
+# Invariant: `pnpm install --frozen-lockfile` runs every workspace package's
+# install-time lifecycle script (preinstall/install/postinstall). If one of
+# those scripts references a file inside its own package (e.g. the plugin
+# template's postinstall runs `node scripts/setup-hooks.mjs`), that file must
+# be copied here too — before the install — or the build dies with
+# MODULE_NOT_FOUND. scripts/guard-docker-postinstall.mjs enforces this.
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/web/package.json apps/web/package.json
 COPY apps/server/package.json apps/server/package.json
@@ -47,6 +54,7 @@ COPY packages/cli/package.json packages/cli/package.json
 COPY plugins/file/package.json plugins/file/package.json
 COPY plugins/gallery/package.json plugins/gallery/package.json
 COPY plugins/template/package.json plugins/template/package.json
+COPY plugins/template/scripts/ plugins/template/scripts/
 COPY plugins/pdf/package.json plugins/pdf/package.json
 COPY plugins/host/package.json plugins/host/package.json
 COPY plugins/host-web/package.json plugins/host-web/package.json
