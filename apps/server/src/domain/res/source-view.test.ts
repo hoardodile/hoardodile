@@ -481,3 +481,91 @@ describe("container addressing (outer!inner)", () => {
 		}
 	})
 })
+
+describe("materialized container addressing (extracted non-zip)", () => {
+	test("outer!inner serves entries from the plugin extraction cache", async () => {
+		const root = mkdtempSync(join(tmpdir(), "src-view-extracted-"))
+		try {
+			const paths = createStoragePaths({ root, latestVersion: 1 })
+			const resId = "res-extracted"
+			await mkdir(paths.latest.resource(resId), { recursive: true })
+			await writeEntry(
+				paths.latest.resource(resId),
+				"seed.txt",
+				Buffer.from("x"),
+			)
+
+			const view = buildSourceArtifactView(
+				{ paths },
+				resId,
+				1,
+				buildDirSpec(paths, resId),
+			)
+
+			// Simulate a plugin `extractArchive("book.cb7")`: the extraction
+			// cache dir holds `<archives>/<outer>/<inner>` plus a manifest.
+			const archivesDir = paths.local.resExtractedArchivesDir(resId, 1)
+			await mkdir(join(archivesDir, "book.cb7", "Ch1"), { recursive: true })
+			await writeFile(
+				join(archivesDir, "book.cb7", "Ch1", "001.jpg"),
+				Buffer.from("page-bytes"),
+			)
+			await writeFile(
+				join(archivesDir, "book.cb7", "index.json"),
+				JSON.stringify({
+					v: 1,
+					archiveName: "book.cb7",
+					entries: [{ path: "Ch1/001.jpg", sizeBytes: 10, kind: "image" }],
+				}),
+			)
+
+			expect(await view.readEntry("book.cb7!Ch1/001.jpg")).toEqual(
+				Buffer.from("page-bytes"),
+			)
+			expect(await view.resolveByteRange("book.cb7!Ch1/001.jpg")).toEqual({
+				size: 10,
+			})
+			const { stream, size, path } = await view.openEntryStream(
+				"book.cb7!Ch1/001.jpg",
+			)
+			expect(size).toBe(10)
+			expect(path).toBe(join(archivesDir, "book.cb7", "Ch1", "001.jpg"))
+			await buffer(stream)
+
+			// An inner path outside the manifest whitelist is not served.
+			await expect(view.readEntry("book.cb7!nope.jpg")).rejects.toThrow()
+			await expect(
+				view.resolveByteRange("book.cb7!missing.jpg"),
+			).resolves.toBeUndefined()
+		} finally {
+			rmSync(root, { recursive: true, force: true })
+		}
+	})
+
+	test("does not address a non-extracted non-zip container", async () => {
+		const root = mkdtempSync(join(tmpdir(), "src-view-noextract-"))
+		try {
+			const paths = createStoragePaths({ root, latestVersion: 1 })
+			const resId = "res-noextract"
+			await mkdir(paths.latest.resource(resId), { recursive: true })
+			await writeEntry(
+				paths.latest.resource(resId),
+				"seed.txt",
+				Buffer.from("x"),
+			)
+
+			const view = buildSourceArtifactView(
+				{ paths },
+				resId,
+				1,
+				buildDirSpec(paths, resId),
+			)
+
+			// No extraction cache → the virtual path falls back to a literal
+			// read of `other.cbr!001.jpg`, which does not exist.
+			await expect(view.readEntry("other.cbr!001.jpg")).rejects.toThrow()
+		} finally {
+			rmSync(root, { recursive: true, force: true })
+		}
+	})
+})

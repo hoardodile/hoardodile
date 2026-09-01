@@ -68,6 +68,19 @@ describe("buildFileUrl", () => {
 			"/api/resources/res_1/files/t%2Fok/dir%2Fpage.png?size=preview",
 		)
 	})
+
+	test("an outer!inner container path keeps the bang and encodes the inner slash", () => {
+		expect(buildFileUrl(RES_ID, "book.cbz!Ch1/001.jpg", TOKEN, "preview")).toBe(
+			"/api/resources/res_1/files/tok-abc/book.cbz!Ch1%2F001.jpg?size=preview",
+		)
+	})
+})
+
+describe("single resolver", () => {
+	test("the client API no longer exposes resolveExtractedUrl", () => {
+		const api = createWebPluginAPI()
+		expect("resolveExtractedUrl" in api).toBe(false)
+	})
 })
 
 describe("buildFrameUrl", () => {

@@ -136,11 +136,17 @@ function buildDirView(
 ): SourceArtifactView {
 	// Literal reads hit the filesystem directly; `outer!inner` addressing
 	// resolves through the nested resolver (zip/tar entries inside an
-	// uploaded archive file) — both from the host container stack.
+	// uploaded archive file) — both from the host container stack. The
+	// extraction cache dir extends `outer!inner` to *materialized* archive
+	// entries (tar/7z/rar): once a plugin calls `extractArchive`, the inner
+	// file is served from the same cache directory the plugin API writes to,
+	// so `/files/<token>/outer!inner` addresses every container kind. Zip
+	// stays on the central-directory stream even without a cache entry.
 	const container = createNestedAwareContainer(
 		createDirectoryContainer(dirPath),
 		deps.nestedCdCache,
 		deps.cacheScope,
+		deps.paths.local.resExtractedArchivesDir(resId, fileVersion),
 	)
 
 	/**

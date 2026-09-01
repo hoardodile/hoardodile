@@ -209,9 +209,11 @@ export type ImageHashesResult = {
 
 /**
  * One file inside a container entry (zip/tar) as listed (or extracted)
- * by the plugin API. `path` is the entry's path inside the archive;
- * dimensions are present when the host probed the entry (image
- * backends) — a listing-only result carries no dimensions.
+ * by the plugin API. `path` is the entry's path *inside* the archive;
+ * the plugin composes it with the container name into the `outer!inner`
+ * form (`book.cbz!Ch1/001.jpg`) the browser addresses with
+ * `resolveFileUrl`. Dimensions are present when the host probed the
+ * entry (image backends) — a listing-only result carries no dimensions.
  */
 export type ArchiveExtractionEntry = {
 	readonly path: string
@@ -236,6 +238,8 @@ export type ContainerListing = {
  * entries of a container entry. A completed extraction is marked by the
  * host's `index.json` manifest; extraction always writes the cache (the
  * host's `local/cache` is derived data, writable in every view mode).
+ * The `path` values are the archive-relative inner paths — combine them
+ * with the container name to address the entries via `outer!inner`.
  */
 export type ArchiveExtraction = {
 	readonly entries: readonly ArchiveExtractionEntry[]
@@ -342,18 +346,22 @@ export type ResourceAPI<TSchema extends PluginSchema = PluginSchema> = {
 		kinds: readonly ImageHashKind[],
 	) => Promise<Readonly<Record<ImageHashKind, string>> | undefined>
 	/**
-	 * List the file entries of a container entry (zip/tar) without
-	 * materializing anything — the cheap call for metadata-only needs
-	 * (detect, card counts). Rejects when `filename` is not a supported
-	 * container.
+	 * List the file entries of a container entry without materializing
+	 * anything — the cheap call for metadata-only needs (detect, card
+	 * counts). Rejects when `filename` is not a supported container.
+	 * The returned `path` values are archive-relative; a plugin combines
+	 * them with the container name into `outer!inner` to address entries.
 	 */
 	readonly listContainer: (filename: string) => Promise<ContainerListing>
 	/**
 	 * Materialize the contents of a container entry (zip/tar) into the
 	 * host's extraction cache so the browser can serve the inner files
-	 * over plain URLs. `filename` is a literal container entry — the
-	 * cache holds one directory per archive with the inner paths
-	 * preserved, plus a completion manifest.
+	 * over plain URLs (`/files/…/outer!inner`). `filename` is a literal
+	 * container entry — the cache holds one directory per archive with
+	 * the inner paths preserved, plus a completion manifest. Zip entries
+	 * are readable through `/files` straight from the archive's central
+	 * directory even without extraction; non-zip containers (tar/7z/rar)
+	 * must be extracted first, then read from the cache.
 	 *
 	 * Idempotent: an already-materialized archive re-lists from the
 	 * manifest without re-extracting. Rejects when the entry is not a

@@ -81,8 +81,13 @@ must handle the absent case by re-deriving.
 ## ResourceAPI
 
 Every method is resource-relative; the host resolves absolute paths.
-Container addressing `outer!inner` reads inside a zip/tar entry
-(`book.cbz!Chapter 1/001.jpg`).
+Container addressing `outer!inner` reads inside an archive entry
+(`book.cbz!Chapter 1/001.jpg`): zip entries stream from the archive's
+central directory, and tar/7z/rar entries are served from the host's
+extraction cache once a plugin has called `extractArchive`. This is the
+**single** addressing form for any container kind — a plugin combines the
+container name with an archive-relative `path` from `listContainer` /
+`extractArchive` to address an entry.
 
 | Method | Purpose |
 | --- | --- |
@@ -93,8 +98,8 @@ Container addressing `outer!inner` reads inside a zip/tar entry
 | `probe(path)` | One-pass metadata decode (sharp images, ffprobe audio/video; settles ambiguous containers). **Never rejects**: `{ kind: "other" }` = identified non-media; `{ kind: "unknown", reason: "unsupported" \| "unavailable" \| "failed" }` distinguishes no-backend from decode failure. |
 | `hashBytes(path, "md5" \| "sha256")` | Stream hash, safe for arbitrarily large files. |
 | `computeImageHashes(path, kinds)` | `sha256`/`dhash`/`phash` in one pass (animated → first frame); `undefined` when not a decodable image. |
-| `listContainer(filename)` | Container (zip/tar) listing without materializing — cheap. |
-| `extractArchive(filename)` | Materialize a container into the host's extraction cache so the browser can serve inner files over URLs. Idempotent (re-lists from the manifest), budget-checked, rejects when unsupported; writes `local/cache`, writable in every view mode. |
+| `listContainer(filename)` | List an archive's entries without materializing — cheap (detect, card counts). `path` values are archive-relative; combine with the container name into `outer!inner` to address entries. Rejects for unsupported containers. |
+| `extractArchive(filename)` | Materialize a container (zip/tar/7z/rar) into the host's extraction cache so the browser can serve inner files via `/files/…/outer!inner`. Idempotent (re-lists from the manifest), budget-checked, rejects when unsupported; writes `local/cache`, writable in every view mode. Zip entries read through `/files` even without extraction; non-zip must be extracted first. |
 | `download({ url, dest, sha256?, reason? })` or `download([…])` | **User-consented download into the plugin's own vault** (`versions/<v>/plugins/<id>/vault/`): one request or an array of requests. A cached `dest` answers `cached: true` with no dialog and no network; batched results keep request order, cached items in place. An array is ONE consent question for the WHOLE batch (the dialog lists every URL) and all-or-nothing — any failure discards every staged file and rejects with the first error; cap 16 items per call. Rejections carry `err.name`: `DENIED` (declined/timeout), `UNAVAILABLE` (no client attached, read-only archive, CLI/workbench), `POLICY` (no `download` permission, URL/dest not allowed, hash mismatch, batch too large). Optional `sha256` pins the bytes (SRI-style); `reason` is shown in the dialog. Gated by the manifest `download` permission. |
 | `statAsset(path)` / `readAsset(path)` | Inspect/read a vault file (byte-size check, bounded read). Same permission gate; `statAsset` is the cheap presence check. |
 | `deleteAsset(path)` | Remove a vault file — the plugin decides the vault's lifecycle (e.g. stale layouts after an update). Idempotent (`{ existed: false }`), no consent needed, nothing leaves the host. |

@@ -53,7 +53,7 @@ not wired, and the plugin's calls are rejected by the bridge.
 | `danmaku` | Read/create danmaku (bullet comments) for the resource. |
 | `message` | Read/create anchored messages for the resource. |
 | `imageHashes` | `imageHashes` results participate in duplicate detection. |
-| `container` | `listContainer`/`extractArchive` (archive entries) work; the sandbox denies these APIs without it. |
+| `container` | `listContainer`/`extractArchive` (archive entries) work; the sandbox denies these APIs without it. Use it to read inside archives (`outer!inner`) and to materialize non-zip containers for browser reads. |
 | `download` | The plugin asset vault: `download`/`statAsset`/`readAsset`/`deleteAsset` work (both sides of the plugin), *and* every `download()` call needs your approval in the shared dialog — one batched `download([…])` is ONE dialog listing every item (all-or-nothing, ≤16 items). Denied by default. |
 
 The gallery manifest shows the typical media-plugin set:

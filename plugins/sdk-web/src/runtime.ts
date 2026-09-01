@@ -131,12 +131,6 @@ export function createIframeHostAPI<
 		return buildFileUrl(ctx.resId, filename, ctx.fileToken, variant)
 	}
 
-	function resolveExtractedUrl(path: string): string {
-		return `/api/resources/${ctx.resId}/extracted/${encodeURIComponent(
-			ctx.fileToken,
-		)}/${encodeURIComponent(path)}`
-	}
-
 	function extractProgressUrl(): string {
 		// The trailing slash carries the token segment the auth preHandler
 		// strips (see apps/server/src/infra/http/plugin.ts).
@@ -278,7 +272,6 @@ export function createIframeHostAPI<
 		listFiles,
 		readFile,
 		resolveFileUrl,
-		resolveExtractedUrl,
 		extractProgressUrl,
 		resolveBaseUrl,
 		resolveFrameUrl,

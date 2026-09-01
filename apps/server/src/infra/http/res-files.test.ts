@@ -11,6 +11,7 @@ import { createStoragePaths } from "src/infra/storage/paths.ts"
 import { type BuiltServer, buildServer } from "src/server.ts"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import yauzl from "yauzl"
+import yazl from "yazl"
 import { parseByteRange } from "./byte-range.ts"
 
 // Wrap createReadStream so tests can assert how the server opens files
@@ -190,6 +191,92 @@ describe("resource files HTTP", () => {
 		// by the containment check/stat (404) — never served.
 		expect(escapeReq.statusCode).toBeGreaterThanOrEqual(400)
 		expect(escapeReq.statusCode).toBeLessThan(500)
+	})
+
+	test("GET /files serves materialized non-zip container entries", async () => {
+		// A real artifact dir makes the source view a `buildDirView`, which
+		// wires the plugin extraction cache into `outer!inner` addressing.
+		// Simulate a plugin calling `extractArchive("book.cb7")`: the cache
+		// holds `<archivesDir>/book.cb7/<inner>` plus a manifest.
+		await seedResourceArtifact(
+			{ db: built.db, paths: built.storagePaths },
+			id,
+			[{ name: "seed.txt", bytes: Buffer.from("x") }],
+		)
+		const fileVersion = 1
+		const archivesDir = built.storagePaths.local.resExtractedArchivesDir(
+			id,
+			fileVersion,
+		)
+		const { mkdir, writeFile } = await import("node:fs/promises")
+		await mkdir(join(archivesDir, "book.cb7", "Ch1"), { recursive: true })
+		await writeFile(
+			join(archivesDir, "book.cb7", "Ch1", "001.jpg"),
+			Buffer.from("page-bytes"),
+		)
+		await writeFile(
+			join(archivesDir, "book.cb7", "index.json"),
+			JSON.stringify({
+				v: 1,
+				archiveName: "book.cb7",
+				entries: [{ path: "Ch1/001.jpg", sizeBytes: 10, kind: "image" }],
+			}),
+		)
+
+		const ok = await built.app.inject({
+			method: "GET",
+			url: `/api/resources/${id}/files/book.cb7!Ch1/001.jpg`,
+			remoteAddress: REMOTE_ADDR,
+			headers: { cookie },
+		})
+		expect(ok.statusCode).toBe(200)
+		expect(ok.headers["content-type"]).toBe("image/jpeg")
+		expect(Buffer.from(ok.rawPayload).toString()).toBe("page-bytes")
+
+		// An entry that is not in the manifest is not served.
+		const missing = await built.app.inject({
+			method: "GET",
+			url: `/api/resources/${id}/files/book.cb7!nope.jpg`,
+			remoteAddress: REMOTE_ADDR,
+			headers: { cookie },
+		})
+		expect(missing.statusCode).toBe(404)
+	})
+
+	test("GET /files streams a zip container entry from its central directory", async () => {
+		// A deflated cbz as a bare top-level file; the `/files` route must
+		// stream the inner entry without any extraction.
+		const zip = new yazl.ZipFile()
+		zip.addBuffer(Buffer.from("zip-page-bytes"), "Ch1/001.jpg")
+		zip.addBuffer(Buffer.from("zip-page-two"), "Ch1/002.jpg")
+		zip.end()
+		const chunks: Buffer[] = []
+		for await (const chunk of zip.outputStream) {
+			chunks.push(typeof chunk === "string" ? Buffer.from(chunk) : chunk)
+		}
+		await seedResourceArtifact(
+			{ db: built.db, paths: built.storagePaths },
+			id,
+			[{ name: "book.cbz", bytes: Buffer.concat(chunks) }],
+		)
+
+		const ok = await built.app.inject({
+			method: "GET",
+			url: `/api/resources/${id}/files/book.cbz!Ch1/001.jpg`,
+			remoteAddress: REMOTE_ADDR,
+			headers: { cookie },
+		})
+		expect(ok.statusCode).toBe(200)
+		expect(ok.headers["content-type"]).toBe("image/jpeg")
+		expect(Buffer.from(ok.rawPayload).toString()).toBe("zip-page-bytes")
+
+		const missing = await built.app.inject({
+			method: "GET",
+			url: `/api/resources/${id}/files/book.cbz!nope.jpg`,
+			remoteAddress: REMOTE_ADDR,
+			headers: { cookie },
+		})
+		expect(missing.statusCode).toBe(404)
 	})
 
 	test("GET /extract-progress reports in-flight materialization", async () => {

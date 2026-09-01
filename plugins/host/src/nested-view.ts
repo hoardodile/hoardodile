@@ -53,25 +53,36 @@ export function createNestedAwareContainer(
 		{ cdCache: nestedCdCache, scope },
 	)
 
-	// Manifest reads are memoized per (cacheDir, outer): archives are
-	// immutable per version, so a parsed manifest never needs invalidation.
+	// Manifest reads are memoized per (cacheDir, outer) to avoid re-parsing
+	// the JSON on every virtual read. A **present** manifest is immutable
+	// per version, so a parsed result never needs invalidation. An
+	// **absent** manifest, however, is only "not materialized yet": a
+	// plugin may probe a non-zip `outer!inner` before calling
+	// `extractArchive`, then materialize it. Pinning the "absent" state
+	// would make the same view stale forever, so the cache only keeps a
+	// positive result and re-checks after an absent read.
 	const manifestMemo = new Map<
 		string,
 		Promise<readonly ExtractedEntry[] | undefined>
 	>()
 
-	function readManifest(
+	async function readManifest(
 		outer: string,
 	): Promise<readonly ExtractedEntry[] | undefined> {
 		const key = `${extractCacheDir}:${outer}`
 		const pending = manifestMemo.get(key)
 		if (pending !== undefined) return pending
+		// Share the in-flight read so concurrent callers do not re-read the
+		// same archive's manifest, then drop the key when the answer is
+		// "absent" so a later materialization is picked up.
 		const work = readExistingManifest(
 			join(extractCacheDir!, outer, "index.json"),
 			outer,
 		).catch(() => undefined)
 		manifestMemo.set(key, work)
-		return work
+		const entries = await work
+		if (entries === undefined) manifestMemo.delete(key)
+		return entries
 	}
 
 	type MaterializedEntry = {

@@ -106,20 +106,18 @@ export type WebPluginAPI<TSchema extends PluginSchema = PluginSchema> = {
 	 * `{ maxArea: 2_000_000 }` caps a downscale. Variant renders are
 	 * cached by the host; pick the `file.preview` flag to gate an
 	 * original/preview toggle.
+	 *
+	 * Container addressing: pass the entry's `outer!inner` form (e.g.
+	 * `book.cbz!Ch1/001.jpg`) to read a file inside an archive. The host
+	 * serves zip entries straight from the archive's central directory and
+	 * tar/7z/rar entries from its extraction cache once the plugin has
+	 * called `extractArchive`. This is the single entry point for literal
+	 * files and archive entries alike.
 	 */
 	readonly resolveFileUrl: (
 		filename: string,
 		variant?: FileUrlVariant,
 	) => string
-	/**
-	 * Resolve the URL of a file materialized by the plugin's
-	 * `extractArchive` hook: an inner entry of an archive (zip/tar)
-	 * served from the host's extraction cache. `path` is the entry's
-	 * relative path inside the archive, exactly as returned by
-	 * `extractArchive` / the `listFiles` hook. Tokenized like
-	 * `resolveFileUrl`.
-	 */
-	readonly resolveExtractedUrl: (path: string) => string
 	/**
 	 * Resolve the URL of the host's in-flight extraction progress for
 	 * this resource (see `extractArchive`). Returns

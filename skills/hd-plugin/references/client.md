@@ -52,9 +52,12 @@ work without repeats.
   `"preview"` (host-rendered AVIF variant), or an `ImageVariantSpec`
   like `{ format: "webp", fit: "exact" }` / `{ maxArea: 2_000_000 }`;
   variants are cached by the host — use the file's `preview` flag to
-  gate an original/preview toggle.
-- `resolveExtractedUrl(path)` — an inner entry materialized by
-  `extractArchive`.
+  gate an original/preview toggle. To address an entry inside an
+  archive, pass the `outer!inner` form (e.g. `book.cbz!Ch1/001.jpg`);
+  the host serves zip entries from the archive's central directory and
+  tar/7z/rar entries from the extraction cache once `extractArchive`
+  has run. This is the **single** resolver for literal files and archive
+  entries alike.
 - `extractProgressUrl()` — in-flight extraction progress (`{done,total}`
   or `null`; cheap no-store polls).
 - `resolveBaseUrl()` — the resource files directory root (for vendor

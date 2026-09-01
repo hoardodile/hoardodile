@@ -73,7 +73,6 @@ export function createWebPluginAPI(
 		listFiles: async () => [],
 		readFile: async () => new ArrayBuffer(0),
 		resolveFileUrl: (filename, variant) => buildMockFileUrl(filename, variant),
-		resolveExtractedUrl: (path) => `/extracted/${path}`,
 		extractProgressUrl: () => "/extract-progress/",
 		resolveBaseUrl: () => "/files/",
 		resolveFrameUrl: (filename, timeMs) => `/frame/${filename}/${timeMs}`,

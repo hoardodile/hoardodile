@@ -11,12 +11,14 @@ export default definePlugin<FileSchema>({
 })
 
 /**
- * Enumerate the resource's files. Archive files (zip/tar) at the top
- * level are expanded one level: their inner entries are listed as
+ * Enumerate the resource's files. Archive files (zip/tar/7z/rar) at the
+ * top level are expanded one level: their inner entries are listed as
  * `archive!inner` virtual paths, so the built-in file tree keeps
- * browsing archive uploads without any storage-layer help. Hosts
- * without container support (folder import, CLI) fall back to the
- * top-level list.
+ * browsing archive uploads without any storage-layer help. Every entry
+ * is served through `resolveFileUrl` — zip reads stream from the
+ * archive's central directory, tar/7z/rar from the host's extraction
+ * cache once materialized. Hosts without container support (folder
+ * import, CLI) fall back to the top-level list.
  */
 async function listFiles(api: ResourceAPI): Promise<readonly FileEntry[]> {
 	// Keep the container's canonical order (`.order` upload order,
