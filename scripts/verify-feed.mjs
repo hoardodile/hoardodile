@@ -106,7 +106,11 @@ for (const url of yamlFileUrls(yml)) {
 const artifacts = readdirSync(releaseDir)
 const expectedPrefix = `${productName}-${version}-`
 if (platform === "win") {
-	if (!artifacts.some((name) => name.startsWith(expectedPrefix))) {
+	if (
+		!artifacts.some(
+			(name) => name.startsWith(expectedPrefix) && name.endsWith(".zip"),
+		)
+	) {
 		problems.push("portable zip missing (clean installs without the installer)")
 	}
 }

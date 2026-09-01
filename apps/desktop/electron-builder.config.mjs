@@ -44,6 +44,8 @@ const config = {
 	win: {
 		icon: "resources/icon.ico",
 		verifyUpdateCodeSignature: false,
+		// biome-ignore lint/suspicious/noTemplateCurlyInString: electron-builder packer tokens
+		artifactName: "${productName}-${version}-windows-${arch}.${ext}",
 		target: [
 			{ target: "nsis", arch: ["x64"] },
 			{ target: "zip", arch: ["x64"] },
@@ -68,7 +70,7 @@ const config = {
 			{ target: "zip", arch: ["arm64"] },
 		],
 		// biome-ignore lint/suspicious/noTemplateCurlyInString: electron-builder packer tokens
-		artifactName: "${productName}-${version}-${arch}.${ext}",
+		artifactName: "${productName}-${version}-macos-${arch}.${ext}",
 	},
 	linux: {
 		icon: "resources/icon.png",
@@ -76,13 +78,13 @@ const config = {
 		executableName: "hoardodile",
 		target: ["AppImage"],
 		// biome-ignore lint/suspicious/noTemplateCurlyInString: electron-builder packer tokens
-		artifactName: "${productName}-${version}-${arch}.${ext}",
+		artifactName: "${productName}-${version}-linux-${arch}.${ext}",
 	},
 	nsis: {
 		oneClick: false,
 		allowToChangeInstallationDirectory: true,
 		// biome-ignore lint/suspicious/noTemplateCurlyInString: electron-builder packer tokens
-		artifactName: "${productName}-Setup-${version}-${arch}.${ext}",
+		artifactName: "${productName}-${version}-windows-${arch}-setup.${ext}",
 	},
 	publish: {
 		provider: "github",
