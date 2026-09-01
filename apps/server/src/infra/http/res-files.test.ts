@@ -431,6 +431,26 @@ describe("resource files HTTP", () => {
 		expect(entries).toContain("doc.txt")
 	})
 
+	test("GET source.zip packs a single-archive resource whole, not its inner members", async () => {
+		await seedResourceArtifact(
+			{ db: built.db, paths: built.storagePaths },
+			id,
+			[{ name: "book.cbz", bytes: Buffer.from("opaque archive bytes") }],
+		)
+
+		const res = await built.app.inject({
+			method: "GET",
+			url: `/api/resources/${id}/source.zip`,
+			remoteAddress: REMOTE_ADDR,
+			headers: { cookie },
+		})
+		expect(res.statusCode).toBe(200)
+		const entries = await zipEntryNames(Buffer.from(res.rawPayload))
+		// The source is a single stored archive; the export keeps it whole
+		// and never unwraps it into the members a content plugin might list.
+		expect(entries).toEqual(["book.cbz"])
+	})
+
 	test("GET source.zip records a resource.export footprint", async () => {
 		await seedResourceArtifact(
 			{ db: built.db, paths: built.storagePaths },
