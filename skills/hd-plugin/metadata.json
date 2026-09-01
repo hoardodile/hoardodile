@@ -1,7 +1,7 @@
 {
-	"version": "1.6.0",
+	"version": "1.7.0",
 	"organization": "Hoardodile",
-	"date": "2026-08-31",
+	"date": "2026-09-01",
 	"abstract": "Self-contained authoring guide for hoardodile content plugins: the manifest contract (incl. minAppVersion and i18n for every app language), the definePlugin hook contract (detect/sourceMeta/searchMeta/coverLocal/listFiles/imageHashes/onInstall), the ResourceAPI (incl. the user-consented asset vault with batched downloads and install-time prefetch), the sandboxed iframe client on @hoardodile/sdk-react and @hoardodile/sdk-web (incl. the uploadCover cover-upload API), the published-SDK bootstrap, the plugin CLI/workbench toolchain, testing with createResourceAPIFixture, marketplace publishing (registry, zip-only release assets, per-release README files with a bare README.md fallback, release-it pnpm release), and reference implementations to study.",
 	"references": [
 		"https://github.com/hoardodile/hoardodile/tree/main/plugins/template",
