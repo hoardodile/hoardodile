@@ -983,6 +983,163 @@ describe("buildServer lifecycle (9a)", () => {
 			await built.close()
 		}
 	})
+
+	test("webRoot with a missing index.html degrades to a clean 503 instead of a 500", async () => {
+		// A partial/stale build: static assets present, index.html absent.
+		const webRoot = join(root, "web-dist-no-index")
+		mkdirSync(webRoot, { recursive: true })
+		writeFileSync(join(webRoot, "app.js"), "// static asset", "utf8")
+
+		const env = loadEnv({
+			NODE_ENV: "test",
+			LOG_LEVEL: "silent",
+			STORAGE_ROOT: root,
+			DATABASE_URL: dbFilePath,
+		} satisfies NodeJS.ProcessEnv)
+
+		const built = await buildServer({ env, webRoot })
+		try {
+			await built.app.ready()
+
+			const rootRes = await built.app.inject({
+				method: "GET",
+				url: "/",
+				remoteAddress: "127.0.0.1",
+			})
+			expect(rootRes.statusCode).toBe(503)
+			expect(rootRes.headers["content-type"]).toContain("text/html")
+			expect(rootRes.headers["content-security-policy"]).toBe(
+				"frame-ancestors 'self'",
+			)
+			// The response must never leak the absolute filesystem path,
+			// a raw ENOENT, or a `code` field.
+			expect(rootRes.body).not.toContain(webRoot)
+			expect(rootRes.body).not.toContain("ENOENT")
+			expect(rootRes.body).not.toContain("no such file")
+
+			// Deep SPA routes fall back to the same clean 503.
+			const deepRes = await built.app.inject({
+				method: "GET",
+				url: "/resources/123/edit",
+				remoteAddress: "127.0.0.1",
+			})
+			expect(deepRes.statusCode).toBe(503)
+			expect(deepRes.body).not.toContain(webRoot)
+			expect(deepRes.body).not.toContain("ENOENT")
+
+			// Static assets that DO exist still serve without index.html.
+			const assetRes = await built.app.inject({
+				method: "GET",
+				url: "/app.js",
+				remoteAddress: "127.0.0.1",
+			})
+			expect(assetRes.statusCode).toBe(200)
+			expect(assetRes.body).toContain("static asset")
+
+			// A missing service worker resolves cleanly (404), never a 500.
+			const swRes = await built.app.inject({
+				method: "GET",
+				url: "/sw.js",
+				remoteAddress: "127.0.0.1",
+			})
+			expect(swRes.statusCode).not.toBe(500)
+			expect(swRes.body).not.toContain("ENOENT")
+
+			// A missing JS asset is not served via the SPA fallback; it 404s.
+			const missingAsset = await built.app.inject({
+				method: "GET",
+				url: "/does-not-exist.js",
+				remoteAddress: "127.0.0.1",
+			})
+			expect(missingAsset.statusCode).toBe(404)
+			expect(missingAsset.body).not.toContain("ENOENT")
+
+			// API surface is unaffected.
+			const health = await built.app.inject({
+				method: "GET",
+				url: "/health",
+				remoteAddress: "127.0.0.1",
+			})
+			expect(health.statusCode).toBe(200)
+			expect(health.json()).toEqual({ ok: true })
+		} finally {
+			await built.close()
+		}
+	})
+
+	test("without a webRoot the SPA is not mounted and / 404s cleanly", async () => {
+		const env = loadEnv({
+			NODE_ENV: "test",
+			LOG_LEVEL: "silent",
+			STORAGE_ROOT: root,
+			DATABASE_URL: dbFilePath,
+		} satisfies NodeJS.ProcessEnv)
+
+		const built = await buildServer({ env })
+		try {
+			await built.app.ready()
+
+			const rootRes = await built.app.inject({
+				method: "GET",
+				url: "/",
+				remoteAddress: "127.0.0.1",
+			})
+			expect(rootRes.statusCode).toBe(404)
+			expect(rootRes.body).not.toContain("ENOENT")
+			expect(rootRes.body).not.toContain("no such file")
+
+			const health = await built.app.inject({
+				method: "GET",
+				url: "/health",
+				remoteAddress: "127.0.0.1",
+			})
+			expect(health.statusCode).toBe(200)
+			expect(health.json()).toEqual({ ok: true })
+		} finally {
+			await built.close()
+		}
+	})
+
+	test("webRoot serves sw.js with no-cache when it is present", async () => {
+		const webRoot = join(root, "web-dist-with-sw")
+		mkdirSync(webRoot, { recursive: true })
+		writeFileSync(
+			join(webRoot, "index.html"),
+			"<!doctype html><html><body data-testid=spa>ok</body></html>",
+			"utf8",
+		)
+		writeFileSync(join(webRoot, "sw.js"), "self.__WB_MANIFEST = []", "utf8")
+
+		const env = loadEnv({
+			NODE_ENV: "test",
+			LOG_LEVEL: "silent",
+			STORAGE_ROOT: root,
+			DATABASE_URL: dbFilePath,
+		} satisfies NodeJS.ProcessEnv)
+
+		const built = await buildServer({ env, webRoot })
+		try {
+			await built.app.ready()
+
+			const rootRes = await built.app.inject({
+				method: "GET",
+				url: "/",
+				remoteAddress: "127.0.0.1",
+			})
+			expect(rootRes.statusCode).toBe(200)
+			expect(rootRes.body).toContain("data-testid=spa")
+
+			const swRes = await built.app.inject({
+				method: "GET",
+				url: "/sw.js",
+				remoteAddress: "127.0.0.1",
+			})
+			expect(swRes.statusCode).toBe(200)
+			expect(swRes.body).toContain("__WB_MANIFEST")
+		} finally {
+			await built.close()
+		}
+	})
 })
 
 describe("plugin asset security headers", () => {

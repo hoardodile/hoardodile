@@ -10,9 +10,10 @@
  */
 
 import { existsSync } from "node:fs"
-import { dirname, join, resolve } from "node:path"
+import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
 import { loadEnv, loadWorkspaceEnvFile } from "src/config/env.ts"
+import { resolveAppWebRoot } from "src/config/web-root.ts"
 import { isAuthConfigured, launchHttpServer } from "src/runtime.ts"
 
 async function main(): Promise<void> {
@@ -54,9 +55,10 @@ async function main(): Promise<void> {
  *  3. Otherwise undefined -> tRPC/HTTP only, no SPA mount.
  */
 function resolveWebRoot(env: ReturnType<typeof loadEnv>): string | undefined {
-	if (env.APP_WEB_ROOT !== undefined && env.APP_WEB_ROOT.length > 0) {
-		return resolve(env.APP_WEB_ROOT)
-	}
+	// `APP_WEB_ROOT` is only honored when it contains an actual SPA build;
+	// a missing/stale `index.html` must never be mounted (see resolveAppWebRoot).
+	const fromApp = resolveAppWebRoot(env.APP_WEB_ROOT)
+	if (fromApp !== undefined) return fromApp
 	const bundled = bundledWebRoot()
 	if (bundled !== undefined && existsSync(join(bundled, "index.html"))) {
 		return bundled

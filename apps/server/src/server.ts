@@ -4,7 +4,11 @@ import { setTimeout } from "node:timers/promises"
 import cookie from "@fastify/cookie"
 import cors from "@fastify/cors"
 import { fastifyTRPCPlugin } from "@trpc/server/adapters/fastify"
-import Fastify, { type FastifyInstance, LogController } from "fastify"
+import Fastify, {
+	type FastifyInstance,
+	type FastifyReply,
+	LogController,
+} from "fastify"
 import type { Env } from "src/config/env.ts"
 import { buildLoggerOptions } from "src/config/logger.ts"
 import {
@@ -471,6 +475,23 @@ async function registerTrpcSurface(app: FastifyInstance): Promise<void> {
 	})
 }
 
+/**
+ * Serve a clean, path-leaking-free 503 for the SPA shell when the mounted
+ * web root has no `index.html` (a missing or stale build). The sidecar must
+ * never surface a raw `ENOENT` 500 with the absolute filesystem path to LAN
+ * clients. The copy is deliberately generic — the server has no i18n.
+ */
+function sendSpaUnavailable(reply: FastifyReply): FastifyReply {
+	reply.code(503)
+	reply.header("content-type", "text/html; charset=utf-8")
+	reply.header("content-security-policy", "frame-ancestors 'self'")
+	reply.header("cache-control", "no-cache")
+	reply.send(
+		'<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Service Unavailable</title></head><body><h1>Service Unavailable</h1><p>The app&#39;s web UI is not built or is temporarily unavailable. Rebuild the SPA or reinstall the desktop app, then reload this page.</p></body></html>',
+	)
+	return reply
+}
+
 /** Serve bundled web assets. */
 async function registerStaticAssets(
 	app: FastifyInstance,
@@ -484,11 +505,14 @@ async function registerStaticAssets(
 		immutable: true,
 	})
 
+	const indexHtml = (): string => join(webRoot, "index.html")
+
 	app.get("/", (_, reply) => {
 		// Clickjacking guard for the SPA shell; plugin pages get their own
 		// stricter CSP from the plugin-render route.
 		reply.header("content-security-policy", "frame-ancestors 'self'")
-		return sendFile(reply, join(webRoot, "index.html"), {
+		if (!existsSync(indexHtml())) return sendSpaUnavailable(reply)
+		return sendFile(reply, indexHtml(), {
 			contentType: "text/html",
 			cacheControl: "no-cache",
 			conditional: { headers: reply.request.headers },
@@ -515,6 +539,10 @@ async function registerStaticAssets(
 		}
 		reply.header("cache-control", "no-cache")
 		reply.header("content-security-policy", "frame-ancestors 'self'")
+		if (!existsSync(indexHtml())) {
+			void sendSpaUnavailable(reply)
+			return
+		}
 		void reply.sendFile("index.html")
 	})
 }
