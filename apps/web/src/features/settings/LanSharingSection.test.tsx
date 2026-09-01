@@ -1,4 +1,9 @@
-import type { LanCheckResult, LanSetResult } from "@hoardodile/shared/desktop"
+import type {
+	LanAddress,
+	LanCheckResult,
+	LanInfo,
+	LanSetResult,
+} from "@hoardodile/shared/desktop"
 import { toast } from "@hoardodile/ui/components/toast"
 import { fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { afterEach, describe, expect, it, vi } from "vitest"
@@ -8,6 +13,32 @@ import { LanSharingSection } from "./LanSharingSection"
 vi.mock("@hoardodile/ui/components/toast", () => ({
 	toast: { add: vi.fn() },
 }))
+
+function lanInfo(
+	options: {
+		readonly enabled?: boolean
+		readonly https?: boolean
+		readonly port?: number
+		readonly lanPort?: number
+		readonly lanPreferredPort?: number
+		readonly lanHttpsPort?: number
+		readonly addresses?: readonly LanAddress[]
+	} = {},
+): LanInfo {
+	const port = options.port ?? 3000
+	return {
+		enabled: options.enabled ?? true,
+		https: options.https ?? false,
+		port,
+		preferredPort: port,
+		lanPort: options.lanPort ?? port,
+		lanPreferredPort: options.lanPreferredPort ?? port,
+		lanHttpsPort: options.lanHttpsPort ?? port + 1,
+		lanHttpsPreferredPort: options.lanHttpsPort ?? port + 1,
+		fingerprint: undefined,
+		addresses: options.addresses ?? [],
+	}
+}
 
 function installBridge(
 	overrides?: Partial<HoardodileDesktopBridge>,
@@ -72,12 +103,9 @@ function installBridge(
 		async setSharedFolderRoot() {},
 		async setSharedFolderEnabled() {},
 		async getLanInfo() {
-			return {
-				enabled: true,
-				port: 3000,
-				preferredPort: 3000,
+			return lanInfo({
 				addresses: [{ interfaceName: "Ethernet", address: "192.168.1.20" }],
-			}
+			})
 		},
 		async checkLanEnabled() {
 			return { ok: true }
@@ -86,6 +114,7 @@ function installBridge(
 			return { ok: true }
 		},
 		async setLanPort() {},
+		async setLanHttps() {},
 		async getShellCacheSize() {
 			return 0
 		},
@@ -124,6 +153,40 @@ describe("LanSharingSection", () => {
 		expect(document.querySelector("svg")).not.toBeNull()
 	})
 
+	it("toggles the HTTPS scheme and updates the shown LAN URL", async () => {
+		const setLanHttpsMock = vi.fn(async (_enabled: boolean) => {})
+		let https = false
+		installBridge({
+			async setLanHttps(enabled) {
+				setLanHttpsMock(enabled)
+				https = enabled
+			},
+			async getLanInfo() {
+				return lanInfo({
+					https,
+					addresses: [{ interfaceName: "Ethernet", address: "192.168.1.20" }],
+				})
+			},
+		})
+		render(<LanSharingSection />)
+		const toggle = await screen.findByTestId("desktop-lan-https")
+		expect(toggle).not.toBeChecked()
+		await waitFor(() => {
+			expect(screen.getByTestId("desktop-lan-primary-url")).toHaveTextContent(
+				"http://192.168.1.20:3000/",
+			)
+		})
+		fireEvent.click(toggle)
+		await waitFor(() => {
+			expect(setLanHttpsMock).toHaveBeenCalledWith(true)
+		})
+		await waitFor(() => {
+			expect(screen.getByTestId("desktop-lan-primary-url")).toHaveTextContent(
+				"https://192.168.1.20:3001/",
+			)
+		})
+	})
+
 	it("shows the localhost address with copy and open buttons while sharing is off", async () => {
 		installBridge({
 			async getConfig() {
@@ -144,12 +207,7 @@ describe("LanSharingSection", () => {
 				}
 			},
 			async getLanInfo() {
-				return {
-					enabled: false,
-					port: 3000,
-					preferredPort: 3000,
-					addresses: [],
-				}
+				return lanInfo({ enabled: false })
 			},
 		})
 		render(<LanSharingSection />)
@@ -202,12 +260,7 @@ describe("LanSharingSection", () => {
 				}
 			},
 			async getLanInfo() {
-				return {
-					enabled: false,
-					port: 4040,
-					preferredPort: 3000,
-					addresses: [],
-				}
+				return lanInfo({ enabled: false, port: 4040 })
 			},
 		})
 		render(<LanSharingSection />)
@@ -220,10 +273,7 @@ describe("LanSharingSection", () => {
 	it("folds virtual-adapter addresses into an expandable list", async () => {
 		installBridge({
 			async getLanInfo() {
-				return {
-					enabled: true,
-					port: 3000,
-					preferredPort: 3000,
+				return lanInfo({
 					addresses: [
 						{ interfaceName: "Ethernet", address: "192.168.3.60" },
 						{
@@ -232,7 +282,7 @@ describe("LanSharingSection", () => {
 						},
 						{ interfaceName: "Meta", address: "198.18.0.1" },
 					],
-				}
+				})
 			},
 		})
 		render(<LanSharingSection />)
@@ -255,12 +305,7 @@ describe("LanSharingSection", () => {
 	it("shows an empty hint when no address is reachable", async () => {
 		installBridge({
 			async getLanInfo() {
-				return {
-					enabled: true,
-					port: 3000,
-					preferredPort: 3000,
-					addresses: [],
-				}
+				return lanInfo()
 			},
 		})
 		render(<LanSharingSection />)
@@ -272,12 +317,12 @@ describe("LanSharingSection", () => {
 		installBridge({
 			setLanPort,
 			async getLanInfo() {
-				return {
-					enabled: true,
+				return lanInfo({
 					port: 4040,
-					preferredPort: 3000,
 					addresses: [{ interfaceName: "Ethernet", address: "192.168.1.20" }],
-				}
+					lanPort: 4040,
+					lanPreferredPort: 3000,
+				})
 			},
 		})
 		render(<LanSharingSection />)
@@ -316,12 +361,7 @@ describe("LanSharingSection", () => {
 				}
 			},
 			async getLanInfo() {
-				return {
-					enabled: false,
-					port: 4040,
-					preferredPort: 3000,
-					addresses: [],
-				}
+				return lanInfo({ enabled: false, port: 4040 })
 			},
 		})
 		render(<LanSharingSection />)
@@ -333,12 +373,12 @@ describe("LanSharingSection", () => {
 		function adjustedBridge(port: number) {
 			installBridge({
 				async getLanInfo() {
-					return {
-						enabled: true,
+					return lanInfo({
 						port,
-						preferredPort: 3000,
+						lanPort: port,
+						lanPreferredPort: 3000,
 						addresses: [{ interfaceName: "Ethernet", address: "192.168.1.20" }],
-					}
+					})
 				},
 			})
 		}
@@ -420,12 +460,7 @@ describe("LanSharingSection", () => {
 				}
 			},
 			async getLanInfo() {
-				return {
-					enabled: false,
-					port: 3000,
-					preferredPort: 3000,
-					addresses: [],
-				}
+				return lanInfo({ enabled: false })
 			},
 			checkLanEnabled,
 			setLanEnabled,
@@ -481,12 +516,7 @@ describe("LanSharingSection", () => {
 				}
 			},
 			async getLanInfo() {
-				return {
-					enabled: false,
-					port: 3000,
-					preferredPort: 3000,
-					addresses: [],
-				}
+				return lanInfo({ enabled: false })
 			},
 			checkLanEnabled,
 			setLanEnabled,
@@ -530,12 +560,7 @@ describe("LanSharingSection", () => {
 				}
 			},
 			async getLanInfo() {
-				return {
-					enabled: false,
-					port: 3000,
-					preferredPort: 3000,
-					addresses: [],
-				}
+				return lanInfo({ enabled: false })
 			},
 			checkLanEnabled,
 			setLanEnabled,

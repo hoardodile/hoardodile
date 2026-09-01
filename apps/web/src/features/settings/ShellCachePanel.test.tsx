@@ -69,8 +69,14 @@ function installBridge(
 		async getLanInfo() {
 			return {
 				enabled: false,
+				https: false,
 				port: 3000,
 				preferredPort: 3000,
+				lanPort: 3000,
+				lanPreferredPort: 3000,
+				lanHttpsPort: 3001,
+				lanHttpsPreferredPort: 3001,
+				fingerprint: undefined,
 				addresses: [],
 			}
 		},
@@ -81,6 +87,7 @@ function installBridge(
 			return { ok: true }
 		},
 		async setLanPort() {},
+		async setLanHttps() {},
 		async getShellCacheSize() {
 			return 1024
 		},

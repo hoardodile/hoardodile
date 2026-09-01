@@ -30,9 +30,15 @@ export type StartSidecarOptions = {
 	readonly log: (chunk: string) => void
 }
 
-/** Loopback by default; local-network sharing binds all IPv4 interfaces. */
-function sidecarHost(config: DesktopConfig): SidecarHost {
-	return config.lanEnabled ? "0.0.0.0" : "127.0.0.1"
+/**
+ * The sidecar always binds loopback. LAN exposure is served by the
+ * shell's embedded TLS terminator (see lan-proxy.ts) instead of rebinding
+ * the sidecar to `0.0.0.0`, so toggling the share never restarts it.
+ *
+ * Exported so tests can pin the loopback invariant.
+ */
+export function sidecarHost(_config: DesktopConfig): SidecarHost {
+	return "127.0.0.1"
 }
 
 /**

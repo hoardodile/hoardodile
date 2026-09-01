@@ -32,6 +32,9 @@ describe("parseDesktopConfig", () => {
 		expect(parsed.port).toBe(3000)
 		expect(parsed.portPreferred).toBe(3000)
 		expect(parsed.lanEnabled).toBe(false)
+		expect(parsed.lanHttps).toBe(false)
+		expect(parsed.lanHttpsPort).toBe(3001)
+		expect(parsed.lanHttpsPreferredPort).toBe(3001)
 		expect(parsed.closeAction).toBe("ask")
 		expect(parsed.requireSignInOnLaunch).toBe(true)
 		expect(parsed.requireSignInOnWindowOpen).toBe(true)
@@ -70,6 +73,25 @@ describe("parseDesktopConfig", () => {
 		expect(parsed.autoUpdate).toBe(false)
 		expect(parsed.wizardComplete).toBe(true)
 		expect(parsed.sharedFolderEnabled).toBe(false)
+	})
+
+	it("keeps a persisted lanPort and lanPreferredPort", () => {
+		const parsed = parseDesktopConfig(
+			{
+				lanPort: 5001,
+				lanPreferredPort: 5001,
+				lanHttpsPort: 5002,
+				lanHttpsPreferredPort: 5002,
+				lanHttps: true,
+			},
+			"C:/lib",
+			"C:/docs",
+		)
+		expect(parsed.lanPort).toBe(5001)
+		expect(parsed.lanPreferredPort).toBe(5001)
+		expect(parsed.lanHttpsPort).toBe(5002)
+		expect(parsed.lanHttpsPreferredPort).toBe(5002)
+		expect(parsed.lanHttps).toBe(true)
 	})
 
 	it("keeps a persisted sharedFolderEnabled true", () => {

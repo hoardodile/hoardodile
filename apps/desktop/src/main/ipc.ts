@@ -53,6 +53,7 @@ export type IpcHost = {
 		options?: { readonly weakPasswordConfirmed?: boolean },
 	) => Promise<LanSetResult>
 	setLanPort: (port: number) => Promise<void>
+	setLanHttps: (enabled: boolean) => Promise<void>
 	shellCacheSize: () => Promise<number>
 	shellCacheClear: () => Promise<number>
 	completeWizard: (result: DesktopWizardResult) => void
@@ -186,6 +187,10 @@ export function registerIpc(host: IpcHost): void {
 	ipcMain.handle(IPC.setLanPort, (_event, port: unknown) => {
 		if (!isValidPort(port)) return
 		return host.setLanPort(port)
+	})
+	ipcMain.handle(IPC.setLanHttps, (_event, enabled: unknown) => {
+		if (typeof enabled !== "boolean") return
+		return host.setLanHttps(enabled)
 	})
 	ipcMain.handle(IPC.shellCacheSize, () => host.shellCacheSize())
 	ipcMain.handle(IPC.shellCacheClear, () => host.shellCacheClear())

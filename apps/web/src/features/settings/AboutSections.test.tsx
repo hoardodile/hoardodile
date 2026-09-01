@@ -334,7 +334,18 @@ function desktopBridge(
 		async setSharedFolderRoot() {},
 		async setSharedFolderEnabled() {},
 		async getLanInfo() {
-			return { enabled: false, port: 3000, preferredPort: 3000, addresses: [] }
+			return {
+				enabled: false,
+				https: false,
+				port: 3000,
+				preferredPort: 3000,
+				lanPort: 3000,
+				lanPreferredPort: 3000,
+				lanHttpsPort: 3001,
+				lanHttpsPreferredPort: 3001,
+				fingerprint: undefined,
+				addresses: [],
+			}
 		},
 		async checkLanEnabled() {
 			return { ok: true }
@@ -343,6 +354,7 @@ function desktopBridge(
 			return { ok: true }
 		},
 		async setLanPort() {},
+		async setLanHttps() {},
 		async getShellCacheSize() {
 			return 0
 		},

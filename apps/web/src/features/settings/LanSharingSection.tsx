@@ -87,7 +87,7 @@ function LanSharingForm(props: {
 }) {
 	const { desktop, config, lan, onRefresh } = props
 	const { t } = useTranslation()
-	const [portInput, setPortInput] = useState(String(lan.preferredPort))
+	const [portInput, setPortInput] = useState(String(lan.lanPreferredPort))
 	const [busy, setBusy] = useState(false)
 	// The shell probe (weak-password check) runs without any loading UI:
 	// a required confirm dialog must appear before a spinner ever does.
@@ -107,11 +107,11 @@ function LanSharingForm(props: {
 	})
 
 	const portValue = Number(portInput.trim())
-	const portDirty = portInput.trim() !== String(lan.port)
+	const portDirty = portInput.trim() !== String(lan.lanPort)
 	const portValid =
 		Number.isInteger(portValue) && portValue >= 1 && portValue <= 65535
-	const portAdjusted = lan.port !== lan.preferredPort
-	const adjustmentKey = `${lan.preferredPort}:${lan.port}`
+	const portAdjusted = lan.lanPort !== lan.lanPreferredPort
+	const adjustmentKey = `${lan.lanPreferredPort}:${lan.lanPort}`
 	// Only relevant while sharing is on: the copy tells other devices to
 	// use the new port, and with sharing off nothing else displays it.
 	const portAdjustedNotice =
@@ -132,7 +132,7 @@ function LanSharingForm(props: {
 			desktop.getLanInfo(),
 		])
 		onRefresh(nextConfig, nextLan)
-		setPortInput(String(nextLan.preferredPort))
+		setPortInput(String(nextLan.lanPreferredPort))
 	}
 
 	/**
@@ -234,6 +234,19 @@ function LanSharingForm(props: {
 		}
 	}
 
+	async function handleHttpsToggle(enabled: boolean): Promise<void> {
+		if (busy || pending) return
+		setBusy(true)
+		try {
+			await desktop.setLanHttps(enabled)
+			await refresh()
+		} catch {
+			// the shell surfaced the error; the switch stays at its state
+		} finally {
+			setBusy(false)
+		}
+	}
+
 	function handleCopy(url: string) {
 		void navigator.clipboard.writeText(url).then(
 			() => {
@@ -250,10 +263,12 @@ function LanSharingForm(props: {
 	// sharing is off — this machine's browser can open it too. Uses the
 	// actual listening port so a conflict fallback is never stale.
 	const localUrl = `http://127.0.0.1:${lan.port}/`
+	const servingScheme = lan.https ? "https" : "http"
+	const servingPort = lan.https ? lan.lanHttpsPort : lan.lanPort
 	const urls = lan.addresses.map((entry) => ({
 		label: entry.address,
 		address: entry.address,
-		url: `http://${entry.address}:${lan.port}/`,
+		url: `${servingScheme}://${entry.address}:${servingPort}/`,
 		interfaceName: entry.interfaceName,
 	}))
 	const primary = urls[0]
@@ -346,14 +361,14 @@ function LanSharingForm(props: {
 							<div className="min-w-0">
 								<div className="text-ui font-semibold text-foreground">
 									{t("me.desktop.lan.portAdjustedTitle", {
-										preferred: lan.preferredPort,
-										actual: lan.port,
+										preferred: lan.lanPreferredPort,
+										actual: lan.lanPort,
 									})}
 								</div>
 								<p className="mt-0.5 text-xs leading-5 text-muted-foreground">
 									{t("me.desktop.lan.portAdjustedHint", {
-										preferred: lan.preferredPort,
-										actual: lan.port,
+										preferred: lan.lanPreferredPort,
+										actual: lan.lanPort,
 									})}
 								</p>
 							</div>
@@ -367,6 +382,32 @@ function LanSharingForm(props: {
 							>
 								<Cross />
 							</Button>
+						</div>
+					) : null}
+					{config.lanEnabled ? (
+						<div
+							className="flex items-center justify-between gap-6"
+							aria-busy={busy}
+						>
+							<div className="min-w-0">
+								<div className="text-ui font-semibold text-foreground">
+									{t("me.desktop.lan.httpsTitle")}
+								</div>
+								<p className="mt-0.5 text-xs leading-5 text-muted-foreground">
+									{t("me.desktop.lan.httpsDescription")}
+								</p>
+							</div>
+							<div className="flex shrink-0 items-center gap-2 [-webkit-app-region:no-drag]">
+								<Switch
+									checked={lan.https}
+									onCheckedChange={(enabled) => {
+										void handleHttpsToggle(enabled)
+									}}
+									disabled={busy || pending}
+									aria-label={t("me.desktop.lan.httpsTitle")}
+									data-testid="desktop-lan-https"
+								/>
+							</div>
 						</div>
 					) : null}
 					<div className="flex items-start gap-4">
@@ -481,6 +522,17 @@ function LanSharingForm(props: {
 										))}
 									</ul>
 								</details>
+							) : null}
+							{lan.https ? (
+								<div
+									className="rounded-lg bg-muted px-3 py-2.5 text-xs leading-5 text-muted-foreground"
+									data-testid="desktop-lan-cert"
+								>
+									{t("me.desktop.lan.certHint")}
+									<div className="mt-1 break-all font-mono text-[11px] font-normal text-foreground">
+										{t("me.desktop.lan.certFingerprint")}: {lan.fingerprint}
+									</div>
+								</div>
 							) : null}
 						</div>
 					) : null}

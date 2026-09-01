@@ -26,6 +26,16 @@ export type DesktopConfig = {
 	/** Port the user last requested; `port` follows it unless a conflict fallback kicked in. */
 	portPreferred: number
 	lanEnabled: boolean
+	/** HTTP port bound on 0.0.0.0 for LAN clients (may differ from `lanPreferredPort` after a fallback). */
+	lanPort: number
+	/** LAN HTTP port the user last requested; follows `lanPort` unless a conflict fallback moved it. */
+	lanPreferredPort: number
+	/** HTTPS port bound on 0.0.0.0 for LAN clients (may differ from `lanHttpsPreferredPort` after a fallback). */
+	lanHttpsPort: number
+	/** LAN HTTPS port the user last requested; follows `lanHttpsPort` unless a conflict fallback moved it. */
+	lanHttpsPreferredPort: number
+	/** Whether the LAN share serves over TLS (opt-in). Off → plain HTTP on `lanPort`; the other scheme redirects. */
+	lanHttps: boolean
 	autoStart: boolean
 	startInTray: boolean
 	/** What closing the app window does: ask, hide to tray, or quit the app. */
@@ -64,6 +74,11 @@ const storedConfigSchema = z.object({
 	port: z.number().int().min(1).max(65535),
 	portPreferred: z.number().int().min(1).max(65535),
 	lanEnabled: z.boolean(),
+	lanPort: z.number().int().min(1).max(65535),
+	lanPreferredPort: z.number().int().min(1).max(65535),
+	lanHttpsPort: z.number().int().min(1).max(65535),
+	lanHttpsPreferredPort: z.number().int().min(1).max(65535),
+	lanHttps: z.boolean(),
 	autoStart: z.boolean(),
 	startInTray: z.boolean(),
 	closeAction: z.enum(["ask", "tray", "quit"]),
@@ -87,6 +102,11 @@ export function defaultDesktopConfig(
 		port: DEFAULT_PORT,
 		portPreferred: DEFAULT_PORT,
 		lanEnabled: false,
+		lanPort: DEFAULT_PORT,
+		lanPreferredPort: DEFAULT_PORT,
+		lanHttpsPort: DEFAULT_PORT + 1,
+		lanHttpsPreferredPort: DEFAULT_PORT + 1,
+		lanHttps: false,
 		autoStart: false,
 		startInTray: false,
 		closeAction: "ask",
@@ -132,6 +152,12 @@ export function parseDesktopConfig(
 		port: parsed.data.port ?? defaults.port,
 		portPreferred: parsed.data.portPreferred ?? defaults.portPreferred,
 		lanEnabled: parsed.data.lanEnabled ?? defaults.lanEnabled,
+		lanPort: parsed.data.lanPort ?? defaults.lanPort,
+		lanPreferredPort: parsed.data.lanPreferredPort ?? defaults.lanPreferredPort,
+		lanHttpsPort: parsed.data.lanHttpsPort ?? defaults.lanHttpsPort,
+		lanHttpsPreferredPort:
+			parsed.data.lanHttpsPreferredPort ?? defaults.lanHttpsPreferredPort,
+		lanHttps: parsed.data.lanHttps ?? defaults.lanHttps,
 		autoStart: parsed.data.autoStart ?? defaults.autoStart,
 		startInTray: parsed.data.startInTray ?? defaults.startInTray,
 		closeAction: parsed.data.closeAction ?? defaults.closeAction,

@@ -20,6 +20,7 @@ import {
 	shell,
 	type Tray,
 } from "electron"
+import getPort from "get-port"
 import { HIDDEN_SWITCH, IPC } from "../shared/ipc.ts"
 import {
 	configFilePath,
@@ -36,6 +37,7 @@ import {
 	registerIpc,
 } from "./ipc.ts"
 import { computeLanAddresses } from "./lan.ts"
+import { type LanProxyHandle, startLanProxy } from "./lan-proxy.ts"
 import {
 	findWorkspaceRoot,
 	packagedLayout,
@@ -59,6 +61,7 @@ import {
 	type SidecarHandle,
 	startSidecar,
 } from "./sidecar.ts"
+import { ensureLanCert, lanCertDir } from "./tls-cert.ts"
 import {
 	createAppTray,
 	rebuildTrayMenu,
@@ -89,6 +92,8 @@ type Runtime = {
 	defaultLibraryPath: string
 	portable: boolean
 	sidecar: SidecarHandle | undefined
+	lanProxy: LanProxyHandle | undefined
+	lanCertFingerprint: string | undefined
 	window: BrowserWindow | undefined
 	wizard: BrowserWindow | undefined
 	tray: Tray | undefined
@@ -297,8 +302,14 @@ async function setSharedFolderEnabled(
 function lanInfo(runtime: Runtime): LanInfo {
 	return {
 		enabled: runtime.config.lanEnabled,
+		https: runtime.config.lanHttps,
 		port: runtime.config.port,
 		preferredPort: runtime.config.portPreferred,
+		lanPort: runtime.config.lanPort,
+		lanPreferredPort: runtime.config.lanPreferredPort,
+		lanHttpsPort: runtime.config.lanHttpsPort,
+		lanHttpsPreferredPort: runtime.config.lanHttpsPreferredPort,
+		fingerprint: runtime.lanCertFingerprint,
 		addresses: computeLanAddresses(),
 	}
 }
@@ -409,44 +420,59 @@ async function setLanEnabled(
 }
 
 /**
- * Change the sidecar port (localhost and the LAN share use one port) and
- * restart in place. The requested port is remembered separately so the
- * UI can keep showing it even when a conflict fallback moved the actual
- * listening port.
+ * Change the HTTPS port LAN clients use. This only restarts the embedded
+ * TLS terminator — never the sidecar, so the app window keeps its
+ * session. A busy port falls back to a free one (`lanPort` desyncs from
+ * `lanPreferredPort`, surfaced by the settings UI).
  */
 async function setLanPort(runtime: Runtime, port: number): Promise<void> {
-	// Only no-op when the request already matches the ACTUAL listening
-	// port, so re-applying a preferred port that a conflict fallback moved
-	// away actually restarts the sidecar and tries to reclaim it.
-	if (port === runtime.config.port) return
+	// Only no-op when the request already matches the REQUESTED port, so
+	// re-applying a preferred port that a conflict fallback moved actually
+	// re-resolves it against the free list.
+	if (port === runtime.config.lanPreferredPort) return
 	if (runtime.sidecar === undefined) {
 		throw new Error("sidecar is not running")
 	}
-	await applyLanChange(runtime, { port, portPreferred: port })
+	await applyLanChange(runtime, { lanPreferredPort: port })
 }
 
+/** Toggle the LAN share between plain HTTP and TLS. Proxy-only — never restarts the sidecar. */
+async function setLanHttps(runtime: Runtime, enabled: boolean): Promise<void> {
+	if (enabled === runtime.config.lanHttps) return
+	if (runtime.sidecar === undefined) {
+		throw new Error("sidecar is not running")
+	}
+	await applyLanChange(runtime, { lanHttps: enabled })
+}
+
+/**
+ * Apply a local-network-share change (enable/disable or the LAN port).
+ * This only starts/stops the embedded TLS terminator; the sidecar is
+ * never restarted, so the window keeps its session and does not reload.
+ * Genuine failures (proxy bind, no reachable address, sidecar down) revert
+ * the config and reject.
+ */
 async function applyLanChange(
 	runtime: Runtime,
-	patch: Partial<Pick<DesktopConfig, "lanEnabled" | "port" | "portPreferred">>,
+	patch: Partial<
+		Pick<
+			DesktopConfig,
+			| "lanEnabled"
+			| "lanPort"
+			| "lanPreferredPort"
+			| "lanHttpsPort"
+			| "lanHttps"
+		>
+	>,
 ): Promise<void> {
 	const previous = runtime.config
 	runtime.config = { ...runtime.config, ...patch }
 	persist(runtime)
-	let handle: SidecarHandle
 	try {
-		await runtime.sidecar?.stop()
-		handle = await spawnSidecar(runtime)
+		await syncLanProxy(runtime)
 	} catch (err) {
 		runtime.config = previous
 		persist(runtime)
-		runtime.crashed = true
-		const win = runtime.window
-		if (win !== undefined) {
-			flushWindowState(runtime, win)
-			win.destroy()
-		}
-		runtime.window = undefined
-		rebuildSidecarTray(runtime)
 		const message = err instanceof Error ? err.message : String(err)
 		dialog.showErrorBox(
 			"hoardodile",
@@ -459,49 +485,76 @@ async function applyLanChange(
 		)
 		throw err
 	}
-	runtime.sidecar = handle
-	runtime.crashed = false
-	rebuildSidecarTray(runtime)
-	const win = runtime.window
-	if (win !== undefined && !win.isDestroyed()) {
-		// Dev loads the Vite URL directly and the proxy already rebinds
-		// to the new sidecar URL; production pages come from the sidecar
-		// and die with it, so reload from the fresh URL — the SPA's own
-		// first-paint splash is the loading surface (or the error page if
-		// it still fails).
-		if (process.env.HOARDODILE_WEB_URL === undefined) {
-			try {
-				// Keep the SPA route (path/query/hash) across the reload so a
-				// LAN toggle does not bounce the user off the settings route.
-				await win.loadURL(
-					appUrlPreservingRoute(win.webContents.getURL(), handle.url),
-				)
-			} catch {
-				await loadShellPage(
-					win,
-					shellPageTarget(runtime),
-					serverErrorMessage(runtime.language),
-				)
-			}
-		}
-	}
 }
 
-function rebuildSidecarTray(runtime: Runtime): void {
-	if (runtime.tray === undefined) return
-	rebuildTrayMenu(
-		runtime.tray,
-		trayHandlers(runtime),
-		{
-			crashed: runtime.crashed,
-			updateReady: runtime.updateReady,
-		},
-		trayStrings(runtime.language),
-	)
+/**
+ * Reconcile the embedded LAN forwarder with the current config: stop it
+ * when sharing is off, otherwise start (or restart) it bound to the
+ * resolved LAN port — plain HTTP by default, TLS with a self-signed leaf
+ * for the current addresses when `lanHttps` is on. Also refreshes the
+ * certificate fingerprint reported to the settings UI (https only).
+ */
+async function syncLanProxy(runtime: Runtime): Promise<void> {
+	if (runtime.lanProxy !== undefined) {
+		await runtime.lanProxy.close()
+		runtime.lanProxy = undefined
+	}
+	runtime.lanCertFingerprint = undefined
+	if (!runtime.config.lanEnabled) return
+	const sidecar = runtime.sidecar
+	if (sidecar === undefined) {
+		throw new Error("sidecar is not running")
+	}
+	const addresses = computeLanAddresses()
+	const ips = addresses.map((entry) => entry.address)
+	if (ips.length === 0) {
+		throw new Error("no reachable LAN address")
+	}
+	// Both ports are always up; the serving scheme redirects the other, so
+	// a URL never breaks when `lanHttps` toggles. The cert is always needed.
+	const cert = ensureLanCert({
+		dir: lanCertDir(app.getPath("userData")),
+		addresses: ips,
+	})
+	const lanPort = await resolveLanPort(runtime)
+	const httpsPort = await resolveLanHttpsPort(runtime, lanPort)
+	runtime.config = { ...runtime.config, lanPort, lanHttpsPort: httpsPort }
+	persist(runtime)
+	runtime.lanProxy = await startLanProxy({
+		sidecarPort: sidecar.port,
+		lanPort,
+		httpsPort,
+		lanHttps: runtime.config.lanHttps,
+		cert: cert.leafPem,
+		key: cert.leafKeyPem,
+	})
+	runtime.lanCertFingerprint = cert.leafFingerprint
+}
+
+/** Resolve a free LAN HTTP port on 0.0.0.0, preferring the user's requested port. */
+async function resolveLanPort(runtime: Runtime): Promise<number> {
+	return await getPort({
+		host: "0.0.0.0",
+		port: runtime.config.lanPreferredPort,
+	})
+}
+
+/** Resolve a free LAN HTTPS port on 0.0.0.0, avoiding the HTTP port used above. */
+async function resolveLanHttpsPort(
+	runtime: Runtime,
+	avoidPort: number,
+): Promise<number> {
+	const preferred = runtime.config.lanHttpsPreferredPort
+	let port = await getPort({ host: "0.0.0.0", port: preferred })
+	if (port === avoidPort) {
+		port = await getPort({ host: "0.0.0.0", port: preferred + 1 })
+	}
+	return port
 }
 
 async function relaunchApp(runtime: Runtime): Promise<void> {
 	runtime.quitting = true
+	await runtime.lanProxy?.close().catch(() => undefined)
 	await runtime.sidecar?.stop()
 	app.relaunch()
 	app.quit()
@@ -509,6 +562,7 @@ async function relaunchApp(runtime: Runtime): Promise<void> {
 
 async function quitApp(runtime: Runtime): Promise<void> {
 	runtime.quitting = true
+	await runtime.lanProxy?.close().catch(() => undefined)
 	await runtime.sidecar?.stop()
 	app.quit()
 }
@@ -523,6 +577,17 @@ async function restartSidecar(runtime: Runtime): Promise<void> {
 	try {
 		runtime.sidecar = await spawnSidecar(runtime)
 		runtime.crashed = false
+		if (runtime.config.lanEnabled) {
+			try {
+				await syncLanProxy(runtime)
+			} catch (err) {
+				console.error(
+					`[desktop] failed to resume LAN share after restart: ${
+						err instanceof Error ? err.message : String(err)
+					}`,
+				)
+			}
+		}
 		if (runtime.tray !== undefined) {
 			rebuildTrayMenu(
 				runtime.tray,
@@ -885,6 +950,8 @@ async function boot(): Promise<void> {
 		defaultLibraryPath,
 		portable: isPortableBuild(),
 		sidecar: undefined,
+		lanProxy: undefined,
+		lanCertFingerprint: undefined,
 		window: undefined,
 		wizard: undefined,
 		tray: undefined,
@@ -979,6 +1046,7 @@ async function boot(): Promise<void> {
 		setLanEnabled: (enabled, options) =>
 			setLanEnabled(runtime, enabled, options?.weakPasswordConfirmed === true),
 		setLanPort: (port) => setLanPort(runtime, port),
+		setLanHttps: (enabled) => setLanHttps(runtime, enabled),
 		shellCacheSize: () =>
 			getShellCacheSize({
 				session: session.defaultSession,
@@ -1000,6 +1068,7 @@ async function boot(): Promise<void> {
 		applyUpdate: () => runtime.updater?.apply() ?? Promise.resolve(),
 		async quitAndInstall() {
 			runtime.quitting = true
+			await runtime.lanProxy?.close().catch(() => undefined)
 			await runtime.sidecar?.stop()
 			runtime.updater?.quitAndInstall()
 		},
@@ -1073,6 +1142,23 @@ async function boot(): Promise<void> {
 		runtime.crashed = true
 	}
 
+	// Resume a previously-enabled local-network share without restarting
+	// the sidecar: a failure here must never knock the app down. Turn the
+	// share back off so the settings UI never shows a broken "enabled".
+	if (runtime.sidecar !== undefined && runtime.config.lanEnabled) {
+		try {
+			await syncLanProxy(runtime)
+		} catch (err) {
+			console.error(
+				`[desktop] failed to resume local-network share: ${
+					err instanceof Error ? err.message : String(err)
+				}`,
+			)
+			runtime.config = { ...runtime.config, lanEnabled: false }
+			persist(runtime)
+		}
+	}
+
 	// Test-only hooks for the Playwright e2e suite (apps/desktop/e2e):
 	// headless Linux CI has no StatusNotifier/DBus service behind the
 	// tray, and the updater must never poll in a test. Both are optional
@@ -1133,10 +1219,22 @@ async function boot(): Promise<void> {
 						persist(runtime)
 					},
 					stopSidecar: async () => {
+						await runtime.lanProxy?.close().catch(() => undefined)
 						await runtime.sidecar?.stop()
 					},
 					startSidecar: async () => {
 						runtime.sidecar = await spawnSidecar(runtime)
+						if (runtime.config.lanEnabled) {
+							try {
+								await syncLanProxy(runtime)
+							} catch (err) {
+								console.error(
+									`[desktop] failed to resume LAN share: ${
+										err instanceof Error ? err.message : String(err)
+									}`,
+								)
+							}
+						}
 					},
 					watchSidecarCrash: (listener) => {
 						const handle = runtime.sidecar

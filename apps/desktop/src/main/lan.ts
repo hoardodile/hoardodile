@@ -44,17 +44,20 @@ function isLinkLocal(address: string): boolean {
 
 /**
  * The URL other devices should open, or `undefined` when sharing is off
- * or there is no reachable address.
+ * or there is no reachable address. The LAN share is served by the shell's
+ * embedded forwarder with the configured scheme (`http` by default, `https`
+ * opt-in).
  */
 export function lanUrlFor(
 	enabled: boolean,
 	port: number,
 	addresses: readonly LanAddress[],
+	scheme: "http" | "https" = "http",
 ): string | undefined {
 	if (!enabled) return undefined
 	const primary = addresses[0]
 	if (primary === undefined) return undefined
-	return `http://${primary.address}:${port}/`
+	return `${scheme}://${primary.address}:${port}/`
 }
 
 function privateScopeRank(address: string): number {

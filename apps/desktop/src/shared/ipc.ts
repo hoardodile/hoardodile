@@ -30,6 +30,7 @@ export const IPC = {
 	lanCheck: "desktop:lan:check",
 	setLanEnabled: "desktop:lan:set-enabled",
 	setLanPort: "desktop:lan:set-port",
+	setLanHttps: "desktop:lan:set-https",
 	shellCacheSize: "desktop:shell-cache:size",
 	shellCacheClear: "desktop:shell-cache:clear",
 	completeWizard: "desktop:wizard:complete",

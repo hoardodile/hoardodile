@@ -1,7 +1,8 @@
 import { createServer } from "node:net"
 import getPort from "get-port"
 import { describe, expect, it, vi } from "vitest"
-import { resolveListenPort } from "./sidecar.ts"
+import { defaultDesktopConfig } from "./config.ts"
+import { resolveListenPort, sidecarHost } from "./sidecar.ts"
 
 vi.mock("get-port", () => ({ default: vi.fn() }))
 
@@ -25,6 +26,14 @@ async function holdPort(port: number): Promise<() => Promise<void>> {
 	)
 	return () => new Promise<void>((resolve) => server.close(() => resolve()))
 }
+
+describe("sidecarHost", () => {
+	it("always binds loopback, never 0.0.0.0, regardless of the share state", () => {
+		const config = defaultDesktopConfig("C:/lib", "C:/docs")
+		expect(sidecarHost({ ...config, lanEnabled: true })).toBe("127.0.0.1")
+		expect(sidecarHost({ ...config, lanEnabled: false })).toBe("127.0.0.1")
+	})
+})
 
 describe("resolveListenPort", () => {
 	it("keeps the preferred port when it is bindable (no drift through TIME_WAIT)", async () => {

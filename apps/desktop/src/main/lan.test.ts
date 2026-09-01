@@ -50,8 +50,14 @@ describe("computeLanAddresses", () => {
 describe("lanUrlFor", () => {
 	const addresses = [{ interfaceName: "Ethernet", address: "192.168.1.20" }]
 
-	it("builds the primary URL when sharing is enabled", () => {
+	it("builds the primary URL with the default HTTP scheme", () => {
 		expect(lanUrlFor(true, 3000, addresses)).toBe("http://192.168.1.20:3000/")
+	})
+
+	it("uses https when the opt-in TLS scheme is requested", () => {
+		expect(lanUrlFor(true, 3000, addresses, "https")).toBe(
+			"https://192.168.1.20:3000/",
+		)
 	})
 
 	it("returns undefined while sharing is off", () => {

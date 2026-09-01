@@ -116,8 +116,19 @@ function parseLanInfo(value: unknown): LanInfo {
 	}
 	return {
 		enabled: value.enabled === true,
+		https: value.https === true,
 		port: isValidPort(value.port) ? value.port : 0,
 		preferredPort: isValidPort(value.preferredPort) ? value.preferredPort : 0,
+		lanPort: isValidPort(value.lanPort) ? value.lanPort : 0,
+		lanPreferredPort: isValidPort(value.lanPreferredPort)
+			? value.lanPreferredPort
+			: 0,
+		lanHttpsPort: isValidPort(value.lanHttpsPort) ? value.lanHttpsPort : 0,
+		lanHttpsPreferredPort: isValidPort(value.lanHttpsPreferredPort)
+			? value.lanHttpsPreferredPort
+			: 0,
+		fingerprint:
+			typeof value.fingerprint === "string" ? value.fingerprint : undefined,
 		addresses,
 	}
 }
@@ -287,6 +298,9 @@ const bridge: HoardodileDesktopBridge = {
 	},
 	async setLanPort(port) {
 		await invokeUnknown(IPC.setLanPort, port)
+	},
+	async setLanHttps(enabled) {
+		await invokeUnknown(IPC.setLanHttps, enabled)
 	},
 	async getShellCacheSize() {
 		const raw = await invokeUnknown(IPC.shellCacheSize)

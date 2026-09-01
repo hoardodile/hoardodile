@@ -78,10 +78,22 @@ export type LanAddress = {
 
 export type LanInfo = {
 	readonly enabled: boolean
-	/** Actual listening port (may differ from `preferredPort` after a conflict fallback). */
+	/** Whether the LAN share is served over TLS (opt-in). Off → plain HTTP. */
+	readonly https: boolean
+	/** Loopback sidecar port the desktop window itself loads from. */
 	readonly port: number
-	/** Port the user last requested; the settings UI edits this value. */
+	/** Loopback port the user last requested (kept for config compatibility). */
 	readonly preferredPort: number
+	/** The actual bound HTTP port (the serving scheme when `https` is off, else a redirect port). */
+	readonly lanPort: number
+	/** LAN HTTP port the user last requested; may differ from `lanPort` after a fallback. */
+	readonly lanPreferredPort: number
+	/** LAN HTTPS port the user last requested; the settings UI edits this value. */
+	readonly lanHttpsPort: number
+	/** LAN HTTPS port the user last requested; may differ from `lanHttpsPort` after a fallback. */
+	readonly lanHttpsPreferredPort: number
+	/** SHA-256 of the served leaf certificate, lowercase hex; `undefined` while sharing is off. */
+	readonly fingerprint: string | undefined
 	readonly addresses: readonly LanAddress[]
 }
 
@@ -214,25 +226,32 @@ export type HoardodileDesktopBridge = {
 	 */
 	checkLanEnabled: () => Promise<LanCheckResult>
 	/**
-	 * Enable or disable local-network sharing and restart the sidecar
-	 * with the matching bind host. Rejects when the sidecar is down or
-	 * when the restart fails; resolves `{ ok: false }` when enabling is
-	 * declined so the renderer can explain — `no-admin-password` never
-	 * enables (an unclaimed instance must not become reachable), while
-	 * `weak-password-required` means the user must confirm the weak
-	 * admin password first, then retry with `{ weakPasswordConfirmed:
-	 * true }` (the shell re-checks the password on every call).
+	 * Enable or disable local-network sharing. This starts/stops the
+	 * embedded TLS terminator in the shell only — it never restarts the
+	 * sidecar, so the app window keeps its session. Rejects when the
+	 * sidecar is down or the TLS listener cannot start; resolves
+	 * `{ ok: false }` when enabling is declined so the renderer can
+	 * explain — `no-admin-password` never enables (an unclaimed instance
+	 * must not become reachable), while `weak-password-required` means the
+	 * user must confirm the weak admin password first, then retry with
+	 * `{ weakPasswordConfirmed: true }` (the shell re-checks the password
+	 * on every call).
 	 */
 	setLanEnabled: (
 		enabled: boolean,
 		options?: { readonly weakPasswordConfirmed?: boolean },
 	) => Promise<LanSetResult>
 	/**
-	 * Change the sidecar port (localhost and LAN share share one port)
-	 * and restart the sidecar. Rejects on invalid ports or restart
-	 * failure; a busy port falls back to a free one.
+	 * Change the HTTPS port LAN clients use and restart the embedded TLS
+	 * terminator (never the sidecar). A busy port falls back to a free one,
+	 * surfaced as `lanPort` desyncing from `lanPreferredPort`.
 	 */
 	setLanPort: (port: number) => Promise<void>
+	/**
+	 * Toggle the LAN share between plain HTTP (default) and TLS. Proxy-only —
+	 * never restarts the sidecar, so the app window keeps its session.
+	 */
+	setLanHttps: (enabled: boolean) => Promise<void>
 	/**
 	 * Current size in bytes of the desktop shell's on-disk caches: the
 	 * Chromium session caches (HTTP, compiled code, GPU shaders) plus the

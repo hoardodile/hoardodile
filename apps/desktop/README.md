@@ -119,7 +119,7 @@ v0.1 installers are **unsigned everywhere**: Windows SmartScreen warns "unknown 
 
 ## Security and privacy
 
-- `HOST=127.0.0.1` by default; local-network binding is an authenticated Settings toggle (same port, `0.0.0.0`) that requires an admin password and is never offered by the wizard; a weak password needs an explicit in-app confirmation before enabling.
+- `HOST=127.0.0.1` always — the sidecar never binds `0.0.0.0`. Local-network sharing is an authenticated Settings toggle that raises an **embedded TLS terminator** (`0.0.0.0:<lanPort>`, self-generated CA + leaf with the machine's addresses as SANs) in the shell and proxies to the loopback sidecar; it requires an admin password, is never offered by the wizard, and a weak password needs an explicit in-app confirmation before enabling. Toggling it never restarts the sidecar. `/api/internal/*` is refused by the terminator.
 - `/api/internal/*` control routes are loopback-gated: non-loopback peers get 403 even with a valid token. A browser on the same machine may open the same URL; cookies are not shared with Electron.
 - Production desktop never registers `/sw.js` (a SW on `http://127.0.0.1` stale-caches across installer updates) and unregisters any existing controller.
 - Folder picker in main, not the renderer; shutdown is token-gated; external https via `openExternal`.
