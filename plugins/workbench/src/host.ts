@@ -4,6 +4,7 @@ import {
 	createMockMessageStore,
 	type MockHost,
 } from "@hoardodile/host-web"
+import type { Danmaku, Message } from "@hoardodile/sdk-types"
 import { hostPushKeys, type PluginIframeContext } from "@hoardodile/sdk-web"
 import { createAssetVault } from "./consent-bridge.ts"
 import {
@@ -13,6 +14,7 @@ import {
 	type WorkbenchManifest,
 	type WorkbenchResource,
 } from "./context.ts"
+import { observeDanmaku, observeMessages } from "./observe.ts"
 
 /**
  * One mounted plugin iframe plus the mock host bound to it. The iframe
@@ -27,21 +29,52 @@ export type Mounted = {
 	readonly dispose: () => void
 }
 
+/**
+ * How a live plugin write is captured into the persistent workbench
+ * session. The mock host's handlers fire these; the App forwards each to
+ * the session store so a refresh re-seeds the value. `prefs` is
+ * plugin-scoped, `cache` per (plugin, resource); messages/danmaku carry
+ * their own resource id.
+ */
+export type SessionRecorder = {
+	readonly recordPref: (pluginId: string, key: string, value: string) => void
+	readonly recordCache: (
+		pluginId: string,
+		resId: string,
+		key: string,
+		value: string,
+	) => void
+	readonly recordMessage: (resId: string, message: Message) => void
+	readonly recordDanmaku: (resId: string, danmaku: Danmaku) => void
+}
+
 export function mountIframe(opts: {
 	readonly manifest: WorkbenchManifest
 	readonly resource: WorkbenchResource
 	readonly ctx: ResourceContext
 	readonly context: PluginIframeContext
 	readonly container: HTMLElement
+	readonly recorder: SessionRecorder
 }): Mounted {
-	const { manifest, resource, ctx, context, container } = opts
+	const { manifest, resource, ctx, context, container, recorder } = opts
+	const messages = observeMessages(
+		createMockMessageStore(ctx.state?.messages ?? []),
+		recorder.recordMessage,
+	)
+	const danmaku = observeDanmaku(
+		createMockDanmakuStore(ctx.state?.danmaku ?? []),
+		recorder.recordDanmaku,
+	)
 	const host = createMockHost({
 		targetWindow: window,
 		files: createHttpFileBackend(resource.id, () => ctx.snapshot),
-		messages: createMockMessageStore(ctx.state?.messages ?? []),
-		danmaku: createMockDanmakuStore(ctx.state?.danmaku ?? []),
+		messages,
+		danmaku,
 		prefs: ctx.state?.prefs,
 		cache: ctx.state?.cache,
+		onPrefChanged: (key, value) => recorder.recordPref(manifest.id, key, value),
+		onCacheChanged: (resId, key, value) =>
+			recorder.recordCache(manifest.id, resId, key, value),
 		assetVault: createAssetVault(manifest),
 	})
 

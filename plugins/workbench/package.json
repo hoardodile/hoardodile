@@ -46,6 +46,8 @@
 		"@hoardodile/sdk-web": "workspace:*",
 		"@hoardodile/ui": "workspace:*",
 		"@playwright/test": "catalog:",
+		"fake-indexeddb": "^6.2.5",
+		"idb": "^8.0.3",
 		"@rolldown/plugin-babel": "catalog:",
 		"@solar-icons/react": "catalog:",
 		"@tailwindcss/vite": "catalog:",

@@ -26,10 +26,16 @@ import {
 	type WorkbenchConfig,
 } from "../config.ts"
 
-/** Plugin-state override status surfaced in the dialog. */
+/** Plugin-state status surfaced in the dialog. */
 export type PluginStateView = {
+	/** The plugin's settings were explicitly reset (empty baseline). */
 	readonly prefsCleared: boolean
+	/** The plugin+resource cache was explicitly cleared (empty baseline). */
 	readonly cacheCleared: boolean
+	/** Any prefs session state exists (a reset or recorded writes) — gates Restore. */
+	readonly prefsChanged: boolean
+	/** Any cache session state exists (a reset or recorded writes) — gates Restore. */
+	readonly cacheChanged: boolean
 }
 
 /**
@@ -237,7 +243,7 @@ export function ConfigDialog(props: {
 									</Button>
 								</div>
 							</div>
-							{pluginState.prefsCleared || pluginState.cacheCleared ? (
+							{pluginState.prefsChanged || pluginState.cacheChanged ? (
 								<Button
 									variant="ghost"
 									size="sm"

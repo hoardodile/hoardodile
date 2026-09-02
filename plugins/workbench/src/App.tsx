@@ -28,16 +28,23 @@ import {
 import { type Mounted, mountIframe, pushPresentation } from "./host.ts"
 import { i18n } from "./i18n.ts"
 import {
+	emptySession,
 	hasCacheOverride,
 	hasPrefOverride,
-	loadPluginStateOverrides,
-	savePluginStateOverrides,
+	isCacheCleared,
+	isPrefsCleared,
+	recordCacheWrite,
+	recordDanmaku,
+	recordMessage,
+	recordPrefWrite,
 	seedState,
+	type WorkbenchSession,
 	withClearedCache,
 	withClearedPrefs,
 	withoutCacheOverride,
 	withoutPrefOverride,
-} from "./plugin-state.ts"
+} from "./session.ts"
+import { createSessionStore, type SessionStore } from "./session-store.ts"
 
 function readSystemDark(): boolean {
 	return window.matchMedia("(prefers-color-scheme: dark)").matches
@@ -64,12 +71,19 @@ function samePresentation(
  * a setting never remounts the plugin (exactly like the app's theme
  * broadcast); switching resource or Reload does a full remount (the
  * app's preview dialog behavior).
+ *
+ * The plugin session (prefs/cache writes plus created messages/danmaku) is
+ * loaded from IndexedDB before the first mount and recorded back into it
+ * on every write, so a refresh re-seeds the same state instead of the
+ * read-only library seed. Writes never remount the iframe (the mock host
+ * applies them live); relaying the session snapshot is a fire-and-forget
+ * persistence concern.
  */
 export function App() {
 	const [config, setConfig] = useState<WorkbenchConfig>(() =>
 		loadWorkbenchConfig(),
 	)
-	const [overrides, setOverrides] = useState(() => loadPluginStateOverrides())
+	const [session, setSession] = useState<WorkbenchSession | null>(null)
 	const [manifest, setManifest] = useState<WorkbenchManifest | null>(null)
 	const [bootstrapError, setBootstrapError] = useState<string | null>(null)
 	const [resources, setResources] = useState<readonly WorkbenchResource[]>([])
@@ -80,7 +94,9 @@ export function App() {
 	const [systemDark, setSystemDark] = useState(readSystemDark)
 	const frameRef = useRef<HTMLDivElement | null>(null)
 	const mountedRef = useRef<Mounted | null>(null)
-	const overridesRef = useRef(overrides)
+	const sessionRef = useRef<WorkbenchSession>(emptySession())
+	const sessionStoreRef = useRef<SessionStore | null>(null)
+	const [sessionReady, setSessionReady] = useState(false)
 	const consentEntry = useDownloadConsentEntry()
 	const fullscreenAPI = useContainerFullscreen(frameRef)
 
@@ -108,6 +124,32 @@ export function App() {
 			cancelled = true
 		}
 	}, [])
+
+	// Load the persisted plugin session once, before the first mount. The
+	// mount effect gates on `sessionReady` so it runs with the loaded value,
+	// while the `session` state above stays available for the UI (which
+	// reflects resets/clears) without remounting the iframe on every write.
+	useEffect(() => {
+		const store = createSessionStore()
+		sessionStoreRef.current = store
+		let cancelled = false
+		void store.load().then((loaded) => {
+			if (cancelled) return
+			sessionRef.current = loaded
+			setSession(loaded)
+			setSessionReady(true)
+		})
+		return () => {
+			cancelled = true
+		}
+	}, [])
+
+	/** Mutate the session snapshot and persist it (coalesced) to IndexedDB. */
+	const commitSession = (next: WorkbenchSession) => {
+		sessionRef.current = next
+		setSession(next)
+		sessionStoreRef.current?.save(next)
+	}
 
 	const resource = resources.find((r) => r.id === selectedId) ?? resources[0]
 
@@ -172,14 +214,6 @@ export function App() {
 		saveWorkbenchConfig(config)
 	}, [config])
 
-	// Keep the latest plugin-state override for the mount effect (which
-	// reads it through a ref so an override change alone never remounts),
-	// and persist every change to the workbench-local override key.
-	useEffect(() => {
-		overridesRef.current = overrides
-		savePluginStateOverrides(overrides)
-	}, [overrides])
-
 	// Latest presentation for the initial context — the mount effect must
 	// not re-run (and remount the iframe) when a setting changes. A fresh
 	// iframe gets its presentation from the initial context; only later
@@ -192,10 +226,11 @@ export function App() {
 
 	useEffect(() => {
 		if (manifest === null || resource === undefined || context === null) return
+		if (!sessionReady) return
 		const container = frameRef.current
 		if (container === null) return
-		const ctx = seedState(
-			overridesRef.current,
+		const seeded = seedState(
+			sessionRef.current,
 			manifest.id,
 			resource.id,
 			context,
@@ -203,14 +238,41 @@ export function App() {
 		const mounted = mountIframe({
 			manifest,
 			resource,
-			ctx,
+			ctx: seeded,
 			context: buildContext(
 				manifest.id,
 				resource,
-				ctx,
+				seeded,
 				presentationRef.current,
 			),
 			container,
+			recorder: {
+				recordPref: (pluginId, key, value) =>
+					commitSession(
+						recordPrefWrite(
+							sessionRef.current,
+							pluginId,
+							context.state?.prefs ?? {},
+							key,
+							value,
+						),
+					),
+				recordCache: (pluginId, resId, key, value) =>
+					commitSession(
+						recordCacheWrite(
+							sessionRef.current,
+							pluginId,
+							resId,
+							context.state?.cache ?? {},
+							key,
+							value,
+						),
+					),
+				recordMessage: (resId, message) =>
+					commitSession(recordMessage(sessionRef.current, resId, message)),
+				recordDanmaku: (resId, danmaku) =>
+					commitSession(recordDanmaku(sessionRef.current, resId, danmaku)),
+			},
 		})
 		mountedRef.current = mounted
 		lastPushedRef.current = presentationRef.current
@@ -218,7 +280,7 @@ export function App() {
 			mounted.dispose()
 			mountedRef.current = null
 		}
-	}, [manifest, resource, context])
+	}, [manifest, resource, context, sessionReady])
 
 	// Live pushes: settings changes reach a mounted iframe without a
 	// remount (the app's theme/font/language broadcast).
@@ -241,40 +303,57 @@ export function App() {
 		setResourcesOpen(false)
 	}
 
-	// Plugin-state management. Each action updates the workbench-local
-	// override (persisted by the effect above) and remounts the iframe via
-	// the existing reload path, so the plugin re-seeds from the cleared
+	// Plugin-state management. Each action updates the workbench session
+	// (persisted by `commitSession`) and remounts the iframe via the
+	// existing reload path, so the plugin re-seeds from the cleared
 	// (empty) baseline instead of the read-only library state.
 	const handleResetSettings = () => {
 		if (manifest === null) return
-		setOverrides(withClearedPrefs(overrides, manifest.id))
+		commitSession(withClearedPrefs(sessionRef.current, manifest.id))
 		setReloadNonce((n) => n + 1)
 	}
 	const handleClearCache = () => {
 		if (manifest === null || resource === undefined) return
-		setOverrides(withClearedCache(overrides, manifest.id, resource.id))
+		commitSession(
+			withClearedCache(sessionRef.current, manifest.id, resource.id),
+		)
 		setReloadNonce((n) => n + 1)
 	}
 	const handleRestoreState = () => {
 		if (manifest === null) return
 		const next =
 			resource === undefined
-				? withoutPrefOverride(overrides, manifest.id)
+				? withoutPrefOverride(sessionRef.current, manifest.id)
 				: withoutCacheOverride(
-						withoutPrefOverride(overrides, manifest.id),
+						withoutPrefOverride(sessionRef.current, manifest.id),
 						manifest.id,
 						resource.id,
 					)
-		setOverrides(next)
+		commitSession(next)
 		setReloadNonce((n) => n + 1)
 	}
 
 	const pluginState = {
-		prefsCleared: manifest !== null && hasPrefOverride(overrides, manifest.id),
+		prefsCleared:
+			manifest !== null &&
+			session !== null &&
+			isPrefsCleared(session, manifest.id),
 		cacheCleared:
 			manifest !== null &&
 			resource !== undefined &&
-			hasCacheOverride(overrides, manifest.id, resource.id),
+			session !== null &&
+			isCacheCleared(session, manifest.id, resource.id),
+		// Any session state (a reset or recorded writes) so the Restore
+		// button appears even when a plugin merely wrote a pref/cache entry.
+		prefsChanged:
+			manifest !== null &&
+			session !== null &&
+			hasPrefOverride(session, manifest.id),
+		cacheChanged:
+			manifest !== null &&
+			resource !== undefined &&
+			session !== null &&
+			hasCacheOverride(session, manifest.id, resource.id),
 	}
 	const { t: tw } = useTranslation("workbench")
 
@@ -331,7 +410,7 @@ export function App() {
 					) : (
 						<Stage
 							mode={config.mode}
-							loading={context === null}
+							loading={context === null || !sessionReady}
 							frameRef={frameRef}
 						/>
 					)}

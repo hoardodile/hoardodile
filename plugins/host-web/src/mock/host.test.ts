@@ -169,6 +169,33 @@ describe("createMockHost bridge", () => {
 		}
 	})
 
+	test("onPrefChanged and onCacheChanged fire on writes (recorder contract)", async () => {
+		const onPrefChanged = vi.fn()
+		const onCacheChanged = vi.fn()
+		const host = createMockHost({
+			targetWindow: window,
+			files: createInMemoryFileBackend(),
+			onPrefChanged,
+			onCacheChanged,
+		})
+		host.register(window, { pluginId: "test-plugin", resId: "r-1" })
+		try {
+			ensureHostBridge()
+			const api = createIframeHostAPI(buildContext())
+
+			api.setPref("theme", "dark")
+			await vi.waitFor(() =>
+				expect(onPrefChanged).toHaveBeenCalledWith("theme", "dark"),
+			)
+			api.setCache("scroll", "42")
+			await vi.waitFor(() =>
+				expect(onCacheChanged).toHaveBeenCalledWith("r-1", "scroll", "42"),
+			)
+		} finally {
+			host.dispose()
+		}
+	})
+
 	test("requests from unregistered sources are dropped", async () => {
 		const host = createMockHost({
 			targetWindow: window,
