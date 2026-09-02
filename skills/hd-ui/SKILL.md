@@ -1,6 +1,6 @@
 ---
 name: hd-ui
-description: Use the @hoardodile/ui component library — a published, shadcn-style design-system package (built on @base-ui/react) for the host app, desktop shell and plugin iframes. Use when building, reshaping, or composing UI with @hoardodile/ui: choosing the right component, variant, size, or icon, wiring a dialog/forms/toolbar surface, styling with the design tokens instead of raw values, following the host theme/palette/icon-style/fonts through the SDK, or auditing a surface against the "defaults are the design" contract. Components are imported per subpath and styled by their own variants/tokens — a primitive's default config is the design; reach for className only for layout, never for hard-coded pixel values.
+description: Use the @hoardodile/ui component library — a published, shadcn-style design-system package (built on @base-ui/react) for the host app, desktop shell and plugin iframes. Use when building, reshaping, or composing UI with @hoardodile/ui — choosing the right component, variant, size, or icon, wiring a dialog/forms/toolbar surface, styling with the design tokens instead of raw values, following the host theme/palette/icon-style/fonts through the SDK, or auditing a surface against the "defaults are the design" contract. Components are imported per subpath and styled by their own variants/tokens — a primitive's default config is the design; reach for className only for layout, never for hard-coded pixel values.
 license: MIT
 metadata:
   author: hoardodile
