@@ -1,4 +1,4 @@
-﻿import type { PluginIframeContext } from "@hoardodile/sdk-web"
+import type { PluginIframeContext } from "@hoardodile/sdk-web"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { claim, setPoolContainer } from "./iframe-pool"
 
@@ -404,6 +404,103 @@ describe("iframe-pool", () => {
 			expect(slot.iframe).toBe(iframe)
 			expect(slot.primedResId).toBeUndefined()
 			slot.release()
+		})
+	})
+
+	describe("reloadAsset (live fingerprint change)", () => {
+		// Scoped helpers (the readiness/primed describes define their own).
+		function mountContainer(): HTMLElement {
+			const el = document.createElement("div")
+			document.body.appendChild(el)
+			setPoolContainer(el)
+			return el
+		}
+
+		function loadIframe(iframe: HTMLIFrameElement): void {
+			iframe.dispatchEvent(new Event("load"))
+		}
+
+		function dispatchPainted(
+			source: MessageEventSource | null,
+			resId: string,
+			origin = "null",
+		): void {
+			window.dispatchEvent(
+				new MessageEvent("message", {
+					origin,
+					source,
+					data: { type: "contextPainted", resId },
+				}),
+			)
+		}
+
+		const context = {
+			pluginId: "p-live",
+			resId: "r-1",
+			resName: "r-1",
+			sourceMeta: undefined,
+			searchMeta: undefined,
+			fileStats: undefined,
+			contentPluginId: "p-live",
+			language: "en",
+			resolvedTheme: "light",
+			palette: "mono",
+			iconStyle: "duotone",
+			fonts: { family: "", cssPaths: [] },
+			initialPrefs: {},
+			initialCache: {},
+			fileToken: "tok",
+			assetToken: "",
+		} as const
+
+		afterEach(() => {
+			setPoolContainer(undefined)
+			document.body.innerHTML = ""
+		})
+
+		it("re-navigates a live claim to the new fingerprint and clears ack memory", () => {
+			mountContainer()
+			const slot = claim({ pluginId: "p-live", assetVersion: "v1" })
+			loadIframe(slot.iframe)
+			slot.postContext({ ...context })
+			// Simulate a paint ack so there is primed memory to clear.
+			dispatchPainted(slot.iframe.contentWindow, "r-1")
+
+			const didReload = slot.reloadAsset("v2")
+
+			expect(didReload).toBe(true)
+			expect(slot.iframe.src).toContain("v=v2")
+			// The reloaded document has painted nothing, so no later claim may
+			// be primed onto it.
+			const re = claim({ pluginId: "p-live", resId: "r-1", assetVersion: "v2" })
+			expect(re.primedResId).toBeUndefined()
+			re.release()
+		})
+
+		it("is a no-op and returns false when the fingerprint is unchanged", () => {
+			mountContainer()
+			const slot = claim({ pluginId: "p-same", assetVersion: "v1" })
+			loadIframe(slot.iframe)
+
+			const didReload = slot.reloadAsset("v1")
+
+			expect(didReload).toBe(false)
+			expect(slot.iframe.src).toContain("v=v1")
+		})
+
+		it("records but does not reload when the entry had no fingerprint yet (cold-open baseline)", () => {
+			mountContainer()
+			// Cold open: the claim was built before the plugin list resolved.
+			const slot = claim({ pluginId: "p-cold" })
+			loadIframe(slot.iframe)
+
+			const didReload = slot.reloadAsset("v1")
+
+			expect(didReload).toBe(false)
+			// The first real fingerprint is remembered so a later equal claim
+			// is treated as the hot reuse path.
+			expect(slot.reloadAsset("v1")).toBe(false)
+			expect(slot.iframe.src).not.toContain("v=")
 		})
 	})
 

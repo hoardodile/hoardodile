@@ -118,12 +118,14 @@ type WindowSlotRecord = {
 
 export function createPreviewWindow(deps: {
 	readonly getAssetVersion: (pluginId: string) => string | undefined
-	readonly loadContext: (
-		item: PreviewWindowItem,
-	) => Promise<PluginIframeContext>
-	readonly loadNeighborContext: (
-		neighbor: PreviewWindowNeighbor,
-	) => Promise<PluginIframeContext>
+	readonly loadContext: (item: PreviewWindowItem) => Promise<{
+		readonly ctx: PluginIframeContext
+		readonly assetVersion?: string
+	}>
+	readonly loadNeighborContext: (neighbor: PreviewWindowNeighbor) => Promise<{
+		readonly ctx: PluginIframeContext
+		readonly assetVersion?: string
+	}>
 	/** zIndex for the presented iframe; every other slot gets zTop - 1. */
 	readonly zTop: number
 }): PreviewWindow {
@@ -287,10 +289,16 @@ export function createPreviewWindow(deps: {
 				// The context is posted only once both the iframe load and the
 				// context data are in hand — posting into an unloaded document
 				// would reach no listener.
-				const [ctx] = await Promise.all([
+				const [{ ctx, assetVersion }] = await Promise.all([
 					contextRequest,
 					slotClaim.whenLoaded(),
 				])
+				// A replaced/rebuild plugin must load its new bundle before
+				// the context is posted. Same fingerprint: the hot reuse path,
+				// no reload.
+				if (assetVersion !== undefined && slotClaim.reloadAsset(assetVersion)) {
+					await slotClaim.whenLoaded()
+				}
 				// The slot may have been released while the fetches were in
 				// flight (window slid, dialog closed).
 				if (slots.get(item.resId) !== record) return

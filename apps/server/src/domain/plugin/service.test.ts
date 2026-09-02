@@ -3,6 +3,7 @@ import {
 	mkdirSync,
 	mkdtempSync,
 	rmSync,
+	utimesSync,
 	writeFileSync,
 } from "node:fs"
 import { tmpdir } from "node:os"
@@ -549,5 +550,86 @@ describe("plugin service marketplace source", () => {
 		await svc.uninstall(PLUGIN_ID)
 
 		expect(svc.listMarketplaceSources()).toEqual([])
+	})
+})
+
+describe("plugin service asset fingerprint (dev re-stat)", () => {
+	let root: string
+	let dbh: DbHandles
+	let registry: ReturnType<typeof buildRegistry>
+	let loader: PluginLoader
+	let svc: PluginService
+	let seedRemovalsFile: string
+
+	function buildService(entries: readonly ReturnType<typeof entryFor>[]) {
+		registry = buildRegistry(entries)
+		loader = {
+			getRegistry: () => registry,
+			rescan: vi.fn(async () => {}),
+		} as unknown as PluginLoader
+		const sandbox = { unloadPlugin: vi.fn() } as unknown as PluginSandbox
+		svc = createPluginService({
+			db: dbh.db,
+			loader,
+			sandbox,
+			seedDirs: [],
+			seedRemovals: createSeedRemovalsStore(seedRemovalsFile),
+		})
+	}
+
+	function writeDist(dir: string, at: Date): void {
+		mkdirSync(dir, { recursive: true })
+		const indexHtml = join(dir, "index.html")
+		writeFileSync(indexHtml, "<!doctype html><html></html>")
+		utimesSync(indexHtml, at, at)
+	}
+
+	function assetVersionOf(id: PluginManifestId): string | undefined {
+		return svc.listAll().find((p) => p.id === id)?.assetVersion
+	}
+
+	beforeEach(() => {
+		root = mkdtempSync(join(tmpdir(), "plugin-fp-"))
+		dbh = openDb(":memory:")
+		dbh.runMigrations()
+		seedRemovalsFile = join(root, "seed-removals.json")
+	})
+
+	afterEach(() => {
+		dbh.close()
+		rmSync(root, { recursive: true, force: true })
+	})
+
+	test("a rebuilt dev plugin reports a new fingerprint without a rescan", () => {
+		const distDir = join(root, "plugins", PLUGIN_ID)
+		const first = new Date("2024-01-01T00:00:00Z")
+		writeDist(distDir, first)
+		buildService([entryFor(PLUGIN_ID, "Dev", { dev: true, diskPath: distDir })])
+
+		expect(assetVersionOf(PLUGIN_ID)).toBe(String(first.getTime()))
+		const before = assetVersionOf(PLUGIN_ID)
+
+		// Rebuild in place: no rescan replaces the registry object.
+		const second = new Date("2024-01-02T00:00:00Z")
+		writeDist(distDir, second)
+
+		expect(assetVersionOf(PLUGIN_ID)).toBe(String(second.getTime()))
+		expect(assetVersionOf(PLUGIN_ID)).not.toBe(before)
+	})
+
+	test("an installed plugin's fingerprint is memoized until the registry is replaced", () => {
+		const distDir = join(root, "plugins", PLUGIN_ID)
+		const first = new Date("2024-01-01T00:00:00Z")
+		writeDist(distDir, first)
+		buildService([entryFor(PLUGIN_ID, "Disk", { diskPath: distDir })])
+
+		const before = assetVersionOf(PLUGIN_ID)
+		expect(before).toBe(String(first.getTime()))
+
+		// An on-disk change without a registry swap must NOT move the
+		// memoized fingerprint (installed plugins only change via rescan).
+		const second = new Date("2024-01-02T00:00:00Z")
+		writeDist(distDir, second)
+		expect(assetVersionOf(PLUGIN_ID)).toBe(before)
 	})
 })

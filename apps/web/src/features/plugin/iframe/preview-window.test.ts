@@ -1,4 +1,4 @@
-﻿import type { PluginIframeContext } from "@hoardodile/sdk-web"
+import type { PluginIframeContext } from "@hoardodile/sdk-web"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import type { PoolClaimedEntry } from "./iframe-pool"
 import {
@@ -26,7 +26,7 @@ function makeSlot(primedResId?: string) {
 		postContext: vi.fn(),
 		setVisibility: vi.fn(),
 		onLoaded: () => () => {},
-		whenLoaded: () => Promise.resolve(),
+		whenLoaded: vi.fn(() => Promise.resolve()),
 		onReady: vi.fn((cb: () => void) => {
 			if (ready) {
 				cb()
@@ -37,6 +37,7 @@ function makeSlot(primedResId?: string) {
 				readyCallbacks.delete(cb)
 			}
 		}),
+		reloadAsset: vi.fn(() => false),
 	}
 	function fireReady(): void {
 		if (ready) return
@@ -77,11 +78,21 @@ function makeContext(resId: string): PluginIframeContext {
 	}
 }
 
-const loadContextMock = vi.fn((item: PreviewWindowItem) =>
-	Promise.resolve(makeContext(item.resId)),
+type ContextResult = {
+	readonly ctx: PluginIframeContext
+	readonly assetVersion?: string
+}
+
+const loadContextMock = vi.fn(
+	(item: PreviewWindowItem): Promise<ContextResult> =>
+		Promise.resolve({ ctx: makeContext(item.resId), assetVersion: undefined }),
 )
-const loadNeighborContextMock = vi.fn((neighbor: PreviewWindowNeighbor) =>
-	Promise.resolve(makeContext(neighbor.resId)),
+const loadNeighborContextMock = vi.fn(
+	(neighbor: PreviewWindowNeighbor): Promise<ContextResult> =>
+		Promise.resolve({
+			ctx: makeContext(neighbor.resId),
+			assetVersion: undefined,
+		}),
 )
 
 function makeItem(resId: string, pluginId = "p-1"): PreviewWindowItem {
@@ -386,12 +397,16 @@ describe("createPreviewWindow", () => {
 	})
 
 	it("ignores a context that resolves after its slot was released", async () => {
-		let resolveContext: ((ctx: PluginIframeContext) => void) | undefined
+		let resolveContext:
+			| ((value: { ctx: PluginIframeContext; assetVersion?: string }) => void)
+			| undefined
 		loadNeighborContextMock.mockImplementationOnce(
 			() =>
-				new Promise<PluginIframeContext>((resolve) => {
-					resolveContext = resolve
-				}),
+				new Promise<{ ctx: PluginIframeContext; assetVersion?: string }>(
+					(resolve) => {
+						resolveContext = resolve
+					},
+				),
 		)
 		const a = queueClaim()
 		const b = queueClaim()
@@ -403,10 +418,40 @@ describe("createPreviewWindow", () => {
 		window.focus(makeItem("r-c", "p-c"), [])
 		expect(b.slot.release).toHaveBeenCalledTimes(1)
 
-		resolveContext?.(makeContext("r-b"))
+		resolveContext?.({ ctx: makeContext("r-b"), assetVersion: undefined })
 		await flush()
 		expect(b.slot.postContext).not.toHaveBeenCalled()
 		expect(a.slot.release).toHaveBeenCalledTimes(1)
+	})
+
+	it("reloads a replaced plugin's iframe before posting its context", async () => {
+		const a = queueClaim()
+		const window = setup()
+
+		// The freshly-loaded bootstrap reports a newer fingerprint than the
+		// entry was built with (assetVersion "v1" via getAssetVersion).
+		loadContextMock.mockImplementationOnce(() =>
+			Promise.resolve({ ctx: makeContext("r-a"), assetVersion: "v2" }),
+		)
+		// The reload triggers a navigation; the push awaits its load before
+		// posting the context.
+		;(a.slot.reloadAsset as ReturnType<typeof vi.fn>).mockImplementationOnce(
+			() => true,
+		)
+		const reloadedThenPosted = vi.fn()
+		;(a.slot.whenLoaded as ReturnType<typeof vi.fn>).mockImplementation(() => {
+			reloadedThenPosted()
+			return Promise.resolve()
+		})
+
+		window.focus(makeItem("r-a"), [])
+		await flush()
+
+		expect(a.slot.reloadAsset).toHaveBeenCalledWith("v2")
+		// whenLoaded is awaited (index 2) after the reload (index 1), so the
+		// reloaded document is in place before the context is posted.
+		expect(reloadedThenPosted).toHaveBeenCalled()
+		expect(a.slot.postContext).toHaveBeenCalledWith(makeContext("r-a"))
 	})
 
 	it("notifies subscribers on focus, ack, and flip with a stable snapshot between", () => {

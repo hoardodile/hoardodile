@@ -299,6 +299,8 @@ export type PreviewInitResult = {
 	readonly fileToken: string
 	/** Plugin-scoped asset-vault token (empty when the manifest lacks `download`). */
 	readonly assetToken: string
+	/** Server-computed fingerprint of the plugin's client assets. */
+	readonly assetVersion?: string
 }
 
 /**
@@ -388,7 +390,10 @@ function loadFocusedContext(
 	qc: QueryClient,
 	item: PreviewWindowItem,
 	forceThemeRef: RefObject<"light" | "dark" | undefined>,
-): Promise<PluginIframeContext> {
+): Promise<{
+	readonly ctx: PluginIframeContext
+	readonly assetVersion?: string
+}> {
 	return qc
 		.fetchQuery(
 			previewInitContextQueryOptions({
@@ -397,14 +402,15 @@ function loadFocusedContext(
 			}),
 		)
 		.catch(() => undefined)
-		.then((init) =>
-			buildPluginIframeContext({
+		.then((init) => ({
+			ctx: buildPluginIframeContext({
 				...item,
 				forceTheme: forceThemeRef.current,
 				inheritFont: readInheritFont(qc, item.pluginId),
 				init,
 			}),
-		)
+			assetVersion: init?.assetVersion,
+		}))
 }
 
 /**
@@ -412,11 +418,18 @@ function loadFocusedContext(
  * full target fields from the detail card (usually a warm hit on the
  * search dialog's neighbor prefetch effect; fetchQuery dedupes
  * regardless) plus the same bootstrap payload the focused item gets.
+ * Carries the same `forceTheme` override as the focused loader so a
+ * pre-painted neighbor is already in the dialog's forced theme — a
+ * left/right flip never flashes a host-theme-colored card.
  */
-async function loadNeighborContext(
+export async function loadNeighborContext(
 	qc: QueryClient,
 	neighbor: PreviewWindowNeighbor,
-): Promise<PluginIframeContext> {
+	forceThemeRef: RefObject<"light" | "dark" | undefined>,
+): Promise<{
+	readonly ctx: PluginIframeContext
+	readonly assetVersion?: string
+}> {
 	const [card, init] = await Promise.all([
 		qc.fetchQuery(resDetailCardQueryOptions(neighbor.resId)),
 		qc
@@ -428,17 +441,40 @@ async function loadNeighborContext(
 			)
 			.catch(() => undefined),
 	])
-	return buildPluginIframeContext({
-		pluginId: neighbor.pluginId,
-		resId: neighbor.resId,
-		resName: card.name,
-		sourceMeta: card.sourceMeta,
-		searchMeta: card.searchMeta,
-		fileStats: card.fileStats,
-		contentPluginId: card.contentPluginId ?? neighbor.pluginId,
-		inheritFont: readInheritFont(qc, neighbor.pluginId),
-		init,
-	})
+	return {
+		ctx: buildPluginIframeContext({
+			pluginId: neighbor.pluginId,
+			resId: neighbor.resId,
+			resName: card.name,
+			sourceMeta: card.sourceMeta,
+			searchMeta: card.searchMeta,
+			fileStats: card.fileStats,
+			contentPluginId: card.contentPluginId ?? neighbor.pluginId,
+			forceTheme: forceThemeRef.current,
+			inheritFont: readInheritFont(qc, neighbor.pluginId),
+			init,
+		}),
+		assetVersion: init?.assetVersion,
+	}
+}
+
+/**
+ * Apply the freshly-loaded context's asset fingerprint to a claim: if the
+ * plugin was replaced/rebuild since the entry was built, re-navigate the
+ * iframe to the new `?v=` URL and await the reloaded document. Posting a
+ * context into a pre-reload document is dropped, so the caller must await
+ * this before {@link PoolClaimedEntry.postContext}. No-op for an unchanged
+ * fingerprint (the hot reuse path) and for the cold-open baseline (the
+ * first playout already is the current build — avoid a redundant reload).
+ */
+async function applyAssetReload(
+	slot: PoolClaimedEntry,
+	assetVersion: string | undefined,
+): Promise<void> {
+	if (assetVersion === undefined) return
+	if (slot.reloadAsset(assetVersion)) {
+		await slot.whenLoaded()
+	}
 }
 
 /**
@@ -539,7 +575,8 @@ export function usePluginIframeSlot(
 		windowInstanceRef.current = createPreviewWindow({
 			getAssetVersion: (id) => readAssetVersion(qc, id),
 			loadContext: (item) => loadFocusedContext(qc, item, forceThemeRef),
-			loadNeighborContext: (neighbor) => loadNeighborContext(qc, neighbor),
+			loadNeighborContext: (neighbor) =>
+				loadNeighborContext(qc, neighbor, forceThemeRef),
 			zTop: zHint,
 		})
 	}
@@ -663,6 +700,11 @@ export function usePluginIframeSlot(
 					.catch(() => undefined),
 				whenReattached,
 			])
+			if (!mounted) return
+			// A replaced/rebuild plugin must load its new bundle before the
+			// context is posted (a context posted into a pre-reload document
+			// is dropped). Same fingerprint: the hot reuse path, no reload.
+			await applyAssetReload(slot, init?.assetVersion)
 			if (!mounted) return
 			slot.postContext(
 				buildPluginIframeContext({

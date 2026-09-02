@@ -189,10 +189,20 @@ export function createPluginService(deps: PluginServiceDeps): PluginService {
 		let versions = assetVersionCache.get(registry)
 		if (versions === undefined) {
 			versions = new Map()
-			for (const entry of registry.getAll()) {
+			assetVersionCache.set(registry, versions)
+		}
+		// Dev plugins are rebuilt in place: `plugin build`/watch rewrites
+		// dist/index.html but nothing replaces the registry object, so a
+		// memoized fingerprint would stay stale forever and the web client
+		// would keep reusing the old bundle. Re-stat dev entries on every
+		// read (they are few); installed/builtin plugins only change via a
+		// registry swap and stay memoized.
+		for (const entry of registry.getAll()) {
+			if (entry.dev) {
+				versions.set(entry.id, assetVersionOf(entry.diskPath))
+			} else if (!versions.has(entry.id)) {
 				versions.set(entry.id, assetVersionOf(entry.diskPath))
 			}
-			assetVersionCache.set(registry, versions)
 		}
 		return versions
 	}

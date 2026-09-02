@@ -53,6 +53,19 @@ export type PoolClaimedEntry = {
 	 * wait or fallback timer. Undefined for a normal claim.
 	 */
 	readonly primedResId: string | undefined
+	/**
+	 * Re-navigate the iframe to this plugin's assets at a new fingerprint.
+	 * Called when the claim's fresh context reveals the plugin was replaced
+	 * or rebuilt since the entry was built: the document must load the new
+	 * bundle before the context is posted (a context posted into a
+	 * pre-reload document is silently dropped). No-op — returns false — when
+	 * the fingerprint is unchanged, and when the entry still has no
+	 * fingerprint (a cold open whose first playout IS the current build, so
+	 * re-navigating would double-load). Returns true when a navigation was
+	 * triggered; the caller should await {@link whenLoaded} before posting
+	 * the context.
+	 */
+	readonly reloadAsset: (assetVersion: string) => boolean
 }
 
 type PoolEntry = {
@@ -398,6 +411,31 @@ export function claim(opts: {
 			if (win !== null) {
 				registerIframe(win, { pluginId: ctx.pluginId, resId: ctx.resId })
 			}
+		},
+		reloadAsset(assetVersion) {
+			if (claimed.claimId !== claimId) return false
+			// Same fingerprint: the previously loaded document is still the
+			// one this claim wants, no navigation.
+			if (assetVersion === claimed.assetVersion) return false
+			// The entry was built before the plugin list resolved (fingerprint
+			// undefined): the document now on screen was produced by the very
+			// build this first-real value describes (a dev plugin's assets are
+			// served no-store), so record it and don't navigate a second time.
+			if (claimed.assetVersion === undefined) {
+				claimed.assetVersion = assetVersion
+				return false
+			}
+			// The plugin's assets changed since this entry was built (a
+			// replaced / rebuilt plugin) — load the re-versioned URL so the
+			// year-long cache is bypassed only when the fingerprint actually
+			// moved. The reloaded document has painted nothing: drop the ack
+			// memory and mark it not-yet-loaded so whenLoaded/onLoaded wait
+			// for the fresh document.
+			claimed.lastAckedResId = undefined
+			claimed.loaded = false
+			claimed.assetVersion = assetVersion
+			claimed.iframe.src = apiPaths.plugins.indexHtml(pluginId, assetVersion)
+			return true
 		},
 		setVisibility(visible) {
 			if (claimed.claimId !== claimId) return

@@ -9,6 +9,7 @@ import { claim, setPoolContainer } from "./iframe-pool"
 import type { PreviewWindowSnapshot } from "./preview-window"
 import {
 	buildPluginIframeContext,
+	loadNeighborContext,
 	useIframeLifecycle,
 	usePluginIframeSlot,
 	useWindowGeometrySync,
@@ -313,6 +314,7 @@ describe("useIframeLifecycle", () => {
 			onLoaded: () => () => {},
 			whenLoaded: () => new Promise<void>(() => {}),
 			onReady: () => () => {},
+			reloadAsset: () => false,
 		}
 		return { slot, setVisibility }
 	}
@@ -430,6 +432,51 @@ describe("buildPluginIframeContext", () => {
 		expect(withoutInit.initialCache).toEqual({})
 		expect(withoutInit.fileToken).toBe("")
 		expect(withoutInit.assetToken).toBe("")
+	})
+})
+
+describe("loadNeighborContext", () => {
+	afterEach(() => {
+		document.documentElement.classList.remove("dark")
+	})
+
+	it("forwards forceTheme so a neighbor never paints light in a dark dialog", async () => {
+		const qc = new QueryClient()
+		const forceThemeRef = { current: "dark" as const }
+		const { ctx } = await loadNeighborContext(
+			qc,
+			{ resId: "r-2", pluginId: "p-2" },
+			forceThemeRef,
+		)
+		expect(ctx.resolvedTheme).toBe("dark")
+	})
+
+	it("reads the host document class when forceTheme is absent", async () => {
+		const root = document.documentElement
+		const qc = new QueryClient()
+		const forceThemeRef = { current: undefined }
+
+		root.classList.remove("dark")
+		expect(
+			(
+				await loadNeighborContext(
+					qc,
+					{ resId: "r-2", pluginId: "p-2" },
+					forceThemeRef,
+				)
+			).ctx.resolvedTheme,
+		).toBe("light")
+
+		root.classList.add("dark")
+		expect(
+			(
+				await loadNeighborContext(
+					qc,
+					{ resId: "r-3", pluginId: "p-3" },
+					forceThemeRef,
+				)
+			).ctx.resolvedTheme,
+		).toBe("dark")
 	})
 })
 
@@ -689,6 +736,60 @@ describe("usePluginIframeSlot", () => {
 		expect(iframeB.style.pointerEvents).toBe("auto")
 		expect(iframeA.style.opacity).toBe("0")
 		expect(result.current.presented).toBe(true)
+	})
+
+	it("paints the ±1 neighbor with the forced theme so a left/right flip stays dark", async () => {
+		const { container, wrapper } = setup()
+		const { result } = renderHook(
+			() =>
+				usePluginIframeSlot({
+					...slotOptions("p-1", "r-1"),
+					forceTheme: "dark",
+					neighbors: [{ resId: "r-2", pluginId: "p-2" }],
+				}),
+			{ wrapper },
+		)
+		attachPlaceholder(result)
+		const iframeA = getIframe(container, 0)
+		const iframeB = getIframe(container, 1)
+
+		// Capture the context pushes each slot posts. The pool transport
+		// reads `iframe.contentWindow` lazily at post time, so shadowing the
+		// per-instance `contentWindow` (not the prototype) captures exactly
+		// this test's pushes without leaking into other tests.
+		const contextPushes: Array<{ resId: string; resolvedTheme: string }> = []
+		const fakeWindow = {
+			postMessage: (msg: {
+				key?: string
+				data?: { resId?: string; resolvedTheme?: string }
+			}) => {
+				if (msg.key === hostPushKeys.context && msg.data !== undefined) {
+					contextPushes.push({
+						resId: msg.data.resId ?? "",
+						resolvedTheme: msg.data.resolvedTheme ?? "",
+					})
+				}
+			},
+		}
+		for (const iframe of [iframeA, iframeB]) {
+			Object.defineProperty(iframe, "contentWindow", {
+				configurable: true,
+				get: () => fakeWindow,
+			})
+		}
+
+		act(() => {
+			iframeA.dispatchEvent(new Event("load"))
+			iframeB.dispatchEvent(new Event("load"))
+		})
+		await flushAll()
+
+		// On a light host (no `dark` class) the neighbor must still inherit
+		// the dialog's forced theme, otherwise a flip flashes a light card.
+		document.documentElement.classList.remove("dark")
+		const neighborPush = contextPushes.find((c) => c.resId === "r-2")
+		expect(neighborPush, "context push for the ±1 neighbor").toBeDefined()
+		expect(neighborPush?.resolvedTheme).toBe("dark")
 	})
 
 	it("shows the iframe after a fallback delay when no ack arrives (legacy SDK)", async () => {
