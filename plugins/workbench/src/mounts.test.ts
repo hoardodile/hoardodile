@@ -11,7 +11,9 @@ import { MOBILE_INITIAL_SCALE } from "@hoardodile/ui/viewport"
 import { describe, expect, it } from "vitest"
 import {
 	createDirectoryProviders,
+	createRebuildBus,
 	createResourceDirProviders,
+	createWorkbenchMounts,
 	wrapPluginHtml,
 } from "../scripts/mounts.mjs"
 
@@ -154,6 +156,185 @@ describe("createDirectoryProviders (single resource)", () => {
 			).toBe("hello")
 		} finally {
 			rmSync(root, { recursive: true, force: true })
+		}
+	})
+})
+
+// ── Rebuild stream (SSE) + no-store plugin bundle ────────────────────────
+
+/** Minimal res double for the SSE bus/mount (writeHead/write/end/on). */
+function fakeSseRes() {
+	const headers: Record<string, string> = {}
+	const listeners: Record<string, Array<() => void>> = {}
+	return {
+		statusCode: 200,
+		headers,
+		written: [] as string[],
+		ended: false,
+		writeHead(status: number, hdrs: Record<string, string>) {
+			this.statusCode = status
+			Object.assign(headers, hdrs)
+		},
+		setHeader(key: string, value: string) {
+			headers[String(key).toLowerCase()] = value
+		},
+		write(data: string) {
+			this.written.push(data)
+			return true
+		},
+		end() {
+			this.ended = true
+		},
+		on(_event: string, fn: () => void) {
+			const list = listeners[_event] ?? []
+			list.push(fn)
+			listeners[_event] = list
+		},
+	}
+}
+
+/** Minimal res double for the plain JSON/bytes mounts. */
+function fakeRes() {
+	const headers: Record<string, string> = {}
+	return {
+		statusCode: 200,
+		headers,
+		body: "" as string,
+		setHeader(key: string, value: string) {
+			headers[String(key).toLowerCase()] = value
+		},
+		end(body: string | Uint8Array = "") {
+			this.body = typeof body === "string" ? body : Buffer.from(body).toString()
+		},
+	}
+}
+
+async function driveMounts(
+	mounts: Array<(req: unknown, res: unknown) => unknown>,
+	path: string,
+	res: unknown,
+) {
+	for (const mount of mounts) {
+		if (await mount({ method: "GET", url: path }, res)) return true
+	}
+	return false
+}
+
+describe("createRebuildBus", () => {
+	it("emits a connect frame and broadcasts rebuild frames to subscribers", () => {
+		const bus = createRebuildBus()
+		const res = fakeSseRes()
+		const off = bus.subscribe(res)
+		try {
+			expect(res.written).toEqual(['data: {"kind":"ready"}\n\n'])
+			bus.emit({ kind: "rebuild" })
+			expect(res.written).toContain('data: {"kind":"rebuild"}\n\n')
+			bus.emit({ kind: "rebuild" })
+			expect(res.written.filter((w) => w.includes('"kind":"rebuild"'))).toEqual(
+				['data: {"kind":"rebuild"}\n\n', 'data: {"kind":"rebuild"}\n\n'],
+			)
+		} finally {
+			off()
+		}
+	})
+
+	it("unsubscribe stops delivery", () => {
+		const bus = createRebuildBus()
+		const res = fakeSseRes()
+		bus.subscribe(res)
+		bus.emit({ kind: "rebuild" })
+		// Re-subscribe a fresh subscriber to prove the first is gone.
+		bus.close()
+		const second = fakeSseRes()
+		const off = bus.subscribe(second)
+		try {
+			bus.emit({ kind: "rebuild" })
+			expect(second.written).toContain('data: {"kind":"rebuild"}\n\n')
+		} finally {
+			off()
+		}
+	})
+
+	it("close ends every open stream and denies further delivery", () => {
+		const bus = createRebuildBus()
+		const a = fakeSseRes()
+		const b = fakeSseRes()
+		bus.subscribe(a)
+		bus.subscribe(b)
+		bus.close()
+		expect(a.ended).toBe(true)
+		expect(b.ended).toBe(true)
+		// After close, emit must not resurrect them.
+		bus.emit({ kind: "rebuild" })
+		expect(a.written.filter((w) => w.includes('"kind":"rebuild"'))).toEqual([])
+	})
+})
+
+describe("rebuild events mount", () => {
+	it("serves an SSE stream over /api/workbench/events and forwards emits", async () => {
+		const bus = createRebuildBus()
+		const mounts = createWorkbenchMounts({
+			providers: { resources: () => [] },
+			rebuildBus: bus,
+		})
+		const res = fakeSseRes()
+		const handled = await driveMounts(mounts, "/api/workbench/events", res)
+		try {
+			expect(handled).toBe(true)
+			expect(res.statusCode).toBe(200)
+			expect(res.headers["content-type"]).toContain("text/event-stream")
+			expect(res.headers["cache-control"]).toContain("no-store")
+			expect(res.written).toEqual(['data: {"kind":"ready"}\n\n'])
+			bus.emit({ kind: "rebuild" })
+			expect(res.written).toContain('data: {"kind":"rebuild"}\n\n')
+		} finally {
+			bus.close()
+		}
+	})
+
+	it("does not swallow the other /api/workbench/* routes", async () => {
+		const bus = createRebuildBus()
+		const mounts = createWorkbenchMounts({
+			providers: { resources: () => ["x"] },
+			rebuildBus: bus,
+		})
+		try {
+			const res = fakeRes()
+			const handled = await driveMounts(mounts, "/api/workbench/resources", res)
+			expect(handled).toBe(true)
+			expect(res.body).toBe('["x"]')
+		} finally {
+			bus.close()
+		}
+	})
+})
+
+describe("static plugin mount", () => {
+	it("serves the bundle with no-store so a reload always picks up a rebuild", async () => {
+		const dir = mkdtempSync(join(tmpdir(), "wb-plugin-"))
+		try {
+			writeFileSync(join(dir, "index.html"), '<div id="root"></div>')
+			writeFileSync(join(dir, "app.js"), "console.log(1)")
+			const mounts = createWorkbenchMounts({
+				pluginDir: dir,
+				providers: { resources: () => [] },
+			})
+
+			const html = fakeRes()
+			await driveMounts(mounts, "/plugin/index.html", html)
+			expect(html.headers["cache-control"]).toBe(
+				"no-cache, no-store, must-revalidate",
+			)
+			expect(html.body).toContain('<div id="root"></div>')
+
+			const js = fakeRes()
+			await driveMounts(mounts, "/plugin/app.js", js)
+			expect(js.headers["cache-control"]).toBe(
+				"no-cache, no-store, must-revalidate",
+			)
+			expect(Buffer.from(js.body).toString()).toBe("console.log(1)")
+		} finally {
+			rmSync(dir, { recursive: true, force: true })
 		}
 	})
 })

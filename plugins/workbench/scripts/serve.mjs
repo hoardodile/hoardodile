@@ -24,9 +24,12 @@ import { fileURLToPath } from "node:url"
 import {
 	contentTypeOf,
 	createDirectoryProviders,
+	createRebuildBus,
 	createResourceDirProviders,
 	createWorkbenchMounts,
 } from "./mounts.mjs"
+
+export { createRebuildBus }
 
 const DIST_DIR = resolve(dirname(fileURLToPath(import.meta.url)))
 
@@ -46,6 +49,7 @@ export function serveWorkbench(opts) {
 		port = 5199,
 		host = "127.0.0.1",
 		onReady,
+		rebuildBus,
 	} = opts
 	if (pluginDir === undefined) {
 		console.warn("[workbench] no plugin dir — pass --plugin <dist-dir>")
@@ -82,6 +86,10 @@ export function serveWorkbench(opts) {
 		pluginDir,
 		providers,
 		vault: vaultRoot,
+		// Always publish the SSE route so the page connects cleanly; the
+		// CLI passes the bus it drives from its dist watcher, standalone
+		// servers keep an idle bus that never emits.
+		rebuildBus: rebuildBus ?? createRebuildBus(),
 	})
 
 	const server = createServer((req, res) => {

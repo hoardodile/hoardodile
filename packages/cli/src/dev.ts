@@ -436,15 +436,18 @@ export async function executeDev(opts: DevOptions): Promise<number> {
 	// The workbench mounts the BUILT bundle: `hoardodile plugin build`
 	// emits manifest.json, index.html and main.js into dist/. Serving the
 	// source root instead would hand the iframe raw .tsx.
-	const { serveWorkbench } = await loadWorkbenchServe(pluginDir)
+	const { serveWorkbench, createRebuildBus } =
+		await loadWorkbenchServe(pluginDir)
 	// The workbench may rebind to a free port, so the printed URL must be
 	// the actual one. Capture it via `onReady` and only surface it after
 	// the build settles, so the plugin's vite watch-build output does not
 	// scroll it off-screen.
+	const rebuildBus = createRebuildBus()
 	let workbenchUrl = `http://127.0.0.1:${opts.port}`
 	const server = await serveWorkbench({
 		pluginDir: distDir,
 		port: opts.port,
+		rebuildBus,
 		onReady: (url: string) => {
 			workbenchUrl = url
 		},
@@ -476,6 +479,13 @@ export async function executeDev(opts: DevOptions): Promise<number> {
 			const captured = snapshots?.captured() ?? []
 			snapshots?.invalidate()
 			for (const resId of captured) void snapshots?.refresh(resId)
+			// Tell the open workbench page to reload its plugin iframe so it
+			// picks up the rebuilt client bundle (and, via the invalidated
+			// snapshots above, the recaptured server hooks). The context
+			// refetch coalesces with any in-flight recapture through the
+			// snapshot store's running map, so a reload never shows a stale
+			// `sourceMeta` for long.
+			rebuildBus.emit({ kind: "rebuild" })
 		})
 	} else {
 		console.error(
@@ -492,6 +502,7 @@ export async function executeDev(opts: DevOptions): Promise<number> {
 			stopDistWatch?.()
 			watcher.kill()
 			source?.close?.()
+			rebuildBus.close()
 			server.close(() => resolveStop())
 		}
 		process.once("SIGINT", stop)

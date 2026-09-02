@@ -27,6 +27,7 @@ import {
 } from "./context.ts"
 import { type Mounted, mountIframe, pushPresentation } from "./host.ts"
 import { i18n } from "./i18n.ts"
+import { subscribeToPluginRebuilds } from "./rebuild-events.ts"
 import {
 	emptySession,
 	hasCacheOverride,
@@ -213,6 +214,21 @@ export function App() {
 	useEffect(() => {
 		saveWorkbenchConfig(config)
 	}, [config])
+
+	// Auto-refresh the plugin iframe when the dev watch-build rebuilds the
+	// bundle (`hoardodile plugin dev` broadcasts over
+	// `/api/workbench/events`). Coalesces rebuild bursts so the iframe does
+	// not remount several times in a row; the reload re-seeds the persisted
+	// session, exactly like the manual Reload button.
+	const lastRebuildAtRef = useRef(0)
+	useEffect(() => {
+		return subscribeToPluginRebuilds(() => {
+			const now = Date.now()
+			if (now - lastRebuildAtRef.current < 300) return
+			lastRebuildAtRef.current = now
+			setReloadNonce((n) => n + 1)
+		})
+	}, [])
 
 	// Latest presentation for the initial context — the mount effect must
 	// not re-run (and remount the iframe) when a setting changes. A fresh

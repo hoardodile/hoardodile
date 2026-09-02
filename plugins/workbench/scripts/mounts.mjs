@@ -240,6 +240,11 @@ function staticMount(basePath, dir) {
 		// asset fetches need permissive CORS, same as the real server's
 		// plugin render route.
 		res.setHeader("access-control-allow-origin", "*")
+		// The workbench always serves a dev-rebuildable bundle, so a reload
+		// (manual or the rebuild-driven auto-refresh) must re-fetch the
+		// current build rather than a browser-cached one — mirrors the
+		// host server's dev branch (`NODE_ENV=development` / `entry.dev`).
+		res.setHeader("cache-control", "no-cache, no-store, must-revalidate")
 		const rel = decodeURIComponent(url.pathname.slice(basePath.length)).replace(
 			/^\/+/,
 			"",
@@ -503,12 +508,84 @@ function workbenchApiMount(providers) {
 	}
 }
 
+// ── Rebuild events (SSE) ────────────────────────────────────────────────
+
+/**
+ * A minimal subscriber registry that broadcasts rebuild signals to the
+ * connected workbench pages over SSE. `hoardodile plugin dev` owns the
+ * rebuild detection (its dist watcher) and calls `emit` after it has
+ * invalidated and re-captured the hook snapshots, so a page that reloads
+ * in response always sees the fresh build.
+ */
+export function createRebuildBus() {
+	const subscribers = new Set()
+	const PING_INTERVAL_MS = 15_000
+	return {
+		subscribe(res) {
+			res.writeHead(200, {
+				"content-type": "text/event-stream",
+				"cache-control": "no-cache, no-store, must-revalidate",
+				connection: "keep-alive",
+			})
+			// Connect frame so the page can tell "connected" from silence;
+			// it is not a rebuild signal.
+			res.write('data: {"kind":"ready"}\n\n')
+			const ping = setInterval(() => {
+				try {
+					res.write(": ping\n\n")
+				} catch {
+					// Response already gone; the `close` handler cleans up.
+				}
+			}, PING_INTERVAL_MS)
+			subscribers.add(res)
+			res.on("close", () => {
+				clearInterval(ping)
+				subscribers.delete(res)
+			})
+			return () => {
+				clearInterval(ping)
+				subscribers.delete(res)
+			}
+		},
+		emit(payload) {
+			const frame = `data: ${JSON.stringify(payload)}\n\n`
+			for (const res of subscribers) {
+				try {
+					res.write(frame)
+				} catch {
+					// Skip responses that went away; `close` cleans up.
+				}
+			}
+		},
+		close() {
+			for (const res of subscribers) {
+				try {
+					res.end()
+				} catch {
+					// Already ended.
+				}
+			}
+			subscribers.clear()
+		},
+	}
+}
+
+/** `GET /api/workbench/events` — the SSE rebuild stream back to the page. */
+function rebuildEventsMount(bus) {
+	return (req, res) => {
+		const url = new URL(req.url ?? "/", "http://workbench.local")
+		if (url.pathname !== "/api/workbench/events") return false
+		bus.subscribe(res)
+		return true
+	}
+}
+
 /**
  * Build the workbench's request handlers in match order. Each returns
  * `true` when it handled the request.
  */
 export function createWorkbenchMounts(opts) {
-	const { pluginDir, providers } = opts
+	const { pluginDir, providers, rebuildBus } = opts
 	const mounts = []
 	if (pluginDir !== undefined) mounts.push(staticMount("/plugin", pluginDir))
 	if (providers.files !== undefined) {
@@ -522,6 +599,9 @@ export function createWorkbenchMounts(opts) {
 		mounts.push(pluginAssetsMount(opts.vault))
 		mounts.push(workbenchVaultMount(opts.vault))
 	}
+	// Before the `/api/workbench/*` catch-all mount, otherwise its
+	// `pathname.startsWith("/api/workbench/")` would swallow the SSE route.
+	if (rebuildBus !== undefined) mounts.push(rebuildEventsMount(rebuildBus))
 	mounts.push(workbenchApiMount(providers))
 	return mounts
 }

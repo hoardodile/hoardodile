@@ -2,6 +2,25 @@ import type { Server } from "node:http"
 import type { ImageVariantQuery } from "@hoardodile/sdk-types/image-variant"
 
 /**
+ * A rebuild signal broadcast over the `/api/workbench/events` SSE stream
+ * when the dev watch-build rewrites the plugin bundle. The page reloads
+ * its plugin iframe in response.
+ */
+export type RebuildEvent = { readonly kind: "rebuild" }
+
+/**
+ * The SSE rebuild bus a caller can drive ahead of the workbench server
+ * (`hoardodile plugin dev` passes one; `emit` is called after the hook
+ * snapshots are invalidated and re-captured). A standalone server uses an
+ * internal idle bus that never emits.
+ */
+export type RebuildBus = {
+	readonly subscribe: (res: import("node:http").ServerResponse) => () => void
+	readonly emit: (payload: RebuildEvent) => void
+	readonly close: () => void
+}
+
+/**
  * Server-side hook results captured against the selected resource. The
  * workbench pushes these into the plugin iframe context so it renders
  * exactly like the app does. Produced by `hoardodile plugin dev`; the
@@ -163,6 +182,13 @@ export type ServeWorkbenchOptions = {
 	 * settled, instead of being buried under the watcher's output.
 	 */
 	readonly onReady?: (url: string) => void
+	/**
+	 * The rebuild SSE bus mounted at `/api/workbench/events`. `hoardodile
+	 * plugin dev` drives it from its dist watcher to auto-refresh the
+	 * page; when omitted an internal idle bus serves the route (so the
+	 * page still connects cleanly) but never emits.
+	 */
+	readonly rebuildBus?: RebuildBus
 }
 
 /**
@@ -171,6 +197,9 @@ export type ServeWorkbenchOptions = {
  * listening.
  */
 export function serveWorkbench(opts: ServeWorkbenchOptions): Promise<Server>
+
+/** Create an SSE rebuild bus to drive from a dist watcher (see {@link RebuildBus}). */
+export function createRebuildBus(): RebuildBus
 
 /** Providers over one plain directory, standing in for a single resource. */
 export function createDirectoryProviders(

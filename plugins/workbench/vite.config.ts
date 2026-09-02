@@ -9,6 +9,7 @@ import { defineConfig } from "vite"
 // module, so a route can never exist in only one of them.
 import {
 	createDirectoryProviders,
+	createRebuildBus,
 	createResourceDirProviders,
 	createWorkbenchMounts,
 } from "./scripts/mounts.mjs"
@@ -60,6 +61,10 @@ function workbenchMountsPlugin(): Plugin {
 			const mounts = createWorkbenchMounts({
 				pluginDir,
 				providers,
+				// Idle bus: the workbench's own dev server does not watch a
+				// plugin build for rebuilds, but registering the SSE route
+				// keeps the page from error-looping on a missing endpoint.
+				rebuildBus: createRebuildBus(),
 				// The dev vault lives with the plugin's other workbench
 				// scratch (`.hoardodile/extract`): user-consented dev
 				// downloads never touch the data or storage root.
