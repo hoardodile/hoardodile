@@ -4,3 +4,8 @@ dist
 .hoardodile
 testdata-real
 release
+
+# OS / editor junk
+.DS_Store
+Thumbs.db
+*.local

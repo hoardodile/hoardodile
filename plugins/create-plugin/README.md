@@ -25,7 +25,8 @@ Vitest unit tests against `createResourceAPIFixture`. It also ships the
 development toolchain hoardodile uses — `biome.json` (format + lint),
 `lefthook.yml` (git hooks: Conventional-Commits `commit-msg` + biome/tsc
 `pre-commit`, installed by `postinstall` in a git repo), the release-it
-changelog/release setup, and `AGENTS.md`.
+changelog/release setup, the repo-convention dotfiles (`.gitattributes`,
+`.editorconfig`, `.gitignore`, `.nvmrc`), and `AGENTS.md`.
 
 ```bash
 cd my-plugin
