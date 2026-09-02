@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.11](https://github.com/hoardodile/hoardodile/compare/v0.1.10...v0.1.11) (2026-09-02)
+
+### Features
+
+* **workbench:** auto-refresh the plugin iframe on rebuild ([312eff5](https://github.com/hoardodile/hoardodile/commit/312eff5f69873cc8f4200bda61d7bd922ab058b6))
+
 ## [0.1.10](https://github.com/hoardodile/hoardodile/compare/v0.1.9...v0.1.10) (2026-09-01)
 
 ### Bug Fixes
