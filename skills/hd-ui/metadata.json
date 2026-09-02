@@ -1,0 +1,7 @@
+{
+	"version": "1.0.0",
+	"organization": "Hoardodile",
+	"date": "2026-09-02",
+	"abstract": "Using the @hoardodile/ui component library — a published, shadcn-style design-system package (built on @base-ui/react) for the host app, desktop shell and plugin iframes. Follows the shadcn skill layout: a project-context check (host SDK applyTheme/applyFonts vs standalone .light/.dark/.theme-<id> + data-icon-style), usage principles (use existing components, compose, variants over custom styles, semantic tokens, defaults are the design), and Critical Rules split into rules/ files — styling.md (className for layout only, no hard-coded pixel values, cn(), semantic tokens, no manual dark:/z-index), composition.md (groups, overlays, Title, Button loading, use components not markup), icons.md (registry only, Icon tiers, data-icon, no sizing classes), forms.md (Form/FormField, control choice, validation/disabled states), base-ui.md (render not asChild, nativeButton, base prop shapes), and theme.md (theme.css, host-theme following, motion props, peer deps) — plus design.md (a self-contained design reference: the 8 principles, ten color roles, typography, the variable-ized size/measure tokens, layout/measures, states, overlays, motion), a component-selection table (with a Design-at-a-glance summary in the main SKILL.md), a subpath reference, and a workflow/audit checklist. For surfaces that use @hoardodile/ui.",
+	"references": ["https://github.com/hoardodile/hoardodile/tree/main/DESIGN.md"]
+}

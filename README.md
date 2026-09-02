@@ -41,7 +41,10 @@ docker compose up -d
 
 ```bash
 npx skills add hoardodile/hoardodile@hd-plugin
-npx skills add hoardodile/hoardodile@hd-plugin-design
+
+# Choose the UI skill that matches your project — they are mutually exclusive:
+npx skills add hoardodile/hoardodile@hd-ui       # if you use @hoardodile/ui
+npx skills add hoardodile/hoardodile@hd-design    # if you do NOT use @hoardodile/ui
 ```
 
 ## Contributions

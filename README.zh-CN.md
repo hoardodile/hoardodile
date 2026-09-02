@@ -41,7 +41,10 @@ docker compose up -d
 
 ```bash
 npx skills add hoardodile/hoardodile@hd-plugin
-npx skills add hoardodile/hoardodile@hd-plugin-design
+
+# 按你的项目选择 UI 技能，二者二选一：
+npx skills add hoardodile/hoardodile@hd-ui       # 使用 @hoardodile/ui 组件库时
+npx skills add hoardodile/hoardodile@hd-design    # 不使用 @hoardodile/ui 时
 ```
 
 ## 贡献

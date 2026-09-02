@@ -66,7 +66,7 @@ export type PluginDownloadConsentDialogProps = {
  * and the plugin's stated reason, with Allow / Deny and a session-remember
  * checkbox. A batch is one dialog listing all items.
  *
- * Design contract (hd-plugin-design): card + hairline + `--radius-2xl`
+ * Design contract (hd-design): card + hairline + `--radius-2xl`
  * + `--shadow-dialog`, footer parted by an inset hairline, focus on the
  * dialog container; the danger stays in copy and actions, never in color.
  */

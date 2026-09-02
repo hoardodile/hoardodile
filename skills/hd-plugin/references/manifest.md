@@ -36,7 +36,7 @@ the plugin really needs a newer app. Omit it for plugins that support every
 release.
 **`icon`**: shown on the plugin's card/row in Settings → Plugins and the
 install preview. A **Solar glyph name** (any glyph from the host's full
-Solar index — see `hd-plugin-design` Iconography) or a relative asset
+Solar index — see `hd-design` Iconography) or a relative asset
 path inside your plugin zip. Names outside the Solar set render the
 fallback icon; `http(s):`/`data:` URIs and `..` paths are rejected on
 install.
@@ -108,7 +108,7 @@ kind labels, etc.) are referenced from the `ui` block:
   (counts, durations, versions…).
 - **`search.kinds`** — searchable categories your plugin supplies.
   `key` is stable and typed; labels via `{{t()}}`; icons via
-  `{{icon('<SolarGlyph>')}}` (see `hd-plugin-design` for the icon set).
+  `{{icon('<SolarGlyph>')}}` (see `hd-design` for the icon set).
   Every kind must appear in the plugin's `searchMeta` hook output — the
   facets are boolean flags computed once at import/upload time (not per
   search), and `v` in that payload bumps whenever the plugin changes its

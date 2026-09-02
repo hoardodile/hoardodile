@@ -31,7 +31,7 @@ lives in `references/`.
   anchor jumps, danmaku, image hashes for duplicate detection.
 - Debugging `detect`/`sourceMeta`/`searchMeta` results or iframe client
   behavior.
-- Building plugin UI — also apply the `hd-plugin-design` skill.
+- Building plugin UI — import [`@hoardodile/ui`](https://www.npmjs.com/package/@hoardodile/ui) components and follow the `hd-ui` skill for usage/composition; if you build UI without it, apply the `hd-design` skill.
 
 ## Workflow
 
@@ -132,6 +132,6 @@ types from the root entry.
 - The contract is documented inline in the SDK:
   [`plugins/sdk-types/src/plugin-definition.ts`](../../plugins/sdk-types/src/plugin-definition.ts) (hooks, definitions,
   fixtures) — the authoritative reference behind `references/server.md`.
-- Plugin UI: [`@hoardodile/ui`](https://www.npmjs.com/package/@hoardodile/ui) (see `hd-plugin-design`).
+- Plugin UI: [`@hoardodile/ui`](https://www.npmjs.com/package/@hoardodile/ui) — see the `hd-ui` skill for usage/composition; for UI built without it, see `hd-design`.
 - `references/tooling.md` covers the registry bootstrap, the plugin
   CLI/workbench toolchain and the test/deploy loop.

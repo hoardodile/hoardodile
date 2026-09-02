@@ -1,0 +1,7 @@
+{
+	"version": "1.0.0",
+	"organization": "Hoardodile",
+	"date": "2026-09-02",
+	"abstract": "The hoardodile design system as a standalone, package-independent spec — for surfaces that do NOT use @hoardodile/ui. Covers the design principles, the five palettes (light+dark) and how to theme a surface by hand (documentElement .light/.dark + .theme-<id> + data-icon-style, font-cascade via --font-app/--font-doc-*), the ten color roles and chip surfaces, the type scale and font stacks (incl. CJK tiny text), the 4px spacing grid + radius family + the one/two shadows, Solar iconography (three tiers, duotone via --icon-tone, marks), layout (three-pane + caption strip, measures, control geometry, breakpoints, one scroll container), states, engine-aware scrollbars, overlay/dialog anatomy, and motion principles/tokens — plus a standalone implementation checklist. Authority is the repo-root DESIGN.md; when you CAN use @hoardodile/ui, prefer it (the package carries this system) and do not apply this skill.",
+	"references": ["https://github.com/hoardodile/hoardodile/tree/main/DESIGN.md"]
+}
