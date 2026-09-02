@@ -81,7 +81,7 @@ const ALLOWED_LICENSE_TOKENS = new Set([
 	"MPL-2.0",
 	// LGPL-2.1 and GPL-3.0-or-later are fine here: the app is GPL-3.0 and
 	// ffmpeg/ffprobe/7-Zip ship as standalone binaries invoked as child
-	// processes (ffmpeg-static / @derhuerst/ffprobe-static /
+	// processes (@hoardodile/ffmpeg-bin / @hoardodile/ffprobe-bin /
 	// @hoardodile/7z-bin — GPL-3.0 wrapper around the 7-Zip binary, itself
 	// LGPL-2.1 + unRAR exception).
 	"LGPL-2.1",
@@ -121,8 +121,7 @@ function isLicenseAllowed(raw) {
 }
 
 // Some very old packages declare a bare "BSD" while carrying the 2-clause
-// text (parse-cache-control, pulled in by ffmpeg-static's http-basic).
-// "Custom: License.txt" was used by 7z-wasm's GNU LGPL + unRAR
+// text. "Custom: License.txt" was used by 7z-wasm's GNU LGPL + unRAR
 // restriction license (the same license as the 7-Zip binary it compiled);
 // kept as an alias in case a similar license-text-only package returns.
 const LEGACY_LICENSE_ALIASES = {

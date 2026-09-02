@@ -148,9 +148,9 @@ export function allowBuildsYaml(): string {
  * all up front (mirroring the root workspace's allowBuilds).
  */
 const ALLOWED_BUILDS = [
-	"@derhuerst/ffprobe-static",
+	"@hoardodile/ffmpeg-bin",
+	"@hoardodile/ffprobe-bin",
 	"@hoardodile/7z-bin",
-	"ffmpeg-static",
 	"lefthook",
 ]
 

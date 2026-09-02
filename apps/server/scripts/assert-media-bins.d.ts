@@ -1,6 +1,6 @@
 export const OPTIONAL_BIN_PACKAGES: readonly [
-	"ffmpeg-static",
-	"@derhuerst/ffprobe-static",
+	"@hoardodile/ffmpeg-bin",
+	"@hoardodile/ffprobe-bin",
 	"@hoardodile/7z-bin",
 ]
 

@@ -96,9 +96,9 @@ describe("rewritePackageJson", () => {
 describe("workspace build approvals", () => {
 	it("allowBuildsYaml approves lefthook and host's optional binaries", () => {
 		const yaml = allowBuildsYaml()
-		expect(yaml).toContain("'@derhuerst/ffprobe-static': true")
+		expect(yaml).toContain("'@hoardodile/ffprobe-bin': true")
+		expect(yaml).toContain("'@hoardodile/ffmpeg-bin': true")
 		expect(yaml).toContain("'@hoardodile/7z-bin': true")
-		expect(yaml).toContain("'ffmpeg-static': true")
 		expect(yaml).toContain("'lefthook': true")
 	})
 

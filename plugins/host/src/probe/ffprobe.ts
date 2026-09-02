@@ -4,7 +4,7 @@
  * differ in how they read the payload, so the process handling and the
  * payload shapes live here.
  *
- * The ffprobe binary path is resolved lazily. `@derhuerst/ffprobe-static`
+ * The ffprobe binary path is resolved lazily. `@hoardodile/ffprobe-bin`
  * is an optional dependency of this package — not shipped in the host
  * tarball. Dev resolves it from this package's `node_modules`; `pnpm
  * start` and the desktop sidecar resolve it from the server
@@ -17,7 +17,7 @@ import { execa } from "execa"
 type ResolveFfprobeDeps = {
 	readonly env?: NodeJS.ProcessEnv
 	/** Override for tests so they never hit the real module. */
-	readonly loadStatic?: () => string | undefined
+	readonly loadStatic?: () => string | null | undefined
 }
 
 const requireCjs = createRequire(import.meta.url)
@@ -27,7 +27,7 @@ const requireCjs = createRequire(import.meta.url)
  *
  * Precedence:
  *   1. The `FFPROBE_PATH` env var.
- *   2. `@derhuerst/ffprobe-static` via lazy `createRequire` — the
+ *   2. `@hoardodile/ffprobe-bin` via lazy `createRequire` — the
  *      installer package stays out of the host tarball.
  *   3. A bare command name, letting operators with ffprobe on PATH run
  *      the CLI or server directly.
@@ -42,7 +42,7 @@ export function resolveFfprobePath(deps: ResolveFfprobeDeps = {}): string {
 
 function loadInstallerFfprobe(): string | undefined {
 	try {
-		const mod: unknown = requireCjs("@derhuerst/ffprobe-static")
+		const mod: unknown = requireCjs("@hoardodile/ffprobe-bin")
 		if (typeof mod === "string" && mod.length > 0) return mod
 		if (
 			mod !== null &&

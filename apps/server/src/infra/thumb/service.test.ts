@@ -444,11 +444,17 @@ describe("thumb service", () => {
 	test("resolveFfmpegPaths falls back to installer binaries when no env override", () => {
 		const paths = resolveFfmpegPaths({
 			env: {},
-			loadStatic: () => "/node_modules/ffmpeg-static/ffmpeg",
-			loadStaticFfprobe: () => "/node_modules/ffprobe-static/ffprobe",
+			loadStatic: () =>
+				"/node_modules/@hoardodile/ffmpeg-bin/bin/win32-x64/ffmpeg.exe",
+			loadStaticFfprobe: () =>
+				"/node_modules/@hoardodile/ffprobe-bin/bin/win32-x64/ffprobe.exe",
 		})
-		expect(paths.ffmpeg).toBe("/node_modules/ffmpeg-static/ffmpeg")
-		expect(paths.ffprobe).toBe("/node_modules/ffprobe-static/ffprobe")
+		expect(paths.ffmpeg).toBe(
+			"/node_modules/@hoardodile/ffmpeg-bin/bin/win32-x64/ffmpeg.exe",
+		)
+		expect(paths.ffprobe).toBe(
+			"/node_modules/@hoardodile/ffprobe-bin/bin/win32-x64/ffprobe.exe",
+		)
 	})
 
 	test("resolveFfmpegPaths falls back to PATH lookup when static is unavailable", () => {

@@ -20,10 +20,11 @@
 
 FROM node:24-bookworm-slim AS build
 
-# 7z-bin's install script downloads its binary through `curl` (ffmpeg-static
-# style); bookworm-slim ships neither it nor the CA bundle. git serves the
-# root postinstall (lefthook), which also needs a repository — the manifest
-# stage has none until `COPY . .`, so an empty one is initialized below.
+# 7z-bin's install script downloads its binary through `curl` (as do the
+# @hoardodile/*-bin packages); bookworm-slim ships neither curl nor the CA
+# bundle. git serves the root postinstall (lefthook), which also needs a
+# repository — the manifest stage has none until `COPY . .`, so an empty
+# one is initialized below.
 RUN apt-get update \
 	&& apt-get install -y --no-install-recommends curl ca-certificates git \
 	&& rm -rf /var/lib/apt/lists/*

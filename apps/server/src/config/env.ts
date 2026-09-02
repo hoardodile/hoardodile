@@ -247,10 +247,10 @@ const envSchema = z
 			.default(256 * 1024 * 1024),
 		/**
 		 * Optional overrides for the `ffmpeg` / `ffprobe` binaries. When
-		 * unset, `ffmpeg-static` / `@derhuerst/ffprobe-static` (dev: host
-		 * `node_modules`; `pnpm start` / desktop: server `dist/node_modules`)
-		 * or PATH resolve them instead, so neither CI nor a fresh clone
-		 * needs extra setup.
+		 * unset, `@hoardodile/ffmpeg-bin` / `@hoardodile/ffprobe-bin` (dev:
+		 * host `node_modules`; `pnpm start` / desktop: server
+		 * `dist/node_modules`) or PATH resolve them instead, so neither CI
+		 * nor a fresh clone needs extra setup.
 		 */
 		FFMPEG_PATH: z.string().min(1).optional(),
 		FFPROBE_PATH: z.string().min(1).optional(),

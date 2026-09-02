@@ -42,7 +42,8 @@ const desktopRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..")
  * The v1 release matrix: win32-x64, linux-x64, darwin-arm64. `resourcesRel`
  * is the electron-builder resources path relative to `release/` (the .app
  * bundle on macOS) and the file names are the platform-truth of the staged
- * natives (7-Zip is `7z.exe`/`7zz`, ffmpeg-static is `ffmpeg.exe`/`ffmpeg`).
+ * natives (7-Zip is `7z.exe`/`7zz`, @hoardodile/ffmpeg-bin is
+ * `bin/<platform>-<arch>/ffmpeg.exe`/`ffmpeg`).
  */
 const LAYOUTS = {
 	"win32-x64": {
@@ -104,18 +105,21 @@ const RESOLVABLE_NATIVES = [
 	"better-sqlite3",
 	"sharp",
 	"@node-rs/argon2",
-	"ffmpeg-static",
-	"@derhuerst/ffprobe-static",
+	"@hoardodile/ffmpeg-bin",
+	"@hoardodile/ffprobe-bin",
 	"@hoardodile/7z-bin",
 ]
+
+/** Platform-arch key (`win32-x64`, `linux-x64`, `darwin-arm64`) for the bin folders. */
+const binKey = `${platform}-${arch}`
 
 /** Files (relative to nativeRoot) the runtime needs in addition to resolution. */
 const REQUIRED_FILES = [
 	`better-sqlite3/prebuilds/${layout.sqlitePrebuild}`,
 	layout.sharpDir,
 	layout.argonDir,
-	`ffmpeg-static/${layout.ffmpeg}`,
-	`@derhuerst/ffprobe-static/${layout.ffprobe}`,
+	`@hoardodile/ffmpeg-bin/bin/${binKey}/${layout.ffmpeg}`,
+	`@hoardodile/ffprobe-bin/bin/${binKey}/${layout.ffprobe}`,
 	`@hoardodile/7z-bin/${layout.sevenZip}`,
 ]
 

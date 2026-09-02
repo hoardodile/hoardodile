@@ -37,7 +37,7 @@ pnpm add @hoardodile/host
 
 The content sniffer and the image/video/audio probes (`sniffBytes`,
 `probeImageSource`, `probeAvMedia`, ...) load `sharp` and the
-`ffmpeg-static` / `@derhuerst/ffprobe-static` binaries lazily at runtime;
+`@hoardodile/ffmpeg-bin` / `@hoardodile/ffprobe-bin` binaries lazily at runtime;
 `sharp` is an optional peer, the binaries are optional dependencies and
 install automatically (skip with `--no-optional`; the loaders fall back
 to PATH).

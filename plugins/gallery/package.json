@@ -31,6 +31,7 @@
 	},
 	"devDependencies": {
 		"@hoardodile/cli": "workspace:*",
+		"@hoardodile/ffmpeg-bin": "^1.0.0",
 		"@hoardodile/host": "workspace:*",
 		"@hoardodile/host-web": "workspace:*",
 		"@hoardodile/workbench": "workspace:*",
@@ -40,7 +41,6 @@
 		"@types/node": "catalog:",
 		"@types/react": "catalog:",
 		"@vitejs/plugin-react": "catalog:",
-		"ffmpeg-static": "catalog:",
 		"jsdom": "catalog:",
 		"tailwindcss": "catalog:",
 		"typescript": "catalog:",

@@ -115,15 +115,16 @@ function encodeWav(seconds, frequencyHz) {
 // ── ffmpeg-backed fixtures ───────────────────────────────────────────────
 
 /**
- * An ffmpeg binary, if one can be found: PATH first, then the ffmpeg-static
- * package a hoardodile checkout already has. Absent is fine — the clip
- * and animation are committed, so a fresh clone never re-encodes them.
+ * An ffmpeg binary, if one can be found: PATH first, then the
+ * @hoardodile/ffmpeg-bin package a hoardodile checkout already has. Absent
+ * is fine — the clip and animation are committed, so a fresh clone never
+ * re-encodes them.
  */
 function findFfmpeg() {
 	const probe = spawnSync("ffmpeg", ["-version"], { stdio: "ignore" })
 	if (probe.status === 0) return "ffmpeg"
 	const require = createRequire(import.meta.url)
-	for (const pkg of ["ffmpeg-static"]) {
+	for (const pkg of ["@hoardodile/ffmpeg-bin"]) {
 		try {
 			const resolved = require(pkg)
 			const path = typeof resolved === "string" ? resolved : resolved.path

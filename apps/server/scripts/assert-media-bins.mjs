@@ -9,8 +9,8 @@ import { createRequire } from "node:module"
 import { join, resolve } from "node:path"
 
 export const OPTIONAL_BIN_PACKAGES = [
-	"ffmpeg-static",
-	"@derhuerst/ffprobe-static",
+	"@hoardodile/ffmpeg-bin",
+	"@hoardodile/ffprobe-bin",
 	"@hoardodile/7z-bin",
 ]
 

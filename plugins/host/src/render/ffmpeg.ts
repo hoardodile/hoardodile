@@ -3,7 +3,7 @@
  *
  * Precedence:
  *   1. Explicit env vars (`FFMPEG_PATH`, `FFPROBE_PATH`).
- *   2. `ffmpeg-static` and `@derhuerst/ffprobe-static` via lazy
+ *   2. `@hoardodile/ffmpeg-bin` and `@hoardodile/ffprobe-bin` via lazy
  *      `createRequire`, so they stay out of the host tarball. Dev
  *      resolves them from this package's `node_modules`; `pnpm start`
  *      and the desktop sidecar resolve them from the server
@@ -23,9 +23,9 @@ export type FfmpegPaths = {
 type ResolveDeps = {
 	readonly env?: NodeJS.ProcessEnv
 	/** Override for tests so they never hit the real module. */
-	readonly loadStatic?: () => string | undefined
+	readonly loadStatic?: () => string | null | undefined
 	/** Override for tests so they never hit the real module. */
-	readonly loadStaticFfprobe?: () => string | undefined
+	readonly loadStaticFfprobe?: () => string | null | undefined
 }
 
 export function resolveFfmpegPaths(deps: ResolveDeps = {}): FfmpegPaths {
@@ -52,11 +52,11 @@ export function resolveFfmpegPaths(deps: ResolveDeps = {}): FfmpegPaths {
 }
 
 function loadInstallerFfmpeg(): string | undefined {
-	return loadInstallerPath("ffmpeg-static")
+	return loadInstallerPath("@hoardodile/ffmpeg-bin")
 }
 
 function loadInstallerFfprobe(): string | undefined {
-	return loadInstallerPath("@derhuerst/ffprobe-static")
+	return loadInstallerPath("@hoardodile/ffprobe-bin")
 }
 
 function loadInstallerPath(moduleName: string): string | undefined {
