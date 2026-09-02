@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.12](https://github.com/hoardodile/hoardodile/compare/v0.1.11...v0.1.12) (2026-09-02)
+
+### Bug Fixes
+
+* **agent-skills:** repair hd-ui SKILL.md frontmatter so npx can install it ([bd3a7bc](https://github.com/hoardodile/hoardodile/commit/bd3a7bcd81c385af268c3818fa7dd8a09a374781))
+* **desktop:** use .ico for Windows window/taskbar icon ([29e01a3](https://github.com/hoardodile/hoardodile/commit/29e01a3b514fc0aa7acbf1845683138a3cff51cd))
+* **web:** keep preview neighbors dark and reload stale dev plugin assets ([6e572b6](https://github.com/hoardodile/hoardodile/commit/6e572b6aeaeef4ddf1e58ad5764f05bb0a5453cd))
+
 ## [0.1.11](https://github.com/hoardodile/hoardodile/compare/v0.1.10...v0.1.11) (2026-09-02)
 
 ### Features
