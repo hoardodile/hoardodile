@@ -100,9 +100,17 @@ function iconPathIn(resourcesPath: string, file: string): string | undefined {
 	return undefined
 }
 
-/** 512×512 window icon; also the exe/runtime icon in packaged layouts. */
+/**
+ * Window/taskbar icon. Windows requires .ico (a PNG does not apply to the
+ * taskbar button), so the icon resolves to the multi-size ICO there;
+ * macOS/Linux take the 512×512 PNG. Packaged: `resources/`, dev:
+ * `resources/` under the app path.
+ */
 export function windowIconPath(resourcesPath: string): string | undefined {
-	return iconPathIn(resourcesPath, "icon.png")
+	return iconPathIn(
+		resourcesPath,
+		process.platform === "win32" ? "icon.ico" : "icon.png",
+	)
 }
 
 /** 32×32 tray icon (Windows trays render 16–32 px; feeding 512 turns muddy). */

@@ -76,6 +76,14 @@ console.log(`staged node runtime: ${nodePath}`)
 
 copyFile(join(desktopRoot, "resources", "icon.png"), join(destRoot, "icon.png"))
 copyFile(join(desktopRoot, "resources", "tray.png"), join(destRoot, "tray.png"))
+// The Windows window/taskbar icon must be .ico (a PNG doesn't apply), so
+// stage the multi-size ICO alongside the PNG for win32 targets only.
+if (target === "win32") {
+	copyFile(
+		join(desktopRoot, "resources", "icon.ico"),
+		join(destRoot, "icon.ico"),
+	)
+}
 writeResourcesMarker(destRoot, nodePath, { platform: target, arch })
 
 console.log(
