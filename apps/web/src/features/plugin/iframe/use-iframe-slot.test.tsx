@@ -18,6 +18,9 @@ import {
 // Detail-card payloads the trpcQuery mock hands back, keyed by resId.
 // Set per test before rendering.
 let cardPlugins: Record<string, string> = {}
+// The asset fingerprint the previewInitContext mock reports for any plugin.
+// Switched per test to exercise the replaced-plugin reload path.
+let previewInitAssetVersion: string | undefined
 
 const trpcQuery = vi.fn((...args: unknown[]) => {
 	const [namespace, procedure, input] = args
@@ -36,6 +39,17 @@ const trpcQuery = vi.fn((...args: unknown[]) => {
 		})
 	}
 	// plugin.previewInitContext
+	if (namespace === "plugin" && procedure === "previewInitContext") {
+		return Promise.resolve({
+			prefs: {},
+			cache: {},
+			fileToken: "tok",
+			assetToken: "",
+			...(previewInitAssetVersion !== undefined
+				? { assetVersion: previewInitAssetVersion }
+				: {}),
+		})
+	}
 	return Promise.resolve<unknown>(null)
 })
 
@@ -141,6 +155,7 @@ function makePlaceholder(rect: Rect): HTMLElement {
 afterEach(() => {
 	vi.restoreAllMocks()
 	cardPlugins = {}
+	previewInitAssetVersion = undefined
 	document.body.innerHTML = ""
 })
 
@@ -500,7 +515,7 @@ describe("usePluginIframeSlot", () => {
 				</QueryClientProvider>
 			)
 		}
-		return { container, wrapper }
+		return { container, wrapper, queryClient }
 	}
 
 	afterEach(() => {
@@ -960,5 +975,98 @@ describe("usePluginIframeSlot", () => {
 		expect(
 			postSpy.mock.calls.filter(([msg]) => isContextPush(msg)),
 		).toHaveLength(0)
+	})
+
+	it("reloads the inline iframe before posting context when the plugin's fingerprint moved", async () => {
+		const { container, wrapper, queryClient } = setup()
+		// The plugin list reports the fingerprint the claim was built with;
+		// the bootstrap reports a newer one (simulating a replaced/rebuild
+		// plugin since the entry was created).
+		queryClient.setQueryData(
+			["plugin", "listAll"],
+			[
+				{
+					id: "p-reload-inline",
+					assetVersion: "v1",
+					manifest: { ui: { inheritFont: true } },
+				},
+			],
+		)
+		previewInitAssetVersion = "v2"
+
+		const { result } = renderHook(
+			() =>
+				usePluginIframeSlot({
+					...slotOptions("p-reload-inline", "r-1"),
+					inline: true,
+				}),
+			{ wrapper },
+		)
+		const placeholder = attachPlaceholder(result)
+		const iframe = placeholder.querySelector("iframe")
+		if (iframe === null) throw new Error("no iframe in placeholder")
+		// The claim was built with the stale fingerprint, re-parented and
+		// loaded (the post-re-parent load the context push awaits).
+		expect(iframe.src).toContain("v=v1")
+		act(() => {
+			iframe.dispatchEvent(new Event("load"))
+		})
+		await flushAll()
+		// The bootstrap revealed a newer build: the iframe re-navigates to
+		// the re-versioned URL before the context is posted.
+		expect(iframe.src).toContain("v=v2")
+		// Attach to the post-reload window (a src change keeps the same
+		// window object; only its document is replaced) before the reload
+		// load resolves the push's whenLoaded wait.
+		const win = iframe.contentWindow
+		if (win === null) throw new Error("no contentWindow")
+		const postSpy = vi.spyOn(win, "postMessage")
+		act(() => {
+			iframe.dispatchEvent(new Event("load"))
+		})
+		await flushAll()
+		const pushes = postSpy.mock.calls.filter(([msg]) => isContextPush(msg))
+		expect(pushes).toHaveLength(1)
+		expect(container.querySelector("iframe")).toBeNull()
+	})
+
+	it("does not reload the inline iframe when the fingerprint is unchanged", async () => {
+		const { wrapper, queryClient } = setup()
+		queryClient.setQueryData(
+			["plugin", "listAll"],
+			[
+				{
+					id: "p-same-inline",
+					assetVersion: "v1",
+					manifest: { ui: { inheritFont: true } },
+				},
+			],
+		)
+		previewInitAssetVersion = "v1"
+
+		const { result } = renderHook(
+			() =>
+				usePluginIframeSlot({
+					...slotOptions("p-same-inline", "r-1"),
+					inline: true,
+				}),
+			{ wrapper },
+		)
+		const placeholder = attachPlaceholder(result)
+		const iframe = placeholder.querySelector("iframe")
+		if (iframe === null) throw new Error("no iframe in placeholder")
+		expect(iframe.src).toContain("v=v1")
+		// Same fingerprint: no reload, so the push lands on this window.
+		const win = iframe.contentWindow
+		if (win === null) throw new Error("no contentWindow")
+		const postSpy = vi.spyOn(win, "postMessage")
+		act(() => {
+			iframe.dispatchEvent(new Event("load"))
+		})
+		await flushAll()
+		// Exactly one load, no re-navigation to a new ?v=.
+		expect(iframe.src).toContain("v=v1")
+		const pushes = postSpy.mock.calls.filter(([msg]) => isContextPush(msg))
+		expect(pushes).toHaveLength(1)
 	})
 })
