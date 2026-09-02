@@ -6,6 +6,7 @@ import { useQueryClient } from "@tanstack/react-query"
 import { useTranslation } from "react-i18next"
 import { ImageEditPanel } from "@/components/common/ImageEditPanel"
 import { useEditHubSectionTitle } from "@/components/common/useEditHubSectionTitle"
+import { useExistingImageSrc } from "@/hooks/useExistingImageSrc"
 import { apiPaths } from "@/lib/paths"
 import { invalidateResources } from "../api"
 import { uploadResCoverCropped } from "../utils/coverCapture"
@@ -133,6 +134,14 @@ function ResCoverPanel(props: {
 	const { resId, onSaved } = props
 	const qc = useQueryClient()
 
+	// When a permanent cover already exists, preload it into the cropper so
+	// the user can re-crop / fine-tune it without re-picking a file. The
+	// `?size=original&format=image` URL returns the uploaded cover only and
+	// 404s otherwise (a plugin source-derived frame is not a user upload).
+	const existingSrc = useExistingImageSrc(
+		`${apiPaths.resources.cover(resId)}?size=original&format=image`,
+	)
+
 	async function handleSave(cropped: CroppedImage) {
 		await uploadResCoverCropped(resId, cropped, qc)
 	}
@@ -145,12 +154,14 @@ function ResCoverPanel(props: {
 			previewWidth={280}
 			previewHeight={280}
 			showPreviewSwitch
+			initialSrc={existingSrc}
 			onSave={handleSave}
 			onSaved={onSaved}
 			deleteUrl={apiPaths.resources.cover(resId)}
 			onInvalidate={async () => invalidateResources(qc, resId)}
 			onDeleted={onSaved}
 			deleteTestId="resource-cover-delete"
+			removeTestId="resource-cover-remove"
 		/>
 	)
 }

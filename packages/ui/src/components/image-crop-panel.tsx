@@ -30,12 +30,6 @@ export type ImageCropPanelProps = {
 	readonly onSave: (cropped: CroppedImage) => Promise<unknown>
 	readonly onSaved?: () => void
 	/**
-	 * Called when the user clicks the action button but no image has been
-	 * selected. The parent (e.g. {@link ImageEditPanel}) can treat this as a
-	 * request to remove the existing image.
-	 */
-	readonly onClear?: () => void
-	/**
 	 * When set (e.g. canvas snapshot object URL), skips the empty picker and
 	 * shows the cropper immediately.
 	 */
@@ -98,7 +92,6 @@ export function ImageCropPanel(props: ImageCropPanelProps) {
 		previewHeight: previewHeightProp,
 		onSave,
 		onSaved,
-		onClear,
 		initialSrc,
 		allowChangeSource = true,
 		onSavingChange,
@@ -237,10 +230,7 @@ export function ImageCropPanel(props: ImageCropPanelProps) {
 
 	async function handleSave() {
 		const render = renderRef.current
-		if (render === undefined) {
-			onClear?.()
-			return
-		}
+		if (render === undefined) return
 		setSaving(true)
 		onSavingChange?.(true)
 		try {
@@ -266,14 +256,10 @@ export function ImageCropPanel(props: ImageCropPanelProps) {
 		<Button
 			type="button"
 			onClick={handleSave}
-			disabled={saving}
+			disabled={saving || imageSrc === undefined}
 			data-testid="image-crop-save"
 		>
-			{saving
-				? t("imageCrop.saving")
-				: imageSrc === undefined
-					? t("imageCrop.remove")
-					: t("imageCrop.save")}
+			{saving ? t("imageCrop.saving") : t("imageCrop.save")}
 		</Button>
 	)
 
@@ -288,6 +274,19 @@ export function ImageCropPanel(props: ImageCropPanelProps) {
 					onChange={handleFileChange}
 					data-testid="image-crop-file-input"
 				/>
+			) : null}
+
+			{imageSrc !== undefined && allowChangeSource ? (
+				<Button
+					type="button"
+					variant="secondary"
+					onClick={handleReselect}
+					className="self-center"
+					data-testid="image-crop-reselect"
+				>
+					<RefreshCircle className="h-4 w-4" />
+					{t("imageCrop.reselect")}
+				</Button>
 			) : null}
 
 			<div
@@ -390,18 +389,6 @@ export function ImageCropPanel(props: ImageCropPanelProps) {
 						/>
 					</div>
 					)}
-					{imageSrc !== undefined && allowChangeSource ? (
-						<Button
-							type="button"
-							size="sm"
-							variant="ghost"
-							onClick={handleReselect}
-							className="text-muted-foreground text-xs"
-						>
-							<RefreshCircle className="mr-1 h-3.5 w-3.5" />
-							{t("imageCrop.reselect")}
-						</Button>
-					) : null}
 				</div>
 
 				{previewVisible ? (

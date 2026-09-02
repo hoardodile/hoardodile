@@ -53,6 +53,26 @@ export function DialogFooterActions({ children }: { children: ReactNode }) {
 	return null
 }
 
+/**
+ * Declarative left-edge footer action: contributes the node to the
+ * surrounding dialog's footer front, pushed to the left edge (cancel and
+ * the primary action stay right-aligned — DESIGN.md three-button footers).
+ * Renders nothing outside a dialog.
+ */
+export function DialogFooterLeadingActions({
+	children,
+}: {
+	children: ReactNode
+}) {
+	const slot = useDialogFooterActions()
+	useEffect(() => {
+		if (slot === null) return
+		slot.setLeadingActions(children)
+		return () => slot.setLeadingActions(null)
+	}, [slot, children])
+	return null
+}
+
 export type AppDialogProps = Readonly<{
 	open: boolean
 	onOpenChange: (open: boolean) => void
@@ -122,9 +142,13 @@ export function AppDialog(props: AppDialogProps) {
 	// Footer actions contributed by body panels (DialogFooterActions):
 	// appended after the dialog's own footer, reset when the dialog closes.
 	const [footerActions, setFooterActions] = useState<ReactNode>(null)
+	// Left-edge function key (DialogFooterLeadingActions): rendered at the
+	// footer's left while cancel + the primary action stay right-aligned
+	// (DESIGN.md — three button footers). Reset when the dialog closes.
+	const [leadingActions, setLeadingActions] = useState<ReactNode>(null)
 	const actionsValue = useMemo(
-		() => ({ setFooterActions }),
-		[setFooterActions],
+		() => ({ setFooterActions, setLeadingActions }),
+		[setFooterActions, setLeadingActions],
 	)
 
 	return (
@@ -175,10 +199,24 @@ export function AppDialog(props: AppDialogProps) {
 					</DialogFooterActionsContext.Provider>
 				</DialogBody>
 				{(footer !== undefined && footer !== null) ||
-				footerActions !== null ? (
+				footerActions !== null ||
+				leadingActions !== null ? (
+					// Footer-action placement (DESIGN.md — dialog anatomy):
+					// with a primary action the bar splits — the leading
+					// function key sits at the left edge while cancel + the
+					// primary stay right-aligned ([remove] [cancel] [save]);
+					// without a primary the bar never splits — cancel leads
+					// and the function key holds the right edge ([cancel]
+					// [remove]).
 					<DialogFooter flush={flush}>
+						{leadingActions !== null && footerActions !== null ? (
+							<div className="mr-auto">{leadingActions}</div>
+						) : null}
 						{footer}
 						{footerActions}
+						{leadingActions !== null && footerActions === null ? (
+							<>{leadingActions}</>
+						) : null}
 					</DialogFooter>
 				) : null}
 			</DialogContent>

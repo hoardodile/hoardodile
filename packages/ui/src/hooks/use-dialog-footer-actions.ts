@@ -9,7 +9,15 @@ import { createContext, type ReactNode, useContext } from "react"
  */
 
 type DialogFooterActionsValue = {
+	/** The right-aligned primary action slot (after the dialog's own footer). */
 	readonly setFooterActions: (node: ReactNode | null) => void
+	/**
+	 * The left-edge function key slot, rendered before the dialog's footer so
+	 * a destructive/secondary function key can sit at the left edge while
+	 * cancel and the primary action stay right-aligned (DESIGN.md — three
+	 * button footers).
+	 */
+	readonly setLeadingActions: (node: ReactNode | null) => void
 }
 
 const DialogFooterActionsContext =

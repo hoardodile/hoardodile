@@ -1,6 +1,7 @@
 import type { CroppedImage } from "@hoardodile/ui/components/image-cropper"
 import { useQueryClient } from "@tanstack/react-query"
 import { ImageEditPanel } from "@/components/common/ImageEditPanel"
+import { useExistingImageSrc } from "@/hooks/useExistingImageSrc"
 import { mimeToImageExt } from "@/lib/mime"
 import { apiPaths } from "@/lib/paths"
 import { invalidateCharacters, uploadCharImage } from "../api"
@@ -23,6 +24,12 @@ export function CharImagePanel(props: CharImagePanelProps) {
 	const { charId, variant, onSaved } = props
 	const qc = useQueryClient()
 
+	// When the avatar / fullbody image already exists, preload it into the
+	// cropper so the user can fine-tune the crop without re-picking a file.
+	const existingSrc = useExistingImageSrc(
+		apiPaths.characters.image(charId, variant),
+	)
+
 	async function handleSave(cropped: CroppedImage) {
 		await uploadCharacterImage(charId, variant, cropped)
 		await invalidateCharacters(qc, charId)
@@ -35,12 +42,14 @@ export function CharImagePanel(props: CharImagePanelProps) {
 			previewShape={variant === "avatar" ? "circle" : "square"}
 			cropStageWidth={variant === "avatar" ? 200 : 260}
 			cropStageHeight={variant === "avatar" ? 200 : 500}
+			initialSrc={existingSrc}
 			onSave={handleSave}
 			onSaved={onSaved}
 			deleteUrl={apiPaths.characters.image(charId, variant)}
 			onInvalidate={async () => invalidateCharacters(qc, charId)}
 			onDeleted={onSaved}
 			deleteTestId={`character-image-delete-${variant}`}
+			removeTestId={`character-image-remove-${variant}`}
 		/>
 	)
 }

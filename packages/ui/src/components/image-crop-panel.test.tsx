@@ -141,15 +141,33 @@ describe("ImageCropPanel", () => {
 	})
 
 	it("renders the action button as an inline panel row outside a dialog", () => {
-		const { container } = renderWithI18n(
-			<ImageCropPanel onClear={vi.fn()} onSave={vi.fn()} />,
-		)
+		const { container } = renderWithI18n(<ImageCropPanel onSave={vi.fn()} />)
 
 		expect(screen.getByTestId("image-crop-frame")).toBeInTheDocument()
-		// No image selected: the action button becomes "Remove".
-		const remove = screen.getByTestId("image-crop-save")
-		expect(remove).toHaveTextContent("Remove")
+		// No image selected: the primary stays "Save" but is disabled — it is
+		// never a "Remove" action (removal is a dedicated danger button).
+		const save = screen.getByTestId("image-crop-save")
+		expect(save).toHaveTextContent("Save")
+		expect(save).toBeDisabled()
+		// The reselect ("re-upload") affordance only appears once an image is
+		// selected.
+		expect(screen.queryByTestId("image-crop-reselect")).not.toBeInTheDocument()
 		expect(container.querySelector('[data-slot="dialog-footer"]')).toBeNull()
+	})
+
+	it("keeps the primary Save enabled and labeled 'Save' when an image is present", async () => {
+		renderWithI18n(<ImageCropPanel initialSrc={TALL_IMAGE_SRC} onSave={vi.fn()} />)
+		const save = await screen.findByTestId("image-crop-save")
+		expect(save).toHaveTextContent("Save")
+		expect(save).toBeEnabled()
+	})
+
+	it("renders the reselect button above the container when an image is selected", async () => {
+		renderWithI18n(<ImageCropPanel initialSrc={TALL_IMAGE_SRC} onSave={vi.fn()} />)
+		expect(await screen.findByTestId("image-crop-reselect")).toBeInTheDocument()
+		expect(screen.getByTestId("image-crop-reselect")).toHaveTextContent(
+			"Re-upload",
+		)
 	})
 
 	it("hides the action button when hideActionButton is set", async () => {
