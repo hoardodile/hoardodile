@@ -14,7 +14,6 @@ import {
 	DropdownMenuTrigger,
 } from "@hoardodile/ui/components/dropdown-menu"
 import { Input } from "@hoardodile/ui/components/input"
-import { Surface } from "@hoardodile/ui/components/surface"
 import { TagChip } from "@hoardodile/ui/components/tag-chip"
 import { toast } from "@hoardodile/ui/components/toast"
 import {
@@ -486,9 +485,8 @@ function CharactershipRow(props: CharactershipRowProps) {
 	}
 
 	return (
-		<Surface
-			size="compact"
-			className="group flex flex-col gap-2 transition-colors hover:bg-muted/20"
+		<div
+			className="group flex flex-col gap-2"
 			data-testid={
 				edge !== undefined
 					? `charactership-row-${edge.id}`
@@ -603,7 +601,7 @@ function CharactershipRow(props: CharactershipRowProps) {
 					}
 				/>
 			) : null}
-		</Surface>
+		</div>
 	)
 }
 
