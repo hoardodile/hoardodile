@@ -146,6 +146,9 @@ export function serveWorkbench(opts) {
 
 function serveSpa(req, res) {
 	const url = new URL(req.url ?? "/", "http://workbench.local")
+	// Dev server: the shell and its (hashed) assets are never browser-cached,
+	// so a workbench rebuild is picked up on the next load.
+	res.setHeader("cache-control", "no-cache, no-store, must-revalidate")
 	if (url.pathname === "/") {
 		res.setHeader("content-type", "text/html; charset=utf-8")
 		res.end(readFileSync(join(DIST_DIR, "index.html")))

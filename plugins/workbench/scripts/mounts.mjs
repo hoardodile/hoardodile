@@ -107,6 +107,11 @@ function sendJson(res, value) {
 
 function sendBytes(res, contentType, bytes) {
 	res.setHeader("content-type", contentType)
+	// Dev server: never let the browser cache the raw bytes a plugin reads
+	// (data files, preview/seek frames, extracted content, covers). Mirrors
+	// the `/plugin` dev bundle and `sendJson`, so a rebuild/reload always
+	// re-fetches the current content instead of a browser-cached copy.
+	res.setHeader("cache-control", "no-cache, no-store, must-revalidate")
 	res.end(bytes)
 }
 

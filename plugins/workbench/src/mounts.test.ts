@@ -338,3 +338,47 @@ describe("static plugin mount", () => {
 		}
 	})
 })
+
+describe("byte mounts serve no-store so a rebuild is never masked by the browser cache", () => {
+	it("serves /data bytes with no-cache, no-store, must-revalidate", async () => {
+		const root = mkdtempSync(join(tmpdir(), "wb-data-"))
+		try {
+			writeFileSync(join(root, "doc.txt"), "v1")
+			const data = createDirectoryProviders(root)
+			const mounts = createWorkbenchMounts({
+				providers: { resources: () => [], files: data.files },
+			})
+			const res = fakeRes()
+			const handled = await driveMounts(mounts, "/data/doc.txt", res)
+			expect(handled).toBe(true)
+			expect(res.headers["cache-control"]).toBe(
+				"no-cache, no-store, must-revalidate",
+			)
+		} finally {
+			rmSync(root, { recursive: true, force: true })
+		}
+	})
+
+	it("serves an /api/resources file with the same no-store header", async () => {
+		const root = mkdtempSync(join(tmpdir(), "wb-resfile-"))
+		try {
+			writeFileSync(join(root, "entry.txt"), "entry")
+			const data = createDirectoryProviders(root)
+			const mounts = createWorkbenchMounts({
+				providers: { resources: () => [], files: data.files },
+			})
+			const res = fakeRes()
+			const handled = await driveMounts(
+				mounts,
+				"/api/resources/workbench/files/tok/entry.txt",
+				res,
+			)
+			expect(handled).toBe(true)
+			expect(res.headers["cache-control"]).toBe(
+				"no-cache, no-store, must-revalidate",
+			)
+		} finally {
+			rmSync(root, { recursive: true, force: true })
+		}
+	})
+})
