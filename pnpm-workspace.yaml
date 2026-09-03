@@ -63,3 +63,14 @@ minimumReleaseAgeExclude:
   - '@hoardodile/7z-bin@1.1.3'
   - '@hoardodile/ffmpeg-bin@1.0.0'
   - '@hoardodile/ffprobe-bin@1.0.0'
+  - fast-uri@3.1.7 || 4.1.4
+# fast-uri carries high-severity advisories (host confusion / SSRF via IDN,
+# IPv6 and percent-decoding normalization): GHSA-5jgf-p345-68v8,
+# GHSA-f65p-4m7j-42xc, GHSA-fph4-wmhf-6fwf, GHSA-jqff-g426-hqxp. The parent
+# ranges (ajv ^3, @fastify/ajv-compiler & fast-json-stringify ^4) already
+# allow the patched releases, but pnpm keeps an existing transitive
+# resolution, so pin each line to the first fixed version — otherwise the
+# release workflow's `pnpm audit --prod --audit-level high` gate fails.
+overrides:
+  fast-uri@^3: 3.1.7
+  fast-uri@^4: 4.1.4
