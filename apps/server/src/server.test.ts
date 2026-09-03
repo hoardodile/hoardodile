@@ -2150,6 +2150,19 @@ describe("plugin upload limits", () => {
 		return buffer(zip.outputStream)
 	}
 
+	/** Like {@link buildZip}, but pins every entry to one archive timestamp. */
+	async function buildZipWithMtime(
+		entries: readonly (readonly [string, Buffer])[],
+		mtime: Date,
+	): Promise<Buffer> {
+		const zip = new yazl.ZipFile()
+		for (const [name, data] of entries) {
+			zip.addBuffer(data, name, { mtime })
+		}
+		zip.end()
+		return buffer(zip.outputStream)
+	}
+
 	function multipartZip(zipBuf: Buffer): {
 		readonly payload: Buffer
 		readonly contentType: string
@@ -2312,6 +2325,89 @@ describe("plugin upload limits", () => {
 		expect(readFileSync(join(vaultDir, "runtime.mjs"), "utf-8")).toBe(
 			"vault-data",
 		)
+	})
+
+	test("an upload update moves the asset fingerprint even when zip timestamps are identical", async () => {
+		const cookie = await loginCookie()
+		const id = "22222222-2222-4222-8222-222222222222"
+		// Archive entry mtimes are preserved by extraction (7-Zip restores
+		// them), so the client fingerprint must be content-based: an update
+		// whose index.html carries the SAME timestamp as the previous
+		// release (repack without a rebuild, normalized build timestamps)
+		// must still surface a new `?v=` to the web client.
+		const sameMtime = new Date("2024-01-01T00:00:00Z")
+		function pluginZip(version: string, marker: string) {
+			return buildZipWithMtime(
+				[
+					[
+						"manifest.json",
+						Buffer.from(
+							JSON.stringify({
+								id,
+								name: "fp-update-test",
+								description: "fingerprint update test plugin",
+								version,
+								permissions: { download: true },
+							}),
+						),
+					],
+					[
+						"main.js",
+						Buffer.from("export default { detect: () => ({ ok: true }) }\n"),
+					],
+					[
+						"index.html",
+						Buffer.from(
+							`<script src="./assets/app.js"></script><div id="root">--${marker}--</div>`,
+						),
+					],
+					["assets/app.js", Buffer.from(`console.log("${marker}")`)],
+				],
+				sameMtime,
+			)
+		}
+
+		const firstPayload = multipartZip(await pluginZip("1.0.0", "V1"))
+		const first = await built.app.inject({
+			method: "POST",
+			url: "/api/plugin-upload",
+			remoteAddress: "127.0.0.1",
+			headers: { cookie, "content-type": firstPayload.contentType },
+			payload: firstPayload.payload,
+		})
+		expect(first.statusCode).toBe(200)
+
+		const v1 = built.app.pluginService.listAll().find((p) => p.id === id)
+		expect(v1?.assetVersion).toBeDefined()
+		const v1Body = await built.app.inject({
+			method: "GET",
+			url: `/api/plugins/${id}/index.html?v=${v1?.assetVersion}`,
+			remoteAddress: "127.0.0.1",
+		})
+		expect(v1Body.body.toString()).toContain("--V1--")
+
+		const secondPayload = multipartZip(await pluginZip("2.0.0", "V2"))
+		const second = await built.app.inject({
+			method: "POST",
+			url: "/api/plugin-upload",
+			remoteAddress: "127.0.0.1",
+			headers: { cookie, "content-type": secondPayload.contentType },
+			payload: secondPayload.payload,
+		})
+		expect(second.statusCode).toBe(200)
+
+		// Same index.html mtime, different content: the fingerprint MUST
+		// move (the pre-fix mtime fingerprint stayed put and the web client
+		// kept serving the stale bundle while the UI showed v2.0.0).
+		const v2 = built.app.pluginService.listAll().find((p) => p.id === id)
+		expect(v2?.assetVersion).toBeDefined()
+		expect(v2?.assetVersion).not.toBe(v1?.assetVersion)
+		const v2Body = await built.app.inject({
+			method: "GET",
+			url: `/api/plugins/${id}/index.html?v=${v2?.assetVersion}`,
+			remoteAddress: "127.0.0.1",
+		})
+		expect(v2Body.body.toString()).toContain("--V2--")
 	})
 })
 

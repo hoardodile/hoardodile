@@ -2,13 +2,13 @@
  * Manual (one-command) verification of the plugin-replace reload fix with a
  * real browser + real seed artifacts:
  *
- *   After a plugin's client assets are rebuilt in place (its `index.html`
- *   mtime — the `assetVersion` fingerprint — moves), opening a resource that
+ *   After a plugin's client assets are rebuilt in place (its content
+ *   fingerprint — the `assetVersion` hash — moves), opening a resource that
  *   owns it must load the NEW build WITHOUT the "content plugin -> file and
  *   back" toggle. This script proves the two halves of the fix end to end:
  *
- *   1. SERVER HALF (was broken before): a dev plugin rebuilt in place reports
- *      a NEW assetVersion from `plugin.listAll` with NO rescan/server restart.
+ *   1. SERVER HALF: a dev plugin rebuilt in place reports a NEW assetVersion
+ *      from `plugin.listAll` with NO rescan/server restart.
  *   2. CLIENT HALF: reopening (SPA, no full page reload) a gallery resource
  *      re-navigates the preview iframe to the new `?v=` fingerprint and still
  *      renders — no content-plugin switch.
@@ -34,7 +34,6 @@ import {
 	mkdirSync,
 	readFileSync,
 	rmSync,
-	utimesSync,
 	writeFileSync,
 } from "node:fs"
 import { dirname, join, resolve } from "node:path"
@@ -371,13 +370,15 @@ async function main() {
 	}
 	await page.screenshot({ path: join(SHOTS, "plugin-reload-01-before.png") })
 
-	// 2) SERVER HALF: "rebuild" the plugin in place (bump index.html mtime —
-	//    the fingerprint source) with no rescan/restart. The dev-plugin re-stat
-	//    must report a NEW assetVersion from plugin.listAll.
+	// 2) SERVER HALF: "rebuild" the plugin in place (rewrite index.html so
+	//    the content fingerprint moves) with no rescan/restart. The dev-plugin
+	//    re-hash must report a NEW assetVersion from plugin.listAll.
 	t0 = Date.now()
 	const indexHtml = join(PLUGIN_COPY, "index.html")
-	writeFileSync(indexHtml, readFileSync(indexHtml)) // touch content
-	utimesSync(indexHtml, new Date(), new Date("2040-01-01T00:00:00Z"))
+	writeFileSync(
+		indexHtml,
+		`${readFileSync(indexHtml, "utf8")}\n<!-- manual rebuild ${Date.now()} -->`,
+	)
 	const v2 = await galleryAssetVersion(cookie)
 	step("rebuild → listAll reports new fingerprint", Date.now() - t0)
 	log(`assetVersion after rebuild: ${v2} (was ${v1})`)

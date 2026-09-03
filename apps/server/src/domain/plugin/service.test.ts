@@ -553,7 +553,7 @@ describe("plugin service marketplace source", () => {
 	})
 })
 
-describe("plugin service asset fingerprint (dev re-stat)", () => {
+describe("plugin service asset fingerprint (content hash)", () => {
 	let root: string
 	let dbh: DbHandles
 	let registry: ReturnType<typeof buildRegistry>
@@ -577,11 +577,22 @@ describe("plugin service asset fingerprint (dev re-stat)", () => {
 		})
 	}
 
-	function writeDist(dir: string, at: Date): void {
+	function writeDist(
+		dir: string,
+		opts: {
+			readonly indexHtml?: string
+			readonly assetName?: string
+			readonly asset?: string
+		},
+	): void {
 		mkdirSync(dir, { recursive: true })
 		const indexHtml = join(dir, "index.html")
-		writeFileSync(indexHtml, "<!doctype html><html></html>")
-		utimesSync(indexHtml, at, at)
+		writeFileSync(indexHtml, opts.indexHtml ?? "<!doctype html><html></html>")
+		if (opts.assetName !== undefined) {
+			const assetDir = join(dir, "assets")
+			mkdirSync(assetDir, { recursive: true })
+			writeFileSync(join(assetDir, opts.assetName), opts.asset ?? "")
+		}
 	}
 
 	function assetVersionOf(id: PluginManifestId): string | undefined {
@@ -602,34 +613,98 @@ describe("plugin service asset fingerprint (dev re-stat)", () => {
 
 	test("a rebuilt dev plugin reports a new fingerprint without a rescan", () => {
 		const distDir = join(root, "plugins", PLUGIN_ID)
-		const first = new Date("2024-01-01T00:00:00Z")
-		writeDist(distDir, first)
+		writeDist(distDir, { indexHtml: "<html>v1</html>" })
 		buildService([entryFor(PLUGIN_ID, "Dev", { dev: true, diskPath: distDir })])
 
-		expect(assetVersionOf(PLUGIN_ID)).toBe(String(first.getTime()))
 		const before = assetVersionOf(PLUGIN_ID)
+		expect(before).toBeDefined()
 
 		// Rebuild in place: no rescan replaces the registry object.
-		const second = new Date("2024-01-02T00:00:00Z")
-		writeDist(distDir, second)
+		writeDist(distDir, { indexHtml: "<html>v2</html>" })
 
-		expect(assetVersionOf(PLUGIN_ID)).toBe(String(second.getTime()))
 		expect(assetVersionOf(PLUGIN_ID)).not.toBe(before)
 	})
 
 	test("an installed plugin's fingerprint is memoized until the registry is replaced", () => {
 		const distDir = join(root, "plugins", PLUGIN_ID)
-		const first = new Date("2024-01-01T00:00:00Z")
-		writeDist(distDir, first)
+		writeDist(distDir, { indexHtml: "<html>v1</html>" })
 		buildService([entryFor(PLUGIN_ID, "Disk", { diskPath: distDir })])
 
 		const before = assetVersionOf(PLUGIN_ID)
-		expect(before).toBe(String(first.getTime()))
+		expect(before).toBeDefined()
 
 		// An on-disk change without a registry swap must NOT move the
 		// memoized fingerprint (installed plugins only change via rescan).
-		const second = new Date("2024-01-02T00:00:00Z")
-		writeDist(distDir, second)
+		writeDist(distDir, { indexHtml: "<html>v2</html>" })
 		expect(assetVersionOf(PLUGIN_ID)).toBe(before)
+	})
+
+	test("an update that keeps the same index.html mtime but changes content moves the fingerprint", () => {
+		const distDir = join(root, "plugins", PLUGIN_ID)
+		// The zip extraction preserves the archive's timestamps — mimic a
+		// repacked release whose index.html is byte-identical in mtime but
+		// different in content (the upload-update staleness regression).
+		const same = new Date("2024-01-01T00:00:00Z")
+		writeDist(distDir, {
+			indexHtml: "<html>v1</html>",
+			assetName: "app.js",
+			asset: "//v1",
+		})
+		utimesSync(join(distDir, "index.html"), same, same)
+		utimesSync(join(distDir, "assets", "app.js"), same, same)
+		buildService([entryFor(PLUGIN_ID, "Disk", { diskPath: distDir })])
+		const before = assetVersionOf(PLUGIN_ID)
+
+		// Rescan replaces the registry object with the same diskPath whose
+		// files change content but keep their (zip-preserved) mtimes.
+		writeDist(distDir, {
+			indexHtml: "<html>v2</html>",
+			assetName: "app.js",
+			asset: "//v2",
+		})
+		utimesSync(join(distDir, "index.html"), same, same)
+		utimesSync(join(distDir, "assets", "app.js"), same, same)
+		buildService([entryFor(PLUGIN_ID, "Disk", { diskPath: distDir })])
+
+		expect(assetVersionOf(PLUGIN_ID)).not.toBe(before)
+	})
+
+	test("identical content keeps the fingerprint stable", () => {
+		const distDir = join(root, "plugins", PLUGIN_ID)
+		writeDist(distDir, {
+			indexHtml: "<html>v1</html>",
+			assetName: "app.js",
+			asset: "//v1",
+		})
+		buildService([entryFor(PLUGIN_ID, "Disk", { diskPath: distDir })])
+		const before = assetVersionOf(PLUGIN_ID)
+		// Reinstall of byte-identical content: no fingerprint churn, so the
+		// web client never re-navigates an iframe for a no-op update.
+		buildService([entryFor(PLUGIN_ID, "Disk", { diskPath: distDir })])
+		expect(assetVersionOf(PLUGIN_ID)).toBe(before)
+	})
+
+	test("host-managed vault content never moves the fingerprint", () => {
+		const distDir = join(root, "plugins", PLUGIN_ID)
+		writeDist(distDir, { indexHtml: "<html>v1</html>" })
+		const vaultDir = join(distDir, "vault")
+		mkdirSync(vaultDir, { recursive: true })
+		writeFileSync(join(vaultDir, "runtime.mjs"), "v1")
+		buildService([entryFor(PLUGIN_ID, "Disk", { diskPath: distDir })])
+		const before = assetVersionOf(PLUGIN_ID)
+		// A fresh user-consented vault download must not look like a plugin
+		// update (the iframe stays on the current bundle — it is unchanged).
+		writeFileSync(join(vaultDir, "runtime.mjs"), "v2")
+		writeFileSync(join(vaultDir, "extra.bin"), "new")
+		buildService([entryFor(PLUGIN_ID, "Disk", { diskPath: distDir })])
+		expect(assetVersionOf(PLUGIN_ID)).toBe(before)
+	})
+
+	test("a plugin without index.html reports no fingerprint", () => {
+		const distDir = join(root, "plugins", PLUGIN_ID)
+		mkdirSync(distDir, { recursive: true })
+		writeFileSync(join(distDir, "main.js"), "export default {}")
+		buildService([entryFor(PLUGIN_ID, "Disk", { diskPath: distDir })])
+		expect(assetVersionOf(PLUGIN_ID)).toBeUndefined()
 	})
 })

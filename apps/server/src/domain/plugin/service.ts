@@ -1,4 +1,5 @@
-import { readFileSync, statSync } from "node:fs"
+import { createHash } from "node:crypto"
+import { readdirSync, readFileSync, statSync } from "node:fs"
 import { join } from "node:path"
 import type {
 	PluginLoader,
@@ -26,9 +27,17 @@ export type PluginSettingsRow = {
 	readonly builtin: boolean
 	readonly dev: boolean
 	/**
-	 * Fingerprint of the plugin's client assets (its index.html mtime).
-	 * Changes on every rebuild/reinstall, so the web client can hard-cache
-	 * plugin assets under a `?v=` URL and only fetch anew when this moves.
+	 * Content fingerprint of the plugin's client assets: a hash over every
+	 * file in the plugin directory (minus the host-managed `vault/`) with
+	 * its relative path, so a changed asset, a renamed bundle, or an
+	 * `index.html` that references new files all move the fingerprint —
+	 * the web client hard-caches plugin assets under a `?v=` URL and only
+	 * fetches anew when this moves. A content fingerprint (not an mtime)
+	 * matters because plugin zips are extracted preserving the archive's
+	 * timestamps: an update whose `index.html` mtime happens to match the
+	 * previous release (repack without a rebuild, normalized build
+	 * timestamps, DOS 2s granularity) would otherwise keep serving the
+	 * stale bundle while the manifest claims a new version.
 	 */
 	readonly assetVersion?: string
 }
@@ -92,9 +101,10 @@ export type SeedPluginInfo = {
 export type PluginService = {
 	listAll(): PluginSettingsRow[]
 	/**
-	 * Client-asset fingerprint of a single plugin (its index.html mtime),
-	 * same value {@link listAll} reports per row. `undefined` when the
-	 * plugin is unknown or has no on-disk index.html.
+	 * Client-asset fingerprint of a single plugin (content hash over its
+	 * directory, see {@link PluginSettingsRow.assetVersion}), same value
+	 * {@link listAll} reports per row. `undefined` when the plugin is
+	 * unknown or has no on-disk index.html.
 	 */
 	getAssetVersion(id: PluginManifestId): string | undefined
 	/**
@@ -176,8 +186,8 @@ export function createPluginService(deps: PluginServiceDeps): PluginService {
 	const { db, loader, sandbox, seedDirs, seedRemovals } = deps
 	// Asset fingerprints are per-registry: loadAll/rescan replace the
 	// registry object, so this cache can never serve a fingerprint for a
-	// reloaded plugin's old disk state, and listAll stops paying one
-	// statSync per plugin per request.
+	// reloaded plugin's old disk state, and listAll stops paying one tree
+	// hash per plugin per request.
 	const assetVersionCache = new WeakMap<
 		PluginRegistry,
 		Map<string, string | undefined>
@@ -192,9 +202,9 @@ export function createPluginService(deps: PluginServiceDeps): PluginService {
 			assetVersionCache.set(registry, versions)
 		}
 		// Dev plugins are rebuilt in place: `plugin build`/watch rewrites
-		// dist/index.html but nothing replaces the registry object, so a
+		// dist/ but nothing replaces the registry object, so a
 		// memoized fingerprint would stay stale forever and the web client
-		// would keep reusing the old bundle. Re-stat dev entries on every
+		// would keep reusing the old bundle. Re-hash dev entries on every
 		// read (they are few); installed/builtin plugins only change via a
 		// registry swap and stay memoized.
 		for (const entry of registry.getAll()) {
@@ -229,7 +239,47 @@ export function createPluginService(deps: PluginServiceDeps): PluginService {
 		const st = statSync(join(diskPath, "index.html"), {
 			throwIfNoEntry: false,
 		})
-		return st !== undefined ? String(st.mtimeMs) : undefined
+		if (st === undefined) return undefined
+		// A tiny plugin directory (client bundle + manifest) — hashing the
+		// whole tree per registry is far cheaper than a mistimed `?v=`
+		// reload. The host-managed `vault/` is excluded: its files are
+		// user-consented downloads, not plugin code, and must never move
+		// the fingerprint.
+		const hash = createHash("sha256")
+		const files: string[] = []
+		collectPluginFiles(diskPath, "", files)
+		files.sort()
+		for (const rel of files) {
+			hash.update(rel)
+			hash.update("\0")
+			hash.update(readFileSync(join(diskPath, ...rel.split("/"))))
+		}
+		return hash.digest("hex")
+	}
+
+	/**
+	 * Collect every regular file under `dir` (relative to `dir`, `/`
+	 * separators) except the host-managed top-level `vault/` directory.
+	 * Symlinks are skipped (a plugin tree is a real directory; link targets
+	 * could alias outside paths and would misattribute the fingerprint).
+	 */
+	function collectPluginFiles(dir: string, rel: string, out: string[]): void {
+		const entries = readdirSync(join(dir, ...rel.split("/")), {
+			withFileTypes: true,
+		})
+		for (const entry of entries) {
+			if (entry.isSymbolicLink()) continue
+			const childRel = rel.length === 0 ? entry.name : `${rel}/${entry.name}`
+			if (entry.isDirectory()) {
+				// The plugin asset vault is host-managed (uploads land here
+				// behind the consent dialog) — not part of the plugin's
+				// shipped code, so it never moves the fingerprint.
+				if (rel.length === 0 && entry.name === "vault") continue
+				collectPluginFiles(dir, childRel, out)
+				continue
+			}
+			if (entry.isFile()) out.push(childRel)
+		}
 	}
 
 	function getAssetVersion(id: PluginManifestId): string | undefined {
