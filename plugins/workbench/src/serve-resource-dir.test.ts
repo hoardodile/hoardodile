@@ -132,4 +132,13 @@ describe("serveWorkbench with --data (single resource) is unchanged", () => {
 		expect(resources).toEqual([{ id: "workbench", name: "Workbench" }])
 		expect(await json<string[]>(`${base}/data/?list=1`)).toEqual(["doc.txt"])
 	})
+
+	it("serves /data bytes with no-store so a rebuild is never masked by the browser cache", async () => {
+		const base = await startWorkbench({ dataDir: dataRoot })
+		const res = await fetch(`${base}/data/doc.txt`)
+		expect(res.status).toBe(200)
+		expect(res.headers.get("cache-control")).toBe(
+			"no-cache, no-store, must-revalidate",
+		)
+	})
 })
