@@ -516,10 +516,11 @@ export function InstalledPluginsPanel() {
 						if (!open) setDetailPlugin(null)
 					}}
 					onInstall={() => setDetailPlugin(null)}
-					onUpdate={() => {
+					onUpdate={(latest) => {
 						setUpdateTarget({
 							plugin: detailPlugin,
 							mode: "update",
+							latest,
 							installedVersion: plugins.find((p) => p.id === detailPlugin.id)
 								?.manifest.version,
 						})

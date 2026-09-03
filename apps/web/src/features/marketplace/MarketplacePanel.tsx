@@ -293,14 +293,15 @@ export function MarketplacePanel() {
 					onOpenChange={(open) => {
 						if (!open) setDetailTarget(null)
 					}}
-					onInstall={() => {
-						setInstallTarget({ plugin: detailTarget, mode: "install" })
+					onInstall={(latest) => {
+						setInstallTarget({ plugin: detailTarget, mode: "install", latest })
 						setDetailTarget(null)
 					}}
-					onUpdate={() => {
+					onUpdate={(latest) => {
 						setInstallTarget({
 							plugin: detailTarget,
 							mode: "update",
+							latest,
 							installedVersion: installedById.get(detailTarget.id)?.manifest
 								.version,
 						})

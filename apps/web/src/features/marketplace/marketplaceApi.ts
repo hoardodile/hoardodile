@@ -8,6 +8,7 @@ export const marketplaceKeys = {
 	all: ["marketplace"] as const,
 	config: () => [...marketplaceKeys.all, "config"] as const,
 	snapshot: () => [...marketplaceKeys.all, "snapshot"] as const,
+	detail: (repo: string) => [...marketplaceKeys.all, "detail", repo] as const,
 }
 
 export function marketplaceConfigQueryOptions() {
@@ -47,6 +48,24 @@ export function marketplaceSnapshotQueryOptions() {
 }
 
 type MarketSnapshot = RouterOutputs["marketplace"]["snapshot"]
+
+/**
+ * One plugin's authoritative latest release (asset / notes / readme /
+ * sha256), requested when the user opens its "View" dialog. This is the
+ * only marketplace query that calls the quota-hungry GitHub API, and it is
+ * on-demand — the list snapshot never does. Cached per repo (and cached
+ * server-side per repo), so re-opening a plugin reuses cache instead of
+ * re-hitting the API.
+ */
+export function marketplaceDetailQueryOptions(repo: string, id: string) {
+	return trpcQueryOptions({
+		namespace: "marketplace",
+		procedure: "detail",
+		input: { id, repo },
+		queryKey: marketplaceKeys.detail(repo),
+		staleTime: 60_000,
+	})
+}
 
 /** Explicit "refresh now" — bypasses the server cache and the query cache. */
 export function marketplaceRefreshMutation(): UseMutationOptions<

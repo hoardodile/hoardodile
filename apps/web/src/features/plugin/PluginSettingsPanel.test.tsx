@@ -91,6 +91,7 @@ function marketPlugin(id: string, name: string) {
 function installClient(overrides?: {
 	readonly catalog?: unknown[]
 	readonly config?: { readonly registryRepo: string | null }
+	readonly detail?: unknown
 }) {
 	mockClient.marketplace = {
 		getConfig: {
@@ -100,6 +101,27 @@ function installClient(overrides?: {
 		},
 		snapshot: {
 			query: vi.fn(async () => ({ plugins: overrides?.catalog ?? [] })),
+		},
+		detail: {
+			query: vi.fn(
+				async () =>
+					overrides?.detail ?? {
+						repo: "me/cat-viewer",
+						state: "ok",
+						latest: {
+							tag: "v1.2.3",
+							version: "1.2.3",
+							releaseUrl:
+								"https://github.com/me/cat-viewer/releases/tag/v1.2.3",
+							publishedAt: "2025-01-02T03:04:05Z",
+							notes: null,
+							assetName: `${PLUGIN_ID}-v1.2.3.zip`,
+							assetUrl: "",
+							readme: undefined,
+						},
+						error: undefined,
+					},
+			),
 		},
 	}
 	mockClient.plugin = {

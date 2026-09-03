@@ -182,10 +182,31 @@ function rawUrl(
 	return `https://raw.githubusercontent.com/${owner}/${repo}/${ref}/${path}`
 }
 
+function atomUrl(repo: string): string {
+	return `https://github.com/${repo}/releases.atom`
+}
+
 function apiCalls(f: ReturnType<typeof makeFixture>): number {
 	return f.fetcher.fetchToFile.mock.calls.filter(([url]) =>
 		url.includes("api.github.com"),
 	).length
+}
+
+/** Fetcher that throws a 403 for the GitHub API but serves route bodies. */
+function rateLimitFetcher(f: ReturnType<typeof makeFixture>) {
+	f.fetcher.fetchToFile.mockImplementation(
+		async (u: string, target: string) => {
+			if (u.includes("api.github.com")) {
+				throw new Error(`plugin download returned HTTP 403: ${u}`)
+			}
+			const body = f.routes.get(u)
+			if (body === undefined) {
+				throw new Error(`plugin download returned HTTP 404: ${u}`)
+			}
+			await writeFile(target, body)
+			return { sizeBytes: Buffer.byteLength(body), sha256: sha256(body) }
+		},
+	)
 }
 
 describe("normalizeRepoAddress", () => {
@@ -257,7 +278,7 @@ describe("parseAtomFirstEntry", () => {
 })
 
 describe("createMarketplaceService.refresh", () => {
-	test("loads registry + manifest (HEAD→main fallback) + release into a snapshot", async () => {
+	test("loads registry + manifest (HEAD→main fallback) + the free releases.atom tag into a snapshot", async () => {
 		const f = fixture!
 		f.prefs.set("marketplace.registryRepo", "me/registry")
 		f.addJson(rawUrl("me", "registry", "HEAD", "registry.json"), {
@@ -267,10 +288,7 @@ describe("createMarketplaceService.refresh", () => {
 		// The registry has a registry.json on HEAD; the plugin repo's HEAD
 		// 404s and its manifest is found on `main`.
 		f.addJson(rawUrl("me", "cat-viewer", "main", "manifest.json"), MANIFEST)
-		f.addJson(
-			"https://api.github.com/repos/me/cat-viewer/releases/latest",
-			RELEASE,
-		)
+		f.add(atomUrl("me/cat-viewer"), atomFeed("v1.2.3", "2025-01-02T03:04:05Z"))
 
 		const snapshot = await f.service.refresh(false)
 
@@ -285,11 +303,13 @@ describe("createMarketplaceService.refresh", () => {
 			description: "Shows cats",
 			state: "ok",
 		})
+		// The catalog carries the version-only latest — no asset, readme or notes.
 		expect(plugin.latest).toMatchObject({
 			tag: "v1.2.3",
 			version: "1.2.3",
-			assetName: `${PLUGIN_ID}-v1.2.3.zip`,
+			publishedAt: "2025-01-02T03:04:05Z",
 		})
+		expect(plugin.latest?.assetUrl).toBeUndefined()
 		expect(plugin.latest?.readme).toBeUndefined()
 		expect(plugin.permissions.sourceMeta).toBe(true)
 		// The full manifest rides the snapshot for the UI (i18n names,
@@ -306,9 +326,11 @@ describe("createMarketplaceService.refresh", () => {
 			expect.any(String),
 			expect.any(Object),
 		)
+		// The list snapshot never touches the quota-hungry GitHub API.
+		expect(apiCalls(f)).toBe(0)
 	})
 
-	test("serves the snapshot cache for 10 minutes; forced refresh bypasses the release TTL", async () => {
+	test("serves the snapshot cache for 10 minutes; a forced refresh rebuilds it", async () => {
 		const f = fixture!
 		f.prefs.set("marketplace.registryRepo", "me/registry")
 		f.addJson(rawUrl("me", "registry", "HEAD", "registry.json"), {
@@ -316,7 +338,7 @@ describe("createMarketplaceService.refresh", () => {
 			plugins: ["me/cat"],
 		})
 		f.addJson(rawUrl("me", "cat", "HEAD", "manifest.json"), MANIFEST)
-		f.addJson("https://api.github.com/repos/me/cat/releases/latest", RELEASE)
+		f.add(atomUrl("me/cat"), atomFeed("v1.2.3"))
 
 		const registryCalls = () =>
 			f.fetcher.fetchToFile.mock.calls.filter(([url]) =>
@@ -325,25 +347,21 @@ describe("createMarketplaceService.refresh", () => {
 
 		await f.service.refresh(false)
 		expect(registryCalls()).toBe(1)
-		expect(apiCalls(f)).toBe(1)
+		expect(apiCalls(f)).toBe(0)
 		await f.service.refresh(false)
 		expect(registryCalls()).toBe(1)
 
-		// The snapshot layer expires after 10 minutes; the release layer
-		// is still inside its one-hour window.
+		// The snapshot layer expires after 10 minutes.
 		f.advance(10 * 60_000 + 1)
 		await f.service.refresh(false)
 		expect(registryCalls()).toBe(2)
-		expect(apiCalls(f)).toBe(1)
 
-		// Forced refresh refreshes the snapshot layer AND the release
-		// API immediately (the one-hour TTL is bypassed on user command).
+		// A forced refresh bypasses the snapshot cache and rebuilds it.
 		await f.service.refresh(true)
 		expect(registryCalls()).toBe(3)
-		expect(apiCalls(f)).toBe(2)
 	})
 
-	test("defaults the catalog caches to a day when no TTL is configured", async () => {
+	test("defaults the catalog cache to a day when no TTL is configured", async () => {
 		const f = fixture!
 		f.prefs.set("marketplace.registryRepo", "me/registry")
 		f.addJson(rawUrl("me", "registry", "HEAD", "registry.json"), {
@@ -351,7 +369,7 @@ describe("createMarketplaceService.refresh", () => {
 			plugins: ["me/cat"],
 		})
 		f.addJson(rawUrl("me", "cat", "HEAD", "manifest.json"), MANIFEST)
-		f.addJson("https://api.github.com/repos/me/cat/releases/latest", RELEASE)
+		f.add(atomUrl("me/cat"), atomFeed("v1.2.3"))
 
 		const registryCalls = () =>
 			f.fetcher.fetchToFile.mock.calls.filter(([url]) =>
@@ -386,21 +404,18 @@ describe("createMarketplaceService.refresh", () => {
 
 		await defaulted.refresh(false)
 		expect(registryCalls()).toBe(1)
-		expect(apiCalls(f)).toBe(1)
+		expect(apiCalls(f)).toBe(0)
 
-		// 23 h later both the snapshot and the release layer are still
-		// inside the day window — no refetch, no API call.
+		// 23 h later the snapshot is still inside the day window — no refetch.
 		f.advance(23 * 60 * 60_000)
 		await defaulted.refresh(false)
 		expect(registryCalls()).toBe(1)
-		expect(apiCalls(f)).toBe(1)
 
-		// Past a day the snapshot is rebuilt and the release TTL has also
-		// lapsed, so the API is asked again.
+		// Past a day the snapshot is rebuilt — still no API quota consumed.
 		f.advance(60 * 60_000 + 1)
 		await defaulted.refresh(false)
 		expect(registryCalls()).toBe(2)
-		expect(apiCalls(f)).toBe(2)
+		expect(apiCalls(f)).toBe(0)
 	})
 
 	test("shares a single in-flight refresh between concurrent callers", async () => {
@@ -411,159 +426,17 @@ describe("createMarketplaceService.refresh", () => {
 			plugins: ["me/cat"],
 		})
 		f.addJson(rawUrl("me", "cat", "HEAD", "manifest.json"), MANIFEST)
-		f.addJson("https://api.github.com/repos/me/cat/releases/latest", RELEASE)
+		f.add(atomUrl("me/cat"), atomFeed("v1.2.3"))
 
 		const [a, b] = await Promise.all([
 			f.service.refresh(false),
 			f.service.refresh(false),
 		])
 		expect(a.fetchedAt).toBe(b.fetchedAt)
-		expect(apiCalls(f)).toBe(1)
+		expect(apiCalls(f)).toBe(0)
 	})
 
-	test("a rate-limited API degrades to the cached release and cools down", async () => {
-		const f = fixture!
-		f.prefs.set("marketplace.registryRepo", "me/registry")
-		f.addJson(rawUrl("me", "registry", "HEAD", "registry.json"), {
-			version: 1,
-			plugins: ["me/cat"],
-		})
-		f.addJson(rawUrl("me", "cat", "HEAD", "manifest.json"), MANIFEST)
-		f.addJson("https://api.github.com/repos/me/cat/releases/latest", RELEASE)
-
-		// Seed the cache, then make the API 403 — a forced refresh tries
-		// the API anyway (bypassing the one-hour TTL).
-		await f.service.refresh(false)
-		expect(apiCalls(f)).toBe(1)
-		f.fetcher.fetchToFile.mockImplementation(
-			async (u: string, target: string) => {
-				if (u.includes("api.github.com")) {
-					throw new Error(`plugin download returned HTTP 403: ${u}`)
-				}
-				const body = f.routes.get(u)
-				if (body === undefined) {
-					throw new Error(`plugin download returned HTTP 404: ${u}`)
-				}
-				await writeFile(target, body)
-				return { sizeBytes: Buffer.byteLength(body), sha256: sha256(body) }
-			},
-		)
-
-		const snapshot = await f.service.refresh(true)
-		// Stale reuse: the entry stays healthy with the cached release,
-		// flagged as rate-limited so the UI can say so.
-		expect(snapshot.plugins[0]?.state).toBe("ok")
-		expect(snapshot.plugins[0]?.latest?.version).toBe("1.2.3")
-		expect(snapshot.plugins[0]?.rateLimited).toBe(true)
-		expect(snapshot.errors).toEqual([])
-		expect(apiCalls(f)).toBe(2)
-
-		// Within the cooldown an AUTO (non-force) rebuild skips the API
-		// entirely and keeps serving the degraded entry. Advance past the
-		// 10-minute snapshot cache so the release layer is actually hit.
-		f.advance(20 * 60_000)
-		const auto = await f.service.refresh(false)
-		expect(apiCalls(f)).toBe(2)
-		expect(auto.plugins[0]?.rateLimited).toBe(true)
-
-		// A FORCED refresh is a manual retry: it bypasses the cooldown and
-		// re-hits the API once (still 403 → re-arms the cooldown, degrades).
-		const forced = await f.service.refresh(true)
-		expect(apiCalls(f)).toBe(3)
-		expect(forced.plugins[0]?.state).toBe("ok")
-		expect(forced.plugins[0]?.rateLimited).toBe(true)
-
-		// Once the cooldown lapses it retries (and still degrades while 403).
-		f.advance(60 * 60_000 + 1)
-		const after = await f.service.refresh(true)
-		expect(apiCalls(f)).toBe(4)
-		expect(after.plugins[0]?.state).toBe("ok")
-		expect(after.plugins[0]?.latest?.version).toBe("1.2.3")
-		expect(after.plugins[0]?.rateLimited).toBe(true)
-	})
-
-	test("a forced refresh with no cached release and a 403 reports a rate-limited error", async () => {
-		const f = fixture!
-		f.prefs.set("marketplace.registryRepo", "me/registry")
-		f.addJson(rawUrl("me", "registry", "HEAD", "registry.json"), {
-			version: 1,
-			plugins: ["me/cat"],
-		})
-		f.addJson(rawUrl("me", "cat", "HEAD", "manifest.json"), MANIFEST)
-		f.fetcher.fetchToFile.mockImplementation(
-			async (u: string, target: string) => {
-				if (u.includes("api.github.com")) {
-					throw new Error(`plugin download returned HTTP 403: ${u}`)
-				}
-				const body = f.routes.get(u)
-				if (body === undefined) {
-					throw new Error(`plugin download returned HTTP 404: ${u}`)
-				}
-				await writeFile(target, body)
-				return { sizeBytes: Buffer.byteLength(body), sha256: sha256(body) }
-			},
-		)
-
-		const snapshot = await f.service.refresh(true)
-		expect(apiCalls(f)).toBe(1)
-		// No cached payload to degrade to — the entry surfaces as an error,
-		// classified as rate-limited (the cooldown is re-armed).
-		expect(snapshot.plugins[0]?.state).toBe("error")
-		expect(snapshot.plugins[0]?.errorKind).toBe("rate_limited")
-		expect(snapshot.plugins[0]?.latest).toBeUndefined()
-		expect(snapshot.plugins[0]?.rateLimited).toBeUndefined()
-	})
-
-	test("persists the release cache to disk across service restarts", async () => {
-		const f = fixture!
-		f.prefs.set("marketplace.registryRepo", "me/registry")
-		f.addJson(rawUrl("me", "registry", "HEAD", "registry.json"), {
-			version: 1,
-			plugins: ["me/cat"],
-		})
-		f.addJson(rawUrl("me", "cat", "HEAD", "manifest.json"), MANIFEST)
-		f.addJson("https://api.github.com/repos/me/cat/releases/latest", RELEASE)
-
-		await f.service.refresh(false)
-		expect(apiCalls(f)).toBe(1)
-
-		// A fresh service instance (empty in-memory caches) sharing the
-		// same preference store and cache file answers without any API call.
-		const second = createMarketplaceService({
-			prefs: {
-				get: (key: string) =>
-					f.prefs.has(key)
-						? { key, value: f.prefs.get(key)!, updatedAt: 0 }
-						: undefined,
-				set: (key: string, value: string) => {
-					f.prefs.set(key, value)
-					return { key, value, updatedAt: 0 }
-				},
-				remove: (key: string) => {
-					f.prefs.delete(key)
-				},
-			},
-			sources: f.sources,
-			fetcher: f.fetcher,
-			installer: f.installer,
-			rescan: f.rescan,
-			postInstall: f.postInstall,
-			tmpDir: f.root,
-			maxInstallBytes: 1024 * 1024,
-			releaseCacheFile: join(f.root, "releases.json"),
-			cacheTtlMs: 10 * 60_000,
-			releaseCacheTtlMs: 60 * 60_000,
-			rateLimitCooldownMs: 60 * 60_000,
-			now: () => f.clock(),
-		})
-		const snapshot = await second.refresh(false)
-
-		expect(snapshot.plugins[0]?.state).toBe("ok")
-		expect(snapshot.plugins[0]?.latest?.version).toBe("1.2.3")
-		expect(apiCalls(f)).toBe(1)
-	})
-
-	test("a repo with no release stays listed as no_release", async () => {
+	test("a repo with no release (no atom entry) stays listed as no_release", async () => {
 		const f = fixture!
 		f.prefs.set("marketplace.registryRepo", "me/registry")
 		f.addJson(rawUrl("me", "registry", "HEAD", "registry.json"), {
@@ -577,187 +450,7 @@ describe("createMarketplaceService.refresh", () => {
 		expect(snapshot.plugins).toHaveLength(1)
 		expect(snapshot.plugins[0]?.state).toBe("no_release")
 		expect(snapshot.plugins[0]?.latest).toBeUndefined()
-	})
-
-	test("a rate-limited release fetch degrades to a per-plugin error", async () => {
-		const f = fixture!
-		f.prefs.set("marketplace.registryRepo", "me/registry")
-		f.addJson(rawUrl("me", "registry", "HEAD", "registry.json"), {
-			version: 1,
-			plugins: ["me/cat"],
-		})
-		f.addJson(rawUrl("me", "cat", "HEAD", "manifest.json"), MANIFEST)
-		f.fetcher.fetchToFile.mockImplementation(
-			async (u: string, target: string) => {
-				if (u.includes("api.github.com")) {
-					throw new Error(`plugin download returned HTTP 403: ${u}`)
-				}
-				const body = f.routes.get(u)
-				if (body === undefined) {
-					throw new Error(`plugin download returned HTTP 404: ${u}`)
-				}
-				await writeFile(target, body)
-				return { sizeBytes: Buffer.byteLength(body), sha256: sha256(body) }
-			},
-		)
-
-		const snapshot = await f.service.refresh(false)
-
-		expect(snapshot.plugins).toHaveLength(1)
-		expect(snapshot.plugins[0]?.state).toBe("error")
-		expect(snapshot.plugins[0]?.error).toContain("rate limit")
-		expect(snapshot.plugins[0]?.errorKind).toBe("rate_limited")
-	})
-
-	test("a rate-limited API with no cached release surfaces the version from the releases.atom feed", async () => {
-		const f = fixture!
-		f.prefs.set("marketplace.registryRepo", "me/registry")
-		f.addJson(rawUrl("me", "registry", "HEAD", "registry.json"), {
-			version: 1,
-			plugins: ["me/cat"],
-		})
-		f.addJson(rawUrl("me", "cat", "HEAD", "manifest.json"), MANIFEST)
-		// The API is rate-limited, but the free releases feed still lists a tag.
-		f.add("https://github.com/me/cat/releases.atom", atomFeed("v1.2.3"))
-		f.fetcher.fetchToFile.mockImplementation(
-			async (u: string, target: string) => {
-				if (u.includes("api.github.com")) {
-					throw new Error(`plugin download returned HTTP 403: ${u}`)
-				}
-				const body = f.routes.get(u)
-				if (body === undefined) {
-					throw new Error(`plugin download returned HTTP 404: ${u}`)
-				}
-				await writeFile(target, body)
-				return { sizeBytes: Buffer.byteLength(body), sha256: sha256(body) }
-			},
-		)
-
-		const snapshot = await f.service.refresh(true)
-		const plugin = snapshot.plugins[0]!
-		// The version is real (a published release) though the asset is unknown.
-		expect(plugin.state).toBe("ok")
-		expect(plugin.latest?.tag).toBe("v1.2.3")
-		expect(plugin.latest?.version).toBe("1.2.3")
-		expect(plugin.latest?.assetUrl).toBeUndefined()
-		expect(plugin.latest?.publishedAt).toBe("2025-01-02T03:04:05Z")
-		expect(plugin.rateLimited).toBe(true)
-		expect(plugin.error).toBeUndefined()
-		// The free releases feed (not the rate-limited API) supplied the tag.
-		expect(f.fetcher.fetchToFile).toHaveBeenCalledWith(
-			"https://github.com/me/cat/releases.atom",
-			expect.any(String),
-			expect.any(Object),
-		)
-	})
-
-	test("a rate-limited API with a stale cached release and a newer feed tag surfaces the newer version-only release", async () => {
-		const f = fixture!
-		f.prefs.set("marketplace.registryRepo", "me/registry")
-		f.addJson(rawUrl("me", "registry", "HEAD", "registry.json"), {
-			version: 1,
-			plugins: ["me/cat"],
-		})
-		f.addJson(rawUrl("me", "cat", "HEAD", "manifest.json"), MANIFEST)
-		f.addJson("https://api.github.com/repos/me/cat/releases/latest", RELEASE)
-		// Seed the cache with the old release, then a newer feed tag appears.
-		await f.service.refresh(false)
-		f.add("https://github.com/me/cat/releases.atom", atomFeed("v1.3.0"))
-		f.fetcher.fetchToFile.mockImplementation(
-			async (u: string, target: string) => {
-				if (u.includes("api.github.com")) {
-					throw new Error(`plugin download returned HTTP 403: ${u}`)
-				}
-				const body = f.routes.get(u)
-				if (body === undefined) {
-					throw new Error(`plugin download returned HTTP 404: ${u}`)
-				}
-				await writeFile(target, body)
-				return { sizeBytes: Buffer.byteLength(body), sha256: sha256(body) }
-			},
-		)
-
-		const snapshot = await f.service.refresh(true)
-		const plugin = snapshot.plugins[0]!
-		// The newer feed tag wins over the stale cache: version is known, asset is not.
-		expect(plugin.state).toBe("ok")
-		expect(plugin.latest?.version).toBe("1.3.0")
-		expect(plugin.latest?.assetUrl).toBeUndefined()
-		expect(plugin.rateLimited).toBe(true)
-	})
-
-	test("a rate-limited API with a feed tag matching the cached release keeps the cached asset", async () => {
-		const f = fixture!
-		f.prefs.set("marketplace.registryRepo", "me/registry")
-		f.addJson(rawUrl("me", "registry", "HEAD", "registry.json"), {
-			version: 1,
-			plugins: ["me/cat"],
-		})
-		f.addJson(rawUrl("me", "cat", "HEAD", "manifest.json"), MANIFEST)
-		f.addJson("https://api.github.com/repos/me/cat/releases/latest", RELEASE)
-		await f.service.refresh(false)
-		// The feed agrees with the cached tag — the cache is still current, so
-		// its asset is kept and an update stays possible from cache.
-		f.add("https://github.com/me/cat/releases.atom", atomFeed("v1.2.3"))
-		f.fetcher.fetchToFile.mockImplementation(
-			async (u: string, target: string) => {
-				if (u.includes("api.github.com")) {
-					throw new Error(`plugin download returned HTTP 403: ${u}`)
-				}
-				const body = f.routes.get(u)
-				if (body === undefined) {
-					throw new Error(`plugin download returned HTTP 404: ${u}`)
-				}
-				await writeFile(target, body)
-				return { sizeBytes: Buffer.byteLength(body), sha256: sha256(body) }
-			},
-		)
-
-		const snapshot = await f.service.refresh(true)
-		const plugin = snapshot.plugins[0]!
-		expect(plugin.state).toBe("ok")
-		expect(plugin.latest?.version).toBe("1.2.3")
-		expect(plugin.latest?.assetUrl).toBe(
-			RELEASE.assets[0]!.browser_download_url,
-		)
-		expect(plugin.rateLimited).toBe(true)
-	})
-
-	test("a rate-limited API with an empty atom feed degrades to the cached release", async () => {
-		const f = fixture!
-		f.prefs.set("marketplace.registryRepo", "me/registry")
-		f.addJson(rawUrl("me", "registry", "HEAD", "registry.json"), {
-			version: 1,
-			plugins: ["me/cat"],
-		})
-		f.addJson(rawUrl("me", "cat", "HEAD", "manifest.json"), MANIFEST)
-		f.addJson("https://api.github.com/repos/me/cat/releases/latest", RELEASE)
-		await f.service.refresh(false)
-		// The feed answers but carries no entry — nothing to learn from it,
-		// so the marketplace keeps the cached payload (asset still usable).
-		f.add("https://github.com/me/cat/releases.atom", "<feed></feed>")
-		f.fetcher.fetchToFile.mockImplementation(
-			async (u: string, target: string) => {
-				if (u.includes("api.github.com")) {
-					throw new Error(`plugin download returned HTTP 403: ${u}`)
-				}
-				const body = f.routes.get(u)
-				if (body === undefined) {
-					throw new Error(`plugin download returned HTTP 404: ${u}`)
-				}
-				await writeFile(target, body)
-				return { sizeBytes: Buffer.byteLength(body), sha256: sha256(body) }
-			},
-		)
-
-		const snapshot = await f.service.refresh(true)
-		const plugin = snapshot.plugins[0]!
-		expect(plugin.state).toBe("ok")
-		expect(plugin.latest?.version).toBe("1.2.3")
-		expect(plugin.latest?.assetUrl).toBe(
-			RELEASE.assets[0]!.browser_download_url,
-		)
-		expect(plugin.rateLimited).toBe(true)
+		expect(apiCalls(f)).toBe(0)
 	})
 
 	test("a repo with no manifest lands in the errors list instead of the catalog", async () => {
@@ -777,191 +470,7 @@ describe("createMarketplaceService.refresh", () => {
 				message: expect.stringContaining("manifest.json"),
 			},
 		])
-	})
-
-	test("picks the id-tagged zip asset and reads the sha256 sidecar", async () => {
-		const f = fixture!
-		f.prefs.set("marketplace.registryRepo", "me/registry")
-		f.addJson(rawUrl("me", "registry", "HEAD", "registry.json"), {
-			version: 1,
-			plugins: ["me/cat"],
-		})
-		f.addJson(rawUrl("me", "cat", "HEAD", "manifest.json"), MANIFEST)
-		const sidecarName = `${PLUGIN_ID}-v1.2.3.zip.sha256`
-		f.addJson("https://api.github.com/repos/me/cat/releases/latest", {
-			tag_name: "v1.2.3",
-			html_url: "https://github.com/me/cat/releases/tag/v1.2.3",
-			published_at: null,
-			body: null,
-			assets: [
-				{
-					name: "unrelated.zip",
-					browser_download_url:
-						"https://github.com/me/cat/releases/download/v1.2.3/unrelated.zip",
-				},
-				{
-					name: `${PLUGIN_ID}-v1.2.3.zip`,
-					browser_download_url: `https://github.com/me/cat/releases/download/v1.2.3/${PLUGIN_ID}-v1.2.3.zip`,
-				},
-				{
-					name: sidecarName,
-					browser_download_url: `https://github.com/me/cat/releases/download/v1.2.3/${sidecarName}`,
-				},
-			],
-		})
-		f.add(
-			`https://github.com/me/cat/releases/download/v1.2.3/${sidecarName}`,
-			`  ${sha256("zip")}  `,
-		)
-
-		const snapshot = await f.service.refresh(false)
-
-		expect(snapshot.plugins[0]?.latest?.assetName).toBe(
-			`${PLUGIN_ID}-v1.2.3.zip`,
-		)
-		expect(snapshot.plugins[0]?.latest?.sha256).toBe(sha256("zip"))
-	})
-
-	test("loads the release readme assets per locale", async () => {
-		const f = fixture!
-		f.prefs.set("marketplace.registryRepo", "me/registry")
-		f.addJson(rawUrl("me", "registry", "HEAD", "registry.json"), {
-			version: 1,
-			plugins: ["me/cat"],
-		})
-		f.addJson(rawUrl("me", "cat", "HEAD", "manifest.json"), MANIFEST)
-		f.addJson("https://api.github.com/repos/me/cat/releases/latest", {
-			...RELEASE,
-			assets: [
-				...RELEASE.assets,
-				{
-					name: "README.md",
-					browser_download_url:
-						"https://github.com/me/cat/releases/download/v1.2.3/README.md",
-				},
-				{
-					name: "README.zh-CN.md",
-					browser_download_url:
-						"https://github.com/me/cat/releases/download/v1.2.3/README.zh-CN.md",
-				},
-				{
-					name: "unrelated.md",
-					browser_download_url:
-						"https://github.com/me/cat/releases/download/v1.2.3/unrelated.md",
-				},
-			],
-		})
-		f.add(
-			"https://github.com/me/cat/releases/download/v1.2.3/README.md",
-			"# Readme",
-		)
-		f.add(
-			"https://github.com/me/cat/releases/download/v1.2.3/README.zh-CN.md",
-			"# 说明 zh",
-		)
-
-		const snapshot = await f.service.refresh(false)
-
-		expect(snapshot.plugins[0]?.latest?.readme).toEqual({
-			en: "# Readme",
-			"zh-CN": "# 说明 zh",
-		})
-		// Non-readme assets are never fetched.
-		expect(
-			f.fetcher.fetchToFile.mock.calls.some(([url]) =>
-				String(url).includes("unrelated.md"),
-			),
-		).toBe(false)
-	})
-
-	test("a failing readme locale drops just that locale", async () => {
-		const f = fixture!
-		f.prefs.set("marketplace.registryRepo", "me/registry")
-		f.addJson(rawUrl("me", "registry", "HEAD", "registry.json"), {
-			version: 1,
-			plugins: ["me/cat"],
-		})
-		f.addJson(rawUrl("me", "cat", "HEAD", "manifest.json"), MANIFEST)
-		f.addJson("https://api.github.com/repos/me/cat/releases/latest", {
-			...RELEASE,
-			assets: [
-				...RELEASE.assets,
-				{
-					name: "README.md",
-					browser_download_url:
-						"https://github.com/me/cat/releases/download/v1.2.3/README.md",
-				},
-				{
-					name: "README.ja.md",
-					browser_download_url:
-						"https://github.com/me/cat/releases/download/v1.2.3/README.ja.md",
-				},
-			],
-		})
-		f.add(
-			"https://github.com/me/cat/releases/download/v1.2.3/README.md",
-			"# Readme",
-		)
-
-		// `README.ja.md` is missing → only the English fallback survives.
-		const snapshot = await f.service.refresh(false)
-		expect(snapshot.plugins[0]?.latest?.readme).toEqual({ en: "# Readme" })
-	})
-
-	test("maps the bare README.md fallback to en", async () => {
-		const f = fixture!
-		f.prefs.set("marketplace.registryRepo", "me/registry")
-		f.addJson(rawUrl("me", "registry", "HEAD", "registry.json"), {
-			version: 1,
-			plugins: ["me/cat"],
-		})
-		f.addJson(rawUrl("me", "cat", "HEAD", "manifest.json"), MANIFEST)
-		f.addJson("https://api.github.com/repos/me/cat/releases/latest", {
-			...RELEASE,
-			assets: [
-				...RELEASE.assets,
-				{
-					name: "README.md",
-					browser_download_url:
-						"https://github.com/me/cat/releases/download/v1.2.3/README.md",
-				},
-			],
-		})
-		f.add(
-			"https://github.com/me/cat/releases/download/v1.2.3/README.md",
-			"# Readme",
-		)
-
-		const snapshot = await f.service.refresh(false)
-		expect(snapshot.plugins[0]?.latest?.readme).toEqual({ en: "# Readme" })
-	})
-
-	test("keeps only the shipped locale when there is no bare README.md", async () => {
-		const f = fixture!
-		f.prefs.set("marketplace.registryRepo", "me/registry")
-		f.addJson(rawUrl("me", "registry", "HEAD", "registry.json"), {
-			version: 1,
-			plugins: ["me/cat"],
-		})
-		f.addJson(rawUrl("me", "cat", "HEAD", "manifest.json"), MANIFEST)
-		f.addJson("https://api.github.com/repos/me/cat/releases/latest", {
-			...RELEASE,
-			assets: [
-				...RELEASE.assets,
-				{
-					name: "README.zh.md",
-					browser_download_url:
-						"https://github.com/me/cat/releases/download/v1.2.3/README.zh.md",
-				},
-			],
-		})
-		f.add(
-			"https://github.com/me/cat/releases/download/v1.2.3/README.zh.md",
-			"# 说明 zh",
-		)
-
-		const snapshot = await f.service.refresh(false)
-		expect(snapshot.plugins[0]?.latest?.readme).toEqual({ zh: "# 说明 zh" })
+		expect(apiCalls(f)).toBe(0)
 	})
 
 	test("throws when the registry file fails validation", async () => {
@@ -1032,9 +541,9 @@ describe("createMarketplaceService.refresh", () => {
 			plugins: ["me/cat"],
 		})
 		f.addJson(rawUrl("me", "cat", "HEAD", "manifest.json"), MANIFEST)
-		f.addJson("https://api.github.com/repos/me/cat/releases/latest", RELEASE)
+		f.add(atomUrl("me/cat"), atomFeed("v1.2.3"))
 		await f.service.refresh(false)
-		expect(apiCalls(f)).toBe(1)
+		expect(apiCalls(f)).toBe(0)
 
 		f.service.setConfig(null)
 		expect(f.prefs.get("marketplace.registryRepo")).toBe("")
@@ -1042,6 +551,343 @@ describe("createMarketplaceService.refresh", () => {
 		await expect(f.service.refresh(false)).rejects.toMatchObject({
 			message: expect.stringContaining("not configured"),
 		})
+	})
+})
+
+describe("createMarketplaceService.detail", () => {
+	test("fetches the authoritative release asset, sha256 sidecar, notes and per-locale readme", async () => {
+		const f = fixture!
+		const sidecar = `${PLUGIN_ID}-v1.2.3.zip.sha256`
+		const zipUrl = `https://github.com/me/cat/releases/download/v1.2.3/${PLUGIN_ID}-v1.2.3.zip`
+		f.addJson("https://api.github.com/repos/me/cat/releases/latest", {
+			tag_name: "v1.2.3",
+			html_url: "https://github.com/me/cat/releases/tag/v1.2.3",
+			published_at: "2025-01-02T03:04:05Z",
+			body: "First release\n\nNotes here",
+			assets: [
+				{
+					name: "unrelated.zip",
+					browser_download_url:
+						"https://github.com/me/cat/releases/download/v1.2.3/unrelated.zip",
+				},
+				{
+					name: `${PLUGIN_ID}-v1.2.3.zip`,
+					browser_download_url: zipUrl,
+				},
+				{
+					name: sidecar,
+					browser_download_url: `https://github.com/me/cat/releases/download/v1.2.3/${sidecar}`,
+				},
+				{
+					name: "README.md",
+					browser_download_url:
+						"https://github.com/me/cat/releases/download/v1.2.3/README.md",
+				},
+				{
+					name: "README.zh-CN.md",
+					browser_download_url:
+						"https://github.com/me/cat/releases/download/v1.2.3/README.zh-CN.md",
+				},
+				{
+					name: "unrelated.md",
+					browser_download_url:
+						"https://github.com/me/cat/releases/download/v1.2.3/unrelated.md",
+				},
+			],
+		})
+		f.add(
+			`https://github.com/me/cat/releases/download/v1.2.3/${sidecar}`,
+			`  ${sha256("zip")}  `,
+		)
+		f.add(
+			"https://github.com/me/cat/releases/download/v1.2.3/README.md",
+			"# Readme",
+		)
+		f.add(
+			"https://github.com/me/cat/releases/download/v1.2.3/README.zh-CN.md",
+			"# 说明 zh",
+		)
+
+		const detail = await f.service.detail("me/cat", PLUGIN_ID)
+
+		expect(detail.repo).toBe("me/cat")
+		expect(detail.state).toBe("ok")
+		expect(detail.latest).toMatchObject({
+			tag: "v1.2.3",
+			version: "1.2.3",
+			assetName: `${PLUGIN_ID}-v1.2.3.zip`,
+			assetUrl: zipUrl,
+			sha256: sha256("zip"),
+			notes: "First release\n\nNotes here",
+		})
+		expect(detail.latest?.readme).toEqual({
+			en: "# Readme",
+			"zh-CN": "# 说明 zh",
+		})
+		// Non-readme assets are never fetched.
+		expect(
+			f.fetcher.fetchToFile.mock.calls.some(([url]) =>
+				String(url).includes("unrelated.md"),
+			),
+		).toBe(false)
+	})
+
+	test("a failing readme locale drops just that locale", async () => {
+		const f = fixture!
+		f.addJson("https://api.github.com/repos/me/cat/releases/latest", {
+			...RELEASE,
+			assets: [
+				...RELEASE.assets,
+				{
+					name: "README.md",
+					browser_download_url:
+						"https://github.com/me/cat/releases/download/v1.2.3/README.md",
+				},
+				{
+					name: "README.ja.md",
+					browser_download_url:
+						"https://github.com/me/cat/releases/download/v1.2.3/README.ja.md",
+				},
+			],
+		})
+		f.add(
+			"https://github.com/me/cat/releases/download/v1.2.3/README.md",
+			"# Readme",
+		)
+
+		// `README.ja.md` is missing → only the English fallback survives.
+		const detail = await f.service.detail("me/cat", PLUGIN_ID)
+		expect(detail.latest?.readme).toEqual({ en: "# Readme" })
+	})
+
+	test("keeps only the shipped locale when there is no bare README.md", async () => {
+		const f = fixture!
+		f.addJson("https://api.github.com/repos/me/cat/releases/latest", {
+			...RELEASE,
+			assets: [
+				...RELEASE.assets,
+				{
+					name: "README.zh.md",
+					browser_download_url:
+						"https://github.com/me/cat/releases/download/v1.2.3/README.zh.md",
+				},
+			],
+		})
+		f.add(
+			"https://github.com/me/cat/releases/download/v1.2.3/README.zh.md",
+			"# 说明 zh",
+		)
+
+		const detail = await f.service.detail("me/cat", PLUGIN_ID)
+		expect(detail.latest?.readme).toEqual({ zh: "# 说明 zh" })
+	})
+
+	test("a repo with no published release resolves to no_release", async () => {
+		const f = fixture!
+		f.fetcher.fetchToFile.mockImplementation(
+			async (u: string, target: string) => {
+				if (u.includes("api.github.com")) {
+					throw new Error(`plugin download returned HTTP 404: ${u}`)
+				}
+				const body = f.routes.get(u)
+				if (body === undefined) {
+					throw new Error(`plugin download returned HTTP 404: ${u}`)
+				}
+				await writeFile(target, body)
+				return { sizeBytes: Buffer.byteLength(body), sha256: sha256(body) }
+			},
+		)
+
+		const detail = await f.service.detail("me/cat", PLUGIN_ID)
+		expect(detail.state).toBe("no_release")
+		expect(detail.latest).toBeUndefined()
+	})
+
+	test("a rate-limited API with no cached release surfaces the version from the releases.atom feed", async () => {
+		const f = fixture!
+		f.add(atomUrl("me/cat"), atomFeed("v1.2.3"))
+		rateLimitFetcher(f)
+
+		const detail = await f.service.detail("me/cat", PLUGIN_ID)
+		// The version is real (a published release) though the asset is unknown.
+		expect(detail.state).toBe("ok")
+		expect(detail.latest?.tag).toBe("v1.2.3")
+		expect(detail.latest?.version).toBe("1.2.3")
+		expect(detail.latest?.assetUrl).toBeUndefined()
+		expect(detail.latest?.publishedAt).toBe("2025-01-02T03:04:05Z")
+		expect(detail.rateLimited).toBe(true)
+		expect(detail.error).toBeUndefined()
+		// The free releases feed (not the rate-limited API) supplied the tag.
+		expect(f.fetcher.fetchToFile).toHaveBeenCalledWith(
+			atomUrl("me/cat"),
+			expect.any(String),
+			expect.any(Object),
+		)
+	})
+
+	test("a rate-limited API with a stale cached release and a newer feed tag surfaces the newer version-only release", async () => {
+		const f = fixture!
+		f.addJson("https://api.github.com/repos/me/cat/releases/latest", RELEASE)
+		await f.service.detail("me/cat", PLUGIN_ID) // seed v1.2.3 + asset
+		f.add(atomUrl("me/cat"), atomFeed("v1.3.0"))
+		rateLimitFetcher(f)
+		// Expire the release TTL so the next detail re-fetches the API.
+		f.advance(60 * 60_000 + 1)
+
+		const detail = await f.service.detail("me/cat", PLUGIN_ID)
+		// The newer feed tag wins over the stale cache: version known, asset not.
+		expect(detail.state).toBe("ok")
+		expect(detail.latest?.version).toBe("1.3.0")
+		expect(detail.latest?.assetUrl).toBeUndefined()
+		expect(detail.rateLimited).toBe(true)
+	})
+
+	test("a rate-limited API with a feed tag matching the cached release keeps the cached asset", async () => {
+		const f = fixture!
+		f.addJson("https://api.github.com/repos/me/cat/releases/latest", RELEASE)
+		await f.service.detail("me/cat", PLUGIN_ID) // seed v1.2.3 + asset
+		// The feed agrees with the cached tag — the cache is still current, so
+		// its asset is kept and an update stays possible from cache.
+		f.add(atomUrl("me/cat"), atomFeed("v1.2.3"))
+		rateLimitFetcher(f)
+		f.advance(60 * 60_000 + 1)
+
+		const detail = await f.service.detail("me/cat", PLUGIN_ID)
+		expect(detail.state).toBe("ok")
+		expect(detail.latest?.version).toBe("1.2.3")
+		expect(detail.latest?.assetUrl).toBe(
+			RELEASE.assets[0]!.browser_download_url,
+		)
+		expect(detail.rateLimited).toBe(true)
+	})
+
+	test("a rate-limited API with an empty atom feed degrades to the cached release", async () => {
+		const f = fixture!
+		f.addJson("https://api.github.com/repos/me/cat/releases/latest", RELEASE)
+		await f.service.detail("me/cat", PLUGIN_ID) // seed v1.2.3 + asset
+		// The feed answers but carries no entry — nothing to learn from it,
+		// so the detail keeps the cached payload (asset still usable).
+		f.add(atomUrl("me/cat"), "<feed></feed>")
+		rateLimitFetcher(f)
+		f.advance(60 * 60_000 + 1)
+
+		const detail = await f.service.detail("me/cat", PLUGIN_ID)
+		expect(detail.state).toBe("ok")
+		expect(detail.latest?.version).toBe("1.2.3")
+		expect(detail.latest?.assetUrl).toBe(
+			RELEASE.assets[0]!.browser_download_url,
+		)
+		expect(detail.rateLimited).toBe(true)
+	})
+
+	test("a rate-limited API with no cached release and no atom entry reports a rate-limited error", async () => {
+		const f = fixture!
+		rateLimitFetcher(f)
+
+		const detail = await f.service.detail("me/cat", PLUGIN_ID)
+		expect(detail.state).toBe("error")
+		expect(detail.errorKind).toBe("rate_limited")
+		expect(detail.error).toContain("rate limit")
+		expect(detail.latest).toBeUndefined()
+	})
+
+	test("caches a fresh release per repo and persists it across restarts", async () => {
+		const f = fixture!
+		f.addJson("https://api.github.com/repos/me/cat/releases/latest", RELEASE)
+		await f.service.detail("me/cat", PLUGIN_ID)
+		expect(apiCalls(f)).toBe(1)
+
+		// A fresh instance (empty in-memory cache) sharing the same cache file
+		// answers from the persisted disk cache without any API call.
+		const second = createMarketplaceService({
+			prefs: {
+				get: (key: string) =>
+					f.prefs.has(key)
+						? { key, value: f.prefs.get(key)!, updatedAt: 0 }
+						: undefined,
+				set: (key: string, value: string) => {
+					f.prefs.set(key, value)
+					return { key, value, updatedAt: 0 }
+				},
+				remove: (key: string) => {
+					f.prefs.delete(key)
+				},
+			},
+			sources: f.sources,
+			fetcher: f.fetcher,
+			installer: f.installer,
+			rescan: f.rescan,
+			postInstall: f.postInstall,
+			tmpDir: f.root,
+			maxInstallBytes: 1024 * 1024,
+			releaseCacheFile: join(f.root, "releases.json"),
+			cacheTtlMs: 10 * 60_000,
+			releaseCacheTtlMs: 60 * 60_000,
+			rateLimitCooldownMs: 60 * 60_000,
+			now: () => f.clock(),
+		})
+		const detail = await second.detail("me/cat", PLUGIN_ID)
+		expect(detail.state).toBe("ok")
+		expect(detail.latest?.version).toBe("1.2.3")
+		expect(apiCalls(f)).toBe(1)
+	})
+
+	test("a rate-limited API arms a cooldown that suppresses re-hits until it lapses", async () => {
+		const f = fixture!
+		f.addJson("https://api.github.com/repos/me/cat/releases/latest", RELEASE)
+		// Seed a healthy cache, then make the API 403.
+		const healthy = await f.service.detail("me/cat", PLUGIN_ID)
+		expect(apiCalls(f)).toBe(1)
+		expect(healthy.rateLimited).toBeUndefined()
+
+		// Expire the release TTL so the next detail re-fetches; the stale
+		// cached payload degrades to a rate-limited entry instead of erroring.
+		f.advance(60 * 60_000 + 1)
+		rateLimitFetcher(f)
+
+		const degraded = await f.service.detail("me/cat", PLUGIN_ID)
+		expect(apiCalls(f)).toBe(2)
+		expect(degraded.state).toBe("ok")
+		expect(degraded.latest?.version).toBe("1.2.3")
+		expect(degraded.rateLimited).toBe(true)
+
+		// Within the cooldown a re-open skips the API entirely (no re-quota burn).
+		const again = await f.service.detail("me/cat", PLUGIN_ID)
+		expect(apiCalls(f)).toBe(2)
+		expect(again.rateLimited).toBe(true)
+
+		// Once the cooldown lapses it retries (and still degrades while 403).
+		f.advance(60 * 60_000 + 1)
+		const after = await f.service.detail("me/cat", PLUGIN_ID)
+		expect(apiCalls(f)).toBe(3)
+		expect(after.state).toBe("ok")
+		expect(after.latest?.version).toBe("1.2.3")
+		expect(after.rateLimited).toBe(true)
+	})
+
+	test("rejects a non-normalized repo address before any fetch", async () => {
+		const f = fixture!
+		await expect(
+			f.service.detail("https://gitlab.com/me/x", PLUGIN_ID),
+		).rejects.toMatchObject({
+			code: "VALIDATION",
+			message: expect.stringContaining("GitHub repository address"),
+		})
+		expect(f.fetcher.fetchToFile).not.toHaveBeenCalled()
+	})
+
+	test("a release payload that fails validation maps to a failed error", async () => {
+		const f = fixture!
+		// The API answers, but the payload is missing the required fields.
+		f.addJson("https://api.github.com/repos/me/cat/releases/latest", {
+			bogus: true,
+		})
+
+		const detail = await f.service.detail("me/cat", PLUGIN_ID)
+		expect(detail.state).toBe("error")
+		expect(detail.errorKind).toBe("failed")
+		expect(detail.latest).toBeUndefined()
+		expect(detail.error).toContain("fetching latest release failed")
 	})
 })
 
@@ -1168,10 +1014,7 @@ describe("createMarketplaceService origin merge", () => {
 			plugins: ["me/cat-viewer"],
 		})
 		f.addJson(rawUrl("me", "cat-viewer", "HEAD", "manifest.json"), MANIFEST)
-		f.addJson(
-			"https://api.github.com/repos/me/cat-viewer/releases/latest",
-			RELEASE,
-		)
+		f.add(atomUrl("me/cat-viewer"), atomFeed("v1.2.3"))
 		// Installed from another registry: source repo not listed here and
 		// its plugin id is absent from the current catalog.
 		f.sources.listInstallSources.mockReturnValue([
@@ -1182,10 +1025,7 @@ describe("createMarketplaceService origin merge", () => {
 			id: OTHER_ID,
 			version: "2.0.0",
 		})
-		f.addJson("https://api.github.com/repos/me/other-viewer/releases/latest", {
-			...RELEASE,
-			tag_name: "v2.0.0",
-		})
+		f.add(atomUrl("me/other-viewer"), atomFeed("v2.0.0"))
 
 		const snapshot = await f.service.refresh(false)
 
@@ -1196,6 +1036,7 @@ describe("createMarketplaceService origin merge", () => {
 			state: "ok",
 		})
 		expect(merged?.latest?.version).toBe("2.0.0")
+		expect(apiCalls(f)).toBe(0)
 	})
 
 	test("the current registry wins when an installed origin matches a catalog id", async () => {
@@ -1206,10 +1047,7 @@ describe("createMarketplaceService origin merge", () => {
 			plugins: ["me/cat-viewer"],
 		})
 		f.addJson(rawUrl("me", "cat-viewer", "HEAD", "manifest.json"), MANIFEST)
-		f.addJson(
-			"https://api.github.com/repos/me/cat-viewer/releases/latest",
-			RELEASE,
-		)
+		f.add(atomUrl("me/cat-viewer"), atomFeed("v1.2.3"))
 		// The same plugin id is listed by the current registry: the origin
 		// repo is skipped (and never fetched) — catalog data wins.
 		f.sources.listInstallSources.mockReturnValue([
@@ -1220,7 +1058,7 @@ describe("createMarketplaceService origin merge", () => {
 
 		expect(snapshot.plugins).toHaveLength(1)
 		expect(snapshot.plugins[0]?.repo).toBe("me/cat-viewer")
-		expect(apiCalls(f)).toBe(1)
+		expect(apiCalls(f)).toBe(0)
 	})
 
 	test("does not refetch an origin repo the registry already lists", async () => {
@@ -1231,10 +1069,7 @@ describe("createMarketplaceService origin merge", () => {
 			plugins: ["me/cat-viewer"],
 		})
 		f.addJson(rawUrl("me", "cat-viewer", "HEAD", "manifest.json"), MANIFEST)
-		f.addJson(
-			"https://api.github.com/repos/me/cat-viewer/releases/latest",
-			RELEASE,
-		)
+		f.add(atomUrl("me/cat-viewer"), atomFeed("v1.2.3"))
 		f.sources.listInstallSources.mockReturnValue([
 			{ id: OTHER_ID, repo: "me/cat-viewer" },
 		])
@@ -1243,7 +1078,7 @@ describe("createMarketplaceService origin merge", () => {
 
 		expect(snapshot.plugins).toHaveLength(1)
 		expect(snapshot.plugins[0]?.repo).toBe("me/cat-viewer")
-		expect(apiCalls(f)).toBe(1)
+		expect(apiCalls(f)).toBe(0)
 	})
 
 	test("an origin repo that fails to load lands in the errors list", async () => {
@@ -1254,10 +1089,7 @@ describe("createMarketplaceService origin merge", () => {
 			plugins: ["me/cat-viewer"],
 		})
 		f.addJson(rawUrl("me", "cat-viewer", "HEAD", "manifest.json"), MANIFEST)
-		f.addJson(
-			"https://api.github.com/repos/me/cat-viewer/releases/latest",
-			RELEASE,
-		)
+		f.add(atomUrl("me/cat-viewer"), atomFeed("v1.2.3"))
 		f.sources.listInstallSources.mockReturnValue([
 			{ id: OTHER_ID, repo: "me/other-viewer" },
 		])
@@ -1281,20 +1113,13 @@ describe("createMarketplaceService origin merge", () => {
 			plugins: ["me/cat-viewer"],
 		})
 		f.addJson(rawUrl("me", "cat-viewer", "HEAD", "manifest.json"), MANIFEST)
-		f.addJson(
-			"https://api.github.com/repos/me/cat-viewer/releases/latest",
-			RELEASE,
-		)
+		f.add(atomUrl("me/cat-viewer"), atomFeed("v1.2.3"))
 		f.sources.listInstallSources.mockReturnValue([
 			{ id: OTHER_ID, repo: "me/other-viewer" },
 		])
 		f.addJson(rawUrl("me", "other-viewer", "HEAD", "manifest.json"), {
 			...MANIFEST,
 			id: "66666666-6666-4666-8666-666666666666",
-		})
-		f.addJson("https://api.github.com/repos/me/other-viewer/releases/latest", {
-			...RELEASE,
-			tag_name: "v2.0.0",
 		})
 
 		const snapshot = await f.service.refresh(false)

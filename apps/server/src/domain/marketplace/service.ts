@@ -23,6 +23,7 @@ import {
 	type MarketInstallInput,
 	type MarketLatest,
 	type MarketPlugin,
+	type MarketPluginDetail,
 	type MarketSnapshot,
 	marketRegistryFile,
 } from "./schema.ts"
@@ -36,12 +37,18 @@ import {
  * Data channels, by cost:
  * - registry file + each plugin's `manifest.json`: `raw.githubusercontent.com`
  *   (no API quota; ref fallback `HEAD` → `main` → `master`);
- * - latest release info: `api.github.com/repos/<repo>/releases/latest`
- *   (the only API-quota-hungry call, one per plugin). When that API is
- *   rate-limited, the marketplace falls back to the free GitHub releases
- *   feed (`github.com/<repo>/releases.atom`, a web endpoint — no API quota)
- *   to learn the true latest release tag, so the UI can still tell the user
- *   a new version was published even though its asset is not fetchable yet;
+ * - the **catalog** latest version: the free GitHub releases feed
+ *   (`github.com/<repo>/releases.atom`, a web endpoint — no API quota) —
+ *   the list snapshot reads only the tag + date, so it stays fast and never
+ *   touches the quota-hungry API;
+ * - the **authoritative** latest release (asset / notes / readme / sha256):
+ *   `api.github.com/repos/<repo>/releases/latest` — the only API-quota-hungry
+ *   call, and it is made on demand when the user opens a plugin's view
+ *   ({@link MarketplaceService.detail}), cached per repo so repeated opens
+ *   reuse the cache. When rate-limited, it falls back to the free
+ *   `releases.atom` feed to learn the true latest tag, so the UI can still
+ *   tell the user a new version was published even though its asset is not
+ *   fetchable yet;
  * - install/update assets: the release's `browser_download_url`
  *   (a direct `github.com` download, no API quota).
  *
@@ -178,6 +185,13 @@ export type MarketplaceService = {
 	refresh(force: boolean): Promise<MarketSnapshot>
 	/** Download + validate + install a release asset (install or update). */
 	install(input: MarketInstallInput): Promise<{ readonly pluginId: string }>
+	/**
+	 * One repo's authoritative latest release (asset / notes / readme /
+	 * sha256). Fetched on demand when the user opens a plugin's view, and
+	 * cached per repo (persisted release cache + rate-limit cooldown) so an
+	 * open is served from cache instead of re-hitting the quota-hungry API.
+	 */
+	detail(repo: string, id: string): Promise<MarketPluginDetail>
 }
 
 type MarketFetchErrorKind = "missing" | "rate_limited" | "failed"
@@ -345,7 +359,7 @@ export function createMarketplaceService(
 			}
 		}
 		if (pending !== undefined) return await pending
-		pending = buildAndCache(repo, force).finally(() => {
+		pending = buildAndCache(repo).finally(() => {
 			pending = undefined
 		})
 		return await pending
@@ -414,19 +428,13 @@ export function createMarketplaceService(
 		return repo
 	}
 
-	async function buildAndCache(
-		repo: string,
-		force: boolean,
-	): Promise<MarketSnapshot> {
-		const snapshot = await buildSnapshot(repo, force)
+	async function buildAndCache(repo: string): Promise<MarketSnapshot> {
+		const snapshot = await buildSnapshot(repo)
 		cache.set(repo, { snapshot, fetchedAt: snapshot.fetchedAt })
 		return snapshot
 	}
 
-	async function buildSnapshot(
-		repo: string,
-		force: boolean,
-	): Promise<MarketSnapshot> {
+	async function buildSnapshot(repo: string): Promise<MarketSnapshot> {
 		let registryText: string
 		try {
 			registryText = await fetchTextBestEffort(rawUrls(repo, "registry.json"), {
@@ -467,7 +475,7 @@ export function createMarketplaceService(
 		})
 
 		const results = await Promise.all(
-			entries.map((entry) => limiter.run(() => loadPlugin(entry, force))),
+			entries.map((entry) => limiter.run(() => loadPlugin(entry))),
 		)
 		const plugins: MarketPlugin[] = []
 		const errors: MarketError[] = []
@@ -478,7 +486,7 @@ export function createMarketplaceService(
 				plugins.push(result.plugin)
 			}
 		}
-		await mergeInstalledOrigins(plugins, errors, force)
+		await mergeInstalledOrigins(plugins, errors)
 		persistReleaseCache()
 		return {
 			registryRepo: repo,
@@ -499,7 +507,6 @@ export function createMarketplaceService(
 	async function mergeInstalledOrigins(
 		plugins: MarketPlugin[],
 		errors: MarketError[],
-		force: boolean,
 	): Promise<void> {
 		const catalogIds = new Set(plugins.map((plugin) => plugin.id))
 		const catalogRepos = new Set(plugins.map((plugin) => plugin.repo))
@@ -512,7 +519,7 @@ export function createMarketplaceService(
 		}
 		const repos = new Set(originRepoById.values())
 		const results = await Promise.all(
-			[...repos].map((repo) => limiter.run(() => loadPlugin(repo, force))),
+			[...repos].map((repo) => limiter.run(() => loadPlugin(repo))),
 		)
 		for (const result of results) {
 			if (result.kind === "error") {
@@ -529,10 +536,7 @@ export function createMarketplaceService(
 		}
 	}
 
-	async function loadPlugin(
-		repo: string,
-		force: boolean,
-	): Promise<
+	async function loadPlugin(repo: string): Promise<
 		| { readonly kind: "plugin"; readonly plugin: MarketPlugin }
 		| {
 				readonly kind: "error"
@@ -590,41 +594,22 @@ export function createMarketplaceService(
 			manifest,
 		}
 
-		let latest: MarketLatest | undefined
-		let degraded = false
-		let failure: string | undefined
-		let failureKind: "rate_limited" | "failed" | "missing" | undefined
-		try {
-			const result = await loadLatest(repo, manifest, force)
-			latest = result.latest
-			degraded = result.degraded
-		} catch (err) {
-			if (err instanceof MarketFetchError && err.kind === "missing") {
-				// 404 from `releases/latest` = a manifest-bearing repo that
-				// has simply not published anything yet.
-				return {
-					kind: "plugin",
-					plugin: {
-						...base,
-						state: "no_release",
-						latest: undefined,
-						error: undefined,
-					},
-				}
-			}
-			failure = fetchFailureMessage(err, "latest release")
-			failureKind = err instanceof MarketFetchError ? err.kind : "failed"
-		}
-
-		if (failure !== undefined) {
+		// The catalog reads only the free `releases.atom` feed — it never
+		// touches the quota-hungry `releases/latest` API. A repo with no
+		// published release (no atom entry) lists as `no_release`; otherwise
+		// the version-only latest is surfaced so the list can render the
+		// version/date line and the update signal without using any GitHub
+		// API quota. The installable payload (asset / notes / readme /
+		// sha256) is fetched on demand via `detail`.
+		const entry = await fetchLatestReleaseEntry(repo)
+		if (entry === undefined) {
 			return {
 				kind: "plugin",
 				plugin: {
 					...base,
-					state: "error",
+					state: "no_release",
 					latest: undefined,
-					error: failure,
-					...(failureKind !== undefined ? { errorKind: failureKind } : {}),
+					error: undefined,
 				},
 			}
 		}
@@ -633,9 +618,8 @@ export function createMarketplaceService(
 			plugin: {
 				...base,
 				state: "ok",
-				latest,
+				latest: latestFromAtom(repo, entry),
 				error: undefined,
-				...(degraded ? { rateLimited: true } : {}),
 			},
 		}
 	}
@@ -672,7 +656,7 @@ export function createMarketplaceService(
 	 */
 	async function loadLatest(
 		repo: string,
-		manifest: PluginManifest,
+		id: string,
 		bypass: boolean,
 	): Promise<ReleaseLoadResult> {
 		loadReleaseCache()
@@ -691,7 +675,7 @@ export function createMarketplaceService(
 
 		if (!cooldownActive || bypass) {
 			try {
-				const latest = await fetchRelease(repo, manifest)
+				const latest = await fetchRelease(repo, id)
 				// A fresh API answer is authoritative — drop any feed-learned tag.
 				releaseCache.set(repo, { latest, fetchedAt: now() })
 				markReleaseCacheDirty()
@@ -736,6 +720,52 @@ export function createMarketplaceService(
 		)
 	}
 
+	/**
+	 * One repo's authoritative latest release, fetched on demand when the
+	 * user opens a plugin's view. Unlike the snapshot (free `releases.atom`
+	 * only), this reads the real `releases/latest` payload — the asset URL,
+	 * sha256 sidecar, release notes and the version-pinned readme — so
+	 * install/update becomes actionable. Cached per repo (persisted release
+	 * cache + rate-limit cooldown), so repeated opens reuse the cache
+	 * instead of re-hitting the quota-hungry API.
+	 */
+	async function detail(repo: string, id: string): Promise<MarketPluginDetail> {
+		const normalized = normalizeRepoAddress(repo)
+		try {
+			const result = await loadLatest(normalized, id, false)
+			return {
+				repo: normalized,
+				state: "ok",
+				latest: result.latest,
+				error: undefined,
+				...(result.degraded ? { rateLimited: true } : {}),
+			}
+		} catch (err) {
+			if (err instanceof MarketFetchError && err.kind === "missing") {
+				// A repo with a manifest but no published release (404 from
+				// `releases/latest`) — the view shows "no release".
+				return {
+					repo: normalized,
+					state: "no_release",
+					latest: undefined,
+					error: undefined,
+				}
+			}
+			const kind = err instanceof MarketFetchError ? err.kind : "failed"
+			return {
+				repo: normalized,
+				state: "error",
+				latest: undefined,
+				error: fetchFailureMessage(err, "latest release"),
+				...(kind !== undefined ? { errorKind: kind } : {}),
+			}
+		} finally {
+			// Flush a fresh answer or a re-armed cooldown promptly — the
+			// detail path is now the only writer to the persisted cache.
+			persistReleaseCache()
+		}
+	}
+
 	/** Fetch + parse the first entry of the repo's `releases.atom` feed. */
 	async function fetchLatestReleaseEntry(
 		repo: string,
@@ -754,10 +784,7 @@ export function createMarketplaceService(
 		}
 	}
 
-	async function fetchRelease(
-		repo: string,
-		manifest: PluginManifest,
-	): Promise<MarketLatest> {
+	async function fetchRelease(repo: string, id: string): Promise<MarketLatest> {
 		const raw = await fetchTextBestEffort([apiReleaseUrl(repo)], {
 			maxBytes: MAX_API_BYTES,
 			headers: { "User-Agent": USER_AGENT },
@@ -776,7 +803,7 @@ export function createMarketplaceService(
 		const version = release.tag_name.replace(/^v/, "")
 		const asset = pickZipAsset(
 			release.assets ?? [],
-			manifest.id,
+			id,
 			release.tag_name,
 			version,
 		)
@@ -897,7 +924,7 @@ export function createMarketplaceService(
 		throw lastMissing ?? new MarketFetchError("failed", "no URLs to fetch")
 	}
 
-	return { getConfig, setConfig, refresh, install }
+	return { getConfig, setConfig, refresh, install, detail }
 }
 
 // ── module helpers ────────────────────────────────────────────────────────

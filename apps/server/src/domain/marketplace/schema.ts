@@ -92,7 +92,21 @@ export type MarketPlugin = {
 	 * like the plugins page.
 	 */
 	readonly manifest: PluginManifest
+	/**
+	 * The catalog state, derived from the manifest and the free
+	 * `releases.atom` feed only — the snapshot never calls the quota-hungry
+	 * `releases/latest` API, so `error`/`rateLimited` are never set here
+	 * (`state` is `"ok"` when a release was found, `"no_release"` otherwise).
+	 * The authoritative release (asset / readme / notes / sha256) is fetched
+	 * on demand — see {@link MarketPluginDetail}.
+	 */
 	readonly state: "ok" | "no_release" | "error"
+	/**
+	 * A version-only {@link MarketLatest} read from the free `releases.atom`
+	 * feed: the tag + published date, with no asset / notes / readme. The
+	 * installable payload (asset / sha256 / notes / readme) arrives only via
+	 * {@link MarketplaceService.detail} when the user opens a plugin's view.
+	 */
 	readonly latest: MarketLatest | undefined
 	/** Human-readable reason when `state` is `error`. */
 	readonly error: string | undefined
@@ -125,6 +139,32 @@ export type MarketSnapshot = {
 	 * repo — that could not be loaded as plugins.
 	 */
 	readonly errors: readonly MarketError[]
+}
+
+/**
+ * One plugin's authoritative latest release, fetched on demand when the user
+ * opens the marketplace "View" dialog. Unlike the snapshot's version-only
+ * {@link MarketPlugin.latest}, this holds the installable payload — the
+ * asset URL, sha256, release notes and the version-pinned readme — and is
+ * the only path that touches the quota-hungry `releases/latest` API.
+ * Cached per repo server-side (persisted) and client-side, so repeated
+ * opens never re-hit the API within the cache window.
+ */
+export type MarketPluginDetail = {
+	/** Normalized `owner/repo`. */
+	readonly repo: string
+	readonly state: "ok" | "no_release" | "error"
+	/** The authoritative latest release (asset / notes / readme / sha256). */
+	readonly latest: MarketLatest | undefined
+	/** Human-readable reason when `state` is `error`. */
+	readonly error: string | undefined
+	readonly errorKind?: "rate_limited" | "failed" | "missing"
+	/**
+	 * True when the release payload was served from the cache or from the
+	 * free `releases.atom` feed after the API rate limit — a version-only
+	 * entry (asset absent) is not actionable until the API recovers.
+	 */
+	readonly rateLimited?: boolean
 }
 
 export type MarketInstallInput = {

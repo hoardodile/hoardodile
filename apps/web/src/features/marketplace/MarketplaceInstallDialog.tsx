@@ -8,11 +8,14 @@ import { resolveManifestName } from "@/features/plugin/manifestText"
 import { PluginPermissionBadges } from "@/features/plugin/PluginPermissionBadges"
 import { pluginKeys } from "@/features/plugin/pluginApi"
 import { errorMessage } from "@/lib/errors"
-import type { MarketPlugin } from "./MarketplaceDetailDialog"
+import type { MarketLatest, MarketPlugin } from "./MarketplaceDetailDialog"
 import { marketplaceInstall } from "./marketplaceApi"
 
 export type InstallTarget = {
 	readonly plugin: MarketPlugin
+	/** The authoritative release (asset / sha256 / version) — the snapshot's
+	    version-only `latest` is not installable. */
+	readonly latest: MarketLatest | undefined
 	readonly mode: "install" | "update"
 	/** Installed version before an update — shown as the version arrow. */
 	readonly installedVersion?: string
@@ -35,8 +38,8 @@ export function MarketplaceInstallDialog(props: {
 		target === null
 			? undefined
 			: target.mode === "update" && target.installedVersion !== undefined
-				? `${target.installedVersion} → ${target.plugin.latest?.version ?? ""}`
-				: target.plugin.latest?.version
+				? `${target.installedVersion} → ${target.latest?.version ?? ""}`
+				: target.latest?.version
 	return (
 		<ConfirmDialog
 			open={target !== null}
@@ -110,8 +113,8 @@ export function useMarketplaceInstall(
 			marketplaceInstall({
 				id: target.plugin.id,
 				repo: target.plugin.repo,
-				assetUrl: target.plugin.latest?.assetUrl ?? "",
-				sha256: target.plugin.latest?.sha256,
+				assetUrl: target.latest?.assetUrl ?? "",
+				sha256: target.latest?.sha256,
 			}),
 		onSuccess: (_result, target) => {
 			onSuccess?.(target)
@@ -121,7 +124,7 @@ export function useMarketplaceInstall(
 					target.mode === "update"
 						? t("marketplace.updateSuccess", {
 								name: target.plugin.name,
-								version: target.plugin.latest?.version,
+								version: target.latest?.version,
 							})
 						: t("marketplace.installSuccess", { name: target.plugin.name }),
 				type: "success",

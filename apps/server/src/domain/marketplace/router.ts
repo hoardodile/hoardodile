@@ -12,6 +12,13 @@ const snapshotInput = z.object({
 	force: z.boolean().optional(),
 })
 
+const detailInput = z.object({
+	/** App manifest id — the only field the asset pick needs. */
+	id: z.string().uuid(),
+	/** Normalized `owner/repo` of the plugin to inspect. */
+	repo: z.string().min(1).max(300),
+})
+
 export function buildMarketplaceRouter(deps: {
 	readonly service: MarketplaceService
 }) {
@@ -29,6 +36,15 @@ export function buildMarketplaceRouter(deps: {
 		snapshot: authedProcedure
 			.input(snapshotInput)
 			.query(({ input }) => service.refresh(input.force === true)),
+		/**
+		 * One plugin's authoritative latest release (asset / notes / readme /
+		 * sha256), fetched when the user opens its view and cached per repo.
+		 * The catalog snapshot never calls the quota-hungry API; this is the
+		 * only query that does, and it is on-demand.
+		 */
+		detail: authedProcedure
+			.input(detailInput)
+			.query(({ input }) => service.detail(input.repo, input.id)),
 	})
 }
 

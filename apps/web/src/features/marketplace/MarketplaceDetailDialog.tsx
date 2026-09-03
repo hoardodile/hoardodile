@@ -3,12 +3,14 @@ import { Button } from "@hoardodile/ui/components/button"
 import { Icon } from "@hoardodile/ui/components/icon"
 import { MetaChip } from "@hoardodile/ui/components/meta-chip"
 import { SectionTabs } from "@hoardodile/ui/components/section-tabs"
+import { Skeleton } from "@hoardodile/ui/components/skeleton"
 import {
 	Bug,
 	MagicWand2,
 	PlugCircle,
 	ShieldCheck,
 } from "@hoardodile/ui/icons/registry"
+import { useQuery } from "@tanstack/react-query"
 import { type ReactNode, useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { ExternalLink } from "@/components/common/ExternalLink"
@@ -19,15 +21,28 @@ import {
 } from "@/features/plugin/manifestText"
 import { PluginPermissionBadges } from "@/features/plugin/PluginPermissionBadges"
 import { APP_VERSION } from "@/lib/appInfo"
+import { errorMessage } from "@/lib/errors"
 import { isNewer } from "@/lib/versions"
 import type { RouterOutputs } from "@/trpc/client"
 import { isMinAppSatisfied, marketUpdateAvailable } from "./compat"
+import { marketplaceDetailQueryOptions } from "./marketplaceApi"
 import { PluginMarkdown } from "./PluginMarkdown"
 
 export type MarketPlugin =
 	RouterOutputs["marketplace"]["snapshot"]["plugins"][number]
 
 export type InstalledPlugin = RouterOutputs["plugin"]["listAll"][number]
+
+/** One plugin's authoritative latest release (asset / notes / readme). */
+export type MarketLatest = NonNullable<
+	RouterOutputs["marketplace"]["detail"]["latest"]
+>
+
+/**
+ * One plugin's authoritative release state, fetched on demand when the view
+ * opens. `undefined` while the on-demand fetch is in flight.
+ */
+export type MarketPluginDetail = RouterOutputs["marketplace"]["detail"]
 
 /** The markdown tabs of the detail dialog. */
 type MarketplaceTab = "readme" | "release"
@@ -101,65 +116,104 @@ export function pickReadmeMarkdown(
 /**
  * Read-only detail view — everything the card hides, in one place. Shared
  * by the marketplace catalog and the plugins page's "details" menu entry.
- * Actions are owned by the caller: {@link props.onInstall} / {@link props.onUninstall}
- * stay outside so the install confirmation and the uninstall dialog can
- * live next to the caller's other dialogs.
+ * The authoritative release (asset / notes / readme) is fetched on demand
+ * when the dialog opens and cached per repo, so the list never consumes the
+ * quota-hungry GitHub API. Actions are owned by the caller:
+ * {@link props.onInstall} / {@link props.onUninstall} stay outside so the
+ * install confirmation and the uninstall dialog can live next to the
+ * caller's other dialogs.
  */
 export function MarketplaceDetailDialog(props: {
 	readonly open: boolean
 	readonly plugin: MarketPlugin
 	readonly installed?: InstalledPlugin
 	readonly onOpenChange: (open: boolean) => void
-	readonly onInstall: () => void
+	/** The caller hands the install confirmation the authoritative `latest`. */
+	readonly onInstall: (latest: MarketLatest) => void
 	/** Optional: the host hands the update confirmation to the caller;
 	    absent (e.g. the plugins page) the update entry is hidden. */
-	readonly onUpdate?: () => void
+	readonly onUpdate?: (latest: MarketLatest) => void
 	readonly onUninstall: () => void
 }) {
 	const { t, i18n } = useTranslation()
 	const { plugin } = props
-	const latest = plugin.state === "ok" ? plugin.latest : undefined
 	const installedVersion = props.installed?.manifest.version
 	const compatible = isMinAppSatisfied(plugin.manifest)
-	// An update is actionable only when the newer release's asset was fetched;
-	// a rate-limited version-only release is surfaced as a notice, not a button.
+
+	// The on-demand authoritative release — fetched only when the view opens.
+	const detailQuery = useQuery(
+		marketplaceDetailQueryOptions(plugin.repo, plugin.id),
+	)
+	const detail = detailQuery.data
+	const detailPending = detailQuery.isPending
+	const detailFailed = detailQuery.isError
+
+	// The version line renders immediately from the snapshot's free-feed
+	// `latest`; the authoritative detail (once loaded) refines it.
+	const displayLatest = detail?.latest ?? plugin.latest
+
+	// An update is actionable only when the newer release's asset was fetched
+	// by the on-demand detail; a rate-limited version-only release is
+	// surfaced as a notice, not a button.
 	const updateAvailable =
 		props.onUpdate !== undefined &&
-		marketUpdateAvailable(plugin, installedVersion) &&
-		latest?.assetUrl !== undefined
+		detail !== undefined &&
+		marketUpdateAvailable(
+			{ state: detail.state, latest: detail.latest, manifest: plugin.manifest },
+			installedVersion,
+		) &&
+		detail.latest?.assetUrl !== undefined
 	const [tab, setTab] = useState<MarketplaceTab>("readme")
 
 	useEffect(() => {
 		if (props.open) setTab("readme")
 	}, [props.open, props.plugin.id])
 
-	const readmeContent = pickReadmeMarkdown(latest?.readme, i18n.language)
+	const readmeContent = pickReadmeMarkdown(
+		detail?.latest?.readme,
+		i18n.language,
+	)
 	const readmeLanguages =
-		latest?.readme === undefined ? [] : Object.keys(latest.readme)
+		detail?.latest?.readme === undefined
+			? []
+			: Object.keys(detail.latest.readme)
 	// The readme render resolves relative images against the release's
-	// download base (readme assets are published with each release). `latest`
-	// is non-null whenever `readmeContent` is, but TS cannot track that link.
+	// download base (readme assets are published with each release).
 	const readmeImageBase =
-		latest === undefined
+		displayLatest === undefined
 			? undefined
-			: releaseDownloadBase(plugin.repo, latest.tag)
+			: releaseDownloadBase(plugin.repo, displayLatest.tag)
 	const canInstall =
 		installedVersion === undefined &&
 		compatible &&
-		latest?.assetUrl !== undefined
+		detail?.latest?.assetUrl !== undefined
 	// The rate-limit signal the ticker shows: a known (but not yet actioned)
 	// version reads differently from a plain "info unavailable" notice.
-	const rateLimitedMessage = (() => {
-		if (plugin.rateLimited === true && latest?.version !== undefined) {
+	const dialogError = (() => {
+		if (detailFailed) {
+			return errorMessage(detailQuery.error, t("common.error"))
+		}
+		if (detail?.rateLimited === true && detail.latest?.version !== undefined) {
 			return t("marketplace.updateUnavailableRateLimited", {
-				version: latest.version,
+				version: detail.latest.version,
 			})
 		}
-		if (plugin.errorKind === "rate_limited" || plugin.rateLimited === true) {
+		if (detail?.errorKind === "rate_limited" || detail?.rateLimited === true) {
 			return t("marketplace.errorRateLimitedShort")
 		}
-		return plugin.error ?? ""
+		return detail?.error ?? ""
 	})()
+
+	const showErrorBanner =
+		detailFailed || detail?.state === "error" || detail?.rateLimited === true
+
+	// The readme / release tabs need the on-demand detail; show a skeleton
+	// while it is in flight (or the "no readme / no release notes" copy on
+	// failure or a no-release repo).
+	const notice =
+		detail?.state === "no_release"
+			? t("marketplace.noRelease")
+			: t("marketplace.noReleaseNotes")
 
 	return (
 		<AppDialog
@@ -176,9 +230,9 @@ export function MarketplaceDetailDialog(props: {
 				/>
 			}
 			description={
-				latest === undefined
+				displayLatest === undefined
 					? undefined
-					: versionDateLine(latest, i18n.language)
+					: versionDateLine(displayLatest, i18n.language)
 			}
 			contentTestId="marketplace-detail-dialog"
 			footer={
@@ -221,7 +275,7 @@ export function MarketplaceDetailDialog(props: {
 					) : null}
 					{canInstall ? (
 						<Button
-							onClick={props.onInstall}
+							onClick={() => props.onInstall(detail.latest!)}
 							data-testid="marketplace-detail-install"
 						>
 							{t("marketplace.install")}
@@ -231,17 +285,19 @@ export function MarketplaceDetailDialog(props: {
 						<Button
 							onClick={() => {
 								props.onOpenChange(false)
-								props.onUpdate?.()
+								props.onUpdate?.(detail.latest!)
 							}}
 							data-testid="marketplace-detail-update"
 						>
-							{t("marketplace.updateTo", { version: latest?.version ?? "" })}
+							{t("marketplace.updateTo", {
+								version: displayLatest?.version ?? "",
+							})}
 						</Button>
 					) : null}
 				</>
 			}
 		>
-			{(plugin.state === "error" || plugin.rateLimited === true) && (
+			{showErrorBanner && (
 				<div
 					className="flex h-6 shrink-0 items-center overflow-hidden rounded-md bg-muted text-tiny text-destructive"
 					data-testid="marketplace-dialog-error"
@@ -251,11 +307,9 @@ export function MarketplaceDetailDialog(props: {
 							<span
 								key={copy}
 								className="flex shrink-0 items-center"
-								title={plugin.error}
+								title={dialogError}
 							>
-								<span className="whitespace-nowrap px-3">
-									{rateLimitedMessage}
-								</span>
+								<span className="whitespace-nowrap px-3">{dialogError}</span>
 							</span>
 						))}
 					</span>
@@ -289,19 +343,19 @@ export function MarketplaceDetailDialog(props: {
 									) : (
 										<MetaChip>{t("marketplace.notInstalled")}</MetaChip>
 									)}
-									{latest !== undefined && (
+									{displayLatest !== undefined && (
 										<MetaChip>
-											{t("marketplace.latestRelease")} v{latest.version}
+											{t("marketplace.latestRelease")} v{displayLatest.version}
 										</MetaChip>
 									)}
 									{installedVersion !== undefined &&
-										latest !== undefined &&
-										isNewer(latest.version, installedVersion) && (
+										displayLatest !== undefined &&
+										isNewer(displayLatest.version, installedVersion) && (
 											<MetaChip tone="bordered">
-												{installedVersion} → {latest.version}
+												{installedVersion} → {displayLatest.version}
 											</MetaChip>
 										)}
-									{plugin.state === "no_release" && (
+									{detail?.state === "no_release" && (
 										<MetaChip>{t("marketplace.noRelease")}</MetaChip>
 									)}
 									{!compatible && (
@@ -328,27 +382,27 @@ export function MarketplaceDetailDialog(props: {
 											@{plugin.repo}
 										</ExternalLink>
 									</MetadataRow>
-									{latest !== undefined && (
+									{displayLatest !== undefined && (
 										<MetadataRow label={t("marketplace.latestRelease")}>
 											<ExternalLink
-												href={latest.releaseUrl}
+												href={displayLatest.releaseUrl}
 												className="break-all underline-offset-2 hover:underline"
 											>
-												{versionDateLine(latest, i18n.language)}
+												{versionDateLine(displayLatest, i18n.language)}
 											</ExternalLink>
 										</MetadataRow>
 									)}
-									{latest?.assetName !== undefined && (
+									{detail?.latest?.assetName !== undefined && (
 										<MetadataRow label={t("marketplace.packageAsset")}>
 											<span className="break-all font-mono">
-												{latest.assetName}
+												{detail.latest.assetName}
 											</span>
 										</MetadataRow>
 									)}
-									{latest?.sha256 !== undefined && (
+									{detail?.latest?.sha256 !== undefined && (
 										<MetadataRow label={t("marketplace.checksum")}>
 											<span className="break-all font-mono">
-												{latest.sha256}
+												{detail.latest.sha256}
 											</span>
 										</MetadataRow>
 									)}
@@ -388,7 +442,16 @@ export function MarketplaceDetailDialog(props: {
 								</div>
 
 								<div className="flex flex-col gap-1">
-									{readmeContent !== undefined ? (
+									{detailPending ? (
+										<div
+											className="flex flex-col gap-2"
+											data-testid="marketplace-detail-loading"
+										>
+											<Skeleton className="h-3 w-full" />
+											<Skeleton className="h-3 w-4/5" />
+											<Skeleton className="h-3 w-2/3" />
+										</div>
+									) : readmeContent !== undefined ? (
 										<PluginMarkdown
 											repo={plugin.repo}
 											markdown={readmeContent}
@@ -407,18 +470,24 @@ export function MarketplaceDetailDialog(props: {
 						value: "release",
 						label: t("marketplace.releaseNotes"),
 						testId: "marketplace-detail-tab-release",
-						panel:
-							latest?.notes !== null && latest?.notes !== undefined ? (
-								<PluginMarkdown repo={plugin.repo} markdown={latest.notes} />
-							) : (
-								<p className="text-xs text-muted-foreground">
-									{t(
-										plugin.state === "no_release"
-											? "marketplace.noRelease"
-											: "marketplace.noReleaseNotes",
-									)}
-								</p>
-							),
+						panel: detailPending ? (
+							<div
+								className="flex flex-col gap-2"
+								data-testid="marketplace-detail-loading"
+							>
+								<Skeleton className="h-3 w-full" />
+								<Skeleton className="h-3 w-4/5" />
+								<Skeleton className="h-3 w-2/3" />
+							</div>
+						) : detail?.latest?.notes !== null &&
+							detail?.latest?.notes !== undefined ? (
+							<PluginMarkdown
+								repo={plugin.repo}
+								markdown={detail.latest.notes}
+							/>
+						) : (
+							<p className="text-xs text-muted-foreground">{notice}</p>
+						),
 					},
 				]}
 			/>

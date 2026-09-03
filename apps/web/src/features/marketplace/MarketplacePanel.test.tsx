@@ -27,6 +27,9 @@ vi.mock("@/trpc/client", () => ({
 
 const PLUGIN_ID = "55555555-5555-4555-8555-555555555555"
 
+// The catalog snapshot carries a version-only `latest` (read from the free
+// `releases.atom` feed) — no asset / notes / readme. The authoritative
+// release is fetched on demand via `marketplace.detail` (see DETAIL).
 const SNAPSHOT = {
 	registryRepo: "me/registry",
 	fetchedAt: 1_700_000_000_000,
@@ -68,16 +71,29 @@ const SNAPSHOT = {
 				version: "1.2.3",
 				releaseUrl: "https://github.com/me/cat-viewer/releases/tag/v1.2.3",
 				publishedAt: "2025-01-02T03:04:05Z",
-				notes: "First release",
-				assetName: `${PLUGIN_ID}-v1.2.3.zip`,
-				assetUrl: `https://github.com/me/cat-viewer/releases/download/v1.2.3/${PLUGIN_ID}-v1.2.3.zip`,
-				sha256: "abc123def456",
-				readme: { en: "# Readme heading\n\nReadme **body**." },
 			},
 			error: undefined,
 		},
 	],
 	errors: [],
+}
+
+// The on-demand authoritative release — what `marketplace.detail` returns.
+const DETAIL = {
+	repo: "me/cat-viewer",
+	state: "ok",
+	latest: {
+		tag: "v1.2.3",
+		version: "1.2.3",
+		releaseUrl: "https://github.com/me/cat-viewer/releases/tag/v1.2.3",
+		publishedAt: "2025-01-02T03:04:05Z",
+		notes: "First release",
+		assetName: `${PLUGIN_ID}-v1.2.3.zip`,
+		assetUrl: `https://github.com/me/cat-viewer/releases/download/v1.2.3/${PLUGIN_ID}-v1.2.3.zip`,
+		sha256: "abc123def456",
+		readme: { en: "# Readme heading\n\nReadme **body**." },
+	},
+	error: undefined,
 }
 
 function installedRow(version: string) {
@@ -107,6 +123,11 @@ function installClient(overrides?: {
 	readonly snapshot?: unknown
 	readonly snapshotQuery?: (input: { force: boolean }) => Promise<unknown>
 	readonly installed?: unknown[]
+	readonly detail?: unknown
+	readonly detailQuery?: (input: {
+		id: string
+		repo: string
+	}) => Promise<unknown>
 }) {
 	mockClient.marketplace = {
 		getConfig: {
@@ -117,6 +138,11 @@ function installClient(overrides?: {
 			query:
 				overrides?.snapshotQuery ??
 				vi.fn(async () => overrides?.snapshot ?? SNAPSHOT),
+		},
+		detail: {
+			query:
+				overrides?.detailQuery ??
+				vi.fn(async () => overrides?.detail ?? DETAIL),
 		},
 	}
 	mockClient.plugin = {
@@ -261,13 +287,84 @@ describe("MarketplacePanel", () => {
 		).toBeInTheDocument()
 	})
 
+	it("fetches the detail on demand — the list itself never calls it", async () => {
+		installClient({ config: { registryRepo: "me/registry" } })
+		renderPanel()
+
+		await screen.findByTestId(`marketplace-view-${PLUGIN_ID}`)
+		// The list has rendered without fetching the authoritative detail.
+		const detailQuery = (
+			mockClient.marketplace.detail as {
+				readonly query: ReturnType<typeof vi.fn>
+			}
+		).query
+		expect(detailQuery).not.toHaveBeenCalled()
+
+		await user.click(screen.getByTestId(`marketplace-view-${PLUGIN_ID}`))
+		await screen.findByTestId("marketplace-detail-dialog")
+		expect(detailQuery).toHaveBeenCalledWith({
+			id: PLUGIN_ID,
+			repo: "me/cat-viewer",
+		})
+	})
+
+	it("shows a loading skeleton in the view while the on-demand detail resolves", async () => {
+		installClient({
+			config: { registryRepo: "me/registry" },
+			detailQuery: vi.fn(() => new Promise<never>(() => {})),
+		})
+		renderPanel()
+
+		await user.click(await screen.findByTestId(`marketplace-view-${PLUGIN_ID}`))
+		const dialog = await screen.findByTestId("marketplace-detail-dialog")
+		// The release-dependent content waits on the fetch — a skeleton shows
+		// and the install/update actions stay hidden until the detail resolves.
+		expect(
+			(await within(dialog).findAllByTestId("marketplace-detail-loading"))
+				.length,
+		).toBeGreaterThan(0)
+		expect(
+			within(dialog).queryByTestId("marketplace-detail-install"),
+		).not.toBeInTheDocument()
+		expect(
+			within(dialog).queryByTestId("marketplace-detail-update"),
+		).not.toBeInTheDocument()
+	})
+
+	it("shows the error banner when the on-demand detail fetch fails", async () => {
+		installClient({
+			config: { registryRepo: "me/registry" },
+			detailQuery: vi.fn(async () => {
+				throw new Error("network down")
+			}),
+		})
+		renderPanel()
+
+		await user.click(await screen.findByTestId(`marketplace-view-${PLUGIN_ID}`))
+		const dialog = await screen.findByTestId("marketplace-detail-dialog")
+		expect(
+			await within(dialog).findByTestId("marketplace-dialog-error"),
+		).toBeInTheDocument()
+		// A failed on-demand fetch never offers install/update.
+		expect(
+			within(dialog).queryByTestId("marketplace-detail-install"),
+		).not.toBeInTheDocument()
+		expect(
+			within(dialog).queryByTestId("marketplace-detail-update"),
+		).not.toBeInTheDocument()
+	})
+
 	it("installs from the detail dialog after confirmation and posts the asset", async () => {
 		installClient({ config: { registryRepo: "me/registry" } })
 		renderPanel()
 
 		await user.click(await screen.findByTestId(`marketplace-view-${PLUGIN_ID}`))
 		// The big dialog carries Install; the consent dialog follows.
-		await user.click(await screen.findByTestId("marketplace-detail-install"))
+		await user.click(
+			await within(
+				await screen.findByTestId("marketplace-detail-dialog"),
+			).findByTestId("marketplace-detail-install"),
+		)
 		await screen.findByTestId("marketplace-install-confirm")
 		expect(
 			screen.queryByTestId("marketplace-detail-dialog"),
@@ -284,7 +381,7 @@ describe("MarketplacePanel", () => {
 			expect(JSON.parse(String(installCall?.[1]?.body))).toMatchObject({
 				id: PLUGIN_ID,
 				repo: "me/cat-viewer",
-				assetUrl: SNAPSHOT.plugins[0]!.latest!.assetUrl,
+				assetUrl: DETAIL.latest.assetUrl,
 			})
 		})
 		expect(toast.add).toHaveBeenCalledWith(
@@ -318,7 +415,7 @@ describe("MarketplacePanel", () => {
 			within(dialog).queryByTestId("marketplace-detail-install"),
 		).not.toBeInTheDocument()
 		expect(
-			within(dialog).getByTestId("marketplace-detail-update"),
+			await within(dialog).findByTestId("marketplace-detail-update"),
 		).toBeInTheDocument()
 		expect(
 			within(dialog).getByTestId("marketplace-detail-uninstall"),
@@ -349,7 +446,7 @@ describe("MarketplacePanel", () => {
 		})
 	})
 
-	it("updates from the detail dialog and hides the entry when up to date", async () => {
+	it("updates from the detail dialog and shows the version arrow", async () => {
 		installClient({
 			config: { registryRepo: "me/registry" },
 			installed: [installedRow("1.1.0")],
@@ -358,7 +455,9 @@ describe("MarketplacePanel", () => {
 
 		await user.click(await screen.findByTestId(`marketplace-view-${PLUGIN_ID}`))
 		const dialog = await screen.findByTestId("marketplace-detail-dialog")
-		await user.click(within(dialog).getByTestId("marketplace-detail-update"))
+		await user.click(
+			await within(dialog).findByTestId("marketplace-detail-update"),
+		)
 		expect(await screen.findByText(/1\.1\.0 → 1\.2\.3/)).toBeInTheDocument()
 	})
 
@@ -372,11 +471,11 @@ describe("MarketplacePanel", () => {
 		await user.click(await screen.findByTestId(`marketplace-view-${PLUGIN_ID}`))
 		const dialog = await screen.findByTestId("marketplace-detail-dialog")
 		expect(
+			await within(dialog).findByTestId("marketplace-detail-uninstall"),
+		).toBeInTheDocument()
+		expect(
 			within(dialog).queryByTestId("marketplace-detail-update"),
 		).not.toBeInTheDocument()
-		expect(
-			within(dialog).getByTestId("marketplace-detail-uninstall"),
-		).toBeInTheDocument()
 	})
 
 	it("filters the catalog by installed state and compatible updates", async () => {
@@ -442,17 +541,24 @@ describe("MarketplacePanel", () => {
 	})
 
 	it("keeps a quiet chip and no install action when there is no release", async () => {
+		const noRelease = {
+			...SNAPSHOT,
+			plugins: [
+				{
+					...SNAPSHOT.plugins[0]!,
+					state: "no_release",
+					latest: undefined,
+				},
+			],
+		}
 		installClient({
 			config: { registryRepo: "me/registry" },
-			snapshot: {
-				...SNAPSHOT,
-				plugins: [
-					{
-						...SNAPSHOT.plugins[0]!,
-						state: "no_release",
-						latest: undefined,
-					},
-				],
+			snapshot: noRelease,
+			detail: {
+				repo: "me/cat-viewer",
+				state: "no_release",
+				latest: undefined,
+				error: undefined,
 			},
 		})
 		renderPanel()
@@ -465,7 +571,7 @@ describe("MarketplacePanel", () => {
 		await user.click(screen.getByTestId(`marketplace-view-${PLUGIN_ID}`))
 		const dialog = await screen.findByTestId("marketplace-detail-dialog")
 		expect(
-			within(dialog).getByText("No GitHub release yet"),
+			await within(dialog).findByText("No GitHub release yet"),
 		).toBeInTheDocument()
 		expect(
 			within(dialog).queryByTestId("marketplace-detail-install"),
@@ -500,7 +606,7 @@ describe("MarketplacePanel", () => {
 			within(dialog).queryByTestId("marketplace-detail-install"),
 		).not.toBeInTheDocument()
 		expect(
-			within(dialog).getByText(/requires hoardodile ≥ v9\.9\.9/i),
+			await within(dialog).findByText(/requires hoardodile ≥ v9\.9\.9/i),
 		).toBeInTheDocument()
 	})
 
@@ -531,130 +637,71 @@ describe("MarketplacePanel", () => {
 		expect(within(row).queryByText(/Requires hoardodile/i)).toBeNull()
 	})
 
-	it("shows a standalone danger error line inside the card for a rate-limited entry", async () => {
+	it("shows a rate-limited notice in the dialog with no update action", async () => {
+		// The on-demand detail hit the API rate limit: the version is known
+		// (from the free feed) but there is no asset to install yet.
 		installClient({
 			config: { registryRepo: "me/registry" },
-			snapshot: {
-				...SNAPSHOT,
-				plugins: [
-					{
-						...SNAPSHOT.plugins[0]!,
-						state: "error",
-						latest: undefined,
-						error:
-							"GitHub API rate limit hit while fetching the latest release — the unauthenticated quota resets hourly; try again later",
-						errorKind: "rate_limited",
-					},
-				],
+			installed: [installedRow("1.2.3")],
+			detail: {
+				repo: "me/cat-viewer",
+				state: "ok",
+				latest: {
+					tag: "v1.3.0",
+					version: "1.3.0",
+					releaseUrl: "https://github.com/me/cat-viewer/releases/tag/v1.3.0",
+					publishedAt: "2025-02-01T00:00:00Z",
+					notes: null,
+				},
+				error: undefined,
+				rateLimited: true,
 			},
 		})
 		renderPanel()
 
-		// The card owns the error as its own line (danger colour) — no
-		// ticker, no chip, no raw English text anywhere.
-		const cardError = await screen.findByTestId(
-			`marketplace-card-error-${PLUGIN_ID}`,
-		)
-		expect(cardError).toHaveTextContent("Latest release info unavailable")
-		expect(screen.queryByTestId("marketplace-errors-ticker")).toBeNull()
-		expect(screen.queryByText(/rate limit/i)).toBeNull()
-
-		// Dialog: one quiet line at the bottom, still no raw text.
-		await user.click(screen.getByTestId(`marketplace-view-${PLUGIN_ID}`))
+		await user.click(await screen.findByTestId(`marketplace-view-${PLUGIN_ID}`))
 		const dialog = await screen.findByTestId("marketplace-detail-dialog")
 		expect(
-			within(dialog).getByTestId("marketplace-dialog-error"),
-		).toHaveTextContent("Latest release info unavailable")
-		expect(within(dialog).queryByText(/rate limit/i)).toBeNull()
-	})
-
-	it("flags a rate-limited stale release on the card", async () => {
-		installClient({
-			config: { registryRepo: "me/registry" },
-			snapshot: {
-				...SNAPSHOT,
-				plugins: [
-					{
-						...SNAPSHOT.plugins[0]!,
-						rateLimited: true,
-					},
-				],
-			},
-		})
-		renderPanel()
-
-		// A rate-limited entry still shows data, but the card owns a
-		// scrolling danger strip telling the user a newer version is known
-		// yet not actioned (rate limit) — the staleness is never silent.
-		const strip = await screen.findByTestId(
-			`marketplace-card-error-${PLUGIN_ID}`,
-		)
-		expect(strip).toHaveTextContent(
-			"v1.2.3 has been published, but updating is temporarily unavailable",
-		)
-		expect(
-			screen.getByTestId(`marketplace-view-${PLUGIN_ID}`),
-		).toBeInTheDocument()
-	})
-
-	it("flags a rate-limited version-only release: shows the version but no update action", async () => {
-		// The free releases.atom fallback yields a version without an asset —
-		// the card/dialog must surface the version + a can't-update notice
-		// while refusing to offer an update (no asset to download yet).
-		const versionOnlyLatest = {
-			tag: "v1.3.0",
-			version: "1.3.0",
-			releaseUrl: "https://github.com/me/cat-viewer/releases/tag/v1.3.0",
-			publishedAt: "2025-02-01T00:00:00Z",
-			notes: null,
-		}
-		installClient({
-			config: { registryRepo: "me/registry" },
-			snapshot: {
-				...SNAPSHOT,
-				plugins: [
-					{
-						...SNAPSHOT.plugins[0]!,
-						state: "ok",
-						latest: versionOnlyLatest,
-						rateLimited: true,
-						error: undefined,
-					},
-				],
-			},
-			installed: [installedRow("1.2.3")],
-		})
-		renderPanel()
-
-		// Card: still shows a version + the update dot, plus a rate-limit strip.
-		const card = await screen.findByTestId(`marketplace-plugin-${PLUGIN_ID}`)
-		expect(within(card).getByText(/v1\.3\.0 · /)).toBeInTheDocument()
-		expect(
-			screen.getByTestId(`marketplace-update-dot-${PLUGIN_ID}`),
-		).toBeInTheDocument()
-		expect(
-			await screen.findByTestId(`marketplace-card-error-${PLUGIN_ID}`),
+			await within(dialog).findByTestId("marketplace-dialog-error"),
 		).toHaveTextContent(
 			"v1.3.0 has been published, but updating is temporarily unavailable",
 		)
-
-		// Detail: the version is known, but there is no update action (no asset).
-		await user.click(screen.getByTestId(`marketplace-view-${PLUGIN_ID}`))
-		const dialog = await screen.findByTestId("marketplace-detail-dialog")
-		expect(
-			within(dialog).getByText(/Latest release v1\.3\.0/),
-		).toBeInTheDocument()
 		expect(
 			within(dialog).queryByTestId("marketplace-detail-update"),
 		).not.toBeInTheDocument()
 		expect(
-			within(dialog).getByTestId("marketplace-dialog-error"),
-		).toHaveTextContent(
-			"v1.3.0 has been published, but updating is temporarily unavailable",
-		)
-		expect(
 			within(dialog).getByTestId("marketplace-detail-uninstall"),
 		).toBeInTheDocument()
+	})
+
+	it("shows a rate-limited detail error and refuses install", async () => {
+		installClient({
+			config: { registryRepo: "me/registry" },
+			detail: {
+				repo: "me/cat-viewer",
+				state: "error",
+				latest: undefined,
+				error:
+					"GitHub API rate limit hit while fetching latest release — the unauthenticated quota resets hourly; try again later",
+				errorKind: "rate_limited",
+			},
+		})
+		renderPanel()
+
+		await user.click(await screen.findByTestId(`marketplace-view-${PLUGIN_ID}`))
+		const dialog = await screen.findByTestId("marketplace-detail-dialog")
+		expect(
+			await within(dialog).findByTestId("marketplace-dialog-error"),
+		).toHaveTextContent("Latest release info unavailable")
+		expect(
+			within(dialog).queryByTestId("marketplace-detail-install"),
+		).not.toBeInTheDocument()
+		expect(
+			within(dialog).queryByTestId("marketplace-detail-update"),
+		).not.toBeInTheDocument()
+		expect(
+			within(dialog).queryByTestId("marketplace-detail-uninstall"),
+		).not.toBeInTheDocument()
 	})
 
 	it("opens the detail dialog with metadata, version info, issue channels and markdown tabs", async () => {
@@ -667,13 +714,13 @@ describe("MarketplacePanel", () => {
 		expect(within(dialog).getByText("Cat Viewer")).toBeInTheDocument()
 		expect(within(dialog).getByText("Shows cats")).toBeInTheDocument()
 		expect(within(dialog).getByText("Source metadata")).toBeInTheDocument()
-		// Version info + metadata.
+		// Version info + metadata (from the on-demand detail).
 		expect(within(dialog).getByText("Not installed")).toBeInTheDocument()
 		expect(
-			within(dialog).getByText(/Latest release v1\.2\.3/),
+			await within(dialog).findByText(/Latest release v1\.2\.3/),
 		).toBeInTheDocument()
 		expect(within(dialog).getByText(PLUGIN_ID)).toBeInTheDocument()
-		expect(within(dialog).getByText("abc123def456")).toBeInTheDocument()
+		expect(await within(dialog).findByText("abc123def456")).toBeInTheDocument()
 		expect(within(dialog).getByText("@me/cat-viewer")).toBeInTheDocument()
 		// Both issue channels.
 		const issueLink = within(dialog).getByText("Report an issue").closest("a")
@@ -693,36 +740,33 @@ describe("MarketplacePanel", () => {
 			"github.com/me/cat-viewer/security/advisories/new",
 		)
 		// Readme tab is the default and renders the release readme markdown.
-		expect(within(dialog).getByText("Readme heading")).toBeInTheDocument()
+		expect(
+			await within(dialog).findByText("Readme heading"),
+		).toBeInTheDocument()
 		// Release notes tab switches to the release body markdown.
 		await user.click(
 			within(dialog).getByTestId("marketplace-detail-tab-release"),
 		)
-		expect(within(dialog).getByText("First release")).toBeInTheDocument()
+		expect(await within(dialog).findByText("First release")).toBeInTheDocument()
 		expect(within(dialog).queryByText("Readme heading")).not.toBeInTheDocument()
 	})
 
 	it("resolves readme image references against the release download URL", async () => {
 		installClient({
 			config: { registryRepo: "me/registry" },
-			snapshot: {
-				...SNAPSHOT,
-				plugins: [
-					{
-						...SNAPSHOT.plugins[0]!,
-						latest: {
-							...SNAPSHOT.plugins[0]!.latest!,
-							readme: { en: "# Readme\n\n![shot](shot.png)" },
-						},
-					},
-				],
+			detail: {
+				...DETAIL,
+				latest: {
+					...DETAIL.latest,
+					readme: { en: "# Readme\n\n![shot](shot.png)" },
+				},
 			},
 		})
 		renderPanel()
 
 		await user.click(await screen.findByTestId(`marketplace-view-${PLUGIN_ID}`))
 		const dialog = await screen.findByTestId("marketplace-detail-dialog")
-		const img = within(dialog).getByAltText("shot")
+		const img = await within(dialog).findByAltText("shot")
 		expect(img.getAttribute("src")).toBe(
 			"https://github.com/me/cat-viewer/releases/download/v1.2.3/shot.png",
 		)
@@ -731,14 +775,9 @@ describe("MarketplacePanel", () => {
 	it("shows a hint when the release ships no readme and keeps the release notes tab", async () => {
 		installClient({
 			config: { registryRepo: "me/registry" },
-			snapshot: {
-				...SNAPSHOT,
-				plugins: [
-					{
-						...SNAPSHOT.plugins[0]!,
-						latest: { ...SNAPSHOT.plugins[0]!.latest!, readme: undefined },
-					},
-				],
+			detail: {
+				...DETAIL,
+				latest: { ...DETAIL.latest, readme: undefined },
 			},
 		})
 		renderPanel()
@@ -747,27 +786,19 @@ describe("MarketplacePanel", () => {
 		const dialog = await screen.findByTestId("marketplace-detail-dialog")
 		// No readme → the readme tab shows its hint…
 		expect(
-			within(dialog).getByText("This release ships no readme"),
+			await within(dialog).findByText("This release ships no readme"),
 		).toBeInTheDocument()
 		// …and the release body lives in its own tab.
 		await user.click(
 			within(dialog).getByTestId("marketplace-detail-tab-release"),
 		)
-		expect(within(dialog).getByText("First release")).toBeInTheDocument()
+		expect(await within(dialog).findByText("First release")).toBeInTheDocument()
 	})
 
 	it("shows a hint when the release ships no notes", async () => {
 		installClient({
 			config: { registryRepo: "me/registry" },
-			snapshot: {
-				...SNAPSHOT,
-				plugins: [
-					{
-						...SNAPSHOT.plugins[0]!,
-						latest: { ...SNAPSHOT.plugins[0]!.latest!, notes: null },
-					},
-				],
-			},
+			detail: { ...DETAIL, latest: { ...DETAIL.latest, notes: null } },
 		})
 		renderPanel()
 
@@ -777,7 +808,7 @@ describe("MarketplacePanel", () => {
 			within(dialog).getByTestId("marketplace-detail-tab-release"),
 		)
 		expect(
-			within(dialog).getByText("This release has no release notes"),
+			await within(dialog).findByText("This release has no release notes"),
 		).toBeInTheDocument()
 	})
 
@@ -794,6 +825,12 @@ describe("MarketplacePanel", () => {
 					},
 				],
 			},
+			detail: {
+				repo: "me/cat-viewer",
+				state: "no_release",
+				latest: undefined,
+				error: undefined,
+			},
 		})
 		renderPanel()
 
@@ -803,7 +840,7 @@ describe("MarketplacePanel", () => {
 			within(dialog).getByTestId("marketplace-detail-tab-release"),
 		)
 		expect(
-			within(dialog).getByText("No GitHub release yet"),
+			await within(dialog).findByText("No GitHub release yet"),
 		).toBeInTheDocument()
 	})
 
@@ -857,31 +894,6 @@ describe("MarketplacePanel", () => {
 		).not.toBeInTheDocument()
 	})
 
-	it("keeps the View button dot off when the catalog entry errors", async () => {
-		installClient({
-			config: { registryRepo: "me/registry" },
-			installed: [installedRow("1.1.0")],
-			snapshot: {
-				...SNAPSHOT,
-				plugins: [
-					{
-						...SNAPSHOT.plugins[0]!,
-						state: "error" as const,
-						latest: undefined,
-						error: "fetching latest release failed",
-						errorKind: "failed" as const,
-					},
-				],
-			},
-		})
-		renderPanel()
-
-		await screen.findByTestId(`marketplace-plugin-${PLUGIN_ID}`)
-		expect(
-			screen.queryByTestId(`marketplace-update-dot-${PLUGIN_ID}`),
-		).not.toBeInTheDocument()
-	})
-
 	it("shows the update dot on the View button in the list view too", async () => {
 		installClient({
 			config: { registryRepo: "me/registry" },
@@ -910,6 +922,7 @@ describe("MarketplacePanel", () => {
 		// DESIGN.md three-button footer: the secondary function key sits at
 		// the left edge (mr-auto), cancel + update stay right-aligned.
 		expect(uninstall.className).toContain("mr-auto")
+		await within(dialog).findByTestId("marketplace-detail-update")
 		const buttons = Array.from(
 			footer!.querySelectorAll("button[data-testid]"),
 		).map((el) => el.getAttribute("data-testid"))
@@ -949,7 +962,7 @@ describe("MarketplacePanel", () => {
 		await user.click(await screen.findByTestId(`marketplace-view-${PLUGIN_ID}`))
 		const dialog = await screen.findByTestId("marketplace-detail-dialog")
 		expect(
-			within(dialog).getByTestId("marketplace-detail-install"),
+			await within(dialog).findByTestId("marketplace-detail-install"),
 		).toBeInTheDocument()
 		expect(
 			within(dialog).queryByTestId("marketplace-detail-uninstall"),
