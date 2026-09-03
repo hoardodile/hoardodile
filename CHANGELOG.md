@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.1.13](https://github.com/hoardodile/hoardodile/compare/v0.1.12...v0.1.13) (2026-09-03)
+
+### Features
+
+* **marketplace:** fetch release detail on demand, keep catalog quota-free ([4f552b8](https://github.com/hoardodile/hoardodile/commit/4f552b8354f9b72776b4896a35fba35dafde7b63))
+
+### Bug Fixes
+
+* **desktop:** show branded icon on the Windows taskbar ([1f8dc39](https://github.com/hoardodile/hoardodile/commit/1f8dc3957fa36ad82de88eca63e2eb28e677e28a))
+* **workbench:** serve dev plugin bytes and SPA without browser caching ([d8d4cc3](https://github.com/hoardodile/hoardodile/commit/d8d4cc36791df49837ee2416d6049c38333c6712))
+
 ## [0.1.12](https://github.com/hoardodile/hoardodile/compare/v0.1.11...v0.1.12) (2026-09-02)
 
 ### Bug Fixes
