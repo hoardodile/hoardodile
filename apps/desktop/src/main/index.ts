@@ -1330,7 +1330,17 @@ const gotLock = app.requestSingleInstanceLock()
 if (!gotLock) {
 	app.quit()
 } else {
-	app.setAppUserModelId("com.hoardodile.app")
+	// Windows keys the taskbar button icon (and Windows' own icon cache)
+	// by the app's AppUserModelID. Older builds set `com.hoardodile.app`
+	// with NO window icon, so Windows cached a generic button icon under
+	// that ID — a later build that sets the icon correctly still shows the
+	// stale cache (the "taskbar icon cached by App ID" Electron issue).
+	// Portable/unpacked builds have no installer shortcut that registers
+	// the ID, so they use a distinct ID that starts without that stale
+	// generic cache and resolves the brand-new window/exe icon.
+	app.setAppUserModelId(
+		isPortableBuild() ? "com.hoardodile.app.portable" : "com.hoardodile.app",
+	)
 	app.on("second-instance", (_event, argv) => {
 		if (argv.includes(HIDDEN_SWITCH)) return
 		if (activeRuntime === undefined) return

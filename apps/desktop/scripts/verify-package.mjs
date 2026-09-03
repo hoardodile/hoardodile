@@ -92,13 +92,14 @@ if (layout === undefined) {
 	process.exit(1)
 }
 
-const serverDir = resolve(
+const resourcesDir = resolve(
 	desktopRoot,
 	"release",
 	layout.releaseDir,
 	layout.resourcesRel,
-	"server",
 )
+
+const serverDir = join(resourcesDir, "server")
 const nativeRoot = join(serverDir, "node_modules")
 
 const RESOLVABLE_NATIVES = [
@@ -165,6 +166,7 @@ function main() {
 	}
 
 	checkNodeRuntime(layout, missing)
+	checkRuntimeIcons(missing)
 
 	const asarPath = resolve(
 		desktopRoot,
@@ -176,7 +178,7 @@ function main() {
 	checkAsarHasNoNodeModules(asarPath, missing)
 
 	if (missing.length > 0) {
-		console.error("packaged sidecar is missing native dependencies:")
+		console.error("packaged app is missing required files:")
 		for (const entry of missing) {
 			console.error(`  - ${entry}`)
 		}
@@ -219,6 +221,27 @@ function checkNodeRuntime(layout, missing) {
 		})
 		if (res.error !== undefined || res.status !== 0) {
 			missing.push(`node binary failed codesign --verify (${nodePath})`)
+		}
+	}
+}
+
+/**
+ * The packaged app must ship the runtime window/taskbar + tray icons in
+ * `resources/`. Windows resolves the taskbar button from the `.ico` (a
+ * PNG does not apply there), so `windowIconPath()` returns `undefined`
+ * and the window is created with NO icon when `icon.ico` is absent — a
+ * silent default-icon in the taskbar (worst on portable/unpacked runs,
+ * where no installer shortcut registers the AppUserModelID). A missing
+ * `.ico`/`.png` here is a broken installer, not a cosmetic gap.
+ */
+function checkRuntimeIcons(missing) {
+	const files =
+		platform === "win32"
+			? ["icon.ico", "icon.png", "tray.png"]
+			: ["icon.png", "tray.png"]
+	for (const file of files) {
+		if (!existsSync(join(resourcesDir, file))) {
+			missing.push(`resources/${file} (runtime window/tray icon)`)
 		}
 	}
 }

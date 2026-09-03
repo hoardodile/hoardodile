@@ -113,6 +113,12 @@ What turns "the CI job passed" into "we ship this": the tag-triggered `release.y
 
 v0.1 installers are **unsigned everywhere**: Windows SmartScreen warns "unknown publisher" (`verifyUpdateCodeSignature: false` stays until a certificate is wired in via `CSC_LINK`/`CSC_KEY_PASSWORD`), macOS shows Gatekeeper prompts (ad-hoc signed; `autoUpdate` stays off until signed & notarized builds), Linux AppImage needs no signature; release notes must say so.
 
+### Windows taskbar icon ("default icon")
+
+The running window/taskbar button is branded from `resources/icon.ico` (`win.icon` brands the exe too); `windowIconPath()` resolves the `.ico` for the `BrowserWindow`. `verify-package` now fails the build if `resources/{icon.ico,icon.png,tray.png}` are missing, because a package that ships the PNGs but **not** the `.ico` silently shows the Windows default icon — most visibly on the **portable zip / unpacked** build, where no installer shortcut registers the AppUserModelID (`com.hoardodile.app`) that Windows keys the button icon off of.
+
+If one machine shows the correct icon and another shows the default (same build), refresh that machine's icon cache: quit the app, close Explorer, delete `%LocalAppData%\IconCache.db` and `%LocalAppData%\Microsoft\Windows\Explorer\iconcache_*.db`, then `ie4uinit.exe -show` and restart Explorer (or sign out/in). Re-pin from the Start-menu shortcut afterwards.
+
 ## Shutdown
 
 `child.kill()` force-terminates and skips the SIGTERM handler, leaving SQLite WAL locks. The sidecar must expose token-gated `POST /api/internal/shutdown` (loopback only; wrong token → 401, no close). The shell POSTs shutdown, waits for exit, then `child.kill()` on timeout — same sequence for tray Quit and before `quitAndInstall()`.
