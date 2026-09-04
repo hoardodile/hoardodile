@@ -18,6 +18,15 @@ import {
 const COVER_UPLOAD_EXTS = IMAGE_EXTS
 
 /**
+ * The `/cover` endpoint's *origin* is mutable: the user can replace or
+ * delete a pinned cover (and the plugin-derived source selection changes
+ * with plugin switches). The URL carries no version parameter, so the
+ * browser must revalidate on every use instead of trusting a
+ * year-long immutable cache — the ETag (`size-mtime`) makes that cheap.
+ */
+const COVER_ORIGIN_CACHE_CONTROL = "private, no-cache"
+
+/**
  * Fastify plugin registering local cover serving, video frame, cache-wipe,
  * and permanent cover CRUD routes.
  */
@@ -64,13 +73,14 @@ async function coversPluginImpl(app: FastifyInstance): Promise<void> {
 					size === "original" &&
 					streamFormat === "image"
 				) {
-					return sendOriginalWithRange(
+					return sendOriginalWithRange({
 						reply,
-						coverPath,
-						"image/*",
-						req.headers.range,
-						req.headers["if-none-match"],
-					)
+						path: coverPath,
+						contentType: "image/*",
+						rangeHeader: req.headers.range,
+						ifNoneMatch: req.headers["if-none-match"],
+						cacheControl: COVER_ORIGIN_CACHE_CONTROL,
+					})
 				}
 
 				if (size === "original") {
@@ -131,6 +141,7 @@ async function coversPluginImpl(app: FastifyInstance): Promise<void> {
 										},
 								contentType,
 								req.headers.range,
+								{ cacheControl: COVER_ORIGIN_CACHE_CONTROL },
 							)
 						} catch {
 							return noCover(reply)
@@ -356,14 +367,18 @@ function noCover(reply: FastifyReply): void {
 
 /**
  * Send an original (non-local) cover file, with Range support for video/audio.
+ * The cover origin is mutable, so the default policy is revalidate-on-use
+ * (`private, no-cache`); the ETag anchors 304s and If-Range resumes.
  */
-async function sendOriginalWithRange(
-	reply: FastifyReply,
-	path: string,
-	contentType: string,
-	rangeHeader: string | undefined,
-	ifNoneMatch: string | undefined,
-): Promise<FastifyReply> {
+async function sendOriginalWithRange(opts: {
+	readonly reply: FastifyReply
+	readonly path: string
+	readonly contentType: string
+	readonly rangeHeader: string | undefined
+	readonly ifNoneMatch: string | undefined
+	readonly cacheControl?: string
+}): Promise<FastifyReply> {
+	const { reply, path, contentType, rangeHeader, ifNoneMatch } = opts
 	let sizeBytes: number
 	let mtimeMs: number
 	try {
@@ -387,6 +402,7 @@ async function sendOriginalWithRange(
 		},
 		contentType,
 		rangeHeader,
+		{ cacheControl: opts.cacheControl ?? COVER_ORIGIN_CACHE_CONTROL },
 	)
 }
 

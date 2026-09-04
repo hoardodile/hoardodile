@@ -29,16 +29,25 @@ export type ByteRangeSource =
  * Stream bytes from `source` with HTTP Range support. Range headers are
  * interpreted relative to the logical content (`0..size-1`); stream
  * offsets are translated into absolute positions for window sources.
+ *
+ * The default cache policy (`private, max-age=31536000, immutable`) fits
+ * immutable content-addressed sources (archive entries); callers serving
+ * mutable content (e.g. a user-replaceable cover) must pass a
+ * revalidate-on-use policy such as `"private, no-cache"`.
  */
 export async function sendByteRangeWithHttpRange(
 	reply: FastifyReply,
 	source: ByteRangeSource,
 	contentType: string,
 	rangeHeader: string | undefined,
+	opts: { readonly cacheControl?: string } = {},
 ): Promise<FastifyReply> {
 	reply.header("accept-ranges", "bytes")
 	reply.header("content-type", contentType)
-	reply.header("cache-control", "private, max-age=31536000, immutable")
+	reply.header(
+		"cache-control",
+		opts.cacheControl ?? "private, max-age=31536000, immutable",
+	)
 
 	if (rangeHeader === undefined || !rangeHeader.startsWith("bytes=")) {
 		reply.header("content-length", String(source.size))
