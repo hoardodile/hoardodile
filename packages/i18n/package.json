@@ -1,6 +1,6 @@
 {
 	"name": "@hoardodile/i18n",
-	"version": "0.1.13",
+	"version": "0.1.14",
 	"license": "MIT",
 	"description": "Shared i18n catalogs and helpers for the hoardodile host surfaces and plugin SDK.",
 	"keywords": [

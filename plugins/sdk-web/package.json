@@ -1,6 +1,6 @@
 {
 	"name": "@hoardodile/sdk-web",
-	"version": "0.1.13",
+	"version": "0.1.14",
 	"license": "MIT",
 	"description": "Pure-browser iframe runtime for hoardodile content plugins.",
 	"keywords": [

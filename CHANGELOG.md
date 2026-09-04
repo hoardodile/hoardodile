@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.1.14](https://github.com/hoardodile/hoardodile/compare/v0.1.13...v0.1.14) (2026-09-04)
+
+### Bug Fixes
+
+* **server:** content-hash the plugin asset fingerprint so upload updates always reload ([0945b8d](https://github.com/hoardodile/hoardodile/commit/0945b8d093fa6da0ba6d1fe6707907dffb33870e))
+* **server:** revalidate mutable cover origin instead of immutable cache ([d6abb4c](https://github.com/hoardodile/hoardodile/commit/d6abb4c1f511f9df36f05edfbae36fd2a55f99ac))
+* **web:** bypass the HTTP cache when preloading mutable slot images ([8e5d160](https://github.com/hoardodile/hoardodile/commit/8e5d16007f511867117d504a62a50cb5ad43c6b6))
+* **web:** fall back to ui.card.default when the cover kind block is missing ([785b01d](https://github.com/hoardodile/hoardodile/commit/785b01d6608b7efda60d7029120933c9fba1a905))
+* **workbench:** fall back to the default card slot for un-declared kinds ([1edbc06](https://github.com/hoardodile/hoardodile/commit/1edbc06796d394a58b1d0196f9dc617395df5be7))
+
 ## [0.1.13](https://github.com/hoardodile/hoardodile/compare/v0.1.12...v0.1.13) (2026-09-03)
 
 ### Features
