@@ -413,7 +413,12 @@ function usePluginCardUi(
 		if (entry === undefined) {
 			return { slotUi: undefined, manifest: undefined }
 		}
-		const slotUi = entry.manifest.ui?.card?.[coverKind || "default"]
+		// Kind-specific block wins when the plugin declares it; a resource
+		// whose cover kind has no block (e.g. a user-pinned image cover on
+		// a plugin that configures only `default`) falls back to `default`
+		// so configured corner badges never vanish on cover set/clear.
+		const card = entry.manifest.ui?.card
+		const slotUi = card?.[coverKind ?? "default"] ?? card?.default
 		return {
 			slotUi,
 			manifest: entry.manifest,

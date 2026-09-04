@@ -1,3 +1,4 @@
+import type { CoverKindUiMap } from "@hoardodile/sdk-types"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { fireEvent, render, screen } from "@testing-library/react"
 import type { ComponentProps } from "react"
@@ -83,6 +84,43 @@ function renderWithTemplate(
 	return keyWarning
 }
 
+/**
+ * Render the thumb with a plugin manifest whose `ui.card` carries only the
+ * given blocks (e.g. `{ default: { tl: [...] } }`), so the slot-selection
+ * fallback can be asserted on rendered badge text.
+ */
+function renderWithCardBlocks(
+	card: CoverKindUiMap,
+	resourceOverrides?: Partial<ResMediaThumbResource>,
+) {
+	const queryClient = new QueryClient({
+		defaultOptions: { queries: { retry: false } },
+	})
+	queryClient.setQueryData(pluginKeys.listAll(), [
+		{
+			id: PLUGIN_ID,
+			manifest: {
+				id: PLUGIN_ID,
+				name: "Test Plugin",
+				description: "A plugin for testing",
+				version: "1.0.0",
+				permissions: {},
+				ui: { card },
+			},
+			enabled: true,
+			priority: 0,
+			missing: false,
+			builtin: false,
+			dev: false,
+		},
+	])
+	return render(
+		<QueryClientProvider client={queryClient}>
+			<ResMediaThumb resource={makeResource(resourceOverrides)} />
+		</QueryClientProvider>,
+	)
+}
+
 function renderThumb(
 	resourceOverrides?: Partial<ResMediaThumbResource>,
 	props?: Partial<ComponentProps<typeof ResMediaThumb>>,
@@ -112,6 +150,44 @@ describe("ResMediaThumb", () => {
 				},
 			),
 		).toBeUndefined()
+	})
+
+	it("falls back to the default card block when the cover kind block is absent", () => {
+		renderWithCardBlocks(
+			{
+				default: { tl: ["{{source.width}}x{{source.height}}"] },
+			},
+			{
+				// A user-pinned image cover flips `coverMeta.kind` to "image";
+				// the manifest only declares `default`, which must still render.
+				coverMeta: { kind: "image", width: 100, height: 100 },
+				sourceMeta: { width: 1920, height: 1080 },
+			},
+		)
+		expect(screen.getByText("1920x1080")).toBeInTheDocument()
+	})
+
+	it("prefers the kind-specific card block over the default block", () => {
+		renderWithCardBlocks(
+			{
+				image: { tl: ["KIND-{{source.width}}"] },
+				default: { tl: ["DEFAULT-{{source.width}}"] },
+			},
+			{ sourceMeta: { width: 800 } },
+		)
+		expect(screen.getByText("KIND-800")).toBeInTheDocument()
+		expect(screen.queryByText("DEFAULT-800")).toBeNull()
+	})
+
+	it("renders no corner badges when neither the kind block nor default exists", () => {
+		renderWithCardBlocks(
+			{ image: { bl: ["{{source.width}}"] } },
+			{
+				coverMeta: { kind: "video" },
+				sourceMeta: { width: 800 },
+			},
+		)
+		expect(screen.queryByText("800")).toBeNull()
 	})
 
 	it("gives artwork-less audio the resident player instead of a thumbnail", () => {
