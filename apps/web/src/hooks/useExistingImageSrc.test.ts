@@ -56,7 +56,10 @@ describe("useExistingImageSrc", () => {
 		expect(result.current).toBe("blob:mock-src")
 		expect(fetchMock).toHaveBeenCalledWith(
 			"/api/resources/r1/cover?size=original&format=image",
-			expect.objectContaining({ credentials: "include" }),
+			expect.objectContaining({
+				credentials: "include",
+				cache: "no-store",
+			}),
 		)
 	})
 

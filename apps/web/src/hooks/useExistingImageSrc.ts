@@ -9,6 +9,11 @@ import { useEffect, useRef, useState } from "react"
  * slot that has no file) — so callers can keep their empty "pick an image"
  * frame when there is nothing to preload.
  *
+ * The fetch bypasses the HTTP cache (`cache: "no-store"`): these slot images
+ * are mutable (cover replace/delete, avatar re-upload) and their URLs carry
+ * no version parameter, so a stale entry — e.g. one cached under an older
+ * immutable policy — must never resurface in the editor.
+ *
  * The object URL is an ordinary `blob:` URL created from the fetched bytes,
  * and is revoked when `url` changes or the component unmounts.
  */
@@ -38,6 +43,7 @@ export function useExistingImageSrc(
 				const res = await fetch(target, {
 					credentials: "include",
 					signal: abortCtrl.signal,
+					cache: "no-store",
 				})
 				if (!res.ok) return
 				const blob = await res.blob()
