@@ -71,8 +71,10 @@ describe("pickCardSlotUi", () => {
 		])
 	})
 
-	it("returns undefined for an un-declared cover kind", () => {
-		expect(pickCardSlotUi(manifest, "audio")).toBeUndefined()
+	it("falls back to the default block for an un-declared cover kind", () => {
+		expect(pickCardSlotUi(manifest, "audio")?.bl).toEqual([
+			"{{bytes(file.sizeBytes)}}",
+		])
 	})
 
 	it("returns undefined when the manifest declares no card block", () => {

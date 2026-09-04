@@ -29,14 +29,20 @@ export function resolveCoverKind(snapshot: HookSnapshot | null): string {
 	return "default"
 }
 
-/** The manifest `ui.card` corner-slot block for a given cover kind. */
+/**
+ * The manifest `ui.card` corner-slot block for a given cover kind. The
+ * kind-specific block wins when declared; otherwise the `default` block is
+ * used — mirroring the app's slot selection, so a plugin that declares only
+ * `default` (e.g. PDF, File) keeps its badges when a pinned cover turns
+ * the resource's kind into `image`.
+ */
 export function pickCardSlotUi(
 	manifest: WorkbenchManifest,
 	coverKind: string,
 ): CoverKindUi | undefined {
 	const card = manifest.ui?.card
 	if (card === undefined) return undefined
-	return card[coverKind as keyof typeof card]
+	return card[coverKind as keyof typeof card] ?? card.default
 }
 
 /**
