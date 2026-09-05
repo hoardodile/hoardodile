@@ -1,6 +1,6 @@
 {
 	"name": "@hoardodile/ui",
-	"version": "0.1.14",
+	"version": "0.1.15",
 	"license": "MIT",
 	"description": "shadcn/ui component library for hoardodile plugin iframes.",
 	"keywords": [

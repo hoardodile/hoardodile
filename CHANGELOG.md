@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.15](https://github.com/hoardodile/hoardodile/compare/v0.1.14...v0.1.15) (2026-09-05)
+
+### Features
+
+* **marketplace:** build release detail from quota-free GitHub endpoints ([8a66da6](https://github.com/hoardodile/hoardodile/commit/8a66da613d1e2c62acffb31b8c3787f26190b482))
+* **template:** localize plugin surfaces in all supported languages ([c095fed](https://github.com/hoardodile/hoardodile/commit/c095fedc41e3063db87f856c583fef837e31c150))
+* **web:** accept every archive format the server sniffs ([2790643](https://github.com/hoardodile/hoardodile/commit/2790643cbc5e248f9765b58765dcb2ab2354528d))
+
+### Bug Fixes
+
+* **ui:** keep mobile overlay history entries invisible to the router ([007b70c](https://github.com/hoardodile/hoardodile/commit/007b70c5925c1e336aa51f39b1588d94c3797816))
+
 ## [0.1.14](https://github.com/hoardodile/hoardodile/compare/v0.1.13...v0.1.14) (2026-09-04)
 
 ### Bug Fixes
