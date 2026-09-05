@@ -71,10 +71,15 @@ function hasForbiddenVisibleChar(segment: string): boolean {
  *   per-version database snapshot), `checkpoint/` (the completed rolling checkpoint), `resources/<id>/`,
  *   `characters/<id>/`, `tags/<id>/` (tag art — see {@link VersionPaths.tag}),
  *   `plugins/<id>/` (installed content plugins
- *   frozen with that version; the builtin `file` plugin is not stored
- *   here). Old versions are FROZEN: no writes ever land in
+ *   frozen with that version, including the builtin `file` plugin and
+ *   each plugin's independent vault). Old versions are FROZEN: no writes ever land in
  *   `versions/<v>` once a `versions/<v+1>` exists.
- * - `local`  holds host-only state. Derived caches (thumbs, previews,
+ * - `backups/` holds the default backup repositories: `local/` for this
+ *   library and `sources/<instance-id>/` for received backups. BACKUP_ROOT
+ *   may place these repositories on another volume, outside `versions/`.
+ * - `local` holds host-only state, including `host.sqlite` (authentication
+ *   and device records), backup keys, job journals, and peer connections.
+ *   Derived caches (thumbs, previews,
  *   extraction caches, tmp, read-only DB clones for past-version
  *   viewing) live under `local/cache/` and are wiped wholesale by
  *   clear cache; the rest (`logs`, `trash`, session key, upload
@@ -102,7 +107,8 @@ export type StoragePaths = {
 	atVersion(v: number): VersionPaths
 	/**
 	 * Path to the live runtime SQLite DB: `<root>/app.sqlite`.
-	 * This file is the only writable database during normal operation.
+	 * This file is the writable library database during normal operation.
+	 * Host-owned records live separately in `local/host.sqlite`.
 	 * It lives outside `versions/` so that syncing `versions/` to other
 	 * devices cannot corrupt the in-use database. Only archived snapshots
 	 * and completed checkpoints belong in
@@ -152,7 +158,7 @@ export type VersionPaths = {
 	/**
 	 * Installed content plugins for this version:
 	 * `<root>/versions/<v>/plugins`. Each subdirectory is named by
-	 * `manifest.id`. The builtin `file` plugin is not stored here.
+	 * `manifest.id`, including the builtin `file` plugin.
 	 */
 	plugins(): string
 	/**
