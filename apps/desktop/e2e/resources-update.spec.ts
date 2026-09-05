@@ -84,7 +84,7 @@ function packagedResourcesDir(): string {
 			? join("win-unpacked", "resources")
 			: process.platform === "linux"
 				? join("linux-unpacked", "resources")
-				: join("mac-arm64", "Hoardodile.app", "Contents", "Resources")
+				: join("mac-arm64", "hoardodile.app", "Contents", "Resources")
 	const dir = join(releaseRoot, relative)
 	if (!existsSync(join(dir, "server", "main.js"))) {
 		throw new Error(
@@ -236,7 +236,7 @@ test.beforeAll(async () => {
 	// exe makes the real NSIS-install detection path run.
 	if (process.platform === "win32") {
 		writeFileSync(
-			join(dirname(resolveExecutablePath()), "Uninstall Hoardodile.exe"),
+			join(dirname(resolveExecutablePath()), "Uninstall hoardodile.exe"),
 			"",
 		)
 	}

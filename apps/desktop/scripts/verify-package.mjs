@@ -70,7 +70,7 @@ const LAYOUTS = {
 	},
 	"darwin-arm64": {
 		releaseDir: "mac-arm64",
-		resourcesRel: "Hoardodile.app/Contents/Resources",
+		resourcesRel: "hoardodile.app/Contents/Resources",
 		nodeFile: "node",
 		sqlitePrebuild: "darwin-arm64.node",
 		sharpDir: "@img/sharp-darwin-arm64",

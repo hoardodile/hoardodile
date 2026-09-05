@@ -153,10 +153,10 @@ export function resolveExecutablePath(): string {
 	const releaseRoot = join(repoRoot, "apps", "desktop", "release")
 	const relative =
 		process.platform === "win32"
-			? join("win-unpacked", "Hoardodile.exe")
+			? join("win-unpacked", "hoardodile.exe")
 			: process.platform === "linux"
 				? join("linux-unpacked", "hoardodile")
-				: join("mac-arm64", "Hoardodile.app", "Contents", "MacOS", "Hoardodile")
+				: join("mac-arm64", "hoardodile.app", "Contents", "MacOS", "hoardodile")
 	const path = join(releaseRoot, relative)
 	if (!existsSync(path)) {
 		throw new Error(

@@ -12,7 +12,7 @@ const version = typeof rootPkg.version === "string" ? rootPkg.version : "0.0.0"
 /** @type {import('electron-builder').Configuration} */
 const config = {
 	appId: "com.hoardodile.app",
-	productName: "Hoardodile",
+	productName: "hoardodile",
 	copyright: "Copyright © wooloo26",
 	extraMetadata: {
 		name: "hoardodile",
