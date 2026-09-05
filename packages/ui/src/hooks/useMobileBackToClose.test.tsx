@@ -137,4 +137,35 @@ describe("useMobileBackToClose", () => {
 
 		expect(HISTORY_KEY in (window.history.state ?? {})).toBe(false)
 	})
+
+	it("keeps synthetic entries invisible to a router-style history wrapper", () => {
+		const onClose = vi.fn()
+		// Simulate TanStack Router's wrapper: installed after the overlay's
+		// module-load patch, it wraps the current pushState and records every
+		// call (the real wrapper treats each as a navigation).
+		const wrapped: unknown[] = []
+		const throughThis = window.history.pushState
+		window.history.pushState = (
+			data: unknown,
+			unused: string,
+			url?: string | URL | null,
+		) => {
+			wrapped.push(data)
+			return throughThis(data, unused, url)
+		}
+
+		render(<Overlay open onOpenChange={onClose} />)
+
+		// The synthetic marker push must bypass the wrapper — otherwise the
+		// router re-pushes its own state and the interceptor closes the
+		// overlay we just opened.
+		expect(wrapped).toHaveLength(0)
+		expect(window.history.state).toHaveProperty(HISTORY_KEY)
+
+		// A real navigation (the router's own push) still closes overlays.
+		act(() => {
+			throughThis({ key: "router-key" }, "")
+		})
+		expect(onClose).toHaveBeenCalledWith(false)
+	})
 })

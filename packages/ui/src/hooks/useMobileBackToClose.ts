@@ -24,6 +24,13 @@ const overlayStack: OverlayEntry[] = []
 let popListenerInstalled = false
 let historyPatched = false
 let nextOverlayId = 0
+/**
+ * The native `history` implementations, captured when the patch installs
+ * (at module load, before any framework wrapper). Synthetic overlay
+ * entries must bypass router wrappers — see {@link patchHistory}.
+ */
+let nativePushState: typeof window.history.pushState | undefined
+let nativeReplaceState: typeof window.history.replaceState | undefined
 // Counts consecutive popstate events to suppress. When we call
 // `history.back()` N times (e.g. to unwind an active entry plus
 // parked entries), the next N popstate events must be swallowed so
@@ -84,11 +91,24 @@ export function setNavigationResolver(resolver: NavigationResolver): void {
  * intentionally NOT stripped — the capture-phase popstate listener
  * uses it to identify and auto-skip the stranded entry when the
  * user later navigates past it.
+ *
+ * The patch installs at module load — before any framework history
+ * wrapper exists — and captures the **native** implementations. The
+ * overlay's own synthetic pushes and restores call the captured
+ * natives directly, so TanStack Router's patched
+ * `pushState`/`replaceState` (which treats every call as a
+ * navigation and re-pushes its own state) never sees them: without
+ * this decoupling the router re-push is itself read by the
+ * interceptor as a real navigation (`pushState` without our marker),
+ * and the just-opened overlay is closed again — the mobile "menu
+ * action opens a dialog that instantly disappears" bug.
  */
 function patchHistory(): void {
 	if (historyPatched) return
 	if (typeof window === "undefined") return
 	historyPatched = true
+	nativePushState = window.history.pushState
+	nativeReplaceState = window.history.replaceState
 	const origPush = window.history.pushState.bind(window.history)
 	window.history.pushState = (
 		data: unknown,
@@ -321,7 +341,10 @@ function scheduleStateRestore(
 			if (done) return
 			done = true
 			window.removeEventListener("popstate", onPop)
-			window.history.replaceState(baseState, "")
+			// Native replaceState — the router never sees the synthetic
+			// entry's removal, and the restored base state is the exact
+			// state the router last wrote.
+			nativeReplaceState?.call(window.history, baseState, "")
 			// replaceState truncates forward history, eliminating
 			// phantom entries. Safe to prune their IDs from
 			// `seenSyntheticIds` (excluding IDs still in the
@@ -461,13 +484,14 @@ export function useMobileBackToClose(
 			// Capture the base state BEFORE pushing so we can restore
 			// it on close (via replaceState) to eliminate phantoms.
 			const baseState = window.history.state ?? null
-			window.history.pushState(
-				{
-					...((baseState as Record<string, unknown>) ?? {}),
-					[HISTORY_KEY]: id,
-				},
-				"",
-			)
+			const state = {
+				...((baseState as Record<string, unknown>) ?? {}),
+				[HISTORY_KEY]: id,
+			}
+			// Straight to the native implementation — the router's
+			// patched pushState would treat the synthetic entry as a
+			// navigation and re-push, closing the overlay we just opened.
+			nativePushState?.call(window.history, state, "")
 			overlayStack.push({
 				id,
 				baseState,
@@ -506,3 +530,9 @@ export function useMobileBackToClose(
 		}
 	}, [])
 }
+
+// Install at module load — before the app creates its router, which patches
+// `history.pushState`/`replaceState` and treats every call as a navigation.
+// Capturing the native implementations here is what lets the synthetic
+// overlay entries bypass the router wrapper (see `patchHistory`).
+ensurePopListener()
