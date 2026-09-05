@@ -153,6 +153,15 @@ describe("FolderImporter", () => {
 		expect(screen.getByTestId("folder-source-zip")).toBeInTheDocument()
 		expect(screen.getByText("Browse shared folders")).toBeInTheDocument()
 		expect(screen.getByText("Choose an archive")).toBeInTheDocument()
+		// The picker mirrors every archive format the server sniffs
+		// (zip/tar/7z/rar/xz/gzip) — see plugins/host/src/archive/format.ts.
+		const fileInput =
+			document.querySelector<HTMLInputElement>('input[type="file"]')
+		expect(fileInput?.accept).toContain(".zip")
+		expect(fileInput?.accept).toContain(".7z")
+		expect(fileInput?.accept).toContain(".rar")
+		expect(fileInput?.accept).toContain(".tar.gz")
+		expect(fileInput?.accept).toContain("application/x-7z-compressed")
 	})
 
 	it("disables shared folder option when not configured", async () => {

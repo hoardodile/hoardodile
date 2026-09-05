@@ -7,12 +7,15 @@ import { domainErrorToHttp, sendJson } from "./utils.ts"
  *
  * POST /api/uploads/archive
  *
- * Accepts a single multipart `archive` part containing a zip file. The
- * bytes are streamed into the global staging pool as `<fileId>.zip`
- * (the server mints the `fileId`). The caller receives `{ fileId }` and
- * later passes it to `resource.create({ archiveFileId })`. The staged
- * archive can also be deleted via `DELETE /api/uploads/ordered/:fileId`
- * (the same per-file delete endpoint used for ordered uploads).
+ * Accepts a single multipart `archive` part containing a supported archive
+ * (zip, tar, 7z, rar, xz, gzip). The format is detected from the file's
+ * magic bytes at extraction/commit time, not from the filename, so any of
+ * the supported containers can be staged here. The bytes are streamed into
+ * the global staging pool (the server mints the `fileId`). The caller
+ * receives `{ fileId }` and later passes it to
+ * `resource.create({ archiveFileId })`. The staged archive can also be
+ * deleted via `DELETE /api/uploads/ordered/:fileId` (the same per-file
+ * delete endpoint used for ordered uploads).
  */
 async function resUploadArchivePluginImpl(app: FastifyInstance): Promise<void> {
 	const uploads = app.resUploads

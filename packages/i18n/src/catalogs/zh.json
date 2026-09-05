@@ -1577,7 +1577,7 @@
 				"resultFailed": "失败",
 				"sourceSharedDescription": "从服务器的共享导入根目录中挑选一个文件夹。",
 				"sourceSharedDisabled": "未配置共享文件夹导入。",
-				"sourceZipDescription": "上传 .zip——在服务器端解压后扫描。",
+				"sourceZipDescription": "上传压缩包——在服务器端解压后扫描（支持 zip、tar、7z、rar、xz、gzip）。",
 				"importingDescription": "正在从所选目录创建资源，请稍候。",
 				"stepSource": "来源",
 				"stepBrowse": "浏览",

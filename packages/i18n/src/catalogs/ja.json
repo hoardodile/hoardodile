@@ -1577,7 +1577,7 @@
 				"resultFailed": "失敗",
 				"sourceSharedDescription": "サーバーの共有インポートルートからフォルダーを選択。",
 				"sourceSharedDisabled": "共有フォルダーからのインポートが設定されていません。",
-				"sourceZipDescription": ".zip — サーバー上で展開し、その後スキャンします。",
+				"sourceZipDescription": "アーカイブ — サーバー上で展開し、その後スキャンします（zip、tar、7z、rar、xz、gzip）。",
 				"importingDescription": "選択したフォルダーからリソースを作成しています。少し時間がかかる場合があります。",
 				"stepSource": "ソース",
 				"stepBrowse": "参照",

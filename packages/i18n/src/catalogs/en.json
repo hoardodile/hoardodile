@@ -1577,7 +1577,7 @@
 				"resultFailed": "Failed",
 				"sourceSharedDescription": "Pick a folder from the server's shared import roots.",
 				"sourceSharedDisabled": "Shared folder import is not configured.",
-				"sourceZipDescription": "A .zip — extracted on the server, then scanned.",
+				"sourceZipDescription": "An archive — extracted on the server, then scanned (zip, tar, 7z, rar, xz, gzip).",
 				"importingDescription": "Resources are being created from the selected folder. This may take a moment.",
 				"stepSource": "Source",
 				"stepBrowse": "Browse",

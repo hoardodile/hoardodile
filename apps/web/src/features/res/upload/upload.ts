@@ -33,9 +33,9 @@ export type StageSingleFileResult = {
 }
 
 /**
- * Result of staging a single archive (zip) via the archive upload
- * endpoint. The returned `fileId` is later passed to
- * `resource.create({ archiveFileId })` (to commit the zip directly) or to
+ * Result of staging a single archive (zip, tar, 7z, rar, xz, gzip) via the
+ * archive upload endpoint. The returned `fileId` is later passed to
+ * `resource.create({ archiveFileId })` (to commit the archive directly) or
  * `resource.extractArchive({ archiveFileId })` (to extract it for the
  * folder-import flow).
  */
@@ -140,11 +140,13 @@ export function stageSingleFile(
 }
 
 /**
- * Stage a single archive (zip) via `POST /api/uploads/archive`. The server
- * mints a `fileId` (UUID) and returns it; the archive lives in the global
- * staging pool as `<fileId>.zip` until committed
+ * Stage a single archive (zip, tar, 7z, rar, xz, gzip) via
+ * `POST /api/uploads/archive`. The server mints a `fileId` (UUID) and
+ * returns it; the archive lives in the global staging pool until committed
  * (`resource.create({ archiveFileId })`) or extracted
- * (`resource.extractArchive({ archiveFileId })`).
+ * (`resource.extractArchive({ archiveFileId })`). The server detects the
+ * format from the file's magic bytes, not its name or extension, so any
+ * supported container is accepted.
  *
  * Uses `XMLHttpRequest` for upload `progress` events (same reason as
  * {@link stageSingleFile}).

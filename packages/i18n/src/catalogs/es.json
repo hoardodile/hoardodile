@@ -1577,7 +1577,7 @@
 				"resultFailed": "Fallido",
 				"sourceSharedDescription": "Elige una carpeta de las raíces de importación compartidas del servidor.",
 				"sourceSharedDisabled": "La importación de carpetas compartidas no está configurada.",
-				"sourceZipDescription": "Un .zip — se extrae en el servidor y luego se analiza.",
+				"sourceZipDescription": "Un archivo comprimido — se extrae en el servidor y luego se analiza (zip, tar, 7z, rar, xz, gzip).",
 				"importingDescription": "Se están creando recursos a partir de la carpeta seleccionada. Esto puede tardar un momento.",
 				"stepSource": "Origen",
 				"stepBrowse": "Explorar",

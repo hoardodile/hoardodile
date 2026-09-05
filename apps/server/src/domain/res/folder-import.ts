@@ -20,7 +20,7 @@ export type DirEntry = {
  * List the immediate children of `resolve(rootDir, subPath)`, filtering
  * out dotfiles and returning only directories and files. Used by the
  * folder-import UI to let the user navigate the shared folder or the
- * extracted contents of an uploaded zip.
+ * extracted contents of an uploaded archive.
  *
  * @throws `FORBIDDEN` when the resolved path escapes `guardRoot`.
  */
@@ -51,10 +51,10 @@ export async function browseDirectory(
 }
 
 /**
- * Extract a previously uploaded zip (identified by `archiveFileId`) into a
- * temporary directory under `tmpBase`. The staged archive is discarded
- * after extraction — the extracted directory tree replaces it as the
- * import source.
+ * Extract a previously uploaded archive (identified by `archiveFileId`)
+ * into a temporary directory under `tmpBase`. The staged archive is
+ * discarded after extraction — the extracted directory tree replaces it
+ * as the import source.
  *
  * @returns The absolute path to the extraction directory, which the
  *   caller uses as `root` for subsequent browse/scan/import calls.

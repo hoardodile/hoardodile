@@ -31,8 +31,9 @@ export type ResourceRouterDeps = {
  *
  * - Ordered: stage each file via `POST /api/uploads/ordered` (returns a
  *   `fileId`), then pass the ordered `files: [fileId, …]` list here.
- * - Archive: stage a single zip via `POST /api/uploads/archive` (returns
- *   a `fileId`), then pass `archiveFileId` here.
+ * - Archive: stage a single archive (zip/tar/7z/rar/xz/gzip) via
+ *   `POST /api/uploads/archive` (returns a `fileId`), then pass
+ *   `archiveFileId` here.
  *
  * Direct creation of an empty resource is intentionally unsupported on
  * the public API - every resource owns its source folder.

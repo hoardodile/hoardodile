@@ -1577,7 +1577,7 @@
 				"resultFailed": "Fehlgeschlagen",
 				"sourceSharedDescription": "Wähle einen Ordner aus den gemeinsamen Import-Stammordnern des Servers.",
 				"sourceSharedDisabled": "Der Import aus gemeinsamen Ordnern ist nicht eingerichtet.",
-				"sourceZipDescription": "Eine .zip — wird auf dem Server entpackt und dann gescannt.",
+				"sourceZipDescription": "Ein Archiv — wird auf dem Server entpackt und dann gescannt (zip, tar, 7z, rar, xz, gzip).",
 				"importingDescription": "Aus dem gewählten Ordner werden Ressourcen erstellt. Dies kann einen Moment dauern.",
 				"stepSource": "Quelle",
 				"stepBrowse": "Durchsuchen",

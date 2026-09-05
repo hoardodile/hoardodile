@@ -818,7 +818,7 @@ function ZipUploader(props: {
 			<input
 				ref={inputRef}
 				type="file"
-				accept=".zip,application/zip,application/x-zip-compressed"
+				accept=".zip,.tar,.7z,.rar,.xz,.gz,.tgz,.tar.gz,application/zip,application/x-zip-compressed,application/x-tar,application/x-7z-compressed,application/x-rar-compressed,application/vnd.rar,application/x-xz,application/gzip,application/x-gzip"
 				className="sr-only"
 				onChange={(e) => {
 					handlePick(e.target.files)
