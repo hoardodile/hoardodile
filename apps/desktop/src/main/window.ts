@@ -209,8 +209,9 @@ function loadWindow(win: BrowserWindow, options: CreateWindowOptions): void {
 					: devServerErrorMessage(undefined),
 			)
 		}
-		win.webContents.on("did-fail-load", (_event, _code, desc, _url, isMain) => {
-			if (!isMain) return
+		win.webContents.on("did-fail-load", (_event, code, desc, _url, isMain) => {
+			// Chromium cancels superseded navigations during reloads and redirects.
+			if (!isMain || code === -3) return
 			console.error(`[desktop] app load failed: ${desc}`)
 			showErrorPage()
 		})

@@ -57,6 +57,23 @@ function certMaterial(): { cert: string; key: string } {
 	return cert
 }
 
+it("keeps a LAN proxy usable after the shared development backend changes ports", async () => {
+	const first = await listenUpstream((_req, res) => res.end("first"))
+	const second = await listenUpstream((_req, res) => res.end("second"))
+	let port = first
+	const handle = await startLanProxy({
+		sidecarPort: () => port,
+		lanPort: 0,
+		httpsPort: 0,
+		lanHttps: false,
+		...certMaterial(),
+	})
+	handles.push(handle)
+	expect((await httpRaw(handle.port, "/health")).body).toBe("first")
+	port = second
+	expect((await httpRaw(handle.port, "/health")).body).toBe("second")
+})
+
 type ReqOptions = {
 	readonly method?: string
 	readonly headers?: Record<string, string>

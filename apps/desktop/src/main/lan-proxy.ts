@@ -44,7 +44,7 @@ const HOP_BY_HOP = new Set([
 
 export type LanProxyOptions = {
 	/** Loopback port of the sidecar to forward to (already listening). */
-	readonly sidecarPort: number
+	readonly sidecarPort: number | (() => number)
 	/** HTTP port (0.0.0.0) — serves when `lanHttps` is off, else redirects to `httpsPort`. */
 	readonly lanPort: number
 	/** HTTPS port (0.0.0.0) — serves when `lanHttps` is on, else redirects to `lanPort`. */
@@ -70,7 +70,7 @@ export type LanProxyHandle = {
 }
 
 type LanProxyState = {
-	sidecarPort: number
+	sidecarPort: number | (() => number)
 	lanHttps: boolean
 	httpPort: number
 	httpsPort: number
@@ -181,16 +181,20 @@ function handle(
 
 	const forwardHeaders = { ...req.headers }
 	for (const name of HOP_BY_HOP) delete forwardHeaders[name.toLowerCase()]
+	const sidecarPort =
+		typeof state.sidecarPort === "function"
+			? state.sidecarPort()
+			: state.sidecarPort
 
 	const upstream = request(
 		{
 			host: "127.0.0.1",
-			port: state.sidecarPort,
+			port: sidecarPort,
 			method: req.method,
 			path: req.url ?? "/",
 			headers: {
 				...forwardHeaders,
-				host: `127.0.0.1:${state.sidecarPort}`,
+				host: `127.0.0.1:${sidecarPort}`,
 				"x-forwarded-proto": scheme,
 				"x-forwarded-host": req.headers.host ?? "",
 				"x-forwarded-for": req.socket.remoteAddress ?? "",

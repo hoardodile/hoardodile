@@ -29,6 +29,10 @@ import {
 	writeDesktopConfig,
 } from "./config.ts"
 import { bindDestApiProxy } from "./dest-api-proxy.ts"
+import {
+	connectDevelopmentBackend,
+	readDevelopmentBackend,
+} from "./development-backend.ts"
 import { devServerErrorMessage, serverErrorMessage } from "./error-page.ts"
 import {
 	applyLoginItem,
@@ -260,6 +264,10 @@ async function changeLibrary(
 	runtime: Runtime,
 	libraryPath: string,
 ): Promise<void> {
+	if (readDevelopmentBackend(app.isPackaged))
+		throw new Error(
+			"Shared development uses STORAGE_ROOT. Update .env and restart pnpm dev to change the library.",
+		)
 	runtime.config = { ...runtime.config, libraryPath }
 	persist(runtime)
 	await relaunchApp(runtime)
@@ -303,7 +311,7 @@ function lanInfo(runtime: Runtime): LanInfo {
 	return {
 		enabled: runtime.config.lanEnabled,
 		https: runtime.config.lanHttps,
-		port: runtime.config.port,
+		port: runtime.sidecar?.port ?? runtime.config.port,
 		preferredPort: runtime.config.portPreferred,
 		lanPort: runtime.config.lanPort,
 		lanPreferredPort: runtime.config.lanPreferredPort,
@@ -521,7 +529,7 @@ async function syncLanProxy(runtime: Runtime): Promise<void> {
 	runtime.config = { ...runtime.config, lanPort, lanHttpsPort: httpsPort }
 	persist(runtime)
 	runtime.lanProxy = await startLanProxy({
-		sidecarPort: sidecar.port,
+		sidecarPort: () => sidecar.port,
 		lanPort,
 		httpsPort,
 		lanHttps: runtime.config.lanHttps,
@@ -612,25 +620,28 @@ async function restartSidecar(runtime: Runtime): Promise<void> {
 }
 
 async function spawnSidecar(runtime: Runtime): Promise<SidecarHandle> {
-	const handle = await startSidecar({
-		layout: runtime.layout,
-		config: runtime.config,
-		persistPort(port) {
-			runtime.config = { ...runtime.config, port }
-			persist(runtime)
-		},
-		log(chunk) {
-			if (chunk.length > HEALTH_LOG_LIMIT) return
-			process.stdout.write(chunk)
-		},
-	})
+	const shared = readDevelopmentBackend(app.isPackaged)
+	const handle = shared
+		? connectDevelopmentBackend(shared)
+		: await startSidecar({
+				layout: runtime.layout,
+				config: runtime.config,
+				persistPort(port) {
+					runtime.config = { ...runtime.config, port }
+					persist(runtime)
+				},
+				log(chunk) {
+					if (chunk.length > HEALTH_LOG_LIMIT) return
+					process.stdout.write(chunk)
+				},
+			})
 	handle.onCrash(() => {
 		onSidecarCrash(runtime)
 	})
 	bindDestApiProxy({
 		packaged: app.isPackaged,
 		spaUrl: process.env.HOARDODILE_WEB_URL,
-		sidecarUrl: handle.url,
+		sidecarUrl: () => handle.url,
 	})
 	return handle
 }
@@ -752,7 +763,11 @@ async function openAppWindow(runtime: Runtime): Promise<void> {
 	// The SPA's first-paint splash is the loading surface (same dimmed
 	// logo), so the window loads the app directly and the boot stays in a
 	// single document — no shell-page handoff, no flash between surfaces.
-	await win.loadURL(url)
+	try {
+		await win.loadURL(url)
+	} catch {
+		// Real navigation failures are handled by the window's did-fail-load guard.
+	}
 }
 
 /** Localized close-confirm copy for the native dialog; the SPA pushes the language via the bridge. */
@@ -963,6 +978,15 @@ async function boot(): Promise<void> {
 		iconPath: undefined,
 		completeWizard: undefined,
 	}
+	const shared = readDevelopmentBackend(app.isPackaged)
+	if (shared)
+		runtime.config = {
+			...runtime.config,
+			libraryPath: shared.storageRoot,
+			port: shared.port,
+			portPreferred: shared.port,
+			wizardComplete: true,
+		}
 	activeRuntime = runtime
 	runtime.iconPath = windowIconPath(
 		app.isPackaged ? process.resourcesPath : runtime.desktopRoot,
@@ -1314,7 +1338,18 @@ function isShellExtrasDisabled(): boolean {
 function applyUserDataDirArg(): void {
 	const prefix = "--user-data-dir="
 	const arg = process.argv.find((entry) => entry.startsWith(prefix))
-	if (arg === undefined) return
+	if (arg === undefined) {
+		if (
+			readDevelopmentBackend(app.isPackaged) &&
+			process.env.HOARDODILE_WORKSPACE
+		) {
+			app.setPath(
+				"userData",
+				join(process.env.HOARDODILE_WORKSPACE, "tmp", "desktop-dev-profile"),
+			)
+		}
+		return
+	}
 	const dir = arg.slice(prefix.length)
 	if (dir.length === 0) return
 	app.setPath("userData", dir)

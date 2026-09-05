@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Desktop dev loop: `pnpm desktop` — independent of `pnpm dev`.
+ * Desktop dev loop: `pnpm desktop` is a client of the pnpm dev backend.
  *
  * Desktop and web dev are separate: this script NEVER starts or owns the
  * SPA, and does not wait for one or fail without it. It simply launches
@@ -14,9 +14,8 @@
  *   default (the wizard config pins it with strictPort, which fails when
  *   occupied).
  * - Electron: spawned with HOARDODILE_WEB_URL / ELECTRON_WIZARD_URL /
- *   HOARDODILE_WORKSPACE; stopped as a process tree so the vite-node sidecar
- *   it spawned does not outlive a Ctrl+C. The backend (Fastify sidecar) is
- *   spawned by the shell itself — no external backend required.
+ *   HOARDODILE_WORKSPACE; stopped as a process tree. The shared backend is
+ *   owned by pnpm dev, so quitting the desktop does not stop browser work.
  * - API routing in the desktop window is main's dest proxy
  *   (`apps/desktop/src/main/dest-api-proxy.ts`); the SPA's own `VITE_SERVER_URL`
  *   proxy target is never touched here.
@@ -30,6 +29,7 @@ import { setTimeout as delay } from "node:timers/promises"
 import { fileURLToPath } from "node:url"
 import getPort from "get-port"
 import { build, createServer } from "vite"
+import { developmentBackend } from "../../../scripts/lib/dev-backend.mjs"
 import { findSeedPluginDists } from "../../../scripts/lib/plugin-channels.mjs"
 
 setDefaultResultOrder("ipv4first")
@@ -52,6 +52,10 @@ const devPorts = JSON.parse(
 const SPA_REUSE_URL = `http://localhost:${devPorts.spa}`
 
 async function main() {
+	try {
+		process.loadEnvFile(resolve(workspaceRoot, ".env"))
+	} catch {}
+	const backend = await developmentBackend()
 	ensurePluginDists()
 	const spaUrl = resolveSpaUrl()
 	const wizard = await startWizard()
@@ -59,7 +63,7 @@ async function main() {
 	await build({ configFile: resolve(root, "vite.main.config.ts") })
 	await build({ configFile: resolve(root, "vite.preload.config.ts") })
 
-	const child = spawn(electronExe, [root], {
+	const child = spawn(electronExe, [root, ...process.argv.slice(2)], {
 		cwd: root,
 		stdio: "inherit",
 		env: {
@@ -67,10 +71,17 @@ async function main() {
 			ELECTRON_WIZARD_URL: wizard.url,
 			HOARDODILE_WEB_URL: spaUrl,
 			HOARDODILE_WORKSPACE: workspaceRoot,
+			HOARDODILE_DEV_BACKEND_URL: backend.url,
+			HOARDODILE_DEV_BACKEND_TOKEN: backend.token,
+			HOARDODILE_DEV_BACKEND_FILE: backend.addressFile,
+			HOARDODILE_DEV_STORAGE_ROOT: backend.storageRoot,
 		},
 	})
 	console.log(
 		`[desktop] electron started (pid ${String(child.pid)}) — Ctrl+C stops everything`,
+	)
+	console.log(
+		`[desktop] using pnpm dev backend at ${backend.url}; start pnpm dev if it is not running`,
 	)
 	registerShutdown(child, [wizard.server])
 }

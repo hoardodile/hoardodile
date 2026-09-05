@@ -123,6 +123,8 @@ const envSchema = z
 			.default("development"),
 		HOST: z.string().min(1).default("127.0.0.1"),
 		PORT: z.coerce.number().int().min(1).max(65535).default(3000),
+		/** Development clients share a fixed API address owned by pnpm dev. */
+		HOARDODILE_DEV_BACKEND: z.literal("shared").optional(),
 		/**
 		 * Override the directory of pre-built web assets to serve at `/`.
 		 */

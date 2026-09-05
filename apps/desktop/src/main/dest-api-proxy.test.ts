@@ -2,11 +2,12 @@
  * @vitest-environment node
  */
 
-import { net } from "electron"
+import { net, session } from "electron"
 import { describe, expect, it, vi } from "vitest"
 import {
 	destApiProxyTarget,
 	destSpaNeedsSidecarProxy,
+	installDestApiProxy,
 	proxyHttpRequest,
 } from "./dest-api-proxy.ts"
 
@@ -21,6 +22,25 @@ vi.mock("electron", () => ({
 
 const spa = "http://127.0.0.1:5173"
 const sidecar = "http://127.0.0.1:4123/"
+
+it("follows the shared development backend when its port changes", async () => {
+	let target = "http://127.0.0.1:41001/"
+	installDestApiProxy({ spaOrigin: spa, sidecarOrigin: () => target })
+	const handler = vi
+		.mocked(session.defaultSession.protocol.handle)
+		.mock.calls.at(-1)?.[1]
+	if (!handler) throw new Error("Missing protocol handler")
+	vi.mocked(net.fetch).mockResolvedValue(new Response("ok"))
+	await handler(new Request(`${spa}/auth/status`))
+	expect(vi.mocked(net.fetch).mock.calls.at(-1)?.[0]).toMatchObject({
+		url: "http://127.0.0.1:41001/auth/status",
+	})
+	target = "http://127.0.0.1:41002/"
+	await handler(new Request(`${spa}/auth/status`))
+	expect(vi.mocked(net.fetch).mock.calls.at(-1)?.[0]).toMatchObject({
+		url: "http://127.0.0.1:41002/auth/status",
+	})
+})
 
 describe("destApiProxyTarget", () => {
 	it("rewrites Vite-origin API paths onto the sidecar", () => {

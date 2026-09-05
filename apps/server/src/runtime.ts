@@ -126,8 +126,17 @@ export async function launchHttpServer(
 		databaseUrl: ctx.dbFilePath,
 		readOnly: ctx.readOnly,
 	})
-	const port = await resolveAvailablePort(opts.env.PORT, opts.env.HOST)
-	await built.app.listen({ host: opts.env.HOST, port })
+	let port: number
+	try {
+		port =
+			opts.env.HOARDODILE_DEV_BACKEND === "shared"
+				? opts.env.PORT
+				: await resolveAvailablePort(opts.env.PORT, opts.env.HOST)
+		await built.app.listen({ host: opts.env.HOST, port })
+	} catch (error) {
+		await built.close()
+		throw error
+	}
 
 	// ── TCP keepalive ─────────────────────────────────────────────────────
 	// LAN clients reach the server over WiFi or Ethernet through a router

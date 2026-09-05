@@ -15,7 +15,7 @@ const API_PREFIXES = ["/trpc", "/auth", "/api", "/health"] as const
 const PROXY_TIMEOUT_MS = 15_000
 
 export type DestApiProxy = {
-	setSidecarOrigin: (sidecarOrigin: string) => void
+	setSidecarOrigin: (sidecarOrigin: string | (() => string)) => void
 }
 
 let installed: DestApiProxy | undefined
@@ -65,7 +65,7 @@ export function destSpaNeedsSidecarProxy(
  */
 export function installDestApiProxy(options: {
 	readonly spaOrigin: string
-	readonly sidecarOrigin: string
+	readonly sidecarOrigin: string | (() => string)
 }): DestApiProxy {
 	if (installed !== undefined) {
 		installed.setSidecarOrigin(options.sidecarOrigin)
@@ -74,7 +74,11 @@ export function installDestApiProxy(options: {
 	let sidecarOrigin = options.sidecarOrigin
 	const spaOrigin = options.spaOrigin
 	session.defaultSession.protocol.handle("http", (request) => {
-		return proxyHttpRequest(request, spaOrigin, sidecarOrigin)
+		return proxyHttpRequest(
+			request,
+			spaOrigin,
+			typeof sidecarOrigin === "function" ? sidecarOrigin() : sidecarOrigin,
+		)
 	})
 	installed = {
 		setSidecarOrigin(next) {
@@ -87,12 +91,16 @@ export function installDestApiProxy(options: {
 export function bindDestApiProxy(options: {
 	readonly packaged: boolean
 	readonly spaUrl: string | undefined
-	readonly sidecarUrl: string
+	readonly sidecarUrl: string | (() => string)
 }): void {
 	if (options.packaged) return
 	const spaUrl = options.spaUrl
 	if (spaUrl === undefined || spaUrl.length === 0) return
-	if (!destSpaNeedsSidecarProxy(spaUrl, options.sidecarUrl)) return
+	const initialUrl =
+		typeof options.sidecarUrl === "function"
+			? options.sidecarUrl()
+			: options.sidecarUrl
+	if (!destSpaNeedsSidecarProxy(spaUrl, initialUrl)) return
 	installDestApiProxy({
 		spaOrigin: spaUrl,
 		sidecarOrigin: options.sidecarUrl,

@@ -2,6 +2,7 @@ import { execSync, spawn } from "node:child_process"
 import { existsSync, readFileSync, statSync } from "node:fs"
 import { basename, join, resolve } from "node:path"
 import process from "node:process"
+import { developmentBackend } from "./lib/dev-backend.mjs"
 import { readPluginId } from "./lib/plugin-channels.mjs"
 import { killTree } from "./lib/process.mjs"
 import { WORKSPACE_ROOT } from "./lib/workspace.mjs"
@@ -14,10 +15,6 @@ try {
 } catch {
 	// no .env present
 }
-
-const devPorts = JSON.parse(
-	readFileSync(new URL("./lib/dev-ports.json", import.meta.url), "utf8"),
-)
 
 /**
  * Resolve a DEV_PLUGINS entry to a plugin directory (absolute, or
@@ -72,7 +69,7 @@ function selectPlugins() {
 	return selected
 }
 
-function buildServices(selectedPlugins) {
+function buildServices(selectedPlugins, backend) {
 	const svcs = []
 
 	// The web runs on the vite dev server (HMR), proxying /trpc, /auth,
@@ -81,7 +78,7 @@ function buildServices(selectedPlugins) {
 	// condition, so package edits hot-reload too — no builds in the loop.
 	// Mirror of the server default (apps/server/src/config/env.ts); the
 	// single source for dev tooling is scripts/lib/dev-ports.json.
-	const serverPort = process.env.PORT ?? String(devPorts.api)
+	const serverPort = String(backend.port)
 	const bindHost = process.env.HOST
 	const hostFlag =
 		bindHost !== undefined &&
@@ -149,8 +146,10 @@ function buildServices(selectedPlugins) {
 	}
 
 	const serverEnv = {
-		STORAGE_ROOT:
-			process.env.STORAGE_ROOT ?? resolve(WORKSPACE_ROOT, "tmp", "dev-storage"),
+		PORT: String(backend.port),
+		STORAGE_ROOT: backend.storageRoot,
+		HOARDODILE_SHUTDOWN_TOKEN: backend.token,
+		HOARDODILE_DEV_BACKEND: "shared",
 		HOST: process.env.HOST ?? "0.0.0.0",
 		APP_WEB_ROOT:
 			process.env.APP_WEB_ROOT ??
@@ -263,7 +262,15 @@ async function main() {
 		stdio: "inherit",
 	})
 
-	const services = buildServices(selected)
+	const backend = await developmentBackend()
+	if (backend.running)
+		throw new Error(
+			`This library already has a development backend at ${backend.url}`,
+		)
+	console.log(
+		`[dev] shared API at ${backend.url} (preferred port: ${backend.preferredPort})`,
+	)
+	const services = buildServices(selected, backend)
 	const children = []
 	let exiting = false
 
