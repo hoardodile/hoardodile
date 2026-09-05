@@ -6,15 +6,15 @@ describe("settingsTabs", () => {
 	it("holds every settings tab", () => {
 		expect(SETTINGS_TABS.map((tab) => tab.key)).toEqual([
 			"preferences",
-			"data",
-			"about",
-			"desktop",
-			"custom",
 			"privacy",
-			"archive",
+			"custom",
+			"data",
+			"desktop",
 			"plugins",
 			"marketplace",
+			"archive",
 			"sync",
+			"about",
 		])
 	})
 

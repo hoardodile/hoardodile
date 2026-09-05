@@ -51,23 +51,10 @@ export const SETTINGS_TABS: readonly SettingsTab[] = [
 		testId: "me-tab-preferences",
 	},
 	{
-		key: "data",
-		path: "/settings/data",
-		icon: Database,
-		testId: "me-tab-data",
-	},
-	{
-		key: "about",
-		path: "/settings/about",
-		icon: InfoCircle,
-		testId: "me-tab-about",
-	},
-	{
-		key: "desktop",
-		path: "/settings/desktop",
-		icon: WindowFrame,
-		testId: "me-tab-desktop",
-		desktopOnly: true,
+		key: "privacy",
+		path: "/settings/privacy",
+		icon: ShieldCheck,
+		testId: "me-tab-privacy",
 	},
 	{
 		key: "custom",
@@ -76,16 +63,17 @@ export const SETTINGS_TABS: readonly SettingsTab[] = [
 		testId: "me-tab-custom",
 	},
 	{
-		key: "privacy",
-		path: "/settings/privacy",
-		icon: ShieldCheck,
-		testId: "me-tab-privacy",
+		key: "data",
+		path: "/settings/data",
+		icon: Database,
+		testId: "me-tab-data",
 	},
 	{
-		key: "archive",
-		path: "/settings/backups",
-		icon: Archive,
-		testId: "me-tab-archive",
+		key: "desktop",
+		path: "/settings/desktop",
+		icon: WindowFrame,
+		testId: "me-tab-desktop",
+		desktopOnly: true,
 	},
 	{
 		key: "plugins",
@@ -100,10 +88,22 @@ export const SETTINGS_TABS: readonly SettingsTab[] = [
 		testId: "me-tab-marketplace",
 	},
 	{
+		key: "archive",
+		path: "/settings/backups",
+		icon: Archive,
+		testId: "me-tab-archive",
+	},
+	{
 		key: "sync",
 		path: "/settings/sync",
 		icon: RefreshCircle,
 		testId: "me-tab-sync",
+	},
+	{
+		key: "about",
+		path: "/settings/about",
+		icon: InfoCircle,
+		testId: "me-tab-about",
 	},
 ]
 
