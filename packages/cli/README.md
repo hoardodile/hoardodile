@@ -69,17 +69,23 @@ Then add the line to the `plugins` array of your registry repo's
 The app's **Settings → Marketplace** takes the registry repo address
 once (built-in default: [`hoardodile/marketplace`](https://github.com/hoardodile/marketplace)) and reads everything
 else — each plugin's manifest (name, description, icon, permissions) via
-`raw.githubusercontent.com`, and its latest release (version, notes, zip
-asset, optional `.sha256` sidecar) via `api.github.com`. Requirements:
+`raw.githubusercontent.com`, the latest release (version + published
+date + notes) via the free `releases.atom` feed, and on demand the
+installable payload (zip asset, optional `.sha256` sidecar, per-locale
+readme) from `github.com/<repo>/releases/expanded_assets/<tag>`. All these
+channels are quota-free GitHub web endpoints — the marketplace never
+touches `api.github.com`, so a shared IP with an exhausted API quota
+cannot block it. Requirements:
 
-- all repos are **public** (raw reads and unauthenticated API calls);
+- all repos are **public** (raw reads and unauthenticated web-channel
+  fetches);
 - release tags follow `v<version>` (a `v` prefix is tolerated);
 - the zip asset is what `plugin package` produces (`<id>-<version>.zip`,
   or any `*.zip` in the release).
 
-The unauthenticated GitHub API budget is 60 requests/hour per IP; one
-marketplace refresh costs one request per plugin (registry + manifests
-skip the API entirely), and the app caches snapshots for 10 minutes.
+The server caches the catalog snapshot in memory (default 24 h) and the
+per-repo release payload on disk (`local/cache/marketplace-releases.json`,
+default 24 h), so the endpoints are asked at most once per repo per day.
 All these fetches go through the app's user proxy when one is
 configured (auto-detected from the proxy env vars / OS system proxy;
 `HOARDODILE_PROXY` overrides) — destinations stay GitHub-only.
