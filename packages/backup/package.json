@@ -1,0 +1,27 @@
+{
+	"name": "@hoardodile/backup",
+	"version": "0.0.0",
+	"private": true,
+	"license": "GPL-3.0-only",
+	"type": "module",
+	"exports": {
+		".": "./src/index.ts"
+	},
+	"scripts": {
+		"bench": "node --experimental-transform-types bench/run.ts",
+		"build": "tsc --noEmit",
+		"lint": "tsc --noEmit",
+		"test": "vitest run --maxWorkers=2"
+	},
+	"dependencies": {
+		"zod": "catalog:"
+	},
+	"optionalDependencies": {
+		"@hoardodile/restic-bin": "1.0.0"
+	},
+	"devDependencies": {
+		"@types/node": "catalog:",
+		"typescript": "catalog:",
+		"vitest": "catalog:"
+	}
+}

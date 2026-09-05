@@ -184,17 +184,27 @@ function loadOrCreateSessionKey(paths: StoragePaths): string {
  *     dependencies: ["db-plugin"],
  *   })
  */
-export function buildServicePlugin<TService>(opts: {
+export function buildServicePlugin<TService extends object>(opts: {
 	readonly name: string
 	readonly serviceKey: string
 	readonly createService: (app: FastifyInstance) => TService
 	readonly dependencies?: readonly string[]
 }): FastifyPluginAsync {
 	async function pluginImpl(app: FastifyInstance): Promise<void> {
+		let current = opts.createService(app)
+		const proxy = new Proxy(current, {
+			get(_target, key, receiver) {
+				const value: unknown = Reflect.get(current, key, receiver)
+				return typeof value === "function" ? value.bind(current) : value
+			},
+		})
 		;(app.decorate as (key: string, value: unknown) => FastifyInstance)(
 			opts.serviceKey,
-			opts.createService(app),
+			proxy,
 		)
+		app.storageReloadHandlers?.push(async () => {
+			current = opts.createService(app)
+		})
 	}
 	return fp(pluginImpl satisfies FastifyPluginAsync, {
 		name: opts.name,

@@ -123,6 +123,7 @@ export default defineConfig({
 							SESSION_COOKIE_NAME: "app_session_e2e",
 							SESSION_SECURE_COOKIE: "false",
 							STORAGE_ROOT: storageRoot,
+							BACKUP_ROOT: resolve(storageRoot, "backups"),
 							RESTART_ON_RESTORE: "false",
 							DEV_PLUGIN_PATHS: devPluginDirs.join(","),
 							// The plugin-consent fixture downloads from the

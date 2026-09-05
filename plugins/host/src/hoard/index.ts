@@ -12,6 +12,12 @@ export {
 	streamStoredZip,
 	validateArchiveBudget,
 } from "../archive/index.ts"
+export {
+	type StorageCoordinator,
+	storageCoordinator,
+	withFileCommit,
+	withStorageRequest,
+} from "./coordination.ts"
 export type { DirSizeOptions } from "./dir-size.ts"
 export { sumDirSizes } from "./dir-size.ts"
 export {
@@ -49,6 +55,7 @@ export {
 	vaultTempFile,
 	vaultTotalSize,
 } from "./plugin-vault.ts"
+export { publishVersion, recoverVersionPublication } from "./publish-version.ts"
 export type { OccupiedNames } from "./sanitize.ts"
 export {
 	createOccupiedNames,

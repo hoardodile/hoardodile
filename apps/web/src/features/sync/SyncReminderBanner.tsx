@@ -1,10 +1,9 @@
 import { Button } from "@hoardodile/ui/components/button"
 import { Icon } from "@hoardodile/ui/components/icon"
 import { DangerTriangle, RefreshCircle } from "@hoardodile/ui/icons/registry"
-import { useQuery } from "@tanstack/react-query"
 import { Link } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
-import { syncSummaryQueryOptions } from "./api"
+import { useSyncHealth } from "@/features/protection/syncHealth"
 
 /**
  * Dashboard reminder banners for the sync-device feature. Shows one
@@ -14,11 +13,11 @@ import { syncSummaryQueryOptions } from "./api"
  */
 export function SyncReminderBanner() {
 	const { t } = useTranslation()
-	const summaryQuery = useQuery(syncSummaryQueryOptions())
-	const summary = summaryQuery.data
+	const health = useSyncHealth()
+	const summary = health.summary
 
 	if (summary === undefined) return null
-	if (summary.devices.length === 0) {
+	if (health.count === 0) {
 		return (
 			<BannerRow
 				testId="sync-warning-no-devices"
@@ -29,7 +28,17 @@ export function SyncReminderBanner() {
 			/>
 		)
 	}
-	const dueDevices = summary.devices.filter((entry) => entry.due)
+	if (health.dueConnections.length > 0)
+		return (
+			<BannerRow
+				testId="sync-warning-connections"
+				icon={RefreshCircle}
+				title={t("replication.healthAttention")}
+				description={t("replication.never")}
+				buttonLabel={t("sync.banner.configureLink")}
+			/>
+		)
+	const dueDevices = health.manual.filter((entry) => entry.due)
 	if (dueDevices.length === 0) return null
 	return (
 		<div className="flex flex-col gap-3">

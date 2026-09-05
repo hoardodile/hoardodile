@@ -1,13 +1,23 @@
-import { mkdtempSync, rmSync } from "node:fs"
+import {
+	existsSync,
+	mkdirSync,
+	mkdtempSync,
+	readFileSync,
+	rmSync,
+	writeFileSync,
+} from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
-import { ensureBootstrapVersion } from "@hoardodile/host/hoard"
+import {
+	ensureBootstrapVersion,
+	recoverVersionPublication,
+} from "@hoardodile/host/hoard"
 import { type DomainError, isDomainError } from "@hoardodile/shared"
 import { openDb, schema } from "src/infra/db/connection.ts"
-import { afterEach, beforeEach, describe, expect, test } from "vitest"
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import { createVersionService, type VersionService } from "./service.ts"
 
-describe("version service", () => {
+describe("version service", async () => {
 	let root: string
 	let dbh: ReturnType<typeof openDb>
 	let svc: VersionService
@@ -30,7 +40,7 @@ describe("version service", () => {
 		rmSync(root, { recursive: true, force: true })
 	})
 
-	test("list returns single entry for bootstrap version", () => {
+	test("list returns single entry for bootstrap version", async () => {
 		const entries = svc.list()
 		expect(entries).toHaveLength(1)
 		expect(entries[0]).toEqual({
@@ -42,16 +52,52 @@ describe("version service", () => {
 		expect(entries[0]?.dbSize).toBeGreaterThan(0)
 	})
 
-	test("current and active return 1 after bootstrap", () => {
+	test("preserves prepared plugin copies and requests maintenance when publication cannot finish", async () => {
+		const plugin = join(root, "versions", "1", "plugins", "fixture")
+		mkdirSync(plugin, { recursive: true })
+		writeFileSync(join(plugin, "asset.txt"), "independent plugin contents")
+		const onPublicationFailure = vi.fn()
+		const service = createVersionService({
+			db: dbh,
+			storageRoot: root,
+			readOnly: false,
+			onPublicationFailure,
+		})
+		const collision = join(root, "versions", "2")
+		await expect(
+			service.create(
+				{},
+				{ onProgress: () => mkdirSync(collision, { recursive: true }) },
+			),
+		).rejects.toMatchObject({ code: "archive_publication_interrupted" })
+		expect(onPublicationFailure).toHaveBeenCalledOnce()
+		const work = join(root, "local", "archive-publication")
+		expect(existsSync(join(work, "pending.json"))).toBe(true)
+		expect(
+			readFileSync(
+				join(work, "next", "plugins", "fixture", "asset.txt"),
+				"utf8",
+			),
+		).toBe("independent plugin contents")
+		rmSync(collision, { recursive: true, force: true })
+		await recoverVersionPublication(root)
+		expect(service.current()).toBe(2)
+		expect(
+			readFileSync(join(collision, "plugins", "fixture", "asset.txt"), "utf8"),
+		).toBe("independent plugin contents")
+		expect(existsSync(join(work, "pending.json"))).toBe(false)
+	})
+
+	test("current and active return 1 after bootstrap", async () => {
 		expect(svc.current()).toBe(1)
 		expect(svc.active()).toBe(1)
 	})
 
-	test("create snapshots DB and bumps current version", () => {
+	test("create snapshots DB and bumps current version", async () => {
 		const beforeSize = svc.list()[0]?.dbSize ?? 0
 		expect(beforeSize).toBeGreaterThan(0)
 
-		const result = svc.create()
+		const result = await svc.create()
 		expect(result.previous).toBe(1)
 		expect(result.created).toBe(2)
 
@@ -73,14 +119,14 @@ describe("version service", () => {
 		expect(v2?.dbSize).toBe(beforeSize)
 	})
 
-	test("create throws when in read-only mode", () => {
+	test("create throws when in read-only mode", async () => {
 		const roSvc = createVersionService({
 			db: dbh,
 			storageRoot: root,
 			readOnly: true,
 		})
 		try {
-			roSvc.create()
+			await roSvc.create()
 			expect.unreachable("should have thrown")
 		} catch (err) {
 			// The versioned-write gate lives in the host package; its
@@ -90,8 +136,8 @@ describe("version service", () => {
 		}
 	})
 
-	test("switchTo updates active version", () => {
-		svc.create()
+	test("switchTo updates active version", async () => {
+		await svc.create()
 		svc.switchTo(1)
 
 		expect(svc.active()).toBe(1)
@@ -102,7 +148,7 @@ describe("version service", () => {
 		expect(v2?.active).toBe(false)
 	})
 
-	test("switchTo throws for unknown version", () => {
+	test("switchTo throws for unknown version", async () => {
 		try {
 			svc.switchTo(99)
 			expect.unreachable("should have thrown")
@@ -115,14 +161,14 @@ describe("version service", () => {
 		}
 	})
 
-	test("list reflects on-disk changes made by another instance", () => {
+	test("list reflects on-disk changes made by another instance", async () => {
 		// Simulate another service instance writing the active version
 		const other = createVersionService({
 			db: dbh,
 			storageRoot: root,
 			readOnly: false,
 		})
-		other.create()
+		await other.create()
 		other.switchTo(1)
 
 		// Original service sees the new state without re-instantiation
@@ -133,7 +179,7 @@ describe("version service", () => {
 		expect(entries.find((e) => e.version === 2)?.active).toBe(false)
 	})
 
-	test("dbSize for archived version reads snapshot file, not live DB", () => {
+	test("dbSize for archived version reads snapshot file, not live DB", async () => {
 		// Seed some data to make live DB grow
 		dbh.db
 			.insert(schema.auth)
@@ -141,7 +187,7 @@ describe("version service", () => {
 			.run()
 		const beforeCreate = svc.list()[0]?.dbSize ?? 0
 
-		svc.create()
+		await svc.create()
 
 		const entries = svc.list()
 		const v1 = entries.find((e) => e.version === 1)
@@ -153,9 +199,9 @@ describe("version service", () => {
 		expect(v2?.dbSize).toBeGreaterThanOrEqual(beforeCreate)
 	})
 
-	test("create stores createdAt and note for the archived version", () => {
+	test("create stores createdAt and note for the archived version", async () => {
 		const before = Date.now()
-		svc.create({ note: "milestone" })
+		await svc.create({ note: "milestone" })
 		const after = Date.now()
 		const entries = svc.list()
 		const v1 = entries.find((e) => e.version === 1)
@@ -164,28 +210,28 @@ describe("version service", () => {
 		expect(v1?.createdAt).toBeLessThanOrEqual(after)
 	})
 
-	test("updateMeta persists and clears name/note for the current version", () => {
-		svc.create()
+	test("updateMeta persists and clears name/note for the current version", async () => {
+		await svc.create()
 		const entriesBefore = svc.list()
 		const current = entriesBefore.find((e) => e.current)
 		expect(current).toBeDefined()
 
-		svc.updateMeta(current!.version, { name: "v2", note: "updated note" })
+		await svc.updateMeta(current!.version, { name: "v2", note: "updated note" })
 		let entries = svc.list()
 		const updated = entries.find((e) => e.version === current!.version)
 		expect(updated?.name).toBe("v2")
 		expect(updated?.note).toBe("updated note")
 
-		svc.updateMeta(current!.version, { name: "", note: "" })
+		await svc.updateMeta(current!.version, { name: "", note: "" })
 		entries = svc.list()
 		const cleared = entries.find((e) => e.version === current!.version)
 		expect(cleared?.name).toBeUndefined()
 		expect(cleared?.note).toBeUndefined()
 	})
 
-	test("updateMeta throws for unknown version", () => {
+	test("updateMeta throws for unknown version", async () => {
 		try {
-			svc.updateMeta(99, { note: "note" })
+			await svc.updateMeta(99, { note: "note" })
 			expect.unreachable("should have thrown")
 		} catch (err) {
 			expect(isDomainError(err)).toBe(true)
@@ -193,10 +239,10 @@ describe("version service", () => {
 		}
 	})
 
-	test("updateMeta throws when editing a past archived version", () => {
-		svc.create()
+	test("updateMeta throws when editing a past archived version", async () => {
+		await svc.create()
 		try {
-			svc.updateMeta(1, { note: "should fail" })
+			await svc.updateMeta(1, { note: "should fail" })
 			expect.unreachable("should have thrown")
 		} catch (err) {
 			expect(isDomainError(err)).toBe(true)

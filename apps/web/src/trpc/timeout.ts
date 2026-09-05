@@ -1,5 +1,9 @@
 import { pluginRequestTimeouts } from "@hoardodile/sdk-web"
-import { LONG_RUNNING_TRPC_PROCEDURES } from "@hoardodile/shared/trpc-timeouts"
+import {
+	canWaitForStorage,
+	LONG_RUNNING_TRPC_PROCEDURES,
+	STORAGE_COMMIT_TIMEOUT_MS,
+} from "@hoardodile/shared/trpc-timeouts"
 
 /**
  * Cap for a normal tRPC round trip; the UI must never wait forever
@@ -25,6 +29,7 @@ function requestUrl(input: string | URL | Request): string {
  * the server-side definitions) so it cannot drift.
  */
 export function trpcTimeoutMs(input: string | URL | Request): number {
+	if (canWaitForStorage(requestUrl(input))) return STORAGE_COMMIT_TIMEOUT_MS
 	const path = new URL(requestUrl(input)).pathname
 	// A single batch POST can carry several procedures at once
 	// (`/trpc/a,b?batch=1`), and only the first segment keeps the

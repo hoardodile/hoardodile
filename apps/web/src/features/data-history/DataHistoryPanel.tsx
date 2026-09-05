@@ -6,7 +6,7 @@ import { QueryStateView } from "@hoardodile/ui/components/query-state-view"
 import { Archive, Server } from "@hoardodile/ui/icons/registry"
 import { cn } from "@hoardodile/ui/lib/utils"
 import { useQuery } from "@tanstack/react-query"
-import { useState } from "react"
+import { Fragment, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useConfirmDialog } from "@/components/common/useConfirmDialog"
 import { useDateFormatter } from "@/features/settings/datePrefs"
@@ -14,11 +14,11 @@ import { SettingsSheet } from "@/features/settings/SettingsSheet"
 import { useSaveMutation } from "@/hooks/useSaveMutation"
 import { useToastMutation } from "@/hooks/useToastMutation"
 import { hardResetAndReload } from "@/lib/client-reset"
+import { trpcMutation } from "@/trpc/factory"
 import {
 	autoStatusQueryOptions,
 	type BackupEvent,
 	createBackupMutation,
-	createVersionMutation,
 	dataHistoryListQueryOptions,
 	deleteBackupMutation,
 	invalidateDataHistory,
@@ -35,7 +35,14 @@ import { DataHistoryTimeline } from "./DataHistoryTimeline"
  * the user add notes, and surfaces the consequence of every destructive
  * action in plain language.
  */
-export function DataHistoryPanel() {
+export function DataHistoryPanel({
+	legacyReadOnly = true,
+	embedded = false,
+}: {
+	legacyReadOnly?: boolean
+	embedded?: boolean
+} = {}) {
+	const Sheet = embedded ? Fragment : SettingsSheet
 	const { t } = useTranslation()
 	const { formatDateTime } = useDateFormatter()
 	const listQuery = useQuery(dataHistoryListQueryOptions())
@@ -61,11 +68,10 @@ export function DataHistoryPanel() {
 	})
 
 	const createVersionMut = useToastMutation({
-		...createVersionMutation(),
+		...trpcMutation("protection", "archive"),
 		errorToastKey: "dataHistory.toast.archiveFailed",
 		onSuccess: () => {
 			setArchiveDialogOpen(false)
-			void hardResetAndReload(t("dataHistory.reloading"))
 		},
 	})
 
@@ -156,16 +162,18 @@ export function DataHistoryPanel() {
 			    below the buttons with -mt-2). */}
 			<div className="mb-3 flex flex-wrap items-center justify-between gap-4">
 				<div className="flex flex-wrap items-center gap-2">
-					<Button
-						onClick={handleCreateBackup}
-						disabled={createBackupMut.isPending || createVersionMut.isPending}
-						data-testid="create-backup"
-					>
-						<Icon icon={Server} />
-						{createBackupMut.isPending
-							? t("dataHistory.action.backingUp")
-							: t("dataHistory.action.backupNow")}
-					</Button>
+					{!legacyReadOnly && (
+						<Button
+							onClick={handleCreateBackup}
+							disabled={createBackupMut.isPending || createVersionMut.isPending}
+							data-testid="create-backup"
+						>
+							<Icon icon={Server} />
+							{createBackupMut.isPending
+								? t("dataHistory.action.backingUp")
+								: t("dataHistory.action.backupNow")}
+						</Button>
+					)}
 					<Button
 						variant="secondary"
 						onClick={() => setArchiveDialogOpen(true)}
@@ -187,13 +195,15 @@ export function DataHistoryPanel() {
 				) : null}
 			</div>
 
-			<AutoSnapshotStatusLine
-				status={autoStatusQuery.data}
-				formatDateTime={formatDateTime}
-				className="-mt-2 mb-3"
-			/>
+			{!legacyReadOnly && (
+				<AutoSnapshotStatusLine
+					status={autoStatusQuery.data}
+					formatDateTime={formatDateTime}
+					className="-mt-2 mb-3"
+				/>
+			)}
 
-			<SettingsSheet>
+			<Sheet>
 				<QueryStateView
 					result={listQuery}
 					isEmpty={(data) => data.groups.length === 0}
@@ -225,6 +235,7 @@ export function DataHistoryPanel() {
 							</div>
 							<div className="min-w-0">
 								<DataHistoryDetail
+									legacyReadOnly={legacyReadOnly}
 									data={data}
 									selectedId={selectedId}
 									onRestore={handleRestore}
@@ -238,7 +249,7 @@ export function DataHistoryPanel() {
 						</div>
 					)}
 				</QueryStateView>
-			</SettingsSheet>
+			</Sheet>
 
 			<CreateArchiveDialog
 				open={archiveDialogOpen}

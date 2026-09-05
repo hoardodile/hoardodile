@@ -58,24 +58,13 @@ function renderPanel() {
 	)
 }
 
-describe("DataHistoryPanel auto snapshot status", () => {
-	test("renders the enabled status line with keep and newest time", async () => {
+describe("DataHistoryPanel archive and legacy boundaries", () => {
+	test("keeps archive creation available without advertising legacy snapshots as complete backups", async () => {
 		statusRef.value = { enabled: true, keep: 3, lastAt: 1_700_000_000_000 }
 		renderPanel()
 
-		const line = await screen.findByTestId("auto-status")
-		expect(line).toHaveTextContent(
-			'dataHistory.autoSnapshot.enabled({"keep":3})',
-		)
-		expect(line).toHaveTextContent("dataHistory.autoSnapshot.last")
-	})
-
-	test("renders the disabled status line", async () => {
-		statusRef.value = { enabled: false, keep: 3, lastAt: null }
-		renderPanel()
-
-		expect(await screen.findByTestId("auto-status")).toHaveTextContent(
-			"dataHistory.autoSnapshot.disabled",
-		)
+		expect(await screen.findByTestId("create-archive")).toBeInTheDocument()
+		expect(screen.queryByTestId("auto-status")).not.toBeInTheDocument()
+		expect(screen.queryByTestId("create-backup")).not.toBeInTheDocument()
 	})
 })

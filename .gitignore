@@ -66,3 +66,6 @@ apps/desktop/out/
 
 # Desktop Playwright output
 apps/desktop/.playwright-desktop/
+
+# Local implementation plan
+docs/plans/backup-sync.md

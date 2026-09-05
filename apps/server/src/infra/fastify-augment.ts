@@ -1,4 +1,5 @@
 import type { PluginHooks, PluginLoader } from "@hoardodile/host"
+import type { SyncEngine } from "@hoardodile/sync"
 import type { Env } from "src/config/env.ts"
 import type { SessionStore } from "src/domain/auth/session.ts"
 import type { BackupService } from "src/domain/backup/service.ts"
@@ -21,6 +22,7 @@ import type {
 	PluginPrefService,
 	SystemPrefService,
 } from "src/domain/prefs/service.ts"
+import type { ProtectionService } from "src/domain/protection/service.ts"
 import type { ResService } from "src/domain/res/service.ts"
 import type { ResUploads } from "src/domain/res/upload.ts"
 import type { SearchService } from "src/domain/search/service.ts"
@@ -58,6 +60,10 @@ import type { ThumbService } from "src/infra/thumb/service.ts"
  *    HTTP handlers run inside the Fastify request scope.
  */
 declare module "fastify" {
+	interface FastifyRequest {
+		storageAbort?: AbortController
+		storageWaiting?: boolean
+	}
 	interface FastifyContextConfig {
 		/**
 		 * When true, the route is declared safe to use while the server is
@@ -72,6 +78,11 @@ declare module "fastify" {
 		readonly env: Env
 		readonly dbHandles: DbHandles
 		readonly db: SqliteDb
+		readonly hostDb: SqliteDb
+		readonly protectionService: ProtectionService
+		readonly replicationService: SyncEngine
+		libraryMaintenance: boolean
+		nativeProcessesBusy: boolean
 		readonly paths: StoragePaths
 		readonly signals: SignalEmitter
 		readonly sseBroadcaster: SseBroadcaster
@@ -90,6 +101,9 @@ declare module "fastify" {
 		isDraining: boolean
 		inflightRequests: number
 		reloadGate: Deferred<void> | undefined
+		readonly storageReloadHandlers: Array<() => Promise<void>>
+		readonly activeStorageRequests: Set<import("fastify").FastifyRequest>
+		pendingStorageReloads: number
 
 		// Domain services
 		readonly resService: ResService
@@ -120,6 +134,7 @@ declare module "fastify" {
 		readonly backupService: BackupService
 		readonly versionService: VersionService
 		readonly pluginLoader: PluginLoader
+		readonly stopPluginWorkers: () => Promise<void>
 		readonly pluginService: PluginService
 		readonly pluginHooks: PluginHooks
 		/** Hardened HTTP client behind plugin vault downloads (and the marketplace). */

@@ -1,4 +1,5 @@
 import type { PluginHooks, PluginLoader } from "@hoardodile/host"
+import type { SyncEngine } from "@hoardodile/sync"
 import type { SessionStore } from "src/domain/auth/session.ts"
 import type { BackupService } from "src/domain/backup/service.ts"
 import type { CatService } from "src/domain/cat/service.ts"
@@ -18,6 +19,7 @@ import type {
 	PluginPrefService,
 	SystemPrefService,
 } from "src/domain/prefs/service.ts"
+import type { ProtectionService } from "src/domain/protection/service.ts"
 import type { ResService } from "src/domain/res/service.ts"
 import type { ResUploads } from "src/domain/res/upload.ts"
 import type { SearchService } from "src/domain/search/service.ts"
@@ -79,6 +81,9 @@ export interface RouterServices {
  * by {@link buildAppRouter} (backup, version, thumbs, signals).
  */
 export interface AppRouterServices extends RouterServices {
+	readonly protectionService?: ProtectionService
+	readonly replicationService?: SyncEngine
+	readonly reloadStorage?: () => Promise<void>
 	readonly backupService: BackupService
 	readonly versionService: VersionService
 	readonly thumbService: ThumbService

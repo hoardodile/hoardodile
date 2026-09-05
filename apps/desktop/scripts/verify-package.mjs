@@ -109,6 +109,8 @@ const RESOLVABLE_NATIVES = [
 	"@hoardodile/ffmpeg-bin",
 	"@hoardodile/ffprobe-bin",
 	"@hoardodile/7z-bin",
+	"@hoardodile/restic-bin",
+	"@hoardodile/rclone-bin",
 ]
 
 /** Platform-arch key (`win32-x64`, `linux-x64`, `darwin-arm64`) for the bin folders. */
@@ -122,6 +124,8 @@ const REQUIRED_FILES = [
 	`@hoardodile/ffmpeg-bin/bin/${binKey}/${layout.ffmpeg}`,
 	`@hoardodile/ffprobe-bin/bin/${binKey}/${layout.ffprobe}`,
 	`@hoardodile/7z-bin/${layout.sevenZip}`,
+	`@hoardodile/restic-bin/bin/${binKey}/restic${platform === "win32" ? ".exe" : ""}`,
+	`@hoardodile/rclone-bin/bin/${binKey}/rclone${platform === "win32" ? ".exe" : ""}`,
 ]
 
 function main() {

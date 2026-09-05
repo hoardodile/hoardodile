@@ -3,7 +3,7 @@ import {
 	syncDeviceUpdateInput,
 	syncRecordCreateInput,
 } from "@hoardodile/schemas"
-import { authedProcedure, router, writeProcedure } from "src/infra/trpc/core.ts"
+import { authedProcedure, router } from "src/infra/trpc/core.ts"
 import { z } from "zod"
 import type { SyncService } from "./service.ts"
 
@@ -14,16 +14,19 @@ import type { SyncService } from "./service.ts"
  */
 export function buildSyncRouter(service: SyncService) {
 	return router({
-		deviceCreate: writeProcedure
+		remindDays: authedProcedure
+			.input(z.object({ days: z.number().int().min(1).max(365) }))
+			.mutation(({ input }) => service.setRemindDays(input.days)),
+		deviceCreate: authedProcedure
 			.input(syncDeviceCreateInput)
 			.mutation(({ input }) => service.deviceCreate(input)),
-		deviceUpdate: writeProcedure
+		deviceUpdate: authedProcedure
 			.input(syncDeviceUpdateInput)
 			.mutation(({ input }) => service.deviceUpdate(input)),
-		deviceDelete: writeProcedure
+		deviceDelete: authedProcedure
 			.input(z.object({ id: z.string().min(1) }))
 			.mutation(({ input }) => service.deviceRemove(input.id)),
-		recordCreate: writeProcedure
+		recordCreate: authedProcedure
 			.input(syncRecordCreateInput)
 			.mutation(({ input }) => service.recordCreate(input)),
 		/** Live library state, diffed client-side against each device's

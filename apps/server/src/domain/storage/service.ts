@@ -1,6 +1,6 @@
 import { type Dirent, existsSync, readdirSync, statSync } from "node:fs"
 import { readdir, stat } from "node:fs/promises"
-import { join } from "node:path"
+import { isAbsolute, join, relative, sep } from "node:path"
 import { sumDirSizes } from "@hoardodile/host/hoard"
 import type { StorageOverview, StoragePluginUsage } from "@hoardodile/schemas"
 import { fileStats as fileStatsSchema } from "@hoardodile/schemas"
@@ -13,6 +13,7 @@ import type { StoragePaths } from "src/infra/storage/paths.ts"
 export type StorageServiceDeps = {
 	readonly db: SqliteDb
 	readonly paths: StoragePaths
+	readonly backupRoot?: string
 	/**
 	 * Display names keyed by content plugin id. Optional — unknown ids
 	 * fall back to showing the raw id.
@@ -73,7 +74,14 @@ export function createStorageService(deps: StorageServiceDeps): StorageService {
 				archivedCopiesSize(),
 			])
 		const databaseBytes = databaseSize()
-		const backupBytes = backupsSize()
+		const configuredBackups = deps.backupRoot ?? join(paths.root, "backups")
+		const backupRelative = relative(paths.root, configuredBackups)
+		const backupsInsideRoot =
+			backupRelative !== ".." &&
+			!backupRelative.startsWith(`..${sep}`) &&
+			!isAbsolute(backupRelative)
+		const backupBytes =
+			backupsSize() + (backupsInsideRoot ? await dirSize(configuredBackups) : 0)
 		const rootScan = await dirSizeWithSubtree(
 			paths.root,
 			paths.latest.resources(),

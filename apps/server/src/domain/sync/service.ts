@@ -36,11 +36,13 @@ const DAY_MS = 24 * 60 * 60 * 1000
 
 export type SyncServiceDeps = ClockDeps & {
 	readonly db: SqliteDb
+	readonly hostDb?: SqliteDb
 	/** Disk-usage accounting for the `storageBytes` snapshot value. */
 	readonly storageService: StorageService
 }
 
 export type SyncService = {
+	setRemindDays(days: number): Promise<void>
 	/** Create a device and immediately capture its first state snapshot. */
 	deviceCreate(input: SyncDeviceCreateInput): Promise<SyncDevice>
 	deviceUpdate(input: SyncDeviceUpdateInput): Promise<SyncDevice>
@@ -69,9 +71,9 @@ export type SyncService = {
  * interval pref is a plain number.
  */
 export function createSyncService(deps: SyncServiceDeps): SyncService {
-	const devices = buildSyncDeviceRepository(deps.db)
-	const records = buildSyncRecordRepository(deps.db)
-	const prefs = buildAsyncPrefRepository(deps.db)
+	const devices = buildSyncDeviceRepository(deps.hostDb ?? deps.db)
+	const records = buildSyncRecordRepository(deps.hostDb ?? deps.db)
+	const prefs = buildAsyncPrefRepository(deps.hostDb ?? deps.db)
 	const { now, newId } = resolveClock(deps)
 
 	function readIntPref(key: string, fallback: number): number {
@@ -271,6 +273,11 @@ export function createSyncService(deps: SyncServiceDeps): SyncService {
 	}
 
 	return wrapAsync({
+		setRemindDays: (days: number) => {
+			if (!Number.isInteger(days) || days < 1 || days > 365)
+				throw new Error("Reminder days must be between 1 and 365")
+			prefs.upsert(SYNC_REMIND_DAYS_PREF, String(days), now())
+		},
 		deviceCreate,
 		deviceUpdate,
 		deviceRemove,

@@ -1,6 +1,14 @@
 import { Toaster } from "@hoardodile/ui/components/toast"
-import { type QueryClient, useQueryClient } from "@tanstack/react-query"
-import { createRootRouteWithContext, Outlet } from "@tanstack/react-router"
+import {
+	type QueryClient,
+	useQuery,
+	useQueryClient,
+} from "@tanstack/react-query"
+import {
+	createRootRouteWithContext,
+	Outlet,
+	useRouterState,
+} from "@tanstack/react-router"
 import { useEffect } from "react"
 import { useTranslation } from "react-i18next"
 import { AppShell } from "@/components/layout/AppShell"
@@ -11,6 +19,9 @@ import {
 } from "@/features/plugin/download/consent-store"
 import { DownloadConsentDialog } from "@/features/plugin/download/DownloadConsentDialog"
 import { useAutoLogout } from "@/features/privacy/useAutoLogout"
+import { maintenanceOptions } from "@/features/protection/api"
+import { FileWriteNotice } from "@/features/protection/FileWriteNotice"
+import { MaintenanceScreen } from "@/features/protection/MaintenanceScreen"
 import { notifyImageHashesReady } from "@/features/res/api/dup-toast"
 import { handleResourceMetaUpdated } from "@/features/res/api/sse-handler"
 import { hardResetAndReload } from "@/lib/client-reset"
@@ -61,6 +72,11 @@ export async function handleSseEvent(
 function RootComponent() {
 	const { t } = useTranslation()
 	const queryClient = useQueryClient()
+	const maintenance = useQuery(maintenanceOptions())
+	const pathname = useRouterState({
+		select: (state) => state.location.pathname,
+	})
+	const authenticationPage = pathname === "/login" || pathname === "/setup"
 	useAutoLogout()
 	useEffect(
 		function startSse() {
@@ -94,9 +110,14 @@ function RootComponent() {
 		<div
 			className={isHoardodileDesktop() ? "h-svh overflow-hidden" : undefined}
 		>
-			<AppShell>
-				<Outlet />
-			</AppShell>
+			{maintenance.data && !authenticationPage ? (
+				<MaintenanceScreen />
+			) : (
+				<AppShell>
+					{!authenticationPage && <FileWriteNotice />}
+					<Outlet />
+				</AppShell>
+			)}
 			<DownloadConsentDialog />
 			<Toaster />
 		</div>

@@ -4,6 +4,7 @@ import {
 	createProbeCache,
 	type PluginProbeCache,
 } from "@hoardodile/host"
+import { withFileCommit } from "@hoardodile/host/hoard"
 import type {
 	DuplicateImagesResult,
 	FileStats,
@@ -1280,18 +1281,18 @@ export function createResourceService(deps: ResServiceDeps): ResService {
 			])
 			return hydrated[0] ?? withEffectivePlugin(rowToResourceCard(row))
 		},
-		create,
+		create: withFileCommit(deps.paths.root, create),
 		update: async (input) => update(input),
 		softDelete: async (id) => softDelete(id),
 		softDeleteMany,
 		restore: async (id) => restore(id),
-		hardDelete,
-		hardDeleteMany,
-		setContentPluginId,
+		hardDelete: withFileCommit(deps.paths.root, hardDelete),
+		hardDeleteMany: withFileCommit(deps.paths.root, hardDeleteMany),
+		setContentPluginId: withFileCommit(deps.paths.root, setContentPluginId),
 		hasCoverMeta: cover.hasCoverMeta,
 		findCover: cover.findCover,
-		setCover,
-		clearCover,
+		setCover: withFileCommit(deps.paths.root, setCover),
+		clearCover: withFileCommit(deps.paths.root, clearCover),
 		hasSourceMeta: async (id) => {
 			const row = repo.findById(id)
 			return row.sourceMeta !== null
@@ -1323,7 +1324,7 @@ export function createResourceService(deps: ResServiceDeps): ResService {
 		getFileVersion: async (id) => repo.findById(id).fileVersion,
 		relatedByTags: async (id, limit) => relatedByTags(id, limit),
 		countByContentPluginId: (pluginId) => repo.countByContentPluginId(pluginId),
-		replaceContentPlugin,
+		replaceContentPlugin: withFileCommit(deps.paths.root, replaceContentPlugin),
 		listContentPluginUsage,
 		memories,
 		listSourceNames,

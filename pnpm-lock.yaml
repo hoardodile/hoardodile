@@ -39,6 +39,9 @@ catalogs:
     '@types/react-dom':
       specifier: ^19.2.4
       version: 19.2.4
+    '@types/semver':
+      specifier: ^7.8.0
+      version: 7.8.0
     '@vitejs/plugin-react':
       specifier: ^6.1.0
       version: 6.1.0
@@ -84,6 +87,9 @@ catalogs:
     release-it:
       specifier: ^21.0.2
       version: 21.0.2
+    semver:
+      specifier: ^7.8.5
+      version: 7.8.5
     sharp:
       specifier: ^0.35.3
       version: 0.35.3
@@ -271,6 +277,9 @@ importers:
       '@fastify/static':
         specifier: ^10.1.3
         version: 10.1.3
+      '@hoardodile/backup':
+        specifier: workspace:*
+        version: link:../../packages/backup
       '@hoardodile/host':
         specifier: workspace:*
         version: link:../../plugins/host
@@ -286,6 +295,9 @@ importers:
       '@hoardodile/shared':
         specifier: workspace:*
         version: link:../../packages/shared
+      '@hoardodile/sync':
+        specifier: workspace:*
+        version: link:../../packages/sync
       '@hoardodile/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -325,6 +337,9 @@ importers:
       pino-roll:
         specifier: ^4.0.0
         version: 4.0.0
+      semver:
+        specifier: 'catalog:'
+        version: 7.8.5
       sharp:
         specifier: 'catalog:'
         version: 0.35.3(@types/node@26.2.0)
@@ -338,6 +353,9 @@ importers:
       '@types/node':
         specifier: 'catalog:'
         version: 26.2.0
+      '@types/semver':
+        specifier: 'catalog:'
+        version: 7.8.0
       '@types/yauzl':
         specifier: ^3.4.0
         version: 3.4.0
@@ -522,7 +540,7 @@ importers:
         specifier: ^4.0.1
         version: 4.0.1(supports-color@7.2.0)
       semver:
-        specifier: ^7.8.5
+        specifier: 'catalog:'
         version: 7.8.5
       workbox-expiration:
         specifier: ^7.4.1
@@ -586,7 +604,7 @@ importers:
         specifier: 'catalog:'
         version: 19.2.4(@types/react@19.2.18)
       '@types/semver':
-        specifier: ^7.8.0
+        specifier: 'catalog:'
         version: 7.8.0
       '@types/yauzl':
         specifier: ^3.4.0
@@ -624,6 +642,26 @@ importers:
       yauzl:
         specifier: ^3.4.0
         version: 3.4.0
+
+  packages/backup:
+    dependencies:
+      zod:
+        specifier: 'catalog:'
+        version: 4.4.3
+    devDependencies:
+      '@types/node':
+        specifier: 'catalog:'
+        version: 26.2.0
+      typescript:
+        specifier: 'catalog:'
+        version: 7.0.2
+      vitest:
+        specifier: 'catalog:'
+        version: 4.1.11(@types/node@26.2.0)(@vitest/coverage-v8@4.1.11)(jsdom@30.0.1(@noble/hashes@2.3.0))(vite@8.2.2(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.12)(yaml@2.9.0))
+    optionalDependencies:
+      '@hoardodile/restic-bin':
+        specifier: 1.0.0
+        version: 1.0.0
 
   packages/cli:
     dependencies:
@@ -748,6 +786,38 @@ importers:
       vitest:
         specifier: 'catalog:'
         version: 4.1.11(@types/node@26.2.0)(@vitest/coverage-v8@4.1.11)(jsdom@30.0.1(@noble/hashes@2.3.0))(vite@8.2.2(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.12)(yaml@2.9.0))
+
+  packages/sync:
+    dependencies:
+      '@hoardodile/backup':
+        specifier: workspace:*
+        version: link:../backup
+      https-proxy-agent:
+        specifier: 'catalog:'
+        version: 7.0.6(supports-color@7.2.0)
+      zod:
+        specifier: 'catalog:'
+        version: 4.4.3
+    devDependencies:
+      '@types/node':
+        specifier: 'catalog:'
+        version: 26.2.0
+      '@types/node-forge':
+        specifier: ^1.3.14
+        version: 1.3.14
+      node-forge:
+        specifier: ^1.4.0
+        version: 1.4.0
+      typescript:
+        specifier: 'catalog:'
+        version: 7.0.2
+      vitest:
+        specifier: 'catalog:'
+        version: 4.1.11(@types/node@26.2.0)(@vitest/coverage-v8@4.1.11)(jsdom@30.0.1(@noble/hashes@2.3.0))(vite@8.2.2(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.12)(yaml@2.9.0))
+    optionalDependencies:
+      '@hoardodile/rclone-bin':
+        specifier: 1.0.0
+        version: 1.0.0
 
   packages/ui:
     dependencies:
@@ -2953,6 +3023,14 @@ packages:
 
   '@hoardodile/ffprobe-bin@1.0.0':
     resolution: {integrity: sha512-jaNm15VAWt6lctAOJeuykITEwAKrRL1+PuG3msf8krF+wYN2149R0yjcPv3EkkFji87QhEo0j5o3ZfMTp9Baew==}
+    engines: {node: '>=18'}
+
+  '@hoardodile/rclone-bin@1.0.0':
+    resolution: {integrity: sha512-ufripxLXxR4SCokhbwqNAFBoEHQG5j2xNAtrKFgiH9E1C1Lw6wW5EDeTdjNz3Bhd3+XU/DpnHeP/4lT57GrIrw==}
+    engines: {node: '>=18'}
+
+  '@hoardodile/restic-bin@1.0.0':
+    resolution: {integrity: sha512-vX1Zg2WsAjm1elTw5f/HYMsqAxMluN4LjOly/hxWB+xjpByRiP3C4bRYkQNyWGBUwtR8LSnWzEhL8mMStA410g==}
     engines: {node: '>=18'}
 
   '@hono/node-server@2.1.1':
@@ -11877,6 +11955,12 @@ snapshots:
   '@hoardodile/ffmpeg-bin@1.0.0': {}
 
   '@hoardodile/ffprobe-bin@1.0.0':
+    optional: true
+
+  '@hoardodile/rclone-bin@1.0.0':
+    optional: true
+
+  '@hoardodile/restic-bin@1.0.0':
     optional: true
 
   '@hono/node-server@2.1.1(hono@4.13.3)':

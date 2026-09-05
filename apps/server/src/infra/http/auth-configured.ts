@@ -25,7 +25,7 @@ async function authConfiguredPluginImpl(app: FastifyInstance): Promise<void> {
 		if (!authorizeSidecarToken(app, request)) {
 			return reply.code(401).send({ ok: false as const })
 		}
-		const auth = getAuthRow(app.db)
+		const auth = getAuthRow(app.hostDb ?? app.db)
 		return {
 			configured: auth !== undefined,
 			weakPassword: auth?.weakPassword ?? false,

@@ -1684,7 +1684,7 @@ describe("read-only archive mode", () => {
 			storageRoot: root,
 			readOnly: false,
 		})
-		versionSvc.create()
+		await versionSvc.create()
 		versionSvc.switchTo(1)
 		db.close()
 
@@ -2081,7 +2081,7 @@ describe("health endpoint", () => {
 		expect(res.statusCode).toBe(200)
 		const body = res.json()
 		expect(body.status).toBe("ok")
-		expect(body.autoSnapshot).toMatchObject({ enabled: true, keep: 3 })
+		expect(body.autoSnapshot).toMatchObject({ enabled: false, keep: 3 })
 		expect(
 			body.autoSnapshot.lastAt === null ||
 				typeof body.autoSnapshot.lastAt === "number",

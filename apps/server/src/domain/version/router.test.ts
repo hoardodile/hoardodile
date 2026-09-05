@@ -10,7 +10,7 @@ describe("version router", () => {
 			]),
 			current: vi.fn(() => 1),
 			active: vi.fn(() => 1),
-			create: vi.fn(() => ({ previous: 1, created: 2 })),
+			create: vi.fn(async () => ({ previous: 1, created: 2 })),
 			switchTo: vi.fn(),
 			updateMeta: vi.fn(),
 		}

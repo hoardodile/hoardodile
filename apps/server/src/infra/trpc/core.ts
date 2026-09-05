@@ -74,7 +74,12 @@ export const authedProcedure = t.procedure
 	})
 	.use(({ ctx, type, next, path }) => {
 		if (type === "mutation" && ctx.req.server.readOnly === true) {
-			if (!path.startsWith("version.")) {
+			if (
+				!path.startsWith("version.") &&
+				!path.startsWith("protection.") &&
+				!path.startsWith("sync.") &&
+				!path.startsWith("replication.")
+			) {
 				throw new TRPCError({
 					code: "FORBIDDEN",
 					message:

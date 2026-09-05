@@ -10,6 +10,7 @@ import { hashPassword } from "src/domain/auth/password.ts"
 import { deleteAuthRow, getAuthRow, setAuthRow } from "src/domain/auth/repo.ts"
 import { assessPasswordStrength } from "src/domain/auth/strength.ts"
 import { openDb, schema } from "src/infra/db/connection.ts"
+import { openHostDatabase } from "src/infra/db/host.ts"
 import { resolveStorageContext } from "src/infra/storage/bootstrap.ts"
 import { type BuiltServer, buildServer } from "src/server.ts"
 
@@ -28,7 +29,13 @@ function withRuntimeDb<T>(
 	const dbHandles = openDb(ctx.dbFilePath)
 	try {
 		if (!ctx.readOnly) dbHandles.runMigrations()
-		return fn(dbHandles)
+		if (env.DATABASE_URL === ":memory:") return fn(dbHandles)
+		const host = openHostDatabase(env.STORAGE_ROOT, dbHandles.db)
+		try {
+			return fn(host)
+		} finally {
+			host.close()
+		}
 	} finally {
 		dbHandles.close()
 	}

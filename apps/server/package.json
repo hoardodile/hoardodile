@@ -36,6 +36,7 @@
 	"devDependencies": {
 		"@types/better-sqlite3": "^9.6.0",
 		"@types/node": "catalog:",
+		"@types/semver": "catalog:",
 		"@types/yauzl": "^3.4.0",
 		"@types/yazl": "^3.3.1",
 		"@vitest/coverage-v8": "^4.1.11",
@@ -50,6 +51,8 @@
 		"yazl": "^3.3.1"
 	},
 	"dependencies": {
+		"@hoardodile/backup": "workspace:*",
+		"@hoardodile/sync": "workspace:*",
 		"@fastify/cookie": "^11.1.2",
 		"@fastify/cors": "^11.3.0",
 		"@fastify/multipart": "^10.1.1",
@@ -75,6 +78,7 @@
 		"pino": "^10.3.1",
 		"pino-roll": "^4.0.0",
 		"sharp": "catalog:",
+		"semver": "catalog:",
 		"zod": "catalog:"
 	}
 }

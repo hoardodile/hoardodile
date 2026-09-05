@@ -2,7 +2,7 @@ import {
 	MAX_BACKUP_NAME_LENGTH,
 	MAX_HISTORY_NOTE_LENGTH,
 } from "@hoardodile/schemas"
-
+import { TRPCError } from "@trpc/server"
 import type { SignalEmitter } from "src/infra/signals.ts"
 import { authedProcedure, router, writeProcedure } from "src/infra/trpc/core.ts"
 import { z } from "zod"
@@ -24,6 +24,7 @@ const updateMetaInput = z.object({
 })
 
 export type BuildBackupRouterDeps = {
+	readonly legacyReadOnly?: boolean
 	readonly service: BackupService
 	/**
 	 * Emitter used to signal that a restore has been staged on disk. The
@@ -42,21 +43,30 @@ export type BuildBackupRouterDeps = {
  */
 export function buildBackupRouter(deps: BuildBackupRouterDeps) {
 	const { service, signals } = deps
+	const legacyWrite = writeProcedure.use(({ next }) => {
+		if (deps.legacyReadOnly)
+			throw new TRPCError({
+				code: "FORBIDDEN",
+				message:
+					"Use complete recovery points; legacy database snapshots are available for export only",
+			})
+		return next()
+	})
 	return router({
 		list: authedProcedure.query(() => service.list()),
 		autoStatus: authedProcedure.query(() => service.getAutoStatus()),
-		create: writeProcedure
+		create: legacyWrite
 			.input(createInput)
 			.mutation(({ input }) => service.create(input)),
-		delete: writeProcedure.input(fileNameInput).mutation(({ input }) => {
+		delete: legacyWrite.input(fileNameInput).mutation(({ input }) => {
 			service.delete(input.fileName)
 		}),
-		restore: writeProcedure.input(fileNameInput).mutation(({ input }) => {
+		restore: legacyWrite.input(fileNameInput).mutation(({ input }) => {
 			service.prepareRestore(input.fileName)
 			signals.emit("backup.restoreRequested", undefined)
 			return { fileName: input.fileName, willRestart: false }
 		}),
-		updateMeta: writeProcedure.input(updateMetaInput).mutation(({ input }) =>
+		updateMeta: legacyWrite.input(updateMetaInput).mutation(({ input }) =>
 			service.updateMeta(input.fileName, {
 				name: input.name,
 				note: input.note,

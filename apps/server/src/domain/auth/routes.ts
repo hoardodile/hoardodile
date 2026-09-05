@@ -46,6 +46,7 @@ function httpsRequiredReply(reply: FastifyReply): FastifyReply {
 export type AuthDeps = {
 	readonly env: Env
 	readonly db: SqliteDb
+	readonly preferencesDb?: SqliteDb
 	readonly sessions: SessionStore
 }
 
@@ -79,6 +80,13 @@ export async function registerAuthRoutes(
 	deps: AuthDeps,
 ): Promise<void> {
 	const { env, db, sessions } = deps
+	const getSessionTtl = () => {
+		try {
+			return resolveSessionTtl(deps.preferencesDb ?? db, env)
+		} catch {
+			return resolveSessionTtl(db, env)
+		}
+	}
 
 	await app.register(rateLimit, { global: false })
 
@@ -104,7 +112,7 @@ export async function registerAuthRoutes(
 			return { authenticated: false, configured: false }
 		}
 		const cookie = req.cookies[env.SESSION_COOKIE_NAME]
-		const sessionTtl = resolveSessionTtl(db, env)
+		const sessionTtl = getSessionTtl()
 		const refreshed = await sessions.touch(cookie, sessionTtl)
 		if (refreshed !== undefined && refreshed.sealed !== undefined) {
 			writeSessionCookie(reply, refreshed.sealed, env, sessionTtl)
@@ -167,7 +175,7 @@ export async function registerAuthRoutes(
 				reply.code(401)
 				return { error: "unauthorized" }
 			}
-			const sessionTtl = resolveSessionTtl(db, env)
+			const sessionTtl = getSessionTtl()
 			const issued = await sessions.rotate(sessionTtl)
 			writeSessionCookie(reply, issued.sealed, env, sessionTtl)
 			// The cleartext password is in hand: refresh the strength
@@ -203,7 +211,7 @@ export async function registerAuthRoutes(
 		},
 		async (req, reply) => {
 			const cookie = req.cookies[env.SESSION_COOKIE_NAME]
-			const session = await sessions.touch(cookie, resolveSessionTtl(db, env))
+			const session = await sessions.touch(cookie, getSessionTtl())
 			if (session === undefined) {
 				reply.code(401)
 				return { error: "unauthorized" }

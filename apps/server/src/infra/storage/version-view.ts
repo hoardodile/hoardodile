@@ -2,6 +2,7 @@ import { existsSync } from "node:fs"
 import { join } from "node:path"
 import { versionedDbFile } from "@hoardodile/host/hoard"
 import { conflict, notFound } from "@hoardodile/shared"
+import { openDb } from "src/infra/db/connection.ts"
 import {
 	cloneSqliteFile,
 	verifySqliteIntegrity,
@@ -40,6 +41,13 @@ export function stageViewCloneDb(paths: StoragePaths, version: number): string {
 			`view clone for version ${version} failed integrity check`,
 			{ version },
 		)
+	}
+	const handles = openDb(dest)
+	try {
+		handles.validateCompatibility?.()
+		handles.runMigrations()
+	} finally {
+		handles.close()
 	}
 	return dest
 }

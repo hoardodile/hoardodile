@@ -22,6 +22,8 @@ import {
 	buildPluginPreferenceRouter,
 	buildSystemPreferenceRouter,
 } from "src/domain/prefs/router.ts"
+import { buildProtectionRouter } from "src/domain/protection/router.ts"
+import { buildReplicationRouter } from "src/domain/replication/router.ts"
 import { buildImportRouter } from "src/domain/res/import-router.ts"
 import { buildResourceRouter } from "src/domain/res/router.ts"
 import { buildSearchRouter } from "src/domain/search/router.ts"
@@ -121,7 +123,7 @@ export function buildDomainRouter(services: RouterServices) {
 				 * session id.
 				 */
 				connections: authedProcedure.query(({ ctx }) => ({
-					connections: listSignIns(ctx.req.server.db),
+					connections: listSignIns(ctx.req.server.hostDb ?? ctx.req.server.db),
 				})),
 			}),
 			network: router({
@@ -195,14 +197,23 @@ export function buildDomainRouter(services: RouterServices) {
  */
 export function buildAppRouter(services: AppRouterServices) {
 	return mergeRouters(
+		router({ protection: buildProtectionRouter(services.protectionService) }),
+		router({
+			replication: buildReplicationRouter(
+				services.replicationService,
+				services.protectionService,
+			),
+		}),
 		buildDomainRouter(services),
 		router({
 			backup: buildBackupRouter({
 				service: services.backupService,
+				legacyReadOnly: services.protectionService !== undefined,
 				signals: services.signals,
 			}),
 			version: buildVersionRouter({
 				service: services.versionService,
+				reload: services.reloadStorage,
 				signals: services.signals,
 			}),
 		}),

@@ -3,11 +3,18 @@ import { join } from "node:path"
 import { setTimeout } from "node:timers/promises"
 import cookie from "@fastify/cookie"
 import cors from "@fastify/cors"
+import { inspectManagedProcesses } from "@hoardodile/backup"
+import {
+	currentVersion,
+	recoverVersionPublication,
+	withStorageRequest,
+} from "@hoardodile/host/hoard"
 import { fastifyTRPCPlugin } from "@trpc/server/adapters/fastify"
 import Fastify, {
 	type FastifyError,
 	type FastifyInstance,
 	type FastifyReply,
+	type FastifyRequest,
 	LogController,
 } from "fastify"
 import type { Env } from "src/config/env.ts"
@@ -21,10 +28,12 @@ import {
 import { registerAuthRoutes } from "src/domain/auth/routes.ts"
 import type { SessionStore } from "src/domain/auth/session.ts"
 import { backupPlugin } from "src/domain/backup/plugin.ts"
-import { refreshAutoSnapshot } from "src/domain/backup/scheduler.ts"
 import type { BackupService } from "src/domain/backup/service.ts"
 import { applyPendingRestore } from "src/domain/backup/startup.ts"
 import { domainPlugins } from "src/domain/index.ts"
+import { registerProtection } from "src/domain/protection/plugin.ts"
+import { protectionDirectory } from "src/domain/protection/service.ts"
+import { registerReplication } from "src/domain/replication/plugin.ts"
 import { cleanupOrphanResourceFolders } from "src/domain/res/files.ts"
 import { cleanupTmpDir } from "src/domain/res/folder-import.ts"
 import {
@@ -34,7 +43,7 @@ import {
 } from "src/domain/tag/dedupe.ts"
 import { versionPlugin } from "src/domain/version/plugin.ts"
 import { type DbHandles, openDb } from "src/infra/db/connection.ts"
-import { volumeStatsOf } from "src/infra/disk.ts"
+import { openHostDatabase } from "src/infra/db/host.ts"
 import { authConfiguredPlugin } from "src/infra/http/auth-configured.ts"
 import { sendFile } from "src/infra/http/conditional-request.ts"
 import { toSafeErrorBody } from "src/infra/http/error-response.ts"
@@ -58,6 +67,8 @@ import {
 	type RuntimeRefs,
 } from "src/infra/runtime-context.ts"
 import { resolveStorageContext } from "src/infra/storage/bootstrap.ts"
+import { recoverCheckpointPublication } from "src/infra/storage/checkpoint.ts"
+import { acquireStorageInstance } from "src/infra/storage/instance-lock.ts"
 import {
 	createStoragePaths,
 	type StoragePaths,
@@ -157,10 +168,60 @@ export type BuiltServer = {
 export async function buildServer(
 	opts: BuildServerOptions,
 ): Promise<BuiltServer> {
-	const bootstrap = resolveBootstrapForBuild(opts)
+	const root = opts.storagePaths?.root ?? opts.env.STORAGE_ROOT
+	const release =
+		opts.env.DATABASE_URL !== ":memory:" &&
+		opts.dbHandles?.filePath !== ":memory:"
+			? acquireStorageInstance(root)
+			: undefined
+	const resources: { app?: FastifyInstance; database?: DbHandles } = {}
+	try {
+		return await buildServerWithStorageLock(opts, release, resources)
+	} catch (error) {
+		await resources.app?.close().catch(() => {})
+		try {
+			resources.database?.close()
+		} catch {
+			/* Initialization may have already closed the handle. */
+		}
+		release?.()
+		throw error
+	}
+}
+
+async function buildServerWithStorageLock(
+	opts: BuildServerOptions,
+	release: (() => void) | undefined,
+	resources: { app?: FastifyInstance; database?: DbHandles },
+): Promise<BuiltServer> {
+	const storageRoot = opts.storagePaths?.root ?? opts.env.STORAGE_ROOT
+	const pendingRestore = existsSync(
+		join(protectionDirectory(storageRoot), "maintenance.json"),
+	)
+	const processes = await inspectManagedProcesses(
+		join(protectionDirectory(storageRoot), "processes"),
+	)
+	const nativeProcessesBusy = processes.active + processes.uncertain > 0
+	const suspended = pendingRestore || nativeProcessesBusy
+	if (!suspended) {
+		await recoverVersionPublication(storageRoot)
+		await recoverCheckpointPublication(storageRoot)
+	}
+	const version = currentVersion(storageRoot) || 1
+	const bootstrap = suspended
+		? {
+				storagePaths: createStoragePaths({
+					root: storageRoot,
+					activeVersion: version,
+					latestVersion: version,
+				}),
+				databaseUrl: ":memory:",
+				readOnly: true,
+			}
+		: resolveBootstrapForBuild(opts)
 	// Apply any pending restore BEFORE opening the DB -- the swap is a
 	// file-level rename of the live DB, so no handle may be held yet.
-	if (!opts.dbHandles) {
+	if (!opts.dbHandles && !suspended) {
 		applyPendingRestorePreservingAuth(bootstrap.storagePaths)
 	}
 
@@ -169,14 +230,40 @@ export async function buildServer(
 		bootstrap.storagePaths,
 		opts.enableRequestLogging,
 	)
+	resources.app = app
+	if (release) app.addHook("onClose", async () => release())
 
-	const dbHandles =
-		opts.dbHandles ??
-		openDb(bootstrap.databaseUrl, { readonly: bootstrap.readOnly })
+	const dbHandles = suspended
+		? openDb(":memory:")
+		: (opts.dbHandles ??
+			openDb(bootstrap.databaseUrl, { readonly: bootstrap.readOnly }))
+	if (suspended) dbHandles.runMigrations()
 	const ownsDbHandles = opts.dbHandles === undefined
+	if (ownsDbHandles) resources.database = dbHandles
 	if (ownsDbHandles && !bootstrap.readOnly) {
 		migrateWithDedupe(dbHandles, opts.env, app.log)
 	}
+	let hostHandles: DbHandles | undefined
+	if (
+		opts.env.DATABASE_URL !== ":memory:" &&
+		opts.dbHandles?.filePath !== ":memory:"
+	) {
+		if (bootstrap.readOnly && !suspended) {
+			const latest = openDb(join(storageRoot, "app.sqlite"))
+			try {
+				latest.runMigrations()
+				hostHandles = openHostDatabase(storageRoot, latest.db)
+			} finally {
+				latest.close()
+			}
+		} else
+			hostHandles = openHostDatabase(
+				storageRoot,
+				suspended ? undefined : dbHandles.db,
+			)
+	}
+	app.decorate("hostDb", hostHandles?.db ?? dbHandles.db)
+	if (hostHandles) app.addHook("onClose", async () => hostHandles.close())
 
 	const runtimeRefs = createRuntimeRefs({
 		dbHandles,
@@ -188,9 +275,16 @@ export async function buildServer(
 	app.decorate("isDraining", false)
 	app.decorate("inflightRequests", 0)
 	app.decorate("reloadGate", undefined as Deferred<void> | undefined)
+	app.decorate("storageReloadHandlers", [])
+	app.decorate("activeStorageRequests", new Set<FastifyRequest>())
+	app.decorate("pendingStorageReloads", 0)
+	app.decorate("libraryMaintenance", suspended)
+	app.decorate("nativeProcessesBusy", nativeProcessesBusy)
 
 	await registerInfrastructure(app, opts, runtimeRefs, ownsDbHandles)
 	await registerDomainAndInfraServices(app)
+	await registerProtection(app, () => reloadStorageContext(app))
+	await registerReplication(app)
 	// Fire-and-forget: clear local/cache/tmp and local/.tmp (which contains the
 	// global upload staging pool) on startup. Any active uploads /
 	// extractions were interrupted by the restart anyway; orphaned staged
@@ -401,10 +495,20 @@ async function registerHttpSurface(
 	await app.register(cookie)
 
 	app.get("/health", async () => ({ ok: true as const }))
+	app.get("/api/protection/state", async (_request, reply) => {
+		reply.header("Cache-Control", "no-store")
+		const status = app.protectionService.getStatus()
+		return {
+			maintenance:
+				app.libraryMaintenance ||
+				Boolean(status.maintenance || status.maintenanceError),
+		}
+	})
 
 	await registerAuthRoutes(app, {
 		env: app.env,
-		db: app.db,
+		db: app.hostDb,
+		preferencesDb: app.db,
 		sessions: app.sessions,
 	})
 
@@ -462,6 +566,9 @@ async function registerTrpcSurface(app: FastifyInstance): Promise<void> {
 		marketplaceService: app.marketplaceService,
 		outboundNetwork: app.outboundNetwork,
 		backupService: app.backupService,
+		protectionService: app.protectionService,
+		reloadStorage: () => reloadStorageContext(app).then(() => undefined),
+		replicationService: app.replicationService,
 		versionService: app.versionService,
 		thumbService: app.thumbService,
 		signals: app.signals,
@@ -608,7 +715,7 @@ function isHtmlNavigation(req: {
 	return !lastSegment.includes(".")
 }
 
-const DRAINING_TIMEOUT_MS = 10_000
+const DRAINING_TIMEOUT_MS = 60_000
 const DRAINING_RETRY_AFTER_SECONDS = "0"
 const EVENTS_PATH = "/api/events"
 
@@ -630,12 +737,93 @@ function isEventsRequest(req: { readonly url: string }): boolean {
  * request that blocks the drain.
  */
 function installDrainingMiddleware(app: FastifyInstance): void {
+	const counted = new WeakSet<FastifyRequest>()
+	const completions = new WeakMap<FastifyRequest, (success: boolean) => void>()
+	app.addHook("onRequest", (req, reply, done) => {
+		const controller = new AbortController()
+		let waiting = 0
+		let announced = false
+		const completion = Promise.withResolvers<boolean>()
+		completions.set(req, completion.resolve)
+		req.storageAbort = controller
+		reply.raw.once("close", () => {
+			app.activeStorageRequests.delete(req)
+			if (counted.delete(req)) app.inflightRequests -= 1
+			if (!reply.raw.writableFinished) controller.abort()
+			completion.resolve(reply.raw.writableFinished && reply.statusCode < 400)
+		})
+		withStorageRequest(
+			{
+				signal: controller.signal,
+				waiting: (value) => {
+					waiting += value ? 1 : -1
+					req.storageWaiting = waiting > 0
+					if (value && !announced) {
+						if (app.isDraining || app.libraryMaintenance) controller.abort()
+						announced = true
+						void app.protectionService
+							.observeFileRequest({
+								requestId: req.id,
+								cancel: () => controller.abort(),
+								finished: completion.promise,
+							})
+							.catch((error) =>
+								app.log.error({ err: error }, "protection.file_queue_failed"),
+							)
+					}
+				},
+			},
+			done,
+		)
+	})
 	app.addHook("onRequest", async (req, reply) => {
 		if (isEventsRequest(req)) return
+		const url = req.url.split("?", 1)[0] ?? ""
+		const protectionState = app.protectionService.getStatus()
+		const inMaintenance =
+			app.libraryMaintenance ||
+			Boolean(protectionState.maintenance || protectionState.maintenanceError)
+		const control =
+			url.startsWith("/auth/") ||
+			url.startsWith("/api/internal/") ||
+			url.startsWith("/api/sync/") ||
+			url === "/api/health" ||
+			url === "/api/protection/state" ||
+			(!url.startsWith("/api/") && !url.startsWith("/trpc/")) ||
+			(url.startsWith("/trpc/") &&
+				url
+					.slice(6)
+					.split(",")
+					.every(
+						(name) =>
+							name.startsWith("protection.") ||
+							name.startsWith("version.") ||
+							name === "me" ||
+							name === "ping",
+					))
+		if (
+			inMaintenance &&
+			(!control ||
+				(url.startsWith("/trpc/") &&
+					url
+						.slice(6)
+						.split(",")
+						.some((name) => name.startsWith("version."))))
+		) {
+			return reply.code(503).send({
+				error: "The library is in maintenance mode",
+				maintenance: true,
+			})
+		}
+		if (control) return
 
 		app.inflightRequests += 1
+		counted.add(req)
+		app.activeStorageRequests.add(req)
 		if (app.isDraining) {
 			app.inflightRequests -= 1
+			counted.delete(req)
+			app.activeStorageRequests.delete(req)
 			const gate = app.reloadGate
 			if (gate === undefined) {
 				return reply
@@ -652,11 +840,17 @@ function installDrainingMiddleware(app: FastifyInstance): void {
 					.send({ error: "storage context reload failed" })
 			}
 			app.inflightRequests += 1
+			counted.add(req)
+			app.activeStorageRequests.add(req)
 		}
 	})
-	app.addHook("onResponse", async (req) => {
-		if (isEventsRequest(req)) return
-		app.inflightRequests -= 1
+	app.addHook("onResponse", async (req, reply) => {
+		completions.get(req)?.(
+			!req.storageAbort?.signal.aborted && reply.statusCode < 400,
+		)
+		completions.delete(req)
+		app.activeStorageRequests.delete(req)
+		if (counted.delete(req)) app.inflightRequests -= 1
 	})
 }
 
@@ -713,7 +907,25 @@ function applyPendingRestorePreservingAuth(
  * 6. Atomically swap the runtime refs and resolve the gate.
  * 7. Broadcast an SSE event so clients invalidate cached data.
  */
-export async function reloadStorageContext(
+const contextReloads = new WeakMap<
+	FastifyInstance,
+	Promise<StorageReloadResult>
+>()
+
+export function reloadStorageContext(
+	app: FastifyInstance,
+): Promise<StorageReloadResult> {
+	app.pendingStorageReloads++
+	const previous = contextReloads.get(app) ?? Promise.resolve()
+	const next = previous.catch(() => {}).then(() => reloadStorageContextNow(app))
+	contextReloads.set(app, next)
+	return next.finally(() => {
+		app.pendingStorageReloads--
+		if (contextReloads.get(app) === next) contextReloads.delete(app)
+	})
+}
+
+async function reloadStorageContextNow(
 	app: FastifyInstance,
 ): Promise<StorageReloadResult> {
 	const refs = app.runtimeRefs as RuntimeRefs
@@ -723,6 +935,9 @@ export async function reloadStorageContext(
 	const gate = createDeferred<void>()
 	app.reloadGate = gate
 	app.isDraining = true
+	app.pluginAssetConsent.dispose()
+	for (const request of app.activeStorageRequests)
+		if (request.storageWaiting) request.storageAbort?.abort()
 
 	const start = Date.now()
 	log.info("storage.reload.draining")
@@ -734,9 +949,8 @@ export async function reloadStorageContext(
 			await setTimeout(50)
 		}
 		if (app.inflightRequests > 0) {
-			log.warn(
-				{ inflightRequests: app.inflightRequests },
-				"storage.reload.drain_timeout",
+			throw new Error(
+				"Active library requests did not finish before the storage switch",
 			)
 		}
 
@@ -759,6 +973,7 @@ export async function reloadStorageContext(
 		refs.dbHandles.current = newHandles
 		refs.storagePaths.current = ctx.paths
 		refs.readOnly.current = ctx.readOnly
+		for (const reload of app.storageReloadHandlers) await reload()
 
 		app.isDraining = false
 		gate.resolve()
@@ -785,6 +1000,8 @@ export async function reloadStorageContext(
 		}
 	} catch (err) {
 		app.isDraining = false
+		app.libraryMaintenance = true
+		refs.readOnly.current = true
 		gate.reject(err)
 		throw err
 	} finally {
@@ -808,30 +1025,7 @@ function subscribeContextReload(
 		void reloadStorageContext(app).then(onContextReloaded, logReloadError)
 	})
 	app.signals.on("version.changed", () => {
-		void reloadStorageContext(app)
-			.then(onContextReloaded)
-			.then(() => catchUpAutoSnapshot(app))
-			.catch(logReloadError)
-	})
-}
-
-/**
- * After a version publish/switch reloaded the storage context, take an
- * automatic snapshot immediately when the new version's snapshot window
- * would otherwise start empty (or the switch landed back on the latest
- * version). Runs only while writable and enabled; failures are logged,
- * never fatal. Must be called AFTER the reload resolves so `paths.latest`
- * points at the new version.
- */
-function catchUpAutoSnapshot(app: FastifyInstance): void {
-	if (app.readOnly || !app.env.AUTO_SNAPSHOT_ENABLED) return
-	void refreshAutoSnapshot({
-		service: app.backupService,
-		keep: app.env.AUTO_SNAPSHOT_KEEP,
-		isReadOnly: () => app.readOnly,
-		readFreeBytes: async () => (await volumeStatsOf(app.paths.root))?.freeBytes,
-		minFreeBytes: app.env.MIN_FREE_DISK_BYTES,
-		onError: (err) => app.log.error({ err }, "auto-snapshot.run_failed"),
+		void reloadStorageContext(app).then(onContextReloaded).catch(logReloadError)
 	})
 }
 

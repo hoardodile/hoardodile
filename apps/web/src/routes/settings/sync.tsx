@@ -1,8 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router"
-import {
-	SyncPageActions,
-	SyncSettingsPanel,
-} from "@/features/sync/SyncSettingsPanel"
+import { ReplicationPanel } from "@/features/protection/ReplicationPanel"
 import { requireAuth } from "@/lib/auth-guard"
 
 export const Route = createFileRoute("/settings/sync")({
@@ -18,10 +15,5 @@ export const Route = createFileRoute("/settings/sync")({
  * software.
  */
 function SyncSettingsRoute() {
-	return (
-		<>
-			<SyncPageActions />
-			<SyncSettingsPanel />
-		</>
-	)
+	return <ReplicationPanel />
 }

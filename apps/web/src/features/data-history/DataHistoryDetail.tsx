@@ -25,6 +25,7 @@ import { HistoryNoteEditor } from "./HistoryNoteEditor"
 import { InlineNameEditor } from "./InlineNameEditor"
 
 export type DataHistoryDetailProps = {
+	readonly legacyReadOnly?: boolean
 	readonly data: DataHistoryList
 	readonly selectedId: string | undefined
 	readonly onRestore: (fileName: string) => void
@@ -71,6 +72,7 @@ export function DataHistoryDetail(props: DataHistoryDetailProps) {
 		/>
 	) : (
 		<BackupDetail
+			legacyReadOnly={props.legacyReadOnly}
 			backup={selected}
 			currentVersion={data.currentVersion}
 			onRestore={() => onRestore(selected.fileName)}
@@ -246,6 +248,7 @@ function ArchiveDetail(props: ArchiveDetailProps) {
 }
 
 type BackupDetailProps = {
+	readonly legacyReadOnly?: boolean
 	readonly backup: BackupEvent
 	readonly currentVersion: number
 	readonly onRestore: () => void
@@ -282,7 +285,9 @@ function BackupDetail(props: BackupDetailProps) {
 			}),
 	})
 
-	const isArchived = backup.activeVersionAtCreate !== currentVersion
+	const isArchived =
+		props.legacyReadOnly === true ||
+		backup.activeVersionAtCreate !== currentVersion
 	const canEditMeta = !backup.auto && !isArchived
 
 	return (

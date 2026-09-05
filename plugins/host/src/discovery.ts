@@ -105,6 +105,13 @@ export function createPluginDiscovery(
 		const disk = discoverDiskPlugins(deps.pluginsDir, deps.settings)
 		for (const plugin of disk) {
 			if (seen.has(plugin.id)) {
+				if (
+					found.some(
+						(entry) =>
+							entry.source === "builtin" && entry.diskPath === plugin.diskPath,
+					)
+				)
+					continue
 				console.warn(
 					`[plugin-discovery] skipping disk plugin ${plugin.id}: id already registered (builtin or dev plugin)`,
 				)

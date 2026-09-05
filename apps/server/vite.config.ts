@@ -164,10 +164,25 @@ function copyNativePackagesPlugin(): Plugin {
  */
 function copyOptionalBinPackages(destRoot: string): void {
 	for (const name of OPTIONAL_BIN_PACKAGES) {
-		const srcDir = resolvePackageDir(name, hostRequire)
+		const owner =
+			name === "@hoardodile/restic-bin"
+				? "backup"
+				: name === "@hoardodile/rclone-bin"
+					? "sync"
+					: undefined
+		const resolver =
+			owner === undefined
+				? hostRequire
+				: createRequire(
+						path.resolve(
+							import.meta.dirname,
+							`../../packages/${owner}/package.json`,
+						),
+					)
+		const srcDir = resolvePackageDir(name, resolver)
 		if (srcDir === undefined) {
 			throw new Error(
-				`[app-server] optional binary package ${name} not found; install @hoardodile/host optionalDependencies`,
+				`[app-server] required binary package ${name} not found; run pnpm install with optional dependencies enabled`,
 			)
 		}
 		copyPackageDir(name, srcDir, destRoot)

@@ -1,3 +1,7 @@
+import {
+	canWaitForStorage,
+	STORAGE_COMMIT_TIMEOUT_MS,
+} from "@hoardodile/shared/trpc-timeouts"
 import { net, session } from "electron"
 
 const API_PREFIXES = ["/trpc", "/auth", "/api", "/health"] as const
@@ -155,6 +159,13 @@ export async function proxyHttpRequest(
 function forwardToSidecar(request: Request, target: string): Promise<Response> {
 	return net.fetch(new Request(target, request), {
 		bypassCustomProtocolHandlers: true,
-		signal: AbortSignal.timeout(PROXY_TIMEOUT_MS),
+		signal: AbortSignal.any([
+			request.signal,
+			AbortSignal.timeout(
+				canWaitForStorage(target, request.method)
+					? STORAGE_COMMIT_TIMEOUT_MS
+					: PROXY_TIMEOUT_MS,
+			),
+		]),
 	})
 }

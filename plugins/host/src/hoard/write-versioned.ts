@@ -1,4 +1,5 @@
 import { conflict } from "../errors.ts"
+import { storageCoordinator } from "./coordination.ts"
 import type { StoragePaths } from "./paths.ts"
 
 /**
@@ -35,5 +36,5 @@ export async function writeVersioned<T>(
 			"server is viewing a read-only archive; versioned writes are blocked",
 		)
 	}
-	return await cmd(paths.latest)
+	return await storageCoordinator(paths.root).write(() => cmd(paths.latest))
 }

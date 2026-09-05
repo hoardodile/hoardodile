@@ -21,8 +21,7 @@ async function resPluginImpl(app: FastifyInstance): Promise<void> {
 		uploadWarmCover = fn
 	})
 
-	app.decorate(
-		"resService",
+	const createService = () =>
 		createResourceService({
 			db: app.db,
 			paths: app.paths,
@@ -45,8 +44,21 @@ async function resPluginImpl(app: FastifyInstance): Promise<void> {
 			onUserAction: (action) => {
 				app.traceService.record(action)
 			},
+		})
+	let current = createService()
+	app.decorate(
+		"resService",
+		new Proxy(current, {
+			get(_target, key, receiver) {
+				const value: unknown = Reflect.get(current, key, receiver)
+				return typeof value === "function" ? value.bind(current) : value
+			},
 		}),
 	)
+	app.storageReloadHandlers?.push(async () => {
+		await current.drainMetaQueue()
+		current = createService()
+	})
 }
 
 export const resPlugin = fp(resPluginImpl satisfies FastifyPluginAsync, {

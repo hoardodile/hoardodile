@@ -83,6 +83,16 @@ const baseHandlers: Record<string, (input: unknown) => unknown> = {
 		},
 	}),
 	"sync.summary": () => ({ remindDays: 7, devices: [] }),
+	"replication.status": () => ({
+		role: "unconfigured",
+		name: "Test",
+		paused: false,
+		source: null,
+		peers: [],
+		links: {},
+		receiving: false,
+		activeTransfers: 0,
+	}),
 	// The marketplace update badge queries these; the defaults keep the
 	// badge silent (no registry → snapshot disabled, no installed plugins).
 	"marketplace.getConfig": () => ({ registryRepo: null }),
@@ -361,7 +371,7 @@ describe("AppShell module menu", () => {
 describe("AppShell sync status", () => {
 	it("shows the due state when no device is configured", async () => {
 		const { findByText } = renderAppShell()
-		await findByText("Sync due")
+		await findByText("Sync not configured")
 	})
 
 	it("shows the synced state when every device is up to date", async () => {
@@ -372,11 +382,13 @@ describe("AppShell sync status", () => {
 					remindDays: 7,
 					devices: [
 						{
-							id: "device-1",
-							name: "Backup drive",
-							notes: "",
-							createdAt: "2026-07-28T00:00:00.000Z",
-							updatedAt: "2026-07-28T00:00:00.000Z",
+							device: {
+								id: "device-1",
+								name: "Backup drive",
+								notes: "",
+								createdAt: 1,
+								updatedAt: 1,
+							},
 							due: false,
 						},
 					],
@@ -384,7 +396,7 @@ describe("AppShell sync status", () => {
 			}),
 		)
 		const { findByText } = renderAppShell()
-		await findByText("Synced")
+		await findByText("Records up to date")
 	})
 
 	it("shows the due state when a device reminder is pending", async () => {
@@ -395,11 +407,13 @@ describe("AppShell sync status", () => {
 					remindDays: 7,
 					devices: [
 						{
-							id: "device-1",
-							name: "Backup drive",
-							notes: "",
-							createdAt: "2026-07-28T00:00:00.000Z",
-							updatedAt: "2026-07-28T00:00:00.000Z",
+							device: {
+								id: "device-1",
+								name: "Backup drive",
+								notes: "",
+								createdAt: 1,
+								updatedAt: 1,
+							},
 							due: true,
 							elapsedDays: 10,
 						},
@@ -408,7 +422,7 @@ describe("AppShell sync status", () => {
 			}),
 		)
 		const { findByText } = renderAppShell()
-		await findByText("Sync due")
+		await findByText("Sync needs attention")
 	})
 })
 

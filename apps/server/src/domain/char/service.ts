@@ -1,3 +1,4 @@
+import { withFileCommit } from "@hoardodile/host/hoard"
 import type {
 	Character,
 	CharCard,
@@ -723,12 +724,12 @@ export function createCharacterService(deps: CharServiceDeps): CharService {
 			for (const row of rows) out.push(rowToCharacter(row, meta.get(row.id)))
 			return out
 		},
-		create,
+		create: withFileCommit(deps.paths.root, create),
 		update: async (input) => update(input),
 		softDelete: async (id) => softDelete(id),
 		softDeleteMany,
 		restore: async (id) => restore(id),
-		hardDelete,
+		hardDelete: withFileCommit(deps.paths.root, hardDelete),
 		touch: async (id) => touch(id),
 		resolveImagePath,
 		setVariantVersion: async (id, variant, version) =>
@@ -737,8 +738,8 @@ export function createCharacterService(deps: CharServiceDeps): CharService {
 			const row = repo.findById(id)
 			return variant === "avatar" ? row.avatarVersion : row.fullbodyVersion
 		},
-		setImage,
-		clearImage,
+		setImage: withFileCommit(deps.paths.root, setImage),
+		clearImage: withFileCommit(deps.paths.root, clearImage),
 		clearAllImageMeta: () => repo.clearAllImageMeta(),
 	}
 }

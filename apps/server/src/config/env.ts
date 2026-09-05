@@ -140,6 +140,10 @@ const envSchema = z
 		 */
 		DATABASE_URL: z.string().min(1).optional(),
 		STORAGE_ROOT: z.string().min(1).default(DEFAULT_STORAGE_ROOT),
+		BACKUP_ROOT: z.string().min(1).optional(),
+		RECOVERY_DRILL_ROOT: z.string().min(1).optional(),
+		RESTIC_BIN_PATH: z.string().min(1).optional(),
+		RCLONE_BIN_PATH: z.string().min(1).optional(),
 		/**
 		 * Root directory for shared-folder browsing during folder import.
 		 * This is the "Shared Folder" shown in the upload UI; it is unrelated to
@@ -263,7 +267,7 @@ const envSchema = z
 		/**
 		 * Comma-separated paths to dev content plugin directories.
 		 * Loaded directly from disk without copying into the versioned
-		 * plugins directory.
+		 * plugins directory. Complete backups and archives require installed plugins.
 		 */
 		DEV_PLUGIN_PATHS: z
 			.preprocess(
@@ -280,8 +284,8 @@ const envSchema = z
 		/**
 		 * Comma-separated paths to plugin directories (each with
 		 * manifest.json at its root) that are seeded into
-		 * `{storage}/versions/<latest>/plugins/` on every plugin load
-		 * when the destination tree differs, so the plugin behaves like
+		 * `{storage}/versions/<latest>/plugins/` when first installed,
+		 * preserving existing versioned copies, so the plugin behaves like
 		 * a regular installed one (DB settings, asset caching, uninstall).
 		 * Relative paths resolve against the workspace root. Desktop
 		 * seeds the bundled gallery this way; leaving this empty is the
@@ -485,6 +489,12 @@ const envSchema = z
 		return {
 			...data,
 			STORAGE_ROOT: storageRoot,
+			BACKUP_ROOT: makeAbsolute(
+				data.BACKUP_ROOT ?? join(storageRoot, "backups"),
+			),
+			RECOVERY_DRILL_ROOT: data.RECOVERY_DRILL_ROOT
+				? makeAbsolute(data.RECOVERY_DRILL_ROOT)
+				: undefined,
 			DATABASE_URL:
 				data.DATABASE_URL === ":memory:"
 					? data.DATABASE_URL

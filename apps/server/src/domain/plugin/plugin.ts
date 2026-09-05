@@ -1,5 +1,5 @@
 import { existsSync, readFileSync } from "node:fs"
-import { mkdir, rm } from "node:fs/promises"
+import { cp, rm } from "node:fs/promises"
 import { join } from "node:path"
 import type { PluginAssetHandler } from "@hoardodile/host"
 import {
@@ -12,6 +12,7 @@ import {
 import {
 	assertSafeSegment,
 	extractArchiveInto,
+	withFileCommit,
 	writeVersioned,
 } from "@hoardodile/host/hoard"
 import { PLUGIN_READ_FILE_MAX_BYTES } from "@hoardodile/sdk-types/plugin"
@@ -27,20 +28,41 @@ import { createOutboundNetwork } from "src/infra/outbound-network.ts"
 import { createPluginAssetService } from "./asset-service.ts"
 import { createConsentBroker } from "./consent.ts"
 import { createPluginDownloader } from "./downloader.ts"
+import {
+	installPluginTransaction,
+	recoverPluginInstallations,
+} from "./install-transaction.ts"
 import { createSeedRemovalsStore } from "./seed-removals.ts"
 import { createPluginService } from "./service.ts"
 import { createPluginSettingsStore } from "./settings-store.ts"
-import { buildPluginUploads, moveDir } from "./upload.ts"
+import { buildPluginUploads } from "./upload.ts"
 
 async function pluginDomainImpl(app: FastifyInstance): Promise<void> {
+	if (!app.libraryMaintenance) await recoverPluginInstallations(app.paths)
 	const builtinDir = app.env.BUILTIN_PATH
 	if (builtinDir === undefined && app.env.NODE_ENV !== "test") {
 		throw new Error("Builtin plugin path is required: set BUILTIN_PATH env.")
 	}
 
-	const viewingPluginsDir = app.paths
-		.atVersion(app.paths.activeVersion)
-		.plugins()
+	const builtinId = builtinDir ? readSeedManifestId(builtinDir) : undefined
+	const restoredLibrary = () =>
+		existsSync(join(app.paths.local.root, "protection", "last-restore.json"))
+	function activeBuiltinDir(): string | undefined {
+		if (app.libraryMaintenance && app.readOnly) return builtinDir
+		if (!builtinId) return builtinDir
+		const recorded = join(
+			app.paths.atVersion(app.paths.activeVersion).plugins(),
+			builtinId,
+		)
+		if (existsSync(join(recorded, "manifest.json"))) return recorded
+		if (app.readOnly || app.libraryMaintenance || restoredLibrary()) {
+			app.log.warn(
+				"The legacy archive has no recorded fallback plugin; only its recorded plugins are available",
+			)
+			return undefined
+		}
+		return builtinDir
+	}
 
 	// Deliberately-uninstalled bundled plugins: seeding skips these ids so
 	// a removal persists across restarts and app updates. The bundled
@@ -51,16 +73,29 @@ async function pluginDomainImpl(app: FastifyInstance): Promise<void> {
 	/** The seed dirs whose plugin was not deliberately removed. */
 	function seedDirsToSeed(): string[] {
 		const removed = seedRemovals.read()
-		if (removed.size === 0) return app.env.SEED_PLUGIN_PATHS
 		return app.env.SEED_PLUGIN_PATHS.filter((dir) => {
 			const id = readSeedManifestId(dir)
-			return id === undefined || !removed.has(id)
+			return (
+				id !== undefined &&
+				!removed.has(id) &&
+				!existsSync(join(app.paths.latest.plugins(), id, "manifest.json"))
+			)
 		})
 	}
 
 	async function preparePluginDisk(): Promise<void> {
-		if (app.readOnly) return
-		await writeVersioned(app.paths, false, (latest) => {
+		if (app.readOnly || app.libraryMaintenance || restoredLibrary()) return
+		await writeVersioned(app.paths, false, async (latest) => {
+			if (
+				builtinId &&
+				builtinDir &&
+				!existsSync(join(latest.plugins(), builtinId, "manifest.json"))
+			) {
+				await cp(builtinDir, join(latest.plugins(), builtinId), {
+					recursive: true,
+					preserveTimestamps: true,
+				})
+			}
 			seedPlugins(latest.plugins(), seedDirsToSeed())
 		})
 	}
@@ -122,29 +157,18 @@ async function pluginDomainImpl(app: FastifyInstance): Promise<void> {
 	const uploads = buildPluginUploads({
 		stagingRoot: app.paths.local.uploadStagingRoot(),
 		commit: async (stagingDir, id) => {
-			await writeVersioned(app.paths, app.readOnly, async (latest) => {
-				const destDir = join(latest.plugins(), assertSafeSegment(id))
-				await mkdir(latest.plugins(), { recursive: true })
-				// The host-managed vault survives a plugin update: move it
-				// aside (host-local staging), swap the tree, move it back.
-				// A crash in between strands the vault in the staging root,
-				// which startup cleanup reclaims — the plugin re-fetches.
-				const vaultDir = join(destDir, "vault")
-				const stashDir = join(
-					app.paths.local.uploadStagingRoot(),
-					`plugin-vault-${id}-${Date.now()}`,
+			if (id === builtinId)
+				throw new Error(
+					"The application's fallback plugin cannot be replaced by an uploaded package",
 				)
-				const hasVault = existsSync(vaultDir)
-				if (hasVault) {
-					await moveDir(vaultDir, stashDir)
-				}
-				if (existsSync(destDir)) {
-					await rm(destDir, { recursive: true, force: true })
-				}
-				await moveDir(stagingDir, destDir)
-				if (existsSync(stashDir)) {
-					await moveDir(stashDir, join(destDir, "vault"))
-				}
+			await writeVersioned(app.paths, app.readOnly, async () => {
+				await installPluginTransaction({
+					paths: app.paths,
+					pluginId: id,
+					staging: stagingDir,
+				})
+				await loader.rescan()
+				pluginService.syncRecords()
 			})
 		},
 		extractArchive: extractArchiveInto,
@@ -156,7 +180,9 @@ async function pluginDomainImpl(app: FastifyInstance): Promise<void> {
 	// hook/tRPC time, long after `loader` initialized below.
 	const assetService = createPluginAssetService({
 		paths: app.paths,
-		readOnly: app.readOnly,
+		get readOnly() {
+			return app.readOnly
+		},
 		getPlugin: (pluginId) => {
 			const entry = app.pluginLoader.getRegistry().getById(pluginId)
 			if (entry === undefined) return undefined
@@ -201,12 +227,24 @@ async function pluginDomainImpl(app: FastifyInstance): Promise<void> {
 		await sandbox.disposeAll()
 		consent.dispose()
 	})
+	app.decorate("stopPluginWorkers", async () => {
+		consent.dispose()
+		await sandbox.disposeAll()
+	})
 
 	const loader = createPluginLoader({
-		builtinDir,
-		devPluginDirs: app.readOnly ? [] : app.env.DEV_PLUGIN_PATHS,
+		get builtinDir() {
+			return activeBuiltinDir()
+		},
+		get devPluginDirs() {
+			return app.readOnly ? [] : app.env.DEV_PLUGIN_PATHS
+		},
 		seedPluginDirs: [],
-		pluginsDir: viewingPluginsDir,
+		get pluginsDir() {
+			return app.libraryMaintenance && app.readOnly
+				? join(app.paths.local.root, "maintenance-plugins")
+				: app.paths.atVersion(app.paths.activeVersion).plugins()
+		},
 		settings: createPluginSettingsStore(app.db),
 		disableDevPlugins: app.env.DISABLE_DEV_PLUGINS,
 		sandbox,
@@ -216,11 +254,13 @@ async function pluginDomainImpl(app: FastifyInstance): Promise<void> {
 	})
 	await loader.loadAll()
 	app.decorate("pluginLoader", loader)
-	const pluginService = createPluginService({
+	const rawPluginService = createPluginService({
 		db: app.db,
 		loader,
 		sandbox,
-		readOnly: app.readOnly,
+		get readOnly() {
+			return app.readOnly
+		},
 		prepareDisk: preparePluginDisk,
 		removeInstalledDir: async (id) => {
 			await writeVersioned(app.paths, app.readOnly, async (latest) => {
@@ -236,12 +276,27 @@ async function pluginDomainImpl(app: FastifyInstance): Promise<void> {
 		seedDirs: app.env.SEED_PLUGIN_PATHS,
 		seedRemovals,
 	})
+	const pluginService = {
+		...rawPluginService,
+		rescan: withFileCommit(app.paths.root, rawPluginService.rescan),
+		uninstall: withFileCommit(app.paths.root, rawPluginService.uninstall),
+		restoreSeedPlugin: withFileCommit(
+			app.paths.root,
+			rawPluginService.restoreSeedPlugin,
+		),
+	}
 	// Record every discovered plugin so a later disk removal shows up in
 	// the missing list instead of leaving bound resources as "unknown".
 	pluginService.syncRecords()
 	app.decorate("pluginService", pluginService)
 	app.decorate("pluginAssetService", assetService)
 	app.decorate("pluginAssetConsent", consent)
+	app.storageReloadHandlers?.push(async () => {
+		consent.dispose()
+		await sandbox.disposeAll()
+		await loader.loadAll()
+		pluginService.syncRecords()
+	})
 	// The hook facade reads the registry through a live accessor, so
 	// consumers never hold a stale registry across a rescan.
 	app.decorate(

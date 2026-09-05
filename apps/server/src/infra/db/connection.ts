@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync } from "node:fs"
+import { existsSync, mkdirSync, readFileSync } from "node:fs"
 import { dirname, join } from "node:path"
 import BetterSqlite3 from "better-sqlite3"
 import { drizzle } from "drizzle-orm/better-sqlite3"
@@ -41,6 +41,8 @@ function resolveMigrationsFolder(): string {
 }
 
 export type DbHandles = {
+	validateCompatibility?(): void
+	readonly filePath?: string
 	/**
 	 * Drizzle query builder. **All** application and test queries go through
 	 * this. Keep raw SQL isolated to the narrow helper methods on this handle.
@@ -113,40 +115,92 @@ export function openDb(url: string, opts: OpenDbOptions = {}): DbHandles {
 	const raw = readonly
 		? new BetterSqlite3(url, { readonly: true, fileMustExist: true })
 		: new BetterSqlite3(url)
-	if (!readonly) {
-		raw.pragma("journal_mode = WAL")
-	}
-	raw.pragma("foreign_keys = ON")
-	raw.pragma("busy_timeout = 5000")
-	raw.function("hash", { deterministic: true }, (value: unknown) =>
-		fnv1a(String(value)),
-	)
-	const db = drizzle(raw, { schema })
+	try {
+		if (!readonly) {
+			raw.pragma("journal_mode = WAL")
+		}
+		raw.pragma("foreign_keys = ON")
+		raw.pragma("busy_timeout = 5000")
+		raw.function("hash", { deterministic: true }, (value: unknown) =>
+			fnv1a(String(value)),
+		)
+		const db = drizzle(raw, { schema })
 
-	function runMigrations(): void {
-		const folder = resolveMigrationsFolder()
-		if (!existsSync(folder)) return
-		migrate(db, { migrationsFolder: folder })
-	}
+		function runMigrations(): void {
+			const folder = resolveMigrationsFolder()
+			if (!existsSync(folder)) return
+			migrate(db, { migrationsFolder: folder })
+		}
 
-	return {
-		db,
-		runMigrations,
-		vacuumInto(destination: string): void {
-			// `VACUUM INTO` cannot be parameterised; the destination is
-			// single-quoted and any embedded quote is doubled per SQLite
-			// string literal rules. Callers MUST have already validated
-			// `destination` via `assertSafeSegment` + `assertInside`.
-			const escaped = destination.replace(/'/g, "''")
-			raw.exec(`VACUUM INTO '${escaped}'`)
-		},
-		integrityCheck(): boolean {
-			const rows = raw.pragma("integrity_check") as ReadonlyArray<{
-				integrity_check: string
-			}>
-			return rows.length === 1 && rows[0]?.integrity_check === "ok"
-		},
-		close: () => raw.close(),
+		return {
+			filePath: url,
+			db,
+			runMigrations,
+			validateCompatibility() {
+				const file = join(resolveMigrationsFolder(), "meta", "_journal.json")
+				const journal: unknown = JSON.parse(readFileSync(file, "utf8"))
+				if (
+					!journal ||
+					typeof journal !== "object" ||
+					!("entries" in journal) ||
+					!Array.isArray(journal.entries)
+				)
+					throw new Error("The application migration journal is invalid")
+				const supported = Math.max(
+					0,
+					...journal.entries.map((entry: unknown) =>
+						entry &&
+						typeof entry === "object" &&
+						"when" in entry &&
+						typeof entry.when === "number"
+							? entry.when
+							: 0,
+					),
+				)
+				const table = raw
+					.prepare(
+						"SELECT 1 FROM sqlite_master WHERE type='table' AND name='__drizzle_migrations'",
+					)
+					.get()
+				if (table) {
+					const row: unknown = raw
+						.prepare(
+							"SELECT MAX(created_at) AS applied FROM __drizzle_migrations",
+						)
+						.get()
+					if (
+						row &&
+						typeof row === "object" &&
+						"applied" in row &&
+						typeof row.applied === "number" &&
+						row.applied > supported
+					)
+						throw new Error(
+							"This database requires a newer application version",
+						)
+				}
+			},
+			vacuumInto(destination: string): void {
+				// `VACUUM INTO` cannot be parameterised; the destination is
+				// single-quoted and any embedded quote is doubled per SQLite
+				// string literal rules. Callers MUST have already validated
+				// `destination` via `assertSafeSegment` + `assertInside`.
+				const escaped = destination.replace(/'/g, "''")
+				raw.exec(`VACUUM INTO '${escaped}'`)
+			},
+			integrityCheck(): boolean {
+				const rows = raw.pragma("integrity_check") as ReadonlyArray<{
+					integrity_check: string
+				}>
+				return rows.length === 1 && rows[0]?.integrity_check === "ok"
+			},
+			close: () => {
+				if (raw.open) raw.close()
+			},
+		}
+	} catch (error) {
+		if (raw.open) raw.close()
+		throw error
 	}
 }
 

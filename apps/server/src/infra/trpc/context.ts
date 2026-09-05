@@ -40,7 +40,10 @@ export function makeCreateContext(
 		const cookie = req.cookies[deps.env.SESSION_COOKIE_NAME]
 		const touched = await deps.sessions.touch(
 			cookie,
-			resolveSessionTtl(deps.db, deps.env),
+			resolveSessionTtl(
+				req.server?.libraryMaintenance ? req.server.hostDb : deps.db,
+				deps.env,
+			),
 		)
 		return {
 			env: deps.env,

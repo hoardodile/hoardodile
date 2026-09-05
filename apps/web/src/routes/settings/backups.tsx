@@ -1,5 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router"
 import { DataHistoryPanel } from "@/features/data-history"
+import { RecoveryPanel } from "@/features/protection/RecoveryPanel"
+import {
+	SectionDivider,
+	SettingsSheet,
+} from "@/features/settings/SettingsSheet"
 import { requireAuth } from "@/lib/auth-guard"
 
 export const Route = createFileRoute("/settings/backups")({
@@ -13,5 +18,11 @@ export const Route = createFileRoute("/settings/backups")({
  * a detail card for the selected event.
  */
 function BackupsSettingsRoute() {
-	return <DataHistoryPanel />
+	return (
+		<SettingsSheet>
+			<RecoveryPanel />
+			<SectionDivider />
+			<DataHistoryPanel embedded />
+		</SettingsSheet>
+	)
 }

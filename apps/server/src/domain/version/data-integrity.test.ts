@@ -54,7 +54,7 @@ describe("cross-version data integrity", () => {
 			storageRoot: root,
 			readOnly: false,
 		})
-		const publish = versionSvc.create()
+		const publish = await versionSvc.create()
 		expect(publish.previous).toBe(1)
 		expect(publish.created).toBe(2)
 

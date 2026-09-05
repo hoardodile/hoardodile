@@ -14,6 +14,7 @@ export const storagePlugin = buildServicePlugin({
 		createStorageService({
 			db: app.db,
 			paths: app.paths,
+			backupRoot: app.env.BACKUP_ROOT,
 			pluginNames: new Map(
 				app.pluginService.listAll().map((p) => [p.id, p.manifest.name]),
 			),

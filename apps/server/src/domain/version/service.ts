@@ -1,15 +1,20 @@
 import { existsSync, statSync } from "node:fs"
+import { rm } from "node:fs/promises"
 import { resolve } from "node:path"
+import { BackupError } from "@hoardodile/backup"
 import {
-	createNextVersion,
 	listVersions,
+	publishVersion,
 	readActiveVersion,
 	currentVersion as readCurrentVersion,
+	storageCoordinator,
 	versionedDbFile,
 	versionedPath,
+	withFileCommit,
 	writeActiveVersion,
 } from "@hoardodile/host/hoard"
 import { conflict, notFound } from "@hoardodile/shared"
+import { createDatabaseCheckpoint } from "src/infra/db/checkpoint.ts"
 import type { DbHandles } from "src/infra/db/connection.ts"
 import {
 	createSidecar,
@@ -54,7 +59,7 @@ export type VersionService = {
 	/** Version the running server is viewing. */
 	active(): number
 	/**
-	 * Snapshot the live DB into `versions/<current+1>/app.sqlite`.
+	 * Freeze the current version's database and publish independent plugin copies in the next version.
 	 *
 	 * The caller is responsible for emitting the
 	 * `version.changed` signal after this returns so the server
@@ -63,7 +68,14 @@ export type VersionService = {
 	 * @throws {DomainError} `version.read_only_archive` when the server
 	 *   is viewing a past archive.
 	 */
-	create(input?: VersionCreateInput): CreateVersionResult
+	create(
+		input?: VersionCreateInput,
+		options?: {
+			afterPublish?: () => Promise<void>
+			signal?: AbortSignal
+			onProgress?: (value: unknown) => void
+		},
+	): Promise<CreateVersionResult>
 	/**
 	 * Persist the active version pointer. The new value MUST refer to a
 	 * version directory that exists. The caller is responsible for
@@ -79,13 +91,15 @@ export type VersionService = {
 	 *
 	 * @throws {DomainError} `version.not_found` when `version` does not exist.
 	 */
-	updateMeta(version: number, input: VersionUpdateMetaInput): void
+	updateMeta(version: number, input: VersionUpdateMetaInput): Promise<void>
 }
 
 export type VersionServiceDeps = {
 	readonly db: DbHandles
 	readonly storageRoot: string
 	readonly readOnly: boolean
+	readonly assertArchivable?: () => void
+	readonly onPublicationFailure?: () => void
 }
 
 /**
@@ -96,7 +110,7 @@ export type VersionServiceDeps = {
  * server instance (e.g. during a restart triggered by `create()`).
  */
 export function createVersionService(deps: VersionServiceDeps): VersionService {
-	const { db, storageRoot, readOnly } = deps
+	const { storageRoot } = deps
 
 	function list(): readonly VersionEntry[] {
 		const all = listVersions(storageRoot)
@@ -124,8 +138,15 @@ export function createVersionService(deps: VersionServiceDeps): VersionService {
 		return readActiveVersion(storageRoot)
 	}
 
-	function create(input?: VersionCreateInput): CreateVersionResult {
-		if (readOnly) {
+	async function create(
+		input?: VersionCreateInput,
+		options?: {
+			afterPublish?: () => Promise<void>
+			signal?: AbortSignal
+			onProgress?: (value: unknown) => void
+		},
+	): Promise<CreateVersionResult> {
+		if (deps.readOnly) {
 			throw conflict(
 				"version.read_only_archive",
 				"cannot create a new version while viewing a past archive",
@@ -135,24 +156,72 @@ export function createVersionService(deps: VersionServiceDeps): VersionService {
 		// *before* the next version directory is created. At this point the
 		// target version is still the current (writable) version, so the
 		// write does not violate the "past versions are frozen" rule.
-		const previous = readCurrentVersion(storageRoot)
-		const trimmedName = input?.name?.trim()
-		const trimmedNote = input?.note?.trim()
-		writeVersionMeta(storageRoot, previous, {
-			createdAt: Date.now(),
-			name:
-				trimmedName !== undefined && trimmedName.length > 0
-					? trimmedName
-					: undefined,
-			note:
-				trimmedNote !== undefined && trimmedNote.length > 0
-					? trimmedNote
-					: undefined,
+		return storageCoordinator(storageRoot).freeze({
+			signal: options?.signal,
+			operation: async () => {
+				deps.assertArchivable?.()
+				const previous = readCurrentVersion(storageRoot)
+				const trimmedName = input?.name?.trim()
+				const trimmedNote = input?.note?.trim()
+				writeVersionMeta(storageRoot, previous, {
+					createdAt: Date.now(),
+					name:
+						trimmedName !== undefined && trimmedName.length > 0
+							? trimmedName
+							: undefined,
+					note:
+						trimmedNote !== undefined && trimmedNote.length > 0
+							? trimmedNote
+							: undefined,
+				})
+				const result = await publishVersion({
+					root: storageRoot,
+					signal: options?.signal,
+					onProgress: options?.onProgress,
+					snapshot: async (destination) => {
+						if (deps.db.filePath === ":memory:") {
+							const staged = `${destination}.source`
+							try {
+								deps.db.vacuumInto(staged)
+								await createDatabaseCheckpoint({
+									source: staged,
+									destination,
+									signal: options?.signal,
+								})
+							} finally {
+								await rm(staged, { force: true })
+							}
+							return
+						}
+						await createDatabaseCheckpoint({
+							source: deps.db.filePath ?? resolve(storageRoot, "app.sqlite"),
+							destination,
+							signal: options?.signal,
+						})
+					},
+				}).catch((error: unknown) => {
+					if (
+						existsSync(
+							resolve(
+								storageRoot,
+								"local",
+								"archive-publication",
+								"pending.json",
+							),
+						)
+					) {
+						deps.onPublicationFailure?.()
+						throw new BackupError(
+							"archive_publication_interrupted",
+							"Archive publication was interrupted. Resolve the storage error and restart the service to finish publication",
+						)
+					}
+					throw error
+				})
+				await options?.afterPublish?.()
+				return result
+			},
 		})
-		const result = createNextVersion(storageRoot, (destination) => {
-			db.vacuumInto(destination)
-		})
-		return result
 	}
 
 	function switchTo(version: number): void {
@@ -198,7 +267,14 @@ export function createVersionService(deps: VersionServiceDeps): VersionService {
 		})
 	}
 
-	return { list, current, active, create, switchTo, updateMeta }
+	return {
+		list,
+		current,
+		active,
+		create,
+		switchTo,
+		updateMeta: withFileCommit(storageRoot, updateMeta),
+	}
 }
 
 function dbFileSize(root: string, version: number): number {

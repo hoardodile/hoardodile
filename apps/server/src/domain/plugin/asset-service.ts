@@ -12,6 +12,7 @@
  * caps → SRI-style sha256 verification → atomic commit.
  */
 import { mkdir } from "node:fs/promises"
+import { join } from "node:path"
 import type { StoragePaths } from "@hoardodile/host/hoard"
 import {
 	commitVaultFile,
@@ -202,8 +203,9 @@ export function createPluginAssetService(
 		// network activity.
 		const vetted = requests.map((request) => validateRequest(request))
 
-		return writeVersioned(deps.paths, deps.readOnly, async (latest) => {
-			const vaultDir = latest.pluginVaultDir(pluginId)
+		const sourceVersion = deps.paths.latestVersion
+		return (async () => {
+			const vaultDir = deps.paths.latest.pluginVaultDir(pluginId)
 			// Dest confinement happens before any network: a bad path can
 			// never produce a request at all.
 			return asPolicy(async () => {
@@ -284,8 +286,9 @@ export function createPluginAssetService(
 				const staged: StagedEntry[] = []
 				try {
 					for (const entry of misses) {
-						const tempPath = vaultTempFile(vaultDir)
-						await mkdir(vaultDir, { recursive: true })
+						const stagingRoot = join(deps.paths.local.root, "vault-staging")
+						const tempPath = vaultTempFile(stagingRoot)
+						await mkdir(stagingRoot, { recursive: true })
 						const fetched = await deps.downloader.fetchToFile(
 							entry.request.url,
 							tempPath,
@@ -310,23 +313,32 @@ export function createPluginAssetService(
 					// against the vault's current size, so a sequential
 					// commit could fail mid-batch and leave a partial
 					// result — pre-check the cumulative sum once.
-					const currentTotal = await vaultTotalSize(vaultDir)
-					const addedBytes = staged.reduce((sum, s) => sum + s.sizeBytes, 0)
-					if (currentTotal + addedBytes > deps.maxTotalBytes) {
-						throw pluginAssetError(
-							"POLICY",
-							`plugin download batch would exceed the ${deps.maxTotalBytes}-byte plugin quota (current ${currentTotal})`,
-						)
-					}
-					for (const entry of staged) {
-						await commitVaultFile({
-							vaultDir,
-							rel: entry.planned.parsed.rel,
-							tempPath: entry.tempPath,
-							maxFileBytes: deps.maxFileBytes,
-							maxTotalBytes: deps.maxTotalBytes,
-						})
-					}
+					await writeVersioned(deps.paths, deps.readOnly, async () => {
+						if (deps.readOnly || deps.paths.latestVersion !== sourceVersion) {
+							throw pluginAssetError(
+								"UNAVAILABLE",
+								"The archive changed while the download was pending",
+							)
+						}
+						assertPluginAllowed(pluginId)
+						const currentTotal = await vaultTotalSize(vaultDir)
+						const addedBytes = staged.reduce((sum, s) => sum + s.sizeBytes, 0)
+						if (currentTotal + addedBytes > deps.maxTotalBytes) {
+							throw pluginAssetError(
+								"POLICY",
+								`plugin download batch would exceed the ${deps.maxTotalBytes}-byte plugin quota (current ${currentTotal})`,
+							)
+						}
+						for (const entry of staged) {
+							await commitVaultFile({
+								vaultDir,
+								rel: entry.planned.parsed.rel,
+								tempPath: entry.tempPath,
+								maxFileBytes: deps.maxFileBytes,
+								maxTotalBytes: deps.maxTotalBytes,
+							})
+						}
+					})
 				} finally {
 					for (const entry of staged) {
 						await discardVaultTempFile(entry.tempPath)
@@ -353,7 +365,7 @@ export function createPluginAssetService(
 					}
 				})
 			})
-		})
+		})()
 	}
 
 	async function statAsset(

@@ -6,6 +6,8 @@ allowBuilds:
   '@hoardodile/7z-bin': true
   '@hoardodile/ffmpeg-bin': true
   '@hoardodile/ffprobe-bin': true
+  '@hoardodile/restic-bin': true
+  '@hoardodile/rclone-bin': true
   # 13.x bundles per-platform prebuilds loaded at runtime; its implicit
   # node-gyp build (binding.gyp) is unnecessary and needs a Python toolchain.
   better-sqlite3: false
@@ -27,6 +29,7 @@ catalog:
   '@types/node': ^26.2.0
   '@types/react': ^19.2.18
   '@types/react-dom': ^19.2.4
+  '@types/semver': ^7.8.0
   '@vitejs/plugin-react': ^6.1.0
   babel-plugin-react-compiler: ^1.0.0
   es-toolkit: ^1.51.0
@@ -43,6 +46,7 @@ catalog:
   '@solar-icons/react': ^2.1.0
   release-it: ^21.0.2
   sharp: ^0.35.3
+  semver: ^7.8.5
   tailwindcss: ^4.3.3
   tar: ^7.4.3
   tsup: ^8.5.1
@@ -63,6 +67,8 @@ minimumReleaseAgeExclude:
   - '@hoardodile/7z-bin@1.1.3'
   - '@hoardodile/ffmpeg-bin@1.0.0'
   - '@hoardodile/ffprobe-bin@1.0.0'
+  - '@hoardodile/restic-bin@1.0.0'
+  - '@hoardodile/rclone-bin@1.0.0'
   - fast-uri@3.1.7 || 4.1.4
 # fast-uri carries high-severity advisories (host confusion / SSRF via IDN,
 # IPv6 and percent-decoding normalization): GHSA-5jgf-p345-68v8,

@@ -38,6 +38,7 @@ import { commentListQueryOptions } from "@/features/comments/api"
 import { docTreeQueryOptions } from "@/features/doc/api"
 import { useDocTheme } from "@/features/doc/hooks/useDocPrefs"
 import { useMarketplaceUpdateCount } from "@/features/marketplace/useMarketplaceUpdateCount"
+import { useSyncHealth } from "@/features/protection/syncHealth"
 import { resListCardsQueryOptions } from "@/features/res/api"
 import { ImageSearchButton } from "@/features/search/components/ImageSearchButton"
 import { syncSummaryQueryOptions } from "@/features/sync/api"
@@ -500,20 +501,13 @@ function SidebarContent(props: SidebarContentProps) {
  */
 function BrandSyncStatus() {
 	const { t } = useTranslation()
-	const summary = useQuery(syncSummaryQueryOptions()).data
-	if (summary === undefined) {
+	const health = useSyncHealth()
+	if (!health.loaded) {
 		return null
 	}
-	const dueCount = summary.devices.filter((entry) => entry.due).length
-	const due = summary.devices.length === 0 || dueCount > 0
-	const label = due
-		? t("appShell.syncStatus.due")
-		: t("appShell.syncStatus.synced")
-	const title = due
-		? summary.devices.length === 0
-			? t("appShell.syncStatus.noDevicesTitle")
-			: t("appShell.syncStatus.dueTitle", { count: dueCount })
-		: t("appShell.syncStatus.syncedTitle", { count: summary.devices.length })
+	const due = health.count === 0 || health.dueCount > 0 || health.paused
+	const label = t(health.labelKey)
+	const title = label
 	return (
 		<Link
 			to="/settings/sync"

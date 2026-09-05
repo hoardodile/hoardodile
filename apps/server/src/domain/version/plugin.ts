@@ -1,4 +1,5 @@
 import "src/infra/fastify-augment.ts"
+import { assertArchivablePlugins } from "src/domain/plugin/archivable.ts"
 import { buildServicePlugin } from "src/infra/plugins.ts"
 import { createVersionService } from "./service.ts"
 
@@ -14,7 +15,13 @@ export const versionPlugin = buildServicePlugin({
 		createVersionService({
 			db: app.dbHandles,
 			storageRoot: app.env.STORAGE_ROOT,
-			readOnly: app.readOnly,
+			assertArchivable: () => assertArchivablePlugins(app),
+			onPublicationFailure: () => {
+				app.libraryMaintenance = true
+			},
+			get readOnly() {
+				return app.readOnly
+			},
 		}),
 	dependencies: ["env-plugin", "db-plugin"],
 })

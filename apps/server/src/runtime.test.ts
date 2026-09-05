@@ -31,7 +31,7 @@ describe("writeAuthPassword", () => {
 		} satisfies NodeJS.ProcessEnv)
 		await writeAuthPassword(env, "hunter2")
 
-		const dbh = openDb(env.DATABASE_URL)
+		const dbh = openDb(join(root, "local", "host.sqlite"))
 		try {
 			const row = dbh.db
 				.select({ hash: schema.auth.passwordHash })
@@ -55,7 +55,7 @@ describe("writeAuthPassword", () => {
 		await writeAuthPassword(env, "first")
 		await writeAuthPassword(env, "second")
 
-		const dbh = openDb(env.DATABASE_URL)
+		const dbh = openDb(join(root, "local", "host.sqlite"))
 		try {
 			const row = dbh.db
 				.select({ hash: schema.auth.passwordHash })
