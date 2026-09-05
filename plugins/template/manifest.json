@@ -13,11 +13,17 @@
 	"i18n": {
 		"name": {
 			"en": "Template",
-			"zh": "模板"
+			"zh": "模板",
+			"ja": "テンプレート",
+			"de": "Vorlage",
+			"es": "Plantilla"
 		},
 		"description": {
 			"en": "Template plugin — copy this directory to start your own plugin",
-			"zh": "模板插件——复制此目录作为你自己插件的起点"
+			"zh": "模板插件——复制此目录作为你自己插件的起点",
+			"ja": "テンプレートプラグイン — このディレクトリをコピーして独自プラグインを作成してください",
+			"de": "Vorlagen-Plugin — kopiere dieses Verzeichnis, um dein eigenes Plugin zu starten",
+			"es": "Plugin de plantilla — copia este directorio para empezar tu propio plugin"
 		}
 	}
 }

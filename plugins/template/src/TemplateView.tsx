@@ -1,7 +1,9 @@
 import { usePluginAPI } from "./hooks"
+import { useTranslation } from "./i18n"
 
 export function TemplateView() {
 	const api = usePluginAPI()
+	const { t } = useTranslation()
 	const files = api.resource.sourceMeta?.files ?? []
 	const hdtplCount = api.resource.sourceMeta?.hdtplCount
 
@@ -10,14 +12,13 @@ export function TemplateView() {
 			<header>
 				<h1 className="text-lg font-semibold">{api.resource.name}</h1>
 				<p className="text-gray-500 dark:text-gray-400">
-					Rendered by the template plugin. Edit src/TemplateView.tsx to make it
-					your own.
+					{t("renderedBy")} {t("editHint")}
 				</p>
 			</header>
 			<p>
 				{hdtplCount !== undefined
-					? `${hdtplCount} .hdtpl file(s) — classified once by detect.`
-					: "No sourceMeta yet."}
+					? t("fileCount", { count: hdtplCount })
+					: t("noSourceMeta")}
 			</p>
 			<ul className="list-inside list-disc">
 				{files.map((file) => (

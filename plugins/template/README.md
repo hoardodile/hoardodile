@@ -43,6 +43,9 @@ pnpm dev
   `src/hooks.ts`.
 - `src/shared.ts` — the plugin schema (`PluginSchema`) typed once and
   shared between the server and client sides.
+- `src/i18n.ts` + `src/locales/` — plugin UI strings via
+  `createPluginTranslation`, one bundle per supported language (see
+  [Localization](#localization)).
 - `testdata/` — sample data for `pnpm dev`.
 - `__tests__/` — Vitest unit tests against `createResourceAPIFixture`.
 
@@ -111,6 +114,24 @@ git tag v<version> && git push origin v<version>
 
 Local installs (zip upload in **Settings → Plugins**) still work for
 private packages.
+
+## Localization
+
+The app is localized in five languages (**en, zh, ja, de, es**). A plugin
+can localize three surfaces:
+
+1. **Display name / description** — the `i18n` block in `manifest.json`
+   maps `name`/`description` (and any extra label keys) to a locale table;
+   the host picks the text for the user's UI language.
+2. **Plugin UI strings** — `src/i18n.ts` wraps `createPluginTranslation`
+   with one bundle per language in `src/locales/`; the hook starts in the
+   host's language and follows `languageChanged` pushes, falling back to
+   English for a language the plugin does not ship. `src/__tests__/locales.test.ts`
+   keeps the bundles in lockstep (key set, interpolation placeholders,
+   no untranslated English copy).
+3. **The marketplace readme** — see [Publishing a readme](#publishing-a-readme):
+   one `README.<locale>.md` per language, `README.md` as the English
+   fallback.
 
 ## Publishing a readme
 
