@@ -1,3 +1,4 @@
+import { createReadStream, ReadStream, read } from "node:fs"
 import { Readable } from "node:stream"
 import { err, ok, type Result } from "@hoardodile/sdk-types"
 
@@ -21,19 +22,19 @@ export function parseByteRange(header: string, totalSize: number): ParsedRange {
 	if (startRaw.length === 0 && endRaw.length === 0) return err()
 	if (startRaw.length === 0) {
 		const suffix = Number(endRaw)
-		if (!Number.isFinite(suffix) || suffix <= 0) return err()
+		if (!Number.isSafeInteger(suffix) || suffix <= 0) return err()
 		const length = Math.min(suffix, totalSize)
 		return ok({ start: totalSize - length, end: totalSize - 1 })
 	}
 	const start = Number(startRaw)
-	if (!Number.isFinite(start) || start < 0 || start >= totalSize) {
+	if (!Number.isSafeInteger(start) || start < 0 || start >= totalSize) {
 		return err()
 	}
 	if (endRaw.length === 0) {
 		return ok({ start, end: totalSize - 1 })
 	}
 	const end = Number(endRaw)
-	if (!Number.isFinite(end) || end < start) return err()
+	if (!Number.isSafeInteger(end) || end < start) return err()
 	return ok({ start, end: Math.min(end, totalSize - 1) })
 }
 
@@ -43,7 +44,31 @@ export function sliceStream(
 	start: number,
 	end: number,
 ): Readable {
-	return Readable.from(
+	if (
+		stream instanceof ReadStream &&
+		"fd" in stream &&
+		typeof stream.fd === "number" &&
+		stream.fd >= 0
+	) {
+		// Reuse the checked descriptor instead of reopening a replaceable pathname.
+		const ranged = createReadStream("", {
+			fd: stream.fd,
+			start,
+			end,
+			autoClose: true,
+			fs: {
+				read,
+				close(_fd, callback) {
+					// Only the original FileHandle stream owns this descriptor.
+					stream.destroy()
+					callback(null)
+				},
+			},
+		})
+		stream.once("error", (error) => ranged.destroy(error))
+		return ranged
+	}
+	const ranged = Readable.from(
 		(async function* sliceChunks() {
 			let pos = 0
 			for await (const chunk of stream) {
@@ -55,7 +80,10 @@ export function sliceStream(
 				const from = Math.max(0, start - chunkStart)
 				const to = Math.min(bytes.length, end - chunkStart + 1)
 				yield bytes.subarray(from, to)
+				if (chunkEnd > end) break
 			}
 		})(),
 	)
+	ranged.once("close", () => stream.destroy())
+	return ranged
 }

@@ -116,33 +116,20 @@ async function coversPluginImpl(app: FastifyInstance): Promise<void> {
 									req.headers["if-none-match"],
 								)
 							) {
+								entry.stream.destroy()
 								return reply
 							}
-							// Literal entries serve through a kernel-seeked
-							// window (the container's full-file stream is
-							// destroyed so the range request leaks no handle);
-							// virtual (archive-inner) entries stream the
-							// decompressed bytes.
-							if (entry.path !== undefined) {
+							try {
+								return await sendByteRangeWithHttpRange(
+									reply,
+									{ openStream: async () => entry.stream, size: entry.size },
+									contentType,
+									req.headers.range,
+									{ cacheControl: COVER_ORIGIN_CACHE_CONTROL },
+								)
+							} finally {
 								entry.stream.destroy()
 							}
-							return sendByteRangeWithHttpRange(
-								reply,
-								entry.path !== undefined
-									? {
-											path: entry.path,
-											start: 0,
-											end: entry.size - 1,
-											size: entry.size,
-										}
-									: {
-											openStream: async () => entry.stream,
-											size: entry.size,
-										},
-								contentType,
-								req.headers.range,
-								{ cacheControl: COVER_ORIGIN_CACHE_CONTROL },
-							)
 						} catch {
 							return noCover(reply)
 						}

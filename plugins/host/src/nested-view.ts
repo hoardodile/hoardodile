@@ -1,5 +1,3 @@
-import { createReadStream } from "node:fs"
-import { readFile } from "node:fs/promises"
 import { join } from "node:path"
 import type { Readable } from "node:stream"
 import { buffer } from "node:stream/consumers"
@@ -9,8 +7,8 @@ import {
 } from "./archive/extract-archive.ts"
 import type { NestedCdCache, NestedResolver } from "./archive/index.ts"
 import { createNestedResolver, splitVirtualPath } from "./archive/index.ts"
-import { readFileRange } from "./archive/zip-entries.ts"
 import type { ResourceContainer } from "./container.ts"
+import { createDirectoryContainer } from "./directory-container.ts"
 
 /**
  * Wrap a {@link ResourceContainer} so every read operation understands
@@ -43,8 +41,21 @@ export function createNestedAwareContainer(
 	base: ResourceContainer,
 	nestedCdCache?: NestedCdCache,
 	scope?: string,
-	extractCacheDir?: string,
+	extractionCache?: string | { directory: string; boundaryRoot?: string },
 ): ResourceContainer {
+	const extractCacheDir =
+		typeof extractionCache === "string"
+			? extractionCache
+			: extractionCache?.directory
+	const extracted =
+		extractCacheDir === undefined
+			? undefined
+			: createDirectoryContainer(extractCacheDir, {
+					boundaryRoot:
+						typeof extractionCache === "string"
+							? undefined
+							: extractionCache?.boundaryRoot,
+				})
 	const resolver = createNestedResolver(
 		{
 			sizeOf: (rel) => base.resolveByteRange(rel).then((r) => r?.size),
@@ -78,6 +89,8 @@ export function createNestedAwareContainer(
 		const work = readExistingManifest(
 			join(extractCacheDir!, outer, "index.json"),
 			outer,
+			async () =>
+				(await extracted!.readEntry(`${outer}/index.json`)).toString("utf8"),
 		).catch(() => undefined)
 		manifestMemo.set(key, work)
 		const entries = await work
@@ -87,7 +100,7 @@ export function createNestedAwareContainer(
 
 	type MaterializedEntry = {
 		readonly kind: "materialized"
-		readonly absPath: string
+		readonly relPath: string
 		readonly sizeBytes: number
 	}
 
@@ -100,16 +113,19 @@ export function createNestedAwareContainer(
 	async function resolveMaterialized(
 		rel: string,
 	): Promise<MaterializedEntry | undefined> {
-		if (extractCacheDir === undefined) return undefined
+		if (extracted === undefined) return undefined
 		const parts = splitVirtualPath(rel)
 		if (parts === undefined) return undefined
 		const { outer, inner } = parts
 		const manifest = await readManifest(outer)
 		const entry = manifest?.find((e) => e.path === inner)
 		if (entry === undefined) return undefined
+		const relPath = `${outer}/${inner}`
+		const range = await extracted.resolveByteRange(relPath)
+		if (!range || range.size !== entry.sizeBytes) return undefined
 		return {
 			kind: "materialized",
-			absPath: join(extractCacheDir, outer, inner),
+			relPath,
 			sizeBytes: entry.sizeBytes,
 		}
 	}
@@ -131,9 +147,7 @@ export function createNestedAwareContainer(
 			return base.readEntrySlice(rel, start, end)
 		}
 		if (resolved.kind === "materialized") {
-			// readEntrySlice's `end` is exclusive; readFileRange's is
-			// inclusive.
-			return readFileRange(resolved.absPath, start, end - 1)
+			return extracted!.readEntrySlice(resolved.relPath, start, end)
 		}
 		// Slice the decompressed bytes: consume the stream only up to
 		// `end` so head reads (sniff/probe windows) stay bounded.
@@ -151,11 +165,7 @@ export function createNestedAwareContainer(
 			return base.openEntryStream(rel)
 		}
 		if (resolved.kind === "materialized") {
-			return {
-				stream: createReadStream(resolved.absPath),
-				size: resolved.sizeBytes,
-				path: resolved.absPath,
-			}
+			return extracted!.openEntryStream(resolved.relPath)
 		}
 		return { stream: resolved.openStream(), size: resolved.entry.sizeBytes }
 	}
@@ -166,7 +176,7 @@ export function createNestedAwareContainer(
 			return base.readEntry(rel)
 		}
 		if (resolved.kind === "materialized") {
-			return readFile(resolved.absPath)
+			return extracted!.readEntry(resolved.relPath)
 		}
 		return buffer(resolved.openStream())
 	}
@@ -192,7 +202,7 @@ export function createNestedAwareContainer(
 		if (resolved.kind === "materialized") {
 			// Extracted files are real on-disk entries — libvips/ffmpeg
 			// can mmap/open them directly instead of streaming.
-			return resolved.absPath
+			return extracted!.resolveSeekablePath?.(resolved.relPath)
 		}
 		return undefined
 	}

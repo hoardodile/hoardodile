@@ -1,12 +1,13 @@
-import { createReadStream } from "node:fs"
-import { open, readdir, stat } from "node:fs/promises"
-import { isAbsolute, join, normalize, resolve, sep } from "node:path"
+import { readdir } from "node:fs/promises"
+import { join } from "node:path"
 import type { Readable } from "node:stream"
 import type { ResourceContainer } from "./container.ts"
+import { createDirectoryReader, isMissingEntry } from "./directory-reader.ts"
 import {
 	naturalSort,
+	ORDER_MANIFEST_NAME,
 	orderEntries,
-	readOrderManifest,
+	parseOrderManifest,
 } from "./hoard/order-manifest.ts"
 
 /**
@@ -15,18 +16,27 @@ import {
  * resources exist, or from the CLI. Reads only; the directory is treated
  * as an immutable snapshot for the container's lifetime.
  */
-export function createDirectoryContainer(dir: string): ResourceContainer {
-	async function resolvePath(relPath: string): Promise<string> {
-		return resolveSafeImportPath(dir, relPath)
+export function createDirectoryContainer(
+	dir: string,
+	options: { boundaryRoot?: string } = {},
+): ResourceContainer {
+	const reader = createDirectoryReader(dir, options.boundaryRoot)
+	async function readEntry(relPath: string): Promise<Buffer> {
+		const { handle } = await reader.openFile(relPath)
+		try {
+			return await handle.readFile()
+		} finally {
+			await handle.close()
+		}
 	}
 
 	return {
 		async listEntries(): Promise<readonly string[]> {
 			const out: string[] = []
 			async function collect(current: string, prefix: string): Promise<void> {
-				const entries = await readdir(join(dir, current), {
-					withFileTypes: true,
-				}).catch(() => [] as readonly never[])
+				const resolved = await reader.entry(current, true)
+				const entries = await readdir(resolved.path, { withFileTypes: true })
+				await reader.entry(current, true)
 				for (const e of entries) {
 					if (e.name.startsWith(".")) continue
 					if (e.name.includes(".uploading-")) continue
@@ -40,10 +50,21 @@ export function createDirectoryContainer(dir: string): ResourceContainer {
 					}
 				}
 			}
-			await collect(".", "")
+			try {
+				await collect("", "")
+			} catch (error) {
+				if (!isMissingEntry(error)) throw error
+			}
 			// An explicit order manifest wins when it validates against
 			// this listing; otherwise fall back to the natural name sort.
-			const manifest = await readOrderManifest(dir)
+			let manifest: readonly string[] | undefined
+			try {
+				manifest = parseOrderManifest(
+					(await readEntry(ORDER_MANIFEST_NAME)).toString("utf8"),
+				)
+			} catch (error) {
+				if (!isMissingEntry(error)) throw error
+			}
 			if (manifest !== undefined) {
 				const ordered = orderEntries(manifest, out)
 				if (ordered !== undefined) return ordered
@@ -51,23 +72,14 @@ export function createDirectoryContainer(dir: string): ResourceContainer {
 			return naturalSort(out)
 		},
 
-		async readEntry(relPath: string): Promise<Buffer> {
-			const safe = await resolvePath(relPath)
-			const handle = await open(safe, "r")
-			try {
-				return await handle.readFile()
-			} finally {
-				await handle.close()
-			}
-		},
+		readEntry,
 
 		async readEntrySlice(
 			relPath: string,
 			start: number,
 			end: number,
 		): Promise<Buffer> {
-			const safe = await resolvePath(relPath)
-			const handle = await open(safe, "r")
+			const { handle } = await reader.openFile(relPath)
 			try {
 				const { size } = await handle.stat()
 				const clampedStart = Math.min(Math.max(0, start), size)
@@ -88,54 +100,35 @@ export function createDirectoryContainer(dir: string): ResourceContainer {
 			readonly mtimeMs?: number
 			readonly path?: string
 		}> {
-			const safe = await resolvePath(relPath)
-			const info = await stat(safe)
+			const { handle, info, path } = await reader.openFile(relPath)
 			return {
-				stream: createReadStream(safe),
+				stream: handle.createReadStream({ autoClose: true }),
 				size: info.size,
 				mtimeMs: info.mtimeMs,
-				path: safe,
+				path,
 			}
 		},
 
 		async resolveByteRange(
 			relPath: string,
 		): Promise<{ readonly size: number } | undefined> {
-			const safe = await resolvePath(relPath)
-			const info = await stat(safe).catch(() => undefined)
-			return info === undefined ? undefined : { size: info.size }
+			try {
+				return { size: (await reader.entry(relPath)).info.size }
+			} catch (error) {
+				if (isMissingEntry(error)) return undefined
+				throw error
+			}
 		},
 
 		async resolveSeekablePath(relPath: string): Promise<string | undefined> {
-			const safe = await resolvePath(relPath)
-			const info = await stat(safe).catch(() => undefined)
-			return info?.isFile() === true ? safe : undefined
+			try {
+				return (await reader.entry(relPath)).path
+			} catch (error) {
+				if (isMissingEntry(error)) return undefined
+				throw error
+			}
 		},
 	}
 }
 
-/**
- * Resolve a plugin-supplied relative path against an import directory,
- * rejecting attempts to escape the directory or use absolute paths.
- */
-export function resolveSafeImportPath(dir: string, relPath: string): string {
-	if (relPath.length === 0) {
-		throw new Error("path is empty")
-	}
-	if (relPath.includes("\0")) {
-		throw new Error("path contains null byte")
-	}
-	if (isAbsolute(relPath)) {
-		throw new Error("absolute paths are not allowed")
-	}
-	const normalized = normalize(relPath)
-	if (normalized.startsWith("..") || normalized === "..") {
-		throw new Error("path escapes import directory")
-	}
-	const root = resolve(dir)
-	const candidate = resolve(root, normalized)
-	if (candidate !== root && !candidate.startsWith(root + sep)) {
-		throw new Error("path escapes import directory")
-	}
-	return candidate
-}
+export { resolveSafeImportPath } from "./directory-reader.ts"

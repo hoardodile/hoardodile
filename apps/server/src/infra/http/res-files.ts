@@ -1,8 +1,9 @@
-import { createReadStream } from "node:fs"
-import { stat } from "node:fs/promises"
 import { extname } from "node:path"
-import type { Readable } from "node:stream"
-import type { ResourceContainer } from "@hoardodile/host"
+import { Readable } from "node:stream"
+import {
+	createDirectoryContainer,
+	type ResourceContainer,
+} from "@hoardodile/host"
 import { streamStoredZip, type ZipStreamEntry } from "@hoardodile/host/hoard"
 import { err, isErr, ok, type Result } from "@hoardodile/sdk-types"
 import {
@@ -17,7 +18,7 @@ import { DOWNLOAD_CONTENT_TYPES } from "@hoardodile/shared"
 
 import type { FastifyInstance, FastifyPluginAsync, FastifyReply } from "fastify"
 import { buildTrashedArtifactView } from "src/domain/res/trash-fallback.ts"
-import { assertInside, assertSafeSegment } from "src/infra/storage/paths.ts"
+import { assertSafeSegment } from "src/infra/storage/paths.ts"
 import {
 	buildAttachmentContentDisposition,
 	bulkPackFolderName,
@@ -411,15 +412,20 @@ async function resFilesPluginImpl(app: FastifyInstance): Promise<void> {
 			const rangeHeader = req.headers.range
 			if (rangeHeader === undefined || !rangeHeader.startsWith("bytes=")) {
 				if (etag !== undefined && req.headers["if-none-match"] === etag) {
+					entry.stream.destroy()
 					reply.code(304)
 					return reply.send()
 				}
 				reply.header("content-length", String(entry.size))
-				if (entry.size === 0) return reply.send(Buffer.alloc(0))
+				if (entry.size === 0) {
+					entry.stream.destroy()
+					return reply.send(Buffer.alloc(0))
+				}
 				return reply.send(entry.stream)
 			}
 			const parsedRange = parseByteRange(rangeHeader, entry.size)
 			if (isErr(parsedRange)) {
+				entry.stream.destroy()
 				reply.header("content-range", `bytes */${entry.size}`)
 				return sendError(
 					reply,
@@ -432,20 +438,7 @@ async function resFilesPluginImpl(app: FastifyInstance): Promise<void> {
 			reply.code(206)
 			reply.header("content-range", `bytes ${start}-${end}/${entry.size}`)
 			reply.header("content-length", String(end - start + 1))
-			// Literal entries stream through a kernel-seeked window — the
-			// generic sliceStream would drain the whole file from position
-			// 0 and discard the prefix (a 90% seek reads 90% of the file).
-			// The container's full-file stream is unused here; destroy it
-			// so the range request never leaks an open handle. Virtual
-			// entries have no byte window and keep the decompressed-stream
-			// slice.
-			let stream: Readable
-			if (entry.path !== undefined) {
-				entry.stream.destroy()
-				stream = createReadStream(entry.path, { start, end })
-			} else {
-				stream = sliceStream(entry.stream, start, end)
-			}
+			const stream = sliceStream(entry.stream, start, end)
 			return reply.send(stream)
 		},
 	)
@@ -472,12 +465,13 @@ async function resFilesPluginImpl(app: FastifyInstance): Promise<void> {
 				view.resId,
 				view.fileVersion,
 			)
-			const target = assertInside(
-				extractedRoot,
-				joinPath(extractedRoot, filename),
-			)
-			const info = await stat(target).catch(() => undefined)
-			if (info === undefined || !info.isFile()) {
+			const extracted = createDirectoryContainer(extractedRoot, {
+				boundaryRoot: app.paths.root,
+			})
+			const entry = await extracted
+				.openEntryStream(filename)
+				.catch(() => undefined)
+			if (entry === undefined) {
 				return sendError(
 					reply,
 					404,
@@ -490,7 +484,7 @@ async function resFilesPluginImpl(app: FastifyInstance): Promise<void> {
 				DOWNLOAD_CONTENT_TYPES[ext] ?? "application/octet-stream"
 			reply.header("content-type", contentType)
 			reply.header("cache-control", "private, max-age=31536000, immutable")
-			return reply.send(createReadStream(target))
+			return reply.send(entry.stream)
 		},
 	)
 
@@ -526,19 +520,29 @@ export const resFilesPlugin = resFilesPluginImpl satisfies FastifyPluginAsync
  * packs trashed resource content the same way.
  */
 export async function packViewEntries(
-	view: Pick<ResourceContainer, "openEntryStream">,
+	view: Pick<ResourceContainer, "openEntryStream" | "resolveByteRange">,
 	entries: readonly string[],
 	folderPrefix?: string,
 ): Promise<ZipStreamEntry[]> {
 	const out: ZipStreamEntry[] = []
 	for (const rel of entries) {
-		const entry = await view.openEntryStream(rel).catch(() => undefined)
+		const entry = await view.resolveByteRange(rel).catch(() => undefined)
 		if (entry === undefined) continue
 		const name = rel.replace(/\\/g, "/")
 		out.push({
 			name: folderPrefix !== undefined ? `${folderPrefix}/${name}` : name,
 			size: entry.size,
-			openStream: () => entry.stream,
+			openStream: () =>
+				Readable.from(
+					(async function* () {
+						const opened = await view.openEntryStream(rel)
+						try {
+							yield* opened.stream
+						} finally {
+							opened.stream.destroy()
+						}
+					})(),
+				),
 		})
 	}
 	return out
@@ -565,11 +569,15 @@ async function serveVirtualEntry(
 
 	if (rangeHeader === undefined || !rangeHeader.startsWith("bytes=")) {
 		reply.header("content-length", String(size))
-		if (size === 0) return reply.send(Buffer.alloc(0))
+		if (size === 0) {
+			stream.destroy()
+			return reply.send(Buffer.alloc(0))
+		}
 		return reply.send(stream)
 	}
 	const parsedRange = parseByteRange(rangeHeader, size)
 	if (isErr(parsedRange)) {
+		stream.destroy()
 		reply.header("content-range", `bytes */${size}`)
 		return sendError(
 			reply,
@@ -583,10 +591,6 @@ async function serveVirtualEntry(
 	reply.header("content-range", `bytes ${start}-${end}/${size}`)
 	reply.header("content-length", String(end - start + 1))
 	return reply.send(sliceStream(stream, start, end))
-}
-
-function joinPath(...segments: readonly string[]): string {
-	return segments.join("/").replace(/\\/g, "/")
 }
 
 function sendJson(reply: FastifyReply, value: unknown): FastifyReply {

@@ -3,7 +3,7 @@ import { mkdir, readFile, rename, rm, stat, writeFile } from "node:fs/promises"
 import { join } from "node:path"
 import type { MediaKind } from "@hoardodile/sdk-types"
 import { fileTypeFromName } from "@hoardodile/sdk-types"
-
+import { createDirectoryReader, isMissingEntry } from "../directory-reader.ts"
 import { invalid } from "../errors.ts"
 import {
 	extractSevenZipInto,
@@ -98,6 +98,7 @@ export type ExtractArchiveDeps = {
 	 * (e.g. `<cacheRoot>/resources/<id>/extracted/v<N>/archives`).
 	 */
 	readonly cacheDir: string
+	readonly cacheBoundaryRoot?: string
 	/** Cumulative uncompressed byte budget for one archive. */
 	readonly maxBytes: number
 	/** Entry-count budget for one archive. */
@@ -137,6 +138,20 @@ export type ArchiveExtractor = {
 export function createArchiveExtractor(
 	deps: ExtractArchiveDeps,
 ): ArchiveExtractor {
+	const cacheReader = createDirectoryReader(
+		deps.cacheDir,
+		deps.cacheBoundaryRoot,
+	)
+	async function readCompletion(markerPath: string, archiveName: string) {
+		return readExistingManifest(markerPath, archiveName, async () => {
+			const { handle } = await cacheReader.openFile(`${archiveName}/index.json`)
+			try {
+				return await handle.readFile("utf8")
+			} finally {
+				await handle.close()
+			}
+		})
+	}
 	const resolver = createNestedResolver(deps.outer, {
 		cdCache: deps.nestedCdCache,
 	})
@@ -164,7 +179,7 @@ export function createArchiveExtractor(
 			)
 		}
 		const markerPath = join(deps.cacheDir, archiveName, "index.json")
-		const existing = await readExistingManifest(markerPath, archiveName)
+		const existing = await readCompletion(markerPath, archiveName)
 		if (existing !== undefined) return { entries: existing }
 		if (size > 0) {
 			const head = await deps.outer.readSlice(
@@ -344,7 +359,7 @@ export function createArchiveExtractor(
 		// any listing, and the manifest is the source of truth for the
 		// materialized virtual paths (see nested-view.ts).
 		const markerPath = join(deps.cacheDir, archiveName, "index.json")
-		const extracted = await readExistingManifest(markerPath, archiveName)
+		const extracted = await readCompletion(markerPath, archiveName)
 		if (extracted !== undefined) {
 			return extracted.map((e) => ({ name: e.path, sizeBytes: e.sizeBytes }))
 		}
@@ -439,8 +454,13 @@ type MutableExtractedEntry = {
 export async function readExistingManifest(
 	markerPath: string,
 	archiveName: string,
+	readText: (path: string) => Promise<string> = (path) =>
+		readFile(path, "utf8"),
 ): Promise<readonly ExtractedEntry[] | undefined> {
-	const raw = await readFile(markerPath, "utf8").catch(() => undefined)
+	const raw = await readText(markerPath).catch((error) => {
+		if (isMissingEntry(error)) return undefined
+		throw error
+	})
 	if (raw === undefined) return undefined
 	try {
 		const parsed = JSON.parse(raw) as {

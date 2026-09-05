@@ -111,6 +111,7 @@ export function buildResourceAccess(deps: ResourceAccessDeps): ResourceAccess {
 			...mediaProbes,
 			probeCache: deps.probeCache,
 			cacheScope: `${resId}:${fileVersion}`,
+			extractCacheBoundaryRoot: deps.paths.root,
 			extractCacheDir: deps.paths.local.resExtractedArchivesDir(
 				resId,
 				fileVersion,

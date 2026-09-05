@@ -92,6 +92,8 @@ export type CreatePluginResourceAPIDeps = {
 	 * a clear message.
 	 */
 	readonly extractCacheDir?: string
+	/** Trusted storage boundary for materialized files and their parent directories. */
+	readonly extractCacheBoundaryRoot?: string
 	/**
 	 * Hard caps for one `extractArchive` call. Defaults to
 	 * {@link DEFAULT_PLUGIN_EXTRACT_MAX_BYTES} /
@@ -136,9 +138,25 @@ export function createPluginResourceAPI<
 		deps.view,
 		deps.nestedCdCache,
 		deps.cacheScope,
-		deps.extractCacheDir,
+		deps.extractCacheDir === undefined
+			? undefined
+			: {
+					directory: deps.extractCacheDir,
+					boundaryRoot: deps.extractCacheBoundaryRoot,
+				},
 	)
 	const maxReadFileBytes = deps.maxReadFileBytes ?? PLUGIN_READ_FILE_MAX_BYTES
+	async function withEntryStream<T>(
+		path: string,
+		read: (stream: Readable) => Promise<T>,
+	): Promise<T> {
+		const { stream } = await view.openEntryStream(path)
+		try {
+			return await read(stream)
+		} finally {
+			stream.destroy()
+		}
+	}
 
 	const extractor: ArchiveExtractor | undefined =
 		deps.extractCacheDir === undefined
@@ -151,6 +169,7 @@ export function createPluginResourceAPI<
 							deps.view.readEntrySlice(rel, start, end),
 					},
 					cacheDir: deps.extractCacheDir,
+					cacheBoundaryRoot: deps.extractCacheBoundaryRoot,
 					maxBytes: deps.maxExtractBytes ?? DEFAULT_PLUGIN_EXTRACT_MAX_BYTES,
 					maxEntries:
 						deps.maxExtractEntries ?? DEFAULT_PLUGIN_EXTRACT_MAX_ENTRIES,
@@ -242,8 +261,9 @@ export function createPluginResourceAPI<
 			}
 		}
 		try {
-			const { stream } = await view.openEntryStream(path)
-			const probed = await probeImage(stream, type.ext)
+			const probed = await withEntryStream(path, (stream) =>
+				probeImage(stream, type.ext),
+			)
 			if (probed !== undefined) return imageResult(type.mime, probed)
 		} catch (err) {
 			console.warn(
@@ -273,8 +293,9 @@ export function createPluginResourceAPI<
 			return { kind: "unknown", reason: "unsupported" }
 		}
 		try {
-			const { stream } = await view.openEntryStream(path)
-			return await probeAv(stream, { mime: type.mime, inputFormat })
+			return await withEntryStream(path, (stream) =>
+				probeAv(stream, { mime: type.mime, inputFormat }),
+			)
 		} catch {
 			return { kind: "unknown", reason: "failed" }
 		}
@@ -319,8 +340,7 @@ export function createPluginResourceAPI<
 		path: string,
 		algo: "md5" | "sha256",
 	): Promise<string> {
-		const { stream } = await view.openEntryStream(path)
-		return hashStream(stream, algo)
+		return withEntryStream(path, (stream) => hashStream(stream, algo))
 	}
 
 	async function computeImageHashesScoped(
@@ -333,15 +353,15 @@ export function createPluginResourceAPI<
 		if (type?.kind !== "image") return undefined
 		const result: Partial<Record<ImageHashKind, string>> = {}
 		if (kinds.includes("sha256")) {
-			const { stream } = await view.openEntryStream(path)
-			result.sha256 = await hashStream(stream, "sha256")
+			result.sha256 = await withEntryStream(path, (stream) =>
+				hashStream(stream, "sha256"),
+			)
 		}
 		const perceptual = kinds.filter((kind) =>
 			PERCEPTUAL_HASH_KINDS.includes(kind),
 		)
 		if (perceptual.length > 0) {
-			const { stream } = await view.openEntryStream(path)
-			const gray = await decodeGrayGrid(stream)
+			const gray = await withEntryStream(path, decodeGrayGrid)
 			if (gray !== undefined && grayStddev(gray) >= MIN_PERCEPTUAL_STDDEV) {
 				if (perceptual.includes("dhash")) result.dhash = computeDHash(gray)
 				if (perceptual.includes("phash")) result.phash = computePHash(gray)

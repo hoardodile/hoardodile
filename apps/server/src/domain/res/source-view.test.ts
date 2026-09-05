@@ -1,5 +1,14 @@
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs"
-import { mkdir, readFile, rm, stat, writeFile } from "node:fs/promises"
+import {
+	link,
+	mkdir,
+	readFile,
+	realpath,
+	rm,
+	stat,
+	symlink,
+	writeFile,
+} from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { buffer } from "node:stream/consumers"
@@ -106,6 +115,76 @@ describe("readEntrySlice", () => {
 })
 
 describe("withMaterializedEntry literal path passthrough", () => {
+	test("rejects linked files before invoking native media readers", async () => {
+		const root = mkdtempSync(join(tmpdir(), "src-view-boundary-"))
+		try {
+			const paths = createStoragePaths({ root, latestVersion: 1 })
+			const resId = "res-boundary"
+			const data = paths.latest.resourceData(resId)
+			const outside = join(root, "private")
+			await mkdir(data, { recursive: true })
+			await mkdir(outside)
+			await writeFile(join(outside, "secret.mp4"), "private-data")
+			await symlink(
+				outside,
+				join(data, "linked"),
+				process.platform === "win32" ? "junction" : "dir",
+			)
+			const view = buildSourceArtifactView({ paths }, resId, 1, {
+				kind: "dir",
+				dirPath: data,
+			})
+			let invoked = false
+			await expect(
+				view.withMaterializedEntry("linked/secret.mp4", async (path) => {
+					invoked = true
+					return readFile(path, "utf8")
+				}),
+			).rejects.toThrow("Resource path is unsafe")
+			expect(invoked).toBe(false)
+			await expect(view.openEntryStream("linked/secret.mp4")).rejects.toThrow(
+				"Resource path is unsafe",
+			)
+			await expect(
+				view.resolveSeekablePath?.("linked/secret.mp4"),
+			).rejects.toThrow("Resource path is unsafe")
+			await expect(
+				view.readEntrySlice("linked/secret.mp4", 0, 3),
+			).rejects.toThrow("Resource path is unsafe")
+		} finally {
+			rmSync(root, { recursive: true, force: true })
+		}
+	})
+
+	test("rejects a resource directory redirected outside versions", async () => {
+		const root = mkdtempSync(join(tmpdir(), "src-view-ancestor-"))
+		try {
+			const paths = createStoragePaths({ root, latestVersion: 1 })
+			const resId = "res-boundary"
+			const outside = join(root, "private")
+			await mkdir(join(outside, "data"), { recursive: true })
+			await writeFile(join(outside, "data", "secret.txt"), "private-data")
+			await mkdir(paths.latest.resources(), { recursive: true })
+			await symlink(
+				outside,
+				paths.latest.resource(resId),
+				process.platform === "win32" ? "junction" : "dir",
+			)
+			const view = buildSourceArtifactView({ paths }, resId, 1, {
+				kind: "dir",
+				dirPath: paths.latest.resourceData(resId),
+			})
+			await expect(view.listEntries()).rejects.toThrow(
+				"Resource path is unsafe",
+			)
+			await expect(view.readEntry("secret.txt")).rejects.toThrow(
+				"Resource path is unsafe",
+			)
+		} finally {
+			rmSync(root, { recursive: true, force: true })
+		}
+	})
+
 	test("hands the real file path over with no copy", async () => {
 		const root = mkdtempSync(join(tmpdir(), "src-view-"))
 		try {
@@ -134,7 +213,9 @@ describe("withMaterializedEntry literal path passthrough", () => {
 				async (path) => path,
 			)
 			expect(first).toBe(second)
-			expect(first).toBe(join(paths.latest.resource(resId), "clip.mp4"))
+			expect(first).toBe(
+				await realpath(join(paths.latest.resource(resId), "clip.mp4")),
+			)
 			const cached = await readFile(first, "utf8")
 			expect(cached).toBe("video-bytes")
 		} finally {
@@ -144,6 +225,38 @@ describe("withMaterializedEntry literal path passthrough", () => {
 })
 
 describe("withMaterializedEntry virtual extraction", () => {
+	test("rejects a redirected materialized media cache before calling native readers", async () => {
+		const root = mkdtempSync(join(tmpdir(), "src-view-media-cache-boundary-"))
+		try {
+			const paths = createStoragePaths({ root, latestVersion: 1 })
+			const data = paths.latest.resourceData("res-cache")
+			await mkdir(data, { recursive: true })
+			await writeFile(join(data, "note!part.txt"), "inside")
+			const view = buildSourceArtifactView({ paths }, "res-cache", 1, {
+				kind: "dir",
+				dirPath: data,
+			})
+			const cached = await view.withMaterializedEntry(
+				"note!part.txt",
+				async (path) => path,
+			)
+			await rm(cached)
+			const outside = join(root, "private.txt")
+			await writeFile(outside, "secret")
+			await link(outside, cached)
+			let invoked = false
+			await expect(
+				view.withMaterializedEntry("note!part.txt", async (path) => {
+					invoked = true
+					return readFile(path, "utf8")
+				}),
+			).rejects.toThrow("Resource path is unsafe")
+			expect(invoked).toBe(false)
+		} finally {
+			rmSync(root, { recursive: true, force: true })
+		}
+	})
+
 	test("parallel views share one extraction of a nested entry", async () => {
 		const root = mkdtempSync(join(tmpdir(), "src-view-race-"))
 		try {
@@ -253,7 +366,8 @@ describe("nested cache scoping", () => {
 			)
 
 			const literal = await view.openEntryStream("a.txt")
-			expect(literal.path).toBe(join(dir, "a.txt"))
+			expect(literal.path).toBe(await realpath(join(dir, "a.txt")))
+			await buffer(literal.stream)
 			// Virtual entries have no byte window — no path, decompressed stream.
 			const virtual = await view.openEntryStream("book.cbz!p.txt")
 			expect(virtual.path).toBeUndefined()

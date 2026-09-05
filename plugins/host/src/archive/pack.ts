@@ -1,6 +1,6 @@
 import { createWriteStream, readdirSync } from "node:fs"
 import { join, resolve, sep } from "node:path"
-import type { Readable } from "node:stream"
+import { Readable } from "node:stream"
 import { pipeline } from "node:stream/promises"
 import yazl from "yazl"
 
@@ -28,18 +28,29 @@ export type ZipStreamEntry = {
  */
 export function streamStoredZip(entries: readonly ZipStreamEntry[]) {
 	const zip = new yazl.ZipFile()
+	const output = zip.outputStream
+	if (!(output instanceof Readable))
+		throw new Error("ZIP output must be a Node readable stream")
+	const streams: Readable[] = []
+	zip.on("error", (error: Error) => output.destroy(error))
+	output.once("close", () => {
+		for (const stream of streams) stream.destroy()
+	})
 	for (const entry of entries) {
 		if (entry.size === 0) {
 			zip.addBuffer(Buffer.alloc(0), entry.name, { compress: false })
 			continue
 		}
-		zip.addReadStream(entry.openStream(), entry.name, {
+		const stream = entry.openStream()
+		streams.push(stream)
+		stream.once("error", (error) => output.destroy(error))
+		zip.addReadStream(stream, entry.name, {
 			compress: false,
 			size: entry.size,
 		})
 	}
 	zip.end()
-	return zip.outputStream
+	return output
 }
 
 /**

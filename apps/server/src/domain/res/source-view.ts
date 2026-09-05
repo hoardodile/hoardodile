@@ -1,11 +1,11 @@
 import { rm, stat } from "node:fs/promises"
+import { basename, dirname } from "node:path"
 import {
 	createDirectoryContainer,
 	createNestedAwareContainer,
 	materializeFile,
 	type NestedCdCache,
 	type ResourceContainer,
-	resolveSafeImportPath,
 } from "@hoardodile/host"
 import { notFound } from "@hoardodile/shared"
 import type { StoragePaths } from "src/infra/storage/paths.ts"
@@ -143,10 +143,13 @@ function buildDirView(
 	// so `/files/<token>/outer!inner` addresses every container kind. Zip
 	// stays on the central-directory stream even without a cache entry.
 	const container = createNestedAwareContainer(
-		createDirectoryContainer(dirPath),
+		createDirectoryContainer(dirPath, { boundaryRoot: deps.paths.root }),
 		deps.nestedCdCache,
 		deps.cacheScope,
-		deps.paths.local.resExtractedArchivesDir(resId, fileVersion),
+		{
+			directory: deps.paths.local.resExtractedArchivesDir(resId, fileVersion),
+			boundaryRoot: deps.paths.root,
+		},
 	)
 
 	/**
@@ -226,9 +229,17 @@ function buildDirView(
 			fileVersion,
 			relPath,
 		)
-		if (await statValidCache(cachePath, size)) {
-			return cachePath
+		const cache = createDirectoryContainer(dirname(cachePath), {
+			boundaryRoot: deps.paths.root,
+		})
+		const name = basename(cachePath)
+		const checkedPath = async () => {
+			const path = await cache.resolveSeekablePath?.(name)
+			return path ?? missing(relPath)
 		}
+		const existing = await cache.resolveByteRange(name)
+		if (existing?.size === size) return checkedPath()
+		if (existing) await rm(await checkedPath(), { force: true })
 		const inflightKey = extractInflightKey(resId, fileVersion, relPath)
 		return materializeFile({
 			key: inflightKey,
@@ -236,7 +247,7 @@ function buildDirView(
 				container.openEntryStream(relPath).then((entry) => entry.stream),
 			target: cachePath,
 			expectedSize: size,
-		}).then(() => cachePath)
+		}).then(checkedPath)
 	}
 
 	async function withMaterializedEntry<T>(
@@ -252,7 +263,9 @@ function buildDirView(
 		if (!relPath.includes("!")) {
 			// Literal entry: the file is already on disk — hand the path
 			// over with no copy, so ffmpeg/ffprobe can seek the real file.
-			return fn(resolveSafeImportPath(dirPath, relPath))
+			const path = await container.resolveSeekablePath?.(relPath)
+			if (path === undefined) return missing(relPath)
+			return fn(path)
 		}
 		const cachePath = await materializeToCache(relPath, size)
 		return fn(cachePath)
@@ -291,17 +304,4 @@ export async function locateSourceArtifact(
 	const info = await stat(dirPath).catch(() => undefined)
 	if (info?.isDirectory() !== true) return { kind: "empty" }
 	return { kind: "dir", dirPath }
-}
-
-async function statValidCache(
-	cachePath: string,
-	expectedSize: number,
-): Promise<boolean> {
-	const info = await stat(cachePath).catch(() => undefined)
-	if (!info?.isFile()) return false
-	if (info.size !== expectedSize) {
-		await rm(cachePath, { force: true }).catch(() => {})
-		return false
-	}
-	return true
 }

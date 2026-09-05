@@ -1,4 +1,5 @@
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs"
+import { realpath } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { buffer } from "node:stream/consumers"
@@ -58,7 +59,7 @@ describe("withThumbInput", () => {
 		await withThumbInput(container, "clip.mp4", "video", async (input) => {
 			expect(input.kind).toBe("path")
 			if (input.kind === "path") {
-				expect(input.path).toBe(join(root, "clip.mp4"))
+				expect(input.path).toBe(await realpath(join(root, "clip.mp4")))
 			}
 			return "ok"
 		})
@@ -73,7 +74,7 @@ describe("withThumbInput", () => {
 		await withThumbInput(container, "big.png", "image", async (input) => {
 			expect(input.kind).toBe("path")
 			if (input.kind === "path") {
-				expect(input.path).toBe(join(root, "big.png"))
+				expect(input.path).toBe(await realpath(join(root, "big.png")))
 			}
 			return "ok"
 		})

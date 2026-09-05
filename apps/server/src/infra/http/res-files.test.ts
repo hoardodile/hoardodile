@@ -193,6 +193,49 @@ describe("resource files HTTP", () => {
 		expect(escapeReq.statusCode).toBeLessThan(500)
 	})
 
+	test("refuses junction escapes through original, range, and extracted file routes", async () => {
+		const { mkdir, symlink, writeFile } = await import("node:fs/promises")
+		await seedResourceArtifact(
+			{ db: built.db, paths: built.storagePaths },
+			id,
+			[{ name: "inside.txt", bytes: Buffer.from("inside") }],
+		)
+		const outside = join(root, "private")
+		await mkdir(outside)
+		await writeFile(join(outside, "secret.txt"), "private-outside-marker")
+		const linkType = process.platform === "win32" ? "junction" : "dir"
+		await symlink(
+			outside,
+			join(built.storagePaths.latest.resourceData(id), "linked"),
+			linkType,
+		)
+		const extracted = built.storagePaths.local.resExtractedArchivesDir(id, 1)
+		await mkdir(extracted, { recursive: true })
+		await symlink(outside, join(extracted, "linked"), linkType)
+		for (const request of [
+			{
+				url: `/api/resources/${id}/files/linked/secret.txt`,
+				headers: { cookie },
+			},
+			{
+				url: `/api/resources/${id}/files/linked/secret.txt`,
+				headers: { cookie, range: "bytes=0-5" },
+			},
+			{
+				url: `/api/resources/${id}/extracted/linked/secret.txt`,
+				headers: { cookie },
+			},
+		]) {
+			const result = await built.app.inject({
+				method: "GET",
+				remoteAddress: REMOTE_ADDR,
+				...request,
+			})
+			expect(result.statusCode).toBe(404)
+			expect(result.body).not.toContain("private-outside-marker")
+		}
+	})
+
 	test("GET /files serves materialized non-zip container entries", async () => {
 		// A real artifact dir makes the source view a `buildDirView`, which
 		// wires the plugin extraction cache into `outer!inner` addressing.
@@ -339,14 +382,10 @@ describe("resource files HTTP", () => {
 			headers: { cookie, range: "bytes=4-10" },
 		})
 		expect(res.statusCode).toBe(206)
-		// The literal file must be served through a kernel-seeked window —
-		// a regression back to sliceStream would open without start/end
-		// and drain the whole prefix. (The container also opens one
-		// full-file stream per request for size/mtime; the windowed call
-		// is the one that carries the range.)
+		// Range reads must seek on the verified descriptor, not reopen the path.
 		const windowedCalls = createReadStreamMock.mock.calls.filter(
 			(call) =>
-				String(call[0]).endsWith("a.png") &&
+				typeof (call[1] as { fd?: unknown } | undefined)?.fd === "number" &&
 				typeof (call[1] as { start?: unknown } | undefined)?.start === "number",
 		)
 		expect(windowedCalls.length).toBeGreaterThan(0)
