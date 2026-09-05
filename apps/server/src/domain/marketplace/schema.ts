@@ -31,23 +31,6 @@ export const marketRegistryFile = z.object({
 })
 export type MarketRegistryFile = z.infer<typeof marketRegistryFile>
 
-/** GitHub `releases/latest` payload — the only fields the market reads. */
-export const githubReleasePayload = z.object({
-	tag_name: z.string().min(1),
-	html_url: z.string().min(1),
-	published_at: z.string().nullable().optional(),
-	body: z.string().nullable().optional(),
-	assets: z
-		.array(
-			z.object({
-				name: z.string().min(1),
-				browser_download_url: z.string().min(1),
-			}),
-		)
-		.optional(),
-})
-export type GithubReleasePayload = z.infer<typeof githubReleasePayload>
-
 export type MarketLatest = {
 	/** Raw release tag, e.g. `v1.2.3-beta.1`. */
 	readonly tag: string
@@ -55,13 +38,14 @@ export type MarketLatest = {
 	readonly version: string
 	readonly releaseUrl: string
 	readonly publishedAt: string | null
-	/** Release body, truncated. */
+	/** Release notes, converted from the atom feed's content HTML to markdown. */
 	readonly notes: string | null
 	/**
-	 * Present when the release payload was fetched (installable/updatable).
-	 * Absent on a rate-limited *version-only* entry: the version/tag came from
-	 * the free `releases.atom` feed, but the asset could not be fetched, so
-	 * install/update is blocked until the API recovers.
+	 * Present when the release payload was built (installable/updatable).
+	 * Absent on a *degraded* version-only entry: the version/tag came from
+	 * the free `releases.atom` feed, but the asset list could not be
+	 * fetched (web endpoint 403/429), so install/update is blocked until
+	 * the endpoint recovers.
 	 */
 	readonly assetName?: string
 	readonly assetUrl?: string
@@ -94,11 +78,11 @@ export type MarketPlugin = {
 	readonly manifest: PluginManifest
 	/**
 	 * The catalog state, derived from the manifest and the free
-	 * `releases.atom` feed only — the snapshot never calls the quota-hungry
-	 * `releases/latest` API, so `error`/`rateLimited` are never set here
-	 * (`state` is `"ok"` when a release was found, `"no_release"` otherwise).
-	 * The authoritative release (asset / readme / notes / sha256) is fetched
-	 * on demand — see {@link MarketPluginDetail}.
+	 * `releases.atom` feed only — the snapshot never calls the GitHub API,
+	 * so `error`/`rateLimited` are never set here (`state` is `"ok"` when a
+	 * release was found, `"no_release"` otherwise). The authoritative
+	 * release (asset / readme / notes / sha256) is built on demand — see
+	 * {@link MarketPluginDetail}.
 	 */
 	readonly state: "ok" | "no_release" | "error"
 	/**
@@ -117,10 +101,10 @@ export type MarketPlugin = {
 	readonly errorKind?: "rate_limited" | "failed" | "missing"
 	/**
 	 * True when the shown release payload was served from the cache or from
-	 * the free `releases.atom` feed after the GitHub API rate limit hit —
-	 * `state` stays `ok` (data is usable) but the release info may be stale
-	 * or, for a version-only entry, not installable; the UI flags it on the
-	 * card and notes a new version may be waiting.
+	 * the free `releases.atom` feed after a GitHub web-endpoint rate limit
+	 * hit — `state` stays `ok` (data is usable) but the release info may be
+	 * stale or, for a version-only entry, not installable; the UI flags it
+	 * on the card and notes a new version may be waiting.
 	 */
 	readonly rateLimited?: boolean
 }
@@ -142,13 +126,14 @@ export type MarketSnapshot = {
 }
 
 /**
- * One plugin's authoritative latest release, fetched on demand when the user
+ * One plugin's authoritative latest release, built on demand when the user
  * opens the marketplace "View" dialog. Unlike the snapshot's version-only
  * {@link MarketPlugin.latest}, this holds the installable payload — the
  * asset URL, sha256, release notes and the version-pinned readme — and is
- * the only path that touches the quota-hungry `releases/latest` API.
- * Cached per repo server-side (persisted) and client-side, so repeated
- * opens never re-hit the API within the cache window.
+ * assembled from quota-free GitHub web endpoints (the atom feed plus the
+ * `releases/expanded_assets` fragment). Cached per repo server-side
+ * (persisted) and client-side, so repeated opens never re-fetch within the
+ * cache window.
  */
 export type MarketPluginDetail = {
 	/** Normalized `owner/repo`. */
@@ -161,8 +146,9 @@ export type MarketPluginDetail = {
 	readonly errorKind?: "rate_limited" | "failed" | "missing"
 	/**
 	 * True when the release payload was served from the cache or from the
-	 * free `releases.atom` feed after the API rate limit — a version-only
-	 * entry (asset absent) is not actionable until the API recovers.
+	 * free `releases.atom` feed after a web-endpoint rate limit — a
+	 * version-only entry (asset absent) is not actionable until the
+	 * endpoint recovers.
 	 */
 	readonly rateLimited?: boolean
 }

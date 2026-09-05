@@ -17,7 +17,6 @@ import {
 } from "src/infra/concurrency-limiter.ts"
 import {
 	DEFAULT_MARKETPLACE_REPO,
-	githubReleasePayload,
 	MARKETPLACE_PREF_KEY,
 	type MarketError,
 	type MarketInstallInput,
@@ -34,21 +33,24 @@ import {
  * straight from each repo — everything the UI shows is fetched, the
  * registry only carries the addresses.
  *
- * Data channels, by cost:
+ * Data channels — all quota-free web endpoints, so the marketplace works
+ * even when the GitHub API's unauthenticated 60/hour-per-IP quota is
+ * exhausted (shared proxies/NAT exhaust it easily):
  * - registry file + each plugin's `manifest.json`: `raw.githubusercontent.com`
  *   (no API quota; ref fallback `HEAD` → `main` → `master`);
  * - the **catalog** latest version: the free GitHub releases feed
  *   (`github.com/<repo>/releases.atom`, a web endpoint — no API quota) —
  *   the list snapshot reads only the tag + date, so it stays fast and never
- *   touches the quota-hungry API;
+ *   touches the API;
  * - the **authoritative** latest release (asset / notes / readme / sha256):
- *   `api.github.com/repos/<repo>/releases/latest` — the only API-quota-hungry
- *   call, and it is made on demand when the user opens a plugin's view
- *   ({@link MarketplaceService.detail}), cached per repo so repeated opens
- *   reuse the cache. When rate-limited, it falls back to the free
- *   `releases.atom` feed to learn the true latest tag, so the UI can still
- *   tell the user a new version was published even though its asset is not
- *   fetchable yet;
+ *   built on demand when the user opens a plugin's view
+ *   ({@link MarketplaceService.detail}) from the atom feed (tag, date and
+ *   the release-notes HTML in the first entry) plus
+ *   `github.com/<repo>/releases/expanded_assets/<tag>` (the release's
+ *   asset list — a web endpoint, no API quota), cached per repo so repeated
+ *   opens reuse the cache. Github web endpoints may still answer 403/429
+ *   under secondary rate limits; those degrade to the version-only feed
+ *   data with a cooldown, exactly like the old API path;
  * - install/update assets: the release's `browser_download_url`
  *   (a direct `github.com` download, no API quota).
  *
@@ -59,15 +61,16 @@ import {
 
 /**
  * Cache windows for the marketplace. All three are env-configurable via
- * `createMarketplaceService` deps and default to a day — the GitHub
- * `releases/latest` API is the only quota-hungry hop (60/hour
- * unauthenticated per IP), so long windows keep the catalog cheap to
- * reopen. A forced refresh (the Settings button) still bypasses the
- * release window and degrades to cached data on failure.
+ * `createMarketplaceService` deps and default to a day — the on-demand
+ * release build re-downloads the per-locale readmes and the asset list,
+ * so long windows keep reopened views cheap (and persist the payload
+ * across restarts). A forced refresh (the Settings button) still bypasses
+ * the release window and degrades to cached data on failure.
  */
 const DAY_MS = 24 * 60 * 60_000
 const MAX_RAW_BYTES = 512 * 1024
-const MAX_API_BYTES = 2 * 1024 * 1024
+/** Byte cap for the `expanded_assets` fragment (the asset-list page). */
+const MAX_EXPANDED_BYTES = 2 * 1024 * 1024
 const MAX_SHA256_BYTES = 8 * 1024
 const MAX_README_BYTES = 256 * 1024
 /** Byte cap for the free GitHub releases feed (rate-limit fallback). */
@@ -75,7 +78,7 @@ const MAX_ATOM_BYTES = 256 * 1024
 /** Release-body cap for the dedicated Release notes tab (still bounded by the payload cap). */
 const NOTES_MAX_LENGTH = 128_000
 const REFS = ["HEAD", "main", "master"] as const
-const API_FETCH_CONCURRENCY = 5
+const WEB_FETCH_CONCURRENCY = 5
 const USER_AGENT = "hoardodile-plugin-marketplace"
 /** Release-asset names for the author-published readme: `README.<locale>.md` (bare `README.md` is the fallback). */
 const README_ASSET_RE = /^README\.([A-Za-z0-9-]{1,20})\.md$/
@@ -156,15 +159,15 @@ export type MarketplaceServiceDeps = {
 	readonly maxInstallBytes: number
 	/**
 	 * Persistent release-cache file (`local/cache/marketplace-releases.json`).
-	 * Survives server restarts so the quota-hungry GitHub API is asked at
-	 * most once per repo per cache window.
+	 * Survives server restarts so the release payload is built at most once
+	 * per repo per cache window.
 	 */
 	readonly releaseCacheFile: string
 	/** Snapshot cache window in ms (defaults to `DAY_MS`). */
 	readonly cacheTtlMs?: number
-	/** Per-repo `releases/latest` cache window in ms (defaults to `DAY_MS`). */
+	/** Per-repo release-payload cache window in ms (defaults to `DAY_MS`). */
 	readonly releaseCacheTtlMs?: number
-	/** Post-403/429 API cooldown in ms (defaults to `DAY_MS`). */
+	/** Post-403/429 web-endpoint cooldown in ms (defaults to `DAY_MS`). */
 	readonly rateLimitCooldownMs?: number
 	readonly now?: () => number
 }
@@ -187,9 +190,10 @@ export type MarketplaceService = {
 	install(input: MarketInstallInput): Promise<{ readonly pluginId: string }>
 	/**
 	 * One repo's authoritative latest release (asset / notes / readme /
-	 * sha256). Fetched on demand when the user opens a plugin's view, and
-	 * cached per repo (persisted release cache + rate-limit cooldown) so an
-	 * open is served from cache instead of re-hitting the quota-hungry API.
+	 * sha256), built from quota-free GitHub web endpoints on demand when
+	 * the user opens a plugin's view, and cached per repo (persisted
+	 * release cache + cooldown) so an open is served from cache instead
+	 * of re-fetching the endpoints.
 	 */
 	detail(repo: string, id: string): Promise<MarketPluginDetail>
 }
@@ -262,7 +266,7 @@ export function createMarketplaceService(
 	const releaseCacheTtlMs = deps.releaseCacheTtlMs ?? DAY_MS
 	const rateLimitCooldownMs = deps.rateLimitCooldownMs ?? DAY_MS
 	const limiter: ConcurrencyLimiter = createConcurrencyLimiter(
-		API_FETCH_CONCURRENCY,
+		WEB_FETCH_CONCURRENCY,
 	)
 
 	const cache = new Map<
@@ -594,13 +598,13 @@ export function createMarketplaceService(
 			manifest,
 		}
 
-		// The catalog reads only the free `releases.atom` feed — it never
-		// touches the quota-hungry `releases/latest` API. A repo with no
-		// published release (no atom entry) lists as `no_release`; otherwise
-		// the version-only latest is surfaced so the list can render the
-		// version/date line and the update signal without using any GitHub
-		// API quota. The installable payload (asset / notes / readme /
-		// sha256) is fetched on demand via `detail`.
+		// The catalog reads only the free `releases.atom` feed — a web
+		// endpoint with no API quota, like every other marketplace channel.
+		// A repo with no published release (no atom entry) lists as
+		// `no_release`; otherwise the version-only latest is surfaced so
+		// the list can render the version/date line and the update signal.
+		// The installable payload (asset / notes / readme / sha256) is
+		// built on demand via `detail`, also quota-free.
 		const entry = await fetchLatestReleaseEntry(repo)
 		if (entry === undefined) {
 			return {
@@ -632,27 +636,32 @@ export function createMarketplaceService(
 	}
 
 	/**
-	 * One repo's latest release — cached per repo for the cache window
-	 * (default one day, and persisted to disk) because the GitHub API call
-	 * is the only quota-hungry fetch. A rate-limited API degrades to the
+	 * One repo's latest release — built on demand from the quota-free
+	 * GitHub web endpoints (the atom feed's tag/date/notes HTML plus the
+	 * `releases/expanded_assets` fragment's asset list), cached per repo
+	 * for the cache window (default one day, and persisted to disk)
+	 * because a build re-downloads the per-locale readmes. A web endpoint
+	 * answering 403/429 (GitHub secondary rate limits) degrades to the
 	 * stale cached payload instead of erroring (flagged as degraded); the
-	 * cooldown marker suppresses further API attempts for the same window.
+	 * cooldown marker suppresses further attempts for the same window.
 	 *
-	 * So the user still learns a new version was published even under the
-	 * rate limit, a rate-limited refresh first asks the free `releases.atom`
-	 * feed for the true latest tag. When that tag differs from the cached
-	 * release (or there is none), the marketplace surfaces a version-only
-	 * {@link MarketLatest} (asset omitted) flagged `degraded` — the UI shows
-	 * the version and notes the install/update is temporarily unavailable.
-	 * When the feed tag matches the cached payload the cache is current and
-	 * its asset is kept, so an update stays possible from cache.
+	 * So the user still learns a new version was published even under a
+	 * web-endpoint limit, a degraded build first asks the free
+	 * `releases.atom` feed for the true latest tag. When that tag differs
+	 * from the cached release (or there is none), the marketplace
+	 * surfaces a version-only {@link MarketLatest} (asset omitted) flagged
+	 * `degraded` — the UI shows the version and notes the install/update
+	 * is temporarily unavailable. When the feed tag matches the cached
+	 * payload the cache is current and its asset is kept, so an update
+	 * stays possible from cache.
 	 *
 	 * The manual "refresh now" passes `bypass = true`: it re-checks the
-	 * API regardless of the TTL AND bypasses the rate-limit cooldown — the
-	 * user has explicitly asked to retry, so a single bounded pass re-hits
-	 * the API and re-arms the cooldown if the limit is still in effect.
-	 * Automatic (non-force) rebuilds still honor the cooldown so they never
-	 * hammer the API. Any other failure still degrades to cached data.
+	 * endpoints regardless of the TTL AND bypasses the rate-limit cooldown
+	 * — the user has explicitly asked to retry, so a single bounded pass
+	 * re-hits them and re-arms the cooldown if the limit is still in
+	 * effect. Automatic (non-force) rebuilds still honor the cooldown so
+	 * they never hammer the endpoints. Any other failure still degrades
+	 * to cached data.
 	 */
 	async function loadLatest(
 		repo: string,
@@ -675,8 +684,8 @@ export function createMarketplaceService(
 
 		if (!cooldownActive || bypass) {
 			try {
-				const latest = await fetchRelease(repo, id)
-				// A fresh API answer is authoritative — drop any feed-learned tag.
+				const latest = await buildLatestFromWeb(repo, id)
+				// A fresh answer is authoritative — drop any feed-learned tag.
 				releaseCache.set(repo, { latest, fetchedAt: now() })
 				markReleaseCacheDirty()
 				return { latest, degraded: false }
@@ -716,18 +725,21 @@ export function createMarketplaceService(
 		}
 		throw new MarketFetchError(
 			"rate_limited",
-			"GitHub API rate limit hit — no cached release data yet",
+			"GitHub web endpoint rate limit hit — no cached release data yet",
 		)
 	}
 
 	/**
-	 * One repo's authoritative latest release, fetched on demand when the
-	 * user opens a plugin's view. Unlike the snapshot (free `releases.atom`
-	 * only), this reads the real `releases/latest` payload — the asset URL,
-	 * sha256 sidecar, release notes and the version-pinned readme — so
-	 * install/update becomes actionable. Cached per repo (persisted release
-	 * cache + rate-limit cooldown), so repeated opens reuse the cache
-	 * instead of re-hitting the quota-hungry API.
+	 * One repo's authoritative latest release, built on demand when the
+	 * user opens a plugin's view. Unlike the snapshot (version-only,
+	 * free `releases.atom`), this reads the full release payload — the
+	 * asset list, sha256 sidecar, release notes (HTML in the atom entry,
+	 * converted to markdown) and the version-pinned readme — so
+	 * install/update becomes actionable. Everything comes from quota-free
+	 * GitHub web endpoints, so a shared IP's exhausted API quota can
+	 * never block the view. Cached per repo (persisted release cache +
+	 * cooldown), so repeated opens reuse the cache instead of re-hitting
+	 * the endpoints.
 	 */
 	async function detail(repo: string, id: string): Promise<MarketPluginDetail> {
 		const normalized = normalizeRepoAddress(repo)
@@ -742,8 +754,8 @@ export function createMarketplaceService(
 			}
 		} catch (err) {
 			if (err instanceof MarketFetchError && err.kind === "missing") {
-				// A repo with a manifest but no published release (404 from
-				// `releases/latest`) — the view shows "no release".
+				// A repo with a manifest but no published release (no atom
+				// entry) — the view shows "no release".
 				return {
 					repo: normalized,
 					state: "no_release",
@@ -784,46 +796,76 @@ export function createMarketplaceService(
 		}
 	}
 
-	async function fetchRelease(repo: string, id: string): Promise<MarketLatest> {
-		const raw = await fetchTextBestEffort([apiReleaseUrl(repo)], {
-			maxBytes: MAX_API_BYTES,
+	/**
+	 * Build the authoritative latest release payload from the quota-free
+	 * web endpoints: the atom entry (tag, date, release-notes HTML) plus
+	 * the `releases/expanded_assets/<tag>` fragment (the asset list). An
+	 * unparseable fragment degrades to an empty asset list (the version
+	 * and notes still surface); a transport failure propagates so the
+	 * caller can degrade/cooldown instead of serving a half payload.
+	 */
+	async function buildLatestFromWeb(
+		repo: string,
+		id: string,
+	): Promise<MarketLatest> {
+		const text = await fetchTextBestEffort([atomReleaseUrl(repo)], {
+			maxBytes: MAX_ATOM_BYTES,
 			headers: { "User-Agent": USER_AGENT },
 		})
-		let parsed: unknown
-		try {
-			parsed = JSON.parse(raw) as unknown
-		} catch {
-			throw new MarketFetchError("failed", "release payload is not valid JSON")
+		const entry = parseAtomFirstEntry(text)
+		if (entry === undefined) {
+			throw new MarketFetchError(
+				"missing",
+				"the releases.atom feed carries no release entry",
+			)
 		}
-		const result = githubReleasePayload.safeParse(parsed)
-		if (!result.success) {
-			throw new MarketFetchError("failed", "release payload failed validation")
-		}
-		const release = result.data
-		const version = release.tag_name.replace(/^v/, "")
-		const asset = pickZipAsset(
-			release.assets ?? [],
-			id,
-			release.tag_name,
-			version,
-		)
+		const { tag, publishedAt } = entry
+		const version = tag.replace(/^v/, "")
+		const assets = await fetchExpandedAssets(repo, tag)
+		const asset = pickZipAsset(assets, id, tag, version)
 		const sidecar =
 			asset === undefined
 				? undefined
-				: await readSha256Sidecar(release.assets ?? [], asset.name)
-		const readme = await readReadmeAssets(release.assets ?? [])
-		const latest: MarketLatest = {
-			tag: release.tag_name,
+				: await readSha256Sidecar(assets, asset.name)
+		const readme = await readReadmeAssets(assets)
+		// The atom content is the release body rendered as HTML; convert it
+		// (best-effort — a parse oddity degrades to null notes, never a failure).
+		let notes: string | null = null
+		if (entry.notesHtml !== undefined) {
+			try {
+				notes = truncate(htmlToMarkdown(entry.notesHtml), NOTES_MAX_LENGTH)
+			} catch {
+				notes = null
+			}
+		}
+		return {
+			tag,
 			version,
-			releaseUrl: release.html_url,
-			publishedAt: release.published_at ?? null,
-			notes: truncate(release.body ?? null, NOTES_MAX_LENGTH),
+			releaseUrl: `https://github.com/${repo}/releases/tag/${tag}`,
+			publishedAt,
+			notes,
 			assetName: asset?.name,
 			assetUrl: asset?.browser_download_url,
 			...(sidecar !== undefined ? { sha256: sidecar } : {}),
 			...(readme !== undefined ? { readme } : {}),
 		}
-		return latest
+	}
+
+	/**
+	 * The release's asset list from `releases/expanded_assets/<tag>` — a
+	 * web endpoint (no API quota). The fragment is an HTML list whose rows
+	 * are `<a href="/<repo>/releases/download/<tag>/<name>">` links, each
+	 * with a `<span class="text-bold">` carrying the raw asset name.
+	 */
+	async function fetchExpandedAssets(
+		repo: string,
+		tag: string,
+	): Promise<GithubAsset[]> {
+		const text = await fetchTextBestEffort([expandedAssetsUrl(repo, tag)], {
+			maxBytes: MAX_EXPANDED_BYTES,
+			headers: { "User-Agent": USER_AGENT },
+		})
+		return parseExpandedAssets(text)
 	}
 
 	/**
@@ -984,27 +1026,42 @@ function rawUrls(repo: string, path: string): string[] {
 	)
 }
 
-function apiReleaseUrl(repo: string): string {
-	return `https://api.github.com/repos/${repo}/releases/latest`
-}
-
-/** The free GitHub releases feed — a web endpoint, so it does not consume
-    the REST API quota that rate-limits {@link apiReleaseUrl}. */
+/** The free GitHub releases feed — a web endpoint, so it never consumes
+    the REST API quota. */
 function atomReleaseUrl(repo: string): string {
 	return `https://github.com/${repo}/releases.atom`
 }
 
+/** The release's asset-list page — a web endpoint, so it never consumes
+    the REST API quota. */
+function expandedAssetsUrl(repo: string, tag: string): string {
+	return `https://github.com/${repo}/releases/expanded_assets/${encodeURIComponent(tag)}`
+}
+
+/** The first entry of a repo's `releases.atom` feed, as far as the
+    marketplace reads it. */
+export type AtomFirstEntry = {
+	readonly tag: string
+	readonly publishedAt: string | null
+	/**
+	 * The release body as HTML (the entry's `<content>` element), entity-
+	 * decoded, or `undefined` when the feed ships no content element.
+	 */
+	readonly notesHtml: string | undefined
+}
+
 /**
- * Parse the latest release tag out of a GitHub `releases.atom` feed — the
- * first `<entry>` is the newest published release. The tag is taken from
- * the entry's `rel="alternate"` link (the authoritative `releases/tag/<tag>`
- * URL, immune to entity/whitespace issues in the title), falling back to
- * the `title` element. Returns `undefined` on any structural mismatch so a
- * feed change degrades to the existing behavior instead of throwing.
+ * Parse the latest release entry out of a GitHub `releases.atom` feed —
+ * the first `<entry>` is the newest published release. The tag is taken
+ * from the entry's `rel="alternate"` link (the authoritative
+ * `releases/tag/<tag>` URL, immune to entity/whitespace issues in the
+ * title), falling back to the `title` element; the date from `<updated>`;
+ * the release notes from the `<content>` element (GitHub emits them as
+ * HTML, XML-entity-escaped inside the feed). Returns `undefined` on any
+ * structural mismatch so a feed change degrades to the existing behavior
+ * instead of throwing.
  */
-export function parseAtomFirstEntry(
-	xml: string,
-): { readonly tag: string; readonly publishedAt: string | null } | undefined {
+export function parseAtomFirstEntry(xml: string): AtomFirstEntry | undefined {
 	const first = /<entry>[\s\S]*?<\/entry>/.exec(xml)?.[0]
 	if (first === undefined) return undefined
 	const title = /<title[^>]*>([^<]*)<\/title>/.exec(first)?.[1]
@@ -1016,7 +1073,36 @@ export function parseAtomFirstEntry(
 	const tag = tagFromUrl(alternateHref) ?? title?.trim()
 	if (tag === undefined || tag.length === 0) return undefined
 	const publishedAt = /<updated>([^<]*)<\/updated>/.exec(first)?.[1] ?? null
-	return { tag, publishedAt }
+	const notesHtml = parseAtomContent(first)
+	return { tag, publishedAt, notesHtml }
+}
+
+/**
+ * The `<content>` element of a feed entry, XML-entity-decoded. GitHub
+ * emits release bodies as `type="html"`; a `type="text"` (or absent type)
+ * entry is plain text already. `undefined` when the entry has no content.
+ */
+function parseAtomContent(entry: string): string | undefined {
+	const el = /<content\b([^>]*)>([\s\S]*?)<\/content>/.exec(entry)
+	if (el === null) return undefined
+	const attrs = el[1] ?? ""
+	let body = el[2] ?? ""
+	const type = /type="([^"]*)"/.exec(attrs)?.[1]
+	if (type !== undefined && type !== "html" && type !== "text") {
+		return undefined
+	}
+	// A feed may wrap the body in a CDATA section — unwrap it before the
+	// regular entity decode.
+	if (body.startsWith("<![CDATA[")) {
+		body = body.slice("<![CDATA[".length)
+		if (body.endsWith("]]>")) body = body.slice(0, -3)
+	}
+	return decodeXmlEntities(body)
+}
+
+/** The XML character references a feed may carry (`&lt;` … plus numeric refs). */
+function decodeXmlEntities(text: string): string {
+	return decodeHtmlEntities(text)
 }
 
 /** Extract `<owner>/<repo>/releases/tag/<tag>` from an alternate link href. */
@@ -1037,8 +1123,8 @@ function tagFromUrl(rawUrl: string | undefined): string | undefined {
 /**
  * A version-only {@link MarketLatest} built from the free feed's latest tag:
  * the version is real (a published release), but the asset / notes / sha /
- * readme are unknown — the rate limit kept us from fetching them, so
- * install/update stays blocked until the API recovers.
+ * readme are unknown — a web-endpoint limit kept us from fetching them,
+ * so install/update stays blocked until the endpoint recovers.
  */
 function latestFromAtom(
 	repo: string,
@@ -1071,6 +1157,371 @@ function truncate(value: string | null, max: number): string | null {
 	return value.length > max ? `${value.slice(0, max)}...` : value
 }
 
+/**
+ * Parse the asset list of a `releases/expanded_assets/<tag>` fragment.
+ * GitHub renders one row per asset as
+ * `<a href="/<repo>/releases/download/<tag>/<name>"><span class="text-bold">name</span></a>`;
+ * the name from the span (raw, unescaped display form) and the download
+ * URL from the href. Degenerates to `[]` on a fragment that carries no
+ * asset rows (e.g. a release with no files), never throws.
+ */
+export function parseExpandedAssets(html: string): GithubAsset[] {
+	const out: GithubAsset[] = []
+	const seen = new Set<string>()
+	for (const match of html.matchAll(
+		/<a\b[^>]*\bhref="([^"]*\/releases\/download\/[^"]+)"[^>]*>\s*<span class="text-bold">([^<]+)<\/span>/g,
+	)) {
+		const href = match[1]
+		const name = match[2]
+		if (href === undefined || name === undefined) continue
+		const decodedName = decodeHtmlEntities(name)
+		if (seen.has(decodedName)) continue
+		seen.add(decodedName)
+		out.push({
+			name: decodedName,
+			browser_download_url: `https://github.com${href}`,
+		})
+	}
+	return out
+}
+
+/**
+ * Decode the character references GitHub's markdown renderer can emit —
+ * the five XML/HTML named refs plus decimal/hex numeric refs. Unknown
+ * named refs are left verbatim (safe: they can never inject structure).
+ */
+function decodeHtmlEntities(text: string): string {
+	return text
+		.replace(/&lt;/g, "<")
+		.replace(/&gt;/g, ">")
+		.replace(/&quot;/g, '"')
+		.replace(/&apos;/g, "'")
+		.replace(/&#39;/g, "'")
+		.replace(/&amp;/g, "&")
+		.replace(/&#(\d+);/g, (_, digits: string) =>
+			String.fromCodePoint(Number.parseInt(digits, 10)),
+		)
+		.replace(/&#x([0-9a-fA-F]+);/g, (_, hex: string) =>
+			String.fromCodePoint(Number.parseInt(hex, 16)),
+		)
+}
+
+/**
+ * Convert the release-notes HTML (GitHub's sanitised markdown render,
+ * carried inside the atom feed's `<content type="html">`) back to the
+ * markdown shape the detail dialog renders. Covers the tag set GitHub
+ * actually produces — headings, paragraphs, lists (incl. nested), links,
+ * emphasis, code/pre, blockquote, hr, br, images — and skips unknown
+ * elements' tags while keeping their text. Pure and deterministic; a
+ * structural oddity throws so callers can degrade to `notes: null`.
+ *
+ * @throws when the input is not a string, so a malformed feed never
+ *   produces a partial render.
+ */
+export function htmlToMarkdown(raw: string): string {
+	if (typeof raw !== "string") throw new Error("release-notes HTML is not text")
+	const nodes = parseHtml(decodeHtmlEntities(raw))
+	return renderBlocks(nodes, 0).join("\n\n").trim()
+}
+
+// ── minimal HTML tokeniser + renderer for release notes ────────────────────
+
+type HtmlNode =
+	| { readonly kind: "text"; readonly text: string }
+	| {
+			readonly kind: "element"
+			readonly name: string
+			readonly attrs: ReadonlyMap<string, string>
+			readonly children: readonly HtmlNode[]
+	  }
+
+/** Void HTML elements — parsed as elements with no children. */
+const VOID_TAGS = new Set([
+	"br",
+	"hr",
+	"img",
+	"input",
+	"meta",
+	"link",
+	"source",
+])
+
+function parseHtml(html: string): HtmlNode[] {
+	let cursor = 0
+
+	function readName(from: number): {
+		readonly name: string
+		readonly end: number
+	} {
+		let i = from
+		while (i < html.length && /[a-zA-Z0-9-]/.test(html[i]!)) i += 1
+		return { name: html.slice(from, i).toLowerCase(), end: i }
+	}
+
+	function readAttrs(from: number): {
+		readonly attrs: Map<string, string>
+		readonly end: number
+	} {
+		const attrs = new Map<string, string>()
+		let i = from
+		for (;;) {
+			while (i < html.length && /\s/.test(html[i]!)) i += 1
+			if (i >= html.length || html[i] === ">" || html[i] === "/") break
+			const { name, end } = readName(i)
+			if (name.length === 0) {
+				i += 1
+				continue
+			}
+			i = end
+			while (i < html.length && /\s/.test(html[i]!)) i += 1
+			let value = ""
+			if (html[i] === "=") {
+				i += 1
+				while (i < html.length && /\s/.test(html[i]!)) i += 1
+				const quote = html[i]
+				if (quote === '"' || quote === "'") {
+					i += 1
+					const start = i
+					while (i < html.length && html[i] !== quote) i += 1
+					value = html.slice(start, i)
+					if (html[i] === quote) i += 1
+				} else {
+					const start = i
+					while (i < html.length && !/[\s>]/.test(html[i]!)) i += 1
+					value = html.slice(start, i)
+				}
+			}
+			attrs.set(name, value)
+		}
+		return { attrs, end: i }
+	}
+
+	function parseChildren(): HtmlNode[] {
+		// Parse until a closing tag or the end of input is reached.
+		const out: HtmlNode[] = []
+		for (;;) {
+			const next = html.indexOf("<", cursor)
+			if (next === -1) {
+				const text = html.slice(cursor)
+				if (text.length > 0) out.push({ kind: "text", text })
+				cursor = html.length
+				return out
+			}
+			if (next > cursor)
+				out.push({ kind: "text", text: html.slice(cursor, next) })
+			cursor = next
+			if (html.startsWith("<!--", cursor)) {
+				const end = html.indexOf("-->", cursor)
+				cursor = end === -1 ? html.length : end + 3
+				continue
+			}
+			cursor += 1
+			if (html.startsWith("/", cursor)) {
+				// Closing tag — the caller consumes it.
+				const { end } = readName(cursor + 1)
+				cursor = end
+				const closeTag = html.indexOf(">", cursor)
+				if (closeTag !== -1) cursor = closeTag + 1
+				return out
+			}
+			const { name, end } = readName(cursor)
+			cursor = end
+			const { attrs, end: attrsEnd } = readAttrs(cursor)
+			cursor = attrsEnd
+			if (VOID_TAGS.has(name) || html[cursor] === "/") {
+				const close = html.indexOf(">", cursor)
+				cursor = close === -1 ? html.length : close + 1
+				out.push({ kind: "element", name, attrs, children: [] })
+				continue
+			}
+			// Non-void element: consume children until the matching close.
+			cursor += 1
+			const children = parseChildren()
+			out.push({ kind: "element", name, attrs, children })
+		}
+	}
+
+	return parseChildren()
+}
+
+/** Inline markdown for the children of a block element (recurses into inline tags). */
+function renderInline(nodes: readonly HtmlNode[]): string {
+	let out = ""
+	for (const node of nodes) {
+		if (node.kind === "text") {
+			out += node.text
+			continue
+		}
+		const { name, attrs, children } = node
+		switch (name) {
+			case "a": {
+				const href = attrs.get("href")
+				const text = renderInline(children).trim()
+				if (href === undefined || href.length === 0) {
+					out += text
+					continue
+				}
+				out += `[${text}](${href})`
+				continue
+			}
+			case "strong":
+			case "b":
+				out += `**${renderInline(children)}**`
+				continue
+			case "em":
+			case "i":
+				out += `*${renderInline(children)}*`
+				continue
+			case "s":
+			case "del":
+				out += `~~${renderInline(children)}~~`
+				continue
+			case "code":
+				out += `\`${renderInline(children).trim()}\``
+				continue
+			case "br":
+				out += "\n"
+				continue
+			case "img": {
+				const src = attrs.get("src")
+				out += src === undefined ? "" : `![${attrs.get("alt") ?? ""}](${src})`
+				continue
+			}
+			default:
+				// Transparent inline containers and unknown tags: keep
+				// content, strip structure.
+				out += renderInline(children)
+		}
+	}
+	return out
+}
+
+/** Block-level markdown lines for a sequence of sibling nodes (list items get their own indentation via `depth`). */
+function renderBlocks(nodes: readonly HtmlNode[], depth: number): string[] {
+	const lines: string[] = []
+	for (const node of nodes) {
+		if (node.kind === "text") {
+			const text = node.text.trim()
+			if (text.length > 0)
+				lines.push(repeat("  ", depth) + text.replace(/\n{3,}/g, "\n\n"))
+			continue
+		}
+		const { name, children } = node
+		switch (name) {
+			case "h1":
+			case "h2":
+			case "h3":
+			case "h4":
+			case "h5":
+			case "h6": {
+				const level = Number(name[1])
+				lines.push(
+					repeat("  ", depth) +
+						"#".repeat(level) +
+						" " +
+						renderInline(children).trim(),
+				)
+				break
+			}
+			case "p":
+				lines.push(repeat("  ", depth) + renderInline(children).trim())
+				break
+			case "blockquote": {
+				const inner = renderBlocks(children, depth)
+					.map((line) => line.trim())
+					.join("\n")
+				lines.push(
+					...inner.split("\n").map((line) => `${repeat("  ", depth)}> ${line}`),
+				)
+				break
+			}
+			case "pre": {
+				const code = plainText(children)
+				lines.push(
+					repeat("  ", depth) +
+						"```\n" +
+						code +
+						"\n" +
+						repeat("  ", depth) +
+						"```",
+				)
+				break
+			}
+			case "hr":
+				lines.push(`${repeat("  ", depth)}---`)
+				break
+			case "ul":
+			case "ol":
+				lines.push(...renderList(name, children, depth))
+				break
+			case "li":
+				// A bare li outside a list (malformed) — render as a flat item.
+				lines.push(`${repeat("  ", depth)}- ${renderInline(children).trim()}`)
+				break
+			default:
+				break
+		}
+	}
+	return lines
+}
+
+function repeat(text: string, count: number): string {
+	return count > 0 ? text.repeat(count) : ""
+}
+
+/** Raw text of a subtree — tags stripped, entities already decoded. */
+function plainText(nodes: readonly HtmlNode[]): string {
+	let out = ""
+	for (const node of nodes) {
+		if (node.kind === "text") out += node.text
+		else out += plainText(node.children)
+	}
+	return out
+}
+
+function renderList(
+	name: "ul" | "ol",
+	items: readonly HtmlNode[],
+	depth: number,
+): string[] {
+	const lines: string[] = []
+	let index = 1
+	for (const item of items) {
+		if (item.kind !== "element" || item.name !== "li") continue
+		const marker = name === "ol" ? `${index}. ` : "- "
+		index += 1
+		const inline: string[] = []
+		const nested: HtmlNode[] = []
+		for (const child of item.children) {
+			if (
+				child.kind === "element" &&
+				(child.name === "ul" || child.name === "ol")
+			) {
+				nested.push(child)
+				continue
+			}
+			// Single block children (a lone `<p>` wrapper) render inline.
+			if (
+				child.kind === "element" &&
+				child.name === "p" &&
+				item.children.length === 1
+			) {
+				inline.push(renderInline(child.children))
+				continue
+			}
+			inline.push(renderInline([child]))
+		}
+		const text = inline.join("").replace(/\s+/g, " ").trim()
+		lines.push(repeat("  ", depth) + marker + text)
+		for (const list of nested) {
+			if (list.kind !== "element") continue
+			const childName = list.name === "ol" ? "ol" : "ul"
+			lines.push(...renderList(childName, list.children, depth + 1))
+		}
+	}
+	return lines
+}
+
 function classifyFetchError(err: unknown): MarketFetchError {
 	const message = err instanceof Error ? err.message : String(err)
 	if (message.includes("HTTP 404")) {
@@ -1084,7 +1535,7 @@ function classifyFetchError(err: unknown): MarketFetchError {
 
 function fetchFailureMessage(err: unknown, what: string): string {
 	if (err instanceof MarketFetchError && err.kind === "rate_limited") {
-		return `GitHub API rate limit hit while fetching ${what} — the unauthenticated quota resets hourly; try again later`
+		return `GitHub rate limit hit while fetching ${what} — the free quota resets hourly; try again later`
 	}
 	if (err instanceof MarketFetchError && err.kind === "missing") {
 		return `not found (${what})`
@@ -1096,7 +1547,7 @@ function registryErrorFor(err: unknown, repo: string): never {
 	if (err instanceof MarketFetchError && err.kind === "rate_limited") {
 		throw invalid(
 			"marketplace.rate_limited",
-			"GitHub API rate limit hit while fetching the registry",
+			"GitHub rate limit hit while fetching the registry",
 		)
 	}
 	if (err instanceof MarketFetchError && err.kind === "missing") {

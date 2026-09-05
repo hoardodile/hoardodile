@@ -372,9 +372,9 @@ const envSchema = z
 			.default(false),
 		/**
 		 * How long the plugin-marketplace catalog snapshot is served from
-		 * memory before it is rebuilt. Defaults to a day: the raw
-		 * `registry.json`/`manifest.json` fetches are unquota'd, but the
-		 * whole snapshot rebuild re-reads every manifest, so a long window
+		 * memory before it is rebuilt. Defaults to a day: the registry /
+		 * manifest / release reads are quota-free GitHub web endpoints, but
+		 * a snapshot rebuild re-reads every manifest, so a long window
 		 * keeps repeated catalog opens cheap.
 		 */
 		MARKETPLACE_CACHE_TTL_MS: z.coerce
@@ -383,10 +383,11 @@ const envSchema = z
 			.positive()
 			.default(DAY_MS),
 		/**
-		 * How long one repo's `releases/latest` payload is trusted (and
-		 * persisted to disk). This is the ONLY quota-hungry call (60/hour
-		 * unauthenticated per IP), so the release layer is cached
-		 * independently from the snapshot layer. Defaults to a day.
+		 * How long one repo's release payload (asset / notes / readme /
+		 * sha256) is trusted (and persisted to disk). The on-demand build
+		 * re-downloads the asset list and the per-locale readmes, so the
+		 * release layer is cached independently from the snapshot layer.
+		 * Defaults to a day.
 		 */
 		MARKETPLACE_RELEASE_CACHE_TTL_MS: z.coerce
 			.number()
@@ -394,13 +395,13 @@ const envSchema = z
 			.positive()
 			.default(DAY_MS),
 		/**
-		 * After a GitHub 403/429, skip the API for this long per repo.
-		 * Defaults to a day so a rate-limited catalog entry does not keep
-		 * retrying the quota-hungry `releases/latest` call on every rebuild —
-		 * the market asks the API at most once per repo per day. The manual
-		 * "refresh now" bypasses this cooldown entirely (a user-triggered
-		 * retry); automatic rebuilds still honor it so they never hammer the
-		 * API.
+		 * After a GitHub 403/429 (web-endpoint rate limit), skip the
+		 * release fetch for this long per repo. Defaults to a day so a
+		 * rate-limited catalog entry does not keep retrying on every
+		 * rebuild — the market asks at most once per repo per day. The
+		 * manual "refresh now" bypasses this cooldown entirely (a
+		 * user-triggered retry); automatic rebuilds still honor it so they
+		 * never hammer the endpoints.
 		 */
 		MARKETPLACE_RATE_LIMIT_COOLDOWN_MS: z.coerce
 			.number()

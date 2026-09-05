@@ -27,8 +27,8 @@ async function marketplacePluginImpl(app: FastifyInstance): Promise<void> {
 			tmpDir: app.paths.local.tmp(),
 			maxInstallBytes: app.env.PLUGIN_UPLOAD_MAX_BYTES,
 			// Under `local/cache/` so it clears with the cache and
-			// survives server restarts — keeps the quota-hungry API at
-			// one call per repo per cache window.
+			// survives server restarts — the release payload is built at
+			// most once per repo per cache window.
 			releaseCacheFile: join(
 				app.paths.local.cache(),
 				"marketplace-releases.json",

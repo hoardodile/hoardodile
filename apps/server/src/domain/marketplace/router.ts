@@ -38,9 +38,10 @@ export function buildMarketplaceRouter(deps: {
 			.query(({ input }) => service.refresh(input.force === true)),
 		/**
 		 * One plugin's authoritative latest release (asset / notes / readme /
-		 * sha256), fetched when the user opens its view and cached per repo.
-		 * The catalog snapshot never calls the quota-hungry API; this is the
-		 * only query that does, and it is on-demand.
+		 * sha256), built on demand when the user opens its view and cached
+		 * per repo. Both the catalog snapshot and this detail read only
+		 * quota-free GitHub web endpoints, so the marketplace keeps working
+		 * even while the GitHub API's 60/hour-per-IP quota is exhausted.
 		 */
 		detail: authedProcedure
 			.input(detailInput)

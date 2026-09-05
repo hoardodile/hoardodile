@@ -7,8 +7,10 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 import { DEFAULT_MARKETPLACE_REPO } from "./schema.ts"
 import {
 	createMarketplaceService,
+	htmlToMarkdown,
 	normalizeRepoAddress,
 	parseAtomFirstEntry,
+	parseExpandedAssets,
 } from "./service.ts"
 
 const PLUGIN_ID = "44444444-4444-4444-8444-444444444444"
@@ -24,25 +26,17 @@ const MANIFEST = {
 		message: false,
 	},
 }
-const RELEASE = {
-	tag_name: "v1.2.3",
-	html_url: "https://github.com/me/cat-viewer/releases/tag/v1.2.3",
-	published_at: "2025-01-02T03:04:05Z",
-	body: "First release\n\nNotes here",
-	assets: [
-		{
-			name: `${PLUGIN_ID}-v1.2.3.zip`,
-			browser_download_url: `https://github.com/me/cat-viewer/releases/download/v1.2.3/${PLUGIN_ID}-v1.2.3.zip`,
-		},
-	],
-}
 
 function sha256(text: string): string {
 	return createHash("sha256").update(text).digest("hex")
 }
 
 /** A GitHub `releases.atom` feed with a single release entry (the latest). */
-function atomFeed(tag: string, publishedAt = "2025-01-02T03:04:05Z"): string {
+function atomFeed(
+	tag: string,
+	publishedAt = "2025-01-02T03:04:05Z",
+	notesHtml = "Notes",
+): string {
 	return `<?xml version="1.0" encoding="UTF-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
   <entry>
@@ -50,9 +44,30 @@ function atomFeed(tag: string, publishedAt = "2025-01-02T03:04:05Z"): string {
     <updated>${publishedAt}</updated>
     <link rel="alternate" type="text/html" href="https://github.com/me/cat/releases/tag/${tag}"/>
     <title>${tag}</title>
-    <content type="html">Notes</content>
+    <content type="html">${notesHtml}</content>
   </entry>
 </feed>`
+}
+
+function expandedUrl(repo: string, tag: string): string {
+	return `https://github.com/${repo}/releases/expanded_assets/${encodeURIComponent(tag)}`
+}
+
+/** A `releases/expanded_assets/<tag>` fragment listing one row per asset. */
+function expandedAssets(
+	repo: string,
+	tag: string,
+	assets: readonly { readonly name: string }[],
+): string {
+	return assets
+		.map(
+			(asset) => `<div data-view-component="true" class="Box-row">
+        <a href="/${repo}/releases/download/${tag}/${asset.name}" rel="nofollow" data-turbo="false" class="wb-break-all">
+          <span class="text-bold">${asset.name}</span>
+        </a>
+      </div>`,
+		)
+		.join("\n")
 }
 
 function makeFixture() {
@@ -186,17 +201,44 @@ function atomUrl(repo: string): string {
 	return `https://github.com/${repo}/releases.atom`
 }
 
+/** GitHub API calls — the marketplace must never make any (quota-free by design). */
 function apiCalls(f: ReturnType<typeof makeFixture>): number {
 	return f.fetcher.fetchToFile.mock.calls.filter(([url]) =>
 		url.includes("api.github.com"),
 	).length
 }
 
-/** Fetcher that throws a 403 for the GitHub API but serves route bodies. */
+/** Calls to the `releases/expanded_assets` web endpoint (the asset list). */
+function expandedCalls(f: ReturnType<typeof makeFixture>): number {
+	return f.fetcher.fetchToFile.mock.calls.filter(([url]) =>
+		String(url).includes("expanded_assets"),
+	).length
+}
+
+/** Fetcher that throws a 403 for the asset-list endpoint (and the old API)
+    but serves every other route body — the "shared IP hit a secondary
+    web limit" shape. */
 function rateLimitFetcher(f: ReturnType<typeof makeFixture>) {
 	f.fetcher.fetchToFile.mockImplementation(
 		async (u: string, target: string) => {
-			if (u.includes("api.github.com")) {
+			if (u.includes("expanded_assets") || u.includes("api.github.com")) {
+				throw new Error(`plugin download returned HTTP 403: ${u}`)
+			}
+			const body = f.routes.get(u)
+			if (body === undefined) {
+				throw new Error(`plugin download returned HTTP 404: ${u}`)
+			}
+			await writeFile(target, body)
+			return { sizeBytes: Buffer.byteLength(body), sha256: sha256(body) }
+		},
+	)
+}
+
+/** Fetcher that throws a 403 for every GitHub web endpoint too. */
+function rateLimitEverythingFetcher(f: ReturnType<typeof makeFixture>) {
+	f.fetcher.fetchToFile.mockImplementation(
+		async (u: string, target: string) => {
+			if (u.includes("/github.com/") || u.includes("api.github.com")) {
 				throw new Error(`plugin download returned HTTP 403: ${u}`)
 			}
 			const body = f.routes.get(u)
@@ -234,14 +276,26 @@ describe("normalizeRepoAddress", () => {
 })
 
 describe("parseAtomFirstEntry", () => {
-	test("reads the latest tag from the first entry's alternate link", () => {
+	test("reads the latest tag, date and notes HTML from the first entry", () => {
 		const entry = parseAtomFirstEntry(
-			atomFeed("v1.2.3", "2025-01-02T03:04:05Z"),
+			atomFeed("v1.2.3", "2025-01-02T03:04:05Z", "<h2>Notes here</h2>"),
 		)
 		expect(entry).toEqual({
 			tag: "v1.2.3",
 			publishedAt: "2025-01-02T03:04:05Z",
+			notesHtml: "<h2>Notes here</h2>",
 		})
+	})
+
+	test("decodes the XML entities GitHub escapes inside the content element", () => {
+		const entry = parseAtomFirstEntry(
+			atomFeed(
+				"v1.2.3",
+				"2025-01-02T03:04:05Z",
+				"&lt;h2&gt;A &amp; B&#39;s&lt;/h2&gt;",
+			),
+		)
+		expect(entry?.notesHtml).toBe("<h2>A & B's</h2>")
 	})
 
 	test("falls back to the title when the alternate link is missing", () => {
@@ -249,6 +303,7 @@ describe("parseAtomFirstEntry", () => {
 		expect(parseAtomFirstEntry(feed)).toEqual({
 			tag: "v1.4.0",
 			publishedAt: null,
+			notesHtml: undefined,
 		})
 	})
 
@@ -262,11 +317,13 @@ describe("parseAtomFirstEntry", () => {
 		expect(parseAtomFirstEntry(feed)).toEqual({
 			tag: "v2.1.0",
 			publishedAt: "2025-03-01T00:00:00Z",
+			notesHtml: undefined,
 		})
 		const noDate = `<?xml version="1.0"?><feed><entry><title>v2.2.0</title></entry></feed>`
 		expect(parseAtomFirstEntry(noDate)).toEqual({
 			tag: "v2.2.0",
 			publishedAt: null,
+			notesHtml: undefined,
 		})
 	})
 
@@ -274,6 +331,71 @@ describe("parseAtomFirstEntry", () => {
 		expect(parseAtomFirstEntry("<feed></feed>")).toBeUndefined()
 		expect(parseAtomFirstEntry("not a feed")).toBeUndefined()
 		expect(parseAtomFirstEntry(atomFeed(""))).toBeUndefined()
+	})
+})
+
+describe("parseExpandedAssets", () => {
+	const repo = "me/cat"
+	const tag = "v1.2.3"
+
+	test("reads asset names and download URLs from the fragment rows", () => {
+		const html = expandedAssets(repo, tag, [
+			{ name: "cat-1.2.3.zip" },
+			{ name: "README.md" },
+		])
+		expect(parseExpandedAssets(html)).toEqual([
+			{
+				name: "cat-1.2.3.zip",
+				browser_download_url: `https://github.com/${repo}/releases/download/${tag}/cat-1.2.3.zip`,
+			},
+			{
+				name: "README.md",
+				browser_download_url: `https://github.com/${repo}/releases/download/${tag}/README.md`,
+			},
+		])
+	})
+
+	test("dedupes repeated rows and ignores non-asset links", () => {
+		const html =
+			expandedAssets(repo, tag, [{ name: "a.zip" }, { name: "a.zip" }]) +
+			`<a href="/${repo}/releases/tag/v1.2.3" rel="nofollow"><span class="text-bold">tag page</span></a>`
+		expect(parseExpandedAssets(html)).toHaveLength(1)
+	})
+
+	test("degenerates to an empty list when the fragment has no asset rows", () => {
+		expect(parseExpandedAssets("<div>No files attached</div>")).toEqual([])
+		expect(parseExpandedAssets("")).toEqual([])
+	})
+})
+
+describe("htmlToMarkdown", () => {
+	test("converts headings, paragraphs and emphasis", () => {
+		expect(
+			htmlToMarkdown(
+				"<h2>Features</h2><p>Adds <strong>transparent</strong> background and <em>left</em> drawer.</p>",
+			),
+		).toBe("## Features\n\nAdds **transparent** background and *left* drawer.")
+	})
+
+	test("converts lists with nested items and links", () => {
+		const md = htmlToMarkdown(
+			'<ul><li>Reader: <a href="https://example.com">docs</a></li><li>Nested<ul><li>inner</li></ul></li></ul>',
+		)
+		expect(md).toContain("- Reader: [docs](https://example.com)")
+		expect(md).toContain("  - inner")
+	})
+
+	test("converts code blocks and blockquotes and drops scripts", () => {
+		const md = htmlToMarkdown(
+			"<pre><code>const a = 1</code></pre><blockquote><p>quote</p></blockquote><script>bad()</script>",
+		)
+		expect(md).toContain("```\nconst a = 1\n```")
+		expect(md).toContain("> quote")
+		expect(md).not.toContain("bad()")
+	})
+
+	test("throws on a non-string input so callers can degrade", () => {
+		expect(() => htmlToMarkdown(undefined as unknown as string)).toThrow()
 	})
 })
 
@@ -555,58 +677,41 @@ describe("createMarketplaceService.refresh", () => {
 })
 
 describe("createMarketplaceService.detail", () => {
-	test("fetches the authoritative release asset, sha256 sidecar, notes and per-locale readme", async () => {
+	const downloadUrl = (tag: string, name: string) =>
+		`https://github.com/me/cat/releases/download/${tag}/${name}`
+
+	/** Register the atom feed + expanded-assets fragment. Asset bodies are
+	    registered by the test itself, so "missing" readmes stay missing. */
+	function seedRelease(
+		f: ReturnType<typeof makeFixture>,
+		tag: string,
+		extraAssets: readonly string[] = [],
+		notesHtml = "<h2>First release</h2><p>Notes here</p>",
+	): void {
+		const assetNames = [
+			"unrelated.zip",
+			`${PLUGIN_ID}-${tag}.zip` as string,
+			...extraAssets,
+			"unrelated.md",
+		]
+		f.add(atomUrl("me/cat"), atomFeed(tag, "2025-01-02T03:04:05Z", notesHtml))
+		f.add(
+			expandedUrl("me/cat", tag),
+			expandedAssets(
+				"me/cat",
+				tag,
+				assetNames.map((name) => ({ name })),
+			),
+		)
+	}
+
+	test("builds the authoritative release payload (asset, sha256, notes, readme) from quota-free endpoints", async () => {
 		const f = fixture!
 		const sidecar = `${PLUGIN_ID}-v1.2.3.zip.sha256`
-		const zipUrl = `https://github.com/me/cat/releases/download/v1.2.3/${PLUGIN_ID}-v1.2.3.zip`
-		f.addJson("https://api.github.com/repos/me/cat/releases/latest", {
-			tag_name: "v1.2.3",
-			html_url: "https://github.com/me/cat/releases/tag/v1.2.3",
-			published_at: "2025-01-02T03:04:05Z",
-			body: "First release\n\nNotes here",
-			assets: [
-				{
-					name: "unrelated.zip",
-					browser_download_url:
-						"https://github.com/me/cat/releases/download/v1.2.3/unrelated.zip",
-				},
-				{
-					name: `${PLUGIN_ID}-v1.2.3.zip`,
-					browser_download_url: zipUrl,
-				},
-				{
-					name: sidecar,
-					browser_download_url: `https://github.com/me/cat/releases/download/v1.2.3/${sidecar}`,
-				},
-				{
-					name: "README.md",
-					browser_download_url:
-						"https://github.com/me/cat/releases/download/v1.2.3/README.md",
-				},
-				{
-					name: "README.zh-CN.md",
-					browser_download_url:
-						"https://github.com/me/cat/releases/download/v1.2.3/README.zh-CN.md",
-				},
-				{
-					name: "unrelated.md",
-					browser_download_url:
-						"https://github.com/me/cat/releases/download/v1.2.3/unrelated.md",
-				},
-			],
-		})
-		f.add(
-			`https://github.com/me/cat/releases/download/v1.2.3/${sidecar}`,
-			`  ${sha256("zip")}  `,
-		)
-		f.add(
-			"https://github.com/me/cat/releases/download/v1.2.3/README.md",
-			"# Readme",
-		)
-		f.add(
-			"https://github.com/me/cat/releases/download/v1.2.3/README.zh-CN.md",
-			"# 说明 zh",
-		)
+		seedRelease(f, "v1.2.3", [sidecar, "README.md", "README.zh-CN.md"])
+		f.add(downloadUrl("v1.2.3", sidecar), `  ${sha256("zip")}  `)
+		f.add(downloadUrl("v1.2.3", "README.md"), "# Readme")
+		f.add(downloadUrl("v1.2.3", "README.zh-CN.md"), "# 说明 zh")
 
 		const detail = await f.service.detail("me/cat", PLUGIN_ID)
 
@@ -616,14 +721,17 @@ describe("createMarketplaceService.detail", () => {
 			tag: "v1.2.3",
 			version: "1.2.3",
 			assetName: `${PLUGIN_ID}-v1.2.3.zip`,
-			assetUrl: zipUrl,
+			assetUrl: downloadUrl("v1.2.3", `${PLUGIN_ID}-v1.2.3.zip`),
 			sha256: sha256("zip"),
-			notes: "First release\n\nNotes here",
+			// The atom content HTML is converted back to markdown.
+			notes: "## First release\n\nNotes here",
 		})
 		expect(detail.latest?.readme).toEqual({
 			en: "# Readme",
 			"zh-CN": "# 说明 zh",
 		})
+		// The detail never touches the quota-hungry GitHub API.
+		expect(apiCalls(f)).toBe(0)
 		// Non-readme assets are never fetched.
 		expect(
 			f.fetcher.fetchToFile.mock.calls.some(([url]) =>
@@ -632,28 +740,29 @@ describe("createMarketplaceService.detail", () => {
 		).toBe(false)
 	})
 
+	test("a feed with no content element surfaces the release with null notes", async () => {
+		const f = fixture!
+		seedRelease(f, "v1.2.3", [], "")
+		// `seedRelease` wrote a content element with empty HTML; force a
+		// content-less feed to model a feed without notes.
+		f.add(
+			atomUrl("me/cat"),
+			atomFeed("v1.2.3", "2025-01-02T03:04:05Z").replace(
+				/<content[^>]*>[\s\S]*?<\/content>/,
+				"",
+			),
+		)
+
+		const detail = await f.service.detail("me/cat", PLUGIN_ID)
+		expect(detail.state).toBe("ok")
+		expect(detail.latest?.version).toBe("1.2.3")
+		expect(detail.latest?.notes).toBeNull()
+	})
+
 	test("a failing readme locale drops just that locale", async () => {
 		const f = fixture!
-		f.addJson("https://api.github.com/repos/me/cat/releases/latest", {
-			...RELEASE,
-			assets: [
-				...RELEASE.assets,
-				{
-					name: "README.md",
-					browser_download_url:
-						"https://github.com/me/cat/releases/download/v1.2.3/README.md",
-				},
-				{
-					name: "README.ja.md",
-					browser_download_url:
-						"https://github.com/me/cat/releases/download/v1.2.3/README.ja.md",
-				},
-			],
-		})
-		f.add(
-			"https://github.com/me/cat/releases/download/v1.2.3/README.md",
-			"# Readme",
-		)
+		seedRelease(f, "v1.2.3", ["README.md", "README.ja.md"])
+		f.add(downloadUrl("v1.2.3", "README.md"), "# Readme")
 
 		// `README.ja.md` is missing → only the English fallback survives.
 		const detail = await f.service.detail("me/cat", PLUGIN_ID)
@@ -662,21 +771,8 @@ describe("createMarketplaceService.detail", () => {
 
 	test("keeps only the shipped locale when there is no bare README.md", async () => {
 		const f = fixture!
-		f.addJson("https://api.github.com/repos/me/cat/releases/latest", {
-			...RELEASE,
-			assets: [
-				...RELEASE.assets,
-				{
-					name: "README.zh.md",
-					browser_download_url:
-						"https://github.com/me/cat/releases/download/v1.2.3/README.zh.md",
-				},
-			],
-		})
-		f.add(
-			"https://github.com/me/cat/releases/download/v1.2.3/README.zh.md",
-			"# 说明 zh",
-		)
+		seedRelease(f, "v1.2.3", ["README.zh.md"])
+		f.add(downloadUrl("v1.2.3", "README.zh.md"), "# 说明 zh")
 
 		const detail = await f.service.detail("me/cat", PLUGIN_ID)
 		expect(detail.latest?.readme).toEqual({ zh: "# 说明 zh" })
@@ -684,26 +780,14 @@ describe("createMarketplaceService.detail", () => {
 
 	test("a repo with no published release resolves to no_release", async () => {
 		const f = fixture!
-		f.fetcher.fetchToFile.mockImplementation(
-			async (u: string, target: string) => {
-				if (u.includes("api.github.com")) {
-					throw new Error(`plugin download returned HTTP 404: ${u}`)
-				}
-				const body = f.routes.get(u)
-				if (body === undefined) {
-					throw new Error(`plugin download returned HTTP 404: ${u}`)
-				}
-				await writeFile(target, body)
-				return { sizeBytes: Buffer.byteLength(body), sha256: sha256(body) }
-			},
-		)
-
+		// No atom route — the feed 404s, exactly like a repo without releases.
 		const detail = await f.service.detail("me/cat", PLUGIN_ID)
 		expect(detail.state).toBe("no_release")
 		expect(detail.latest).toBeUndefined()
+		expect(apiCalls(f)).toBe(0)
 	})
 
-	test("a rate-limited API with no cached release surfaces the version from the releases.atom feed", async () => {
+	test("an expanded-assets 403 with no cached release surfaces the version from the releases.atom feed", async () => {
 		const f = fixture!
 		f.add(atomUrl("me/cat"), atomFeed("v1.2.3"))
 		rateLimitFetcher(f)
@@ -717,7 +801,7 @@ describe("createMarketplaceService.detail", () => {
 		expect(detail.latest?.publishedAt).toBe("2025-01-02T03:04:05Z")
 		expect(detail.rateLimited).toBe(true)
 		expect(detail.error).toBeUndefined()
-		// The free releases feed (not the rate-limited API) supplied the tag.
+		// The free releases feed (not the rate-limited asset endpoint) supplied the tag.
 		expect(f.fetcher.fetchToFile).toHaveBeenCalledWith(
 			atomUrl("me/cat"),
 			expect.any(String),
@@ -725,13 +809,13 @@ describe("createMarketplaceService.detail", () => {
 		)
 	})
 
-	test("a rate-limited API with a stale cached release and a newer feed tag surfaces the newer version-only release", async () => {
+	test("a 403 with a stale cached release and a newer feed tag surfaces the newer version-only release", async () => {
 		const f = fixture!
-		f.addJson("https://api.github.com/repos/me/cat/releases/latest", RELEASE)
+		seedRelease(f, "v1.2.3")
 		await f.service.detail("me/cat", PLUGIN_ID) // seed v1.2.3 + asset
 		f.add(atomUrl("me/cat"), atomFeed("v1.3.0"))
 		rateLimitFetcher(f)
-		// Expire the release TTL so the next detail re-fetches the API.
+		// Expire the release TTL so the next detail re-builds.
 		f.advance(60 * 60_000 + 1)
 
 		const detail = await f.service.detail("me/cat", PLUGIN_ID)
@@ -742,9 +826,9 @@ describe("createMarketplaceService.detail", () => {
 		expect(detail.rateLimited).toBe(true)
 	})
 
-	test("a rate-limited API with a feed tag matching the cached release keeps the cached asset", async () => {
+	test("a 403 with a feed tag matching the cached release keeps the cached asset", async () => {
 		const f = fixture!
-		f.addJson("https://api.github.com/repos/me/cat/releases/latest", RELEASE)
+		seedRelease(f, "v1.2.3")
 		await f.service.detail("me/cat", PLUGIN_ID) // seed v1.2.3 + asset
 		// The feed agrees with the cached tag — the cache is still current, so
 		// its asset is kept and an update stays possible from cache.
@@ -756,33 +840,29 @@ describe("createMarketplaceService.detail", () => {
 		expect(detail.state).toBe("ok")
 		expect(detail.latest?.version).toBe("1.2.3")
 		expect(detail.latest?.assetUrl).toBe(
-			RELEASE.assets[0]!.browser_download_url,
+			downloadUrl("v1.2.3", `${PLUGIN_ID}-v1.2.3.zip`),
 		)
 		expect(detail.rateLimited).toBe(true)
 	})
 
-	test("a rate-limited API with an empty atom feed degrades to the cached release", async () => {
+	test("an entry-less feed resolves to no_release even with a stale cached release", async () => {
 		const f = fixture!
-		f.addJson("https://api.github.com/repos/me/cat/releases/latest", RELEASE)
+		seedRelease(f, "v1.2.3")
 		await f.service.detail("me/cat", PLUGIN_ID) // seed v1.2.3 + asset
-		// The feed answers but carries no entry — nothing to learn from it,
-		// so the detail keeps the cached payload (asset still usable).
-		f.add(atomUrl("me/cat"), "<feed></feed>")
-		rateLimitFetcher(f)
 		f.advance(60 * 60_000 + 1)
+		// The feed answers but carries no entry — the repo's releases no
+		// longer exist, so the view reports no_release (the cache cannot be
+		// trusted about the current state).
+		f.add(atomUrl("me/cat"), "<feed></feed>")
 
 		const detail = await f.service.detail("me/cat", PLUGIN_ID)
-		expect(detail.state).toBe("ok")
-		expect(detail.latest?.version).toBe("1.2.3")
-		expect(detail.latest?.assetUrl).toBe(
-			RELEASE.assets[0]!.browser_download_url,
-		)
-		expect(detail.rateLimited).toBe(true)
+		expect(detail.state).toBe("no_release")
+		expect(detail.latest).toBeUndefined()
 	})
 
-	test("a rate-limited API with no cached release and no atom entry reports a rate-limited error", async () => {
+	test("a 403 with no cached release and no atom data reports a rate-limited error", async () => {
 		const f = fixture!
-		rateLimitFetcher(f)
+		rateLimitEverythingFetcher(f)
 
 		const detail = await f.service.detail("me/cat", PLUGIN_ID)
 		expect(detail.state).toBe("error")
@@ -793,12 +873,13 @@ describe("createMarketplaceService.detail", () => {
 
 	test("caches a fresh release per repo and persists it across restarts", async () => {
 		const f = fixture!
-		f.addJson("https://api.github.com/repos/me/cat/releases/latest", RELEASE)
+		seedRelease(f, "v1.2.3")
 		await f.service.detail("me/cat", PLUGIN_ID)
-		expect(apiCalls(f)).toBe(1)
+		expect(expandedCalls(f)).toBe(1)
+		expect(apiCalls(f)).toBe(0)
 
 		// A fresh instance (empty in-memory cache) sharing the same cache file
-		// answers from the persisted disk cache without any API call.
+		// answers from the persisted disk cache without any endpoint re-hit.
 		const second = createMarketplaceService({
 			prefs: {
 				get: (key: string) =>
@@ -829,37 +910,38 @@ describe("createMarketplaceService.detail", () => {
 		const detail = await second.detail("me/cat", PLUGIN_ID)
 		expect(detail.state).toBe("ok")
 		expect(detail.latest?.version).toBe("1.2.3")
-		expect(apiCalls(f)).toBe(1)
+		expect(expandedCalls(f)).toBe(1)
+		expect(apiCalls(f)).toBe(0)
 	})
 
-	test("a rate-limited API arms a cooldown that suppresses re-hits until it lapses", async () => {
+	test("a 403 arms a cooldown that suppresses re-hits until it lapses", async () => {
 		const f = fixture!
-		f.addJson("https://api.github.com/repos/me/cat/releases/latest", RELEASE)
-		// Seed a healthy cache, then make the API 403.
+		seedRelease(f, "v1.2.3")
+		// Seed a healthy cache, then make the asset endpoint 403.
 		const healthy = await f.service.detail("me/cat", PLUGIN_ID)
-		expect(apiCalls(f)).toBe(1)
+		expect(expandedCalls(f)).toBe(1)
 		expect(healthy.rateLimited).toBeUndefined()
 
-		// Expire the release TTL so the next detail re-fetches; the stale
+		// Expire the release TTL so the next detail re-builds; the stale
 		// cached payload degrades to a rate-limited entry instead of erroring.
 		f.advance(60 * 60_000 + 1)
 		rateLimitFetcher(f)
 
 		const degraded = await f.service.detail("me/cat", PLUGIN_ID)
-		expect(apiCalls(f)).toBe(2)
+		expect(expandedCalls(f)).toBe(2)
 		expect(degraded.state).toBe("ok")
 		expect(degraded.latest?.version).toBe("1.2.3")
 		expect(degraded.rateLimited).toBe(true)
 
-		// Within the cooldown a re-open skips the API entirely (no re-quota burn).
+		// Within the cooldown a re-open skips the endpoints entirely.
 		const again = await f.service.detail("me/cat", PLUGIN_ID)
-		expect(apiCalls(f)).toBe(2)
+		expect(expandedCalls(f)).toBe(2)
 		expect(again.rateLimited).toBe(true)
 
 		// Once the cooldown lapses it retries (and still degrades while 403).
 		f.advance(60 * 60_000 + 1)
 		const after = await f.service.detail("me/cat", PLUGIN_ID)
-		expect(apiCalls(f)).toBe(3)
+		expect(expandedCalls(f)).toBe(3)
 		expect(after.state).toBe("ok")
 		expect(after.latest?.version).toBe("1.2.3")
 		expect(after.rateLimited).toBe(true)
@@ -876,12 +958,23 @@ describe("createMarketplaceService.detail", () => {
 		expect(f.fetcher.fetchToFile).not.toHaveBeenCalled()
 	})
 
-	test("a release payload that fails validation maps to a failed error", async () => {
+	test("a transport failure maps to a failed error", async () => {
 		const f = fixture!
-		// The API answers, but the payload is missing the required fields.
-		f.addJson("https://api.github.com/repos/me/cat/releases/latest", {
-			bogus: true,
-		})
+		f.add(atomUrl("me/cat"), atomFeed("v1.2.3"))
+		// The atom answers but the asset-list fetch fails (not 404/403).
+		f.fetcher.fetchToFile.mockImplementation(
+			async (u: string, target: string) => {
+				if (u.includes("expanded_assets")) {
+					throw new Error("socket hang up")
+				}
+				const body = f.routes.get(u)
+				if (body === undefined) {
+					throw new Error(`plugin download returned HTTP 404: ${u}`)
+				}
+				await writeFile(target, body)
+				return { sizeBytes: Buffer.byteLength(body), sha256: sha256(body) }
+			},
+		)
 
 		const detail = await f.service.detail("me/cat", PLUGIN_ID)
 		expect(detail.state).toBe("error")

@@ -51,11 +51,11 @@ type MarketSnapshot = RouterOutputs["marketplace"]["snapshot"]
 
 /**
  * One plugin's authoritative latest release (asset / notes / readme /
- * sha256), requested when the user opens its "View" dialog. This is the
- * only marketplace query that calls the quota-hungry GitHub API, and it is
- * on-demand — the list snapshot never does. Cached per repo (and cached
- * server-side per repo), so re-opening a plugin reuses cache instead of
- * re-hitting the API.
+ * sha256), requested when the user opens its "View" dialog. The server
+ * assembles it from quota-free GitHub web endpoints (atom feed +
+ * `releases/expanded_assets`), on demand — the list snapshot only ever
+ * reads the free feed. Cached per repo (and cached server-side per repo),
+ * so re-opening a plugin reuses cache instead of re-fetching.
  */
 export function marketplaceDetailQueryOptions(repo: string, id: string) {
 	return trpcQueryOptions({
