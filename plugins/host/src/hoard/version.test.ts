@@ -11,7 +11,6 @@ import { join } from "node:path"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 import { DomainError } from "../errors.ts"
 import {
-	createNextVersion,
 	currentVersion,
 	ensureBootstrapVersion,
 	listVersions,
@@ -169,117 +168,5 @@ describe("writeActiveVersion", () => {
 			expect(err).toBeInstanceOf(DomainError)
 			expect((err as DomainError).kind).toBe("version.not_found")
 		}
-	})
-})
-
-describe("createNextVersion", () => {
-	let root: string
-
-	beforeEach(() => {
-		root = mkdtempSync(join(tmpdir(), "ver-next-"))
-	})
-
-	afterEach(() => {
-		rmSync(root, { recursive: true, force: true })
-	})
-
-	test("throws when no version exists yet", () => {
-		try {
-			createNextVersion(root, () => {})
-			expect.unreachable("should have thrown")
-		} catch (err) {
-			expect(err).toBeInstanceOf(DomainError)
-			expect((err as DomainError).kind).toBe("version.bootstrap_required")
-		}
-	})
-
-	test("snapshots the live DB into versions/<prev>/app.sqlite", () => {
-		// Bootstrap version 1, then have the injected vacuum write a marker
-		// file — the primitive's job is the destination, not the sqlite
-		// snapshot (the server's DbHandles.vacuumInto owns that).
-		ensureBootstrapVersion(root)
-		const result = createNextVersion(root, (dest) => {
-			writeFileSync(dest, "snapshot")
-		})
-
-		expect(result.previous).toBe(1)
-		expect(result.created).toBe(2)
-
-		const snapshotPath = join(root, "versions", "1", "app.sqlite")
-		expect(existsSync(snapshotPath)).toBe(true)
-		expect(readFileSync(snapshotPath, "utf8")).toBe("snapshot")
-	})
-
-	test("throws when snapshot already exists", () => {
-		ensureBootstrapVersion(root)
-
-		// First call succeeds
-		createNextVersion(root, (dest) => {
-			writeFileSync(dest, "snapshot")
-		})
-
-		// After first publish, current version becomes 2; the next snapshot
-		// target would be versions/2/app.sqlite. Pre-create it to trigger
-		// the already_exists guard.
-		mkdirSync(join(root, "versions", "2"), { recursive: true })
-		writeFileSync(join(root, "versions", "2", "app.sqlite"), "")
-
-		try {
-			createNextVersion(root, () => {
-				expect.unreachable("vacuumInto should not be called")
-			})
-			expect.unreachable("should have thrown")
-		} catch (err) {
-			expect(err).toBeInstanceOf(DomainError)
-			expect((err as DomainError).kind).toBe("version.already_exists")
-		}
-		expect(existsSync(join(root, "versions", "3"))).toBe(false)
-		expect(currentVersion(root)).toBe(2)
-	})
-
-	test("copies installed plugins into the next version", () => {
-		ensureBootstrapVersion(root)
-		const pluginId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
-		const src = join(root, "versions", "1", "plugins", pluginId)
-		mkdirSync(src, { recursive: true })
-		writeFileSync(join(src, "manifest.json"), JSON.stringify({ id: pluginId }))
-		writeFileSync(join(src, "main.js"), "export default {}\n")
-		mkdirSync(join(root, "versions", "1", "plugins", ".staging-x"), {
-			recursive: true,
-		})
-		mkdirSync(join(root, "versions", "1", "plugins", "not-a-plugin"), {
-			recursive: true,
-		})
-
-		createNextVersion(root, (dest) => {
-			writeFileSync(dest, "snapshot")
-		})
-
-		expect(
-			existsSync(join(root, "versions", "2", "plugins", pluginId, "main.js")),
-		).toBe(true)
-		expect(
-			existsSync(join(root, "versions", "1", "plugins", pluginId, "main.js")),
-		).toBe(true)
-		expect(
-			existsSync(join(root, "versions", "2", "plugins", ".staging-x")),
-		).toBe(false)
-		expect(
-			existsSync(join(root, "versions", "2", "plugins", "not-a-plugin")),
-		).toBe(false)
-	})
-
-	test("removes the next version directory when vacuumInto throws", () => {
-		ensureBootstrapVersion(root)
-		try {
-			createNextVersion(root, () => {
-				throw new Error("vacuum failed")
-			})
-			expect.unreachable("should have thrown")
-		} catch (err) {
-			expect((err as Error).message).toBe("vacuum failed")
-		}
-		expect(existsSync(join(root, "versions", "2"))).toBe(false)
-		expect(currentVersion(root)).toBe(1)
 	})
 })

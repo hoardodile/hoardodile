@@ -38,8 +38,7 @@ export async function registerProtection(
 			throw new Error("The recovery database is corrupt")
 		const handles = openDb(path)
 		try {
-			handles.validateCompatibility?.()
-			handles.runMigrations()
+			handles.validateCompatibility?.({ requireCurrent: true })
 			if (!handles.integrityCheck())
 				throw new Error("The recovery database is incompatible")
 		} finally {

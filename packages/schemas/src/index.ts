@@ -1,5 +1,4 @@
 export * from "./auth.ts"
-export * from "./backup.ts"
 export * from "./cat.ts"
 export * from "./char.ts"
 export * from "./col.ts"

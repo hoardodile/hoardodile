@@ -53,8 +53,6 @@
 		"missing": "缺失",
 		"changed": "内容不同",
 		"extra": "备份中不存在",
-		"legacy": "旧格式数据库快照",
-		"legacyHelp": "这些快照仅包含数据库，仍可导出。",
 		"archives": "历史归档",
 		"archivesHelp": "使用各归档冻结的数据与插件浏览历史。",
 		"jobs": "最近任务",
@@ -957,15 +955,13 @@
 	},
 	"dataHistory": {
 		"title": "数据历史",
-		"description": "查看历史归档和旧格式数据库快照；完整恢复点在上方管理。",
 		"status": {
 			"currentWritable": "可写——v{{version}}",
 			"viewingArchive": "正在查看归档——v{{version}}"
 		},
 		"chip": {
 			"latest": "最新",
-			"readOnly": "只读",
-			"auto": "自动"
+			"readOnly": "只读"
 		},
 		"archive": {
 			"title": "v{{version}}",
@@ -981,45 +977,18 @@
 			"switchHint": "切换后将以只读模式查看该版本。如需继续编辑，请返回最新版本。",
 			"activeHint": "这是正在查看的版本。"
 		},
-		"backup": {
-			"typeLabel": "旧格式数据库快照",
-			"autoTypeLabel": "旧格式自动数据库快照",
-			"autoBadge": "自动",
-			"autoDeleteHint": "旧格式数据库快照保留供导出；还原资料库请使用完整恢复点。",
-			"nameLabel": "名称",
-			"nameEmpty": "无",
-			"restoreHint": "旧格式数据库快照保留供导出；还原资料库请使用完整恢复点。",
-			"deleteHint": "此备份文件将被永久删除，无法恢复。",
-			"archivedHint": "此备份属于已归档版本，数据已冻结，不可还原或删除。"
-		},
 		"action": {
-			"backupNow": "立即备份",
-			"backingUp": "备份中…",
 			"archiveNow": "立即归档",
 			"archiving": "归档中…",
-			"restore": "还原",
-			"restoring": "还原中…",
-			"delete": "删除",
-			"deleting": "删除中…",
 			"switchToVersion": "切换查看此版本",
-			"switching": "切换中…",
-			"download": "下载"
+			"switching": "切换中…"
 		},
 		"reloading": "重新加载中…",
-		"autoSnapshot": {
-			"enabled": "自动快照：每日一次 · 保留 {{keep}} 天",
-			"disabled": "自动快照已关闭",
-			"last": "最近一次 {{time}}"
-		},
 		"detail": {
-			"selectPrompt": "在时间轴中选择一个备份或归档，查看详情与可执行的操作。",
-			"size": "大小",
+			"selectPrompt": "选择归档查看详情。",
 			"versionNumber": "版本号",
 			"createdAt": "创建时间",
 			"note": "备注",
-			"contents": "内容",
-			"contentsValue": "{{resources}} 个资源 · {{characters}} 个角色 · {{documents}} 个文档",
-			"backupOnVersion": "基于 v{{version}} 的备份",
 			"archiveVersion": "归档 v{{version}}"
 		},
 		"note": {
@@ -1028,30 +997,16 @@
 		},
 		"confirm": {
 			"archiveTitle": "归档最新版本",
-			"archiveDescription": "最新版本的数据库与所有资源/角色/文档将归档，归档内的数据不会再被修改；系统会新建一个可写版本继续工作。",
+			"archiveDescription": "当前数据、插件代码和插件文件将一起冻结。新的可写版本使用独立的插件副本。",
 			"archivePhrase": "归档",
-			"archiveAutoHint": "已有数据库快照随归档保留，完整备份使用独立调度。",
-			"restoreTitle": "还原此备份",
-			"restoreDescription": "还原会替换资料库并丢弃本地变更，不会自动创建可回退归档。",
-			"restorePhrase": "还原备份",
-			"autoPhrase": "自动",
-			"deleteBackupTitle": "永久删除备份",
-			"deleteBackupDescription": "此备份文件将被永久删除，无法恢复。",
-			"deleteBackupPhrase": "删除备份",
 			"switchTitle": "切换到该归档版本",
 			"switchDescription": "切换后服务将以只读模式启动，只能查看历史数据。要恢复编辑，请返回最新可写版本。"
 		},
 		"empty": {
-			"title": "暂无数据历史。",
-			"description": "建议你立即创建一次备份，以防数据丢失。"
+			"title": "还没有归档。"
 		},
 		"toast": {
-			"backupCreated": "备份完成",
-			"backupFailed": "备份失败",
 			"archiveFailed": "归档失败",
-			"backupDeleted": "备份已删除",
-			"deleteFailed": "删除失败",
-			"restoreFailed": "还原失败",
 			"switchFailed": "切换失败",
 			"metaSaved": "已保存",
 			"metaSaveFailed": "保存失败"

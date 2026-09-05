@@ -67,8 +67,6 @@ test("loadEnv defaults plugin path vars to empty arrays", () => {
 
 test("loadEnv defaults auto snapshot vars to enabled / keep 3", () => {
 	const env = loadEnv({})
-	expect(env.AUTO_SNAPSHOT_ENABLED).toBe(true)
-	expect(env.AUTO_SNAPSHOT_KEEP).toBe(3)
 	expect(env.MIN_FREE_DISK_BYTES).toBe(5 * 1024 * 1024 * 1024)
 })
 
@@ -97,23 +95,6 @@ test("loadEnv rejects a non-positive marketplace cache window", () => {
 		loadEnv({
 			MARKETPLACE_CACHE_TTL_MS: "0",
 		} satisfies NodeJS.ProcessEnv),
-	).toThrow(/Invalid environment/)
-})
-
-test("loadEnv parses auto snapshot overrides", () => {
-	const env = loadEnv({
-		AUTO_SNAPSHOT_ENABLED: "false",
-		AUTO_SNAPSHOT_KEEP: "7",
-		MIN_FREE_DISK_BYTES: "1073741824",
-	} satisfies NodeJS.ProcessEnv)
-	expect(env.AUTO_SNAPSHOT_ENABLED).toBe(false)
-	expect(env.AUTO_SNAPSHOT_KEEP).toBe(7)
-	expect(env.MIN_FREE_DISK_BYTES).toBe(1_073_741_824)
-})
-
-test("loadEnv rejects a non-positive AUTO_SNAPSHOT_KEEP", () => {
-	expect(() =>
-		loadEnv({ AUTO_SNAPSHOT_KEEP: "0" } satisfies NodeJS.ProcessEnv),
 	).toThrow(/Invalid environment/)
 })
 

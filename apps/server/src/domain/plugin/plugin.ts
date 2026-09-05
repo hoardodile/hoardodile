@@ -48,20 +48,12 @@ async function pluginDomainImpl(app: FastifyInstance): Promise<void> {
 	const restoredLibrary = () =>
 		existsSync(join(app.paths.local.root, "protection", "last-restore.json"))
 	function activeBuiltinDir(): string | undefined {
-		if (app.libraryMaintenance && app.readOnly) return builtinDir
-		if (!builtinId) return builtinDir
+		if (!builtinId || (app.libraryMaintenance && app.readOnly)) return undefined
 		const recorded = join(
 			app.paths.atVersion(app.paths.activeVersion).plugins(),
 			builtinId,
 		)
-		if (existsSync(join(recorded, "manifest.json"))) return recorded
-		if (app.readOnly || app.libraryMaintenance || restoredLibrary()) {
-			app.log.warn(
-				"The legacy archive has no recorded fallback plugin; only its recorded plugins are available",
-			)
-			return undefined
-		}
-		return builtinDir
+		return existsSync(join(recorded, "manifest.json")) ? recorded : undefined
 	}
 
 	// Deliberately-uninstalled bundled plugins: seeding skips these ids so

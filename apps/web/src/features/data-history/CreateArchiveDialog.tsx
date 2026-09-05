@@ -87,9 +87,6 @@ export function CreateArchiveDialog(props: CreateArchiveDialogProps) {
 						data-testid="archive-confirm-input"
 						disabled={pending}
 					/>
-					<p className="mt-2 text-xs text-muted-foreground">
-						{t("dataHistory.confirm.archiveAutoHint")}
-					</p>
 				</div>
 				<div>
 					<p className="text-sm text-muted-foreground mb-1.5">

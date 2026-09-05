@@ -12,12 +12,6 @@ const versionInput = z.object({
 	version: z.number().int().positive(),
 })
 
-const createInput = z.object({
-	confirmArchive: z.literal(true),
-	name: z.string().max(MAX_VERSION_NAME_LENGTH).optional(),
-	note: z.string().max(MAX_HISTORY_NOTE_LENGTH).optional(),
-})
-
 const updateMetaInput = z.object({
 	version: z.number().int().positive(),
 	name: z.string().max(MAX_VERSION_NAME_LENGTH).optional(),
@@ -25,7 +19,6 @@ const updateMetaInput = z.object({
 })
 
 export type BuildVersionRouterDeps = {
-	readonly reload?: () => Promise<void>
 	readonly service: VersionService
 	/**
 	 * Used to signal `version.changed` after a successful create or
@@ -47,17 +40,6 @@ export function buildVersionRouter(deps: BuildVersionRouterDeps) {
 		list: authedProcedure.query(() => service.list()),
 		current: authedProcedure.query(() => service.current()),
 		active: authedProcedure.query(() => service.active()),
-		create: writeProcedure.input(createInput).mutation(async ({ input }) => {
-			const result = await service.create(
-				{
-					name: input.name,
-					note: input.note,
-				},
-				{ afterPublish: deps.reload },
-			)
-			if (!deps.reload) signals.emit("version.changed", undefined)
-			return { ...result, willRestart: false as const }
-		}),
 		switchTo: authedProcedure.input(versionInput).mutation(({ input }) => {
 			service.switchTo(input.version)
 			signals.emit("version.changed", undefined)

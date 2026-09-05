@@ -44,8 +44,7 @@ export function stageViewCloneDb(paths: StoragePaths, version: number): string {
 	}
 	const handles = openDb(dest)
 	try {
-		handles.validateCompatibility?.()
-		handles.runMigrations()
+		handles.validateCompatibility?.({ requireCurrent: true })
 	} finally {
 		handles.close()
 	}

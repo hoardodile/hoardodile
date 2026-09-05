@@ -68,9 +68,7 @@ function hasForbiddenVisibleChar(segment: string): boolean {
  * Root-level subdirectory semantics:
  * - `versions/<version>/` is the user's manual-sync scope, partitioned by
  *   archive version. Each version folder holds: `app.sqlite` (the
- *   per-version database snapshot), `db-backups/` (manual backups,
- *   only kept for the current version), `snapshots/` (automatic daily
- *   snapshots, only kept for the current version), `resources/<id>/`,
+ *   per-version database snapshot), `checkpoint/` (the completed rolling checkpoint), `resources/<id>/`,
  *   `characters/<id>/`, `tags/<id>/` (tag art — see {@link VersionPaths.tag}),
  *   `plugins/<id>/` (installed content plugins
  *   frozen with that version; the builtin `file` plugin is not stored
@@ -107,7 +105,7 @@ export type StoragePaths = {
 	 * This file is the only writable database during normal operation.
 	 * It lives outside `versions/` so that syncing `versions/` to other
 	 * devices cannot corrupt the in-use database. Only archived snapshots
-	 * (written by {@link createNextVersion}) and backup files belong in
+	 * and completed checkpoints belong in
 	 * `versions/`.
 	 */
 	runtimeDb(): string
@@ -142,14 +140,6 @@ export type VersionPaths = {
 	 * character avatar/fullbody slots.
 	 */
 	tag(id: string): string
-	/** Root of manual backups: `<root>/versions/<v>/db-backups`. */
-	dbBackups(): string
-	/** Path to one manual backup: `<root>/versions/<v>/db-backups/<name>`. */
-	dbBackup(name: string): string
-	/** Root of automatic snapshots: `<root>/versions/<v>/snapshots`. */
-	snapshots(): string
-	/** Path to one automatic snapshot: `<root>/versions/<v>/snapshots/<name>`. */
-	snapshot(name: string): string
 	/**
 	 * Path to a deleted-entity placeholder
 	 * (`<root>/versions/<v>/<kind>/<id>/.deleted`) written when hard
@@ -376,10 +366,6 @@ export function createStoragePaths(
 			documents: () => join(vRoot, "documents"),
 			character: (id) => join(vRoot, "characters", assertSafeSegment(id)),
 			tag: (id) => join(vRoot, "tags", assertSafeSegment(id)),
-			dbBackups: () => join(vRoot, "db-backups"),
-			dbBackup: (name) => join(vRoot, "db-backups", assertSafeSegment(name)),
-			snapshots: () => join(vRoot, "snapshots"),
-			snapshot: (name) => join(vRoot, "snapshots", assertSafeSegment(name)),
 			deletedMarker: (kind, id) =>
 				join(vRoot, kind, assertSafeSegment(id), ".deleted"),
 			document: (id) => join(vRoot, "documents", assertSafeSegment(id)),

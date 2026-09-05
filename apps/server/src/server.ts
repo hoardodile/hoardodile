@@ -19,19 +19,11 @@ import Fastify, {
 } from "fastify"
 import type { Env } from "src/config/env.ts"
 import { buildLoggerOptions } from "src/config/logger.ts"
-import {
-	deleteAuthRow,
-	getAuthRow,
-	type StoredAuthRow,
-	setAuthRow,
-} from "src/domain/auth/repo.ts"
 import { registerAuthRoutes } from "src/domain/auth/routes.ts"
 import type { SessionStore } from "src/domain/auth/session.ts"
-import { backupPlugin } from "src/domain/backup/plugin.ts"
-import type { BackupService } from "src/domain/backup/service.ts"
-import { applyPendingRestore } from "src/domain/backup/startup.ts"
 import { domainPlugins } from "src/domain/index.ts"
 import { registerProtection } from "src/domain/protection/plugin.ts"
+import type { ProtectionService } from "src/domain/protection/service.ts"
 import { protectionDirectory } from "src/domain/protection/service.ts"
 import { registerReplication } from "src/domain/replication/plugin.ts"
 import { cleanupOrphanResourceFolders } from "src/domain/res/files.ts"
@@ -146,10 +138,10 @@ export type BuiltServer = {
 	readonly storagePaths: StoragePaths
 	readonly thumbs: ThumbService
 	/**
-	 * Backup service exposed for callers that need to invoke backup/restore
+	 * Protection service exposed for callers that need to invoke backup/restore
 	 * operations directly without going through the HTTP / tRPC auth surface.
 	 */
-	readonly backups: BackupService
+	readonly protection: ProtectionService
 	readonly close: () => Promise<void>
 }
 
@@ -219,11 +211,6 @@ async function buildServerWithStorageLock(
 				readOnly: true,
 			}
 		: resolveBootstrapForBuild(opts)
-	// Apply any pending restore BEFORE opening the DB -- the swap is a
-	// file-level rename of the live DB, so no handle may be held yet.
-	if (!opts.dbHandles && !suspended) {
-		applyPendingRestorePreservingAuth(bootstrap.storagePaths)
-	}
 
 	const app = createFastifyApp(
 		opts.env,
@@ -233,6 +220,12 @@ async function buildServerWithStorageLock(
 	resources.app = app
 	if (release) app.addHook("onClose", async () => release())
 
+	const hostHandles =
+		opts.env.DATABASE_URL !== ":memory:" &&
+		opts.dbHandles?.filePath !== ":memory:"
+			? openHostDatabase(storageRoot)
+			: undefined
+	if (hostHandles) app.addHook("onClose", async () => hostHandles.close())
 	const dbHandles = suspended
 		? openDb(":memory:")
 		: (opts.dbHandles ??
@@ -243,27 +236,7 @@ async function buildServerWithStorageLock(
 	if (ownsDbHandles && !bootstrap.readOnly) {
 		migrateWithDedupe(dbHandles, opts.env, app.log)
 	}
-	let hostHandles: DbHandles | undefined
-	if (
-		opts.env.DATABASE_URL !== ":memory:" &&
-		opts.dbHandles?.filePath !== ":memory:"
-	) {
-		if (bootstrap.readOnly && !suspended) {
-			const latest = openDb(join(storageRoot, "app.sqlite"))
-			try {
-				latest.runMigrations()
-				hostHandles = openHostDatabase(storageRoot, latest.db)
-			} finally {
-				latest.close()
-			}
-		} else
-			hostHandles = openHostDatabase(
-				storageRoot,
-				suspended ? undefined : dbHandles.db,
-			)
-	}
 	app.decorate("hostDb", hostHandles?.db ?? dbHandles.db)
-	if (hostHandles) app.addHook("onClose", async () => hostHandles.close())
 
 	const runtimeRefs = createRuntimeRefs({
 		dbHandles,
@@ -468,14 +441,13 @@ function createFastifyApp(
 	})
 }
 
-/** Register domain services plus thumbs, backup, and version infrastructure. */
+/** Register domain services plus thumbs and version infrastructure. */
 async function registerDomainAndInfraServices(
 	app: FastifyInstance,
 ): Promise<void> {
 	await app.register(domainPlugins)
 	await app.register(thumbPlugin)
 	await app.register(versionPlugin)
-	await app.register(backupPlugin)
 }
 
 /** Register the HTTP routes and the protected HTTP scope. */
@@ -565,9 +537,7 @@ async function registerTrpcSurface(app: FastifyInstance): Promise<void> {
 		pluginAssetConsent: app.pluginAssetConsent,
 		marketplaceService: app.marketplaceService,
 		outboundNetwork: app.outboundNetwork,
-		backupService: app.backupService,
 		protectionService: app.protectionService,
-		reloadStorage: () => reloadStorageContext(app).then(() => undefined),
 		replicationService: app.replicationService,
 		versionService: app.versionService,
 		thumbService: app.thumbService,
@@ -855,48 +825,6 @@ function installDrainingMiddleware(app: FastifyInstance): void {
 }
 
 /**
- * Apply a pending restore, then transplant the auth row from the previous
- * DB into the restored one. Restores bring back data but never
- * credentials: the admin password that worked before the restore keeps
- * working, and an unconfigured instance stays unconfigured.
- *
- * Runs with short-lived handles because this is always invoked at the
- * exact moment the live DB is being swapped (before any handle to the new
- * file exists).
- */
-function applyPendingRestorePreservingAuth(
-	paths: StoragePaths,
-): ReturnType<typeof applyPendingRestore> {
-	const result = applyPendingRestore({ paths })
-	if (!result.applied) return result
-
-	const previousPath = existsSync(result.previousPath)
-		? result.previousPath
-		: undefined
-	let previousAuth: StoredAuthRow | undefined
-	if (previousPath !== undefined) {
-		const previous = openDb(previousPath, { readonly: true })
-		try {
-			previousAuth = getAuthRow(previous.db)
-		} finally {
-			previous.close()
-		}
-	}
-
-	const restored = openDb(result.dbFilePath)
-	try {
-		// Backups may predate the no-credentials policy; never adopt their
-		// auth row either way -- the previous row (or its absence) wins.
-		deleteAuthRow(restored.db)
-		if (previousAuth !== undefined) setAuthRow(restored.db, previousAuth)
-	} finally {
-		restored.close()
-	}
-
-	return result
-}
-
-/**
  * Hot-reload the storage context in-process.
  *
  * 1. Park new requests on a gate (they wait instead of receiving 503).
@@ -962,9 +890,8 @@ async function reloadStorageContextNow(
 			log.warn({ err }, "storage.reload.old_close_failed")
 		}
 
-		// Apply pending restore (no-op if marker missing) and resolve new state.
+		// Resolve the selected archive or the current writable library.
 		const ctx = resolveStorageContext(env)
-		applyPendingRestorePreservingAuth(ctx.paths)
 
 		const newHandles = openDb(ctx.dbFilePath, { readonly: ctx.readOnly })
 		if (!ctx.readOnly) migrateWithDedupe(newHandles, env, log)
@@ -1010,7 +937,7 @@ async function reloadStorageContextNow(
 }
 
 /**
- * Wire the backup/version signals to an in-process storage reload.
+ * Wire the archive selection signals to an in-process storage reload.
  * The server process stays alive; clients learn about the reload via SSE.
  */
 function subscribeContextReload(
@@ -1021,9 +948,6 @@ function subscribeContextReload(
 		app.log.error({ err }, "storage.reload.failed")
 	}
 
-	app.signals.on("backup.restoreRequested", () => {
-		void reloadStorageContext(app).then(onContextReloaded, logReloadError)
-	})
 	app.signals.on("version.changed", () => {
 		void reloadStorageContext(app).then(onContextReloaded).catch(logReloadError)
 	})
@@ -1040,7 +964,7 @@ function buildResult(app: FastifyInstance): BuiltServer {
 		sessions: app.sessions,
 		storagePaths: app.paths,
 		thumbs: app.thumbService,
-		backups: app.backupService,
+		protection: app.protectionService,
 		close: async () => {
 			await app.close()
 		},

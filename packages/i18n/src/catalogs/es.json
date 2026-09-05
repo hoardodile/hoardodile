@@ -53,8 +53,6 @@
 		"missing": "Falta",
 		"changed": "Contenido diferente",
 		"extra": "No está en esta copia",
-		"legacy": "Instantáneas antiguas de la base de datos",
-		"legacyHelp": "Estas instantáneas solo contienen una base de datos. Siguen disponibles para exportar.",
 		"archives": "Archivos históricos",
 		"archivesHelp": "Consulta un archivo histórico con sus propios datos y plugins conservados.",
 		"jobs": "Operaciones recientes",
@@ -957,15 +955,13 @@
 	},
 	"dataHistory": {
 		"title": "Historial de datos",
-		"description": "Archivos históricos e instantáneas antiguas. Los puntos completos se gestionan arriba.",
 		"status": {
 			"currentWritable": "Con escritura — v{{version}}",
 			"viewingArchive": "Viendo el archivo — v{{version}}"
 		},
 		"chip": {
 			"latest": "Más reciente",
-			"readOnly": "Solo lectura",
-			"auto": "Auto"
+			"readOnly": "Solo lectura"
 		},
 		"archive": {
 			"title": "v{{version}}",
@@ -981,45 +977,18 @@
 			"switchHint": "Tras cambiar, la app funciona en modo de solo lectura sobre este archivo. Vuelve a la versión más reciente para editar de nuevo.",
 			"activeHint": "Esta es la versión que estás viendo."
 		},
-		"backup": {
-			"typeLabel": "Instantánea antigua de la base de datos",
-			"autoTypeLabel": "Instantánea automática antigua",
-			"autoBadge": "auto",
-			"autoDeleteHint": "Las instantáneas antiguas se conservan para exportar. Para restaurar la biblioteca, usa un punto completo.",
-			"nameLabel": "Nombre",
-			"nameEmpty": "Ninguna",
-			"restoreHint": "Las instantáneas antiguas se conservan para exportar. Para restaurar la biblioteca, usa un punto completo.",
-			"deleteHint": "Este archivo de copia de seguridad se eliminará de forma permanente y no se puede recuperar.",
-			"archivedHint": "Esta copia pertenece a una versión archivada. Sus datos están congelados y no se pueden restaurar ni eliminar."
-		},
 		"action": {
-			"backupNow": "Crear copia ahora",
-			"backingUp": "Creando copia…",
 			"archiveNow": "Archivar ahora",
 			"archiving": "Archivando…",
-			"restore": "Restaurar",
-			"restoring": "Restaurando…",
-			"delete": "Eliminar",
-			"deleting": "Eliminando…",
 			"switchToVersion": "Cambiar a esta versión",
-			"switching": "Cambiando…",
-			"download": "Descargar"
+			"switching": "Cambiando…"
 		},
 		"reloading": "Recargando…",
-		"autoSnapshot": {
-			"enabled": "Instantánea automática: diaria · conserva {{keep}} días",
-			"disabled": "Las instantáneas automáticas están desactivadas",
-			"last": "la más reciente {{time}}"
-		},
 		"detail": {
-			"selectPrompt": "Selecciona una copia o un archivo en la línea de tiempo para ver los detalles y las acciones disponibles.",
-			"size": "Tamaño",
+			"selectPrompt": "Selecciona un archivo histórico para ver sus detalles.",
 			"versionNumber": "Versión",
 			"createdAt": "Creado",
 			"note": "Nota",
-			"contents": "Contenido",
-			"contentsValue": "{{resources}} recursos · {{characters}} personajes · {{documents}} documentos",
-			"backupOnVersion": "Copia en v{{version}}",
 			"archiveVersion": "Archivo v{{version}}"
 		},
 		"note": {
@@ -1028,30 +997,16 @@
 		},
 		"confirm": {
 			"archiveTitle": "Archivar la versión más reciente",
-			"archiveDescription": "La base de datos de la versión más reciente y todos los recursos, personajes y documentos se congelarán como un archivo de solo lectura. Los datos dentro de un archivo nunca vuelven a cambiar; se creará una versión nueva con escritura para el trabajo continuo.",
+			"archiveDescription": "Se conservarán juntos los datos, el código y los archivos de los plugins. La nueva versión editable usará copias independientes de los plugins.",
 			"archivePhrase": "archivar",
-			"archiveAutoHint": "Las instantáneas existentes se conservan en su archivo. Las copias completas tienen su propia programación.",
-			"restoreTitle": "Restaurar esta copia",
-			"restoreDescription": "Se reemplaza el contenido y se descartan los cambios locales. No se crea un archivo para deshacer la restauración.",
-			"restorePhrase": "restaurar copia",
-			"autoPhrase": "auto",
-			"deleteBackupTitle": "Eliminar la copia para siempre",
-			"deleteBackupDescription": "Este archivo de copia de seguridad se eliminará de forma permanente y no se puede recuperar.",
-			"deleteBackupPhrase": "eliminar copia",
 			"switchTitle": "Cambiar a esta versión archivada",
 			"switchDescription": "Tras cambiar, la app funciona en modo de solo lectura y solo se ven los datos históricos. Vuelve a la versión más reciente para editar de nuevo."
 		},
 		"empty": {
-			"title": "Aún no hay historial de datos.",
-			"description": "Crea una copia ahora para protegerte contra la pérdida de datos."
+			"title": "Todavía no hay archivos históricos."
 		},
 		"toast": {
-			"backupCreated": "Copia creada",
-			"backupFailed": "Falló la copia",
 			"archiveFailed": "Falló el archivado",
-			"backupDeleted": "Copia eliminada",
-			"deleteFailed": "Falló la eliminación",
-			"restoreFailed": "Falló la restauración",
 			"switchFailed": "Falló el cambio",
 			"metaSaved": "Guardado",
 			"metaSaveFailed": "No se pudo guardar"

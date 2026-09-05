@@ -443,28 +443,8 @@ const envSchema = z
 			)
 			.optional(),
 		/**
-		 * When true, the background scheduler takes an automatic snapshot of
-		 * the live DB once per local day (with a catch-up run at boot when
-		 * the newest snapshot is stale) into
-		 * `{storage}/versions/<v>/snapshots/`, keeping only the
-		 * `AUTO_SNAPSHOT_KEEP` newest files.
-		 */
-		AUTO_SNAPSHOT_ENABLED: z
-			.union([z.boolean(), z.enum(["true", "false", "1", "0"])])
-			.transform((v) =>
-				typeof v === "boolean" ? v : v === "true" || v === "1",
-			)
-			.default(true),
-		/**
-		 * Rolling-window size for automatic snapshots: how many distinct
-		 * days of `auto-*.sqlite` files to keep in the current version's
-		 * `snapshots/` folder.
-		 */
-		AUTO_SNAPSHOT_KEEP: z.coerce.number().int().min(1).default(3),
-		/**
 		 * Low-disk guard: when the storage volume has less than this many
-		 * free bytes, automatic snapshots are skipped (a full disk would
-		 * fail the VACUUM INTO mid-write) and the storage overview flags
+		 * free bytes, storage operations are refused and the overview flags
 		 * the volume as low on space.
 		 */
 		MIN_FREE_DISK_BYTES: z.coerce

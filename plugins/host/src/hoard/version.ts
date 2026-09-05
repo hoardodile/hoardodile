@@ -1,14 +1,12 @@
 import {
-	cpSync,
 	existsSync,
 	mkdirSync,
 	readdirSync,
 	readFileSync,
-	rmSync,
 	writeFileSync,
 } from "node:fs"
-import { join, resolve } from "node:path"
-import { conflict, notFound } from "../errors.ts"
+import { resolve } from "node:path"
+import { notFound } from "../errors.ts"
 
 /**
  * Persisted version-state file (under `<root>/local/`, not `versions/`,
@@ -118,87 +116,6 @@ export function ensureBootstrapVersion(root: string): number {
 	const v1 = resolve(versionsRoot(root), "1")
 	mkdirSync(v1, { recursive: true })
 	return 1
-}
-
-export type CreateNextVersionResult = {
-	readonly previous: number
-	readonly created: number
-}
-
-/**
- * Snapshot the current version into a freshly-numbered next version.
- *
- * Process:
- * 1. Compute `next = currentVersion + 1`.
- * 2. Refuse to proceed when `versions/<prev>/app.sqlite` already exists.
- * 3. Create `<root>/versions/<next>/` and copy installed plugins from
- *    `versions/<prev>/plugins` (resource binaries stay at their
- *    `fileVersion`; plugins have no equivalent pointer).
- * 4. Vacuum-snapshot the live DB into `<root>/versions/<prev>/app.sqlite`.
- *    (Caller passes a `vacuumInto` function; we don't take a DB handle
- *    here to keep this module database-agnostic.)
- * 5. On any failure after step 3, remove `versions/<next>` so
- *    {@link currentVersion} does not jump to an empty directory.
- *
- * @throws DomainError `version.bootstrap_required` when no version exists
- *   yet (caller must bootstrap first).
- * @throws DomainError `version.already_exists` when the previous
- *   version's DB snapshot already exists.
- */
-export function createNextVersion(
-	root: string,
-	vacuumInto: (destination: string) => void,
-): CreateNextVersionResult {
-	const prev = currentVersion(root)
-	if (prev === 0) {
-		throw conflict(
-			"version.bootstrap_required",
-			"no current version to snapshot from",
-		)
-	}
-	const next = prev + 1
-	const prevDir = resolve(versionsRoot(root), String(prev))
-	const nextDir = resolve(versionsRoot(root), String(next))
-	// Archive the current live DB under the PREVIOUS version directory so
-	// that `versions/<prev>/app.sqlite` becomes the immutable snapshot.
-	// The live database stays at `<root>/app.sqlite`; only this archived
-	// copy lands in `versions/`.
-	const dest = resolve(prevDir, "app.sqlite")
-	if (existsSync(dest)) {
-		throw conflict(
-			"version.already_exists",
-			`app.sqlite already exists for version ${next}`,
-			{ version: next },
-		)
-	}
-	mkdirSync(nextDir, { recursive: true })
-	try {
-		copyVersionPlugins(prevDir, nextDir)
-		vacuumInto(dest)
-	} catch (err) {
-		rmSync(nextDir, { recursive: true, force: true })
-		throw err
-	}
-	return { previous: prev, created: next }
-}
-
-/**
- * Copy installed plugin directories from one version folder into the
- * next. Only subdirectories that look like plugins (contain
- * `manifest.json`) are copied; dot-directories such as leftover
- * staging folders are skipped.
- */
-function copyVersionPlugins(prevDir: string, nextDir: string): void {
-	const src = join(prevDir, "plugins")
-	if (!existsSync(src)) return
-	const entries = readdirSync(src, { withFileTypes: true })
-	for (const entry of entries) {
-		if (!entry.isDirectory()) continue
-		if (entry.name.startsWith(".")) continue
-		const from = join(src, entry.name)
-		if (!existsSync(join(from, "manifest.json"))) continue
-		cpSync(from, join(nextDir, "plugins", entry.name), { recursive: true })
-	}
 }
 
 /**

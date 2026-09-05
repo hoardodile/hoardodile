@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm"
 import { loadEnv } from "src/config/env.ts"
 import { verifyPassword } from "src/domain/auth/password.ts"
 import { openDb, schema } from "src/infra/db/connection.ts"
+import { openHostDatabase } from "src/infra/db/host.ts"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 import {
 	clearAuthPassword,
@@ -103,7 +104,7 @@ describe("clearAuthPassword", () => {
 		clearAuthPassword(env)
 		expect(isAuthConfigured(env)).toBe(false)
 
-		const dbh = openDb(env.DATABASE_URL)
+		const dbh = openHostDatabase(root)
 		try {
 			expect(dbh.db.select().from(schema.auth).get()).toBeUndefined()
 		} finally {
@@ -149,7 +150,7 @@ describe("isAuthConfigured", () => {
 			STORAGE_ROOT: root,
 		} satisfies NodeJS.ProcessEnv)
 		// Materialise the DB without writing a password row.
-		const dbh = openDb(env.DATABASE_URL)
+		const dbh = openHostDatabase(root)
 		dbh.runMigrations()
 		dbh.close()
 

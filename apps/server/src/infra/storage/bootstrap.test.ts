@@ -7,10 +7,7 @@ import {
 } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
-import {
-	createNextVersion,
-	ensureBootstrapVersion,
-} from "@hoardodile/host/hoard"
+import { ensureBootstrapVersion, publishVersion } from "@hoardodile/host/hoard"
 import { loadEnv } from "src/config/env.ts"
 import { openDb } from "src/infra/db/connection.ts"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
@@ -61,7 +58,7 @@ describe("resolveStorageContext", () => {
 		expect(ctx.paths.runtimeDb()).toBe(liveDbPath)
 	})
 
-	test("active < current returns readOnly true with cloned snapshot", () => {
+	test("active < current returns readOnly true with cloned snapshot", async () => {
 		ensureBootstrapVersion(root)
 		const liveDbPath = join(root, "app.sqlite")
 		const dbh = openDb(liveDbPath)
@@ -69,10 +66,13 @@ describe("resolveStorageContext", () => {
 		dbh.close()
 
 		// Publish version 2 so version 1 becomes an archive
-		createNextVersion(root, (dest) => {
-			const h = openDb(liveDbPath)
-			h.vacuumInto(dest)
-			h.close()
+		await publishVersion({
+			root,
+			snapshot: async (dest) => {
+				const h = openDb(liveDbPath)
+				h.vacuumInto(dest)
+				h.close()
+			},
 		})
 
 		// Switch active to version 1

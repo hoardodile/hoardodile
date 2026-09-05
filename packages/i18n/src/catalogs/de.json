@@ -53,8 +53,6 @@
 		"missing": "Fehlt",
 		"changed": "Abweichender Inhalt",
 		"extra": "Nicht in diesem Backup",
-		"legacy": "Alte Datenbank-Snapshots",
-		"legacyHelp": "Diese Snapshots enthalten nur eine Datenbank. Sie können weiterhin exportiert werden.",
 		"archives": "Historische Archive",
 		"archivesHelp": "Archive mit ihren eigenen eingefrorenen Daten und Plugins ansehen.",
 		"jobs": "Letzte Vorgänge",
@@ -957,15 +955,13 @@
 	},
 	"dataHistory": {
 		"title": "Datenverlauf",
-		"description": "Historische Archive und alte Datenbank-Snapshots. Vollständige Wiederherstellungspunkte werden oben verwaltet.",
 		"status": {
 			"currentWritable": "Beschreibbar — v{{version}}",
 			"viewingArchive": "Archiv ansehen — v{{version}}"
 		},
 		"chip": {
 			"latest": "Neueste",
-			"readOnly": "Schreibgeschützt",
-			"auto": "Auto"
+			"readOnly": "Schreibgeschützt"
 		},
 		"archive": {
 			"title": "v{{version}}",
@@ -981,45 +977,18 @@
 			"switchHint": "Nach dem Wechsel läuft die App gegen dieses Archiv im schreibgeschützten Modus. Kehre zur neuesten Version zurück, um wieder zu bearbeiten.",
 			"activeHint": "Dies ist die Version, die du gerade anzeigst."
 		},
-		"backup": {
-			"typeLabel": "Alter Datenbank-Snapshot",
-			"autoTypeLabel": "Alter automatischer Datenbank-Snapshot",
-			"autoBadge": "auto",
-			"autoDeleteHint": "Alte Datenbank-Snapshots bleiben zum Export erhalten. Zur Wiederherstellung einen vollständigen Wiederherstellungspunkt verwenden.",
-			"nameLabel": "Name",
-			"nameEmpty": "Keine",
-			"restoreHint": "Alte Datenbank-Snapshots bleiben zum Export erhalten. Zur Wiederherstellung einen vollständigen Wiederherstellungspunkt verwenden.",
-			"deleteHint": "Diese Backup-Datei wird dauerhaft gelöscht und kann nicht wiederhergestellt werden.",
-			"archivedHint": "Dieses Backup gehört zu einer archivierten Version. Ihre Daten sind eingefroren und können nicht wiederhergestellt oder gelöscht werden."
-		},
 		"action": {
-			"backupNow": "Jetzt sichern",
-			"backingUp": "Sichern…",
 			"archiveNow": "Jetzt archivieren",
 			"archiving": "Archivieren…",
-			"restore": "Wiederherstellen",
-			"restoring": "Wiederherstellen…",
-			"delete": "Löschen",
-			"deleting": "Löschen…",
 			"switchToVersion": "Zu dieser Version wechseln",
-			"switching": "Wechseln…",
-			"download": "Herunterladen"
+			"switching": "Wechseln…"
 		},
 		"reloading": "Wird neu geladen…",
-		"autoSnapshot": {
-			"enabled": "Automatischer Snapshot: täglich · behält {{keep}} Tage",
-			"disabled": "Automatische Snapshots sind deaktiviert",
-			"last": "neuester {{time}}"
-		},
 		"detail": {
-			"selectPrompt": "Wähle auf der Zeitachse ein Backup oder Archiv aus, um Details und verfügbare Aktionen anzuzeigen.",
-			"size": "Größe",
+			"selectPrompt": "Ein Archiv auswählen, um Details anzuzeigen.",
 			"versionNumber": "Version",
 			"createdAt": "Erstellt",
 			"note": "Notiz",
-			"contents": "Inhalt",
-			"contentsValue": "{{resources}} Ressourcen · {{characters}} Charaktere · {{documents}} Dokumente",
-			"backupOnVersion": "Backup auf v{{version}}",
 			"archiveVersion": "Archiv v{{version}}"
 		},
 		"note": {
@@ -1028,30 +997,16 @@
 		},
 		"confirm": {
 			"archiveTitle": "Neueste Version archivieren",
-			"archiveDescription": "Die Datenbank der neuesten Version sowie alle Ressourcen, Charaktere und Dokumente werden als schreibgeschütztes Archiv eingefroren. Daten in einem Archiv ändern sich nie wieder; für die laufende Arbeit wird eine neue beschreibbare Version erstellt.",
+			"archiveDescription": "Aktuelle Daten, Plugin-Code und Plugin-Dateien werden gemeinsam eingefroren. Eine neue bearbeitbare Version erhält unabhängige Plugin-Kopien.",
 			"archivePhrase": "archivieren",
-			"archiveAutoHint": "Vorhandene Snapshots bleiben im Archiv. Vollständige Backups haben einen eigenen Zeitplan.",
-			"restoreTitle": "Dieses Backup wiederherstellen",
-			"restoreDescription": "Die Wiederherstellung ersetzt Bibliotheksinhalte und verwirft lokale Änderungen. Es wird kein Rücksetzungsarchiv erstellt.",
-			"restorePhrase": "Backup wiederherstellen",
-			"autoPhrase": "auto",
-			"deleteBackupTitle": "Backup endgültig löschen",
-			"deleteBackupDescription": "Diese Backup-Datei wird dauerhaft gelöscht und kann nicht wiederhergestellt werden.",
-			"deleteBackupPhrase": "Backup löschen",
 			"switchTitle": "Zu dieser Archivversion wechseln",
 			"switchDescription": "Nach dem Wechsel läuft die App im schreibgeschützten Modus und nur historische Daten sind sichtbar. Kehre zur neuesten Version zurück, um wieder zu bearbeiten."
 		},
 		"empty": {
-			"title": "Noch kein Datenverlauf.",
-			"description": "Erstelle jetzt ein Backup, um dich gegen Datenverlust zu schützen."
+			"title": "Noch keine Archive."
 		},
 		"toast": {
-			"backupCreated": "Backup erstellt",
-			"backupFailed": "Backup fehlgeschlagen",
 			"archiveFailed": "Archivieren fehlgeschlagen",
-			"backupDeleted": "Backup gelöscht",
-			"deleteFailed": "Löschen fehlgeschlagen",
-			"restoreFailed": "Wiederherstellen fehlgeschlagen",
 			"switchFailed": "Wechsel fehlgeschlagen",
 			"metaSaved": "Gespeichert",
 			"metaSaveFailed": "Speichern fehlgeschlagen"

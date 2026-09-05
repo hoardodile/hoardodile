@@ -53,8 +53,6 @@
 		"missing": "欠落",
 		"changed": "内容が異なる",
 		"extra": "このバックアップに含まれない",
-		"legacy": "旧形式のデータベーススナップショット",
-		"legacyHelp": "これらにはデータベースのみが含まれます。引き続きエクスポートできます。",
 		"archives": "履歴アーカイブ",
 		"archivesHelp": "その時点のデータとプラグインを使って履歴を閲覧します。",
 		"jobs": "最近の操作",
@@ -957,15 +955,13 @@
 	},
 	"dataHistory": {
 		"title": "データ履歴",
-		"description": "履歴アーカイブと旧スナップショットを閲覧します。完全な復元ポイントは上で管理します。",
 		"status": {
 			"currentWritable": "書き込み可能 — v{{version}}",
 			"viewingArchive": "アーカイブを表示中 — v{{version}}"
 		},
 		"chip": {
 			"latest": "最新",
-			"readOnly": "読み取り専用",
-			"auto": "自動"
+			"readOnly": "読み取り専用"
 		},
 		"archive": {
 			"title": "v{{version}}",
@@ -981,45 +977,18 @@
 			"switchHint": "切り替え後、アプリはこのアーカイブに対して読み取り専用モードで動作します。再度編集するには最新バージョンに戻ってください。",
 			"activeHint": "これは表示中のバージョンです。"
 		},
-		"backup": {
-			"typeLabel": "旧形式のデータベーススナップショット",
-			"autoTypeLabel": "旧形式の自動スナップショット",
-			"autoBadge": "自動",
-			"autoDeleteHint": "旧スナップショットはエクスポート用に保持します。復元には完全な復元ポイントを使用してください。",
-			"nameLabel": "名前",
-			"nameEmpty": "なし",
-			"restoreHint": "旧スナップショットはエクスポート用に保持します。復元には完全な復元ポイントを使用してください。",
-			"deleteHint": "このバックアップファイルは完全に削除され、復元できません。",
-			"archivedHint": "このバックアップはアーカイブ版に属します。そのデータは凍結されており、復元または削除できません。"
-		},
 		"action": {
-			"backupNow": "今すぐバックアップ",
-			"backingUp": "バックアップ中…",
 			"archiveNow": "今すぐアーカイブ",
 			"archiving": "アーカイブ中…",
-			"restore": "復元",
-			"restoring": "復元中…",
-			"delete": "削除",
-			"deleting": "削除中…",
 			"switchToVersion": "このバージョンに切り替え",
-			"switching": "切り替え中…",
-			"download": "ダウンロード"
+			"switching": "切り替え中…"
 		},
 		"reloading": "再読み込み中…",
-		"autoSnapshot": {
-			"enabled": "自動スナップショット: 毎日 · {{keep}}日保持",
-			"disabled": "自動スナップショットは無効です",
-			"last": "最新 {{time}}"
-		},
 		"detail": {
-			"selectPrompt": "タイムラインでバックアップまたはアーカイブを選択すると、詳細と利用可能な操作を表示できます。",
-			"size": "サイズ",
+			"selectPrompt": "アーカイブを選択して詳細を表示します。",
 			"versionNumber": "バージョン",
 			"createdAt": "作成日時",
 			"note": "メモ",
-			"contents": "内容",
-			"contentsValue": "リソース {{resources}}件 · キャラクター {{characters}}件 · ドキュメント {{documents}}件",
-			"backupOnVersion": "v{{version}} のバックアップ",
 			"archiveVersion": "アーカイブ v{{version}}"
 		},
 		"note": {
@@ -1028,30 +997,16 @@
 		},
 		"confirm": {
 			"archiveTitle": "最新バージョンをアーカイブ",
-			"archiveDescription": "最新バージョンのデータベースとすべてのリソース、キャラクター、ドキュメントが読み取り専用のアーカイブとして凍結されます。アーカイブ内のデータは二度と変更されず、継続的な作業のために新しい書き込み可能バージョンが作成されます。",
+			"archiveDescription": "現在のデータ、プラグインのコードとファイルを一緒に固定します。新しい編集可能なバージョンには独立したプラグインのコピーを作成します。",
 			"archivePhrase": "アーカイブ",
-			"archiveAutoHint": "既存のスナップショットはアーカイブ内に保持します。完全バックアップは独立した予定で実行します。",
-			"restoreTitle": "このバックアップを復元",
-			"restoreDescription": "全内容を置き換え、ローカルの変更を破棄します。元に戻すためのアーカイブは自動作成しません。",
-			"restorePhrase": "バックアップを復元",
-			"autoPhrase": "自動",
-			"deleteBackupTitle": "バックアップを完全に削除",
-			"deleteBackupDescription": "このバックアップファイルは完全に削除され、復元できません。",
-			"deleteBackupPhrase": "バックアップを削除",
 			"switchTitle": "このアーカイブバージョンに切り替え",
 			"switchDescription": "切り替え後、アプリは読み取り専用モードで動作し、過去データのみが表示されます。再度編集するには最新バージョンに戻ってください。"
 		},
 		"empty": {
-			"title": "まだデータ履歴がありません。",
-			"description": "データ損失に備えて、今すぐバックアップを作成してください。"
+			"title": "アーカイブはまだありません。"
 		},
 		"toast": {
-			"backupCreated": "バックアップを作成しました",
-			"backupFailed": "バックアップに失敗しました",
 			"archiveFailed": "アーカイブに失敗しました",
-			"backupDeleted": "バックアップを削除しました",
-			"deleteFailed": "削除に失敗しました",
-			"restoreFailed": "復元に失敗しました",
 			"switchFailed": "切り替えに失敗しました",
 			"metaSaved": "保存しました",
 			"metaSaveFailed": "保存できませんでした"

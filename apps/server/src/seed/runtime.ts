@@ -68,6 +68,7 @@ import {
 	type TraitService,
 } from "src/domain/trait/service.ts"
 import { type DbHandles, openDb } from "src/infra/db/connection.ts"
+import { openHostDatabase } from "src/infra/db/host.ts"
 import { resolveStorageContext } from "src/infra/storage/bootstrap.ts"
 import type { StoragePaths } from "src/infra/storage/paths.ts"
 import { FILE_PLUGIN_ID, GALLERY_PLUGIN_ID } from "./catalog.ts"
@@ -76,6 +77,7 @@ export type SeedRuntime = {
 	readonly env: Env
 	readonly paths: StoragePaths
 	readonly db: DbHandles
+	readonly hostDb: DbHandles
 	readonly pluginHooks: PluginHooks
 	readonly uploads: ResUploads
 	readonly plugins: PluginService
@@ -129,8 +131,10 @@ export async function openSeedRuntime(env: Env): Promise<SeedRuntime> {
 		assertPluginDir(dir, "gallery seed")
 	}
 
-	const db = openDb(ctx.dbFilePath)
+	const hostDb = openHostDatabase(ctx.paths.root)
+	let db: DbHandles | undefined
 	try {
+		db = openDb(ctx.dbFilePath)
 		db.runMigrations()
 		const paths = ctx.paths
 		const readOnly = { current: false }
@@ -146,32 +150,43 @@ export async function openSeedRuntime(env: Env): Promise<SeedRuntime> {
 			maxOldSpaceMb: env.PLUGIN_WORKER_MAX_OLD_SPACE_MB,
 		})
 		try {
-			return await assembleRuntime(
+			return await assembleRuntime({
 				env,
 				db,
+				hostDb,
 				paths,
 				readOnly,
 				sandbox,
 				builtinDir,
-			)
+			})
 		} catch (err) {
 			await sandbox.disposeAll()
 			throw err
 		}
 	} catch (err) {
-		db.close()
+		db?.close()
+		hostDb.close()
 		throw err
 	}
 }
 
-async function assembleRuntime(
-	env: Env,
-	db: DbHandles,
-	paths: StoragePaths,
-	readOnly: { current: boolean },
-	sandbox: PluginSandbox,
-	builtinDir: string,
-): Promise<SeedRuntime> {
+async function assembleRuntime({
+	env,
+	db,
+	hostDb,
+	paths,
+	readOnly,
+	sandbox,
+	builtinDir,
+}: {
+	env: Env
+	db: DbHandles
+	hostDb: DbHandles
+	paths: StoragePaths
+	readOnly: { current: boolean }
+	sandbox: PluginSandbox
+	builtinDir: string
+}): Promise<SeedRuntime> {
 	const loader = createPluginLoader({
 		builtinDir,
 		devPluginDirs: env.DEV_PLUGIN_PATHS,
@@ -235,14 +250,19 @@ async function assembleRuntime(
 	})
 
 	async function close(): Promise<void> {
-		await sandbox.disposeAll()
-		db.close()
+		try {
+			await sandbox.disposeAll()
+		} finally {
+			db.close()
+			hostDb.close()
+		}
 	}
 
 	return {
 		env,
 		paths,
 		db,
+		hostDb,
 		pluginHooks,
 		uploads,
 		plugins: pluginService,
@@ -263,7 +283,11 @@ async function assembleRuntime(
 			getRegistry: liveRegistry,
 		}),
 		storage,
-		sync: createSyncService({ db: db.db, storageService: storage }),
+		sync: createSyncService({
+			db: db.db,
+			hostDb: hostDb.db,
+			storageService: storage,
+		}),
 		close,
 	}
 }

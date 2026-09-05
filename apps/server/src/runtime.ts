@@ -15,7 +15,7 @@ import { resolveStorageContext } from "src/infra/storage/bootstrap.ts"
 import { type BuiltServer, buildServer } from "src/server.ts"
 
 /**
- * Open the runtime DB at `env`'s storage location with migrations applied,
+ * Open the host database at the configured storage location,
  * run `fn`, and close the short-lived connection. Safe to call BEFORE the
  * long-running server starts (and from other short-lived processes such as
  * the reset CLI); callers that already hold the live handle should use the
@@ -25,19 +25,15 @@ function withRuntimeDb<T>(
 	env: Env,
 	fn: (db: ReturnType<typeof openDb>) => T,
 ): T {
-	const ctx = resolveStorageContext(env)
-	const dbHandles = openDb(ctx.dbFilePath)
+	const handles =
+		env.DATABASE_URL === ":memory:"
+			? openDb(":memory:")
+			: openHostDatabase(env.STORAGE_ROOT)
 	try {
-		if (!ctx.readOnly) dbHandles.runMigrations()
-		if (env.DATABASE_URL === ":memory:") return fn(dbHandles)
-		const host = openHostDatabase(env.STORAGE_ROOT, dbHandles.db)
-		try {
-			return fn(host)
-		} finally {
-			host.close()
-		}
+		if (env.DATABASE_URL === ":memory:") handles.runMigrations()
+		return fn(handles)
 	} finally {
-		dbHandles.close()
+		handles.close()
 	}
 }
 

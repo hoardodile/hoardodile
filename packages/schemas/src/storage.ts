@@ -49,13 +49,13 @@ export const storageOverview = z.object({
 	 * the per-plugin metadata numbers do not cover.
 	 */
 	archivedBytes: z.number().int().nonnegative(),
-	/** Manual (`db-backups/`) and automatic (`snapshots/`) DB snapshots. */
+	/** Complete backup repositories stored on this storage root. */
 	backupBytes: z.number().int().nonnegative(),
 	/** Storage not accounted for by the categories above. */
 	otherBytes: z.number().int().nonnegative(),
 	/**
 	 * True when the storage volume has less free space than the configured
-	 * low-disk threshold — automatic snapshots are paused while this holds.
+	 * low-disk threshold — storage operations are paused while this holds.
 	 */
 	lowSpace: z.boolean(),
 	resources: z.object({

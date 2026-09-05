@@ -110,6 +110,7 @@ export function mixedReasons(
 
 export function readMixedSnapshot(
 	db: SqliteDb,
+	hostDb: SqliteDb,
 	storageRoot: string,
 ): MixedSnapshot {
 	const actionCount = db.select({ n: count() }).from(userActions).get()
@@ -130,7 +131,7 @@ export function readMixedSnapshot(
 		commentIds: idsOf(db.select({ id: comments.id }).from(comments).all()),
 		danmakuIds: idsOf(db.select({ id: danmakus.id }).from(danmakus).all()),
 		syncDeviceIds: idsOf(
-			db.select({ id: syncDevices.id }).from(syncDevices).all(),
+			hostDb.select({ id: syncDevices.id }).from(syncDevices).all(),
 		),
 		relationshipTypeIds: idsOf(
 			db.select({ id: relationshipTypes.id }).from(relationshipTypes).all(),

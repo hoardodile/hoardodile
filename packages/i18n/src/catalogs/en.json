@@ -53,8 +53,6 @@
 		"missing": "Missing",
 		"changed": "Different contents",
 		"extra": "Not in this backup",
-		"legacy": "Legacy database snapshots",
-		"legacyHelp": "These snapshots contain only a database. They remain available for export.",
 		"archives": "Historical archives",
 		"archivesHelp": "Browse an archive using its own frozen data and plugins.",
 		"jobs": "Recent operations",
@@ -957,15 +955,13 @@
 	},
 	"dataHistory": {
 		"title": "Data History",
-		"description": "Historical archives and legacy database snapshots. Manage complete recovery points above.",
 		"status": {
 			"currentWritable": "Writable — v{{version}}",
 			"viewingArchive": "Viewing archive — v{{version}}"
 		},
 		"chip": {
 			"latest": "Latest",
-			"readOnly": "Read-only",
-			"auto": "Auto"
+			"readOnly": "Read-only"
 		},
 		"archive": {
 			"title": "v{{version}}",
@@ -981,45 +977,18 @@
 			"switchHint": "After switching, the app runs in read-only mode against this archive. Return to the latest version to edit again.",
 			"activeHint": "This is the version you are viewing."
 		},
-		"backup": {
-			"typeLabel": "Legacy database snapshot",
-			"autoTypeLabel": "Legacy automatic database snapshot",
-			"autoBadge": "auto",
-			"autoDeleteHint": "Legacy database snapshots are kept for export. Use a complete recovery point to restore the library.",
-			"nameLabel": "Name",
-			"nameEmpty": "None",
-			"restoreHint": "Legacy database snapshots are kept for export. Use a complete recovery point to restore the library.",
-			"deleteHint": "This backup file will be permanently deleted and cannot be recovered.",
-			"archivedHint": "This backup belongs to an archived version. Its data is frozen and cannot be restored or deleted."
-		},
 		"action": {
-			"backupNow": "Backup now",
-			"backingUp": "Backing up…",
 			"archiveNow": "Archive now",
 			"archiving": "Archiving…",
-			"restore": "Restore",
-			"restoring": "Restoring…",
-			"delete": "Delete",
-			"deleting": "Deleting…",
 			"switchToVersion": "Switch to this version",
-			"switching": "Switching…",
-			"download": "Download"
+			"switching": "Switching…"
 		},
 		"reloading": "Reloading…",
-		"autoSnapshot": {
-			"enabled": "Automatic snapshot: daily · keeps {{keep}} days",
-			"disabled": "Automatic snapshots are disabled",
-			"last": "newest {{time}}"
-		},
 		"detail": {
-			"selectPrompt": "Select a backup or archive on the timeline to view details and available actions.",
-			"size": "Size",
+			"selectPrompt": "Select an archive to view its details.",
 			"versionNumber": "Version",
 			"createdAt": "Created",
 			"note": "Note",
-			"contents": "Contents",
-			"contentsValue": "{{resources}} resources · {{characters}} characters · {{documents}} documents",
-			"backupOnVersion": "Backup on v{{version}}",
 			"archiveVersion": "Archive v{{version}}"
 		},
 		"note": {
@@ -1028,30 +997,16 @@
 		},
 		"confirm": {
 			"archiveTitle": "Archive latest version",
-			"archiveDescription": "The latest version's database and all resources, characters, and documents will be frozen as a read-only archive. Data inside an archive never changes again; a new writable version will be created for ongoing work.",
+			"archiveDescription": "The current data, plugin code and plugin vaults will be frozen together. A new writable version will use independent plugin copies.",
 			"archivePhrase": "archive",
-			"archiveAutoHint": "Existing snapshots remain in their archive. Complete backups use an independent schedule.",
-			"restoreTitle": "Restore this backup",
-			"restoreDescription": "This replaces library content and discards local changes. No rollback archive is created automatically.",
-			"restorePhrase": "restore backup",
-			"autoPhrase": "auto",
-			"deleteBackupTitle": "Delete backup forever",
-			"deleteBackupDescription": "This backup file will be permanently deleted and cannot be recovered.",
-			"deleteBackupPhrase": "delete backup",
 			"switchTitle": "Switch to this archive version",
 			"switchDescription": "After switching, the app runs in read-only mode and only historical data is visible. Return to the latest version to edit again."
 		},
 		"empty": {
-			"title": "No data history yet.",
-			"description": "Create a backup now to protect against data loss."
+			"title": "No archives yet."
 		},
 		"toast": {
-			"backupCreated": "Backup created",
-			"backupFailed": "Backup failed",
 			"archiveFailed": "Archive failed",
-			"backupDeleted": "Backup deleted",
-			"deleteFailed": "Delete failed",
-			"restoreFailed": "Restore failed",
 			"switchFailed": "Switch failed",
 			"metaSaved": "Saved",
 			"metaSaveFailed": "Could not save"

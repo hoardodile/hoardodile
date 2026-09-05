@@ -27,9 +27,7 @@ let destination;
     destination = new Database(workerData.destination, { fileMustExist: true });
     destination.pragma("journal_mode = DELETE");
     for (const table of ["auth", "auth_sign_ins", "sync_devices", "sync_records"]) {
-      if (destination.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?").get(table)) {
-        destination.exec('DELETE FROM "' + table + '"');
-      }
+      destination.exec('DELETE FROM "' + table + '"');
     }
     const integrity = destination.pragma("integrity_check");
     if (integrity.length !== 1 || integrity[0].integrity_check !== "ok") throw new Error("SQLite integrity check failed");

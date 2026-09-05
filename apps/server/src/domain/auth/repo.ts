@@ -37,7 +37,7 @@ export function getAuthRow(db: SqliteDb): StoredAuthRow | undefined {
 
 /**
  * Upsert the auth row. The single write path for every password change
- * (first-run setup, change password, CLI reset seeds, restore transplant).
+ * (first-run setup, change password, CLI reset, and demo seed).
  */
 export function setAuthRow(db: SqliteDb, row: StoredAuthRow): void {
 	db.insert(schema.auth)

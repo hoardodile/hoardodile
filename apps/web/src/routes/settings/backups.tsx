@@ -13,9 +13,7 @@ export const Route = createFileRoute("/settings/backups")({
 })
 
 /**
- * Archive settings tab: backup/archive actions and the writability
- * status above the sheet, backup & archive history on one timeline with
- * a detail card for the selected event.
+ * Complete recovery points and versioned archives share one settings sheet.
  */
 function BackupsSettingsRoute() {
 	return (

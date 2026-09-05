@@ -7,7 +7,6 @@ import {
 } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
-import { createBackupService } from "src/domain/backup/service.ts"
 import { resourceMeta, resources } from "src/domain/res/schema.ts"
 import { openDb } from "src/infra/db/connection.ts"
 import { createStoragePaths } from "src/infra/storage/paths.ts"
@@ -211,22 +210,16 @@ describe("storage service", () => {
 			"z".repeat(50),
 		)
 
-		// One manual + one automatic snapshot.
-		const backupSvc = createBackupService({
-			db: dbh,
-			paths,
-			dbFilePath: paths.runtimeDb(),
-			getActiveVersion: () => 1,
-		})
-		const manual = await backupSvc.create()
-		const auto = await backupSvc.createAuto()
+		const repository = join(root, "backups", "local", "data")
+		mkdirSync(repository, { recursive: true })
+		writeFileSync(join(repository, "pack"), "b".repeat(300))
 
 		const overview = await createService().getOverview()
 
 		expect(overview.databaseBytes).toBeGreaterThanOrEqual(liveSize)
 		expect(overview.cacheBytes).toBeGreaterThanOrEqual(150)
 		expect(overview.trashBytes).toBe(200)
-		expect(overview.backupBytes).toBeGreaterThanOrEqual(manual.size + auto.size)
+		expect(overview.backupBytes).toBe(300)
 		expect(overview.usedBytes).toBeGreaterThan(0)
 		expect(overview.lowSpace).toBe(false)
 		// The categories never exceed the recursive total.

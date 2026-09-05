@@ -3,7 +3,6 @@ import {
 	existsSync,
 	mkdirSync,
 	mkdtempSync,
-	readdirSync,
 	readFileSync,
 	rmSync,
 	writeFileSync,
@@ -12,17 +11,16 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { buffer } from "node:stream/consumers"
 import {
-	createNextVersion,
 	ensureBootstrapVersion,
+	publishVersion,
 	writeActiveVersion,
 } from "@hoardodile/host/hoard"
 import { loadEnv } from "src/config/env.ts"
 import { hashPassword } from "src/domain/auth/password.ts"
 import { deleteAuthRow } from "src/domain/auth/repo.ts"
-import { readPendingRestoreMarker } from "src/domain/backup/marker.ts"
-import { createBackupService } from "src/domain/backup/service.ts"
 import { createVersionService } from "src/domain/version/service.ts"
 import { openDb, schema } from "src/infra/db/connection.ts"
+import { openHostDatabase } from "src/infra/db/host.ts"
 import { createDeferred } from "src/infra/runtime-context.ts"
 import { createStoragePaths } from "src/infra/storage/paths.ts"
 import { stageViewCloneDb } from "src/infra/storage/version-view.ts"
@@ -627,160 +625,6 @@ describe("buildServer lifecycle (9a)", () => {
 
 	afterEach(() => {
 		rmSync(root, { recursive: true, force: true })
-	})
-
-	test("a staged restore is applied automatically on the next buildServer (no child process)", async () => {
-		const env = loadEnv({
-			NODE_ENV: "test",
-			LOG_LEVEL: "silent",
-			STORAGE_ROOT: root,
-			DATABASE_URL: dbFilePath,
-		} satisfies NodeJS.ProcessEnv)
-
-		const exitSpy = vi.spyOn(process, "exit").mockImplementation(((
-			code?: number,
-		) => {
-			throw new Error(`process.exit(${code}) must not be called`)
-		}) as typeof process.exit)
-
-		// First server owns its DB (no handles passed).
-		const onContextReloaded = vi.fn()
-		const built1 = await buildServer({
-			env,
-			onContextReloaded,
-		})
-		await built1.app.ready()
-
-		// Seed auth data so we can tell the first DB from the swapped one.
-		const passwordHash = await hashPassword("hunter2")
-		built1.db.db
-			.insert(schema.auth)
-			.values({ singleton: 1, passwordHash, updatedAt: 1 })
-			.run()
-
-		// Take a snapshot of state #1, mutate live DB, then stage a restore
-		// of the earlier snapshot. After restart the mutation must be gone.
-		const svc = createBackupService({
-			db: built1.db,
-			paths: built1.storagePaths,
-			dbFilePath,
-		})
-		const snap = await svc.create()
-
-		built1.db.db
-			.update(schema.auth)
-			.set({ passwordHash: "tainted", updatedAt: 999 })
-			.run()
-
-		await svc.prepareRestore(snap.fileName)
-		expect(readPendingRestoreMarker(paths)?.sourceName).toBe(snap.fileName)
-
-		// Simulate the tRPC restore hook: close the server, then build a
-		// fresh one. `applyPendingRestore` runs at the top of `buildServer`
-		// before the DB is opened.
-		await built1.close()
-		const built2 = await buildServer({ env })
-		await built2.app.ready()
-
-		// Marker cleared -> applyPendingRestore ran.
-		expect(readPendingRestoreMarker(paths)).toBeUndefined()
-		// Previous (tainted) DB was preserved in local/trash/.
-		const trashEntries = existsSync(paths.local.trash())
-			? readdirSync(paths.local.trash())
-			: []
-		expect(trashEntries.length).toBeGreaterThan(0)
-		// The restore brought back the snapshot's data but preserved the
-		// current auth row: the tainted hash survives, the snapshot's is
-		// never adopted.
-		const rows = built2.db.db.select().from(schema.auth).all()
-		expect(rows).toHaveLength(1)
-		expect(rows[0]?.passwordHash).toBe("tainted")
-		expect(rows[0]?.updatedAt).toBe(999)
-
-		// No child process was ever spawned (we only touched `buildServer`).
-		expect(onContextReloaded).not.toHaveBeenCalled()
-		expect(exitSpy).not.toHaveBeenCalled()
-
-		await built2.close()
-		exitSpy.mockRestore()
-	})
-
-	test("storage context is hot-reloaded in-process on restore signal", async () => {
-		const env = loadEnv({
-			NODE_ENV: "test",
-			LOG_LEVEL: "silent",
-			STORAGE_ROOT: root,
-			DATABASE_URL: dbFilePath,
-		} satisfies NodeJS.ProcessEnv)
-
-		const exitSpy = vi.spyOn(process, "exit").mockImplementation(((
-			code?: number,
-		) => {
-			throw new Error(`process.exit(${code}) must not be called`)
-		}) as typeof process.exit)
-
-		let resolveReloaded: (() => void) | undefined
-		const reloadPromise = new Promise<void>((r) => {
-			resolveReloaded = r
-		})
-		const onContextReloaded = vi.fn(() => {
-			resolveReloaded?.()
-		})
-		const built = await buildServer({
-			env,
-			onContextReloaded,
-		})
-		await built.app.ready()
-
-		// Seed auth data so we can tell the first DB from the swapped one.
-		const passwordHash = await hashPassword("hunter2")
-		built.db.db
-			.insert(schema.auth)
-			.values({ singleton: 1, passwordHash, updatedAt: 1 })
-			.run()
-
-		// Take a snapshot, mutate live DB, stage restore, then emit the
-		// same signal the backup router emits.
-		const svc = createBackupService({
-			db: built.db,
-			paths: built.storagePaths,
-			dbFilePath,
-		})
-		const snap = await svc.create()
-
-		built.db.db
-			.update(schema.auth)
-			.set({ passwordHash: "tainted", updatedAt: 999 })
-			.run()
-
-		await svc.prepareRestore(snap.fileName)
-		const pidBefore = process.pid
-
-		built.app.signals.emit("backup.restoreRequested", undefined)
-		await reloadPromise
-
-		// Same process, but the DB was swapped.
-		expect(process.pid).toBe(pidBefore)
-		expect(onContextReloaded).toHaveBeenCalledTimes(1)
-		expect(readPendingRestoreMarker(paths)).toBeUndefined()
-
-		// The restore preserved the current auth row (the tainted hash)
-		// instead of adopting the snapshot's.
-		const rows = built.db.db.select().from(schema.auth).all()
-		expect(rows).toHaveLength(1)
-		expect(rows[0]?.passwordHash).toBe("tainted")
-		expect(rows[0]?.updatedAt).toBe(999)
-
-		// Server is still listening and serving requests.
-		const health = await built.app.inject({
-			method: "GET",
-			url: "/health",
-			remoteAddress: "127.0.0.1",
-		})
-		expect(health.statusCode).toBe(200)
-
-		await built.close()
-		exitSpy.mockRestore()
 	})
 
 	test("requests are queued during storage context reload", async () => {
@@ -1600,10 +1444,14 @@ describe("read-only boot does not seed latest plugins", () => {
 		root = mkdtempSync(join(tmpdir(), "plugin-ro-seed-"))
 		ensureBootstrapVersion(root)
 		const liveDbPath = join(root, "app.sqlite")
+		openHostDatabase(root).close()
 		const db = openDb(liveDbPath)
 		db.runMigrations()
-		createNextVersion(root, (dest) => {
-			db.vacuumInto(dest)
+		await publishVersion({
+			root,
+			snapshot: async (dest) => {
+				db.vacuumInto(dest)
+			},
 		})
 		writeActiveVersion(root, 1)
 		db.close()
@@ -1670,6 +1518,7 @@ describe("read-only archive mode", () => {
 		ensureBootstrapVersion(root)
 
 		const liveDbPath = join(root, "app.sqlite")
+		openHostDatabase(root).close()
 		const db = openDb(liveDbPath)
 		db.runMigrations()
 		const passwordHash = await hashPassword("hunter2")
@@ -1678,6 +1527,12 @@ describe("read-only archive mode", () => {
 			.values({ singleton: 1, passwordHash, updatedAt: Date.now() })
 			.run()
 
+		const host = openHostDatabase(root)
+		host.db
+			.insert(schema.auth)
+			.values({ singleton: 1, passwordHash, updatedAt: Date.now() })
+			.run()
+		host.close()
 		// Publish version 2 so version 1 becomes an archive
 		const versionSvc = createVersionService({
 			db,
@@ -2051,45 +1906,6 @@ describe("trash listing", () => {
 		expect(body.items).toHaveLength(1)
 		expect(body.items[0].name).toBe("resources-res-1-1700000000000")
 		expect(body.items[0].kind).toBe("resource")
-	})
-})
-
-describe("health endpoint", () => {
-	let built: BuiltServer
-	let consoleWarnSpy: ReturnType<typeof vi.spyOn> | undefined
-	let consoleInfoSpy: ReturnType<typeof vi.spyOn> | undefined
-
-	beforeEach(async () => {
-		consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {})
-		consoleInfoSpy = vi.spyOn(console, "info").mockImplementation(() => {})
-		built = await bootstrap()
-		await built.app.ready()
-	})
-
-	afterEach(async () => {
-		await built.close()
-		built.db.close()
-		consoleWarnSpy?.mockRestore()
-		consoleInfoSpy?.mockRestore()
-	})
-
-	test("GET /api/health reports volume and auto-snapshot state without auth", async () => {
-		const res = await built.app.inject({
-			method: "GET",
-			url: "/api/health",
-		})
-		expect(res.statusCode).toBe(200)
-		const body = res.json()
-		expect(body.status).toBe("ok")
-		expect(body.autoSnapshot).toMatchObject({ enabled: false, keep: 3 })
-		expect(
-			body.autoSnapshot.lastAt === null ||
-				typeof body.autoSnapshot.lastAt === "number",
-		).toBe(true)
-		if (body.storage !== null) {
-			expect(typeof body.storage.totalBytes).toBe("number")
-			expect(typeof body.storage.freeBytes).toBe("number")
-		}
 	})
 })
 

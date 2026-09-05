@@ -7,12 +7,6 @@ export {
 	type SessionStore,
 } from "src/domain/auth/session.ts"
 export {
-	type BackupService,
-	type BackupServiceDeps,
-	createBackupService,
-} from "src/domain/backup/service.ts"
-export { applyPendingRestore } from "src/domain/backup/startup.ts"
-export {
 	type CatCreateInput,
 	type CatService,
 	type CatServiceDeps,

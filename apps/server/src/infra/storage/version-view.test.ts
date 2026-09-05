@@ -9,6 +9,7 @@ import {
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { DomainError } from "@hoardodile/shared"
+import { sql } from "drizzle-orm"
 import { openDb } from "src/infra/db/connection.ts"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 import { createStoragePaths } from "./paths.ts"
@@ -49,6 +50,20 @@ describe("stageViewCloneDb", () => {
 			expect(err).toBeInstanceOf(DomainError)
 			expect((err as DomainError).kind).toBe("version.db_missing")
 		}
+	})
+
+	test("rejects an older schema without converting the archived database", () => {
+		mkdirSync(join(root, "versions", "1"), { recursive: true })
+		const source = join(root, "versions", "1", "app.sqlite")
+		const handles = openDb(source)
+		handles.runMigrations()
+		handles.db.run(sql`DELETE FROM __drizzle_migrations`)
+		handles.close()
+		const before = readFileSync(source)
+		expect(() => stageViewCloneDb(createStoragePaths({ root }), 1)).toThrow(
+			"unsupported database schema",
+		)
+		expect(readFileSync(source)).toEqual(before)
 	})
 
 	test("throws when clone fails integrity check", () => {

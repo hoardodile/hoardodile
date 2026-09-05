@@ -65,15 +65,6 @@ describe("version router", () => {
 		expect(deps.service.active).toHaveBeenCalledTimes(1)
 	})
 
-	test("create calls service and emits version.changed", async () => {
-		const deps = createMocks()
-		const caller = createCaller(deps)
-		const result = await caller.create({ confirmArchive: true })
-		expect(result).toEqual({ previous: 1, created: 2, willRestart: false })
-		expect(deps.service.create).toHaveBeenCalledTimes(1)
-		expect(deps.signals.emit).toHaveBeenCalledWith("version.changed", undefined)
-	})
-
 	test("switchTo calls service and emits version.changed", async () => {
 		const deps = createMocks()
 		const caller = createCaller(deps)
@@ -87,13 +78,6 @@ describe("version router", () => {
 		const deps = createMocks()
 		const caller = createCaller(deps, false)
 		await expect(caller.list()).rejects.toThrow("UNAUTHORIZED")
-	})
-
-	test("create rejects missing confirmArchive", async () => {
-		const deps = createMocks()
-		const caller = createCaller(deps)
-		// @ts-expect-error intentionally missing required literal
-		await expect(caller.create({})).rejects.toThrow()
 	})
 
 	test("switchTo rejects invalid version", async () => {

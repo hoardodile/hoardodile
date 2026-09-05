@@ -2,7 +2,6 @@ import type { PluginHooks, PluginLoader } from "@hoardodile/host"
 import type { SyncEngine } from "@hoardodile/sync"
 import type { Env } from "src/config/env.ts"
 import type { SessionStore } from "src/domain/auth/session.ts"
-import type { BackupService } from "src/domain/backup/service.ts"
 import type { CatService } from "src/domain/cat/service.ts"
 import type { RelationshipService } from "src/domain/char/relationship_service.ts"
 import type { CharService } from "src/domain/char/service.ts"
@@ -131,7 +130,6 @@ declare module "fastify" {
 
 		// Cross-cutting infra services that build on top of one or more domain services
 		readonly thumbService: ThumbService
-		readonly backupService: BackupService
 		readonly versionService: VersionService
 		readonly pluginLoader: PluginLoader
 		readonly stopPluginWorkers: () => Promise<void>

@@ -71,9 +71,7 @@ export {
 	writeStagedArchiveFile,
 	writeStagedPoolFile,
 } from "./staging-dir.ts"
-export type { CreateNextVersionResult } from "./version.ts"
 export {
-	createNextVersion,
 	currentVersion,
 	ensureBootstrapVersion,
 	listVersions,

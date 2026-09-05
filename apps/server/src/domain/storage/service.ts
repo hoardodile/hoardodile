@@ -1,4 +1,4 @@
-import { type Dirent, existsSync, readdirSync, statSync } from "node:fs"
+import { type Dirent, statSync } from "node:fs"
 import { readdir, stat } from "node:fs/promises"
 import { isAbsolute, join, relative, sep } from "node:path"
 import { sumDirSizes } from "@hoardodile/host/hoard"
@@ -80,8 +80,7 @@ export function createStorageService(deps: StorageServiceDeps): StorageService {
 			backupRelative !== ".." &&
 			!backupRelative.startsWith(`..${sep}`) &&
 			!isAbsolute(backupRelative)
-		const backupBytes =
-			backupsSize() + (backupsInsideRoot ? await dirSize(configuredBackups) : 0)
+		const backupBytes = backupsInsideRoot ? await dirSize(configuredBackups) : 0
 		const rootScan = await dirSizeWithSubtree(
 			paths.root,
 			paths.latest.resources(),
@@ -220,20 +219,6 @@ export function createStorageService(deps: StorageServiceDeps): StorageService {
 		}
 		for (let v = 1; v <= paths.latestVersion; v++) {
 			total += fileSizeOrZero(paths.atVersion(v).versionSnapshotDb())
-		}
-		return total
-	}
-
-	function backupsSize(): number {
-		let total = 0
-		for (let v = 1; v <= paths.latestVersion; v++) {
-			const version = paths.atVersion(v)
-			for (const dir of [version.dbBackups(), version.snapshots()]) {
-				if (!existsSync(dir)) continue
-				for (const name of readdirSync(dir)) {
-					total += fileSizeOrZero(join(dir, name))
-				}
-			}
 		}
 		return total
 	}

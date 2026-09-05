@@ -41,7 +41,7 @@ function resolveMigrationsFolder(): string {
 }
 
 export type DbHandles = {
-	validateCompatibility?(): void
+	validateCompatibility?(options?: { requireCurrent?: boolean }): void
 	readonly filePath?: string
 	/**
 	 * Drizzle query builder. **All** application and test queries go through
@@ -136,7 +136,7 @@ export function openDb(url: string, opts: OpenDbOptions = {}): DbHandles {
 			filePath: url,
 			db,
 			runMigrations,
-			validateCompatibility() {
+			validateCompatibility(options = {}) {
 				const file = join(resolveMigrationsFolder(), "meta", "_journal.json")
 				const journal: unknown = JSON.parse(readFileSync(file, "utf8"))
 				if (
@@ -162,6 +162,7 @@ export function openDb(url: string, opts: OpenDbOptions = {}): DbHandles {
 						"SELECT 1 FROM sqlite_master WHERE type='table' AND name='__drizzle_migrations'",
 					)
 					.get()
+				let applied = 0
 				if (table) {
 					const row: unknown = raw
 						.prepare(
@@ -173,12 +174,16 @@ export function openDb(url: string, opts: OpenDbOptions = {}): DbHandles {
 						typeof row === "object" &&
 						"applied" in row &&
 						typeof row.applied === "number" &&
-						row.applied > supported
+						Number.isFinite(row.applied)
 					)
-						throw new Error(
-							"This database requires a newer application version",
-						)
+						applied = row.applied
 				}
+				if (applied > supported)
+					throw new Error("This database requires a newer application version")
+				if (options.requireCurrent && applied !== supported)
+					throw new Error(
+						"This archive uses an unsupported database schema; automatic conversion is not supported",
+					)
 			},
 			vacuumInto(destination: string): void {
 				// `VACUUM INTO` cannot be parameterised; the destination is

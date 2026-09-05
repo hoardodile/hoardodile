@@ -271,10 +271,13 @@ export async function fillDemoLibrary(
 			"seed: missing demo-seed sentinel; refusing to fill an unmarked library",
 		)
 	}
-	assertUnmixedLibrary(readMixedSnapshot(rt.db.db, rt.paths.root), existing)
+	assertUnmixedLibrary(
+		readMixedSnapshot(rt.db.db, rt.hostDb.db, rt.paths.root),
+		existing,
+	)
 	if (existing.status === "complete") {
-		if (getAuthRow(rt.db.db) === undefined) {
-			setAuthRow(rt.db.db, {
+		if (getAuthRow(rt.hostDb.db) === undefined) {
+			setAuthRow(rt.hostDb.db, {
 				hash: await hashPassword("demo"),
 				updatedAt: Date.now(),
 				weakPassword: true,
@@ -290,7 +293,7 @@ export async function fillDemoLibrary(
 	const manifest = emptySeedManifest()
 	writeManifest(rt, manifest)
 
-	setAuthRow(rt.db.db, {
+	setAuthRow(rt.hostDb.db, {
 		hash: await hashPassword("demo"),
 		updatedAt: Date.now(),
 		weakPassword: true,

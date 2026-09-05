@@ -6,20 +6,7 @@ import { EventEmitter } from "eventemitter3"
  */
 
 export type ServerSignals = {
-	/**
-	 * A restore has been staged on disk. The server should close itself and
-	 * the caller is expected to apply the pending swap and re-open a fresh
-	 * instance. The payload is intentionally empty -- the marker file on
-	 * disk is the single source of truth for the pending restore.
-	 */
-	readonly "backup.restoreRequested": undefined
-	/**
-	 * The active archive version has changed (either a new version was
-	 * created or the user switched to a different one). The server
-	 * should close itself so a fresh instance picks up the new
-	 * `version-state.json`. Payload is empty for the same reason as
-	 * `backup.restoreRequested` — the on-disk state is the truth.
-	 */
+	/** The selected archive changed; reload the library context in this process. */
 	readonly "version.changed": undefined
 }
 

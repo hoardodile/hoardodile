@@ -7,7 +7,6 @@ import { readdirSync, readFileSync, statSync } from "node:fs"
 import { join } from "node:path"
 import { authRouter } from "src/domain/auth/router.ts"
 import { listSignIns } from "src/domain/auth/signins.ts"
-import { buildBackupRouter } from "src/domain/backup/router.ts"
 import { buildCategoryRouter } from "src/domain/cat/router.ts"
 import { buildCharacterRouter } from "src/domain/char/router.ts"
 import { buildResourceCollectionRouter } from "src/domain/col/router.ts"
@@ -206,14 +205,8 @@ export function buildAppRouter(services: AppRouterServices) {
 		}),
 		buildDomainRouter(services),
 		router({
-			backup: buildBackupRouter({
-				service: services.backupService,
-				legacyReadOnly: services.protectionService !== undefined,
-				signals: services.signals,
-			}),
 			version: buildVersionRouter({
 				service: services.versionService,
-				reload: services.reloadStorage,
 				signals: services.signals,
 			}),
 		}),
