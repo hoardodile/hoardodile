@@ -6,8 +6,15 @@ import { loose } from "@/i18n"
 import { trpcMutation } from "@/trpc/factory"
 import { protectionJobsOptions } from "./api"
 import { JobProgress } from "./JobProgress"
+import { jobErrorKey } from "./job-error"
 
-export function ProtectionJobs() {
+export function ProtectionJobs({
+	activeOnly = false,
+	restoreOnly = false,
+}: {
+	activeOnly?: boolean
+	restoreOnly?: boolean
+} = {}) {
 	const { t } = useTranslation()
 	const tr = loose(t)
 	const query = useQuery(protectionJobsOptions())
@@ -23,16 +30,38 @@ export function ProtectionJobs() {
 		...trpcMutation("protection", "retry"),
 		onSuccess: invalidate,
 	})
+	const visibleJobs = query.data
+		?.filter((job) => {
+			if (restoreOnly && job.kind !== "restore") return false
+			if (
+				activeOnly &&
+				["failed", "interrupted"].includes(job.state) &&
+				query.data?.some(
+					(next) => next.kind === job.kind && next.createdAt > job.createdAt,
+				)
+			)
+				return false
+			return (
+				!activeOnly ||
+				["queued", "running", "cancelling", "failed", "interrupted"].includes(
+					job.state,
+				)
+			)
+		})
+		.slice(0, activeOnly ? 3 : 15)
+	if (activeOnly && !visibleJobs?.length) return null
 	return (
 		<section className="space-y-3" aria-label={t("protection.jobs")}>
-			<h3 className="text-ui font-medium">{t("protection.jobs")}</h3>
+			<h3 className="text-ui font-medium">
+				{t(activeOnly ? "protectionUx.activity" : "protection.jobs")}
+			</h3>
 			{query.data?.length === 0 && (
 				<p className="text-xs text-muted-foreground">
 					{t("protection.noJobs")}
 				</p>
 			)}
 			<div className="divide-y divide-border">
-				{query.data?.slice(0, 15).map((job) => {
+				{visibleJobs?.map((job) => {
 					const running =
 						job.state === "running" ||
 						job.state === "queued" ||
@@ -54,6 +83,15 @@ export function ProtectionJobs() {
 									{new Date(job.createdAt).toLocaleString()}
 								</p>
 								<JobProgress value={job.progress} />
+								{running && (
+									<p className="mt-1 text-xs text-secondary-foreground">
+										{t(
+											job.kind === "restore"
+												? "protectionUx.restoreWorking"
+												: "protectionUx.keepReading",
+										)}
+									</p>
+								)}
 								{job.kind === "file-write" &&
 									!running &&
 									job.state !== "succeeded" && (
@@ -62,7 +100,15 @@ export function ProtectionJobs() {
 										</p>
 									)}
 								{job.error && (
-									<p className="mt-1 text-xs">{job.error.message}</p>
+									<div className="mt-1 text-xs" role="alert">
+										<p>{t(jobErrorKey(job.error))}</p>
+										<details className="mt-1">
+											<summary className="cursor-pointer">
+												{t("protectionUx.errorDetails")}
+											</summary>
+											<p className="mt-1 break-words">{job.error.message}</p>
+										</details>
+									</div>
 								)}
 							</div>
 							{running ? (

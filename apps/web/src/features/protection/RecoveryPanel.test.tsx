@@ -96,6 +96,8 @@ it("keeps the selected recovery point bound while the list refreshes and require
 	const user = userEvent.setup()
 	const row = await screen.findByTestId(`recovery-point-${id}`)
 	expect(restore).not.toHaveBeenCalled()
+	await user.click(within(row).getByText("Selected backup"))
+	await user.click(within(row).getByText("More backup actions"))
 	await user.click(within(row).getByRole("button", { name: "Recovery drill" }))
 	await user.click(
 		screen.getByRole("checkbox", {
@@ -141,7 +143,7 @@ it("keeps the selected recovery point bound while the list refreshes and require
 		await queryClient.invalidateQueries({ queryKey: ["protection", "points"] })
 	})
 	expect(
-		within(screen.getByRole("dialog")).getByText("Selected backup"),
+		within(screen.getByRole("dialog")).getByText(/Selected backup/),
 	).toBeInTheDocument()
 	expect(restore).not.toHaveBeenCalled()
 	await user.clear(confirmation)

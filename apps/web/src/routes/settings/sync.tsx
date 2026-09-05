@@ -8,11 +8,7 @@ export const Route = createFileRoute("/settings/sync")({
 })
 
 /**
- * Sync settings tab: automatic state snapshots. Devices live as
- * standalone floating cards on the canvas — one card per device, never
- * nested inside a sheet — with the reminder interval as its own compact
- * card. The feature only stores records — it never connects to any sync
- * software.
+ * Backup transfers and optional external-sync records share this entry.
  */
 function SyncSettingsRoute() {
 	return <ReplicationPanel />

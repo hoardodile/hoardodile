@@ -9,13 +9,21 @@ test("complete backup, confirmed restore, and manual device management", async (
 	await login(page)
 	await page.goto("/settings/backups")
 	await expect(page.getByTestId("complete-backups")).toBeVisible()
+	await page.getByTestId("setup-new-backup").click()
 	await page.getByTestId("initialize-backups").click()
 	const point = page.locator('[data-testid^="recovery-point-"]').first()
 	await expect(point).toBeVisible({ timeout: 90_000 })
+	const download = page.waitForEvent("download")
+	await page.getByTestId("recovery-key-notice").getByRole("button").click()
+	expect((await download).suggestedFilename()).toBe(
+		"hoardodile-recovery-local.json",
+	)
+	await expect(page.getByTestId("recovery-key-notice")).not.toBeVisible()
 	await page.screenshot({
 		path: testInfo.outputPath("complete-backups.png"),
 		fullPage: true,
 	})
+	await point.locator("summary").first().click()
 	await point.getByRole("button", { name: "Restore", exact: true }).click()
 	const confirmation = page.getByTestId("full-restore-confirm")
 	await expect(confirmation).toBeVisible({ timeout: 30_000 })
@@ -32,6 +40,7 @@ test("complete backup, confirmed restore, and manual device management", async (
 	await expect(page.getByTestId("app-sidebar")).toBeVisible({ timeout: 30_000 })
 	await page.goto("/settings/sync")
 	await expect(page.getByTestId("backup-sync")).toBeVisible()
+	await page.getByTestId("external-sync-records").locator("summary").click()
 	await page.getByTestId("sync-device-add").click()
 	await page
 		.getByRole("dialog")
@@ -42,9 +51,16 @@ test("complete backup, confirmed restore, and manual device management", async (
 		.getByRole("button", { name: "Save", exact: true })
 		.click()
 	await expect(page.getByText("Manual laptop", { exact: true })).toBeVisible()
-	await expect(page.getByText("Manual record", { exact: true })).toBeVisible()
+	await expect(
+		page
+			.getByTestId("external-sync-records")
+			.locator("p")
+			.filter({ hasText: /Manual record/ }),
+	).toBeVisible()
+	await expect(page.getByRole("dialog")).not.toBeVisible()
 	await page.screenshot({
 		path: testInfo.outputPath("backup-sync.png"),
 		fullPage: true,
+		animations: "disabled",
 	})
 })

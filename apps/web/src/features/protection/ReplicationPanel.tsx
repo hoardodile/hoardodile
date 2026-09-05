@@ -5,6 +5,7 @@ import { ConfirmDialog } from "@hoardodile/ui/components/confirm-dialog"
 import { DropdownSelect } from "@hoardodile/ui/components/dropdown-select"
 import { Input } from "@hoardodile/ui/components/input"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { Link } from "@tanstack/react-router"
 import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import {
@@ -16,11 +17,12 @@ import {
 	syncSummaryQueryOptions,
 } from "@/features/sync/api"
 import { useToastMutation } from "@/hooks/useToastMutation"
-import { getDesktopBridge } from "@/lib/desktop"
 import type { RouterOutputs } from "@/trpc/client"
 import { trpcMutation } from "@/trpc/factory"
 import { protectionStatusOptions, replicationStatusOptions } from "./api"
+import { ConnectSenderButton, PairingInviteButton } from "./PairingButtons"
 import { ProtectionJobs } from "./ProtectionJobs"
+import { ReceivedBackup } from "./ReceivedBackup"
 
 type ManualDevice = RouterOutputs["sync"]["summary"]["devices"][number]
 type Connection = { id: string; name: string; receivedAt: number | null }
@@ -28,24 +30,15 @@ type Connection = { id: string; name: string; receivedAt: number | null }
 export function ReplicationPanel() {
 	const { t } = useTranslation()
 	const qc = useQueryClient()
-	const state = useQuery(replicationStatusOptions()).data
-	const lastRestore = useQuery(protectionStatusOptions()).data?.lastRestore
+	const stateQuery = useQuery(replicationStatusOptions())
+	const state = stateQuery.data
+	const protection = useQuery(protectionStatusOptions()).data
+	const lastRestore = protection?.lastRestore
+	const canInvite = Boolean(protection?.lastBackupAt)
 	const summary = useQuery(syncSummaryQueryOptions()).data
 	const records = summary?.devices ?? []
 	const current = useQuery(syncCurrentQueryOptions()).data
 	const [name, setName] = useState("")
-	const [connecting, setConnecting] = useState(false)
-	const [url, setUrl] = useState("")
-	const [code, setCode] = useState("")
-	const [fingerprint, setFingerprint] = useState("")
-	const [invitation, setInvitation] = useState<{
-		code: string
-		expiresAt: number
-	} | null>(null)
-	const [advertisedUrl, setAdvertisedUrl] = useState(
-		window.location.protocol === "https:" ? window.location.origin : "",
-	)
-	const [advertisedFingerprint, setAdvertisedFingerprint] = useState("")
 	const [editing, setEditing] = useState<{
 		id?: string
 		name: string
@@ -62,20 +55,6 @@ export function ReplicationPanel() {
 	useEffect(() => {
 		if (state?.name) setName(state.name)
 	}, [state?.name])
-	useEffect(() => {
-		if (!invitation) return
-		void getDesktopBridge()
-			?.getLanInfo()
-			.then((info) => {
-				const address = info.addresses[0]?.address
-				if (info.enabled && info.https && address) {
-					setAdvertisedUrl(
-						`https://${address.includes(":") ? `[${address}]` : address}:${info.lanHttpsPort}`,
-					)
-					setAdvertisedFingerprint(info.fingerprint ?? "")
-				}
-			})
-	}, [invitation])
 	const invalidate = async () => {
 		await Promise.all([
 			qc.invalidateQueries({ queryKey: ["replication"] }),
@@ -86,18 +65,6 @@ export function ReplicationPanel() {
 	const configure = useToastMutation({
 		...trpcMutation("replication", "configure"),
 		onSuccess: invalidate,
-	})
-	const invite = useToastMutation({
-		...trpcMutation("replication", "invitation"),
-		onSuccess: setInvitation,
-	})
-	const connect = useToastMutation({
-		...trpcMutation("replication", "connect"),
-		onSuccess: async () => {
-			setConnecting(false)
-			setCode("")
-			await invalidate()
-		},
 	})
 	const disconnect = useToastMutation({
 		...trpcMutation("replication", "disconnect"),
@@ -191,7 +158,43 @@ export function ReplicationPanel() {
 						{t("replication.description")}
 					</p>
 				</header>
-				{state && (
+				{stateQuery.isPending && <p>{t("common.loading")}</p>}
+				{stateQuery.error && <p role="alert">{stateQuery.error.message}</p>}
+				{state?.role === "unconfigured" && (
+					<section className="space-y-3 rounded-lg bg-muted p-5">
+						<p className="text-ui font-medium">
+							{t("replicationUx.unconfigured")}
+						</p>
+						<div className="flex flex-wrap gap-3">
+							<Button
+								disabled={configure.isPending}
+								onClick={() =>
+									configure.mutate({
+										role: "send",
+										name: state.name,
+										paused: false,
+									})
+								}
+							>
+								{t("replicationUx.send")}
+							</Button>
+							<Button
+								variant="secondary"
+								disabled={configure.isPending}
+								onClick={() =>
+									configure.mutate({
+										role: "receive",
+										name: state.name,
+										paused: false,
+									})
+								}
+							>
+								{t("replicationUx.receive")}
+							</Button>
+						</div>
+					</section>
+				)}
+				{state && state.role !== "unconfigured" && (
 					<>
 						<div className="flex flex-wrap items-end gap-3">
 							<label
@@ -228,7 +231,10 @@ export function ReplicationPanel() {
 									configure.isPending
 								}
 								options={(["unconfigured", "send", "receive"] as const).map(
-									(role) => ({ value: role, label: t(`replication.${role}`) }),
+									(role) => ({
+										value: role,
+										label: t(`replicationUx.${role}`),
+									}),
 								)}
 								onValueChange={(role) => {
 									if (
@@ -260,17 +266,10 @@ export function ReplicationPanel() {
 						</div>
 						<div className="flex flex-wrap gap-2">
 							{state.role === "send" && (
-								<Button
-									disabled={invite.isPending}
-									onClick={() => invite.mutate(undefined)}
-								>
-									{t("replication.invite")}
-								</Button>
+								<PairingInviteButton disabled={!canInvite} />
 							)}
 							{state.role !== "send" && !state.source && (
-								<Button onClick={() => setConnecting(true)}>
-									{t("replication.connect")}
-								</Button>
+								<ConnectSenderButton onConnected={invalidate} />
 							)}
 							{state.source && (
 								<Button
@@ -282,227 +281,229 @@ export function ReplicationPanel() {
 									{t("replication.receiveNow")}
 								</Button>
 							)}
-							<Button
-								variant="secondary"
-								onClick={() => setEditing({ name: "", notes: "" })}
-								data-testid="sync-device-add"
-							>
-								{t("replication.addRecord")}
-							</Button>
 						</div>
+						<p className="text-xs text-secondary-foreground">
+							{t(
+								state.role === "send"
+									? "replicationUx.sendHelp"
+									: "replicationUx.receiveHelp",
+							)}
+						</p>
+						{state.role === "send" && !canInvite && (
+							<Link to="/settings/backups" className="text-xs underline">
+								{t("protectionUx.start")}
+							</Link>
+						)}
+						{state.source && <ReceivedBackup source={state.source} />}
 					</>
 				)}
 				<SectionDivider />
 				<h3 className="text-ui font-medium">{t("replication.devices")}</h3>
-				<div className="flex items-center gap-3 text-xs">
-					<span>{t("sync.config.remindLabel")}</span>
-					<DropdownSelect
-						value={String(summary?.remindDays ?? 7)}
-						disabled={remind.isPending}
-						options={SYNC_REMIND_DAYS_OPTIONS.map((days) => ({
-							value: String(days),
-							label: t("sync.config.remindDays", { count: days }),
-						}))}
-						onValueChange={(days) => remind.mutate({ days: Number(days) })}
-					/>
-				</div>
+				{rows.length > 0 && (
+					<div className="flex items-center gap-3 text-xs">
+						<span>{t("sync.config.remindLabel")}</span>
+						<DropdownSelect
+							value={String(summary?.remindDays ?? 7)}
+							disabled={remind.isPending}
+							options={SYNC_REMIND_DAYS_OPTIONS.map((days) => ({
+								value: String(days),
+								label: t("sync.config.remindDays", { count: days }),
+							}))}
+							onValueChange={(days) => remind.mutate({ days: Number(days) })}
+						/>
+					</div>
+				)}
 				{rows.length === 0 && (
 					<p className="text-xs text-muted-foreground">
 						{t("replication.noDevices")}
 					</p>
 				)}
 				<div className="divide-y divide-border">
-					{rows.map((row) => (
-						<div
-							key={row.id}
-							className="flex flex-wrap items-center gap-3 py-4"
-							data-testid={`sync-device-${row.id}`}
-						>
-							<div className="min-w-0 flex-1">
-								<p className="text-ui">{row.name}</p>
-								<p className="mt-1 text-xs text-muted-foreground">
-									{row.connection
-										? t("replication.paired")
-										: t("replication.recordOnly")}{" "}
-									·{" "}
-									{row.connection
-										? row.connection.receivedAt
-											? `${t("replication.received")}: ${new Date(row.connection.receivedAt).toLocaleString()}`
-											: t("replication.never")
-										: row.manual?.lastRecordedAt
-											? new Date(row.manual.lastRecordedAt).toLocaleString()
-											: t("protection.never")}
-								</p>
-								{row.manual?.device.notes && (
-									<p className="mt-1 text-xs">{row.manual.device.notes}</p>
-								)}
-								{row.connection &&
-									lastRestore?.repositoryId === row.connection.id && (
-										<p className="mt-1 text-xs text-muted-foreground">
-											{t("protection.lastRestore")}:{" "}
-											{new Date(lastRestore.restoredAt).toLocaleString()} ·{" "}
-											{lastRestore.pointId.slice(0, 8)}
-											<br />
-											{t("protection.restoredEditable")}
-										</p>
+					{rows
+						.filter((row) => row.connection)
+						.map((row) => (
+							<div
+								key={row.id}
+								className="flex flex-wrap items-center gap-3 py-4"
+								data-testid={`sync-device-${row.id}`}
+							>
+								<div className="min-w-0 flex-1">
+									<p className="text-ui">{row.name}</p>
+									<p className="mt-1 text-xs text-muted-foreground">
+										{row.connection
+											? t("replication.paired")
+											: t("replication.recordOnly")}{" "}
+										·{" "}
+										{row.connection
+											? row.connection.receivedAt
+												? `${t("replication.received")}: ${new Date(row.connection.receivedAt).toLocaleString()}`
+												: t("replication.never")
+											: row.manual?.lastRecordedAt
+												? new Date(row.manual.lastRecordedAt).toLocaleString()
+												: t("protection.never")}
+									</p>
+									{row.manual?.device.notes && (
+										<p className="mt-1 text-xs">{row.manual.device.notes}</p>
 									)}
-							</div>
-							{row.manual && (
-								<>
-									<Button
-										variant="ghost"
-										onClick={() =>
-											setEditing({
-												id: row.manual!.device.id,
-												name: row.manual!.device.name,
-												notes: row.manual!.device.notes,
-											})
-										}
-									>
-										{t("protection.metadata")}
-									</Button>
-									<Button
-										variant="ghost"
-										onClick={() => setDetails(row.manual!)}
-									>
-										{t("replication.details")}
-									</Button>
-									{!row.connection && (
+									{row.connection &&
+										lastRestore?.repositoryId === row.connection.id && (
+											<p className="mt-1 text-xs text-muted-foreground">
+												{t("protection.lastRestore")}:{" "}
+												{new Date(lastRestore.restoredAt).toLocaleString()} ·{" "}
+												{lastRestore.pointId.slice(0, 8)}
+												<br />
+												{t("protection.restoredEditable")}
+											</p>
+										)}
+								</div>
+								{row.manual && (
+									<>
 										<Button
-											variant="secondary"
-											disabled={record.isPending}
+											variant="ghost"
 											onClick={() =>
-												record.mutate({ deviceId: row.manual!.device.id })
+												setEditing({
+													id: row.manual!.device.id,
+													name: row.manual!.device.name,
+													notes: row.manual!.device.notes,
+												})
 											}
 										>
-											{t("replication.record")}
+											{t("protection.metadata")}
 										</Button>
-									)}
-								</>
-							)}
-							{row.connection && (
+										<Button
+											variant="ghost"
+											onClick={() => setDetails(row.manual!)}
+										>
+											{t("replication.details")}
+										</Button>
+										{!row.connection && (
+											<Button
+												variant="secondary"
+												disabled={record.isPending}
+												onClick={() =>
+													record.mutate({ deviceId: row.manual!.device.id })
+												}
+											>
+												{t("replication.record")}
+											</Button>
+										)}
+									</>
+								)}
+								{row.connection && (
+									<Button
+										variant="ghost"
+										onClick={() => {
+											if (row.manual)
+												link.mutate({
+													recordId: row.manual.device.id,
+													instanceId: null,
+												})
+											else {
+												setLinking(row.connection!)
+												setRecordId("")
+											}
+										}}
+									>
+										{row.manual
+											? t("replication.unlink")
+											: t("replication.link")}
+									</Button>
+								)}
 								<Button
 									variant="ghost"
-									onClick={() => {
-										if (row.manual)
-											link.mutate({
-												recordId: row.manual.device.id,
-												instanceId: null,
-											})
-										else {
-											setLinking(row.connection!)
-											setRecordId("")
-										}
-									}}
+									onClick={() =>
+										setRemoving({
+											recordId: row.connection
+												? undefined
+												: row.manual?.device.id,
+											connectionId: row.connection?.id,
+											name: row.name,
+										})
+									}
 								>
-									{row.manual ? t("replication.unlink") : t("replication.link")}
+									{row.connection
+										? t("replication.revoke")
+										: t("replication.remove")}
 								</Button>
-							)}
-							<Button
-								variant="ghost"
-								onClick={() =>
-									setRemoving({
-										recordId: row.connection
-											? undefined
-											: row.manual?.device.id,
-										connectionId: row.connection?.id,
-										name: row.name,
-									})
-								}
-							>
-								{row.connection
-									? t("replication.revoke")
-									: t("replication.remove")}
-							</Button>
-						</div>
-					))}
+							</div>
+						))}
 				</div>
-				<SectionDivider />
-				<ProtectionJobs />
-			</div>
-			<AppDialog
-				open={connecting}
-				onOpenChange={setConnecting}
-				title={t("replication.connect")}
-				description={t("replication.connectHelp")}
-				footer={
+				<details
+					className="border-t border-border pt-3"
+					data-testid="external-sync-records"
+				>
+					<summary className="cursor-pointer py-2 text-ui">
+						{t("replicationUx.externalRecords")} (
+						{rows.filter((row) => !row.connection).length})
+					</summary>
+					<p className="my-2 text-xs text-secondary-foreground">
+						{t("replicationUx.externalHelp")}
+					</p>
 					<Button
-						disabled={
-							connect.isPending || !url.trim() || code.trim().length < 32
-						}
-						onClick={() =>
-							connect.mutate({
-								url: url.trim(),
-								code: code.trim(),
-								fingerprint: fingerprint.trim() || undefined,
-							})
-						}
+						variant="secondary"
+						onClick={() => setEditing({ name: "", notes: "" })}
+						data-testid="sync-device-add"
 					>
-						{t("replication.connect")}
+						{t("replicationUx.externalRecord")}
 					</Button>
-				}
-			>
-				<div className="space-y-3">
-					<Input
-						value={url}
-						onChange={(event) => setUrl(event.target.value)}
-						placeholder={t("replication.url")}
-						aria-label={t("replication.url")}
-					/>
-					<Input
-						value={code}
-						onChange={(event) => setCode(event.target.value)}
-						placeholder={t("replication.code")}
-						aria-label={t("replication.code")}
-						autoComplete="off"
-					/>
-					<Input
-						value={fingerprint}
-						onChange={(event) => setFingerprint(event.target.value)}
-						placeholder={t("replication.fingerprint")}
-						aria-label={t("replication.fingerprint")}
-					/>
-				</div>
-			</AppDialog>
-			<AppDialog
-				open={invitation !== null}
-				onOpenChange={(open) => {
-					if (!open) setInvitation(null)
-				}}
-				title={t("replication.invite")}
-				description={t("replication.inviteHelp")}
-			>
-				{invitation && (
-					<div className="space-y-3">
-						<Input
-							value={advertisedUrl}
-							onChange={(event) => setAdvertisedUrl(event.target.value)}
-							placeholder={t("replication.url")}
-							aria-label={t("replication.url")}
-						/>
-						<Input
-							readOnly
-							value={invitation.code}
-							aria-label={t("replication.code")}
-							onFocus={(event) => event.target.select()}
-						/>
-						{advertisedFingerprint && (
-							<Input
-								readOnly
-								value={advertisedFingerprint}
-								aria-label={t("replication.fingerprint")}
-								onFocus={(event) => event.target.select()}
-							/>
-						)}
-						{!advertisedUrl && (
-							<p className="text-xs">{t("replication.addressHelp")}</p>
-						)}
-						<p className="text-xs text-muted-foreground">
-							{new Date(invitation.expiresAt).toLocaleString()}
-						</p>
-					</div>
-				)}
-			</AppDialog>
+					{rows
+						.filter((row) => !row.connection && row.manual)
+						.map((row) => (
+							<div
+								key={row.id}
+								className="flex flex-wrap items-center gap-3 border-b border-border py-3"
+								data-testid={`sync-device-${row.id}`}
+							>
+								<div className="min-w-0 flex-1">
+									<p className="text-ui">{row.name}</p>
+									<p className="text-xs text-muted-foreground">
+										{t("replication.recordOnly")} ·{" "}
+										{row.manual?.lastRecordedAt
+											? new Date(row.manual.lastRecordedAt).toLocaleString()
+											: t("protection.never")}
+									</p>
+								</div>
+								<Button variant="ghost" onClick={() => setDetails(row.manual!)}>
+									{t("replication.details")}
+								</Button>
+								<Button
+									variant="ghost"
+									onClick={() =>
+										setEditing({
+											id: row.manual!.device.id,
+											name: row.name,
+											notes: row.manual!.device.notes,
+										})
+									}
+								>
+									{t("protection.metadata")}
+								</Button>
+								<Button
+									variant="secondary"
+									disabled={record.isPending}
+									onClick={() =>
+										record.mutate({ deviceId: row.manual!.device.id })
+									}
+								>
+									{t("replication.record")}
+								</Button>
+								<Button
+									variant="ghost"
+									onClick={() =>
+										setRemoving({
+											recordId: row.manual!.device.id,
+											name: row.name,
+										})
+									}
+								>
+									{t("replication.remove")}
+								</Button>
+							</div>
+						))}
+				</details>
+				<SectionDivider />
+				<ProtectionJobs activeOnly />
+			</div>
 			<AppDialog
 				open={editing !== null}
 				onOpenChange={(open) => {

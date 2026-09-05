@@ -300,7 +300,6 @@ describe("complete library recovery", () => {
 			path: join(backupRoot, "local"),
 			passwordFile: originalKey,
 		}
-		await engine.initializeRepository(repo)
 		const library = join(root, "library")
 		ensureBootstrapVersion(library)
 		const service = await createProtectionService({
@@ -317,6 +316,11 @@ describe("complete library recovery", () => {
 			leaveMaintenance: () => {},
 		})
 		try {
+			await expect(
+				service.initialize("known-recovery-key"),
+			).rejects.toMatchObject({ code: "repository_not_found" })
+			expect(service.jobs.list()).toHaveLength(0)
+			await engine.initializeRepository(repo)
 			expect(await service.initialize("known-recovery-key")).toBeNull()
 			expect(service.jobs.list()).toHaveLength(0)
 			expect(service.getStatus().enabled).toBe(false)

@@ -637,6 +637,7 @@ export async function createProtectionService(deps: ProtectionDependencies) {
 			drillTargets,
 			storage: coordinator.state(),
 			backupRoot,
+			localRepositoryPath: join(backupRoot, "local"),
 		}),
 		async initialize(recoveryKey?: string) {
 			writable()
@@ -663,6 +664,11 @@ export async function createProtectionService(deps: ProtectionDependencies) {
 					throw new BackupError(
 						"recovery_key_required",
 						"Enter the recovery key for the existing repository",
+					)
+				if (!exists && recoveryKey)
+					throw new BackupError(
+						"repository_not_found",
+						"No existing backup repository was found at the configured local repository path",
 					)
 				const repo: Repository = {
 					id: "local",

@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router"
+import { useTranslation } from "react-i18next"
 import { DataHistoryPanel } from "@/features/data-history"
 import { RecoveryPanel } from "@/features/protection/RecoveryPanel"
 import {
@@ -16,11 +17,20 @@ export const Route = createFileRoute("/settings/backups")({
  * Complete recovery points and versioned archives share one settings sheet.
  */
 function BackupsSettingsRoute() {
+	const { t } = useTranslation()
 	return (
 		<SettingsSheet>
 			<RecoveryPanel />
 			<SectionDivider />
-			<DataHistoryPanel embedded />
+			<details>
+				<summary className="cursor-pointer py-3 text-ui font-medium">
+					{t("protection.archives")}
+				</summary>
+				<p className="mb-4 text-xs text-secondary-foreground">
+					{t("protection.archivesHelp")}
+				</p>
+				<DataHistoryPanel embedded />
+			</details>
 		</SettingsSheet>
 	)
 }
