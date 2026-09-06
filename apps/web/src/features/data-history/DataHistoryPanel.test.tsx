@@ -144,11 +144,10 @@ it("starts archive publication after the typed confirmation, without a note fiel
 	const { user, create } = setup()
 	await user.click(await screen.findByTestId("create-archive"))
 	expect(screen.getByTestId("archive-confirm-submit")).toBeDisabled()
-	// The confirmation prompt is plain text — the old template rendered a
-	// literal `<name>{{name}}</name>` because it was fed through `t()`.
-	expect(
-		screen.getByText(/type the phrase below to confirm/i),
-	).toBeInTheDocument()
+	// The shared type-to-confirm prompt renders the phrase in bold inside
+	// one line («Type "archive" to confirm») — no literal `<name>` tag.
+	const phrase = screen.getByText("archive")
+	expect(phrase.parentElement?.textContent).toBe('Type "archive" to confirm')
 	expect(screen.queryByText(/<name>/)).not.toBeInTheDocument()
 	expect(screen.queryByTestId("archive-note-input")).not.toBeInTheDocument()
 	await user.type(screen.getByTestId("archive-confirm-input"), "archive")
