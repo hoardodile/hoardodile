@@ -1,4 +1,5 @@
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs"
+import { realpath } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { PassThrough } from "node:stream"
@@ -152,6 +153,9 @@ describe("generateUploadPreview", () => {
 		)
 		expect(result.contentType).toBe("image/avif")
 		const args = vi.mocked(spawn).mock.calls[0]?.[1] as string[]
-		expect(args).toContain(src)
+		// The media pipeline hands ffmpeg the canonical path (the directory
+		// container realpaths entries), so the 8.3 short form some Windows
+		// TEMP values carry must not leak into the expectation.
+		expect(args).toContain(await realpath(src))
 	})
 })

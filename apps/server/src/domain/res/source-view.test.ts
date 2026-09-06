@@ -643,7 +643,9 @@ describe("materialized container addressing (extracted non-zip)", () => {
 				"book.cb7!Ch1/001.jpg",
 			)
 			expect(size).toBe(10)
-			expect(path).toBe(join(archivesDir, "book.cb7", "Ch1", "001.jpg"))
+			expect(path).toBe(
+				await realpath(join(archivesDir, "book.cb7", "Ch1", "001.jpg")),
+			)
 			await buffer(stream)
 
 			// An inner path outside the manifest whitelist is not served.
