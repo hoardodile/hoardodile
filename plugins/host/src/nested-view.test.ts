@@ -8,6 +8,7 @@ import {
 	rmSync,
 	writeFileSync,
 } from "node:fs"
+import { realpath } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { dirname, join } from "node:path"
 import { Readable } from "node:stream"
@@ -176,12 +177,14 @@ describe.skipIf(!sevenZipAvailable)(
 			for await (const chunk of stream) chunks.push(Buffer.from(chunk))
 			expect(size).toBe(6)
 			expect(Buffer.concat(chunks).toString("utf8")).toBe("second")
-			expect(path).toBe(join(cacheDir, "book.cb7", "Ch1", "002.jpg"))
+			expect(path).toBe(
+				await realpath(join(cacheDir, "book.cb7", "Ch1", "002.jpg")),
+			)
 			expect(await view.readEntrySlice("book.cb7!Ch1/001.jpg", 0, 3)).toEqual(
 				Buffer.from("fir"),
 			)
 			expect(await view.resolveSeekablePath?.("book.cb7!Ch1/001.jpg")).toBe(
-				join(cacheDir, "book.cb7", "Ch1", "001.jpg"),
+				await realpath(join(cacheDir, "book.cb7", "Ch1", "001.jpg")),
 			)
 		})
 
