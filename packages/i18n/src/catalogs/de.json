@@ -172,7 +172,7 @@
 		"requestFailed": "Anfrage fehlgeschlagen",
 		"saved": "Gespeichert",
 		"saveFailed": "Speichern fehlgeschlagen",
-		"confirmByTypingPrompt": "Tippe „<name>{{name}}</name>“ ein, um zu bestätigen",
+		"confirmByTypingPrompt": "Tippe zur Bestätigung den Begriff unten ein",
 		"searchIncludeIntro": "Einführung durchsuchen",
 		"underline": "Unterstreichen",
 		"colorPicker": {
@@ -642,12 +642,13 @@
 		"previewFallbackUnknown": "unbekanntes Plugin"
 	},
 	"plugins": {
-		"pageHint": "Aus einem .zip-Paket installieren oder den Plugins-Ordner neu scannen, um Neuzugänge zu übernehmen.",
-		"uploadZip": ".zip hochladen",
+		"pageHint": "Aus einem Plugin-Paket (ZIP, TAR, 7Z, RAR und mehr) installieren oder den Plugins-Ordner aktualisieren, um Neuzugänge zu übernehmen.",
+		"uploadPlugin": "Plugin hochladen",
+		"uploadValidatedServerSide": "Das Paket wird vom Server validiert — Name, Version und Berechtigungen erscheinen nach der Installation.",
 		"uploadPluginSuccess": "Plugin installiert",
 		"uploading": "Installieren…",
-		"rescan": "Plugins neu scannen",
-		"rescanSuccess": "Plugins neu gescannt",
+		"rescan": "Plugins aktualisieren",
+		"rescanSuccess": "Plugins aktualisiert",
 		"more": "Mehr",
 		"enableToggle": "Plugin aktivieren oder deaktivieren",
 		"dragToReorder": "Zum Sortieren ziehen",
@@ -695,8 +696,8 @@
 		"uninstallConfirmDescription_other": "{{count}} Ressourcen verwenden dieses Plugin. Nach der Deinstallation werden sie mit dem integrierten Datei-Plugin vorgeschaut; die erneute Installation stellt sie automatisch wieder her. Dies kann nicht rückgängig gemacht werden.",
 		"uninstallConfirmNoUsage": "Keine Ressource verwendet dieses Plugin. Installiere es jederzeit neu, um es wieder zu nutzen. Dies kann nicht rückgängig gemacht werden.",
 		"uninstallSuccess": "{{name}} deinstalliert",
-		"replaceContentAction": "Inhalte ersetzen…",
-		"replaceContentTitle": "Inhalts-Plugin ersetzen",
+		"replaceContentAction": "Plugin ersetzen…",
+		"replaceContentTitle": "Plugin ersetzen",
 		"replaceContentDescription": "Alle Ressourcen, die ein Inhalts-Plugin verarbeitet, zu einem anderen verschieben. Das Inhalts-Plugin jeder Ressource wird neu zugewiesen und die abgeleiteten Metadaten werden zur erneuten Erkennung gelöscht.",
 		"replaceContentFrom": "Quell-Plugin",
 		"replaceContentTo": "Ziel-Plugin",
@@ -955,17 +956,12 @@
 		"setupFormAria": "Passwort festlegen"
 	},
 	"dataHistory": {
-		"title": "Datenverlauf",
-		"status": {
-			"currentWritable": "Beschreibbar — v{{version}}",
-			"viewingArchive": "Archiv ansehen — v{{version}}"
-		},
+		"pageHint": "Friert die neueste Version als schreibgeschütztes Archiv ein. Name und Beschreibung lassen sich jederzeit an der aktuellen Version bearbeiten.",
 		"chip": {
 			"latest": "Neueste",
 			"readOnly": "Schreibgeschützt"
 		},
 		"archive": {
-			"title": "v{{version}}",
 			"tagCurrent": "Neueste (beschreibbar)",
 			"tagActive": "Wird angezeigt",
 			"tagReadOnly": "Historisches Archiv",
@@ -974,28 +970,20 @@
 			"nameLabel": "Name",
 			"namePlaceholder": "z. B. v1 Meilenstein",
 			"noteLabel": "Notiz",
-			"notePlaceholder": "z. B. vor Migration, Daten-Einfrierung…",
-			"switchHint": "Nach dem Wechsel läuft die App gegen dieses Archiv im schreibgeschützten Modus. Kehre zur neuesten Version zurück, um wieder zu bearbeiten.",
-			"activeHint": "Dies ist die Version, die du gerade anzeigst."
+			"notePlaceholder": "z. B. vor Migration, Daten-Einfrierung…"
 		},
 		"action": {
 			"archiveNow": "Jetzt archivieren",
 			"archiving": "Archivieren…",
+			"edit": "Bearbeiten",
 			"switchToVersion": "Zu dieser Version wechseln",
 			"switching": "Wechseln…"
 		},
+		"edit": {
+			"title": "Archiv bearbeiten",
+			"description": "Archiv v{{version}}"
+		},
 		"reloading": "Wird neu geladen…",
-		"detail": {
-			"selectPrompt": "Ein Archiv auswählen, um Details anzuzeigen.",
-			"versionNumber": "Version",
-			"createdAt": "Erstellt",
-			"note": "Notiz",
-			"archiveVersion": "Archiv v{{version}}"
-		},
-		"note": {
-			"empty": "Klicken, um eine Notiz hinzuzufügen…",
-			"placeholder": "Füge eine kurze Beschreibung für diesen Snapshot hinzu…"
-		},
 		"confirm": {
 			"archiveTitle": "Neueste Version archivieren",
 			"archiveDescription": "Aktuelle Daten, Plugin-Code und Plugin-Dateien werden gemeinsam eingefroren. Eine neue bearbeitbare Version erhält unabhängige Plugin-Kopien.",

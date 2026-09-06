@@ -2035,17 +2035,18 @@ describe("plugin upload limits", () => {
 		expect(res.json().kind).toBe("resource.archive_too_large")
 	})
 
-	test("rejects a non-zip plugin archive with a format error", async () => {
+	test("accepts a non-zip plugin archive format but requires a manifest", async () => {
 		const cookie = await loginCookie()
-		// A real gzip stream: the archive engine accepts gzip in general,
-		// but the plugin channel is zip-only (the CLI publishes zips, the
-		// marketplace picks zip assets) — anything else must be refused.
+		// The manual upload channel admits every supported container
+		// format (zip/tar/7z/rar/xz/gzip) — a valid gzip stream is no
+		// longer refused up front; without a manifest.json the install
+		// fails at validation instead.
 		const { gzipSync } = await import("node:zlib")
 		const gz = gzipSync(Buffer.from("not a plugin package"))
 		const boundary = "----hoardodile-test-boundary"
 		const payload = Buffer.concat([
 			Buffer.from(
-				`--${boundary}\r\nContent-Disposition: form-data; name="archive"; filename="plugin.zip"\r\nContent-Type: application/zip\r\n\r\n`,
+				`--${boundary}\r\nContent-Disposition: form-data; name="archive"; filename="plugin.tar.gz"\r\nContent-Type: application/gzip\r\n\r\n`,
 			),
 			gz,
 			Buffer.from(`\r\n--${boundary}--\r\n`),
@@ -2061,7 +2062,7 @@ describe("plugin upload limits", () => {
 			payload,
 		})
 		expect(res.statusCode).toBe(400)
-		expect(res.json().kind).toBe("resource.archive_format_not_allowed")
+		expect(res.json().kind).toBe("plugin.upload_no_manifest")
 	})
 
 	test("marketplace install rejects non-GitHub hosts and unauthenticated calls", async () => {

@@ -172,7 +172,7 @@
 		"requestFailed": "リクエストに失敗しました",
 		"saved": "保存しました",
 		"saveFailed": "保存できませんでした",
-		"confirmByTypingPrompt": "確認するには「<name>{{name}}</name>」と入力してください",
+		"confirmByTypingPrompt": "確認するには下の語句を入力してください",
 		"searchIncludeIntro": "紹介文を検索に含める",
 		"underline": "下線",
 		"colorPicker": {
@@ -642,12 +642,13 @@
 		"previewFallbackUnknown": "不明なプラグイン"
 	},
 	"plugins": {
-		"pageHint": ".zip バンドルからインストールするか、プラグインフォルダーを再スキャンして新しいものを検出してください。",
-		"uploadZip": ".zip をアップロード",
+		"pageHint": "プラグインパッケージ（zip、tar、7z、rar など）からインストールするか、プラグインフォルダーを更新して新着を検出します。",
+		"uploadPlugin": "プラグインをアップロード",
+		"uploadValidatedServerSide": "パッケージはサーバー側で検証され、名称・バージョン・権限はインストール後に表示されます。",
 		"uploadPluginSuccess": "プラグインをインストールしました",
 		"uploading": "インストール中…",
-		"rescan": "プラグインを再スキャン",
-		"rescanSuccess": "プラグインを再スキャンしました",
+		"rescan": "プラグインを更新",
+		"rescanSuccess": "プラグインを更新しました",
 		"more": "その他",
 		"enableToggle": "プラグインを有効化または無効化",
 		"dragToReorder": "ドラッグで並べ替え",
@@ -695,8 +696,8 @@
 		"uninstallConfirmDescription_other": "このプラグインを使用しているリソースが {{count}}件あります。アンインストール後は内蔵のファイルプラグインでプレビューされ、プラグインを再インストールすると自動的に復元されます。これは元に戻せません。",
 		"uninstallConfirmNoUsage": "このプラグインを使用しているリソースはありません。いつでも再インストールして再度使用できます。これは元に戻せません。",
 		"uninstallSuccess": "{{name}} をアンインストールしました",
-		"replaceContentAction": "コンテンツを置き換える…",
-		"replaceContentTitle": "コンテンツプラグインを置き換える",
+		"replaceContentAction": "プラグインを置き換え…",
+		"replaceContentTitle": "プラグインを置き換え",
 		"replaceContentDescription": "あるコンテンツプラグインが扱うすべてのリソースを別のプラグインへ移します。各リソースのコンテンツプラグインを再割り当てし、再検出のため派生メタデータをクリアします。",
 		"replaceContentFrom": "元のプラグイン",
 		"replaceContentTo": "対象プラグイン",
@@ -955,17 +956,12 @@
 		"setupFormAria": "パスワードを設定"
 	},
 	"dataHistory": {
-		"title": "データ履歴",
-		"status": {
-			"currentWritable": "書き込み可能 — v{{version}}",
-			"viewingArchive": "アーカイブを表示中 — v{{version}}"
-		},
+		"pageHint": "最新バージョンを読み取り専用のアーカイブとして凍結します。名前と説明は現在のバージョンでいつでも編集できます。",
 		"chip": {
 			"latest": "最新",
 			"readOnly": "読み取り専用"
 		},
 		"archive": {
-			"title": "v{{version}}",
 			"tagCurrent": "最新 (書き込み可能)",
 			"tagActive": "表示中",
 			"tagReadOnly": "過去のアーカイブ",
@@ -974,28 +970,20 @@
 			"nameLabel": "名前",
 			"namePlaceholder": "例: v1 マイルストーン",
 			"noteLabel": "メモ",
-			"notePlaceholder": "例: 移行前、データ凍結…",
-			"switchHint": "切り替え後、アプリはこのアーカイブに対して読み取り専用モードで動作します。再度編集するには最新バージョンに戻ってください。",
-			"activeHint": "これは表示中のバージョンです。"
+			"notePlaceholder": "例: 移行前、データ凍結…"
 		},
 		"action": {
 			"archiveNow": "今すぐアーカイブ",
 			"archiving": "アーカイブ中…",
+			"edit": "編集",
 			"switchToVersion": "このバージョンに切り替え",
 			"switching": "切り替え中…"
 		},
+		"edit": {
+			"title": "アーカイブを編集",
+			"description": "アーカイブ v{{version}}"
+		},
 		"reloading": "再読み込み中…",
-		"detail": {
-			"selectPrompt": "アーカイブを選択して詳細を表示します。",
-			"versionNumber": "バージョン",
-			"createdAt": "作成日時",
-			"note": "メモ",
-			"archiveVersion": "アーカイブ v{{version}}"
-		},
-		"note": {
-			"empty": "クリックしてメモを追加…",
-			"placeholder": "このスナップショットに短い説明を追加…"
-		},
 		"confirm": {
 			"archiveTitle": "最新バージョンをアーカイブ",
 			"archiveDescription": "現在のデータ、プラグインのコードとファイルを一緒に固定します。新しい編集可能なバージョンには独立したプラグインのコピーを作成します。",

@@ -10,7 +10,11 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { Readable } from "node:stream"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
-import { buildPluginUploads, findSymlinkEntry } from "./upload.ts"
+import {
+	buildPluginUploads,
+	type ContainerFormat,
+	findSymlinkEntry,
+} from "./upload.ts"
 
 const PLUGIN_ID = "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
 
@@ -147,6 +151,24 @@ describe("buildPluginUploads", () => {
 		expect(readdirSync(stagingRoot)).toEqual([])
 	})
 
+	test("defaults to a zip-only allow-list and forwards an explicit formats set", async () => {
+		const seen: (readonly ContainerFormat[])[] = []
+		const uploads = uploadsWith((_source, _destDir, opts) => {
+			seen.push(opts.formats ?? [])
+			return Promise.reject(new Error("boom"))
+		})
+
+		await expect(
+			uploads.installFromZip(Readable.from(["zip-bytes"])),
+		).rejects.toThrow("boom")
+		await expect(
+			uploads.installFromZip(Readable.from(["zip-bytes"]), {
+				formats: ["zip", "tar", "7z", "rar", "xz", "gzip"],
+			}),
+		).rejects.toThrow("boom")
+		expect(seen).toEqual([["zip"], ["zip", "tar", "7z", "rar", "xz", "gzip"]])
+	})
+
 	test("findSymlinkEntry reports the first link and tolerates plain trees", async () => {
 		const clean = join(root, "clean")
 		const nested = join(clean, "a", "b")
@@ -168,5 +190,8 @@ describe("buildPluginUploads", () => {
 type PluginUploadsExtract = (
 	source: NodeJS.ReadableStream,
 	destDir: string,
-	opts: { readonly maxBytes: number },
+	opts: {
+		readonly maxBytes: number
+		readonly formats?: readonly ContainerFormat[]
+	},
 ) => Promise<void>

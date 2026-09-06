@@ -1,6 +1,8 @@
 import { AppDialog } from "@hoardodile/ui/components/app-dialog"
 import { Button } from "@hoardodile/ui/components/button"
+import { Icon } from "@hoardodile/ui/components/icon"
 import { toast } from "@hoardodile/ui/components/toast"
+import { Shop2 } from "@hoardodile/ui/icons/registry"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
@@ -32,6 +34,7 @@ export function MarketplacePageActions() {
 					onClick={() => setOpen(true)}
 					data-testid="marketplace-registry-config"
 				>
+					<Icon icon={Shop2} />
 					{t("marketplace.configureRegistry")}
 				</Button>
 			</div>

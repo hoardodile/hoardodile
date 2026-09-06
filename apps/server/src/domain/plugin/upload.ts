@@ -8,7 +8,15 @@ import { invalid } from "@hoardodile/shared"
 export type PluginUploads = {
 	readonly installFromZip: (
 		archive: NodeJS.ReadableStream,
-		opts?: { readonly expectedId?: string },
+		opts?: {
+			readonly expectedId?: string
+			/**
+			 * Allowed container formats, sniffed from magic bytes. The
+			 * marketplace channel stays zip-only (its release assets are
+			 * packed zips); the manual upload path passes the full set.
+			 */
+			readonly formats?: readonly ContainerFormat[]
+		},
 	) => Promise<string>
 }
 
@@ -27,23 +35,16 @@ export type PluginUploadsDeps = {
 	/**
 	 * Archive extraction, injected by the assembly site so this module
 	 * does not depend on the res domain's archive utilities. Plugin
-	 * installs always call it with a zip-only allow-list — the plugin
-	 * channel only ever produces/accepts zips, so tar/7z/rar… are
-	 * rejected up front rather than opened.
+	 * installs pass a format allow-list — the marketplace channel only
+	 * ever accepts zips, while manual uploads admit every format the
+	 * extractor supports.
 	 */
 	readonly extractArchive: (
 		source: NodeJS.ReadableStream,
 		destDir: string,
 		opts: {
 			readonly maxBytes: number
-			readonly formats?: readonly (
-				| "zip"
-				| "tar"
-				| "7z"
-				| "rar"
-				| "xz"
-				| "gzip"
-			)[]
+			readonly formats?: readonly ContainerFormat[]
 		},
 	) => Promise<void>
 	/**
@@ -53,12 +54,18 @@ export type PluginUploadsDeps = {
 	readonly maxExtractedBytes: number
 }
 
+/** Container formats the plugin upload admit-list supports. */
+export type ContainerFormat = "zip" | "tar" | "7z" | "rar" | "xz" | "gzip"
+
 export function buildPluginUploads(deps: PluginUploadsDeps): PluginUploads {
 	const { stagingRoot, commit, extractArchive, maxExtractedBytes } = deps
 
 	async function installFromZip(
 		archive: NodeJS.ReadableStream,
-		opts?: { readonly expectedId?: string },
+		opts?: {
+			readonly expectedId?: string
+			readonly formats?: readonly ContainerFormat[]
+		},
 	): Promise<string> {
 		const stagingId = randomUUID()
 		const stagingDir = join(stagingRoot, `plugin-extract-${stagingId}`)
@@ -66,12 +73,12 @@ export function buildPluginUploads(deps: PluginUploadsDeps): PluginUploads {
 		try {
 			await mkdir(stagingDir, { recursive: true })
 
-			// Zip-only: the plugin archive channel is project-constrained,
-			// and the CLI publish artifact is a zip — nothing else is a
-			// valid plugin package.
+			// The plugin package channel allows zips by default (and the
+			// CLI publish artifact is a zip); a caller may admit the other
+			// sniffed formats explicitly (the manual upload path).
 			await extractArchive(archive, stagingDir, {
 				maxBytes: maxExtractedBytes,
-				formats: ["zip"],
+				formats: opts?.formats ?? ["zip"],
 			})
 
 			const manifestPath = join(stagingDir, "manifest.json")

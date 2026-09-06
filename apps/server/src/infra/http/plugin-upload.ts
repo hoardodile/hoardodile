@@ -11,6 +11,11 @@ async function pluginUploadPluginImpl(app: FastifyInstance): Promise<void> {
 	// `content-plugin-domain`.
 	const uploads = app.pluginUploads
 
+	// Manual uploads admit every container format the extractor supports
+	// (the marketplace channel stays zip-only). The format is sniffed
+	// from magic bytes, never trusted from the file name.
+	const pluginUploadFormats = ["zip", "tar", "7z", "rar", "xz", "gzip"] as const
+
 	app.post("/api/plugin-upload", async (req, reply) => {
 		if (!req.isMultipart()) {
 			return sendError(
@@ -69,6 +74,7 @@ async function pluginUploadPluginImpl(app: FastifyInstance): Promise<void> {
 
 			const pluginId = await uploads.installFromZip(
 				createReadStream(archivePath),
+				{ formats: pluginUploadFormats },
 			)
 
 			await app.pluginService.rescan()

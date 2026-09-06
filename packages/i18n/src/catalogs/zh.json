@@ -172,7 +172,7 @@
 		"requestFailed": "请求失败",
 		"saved": "已保存",
 		"saveFailed": "保存失败",
-		"confirmByTypingPrompt": "请输入“<name>{{name}}</name>”以确认",
+		"confirmByTypingPrompt": "请输入以下短语以确认",
 		"searchIncludeIntro": "搜索简介",
 		"underline": "下划线",
 		"colorPicker": {
@@ -642,12 +642,13 @@
 		"previewFallbackUnknown": "未知插件"
 	},
 	"plugins": {
-		"pageHint": "从 .zip 包安装，或重新扫描插件文件夹以拾取新到的插件。",
-		"uploadZip": "上传 .zip",
+		"pageHint": "从插件包（zip、tar、7z、rar 等）安装，或刷新插件文件夹以发现新到的插件。",
+		"uploadPlugin": "上传插件",
+		"uploadValidatedServerSide": "插件包将由服务端校验——安装完成后将显示其名称、版本与权限。",
 		"uploadPluginSuccess": "插件已安装",
 		"uploading": "安装中…",
-		"rescan": "重新扫描插件",
-		"rescanSuccess": "插件已重新扫描",
+		"rescan": "刷新插件",
+		"rescanSuccess": "插件已刷新",
 		"more": "更多",
 		"enableToggle": "启用或禁用插件",
 		"dragToReorder": "拖拽调整顺序",
@@ -695,8 +696,8 @@
 		"uninstallConfirmDescription_other": "有 {{count}} 个资源正在使用该插件。卸载后这些资源将改用内置文件插件预览；重新安装该插件可自动恢复。此操作无法撤销。",
 		"uninstallConfirmNoUsage": "没有资源正在使用该插件。卸载后如需恢复，重新安装即可。此操作无法撤销。",
 		"uninstallSuccess": "已卸载 {{name}}",
-		"replaceContentAction": "替换内容插件…",
-		"replaceContentTitle": "替换内容插件",
+		"replaceContentAction": "替换插件…",
+		"replaceContentTitle": "替换插件",
 		"replaceContentDescription": "把某个内容插件处理的全部资源迁移到另一个内容插件。每个资源的内容插件会被重新分配，其派生元数据会被清空以便重新识别。",
 		"replaceContentFrom": "原插件",
 		"replaceContentTo": "目标插件",
@@ -955,17 +956,12 @@
 		"setupFormAria": "设置密码"
 	},
 	"dataHistory": {
-		"title": "数据历史",
-		"status": {
-			"currentWritable": "可写——v{{version}}",
-			"viewingArchive": "正在查看归档——v{{version}}"
-		},
+		"pageHint": "将最新版本冻结为只读归档。名称与描述可在当前版本上随时修改。",
 		"chip": {
 			"latest": "最新",
 			"readOnly": "只读"
 		},
 		"archive": {
-			"title": "v{{version}}",
 			"tagCurrent": "最新版本（可写）",
 			"tagActive": "正在查看",
 			"tagReadOnly": "历史归档",
@@ -974,28 +970,20 @@
 			"nameLabel": "名称",
 			"namePlaceholder": "例如：v1 里程碑",
 			"noteLabel": "备注",
-			"notePlaceholder": "例如：迁移前冻结、数据定型前…",
-			"switchHint": "切换后将以只读模式查看该版本。如需继续编辑，请返回最新版本。",
-			"activeHint": "这是正在查看的版本。"
+			"notePlaceholder": "例如：迁移前冻结、数据定型前…"
 		},
 		"action": {
 			"archiveNow": "立即归档",
 			"archiving": "归档中…",
+			"edit": "修改",
 			"switchToVersion": "切换查看此版本",
 			"switching": "切换中…"
 		},
+		"edit": {
+			"title": "编辑归档",
+			"description": "归档 v{{version}}"
+		},
 		"reloading": "重新加载中…",
-		"detail": {
-			"selectPrompt": "选择归档查看详情。",
-			"versionNumber": "版本号",
-			"createdAt": "创建时间",
-			"note": "备注",
-			"archiveVersion": "归档 v{{version}}"
-		},
-		"note": {
-			"empty": "点击添加备注…",
-			"placeholder": "给这个快照写一句说明…"
-		},
 		"confirm": {
 			"archiveTitle": "归档最新版本",
 			"archiveDescription": "当前数据、插件代码和插件文件将一起冻结。新的可写版本使用独立的插件副本。",

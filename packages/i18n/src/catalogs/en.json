@@ -172,7 +172,7 @@
 		"requestFailed": "Request failed",
 		"saved": "Saved",
 		"saveFailed": "Could not save",
-		"confirmByTypingPrompt": "Type \"<name>{{name}}</name>\" to confirm",
+		"confirmByTypingPrompt": "Type the phrase below to confirm",
 		"searchIncludeIntro": "Search intro",
 		"underline": "Underline",
 		"colorPicker": {
@@ -642,12 +642,13 @@
 		"previewFallbackUnknown": "unknown plugin"
 	},
 	"plugins": {
-		"pageHint": "Install from a .zip bundle, or rescan the plugins folder to pick up new arrivals.",
-		"uploadZip": "Upload .zip",
+		"pageHint": "Install from a plugin package (zip, tar, 7z, rar and more), or refresh the plugins folder to pick up new arrivals.",
+		"uploadPlugin": "Upload plugin",
+		"uploadValidatedServerSide": "The package is validated by the server — its name, version and permissions appear after installation.",
 		"uploadPluginSuccess": "Plugin installed",
 		"uploading": "Installing…",
-		"rescan": "Rescan plugins",
-		"rescanSuccess": "Plugins rescanned",
+		"rescan": "Refresh plugins",
+		"rescanSuccess": "Plugins refreshed",
 		"more": "More",
 		"enableToggle": "Enable or disable plugin",
 		"dragToReorder": "Drag to reorder",
@@ -695,8 +696,8 @@
 		"uninstallConfirmDescription_other": "{{count}} resources are using this plugin. After uninstalling, they will preview with the built-in file plugin; reinstalling the plugin restores them automatically. This cannot be undone.",
 		"uninstallConfirmNoUsage": "No resources are using this plugin. Reinstall it any time to use it again. This cannot be undone.",
 		"uninstallSuccess": "Uninstalled {{name}}",
-		"replaceContentAction": "Replace content…",
-		"replaceContentTitle": "Replace content plugin",
+		"replaceContentAction": "Replace plugin…",
+		"replaceContentTitle": "Replace plugin",
 		"replaceContentDescription": "Move every resource that one content plugin handles to another. Each resource's content plugin is re-assigned and its derived metadata is cleared for re-detection.",
 		"replaceContentFrom": "From plugin",
 		"replaceContentTo": "To plugin",
@@ -955,17 +956,12 @@
 		"setupFormAria": "Set password"
 	},
 	"dataHistory": {
-		"title": "Data History",
-		"status": {
-			"currentWritable": "Writable — v{{version}}",
-			"viewingArchive": "Viewing archive — v{{version}}"
-		},
+		"pageHint": "Freeze the latest version into a read-only archive. Name and description can be edited on the current version anytime.",
 		"chip": {
 			"latest": "Latest",
 			"readOnly": "Read-only"
 		},
 		"archive": {
-			"title": "v{{version}}",
 			"tagCurrent": "Latest (writable)",
 			"tagActive": "Viewing",
 			"tagReadOnly": "Historical archive",
@@ -974,28 +970,20 @@
 			"nameLabel": "Name",
 			"namePlaceholder": "e.g. v1 milestone",
 			"noteLabel": "Note",
-			"notePlaceholder": "e.g. before migration, data freeze…",
-			"switchHint": "After switching, the app runs in read-only mode against this archive. Return to the latest version to edit again.",
-			"activeHint": "This is the version you are viewing."
+			"notePlaceholder": "e.g. before migration, data freeze…"
 		},
 		"action": {
 			"archiveNow": "Archive now",
 			"archiving": "Archiving…",
+			"edit": "Edit",
 			"switchToVersion": "Switch to this version",
 			"switching": "Switching…"
 		},
+		"edit": {
+			"title": "Edit archive",
+			"description": "Archive v{{version}}"
+		},
 		"reloading": "Reloading…",
-		"detail": {
-			"selectPrompt": "Select an archive to view its details.",
-			"versionNumber": "Version",
-			"createdAt": "Created",
-			"note": "Note",
-			"archiveVersion": "Archive v{{version}}"
-		},
-		"note": {
-			"empty": "Click to add a note…",
-			"placeholder": "Add a short description for this snapshot…"
-		},
 		"confirm": {
 			"archiveTitle": "Archive latest version",
 			"archiveDescription": "The current data, plugin code and plugin vaults will be frozen together. A new writable version will use independent plugin copies.",

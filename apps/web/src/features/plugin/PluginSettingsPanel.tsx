@@ -169,7 +169,7 @@ export function PluginPageActions() {
 	const fileInputRef = useRef<HTMLInputElement>(null)
 	const installConfirm = useConfirmDialog<{
 		file: File
-		manifest: PluginManifest
+		manifest?: PluginManifest
 	}>()
 
 	const rescanMut = useToastMutation({
@@ -192,7 +192,13 @@ export function PluginPageActions() {
 			fileInputRef.current.value = ""
 		}
 		// Preview the manifest and ask for explicit consent first: a plugin
-		// is server-side code, so installing must never be one-click.
+		// is server-side code, so installing must never be one-click. Only
+		// zip bundles can be read in the browser; other archive formats are
+		// validated by the server and confirmed without the preview.
+		if (!file.name.toLowerCase().endsWith(".zip")) {
+			installConfirm.open({ file })
+			return
+		}
 		try {
 			const manifest = await readPluginZipManifest(file)
 			if (!isMinAppSatisfied(manifest)) {
@@ -238,7 +244,7 @@ export function PluginPageActions() {
 				<input
 					ref={fileInputRef}
 					type="file"
-					accept=".zip"
+					accept=".zip,.tar,.7z,.rar,.tar.gz,.tgz,.gz,.xz"
 					className="hidden"
 					onChange={handleFileChange}
 					data-testid="plugin-upload-input"
@@ -249,7 +255,7 @@ export function PluginPageActions() {
 					data-testid="plugin-upload"
 				>
 					<Icon icon={Upload} />
-					{t("plugins.uploadZip")}
+					{t("plugins.uploadPlugin")}
 				</Button>
 				<Button
 					variant="secondary"
@@ -288,32 +294,42 @@ export function PluginPageActions() {
 				body={
 					installConfirm.target !== undefined ? (
 						<div className="flex flex-col gap-3">
-							<div className="flex items-center gap-2.5">
-								<PluginTileIcon
-									iconRef={installConfirm.target.manifest.icon}
-									pluginId={installConfirm.target.manifest.id}
-									fallback={PlugCircle}
-								/>
-								<div className="flex flex-col gap-0.5">
-									<span className="text-sm font-medium">
-										{resolveManifestName(
-											installConfirm.target.manifest,
-											i18n.language,
-										)}
-										<span className="ml-2 text-xs font-normal text-muted-foreground">
-											v{installConfirm.target.manifest.version}
-										</span>
-									</span>
-									<span className="font-mono text-xs text-muted-foreground">
-										{installConfirm.target.manifest.id}
-									</span>
-								</div>
-							</div>
-							<PluginPermissionBadges
-								permissions={installConfirm.target.manifest.permissions}
-							/>
+							{installConfirm.target.manifest !== undefined ? (
+								<>
+									<div className="flex items-center gap-2.5">
+										<PluginTileIcon
+											iconRef={installConfirm.target.manifest.icon}
+											pluginId={installConfirm.target.manifest.id}
+											fallback={PlugCircle}
+										/>
+										<div className="flex flex-col gap-0.5">
+											<span className="text-sm font-medium">
+												{resolveManifestName(
+													installConfirm.target.manifest,
+													i18n.language,
+												)}
+												<span className="ml-2 text-xs font-normal text-muted-foreground">
+													v{installConfirm.target.manifest.version}
+												</span>
+											</span>
+											<span className="font-mono text-xs text-muted-foreground">
+												{installConfirm.target.manifest.id}
+											</span>
+										</div>
+									</div>
+									<PluginPermissionBadges
+										permissions={installConfirm.target.manifest.permissions}
+									/>
+								</>
+							) : (
+								<span className="font-mono text-xs text-muted-foreground">
+									{installConfirm.target.file.name}
+								</span>
+							)}
 							<p className="text-xs leading-relaxed text-muted-foreground">
-								{t("plugins.installConfirmRisk")}
+								{installConfirm.target.manifest === undefined
+									? t("plugins.uploadValidatedServerSide")
+									: t("plugins.installConfirmRisk")}
 							</p>
 						</div>
 					) : undefined

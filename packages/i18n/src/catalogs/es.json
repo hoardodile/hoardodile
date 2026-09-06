@@ -172,7 +172,7 @@
 		"requestFailed": "La solicitud falló",
 		"saved": "Guardado",
 		"saveFailed": "No se pudo guardar",
-		"confirmByTypingPrompt": "Escribe «<name>{{name}}</name>» para confirmar",
+		"confirmByTypingPrompt": "Escribe la frase a continuación para confirmar",
 		"searchIncludeIntro": "Buscar en la introducción",
 		"underline": "Subrayado",
 		"colorPicker": {
@@ -642,12 +642,13 @@
 		"previewFallbackUnknown": "complemento desconocido"
 	},
 	"plugins": {
-		"pageHint": "Instala desde un paquete .zip o vuelve a escanear la carpeta de complementos para detectar novedades.",
-		"uploadZip": "Subir .zip",
+		"pageHint": "Instala desde un paquete de complemento (zip, tar, 7z, rar y más) o actualiza la carpeta de complementos para detectar novedades.",
+		"uploadPlugin": "Subir complemento",
+		"uploadValidatedServerSide": "El paquete lo valida el servidor: su nombre, versión y permisos aparecen después de la instalación.",
 		"uploadPluginSuccess": "Complemento instalado",
 		"uploading": "Instalando…",
-		"rescan": "Volver a escanear complementos",
-		"rescanSuccess": "Complementos escaneados de nuevo",
+		"rescan": "Actualizar complementos",
+		"rescanSuccess": "Complementos actualizados",
 		"more": "Más",
 		"enableToggle": "Activar o desactivar complemento",
 		"dragToReorder": "Arrastra para reordenar",
@@ -695,8 +696,8 @@
 		"uninstallConfirmDescription_other": "{{count}} recursos usan este complemento. Tras desinstalarlo, se mostrará la vista previa con el complemento de archivo integrado; al reinstalar el complemento se restauran automáticamente. Esto no se puede deshacer.",
 		"uninstallConfirmNoUsage": "Ningún recurso usa este complemento. Puedes reinstalarlo cuando quieras para usarlo de nuevo. Esto no se puede deshacer.",
 		"uninstallSuccess": "Se desinstaló {{name}}",
-		"replaceContentAction": "Reemplazar contenido…",
-		"replaceContentTitle": "Reemplazar plugin de contenido",
+		"replaceContentAction": "Reemplazar complemento…",
+		"replaceContentTitle": "Reemplazar complemento",
 		"replaceContentDescription": "Mover todos los recursos que gestiona un plugin de contenido a otro. Se reasigna el plugin de contenido de cada recurso y se borran sus metadatos derivados para volver a detectarlos.",
 		"replaceContentFrom": "Plugin de origen",
 		"replaceContentTo": "Plugin de destino",
@@ -955,17 +956,12 @@
 		"setupFormAria": "Configurar contraseña"
 	},
 	"dataHistory": {
-		"title": "Historial de datos",
-		"status": {
-			"currentWritable": "Con escritura — v{{version}}",
-			"viewingArchive": "Viendo el archivo — v{{version}}"
-		},
+		"pageHint": "Congela la versión más reciente en un archivo de solo lectura. El nombre y la descripción se pueden editar en la versión actual en cualquier momento.",
 		"chip": {
 			"latest": "Más reciente",
 			"readOnly": "Solo lectura"
 		},
 		"archive": {
-			"title": "v{{version}}",
 			"tagCurrent": "Más reciente (con escritura)",
 			"tagActive": "En visualización",
 			"tagReadOnly": "Archivo histórico",
@@ -974,28 +970,20 @@
 			"nameLabel": "Nombre",
 			"namePlaceholder": "p. ej., hito v1",
 			"noteLabel": "Nota",
-			"notePlaceholder": "p. ej., antes de la migración, congelación de datos…",
-			"switchHint": "Tras cambiar, la app funciona en modo de solo lectura sobre este archivo. Vuelve a la versión más reciente para editar de nuevo.",
-			"activeHint": "Esta es la versión que estás viendo."
+			"notePlaceholder": "p. ej., antes de la migración, congelación de datos…"
 		},
 		"action": {
 			"archiveNow": "Archivar ahora",
 			"archiving": "Archivando…",
+			"edit": "Editar",
 			"switchToVersion": "Cambiar a esta versión",
 			"switching": "Cambiando…"
 		},
+		"edit": {
+			"title": "Editar archivo",
+			"description": "Archivo v{{version}}"
+		},
 		"reloading": "Recargando…",
-		"detail": {
-			"selectPrompt": "Selecciona un archivo histórico para ver sus detalles.",
-			"versionNumber": "Versión",
-			"createdAt": "Creado",
-			"note": "Nota",
-			"archiveVersion": "Archivo v{{version}}"
-		},
-		"note": {
-			"empty": "Haz clic para añadir una nota…",
-			"placeholder": "Añade una descripción breve para esta instantánea…"
-		},
 		"confirm": {
 			"archiveTitle": "Archivar la versión más reciente",
 			"archiveDescription": "Se conservarán juntos los datos, el código y los archivos de los plugins. La nueva versión editable usará copias independientes de los plugins.",

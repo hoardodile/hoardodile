@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { render, screen, waitFor, within } from "@testing-library/react"
+import { render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeAll, expect, it, vi } from "vitest"
 import { i18n } from "@/i18n"
@@ -8,6 +8,7 @@ import {
 	setTrpcClient,
 	type TRPCClient,
 } from "@/trpc/client"
+import { ArchivePageActions } from "./ArchivePageActions"
 import { DataHistoryPanel } from "./DataHistoryPanel"
 
 vi.mock("@/features/settings/datePrefs", () => ({
@@ -24,7 +25,9 @@ afterEach(() => {
 	for (const client of clients.splice(0)) client.clear()
 })
 
-function setup(readOnly = false, embedded = false) {
+/** The archives page: page actions above, panel below. `readOnly` =
+    viewing a past archive (active = v1). */
+function setup(readOnly = false) {
 	const versions: RouterOutputs["version"]["list"] = [
 		{
 			version: 1,
@@ -59,7 +62,8 @@ function setup(readOnly = false, embedded = false) {
 	clients.push(client)
 	render(
 		<QueryClientProvider client={client}>
-			<DataHistoryPanel embedded={embedded} />
+			<ArchivePageActions />
+			<DataHistoryPanel />
 		</QueryClientProvider>,
 	)
 	return { select, metadata, create, user: userEvent.setup() }
@@ -72,62 +76,82 @@ it("lists archives newest first and switches only after confirmation", async () 
 	expect(
 		current.compareDocumentPosition(past) & Node.DOCUMENT_POSITION_FOLLOWING,
 	).toBeTruthy()
-	await user.click(past)
-	expect(screen.getByText("Frozen note")).toBeInTheDocument()
-	expect(screen.queryByTestId("name-preview")).not.toBeInTheDocument()
+	// The description rides directly under the past version's title line.
+	expect(past).toHaveTextContent("Frozen note")
 	await user.click(screen.getByTestId("switch-1"))
 	expect(select).not.toHaveBeenCalled()
 	await user.click(screen.getByTestId("switch-confirm-submit"))
 	await waitFor(() => expect(select).toHaveBeenCalledWith({ version: 1 }))
 })
 
-it("edits current metadata but disables creation and editing while viewing history", async () => {
-	const { user, metadata } = setup(true)
-	await user.click(await screen.findByTestId("archive-2"))
-	expect(screen.getByTestId("create-archive")).toBeDisabled()
-	expect(screen.queryByTestId("name-preview")).not.toBeInTheDocument()
-	expect(metadata).not.toHaveBeenCalled()
-})
-
-it("saves a current archive name through the archive API", async () => {
+it("edits only the current version while others offer the switch button", async () => {
 	const { user, metadata } = setup()
-	await user.click(await screen.findByTestId("archive-2"))
-	await user.click(screen.getByTestId("name-preview"))
-	const input = screen.getByTestId("name-input")
-	await user.clear(input)
-	await user.type(input, "Renamed{Enter}")
+	await screen.findByTestId("archive-2")
+	expect(screen.getByTestId("edit-2")).toBeInTheDocument()
+	expect(screen.queryByTestId("edit-1")).not.toBeInTheDocument()
+	expect(screen.getByTestId("switch-1")).toBeInTheDocument()
+	expect(screen.queryByTestId("switch-2")).not.toBeInTheDocument()
+
+	await user.click(screen.getByTestId("edit-2"))
+	const dialog = screen.getByTestId("archive-meta-dialog")
+	const name = screen.getByLabelText("Name")
+	expect(name).toHaveValue("Current")
+	await user.clear(name)
+	await user.type(name, "Renamed")
+	await user.clear(screen.getByLabelText("Note"))
+	await user.click(screen.getByTestId("archive-meta-save"))
 	await waitFor(() =>
-		expect(metadata).toHaveBeenCalledWith({ version: 2, name: "Renamed" }),
+		expect(metadata).toHaveBeenCalledWith({
+			version: 2,
+			name: "Renamed",
+			note: "",
+		}),
+	)
+	expect(dialog).not.toBeInTheDocument()
+})
+
+it("disables creation and edits while viewing history, offering switch back", async () => {
+	const { user, metadata } = setup(true)
+	await screen.findByTestId("archive-1")
+	expect(screen.getByTestId("create-archive")).toBeDisabled()
+	// The viewed (active) version offers nothing; the current version is
+	// the way back and carries no edit button in read-only mode.
+	expect(screen.queryByTestId("switch-1")).not.toBeInTheDocument()
+	expect(screen.queryByTestId("edit-2")).not.toBeInTheDocument()
+	expect(screen.getByTestId("switch-2")).toBeInTheDocument()
+	await user.click(screen.getByTestId("switch-2"))
+	await user.click(screen.getByTestId("switch-confirm-submit"))
+	await waitFor(() => expect(metadata).not.toHaveBeenCalled())
+})
+
+it("saves a current archive name and note through the edit dialog", async () => {
+	const { user, metadata } = setup()
+	await screen.findByTestId("archive-2")
+	await user.click(screen.getByTestId("edit-2"))
+	await user.type(screen.getByLabelText("Name"), " Milestone")
+	await user.type(screen.getByLabelText("Note"), "Before release")
+	await user.click(screen.getByTestId("archive-meta-save"))
+	await waitFor(() =>
+		expect(metadata).toHaveBeenCalledWith({
+			version: 2,
+			name: "Current Milestone",
+			note: "Before release",
+		}),
 	)
 })
 
-it("starts archive publication as a job after the typed confirmation", async () => {
+it("starts archive publication after the typed confirmation, without a note field", async () => {
 	const { user, create } = setup()
-	await screen.findByTestId("archive-2")
-	await user.click(screen.getByTestId("create-archive"))
-	const dialog = screen.getByRole("dialog")
-	expect(within(dialog).getByTestId("archive-confirm-submit")).toBeDisabled()
-	await user.type(
-		within(dialog).getByTestId("archive-confirm-input"),
-		"archive",
-	)
-	await user.type(within(dialog).getByTestId("archive-note-input"), "Milestone")
-	await user.click(within(dialog).getByTestId("archive-confirm-submit"))
-	await waitFor(() =>
-		expect(create).toHaveBeenCalledWith({ note: "Milestone" }),
-	)
-})
-
-it("opens the latest archive in the detail pane by default", async () => {
-	setup()
-	await screen.findByTestId("archive-2")
-	expect(screen.getByTestId("detail-archive-2")).toBeInTheDocument()
-})
-
-it("drops its own title when embedded while keeping the archive controls", async () => {
-	setup(false, true)
-	await screen.findByTestId("archive-2")
-	expect(screen.queryByText("Historical archives")).not.toBeInTheDocument()
-	expect(screen.getByTestId("create-archive")).toBeInTheDocument()
-	expect(screen.getByTestId("archive-status")).toBeInTheDocument()
+	await user.click(await screen.findByTestId("create-archive"))
+	expect(screen.getByTestId("archive-confirm-submit")).toBeDisabled()
+	// The confirmation prompt is plain text — the old template rendered a
+	// literal `<name>{{name}}</name>` because it was fed through `t()`.
+	expect(
+		screen.getByText(/type the phrase below to confirm/i),
+	).toBeInTheDocument()
+	expect(screen.queryByText(/<name>/)).not.toBeInTheDocument()
+	expect(screen.queryByTestId("archive-note-input")).not.toBeInTheDocument()
+	await user.type(screen.getByTestId("archive-confirm-input"), "archive")
+	await user.click(screen.getByTestId("archive-confirm-submit"))
+	await waitFor(() => expect(create).toHaveBeenCalledWith({}))
 })
