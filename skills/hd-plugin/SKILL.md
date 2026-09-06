@@ -35,8 +35,8 @@ lives in `references/`.
 
 ## Workflow
 
-1. **Get the SDK.** The `@hoardodile/*` release set is on npm
-   (0.1.8) — `pnpm dlx create-hoardodile-plugin <name>` scaffolds a
+1. **Get the SDK.** The `@hoardodile/*` release set is on npm —
+   `pnpm dlx create-hoardodile-plugin <name>` scaffolds a
    plugin prewired to the published SDK. Registry install only — no
    tarballs or `file:` overrides. Full details:
    `references/tooling.md`.
