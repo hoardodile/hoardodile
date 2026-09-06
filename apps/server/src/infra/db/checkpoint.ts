@@ -26,7 +26,7 @@ let destination;
     source.close(); source = undefined;
     destination = new Database(workerData.destination, { fileMustExist: true });
     destination.pragma("journal_mode = DELETE");
-    for (const table of ["auth", "auth_sign_ins", "sync_devices", "sync_records"]) {
+    for (const table of ["auth", "auth_sign_ins"]) {
       destination.exec('DELETE FROM "' + table + '"');
     }
     const integrity = destination.pragma("integrity_check");

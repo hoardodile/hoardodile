@@ -116,9 +116,6 @@
 		"receiveNow": "今すぐ受信",
 		"paused": "同期を一時停止",
 		"paired": "接続済みサービス",
-		"recordOnly": "手動記録",
-		"link": "デバイス記録を関連付ける",
-		"unlink": "関連付けを解除",
 		"revoke": "接続を取り消す",
 		"received": "最後に確認した受信",
 		"never": "未受信",
@@ -127,13 +124,11 @@
 		"devices": "デバイス",
 		"manualRecords": "手動記録",
 		"addRecord": "手動デバイスを追加",
-		"record": "手動で記録",
 		"details": "詳細",
 		"copy": "コピー",
 		"remove": "削除",
 		"unknown": "不明",
-		"noDevices": "デバイスは未設定です。",
-		"linkDescription": "関連付ける既存の手動デバイス記録を選択してください。"
+		"noDevices": "デバイスは未設定です。"
 	},
 	"common": {
 		"back": "戻る",
@@ -322,8 +317,7 @@
 			"archives": "アーカイブ",
 			"archive": "バックアップ",
 			"plugins": "プラグイン",
-			"marketplace": "マーケット",
-			"sync": "同期"
+			"marketplace": "マーケット"
 		},
 		"section": {
 			"language": "言語",
@@ -2271,89 +2265,15 @@
 		}
 	},
 	"sync": {
-		"pageHint": "デバイスごと: エンティティ数、コンテンツサイズ、ストレージ容量を記録 · ページを開くと前回の同期からの変化を確認できます",
-		"status": {
-			"allUpToDate": "すべてのデバイスが最新です",
-			"dueCount_one": "同期期限のデバイス: {{total}}台中 {{count}}台",
-			"dueCount_other": "同期期限のデバイス: {{total}}台中 {{count}}台"
-		},
-		"tip": {
-			"oneWay": "一方向同期: 1つのマスターリポジトリと、残りをミラーとして。競合を避けるためです。"
-		},
 		"config": {
 			"remindLabel": "リマインド間隔",
-			"remindDescription": "同期されたスナップショットがなく間隔を過ぎると、ダッシュボードが尋ねます。",
 			"remindDays_one": "{{count}}日",
 			"remindDays_other": "{{count}}日"
-		},
-		"devices": {
-			"addTitle": "デバイスを追加",
-			"addAutoRecord": "追加されると現在の状態が自動的に同期されます。",
-			"namePlaceholder": "デバイス名",
-			"notesPlaceholder": "メモ (任意)",
-			"nameHint": "例: ノートPC",
-			"notesHint": "例: USB 4TB",
-			"add": "デバイスを追加",
-			"addPending": "追加中…",
-			"empty": "まだデバイスがありません — 追加して同期を開始してください。",
-			"loading": "読み込み中…",
-			"neverSynced": "未同期",
-			"lastSyncedAgo_one": "最終同期 {{date}} · {{count}}日前",
-			"lastSyncedAgo_other": "最終同期 {{date}} · {{count}}日前",
-			"justNow": "たった今",
-			"minutesAgo_one": "{{count}}分前",
-			"minutesAgo_other": "{{count}}分前",
-			"hoursAgo_one": "{{count}}時間前",
-			"hoursAgo_other": "{{count}}時間前",
-			"upToDate": "最新",
-			"overdue_one": "期限超過 · {{count}}日",
-			"overdue_other": "期限超過 · {{count}}日",
-			"neverBadge": "未同期",
-			"record": "同期",
-			"recordNow": "今すぐ同期",
-			"deleteTitle": "{{name}} を削除しますか？",
-			"deleteDescription": "デバイスとそのすべての同期記録が削除されます。",
-			"delete": "削除",
-			"deletePending": "削除中…",
-			"editTitle": "デバイスを編集",
-			"edit": "編集",
-			"save": "保存",
-			"editPending": "保存中…",
-			"liveHint": "現在の状態 · 前回の同期からの変化"
-		},
-		"fields": {
-			"resources": "リソース",
-			"characters": "キャラクター",
-			"documents": "ドキュメント",
-			"folders": "フォルダー",
-			"messages": "メッセージ",
-			"tags": "タグ",
-			"collections": "コレクション",
-			"trash": "ごみ箱",
-			"contentSize": "コンテンツサイズ",
-			"storage": "ストレージ",
-			"firstRecord": "初回同期"
-		},
-		"toast": {
-			"deviceAdded": "デバイスを追加して同期しました",
-			"deviceAddFailed": "デバイスを追加できませんでした",
-			"deviceUpdated": "デバイスを更新しました",
-			"deviceUpdateFailed": "デバイスを更新できませんでした",
-			"deviceDeleted": "デバイスを削除しました",
-			"deviceDeleteFailed": "デバイスを削除できませんでした",
-			"recorded": "同期しました",
-			"recordFailed": "同期できませんでした"
 		},
 		"banner": {
 			"noDevicesTitle": "同期デバイスがまだ設定されていません。",
 			"noDevicesDescription": "同期を追跡するために少なくとも1台のデバイスを追加してください。",
-			"configureLink": "設定",
-			"neverSyncedTitle": "{{name}} は一度も同期されていません",
-			"neverSyncedDescription": "このデバイスの同期記録がまだありません。",
-			"overdueTitle_one": "{{name}} の最終同期は {{count}}日前です",
-			"overdueTitle_other": "{{name}} の最終同期は {{count}}日前です",
-			"overdueDescription": "{{count}}日間のリマインド間隔を超えています。",
-			"recordLink": "今すぐ同期"
+			"configureLink": "設定"
 		}
 	},
 	"desktopShell": {
@@ -2450,9 +2370,6 @@
 		"receivedFrom": "{{source}} から · 作成日時 {{time}}",
 		"libraryUnchanged": "受信しても使用中のライブラリは変わりません。データを使うには復元が必要です。",
 		"waitingFirst": "送信元から最初の完全なバックアップを受信するのを待っています。",
-		"externalRecord": "外部同期の記録を追加",
-		"externalRecords": "外部同期の記録",
-		"externalHelp": "別のソフトでバックアップする端末用です。状態と通知だけを記録し、ファイルは転送しません。",
 		"pasteInvitation": "ペアリングの招待を貼り付け",
 		"invalidInvitation": "招待が無効か期限切れです。送信元から新しい招待をコピーしてください。",
 		"manualConnection": "接続情報を手動入力",

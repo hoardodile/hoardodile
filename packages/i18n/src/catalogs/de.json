@@ -116,9 +116,6 @@
 		"receiveNow": "Jetzt empfangen",
 		"paused": "Synchronisierung pausieren",
 		"paired": "Verbundener Dienst",
-		"recordOnly": "Manueller Eintrag",
-		"link": "Geräteeintrag verknüpfen",
-		"unlink": "Verknüpfung aufheben",
 		"revoke": "Verbindung widerrufen",
 		"received": "Letzter bestätigter Empfang",
 		"never": "Noch nicht empfangen",
@@ -127,13 +124,11 @@
 		"devices": "Geräte",
 		"manualRecords": "Manuelle Einträge",
 		"addRecord": "Manuelles Gerät hinzufügen",
-		"record": "Manuell erfassen",
 		"details": "Details",
 		"copy": "Kopieren",
 		"remove": "Entfernen",
 		"unknown": "Unbekannt",
-		"noDevices": "Keine Geräte eingerichtet.",
-		"linkDescription": "Wählen Sie einen vorhandenen manuellen Geräteeintrag zur Verknüpfung mit diesem Dienst."
+		"noDevices": "Keine Geräte eingerichtet."
 	},
 	"common": {
 		"back": "Zurück",
@@ -322,8 +317,7 @@
 			"archives": "Archive",
 			"archive": "Backups",
 			"plugins": "Plugins",
-			"marketplace": "Marktplatz",
-			"sync": "Sync"
+			"marketplace": "Marktplatz"
 		},
 		"section": {
 			"language": "Sprache",
@@ -2271,89 +2265,15 @@
 		}
 	},
 	"sync": {
-		"pageHint": "Pro Gerät: erfasst Elementanzahlen, Inhaltsgröße und Speichervolumen · öffne die Seite, um zu sehen, was sich seit dem letzten Sync geändert hat",
-		"status": {
-			"allUpToDate": "Alle Geräte auf dem neuesten Stand",
-			"dueCount_one": "{{count}} von {{total}} Gerät fällig",
-			"dueCount_other": "{{count}} von {{total}} Geräten fällig"
-		},
-		"tip": {
-			"oneWay": "Sync in eine Richtung: ein Master-Repository, der Rest als Spiegel, um Konflikte zu vermeiden."
-		},
 		"config": {
 			"remindLabel": "Erinnere mich nach",
-			"remindDescription": "Nach Ablauf des Intervalls ohne synchronisierten Snapshot fragt das Dashboard nach.",
 			"remindDays_one": "{{count}} Tag",
 			"remindDays_other": "{{count}} Tage"
-		},
-		"devices": {
-			"addTitle": "Gerät hinzufügen",
-			"addAutoRecord": "Der aktuelle Zustand wird nach dem Hinzufügen automatisch synchronisiert.",
-			"namePlaceholder": "Gerätename",
-			"notesPlaceholder": "Notizen (optional)",
-			"nameHint": "z. B. Laptop",
-			"notesHint": "z. B. USB 4TB",
-			"add": "Gerät hinzufügen",
-			"addPending": "Hinzufügen…",
-			"empty": "Noch keine Geräte — füge eines hinzu, um mit dem Sync zu beginnen.",
-			"loading": "Laden…",
-			"neverSynced": "Nie synchronisiert",
-			"lastSyncedAgo_one": "Zuletzt synchronisiert {{date}} · vor {{count}} Tag",
-			"lastSyncedAgo_other": "Zuletzt synchronisiert {{date}} · vor {{count}} Tagen",
-			"justNow": "Gerade eben",
-			"minutesAgo_one": "vor {{count}} Minute",
-			"minutesAgo_other": "vor {{count}} Minuten",
-			"hoursAgo_one": "vor {{count}} Stunde",
-			"hoursAgo_other": "vor {{count}} Stunden",
-			"upToDate": "Auf dem neuesten Stand",
-			"overdue_one": "Überfällig · {{count}} Tag",
-			"overdue_other": "Überfällig · {{count}} Tage",
-			"neverBadge": "Noch nicht synchronisiert",
-			"record": "Sync",
-			"recordNow": "Jetzt synchronisieren",
-			"deleteTitle": "{{name}} löschen?",
-			"deleteDescription": "Das Gerät und alle seine Sync-Einträge werden entfernt.",
-			"delete": "Löschen",
-			"deletePending": "Löschen…",
-			"editTitle": "Gerät bearbeiten",
-			"edit": "Bearbeiten",
-			"save": "Speichern",
-			"editPending": "Speichern…",
-			"liveHint": "Aktueller Zustand · Änderungen seit dem letzten Sync"
-		},
-		"fields": {
-			"resources": "Ressourcen",
-			"characters": "Charaktere",
-			"documents": "Dokumente",
-			"folders": "Ordner",
-			"messages": "Nachrichten",
-			"tags": "Tags",
-			"collections": "Sammlungen",
-			"trash": "Papierkorb",
-			"contentSize": "Inhaltsgröße",
-			"storage": "Speicher",
-			"firstRecord": "Erster Sync"
-		},
-		"toast": {
-			"deviceAdded": "Gerät hinzugefügt und synchronisiert",
-			"deviceAddFailed": "Gerät konnte nicht hinzugefügt werden",
-			"deviceUpdated": "Gerät aktualisiert",
-			"deviceUpdateFailed": "Gerät konnte nicht aktualisiert werden",
-			"deviceDeleted": "Gerät gelöscht",
-			"deviceDeleteFailed": "Gerät konnte nicht gelöscht werden",
-			"recorded": "Synchronisiert",
-			"recordFailed": "Sync fehlgeschlagen"
 		},
 		"banner": {
 			"noDevicesTitle": "Noch keine Sync-Geräte eingerichtet.",
 			"noDevicesDescription": "Füge mindestens ein Gerät hinzu, um Syncs zu verfolgen.",
-			"configureLink": "Einrichten",
-			"neverSyncedTitle": "{{name}} wurde noch nie synchronisiert",
-			"neverSyncedDescription": "Für dieses Gerät ist noch kein Sync aufgezeichnet.",
-			"overdueTitle_one": "{{name}} zuletzt vor {{count}} Tag synchronisiert",
-			"overdueTitle_other": "{{name}} zuletzt vor {{count}} Tagen synchronisiert",
-			"overdueDescription": "Es ist länger her als dein {{count}}-tägiges Erinnerungsintervall.",
-			"recordLink": "Jetzt synchronisieren"
+			"configureLink": "Einrichten"
 		}
 	},
 	"desktopShell": {
@@ -2450,9 +2370,6 @@
 		"receivedFrom": "Von {{source}} · Erstellt {{time}}",
 		"libraryUnchanged": "Der Empfang ändert die aktuelle Bibliothek nicht. Stellen Sie die Sicherung wieder her, um ihre Daten zu verwenden.",
 		"waitingFirst": "Warten auf die erste vollständige Sicherung des Senders.",
-		"externalRecord": "Externen Sync-Eintrag hinzufügen",
-		"externalRecords": "Externe Sync-Einträge",
-		"externalHelp": "Für Geräte, die Sie mit anderer Software sichern. Diese Einträge speichern nur Status und Erinnerungen, keine Dateiübertragung.",
 		"pasteInvitation": "Kopplungseinladung einfügen",
 		"invalidInvitation": "Die Einladung ist ungültig oder abgelaufen. Kopieren Sie eine neue direkt vom Sender.",
 		"manualConnection": "Verbindungsdaten manuell eingeben",

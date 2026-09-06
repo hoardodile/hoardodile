@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test"
 import { login } from "./helpers"
 
-test("complete backup, confirmed restore, and manual device management", async ({
+test("complete backup, confirmed restore, and merged backup-sync page", async ({
 	page,
 }, testInfo) => {
 	test.setTimeout(180_000)
@@ -11,7 +11,12 @@ test("complete backup, confirmed restore, and manual device management", async (
 	await expect(page.getByTestId("complete-backups")).toBeVisible()
 	await expect(page.getByTestId("complete-backups-section")).toBeVisible()
 	await expect(page.getByTestId("recent-operations-section")).toBeVisible()
-	await expect(page.getByTestId("archives-section")).not.toBeVisible()
+	// The backup-sync service and devices live on the same page now.
+	await expect(page.getByTestId("replication-service-section")).toBeVisible()
+	await expect(page.getByTestId("replication-devices-section")).toBeVisible()
+	// External manual sync records are gone.
+	await expect(page.getByTestId("external-sync-records")).not.toBeVisible()
+	await expect(page.getByTestId("sync-device-add")).not.toBeVisible()
 	// The historical archives live on their own tab above the backups tab.
 	await page.goto("/settings/archives")
 	await expect(page.getByTestId("archives-section")).toBeVisible()
@@ -48,27 +53,7 @@ test("complete backup, confirmed restore, and manual device management", async (
 		timeout: 90_000,
 	})
 	await expect(page.getByTestId("app-sidebar")).toBeVisible({ timeout: 30_000 })
-	await page.goto("/settings/sync")
 	await expect(page.getByTestId("backup-sync")).toBeVisible()
-	await expect(page.getByTestId("replication-service-section")).toBeVisible()
-	await expect(page.getByTestId("replication-devices-section")).toBeVisible()
-	await page.getByTestId("sync-device-add").click()
-	await page
-		.getByRole("dialog")
-		.getByRole("textbox", { name: "Name", exact: true })
-		.fill("Manual laptop")
-	await page
-		.getByRole("dialog")
-		.getByRole("button", { name: "Save", exact: true })
-		.click()
-	await expect(page.getByText("Manual laptop", { exact: true })).toBeVisible()
-	await expect(
-		page
-			.getByTestId("external-sync-records")
-			.locator("p")
-			.filter({ hasText: /Manual record/ }),
-	).toBeVisible()
-	await expect(page.getByRole("dialog")).not.toBeVisible()
 	await page.screenshot({
 		path: testInfo.outputPath("backup-sync.png"),
 		fullPage: true,

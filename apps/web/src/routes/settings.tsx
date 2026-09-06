@@ -2,7 +2,6 @@ import { Icon } from "@hoardodile/ui/components/icon"
 import { PageScaffold } from "@hoardodile/ui/components/page-scaffold"
 import { SectionTabs } from "@hoardodile/ui/components/section-tabs"
 import { cn } from "@hoardodile/ui/lib/utils"
-import { useQuery } from "@tanstack/react-query"
 import {
 	createFileRoute,
 	Link,
@@ -11,12 +10,12 @@ import {
 } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 import { useMarketplaceUpdateCount } from "@/features/marketplace/useMarketplaceUpdateCount"
+import { useSyncHealth } from "@/features/protection/syncHealth"
 import {
 	SETTINGS_TABS,
 	type SettingsTabKey,
 	visibleSettingsTabs,
 } from "@/features/settings/settingsTabs"
-import { syncSummaryQueryOptions } from "@/features/sync/api"
 import { requireAuth } from "@/lib/auth-guard"
 import { isHoardodileDesktop } from "@/lib/desktop"
 
@@ -27,9 +26,9 @@ export const Route = createFileRoute("/settings")({
 
 /**
  * Settings layout — the in-page settings shell: a 208px icon nav column
- * (the sync row shows a red dot when a device is due) beside the content
- * column. The tab bar renders once and each tab owns its route, so
- * back/forward navigation and deep links work across sections. The
+ * (the backups row shows a red dot when a sync device is due) beside the
+ * content column. The tab bar renders once and each tab owns its route,
+ * so back/forward navigation and deep links work across sections. The
  * desktop-only tab drops out of a normal browser tab.
  */
 function SettingsLayout() {
@@ -47,9 +46,8 @@ function SettingsLayout() {
 		? (suffix as SettingsTabKey)
 		: "preferences"
 
-	const syncSummaryQuery = useQuery(syncSummaryQueryOptions())
-	const syncDue =
-		(syncSummaryQuery.data?.devices ?? []).some((entry) => entry.due) === true
+	const syncHealth = useSyncHealth()
+	const syncDue = syncHealth.count === 0 || syncHealth.dueCount > 0
 	const marketplaceUpdates = useMarketplaceUpdateCount()
 	const tabs = visibleSettingsTabs(isHoardodileDesktop())
 
@@ -115,7 +113,7 @@ function SettingsLayout() {
 							>
 								<Icon icon={tab.icon} selected={active} className="shrink-0" />
 								{t(`me.tabs.${tab.key}`)}
-								{tab.key === "sync" && syncDue ? (
+								{tab.key === "archive" && syncDue ? (
 									<span className="ml-auto size-2 shrink-0 rounded-full bg-destructive" />
 								) : hasUpdates &&
 									(tab.key === "marketplace" || tab.key === "plugins") ? (

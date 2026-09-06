@@ -726,11 +726,6 @@ export const hierarchyType = {
 	}[],
 }
 
-export const syncDevice = {
-	name: copy("zh", "本机"),
-	notes: copy("zh", "演示用的第一台记录设备。"),
-}
-
 export const comments = [
 	{
 		body: copy("zh", "这张地出今天看起来格外安静。"),
@@ -861,8 +856,6 @@ export function catalogCopies(): readonly {
 	push("hierarchyType.selfLabel", hierarchyType.selfLabel)
 	push("hierarchyType.targetLabel", hierarchyType.targetLabel)
 	push("hierarchyType.intro", hierarchyType.intro)
-	push("syncDevice.name", syncDevice.name)
-	push("syncDevice.notes", syncDevice.notes)
 	for (const [index, row] of comments.entries()) {
 		push(`comments.${index}`, row.body)
 	}

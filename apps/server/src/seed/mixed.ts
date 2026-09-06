@@ -17,7 +17,6 @@ import { comments } from "src/domain/comment/schema.ts"
 import { danmakus } from "src/domain/danmaku/schema.ts"
 import { documents } from "src/domain/doc/schema.ts"
 import { resources } from "src/domain/res/schema.ts"
-import { syncDevices } from "src/domain/sync/schema.ts"
 import { tags } from "src/domain/tag/schema.ts"
 import { userActions } from "src/domain/trace/schema.ts"
 import { traitDefs } from "src/domain/trait/schema.ts"
@@ -36,7 +35,6 @@ export type MixedSnapshot = {
 	readonly collectionIds: readonly string[]
 	readonly commentIds: readonly string[]
 	readonly danmakuIds: readonly string[]
-	readonly syncDeviceIds: readonly string[]
 	readonly relationshipTypeIds: readonly string[]
 	readonly relationshipEdgeIds: readonly string[]
 }
@@ -87,11 +85,6 @@ export function mixedReasons(
 		extras("comment", snapshot.commentIds, new Set(manifest.comments)),
 		extras("danmaku", snapshot.danmakuIds, new Set(manifest.danmaku)),
 		extras(
-			"sync device",
-			snapshot.syncDeviceIds,
-			new Set(manifest.syncDevices),
-		),
-		extras(
 			"relationship type",
 			snapshot.relationshipTypeIds,
 			namedIds(manifest.relationshipTypes),
@@ -110,7 +103,6 @@ export function mixedReasons(
 
 export function readMixedSnapshot(
 	db: SqliteDb,
-	hostDb: SqliteDb,
 	storageRoot: string,
 ): MixedSnapshot {
 	const actionCount = db.select({ n: count() }).from(userActions).get()
@@ -130,9 +122,6 @@ export function readMixedSnapshot(
 		),
 		commentIds: idsOf(db.select({ id: comments.id }).from(comments).all()),
 		danmakuIds: idsOf(db.select({ id: danmakus.id }).from(danmakus).all()),
-		syncDeviceIds: idsOf(
-			hostDb.select({ id: syncDevices.id }).from(syncDevices).all(),
-		),
 		relationshipTypeIds: idsOf(
 			db.select({ id: relationshipTypes.id }).from(relationshipTypes).all(),
 		),

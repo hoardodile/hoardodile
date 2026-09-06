@@ -41,7 +41,6 @@ import { useMarketplaceUpdateCount } from "@/features/marketplace/useMarketplace
 import { useSyncHealth } from "@/features/protection/syncHealth"
 import { resListCardsQueryOptions } from "@/features/res/api"
 import { ImageSearchButton } from "@/features/search/components/ImageSearchButton"
-import { syncSummaryQueryOptions } from "@/features/sync/api"
 import { useStringPrefSync } from "@/hooks/usePrefSync"
 import { useRouteScrollRestore } from "@/hooks/useRouteScrollRestore"
 import { isHoardodileDesktop } from "@/lib/desktop"
@@ -497,7 +496,7 @@ function SidebarContent(props: SidebarContentProps) {
 /**
  * Brand-row sync health: a status dot (green when healthy, red when a
  * device is due or none is configured) and a quiet label, opening
- * Settings → Sync (DESIGN — Brand).
+ * Settings → Backups (DESIGN — Brand).
  */
 function BrandSyncStatus() {
 	const { t } = useTranslation()
@@ -510,7 +509,7 @@ function BrandSyncStatus() {
 	const title = label
 	return (
 		<Link
-			to="/settings/sync"
+			to="/settings/backups"
 			title={title}
 			className="ml-auto flex items-center gap-1.5"
 		>
@@ -537,11 +536,8 @@ function BrandSyncStatus() {
 
 /** Settings-row warning dot: shown while a sync reminder is due. */
 function useSyncAlert(): boolean {
-	const summary = useQuery(syncSummaryQueryOptions()).data
-	return (
-		summary !== undefined &&
-		(summary.devices.length === 0 || summary.devices.some((entry) => entry.due))
-	)
+	const health = useSyncHealth()
+	return health.loaded && (health.count === 0 || health.dueCount > 0)
 }
 
 type NavAreaProps = {

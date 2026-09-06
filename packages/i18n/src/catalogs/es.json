@@ -116,9 +116,6 @@
 		"receiveNow": "Recibir ahora",
 		"paused": "Pausar sincronización",
 		"paired": "Servicio conectado",
-		"recordOnly": "Registro manual",
-		"link": "Asociar registro de dispositivo",
-		"unlink": "Desasociar registro",
 		"revoke": "Revocar conexión",
 		"received": "Última recepción confirmada",
 		"never": "Todavía no recibido",
@@ -127,13 +124,11 @@
 		"devices": "Dispositivos",
 		"manualRecords": "Registros manuales",
 		"addRecord": "Añadir dispositivo manual",
-		"record": "Registrar manualmente",
 		"details": "Detalles",
 		"copy": "Copiar",
 		"remove": "Eliminar",
 		"unknown": "Desconocido",
-		"noDevices": "No hay dispositivos configurados.",
-		"linkDescription": "Selecciona un registro manual existente para asociarlo a este servicio."
+		"noDevices": "No hay dispositivos configurados."
 	},
 	"common": {
 		"back": "Volver",
@@ -322,8 +317,7 @@
 			"archives": "Archivos",
 			"archive": "Copias",
 			"plugins": "Complementos",
-			"marketplace": "Mercado",
-			"sync": "Sincronización"
+			"marketplace": "Mercado"
 		},
 		"section": {
 			"language": "Idioma",
@@ -2271,89 +2265,15 @@
 		}
 	},
 	"sync": {
-		"pageHint": "Por dispositivo: registra recuentos de entidades, tamaño del contenido y volumen de almacenamiento · abre la página para ver qué cambió desde la última sincronización",
-		"status": {
-			"allUpToDate": "Todos los dispositivos están al día",
-			"dueCount_one": "{{count}} de {{total}} dispositivo pendiente",
-			"dueCount_other": "{{count}} de {{total}} dispositivos pendientes"
-		},
-		"tip": {
-			"oneWay": "Sincroniza en un solo sentido: un repositorio maestro y el resto como espejos, para evitar conflictos."
-		},
 		"config": {
 			"remindLabel": "Recordármelo después de",
-			"remindDescription": "Si pasa el intervalo sin una instantánea sincronizada, el panel lo pide.",
 			"remindDays_one": "{{count}} día",
 			"remindDays_other": "{{count}} días"
-		},
-		"devices": {
-			"addTitle": "Añadir un dispositivo",
-			"addAutoRecord": "El estado actual se sincroniza automáticamente al añadirlo.",
-			"namePlaceholder": "Nombre del dispositivo",
-			"notesPlaceholder": "Notas (opcional)",
-			"nameHint": "p. ej., Portátil",
-			"notesHint": "p. ej., USB 4TB",
-			"add": "Añadir dispositivo",
-			"addPending": "Añadiendo…",
-			"empty": "Aún no hay dispositivos — añade uno para empezar a sincronizar.",
-			"loading": "Cargando…",
-			"neverSynced": "Nunca sincronizado",
-			"lastSyncedAgo_one": "Última sincronización {{date}} · hace {{count}} día",
-			"lastSyncedAgo_other": "Última sincronización {{date}} · hace {{count}} días",
-			"justNow": "Ahora mismo",
-			"minutesAgo_one": "hace {{count}} minuto",
-			"minutesAgo_other": "hace {{count}} minutos",
-			"hoursAgo_one": "hace {{count}} hora",
-			"hoursAgo_other": "hace {{count}} horas",
-			"upToDate": "Al día",
-			"overdue_one": "Vencido · {{count}} día",
-			"overdue_other": "Vencido · {{count}} días",
-			"neverBadge": "Aún no sincronizado",
-			"record": "Sincronizar",
-			"recordNow": "Sincronizar ahora",
-			"deleteTitle": "¿Eliminar {{name}}?",
-			"deleteDescription": "El dispositivo y todos sus registros de sincronización se eliminarán.",
-			"delete": "Eliminar",
-			"deletePending": "Eliminando…",
-			"editTitle": "Editar dispositivo",
-			"edit": "Editar",
-			"save": "Guardar",
-			"editPending": "Guardando…",
-			"liveHint": "Estado actual · cambios desde la última sincronización"
-		},
-		"fields": {
-			"resources": "Recursos",
-			"characters": "Personajes",
-			"documents": "Documentos",
-			"folders": "Carpetas",
-			"messages": "Mensajes",
-			"tags": "Etiquetas",
-			"collections": "Colecciones",
-			"trash": "Papelera",
-			"contentSize": "Tamaño del contenido",
-			"storage": "Almacenamiento",
-			"firstRecord": "Primera sincronización"
-		},
-		"toast": {
-			"deviceAdded": "Dispositivo añadido y sincronizado",
-			"deviceAddFailed": "No se pudo añadir el dispositivo",
-			"deviceUpdated": "Dispositivo actualizado",
-			"deviceUpdateFailed": "No se pudo actualizar el dispositivo",
-			"deviceDeleted": "Dispositivo eliminado",
-			"deviceDeleteFailed": "No se pudo eliminar el dispositivo",
-			"recorded": "Sincronizado",
-			"recordFailed": "No se pudo sincronizar"
 		},
 		"banner": {
 			"noDevicesTitle": "Aún no hay dispositivos de sincronización configurados.",
 			"noDevicesDescription": "Añade al menos un dispositivo para registrar sincronizaciones.",
-			"configureLink": "Configurar",
-			"neverSyncedTitle": "{{name}} nunca se ha sincronizado",
-			"neverSyncedDescription": "Aún no hay sincronización registrada para este dispositivo.",
-			"overdueTitle_one": "{{name}} se sincronizó por última vez hace {{count}} día",
-			"overdueTitle_other": "{{name}} se sincronizó por última vez hace {{count}} días",
-			"overdueDescription": "Ha pasado más tiempo que tu intervalo de recordatorio de {{count}} días.",
-			"recordLink": "Sincronizar ahora"
+			"configureLink": "Configurar"
 		}
 	},
 	"desktopShell": {
@@ -2450,9 +2370,6 @@
 		"receivedFrom": "De {{source}} · Creada {{time}}",
 		"libraryUnchanged": "Recibir esta copia no cambia la biblioteca actual. Restáurala para usar sus datos aquí.",
 		"waitingFirst": "Esperando la primera copia completa del emisor.",
-		"externalRecord": "Añadir registro de sincronización externa",
-		"externalRecords": "Registros de sincronización externa",
-		"externalHelp": "Para dispositivos respaldados con otro software. Solo registran estado y recordatorios; no transfieren archivos.",
 		"pasteInvitation": "Pegar invitación de conexión",
 		"invalidInvitation": "La invitación no es válida o ha caducado. Copia una nueva directamente del emisor.",
 		"manualConnection": "Introducir datos manualmente",

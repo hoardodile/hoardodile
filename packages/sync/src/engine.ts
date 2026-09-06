@@ -59,7 +59,6 @@ const stateSchema = z.object({
 	source: source.nullable(),
 	invitation: z.object({ hash: z.string(), expiresAt: z.number() }).nullable(),
 	locks: z.record(z.string().regex(/^[a-f0-9]{64}$/), z.uuid()),
-	links: z.record(z.uuid(), z.uuid()).default({}),
 })
 const pointSchema = recoveryMetadata.extend({
 	id: z.uuid(),
@@ -254,7 +253,6 @@ export async function createSyncEngine(options: {
 							receivedAt: state.source.receivedAt,
 						}
 					: null,
-				links: { ...state.links },
 				receiving: receiving !== undefined,
 				activeTransfers: sessions.size,
 			}
@@ -380,46 +378,14 @@ export async function createSyncEngine(options: {
 		async disconnect() {
 			receiving?.abort()
 			await mutate(() => {
-				for (const [record, id] of Object.entries(state.links))
-					if (id === state.source?.id) delete state.links[record]
 				state.source = null
 				state.role = "unconfigured"
-			})
-		},
-		async linkDevice(recordId: string, instanceId: string | null) {
-			z.uuid().parse(recordId)
-			await mutate(() => {
-				if (instanceId === null) {
-					delete state.links[recordId]
-					return
-				}
-				z.uuid().parse(instanceId)
-				if (
-					state.source?.id !== instanceId &&
-					!state.peers.some((entry) => entry.id === instanceId)
-				)
-					throw new BackupError(
-						"peer_not_found",
-						"The paired device is unavailable",
-					)
-				if (
-					Object.entries(state.links).some(
-						([record, peerId]) => record !== recordId && peerId === instanceId,
-					)
-				)
-					throw new BackupError(
-						"already_linked",
-						"This service is already linked to another device record",
-					)
-				state.links[recordId] = instanceId
 			})
 		},
 		async revoke(id: string) {
 			z.uuid().parse(id)
 			await mutate(() => {
 				state.peers = state.peers.filter((entry) => entry.id !== id)
-				for (const [record, peerId] of Object.entries(state.links))
-					if (peerId === id) delete state.links[record]
 			})
 			for (const [key, session] of sessions)
 				if (session.peerId === id) await endSession(key)

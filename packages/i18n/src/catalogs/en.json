@@ -116,9 +116,6 @@
 		"receiveNow": "Receive now",
 		"paused": "Pause sync",
 		"paired": "Connected service",
-		"recordOnly": "Manual record",
-		"link": "Link a device record",
-		"unlink": "Unlink record",
 		"revoke": "Revoke connection",
 		"received": "Last confirmed receipt",
 		"never": "Not received yet",
@@ -127,13 +124,11 @@
 		"devices": "Devices",
 		"manualRecords": "Manual records",
 		"addRecord": "Add manual device",
-		"record": "Record manually",
 		"details": "Details",
 		"copy": "Copy",
 		"remove": "Remove",
 		"unknown": "Unknown",
-		"noDevices": "No devices configured.",
-		"linkDescription": "Select an existing manual device record to associate with this service."
+		"noDevices": "No devices configured."
 	},
 	"common": {
 		"back": "Back",
@@ -322,8 +317,7 @@
 			"archives": "Archives",
 			"archive": "Backups",
 			"plugins": "Plugins",
-			"marketplace": "Marketplace",
-			"sync": "Sync"
+			"marketplace": "Marketplace"
 		},
 		"section": {
 			"language": "Language",
@@ -2271,89 +2265,15 @@
 		}
 	},
 	"sync": {
-		"pageHint": "Per device: records entity counts, content size and storage volume · open the page anytime to see what changed since the last sync",
-		"status": {
-			"allUpToDate": "All devices up to date",
-			"dueCount_one": "{{count}} of {{total}} device due",
-			"dueCount_other": "{{count}} of {{total}} devices due"
-		},
-		"tip": {
-			"oneWay": "Sync one-way: one master repository, the rest as mirrors, to avoid conflicts."
-		},
 		"config": {
 			"remindLabel": "Remind me after",
-			"remindDescription": "Past the interval without a synced snapshot, the dashboard asks.",
 			"remindDays_one": "{{count}} day",
 			"remindDays_other": "{{count}} days"
-		},
-		"devices": {
-			"addTitle": "Add a device",
-			"addAutoRecord": "The current state is synced automatically once added.",
-			"namePlaceholder": "Device name",
-			"notesPlaceholder": "Notes (optional)",
-			"nameHint": "e.g. Laptop",
-			"notesHint": "e.g. USB 4TB",
-			"add": "Add device",
-			"addPending": "Adding…",
-			"empty": "No devices yet — add one to start syncing.",
-			"loading": "Loading…",
-			"neverSynced": "Never synced",
-			"lastSyncedAgo_one": "Last synced {{date}} · {{count}} day ago",
-			"lastSyncedAgo_other": "Last synced {{date}} · {{count}} days ago",
-			"justNow": "Just now",
-			"minutesAgo_one": "{{count}} minute ago",
-			"minutesAgo_other": "{{count}} minutes ago",
-			"hoursAgo_one": "{{count}} hour ago",
-			"hoursAgo_other": "{{count}} hours ago",
-			"upToDate": "Up to date",
-			"overdue_one": "Overdue · {{count}} day",
-			"overdue_other": "Overdue · {{count}} days",
-			"neverBadge": "Not synced yet",
-			"record": "Sync",
-			"recordNow": "Sync now",
-			"deleteTitle": "Delete {{name}}?",
-			"deleteDescription": "The device and all of its sync records will be removed.",
-			"delete": "Delete",
-			"deletePending": "Deleting…",
-			"editTitle": "Edit device",
-			"edit": "Edit",
-			"save": "Save",
-			"editPending": "Saving…",
-			"liveHint": "Live state · changes since the last sync"
-		},
-		"fields": {
-			"resources": "Resources",
-			"characters": "Characters",
-			"documents": "Documents",
-			"folders": "Folders",
-			"messages": "Messages",
-			"tags": "Tags",
-			"collections": "Collections",
-			"trash": "Trash",
-			"contentSize": "Content size",
-			"storage": "Storage",
-			"firstRecord": "First sync"
-		},
-		"toast": {
-			"deviceAdded": "Device added and synced",
-			"deviceAddFailed": "Could not add device",
-			"deviceUpdated": "Device updated",
-			"deviceUpdateFailed": "Could not update device",
-			"deviceDeleted": "Device deleted",
-			"deviceDeleteFailed": "Could not delete device",
-			"recorded": "Synced",
-			"recordFailed": "Could not sync"
 		},
 		"banner": {
 			"noDevicesTitle": "No sync devices configured yet.",
 			"noDevicesDescription": "Add at least one device to track syncs.",
-			"configureLink": "Set up",
-			"neverSyncedTitle": "{{name}} has never been synced",
-			"neverSyncedDescription": "No sync recorded for this device yet.",
-			"overdueTitle_one": "{{name}} last synced {{count}} day ago",
-			"overdueTitle_other": "{{name}} last synced {{count}} days ago",
-			"overdueDescription": "It's been longer than your {{count}}-day reminder interval.",
-			"recordLink": "Sync now"
+			"configureLink": "Set up"
 		}
 	},
 	"desktopShell": {
@@ -2450,9 +2370,6 @@
 		"receivedFrom": "From {{source}} · Backup created {{time}}",
 		"libraryUnchanged": "Receiving this backup does not change the library you are using. Restore it to use its data here.",
 		"waitingFirst": "Waiting for the first completed backup from the sender.",
-		"externalRecord": "Add external sync record",
-		"externalRecords": "External sync records",
-		"externalHelp": "For devices you back up with other software. These entries only record progress and reminders; they do not transfer files.",
 		"pasteInvitation": "Paste pairing invitation",
 		"invalidInvitation": "This invitation is invalid or expired. Copy a new invitation directly from the sender.",
 		"manualConnection": "Enter connection details manually",

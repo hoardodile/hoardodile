@@ -37,7 +37,6 @@ function emptySnapshot(): MixedSnapshot {
 		collectionIds: [],
 		commentIds: [],
 		danmakuIds: [],
-		syncDeviceIds: [],
 		relationshipTypeIds: [],
 		relationshipEdgeIds: [],
 	}

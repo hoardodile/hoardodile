@@ -116,9 +116,6 @@
 		"receiveNow": "立即接收",
 		"paused": "暂停同步",
 		"paired": "已连接服务",
-		"recordOnly": "手动记录",
-		"link": "关联设备记录",
-		"unlink": "解除关联",
 		"revoke": "撤销连接",
 		"received": "最近确认接收",
 		"never": "尚未接收",
@@ -127,13 +124,11 @@
 		"devices": "设备",
 		"manualRecords": "手动记录",
 		"addRecord": "添加手动设备",
-		"record": "手动记录",
 		"details": "详情",
 		"copy": "复制",
 		"remove": "移除",
 		"unknown": "未知",
-		"noDevices": "尚未配置设备。",
-		"linkDescription": "选择已有的手动设备记录，与此服务建立关联。"
+		"noDevices": "尚未配置设备。"
 	},
 	"common": {
 		"back": "返回",
@@ -322,8 +317,7 @@
 			"archives": "归档",
 			"archive": "备份",
 			"plugins": "插件",
-			"marketplace": "插件市场",
-			"sync": "同步"
+			"marketplace": "插件市场"
 		},
 		"section": {
 			"language": "语言",
@@ -2271,89 +2265,15 @@
 		}
 	},
 	"sync": {
-		"pageHint": "每台设备：记录实体数量、内容大小与存储体积 · 打开页面即可查看自上次同步以来的变化",
-		"status": {
-			"allUpToDate": "所有设备已是最新",
-			"dueCount_one": "{{total}} 台中 {{count}} 台待同步",
-			"dueCount_other": "{{total}} 台中 {{count}} 台待同步"
-		},
-		"tip": {
-			"oneWay": "建议单向同步：一个主仓库，其余为从，避免同步冲突。"
-		},
 		"config": {
 			"remindLabel": "超过多久提醒同步",
-			"remindDescription": "超过间隔时间未同步快照时，仪表盘会提醒。",
 			"remindDays_one": "{{count}} 天",
 			"remindDays_other": "{{count}} 天"
-		},
-		"devices": {
-			"addTitle": "添加设备",
-			"addAutoRecord": "添加后会自动同步一次当前状态。",
-			"namePlaceholder": "设备名称",
-			"notesPlaceholder": "备注（可选）",
-			"nameHint": "例如：笔记本",
-			"notesHint": "例如：USB 4TB",
-			"add": "添加设备",
-			"addPending": "添加中…",
-			"empty": "暂无设备——添加一个开始同步。",
-			"loading": "加载中…",
-			"neverSynced": "从未同步",
-			"lastSyncedAgo_one": "上次同步 {{date}}（{{count}} 天前）",
-			"lastSyncedAgo_other": "上次同步 {{date}}（{{count}} 天前）",
-			"justNow": "刚刚",
-			"minutesAgo_one": "{{count}} 分钟前",
-			"minutesAgo_other": "{{count}} 分钟前",
-			"hoursAgo_one": "{{count}} 小时前",
-			"hoursAgo_other": "{{count}} 小时前",
-			"upToDate": "已是最新",
-			"overdue_one": "已逾期 · {{count}} 天",
-			"overdue_other": "已逾期 · {{count}} 天",
-			"neverBadge": "从未同步",
-			"record": "同步",
-			"recordNow": "立即同步",
-			"deleteTitle": "删除 {{name}}？",
-			"deleteDescription": "该设备及其全部同步记录将被删除。",
-			"delete": "删除",
-			"deletePending": "删除中…",
-			"editTitle": "编辑设备",
-			"edit": "编辑",
-			"save": "保存",
-			"editPending": "保存中…",
-			"liveHint": "当前状态 · 相比上次同步的变化"
-		},
-		"fields": {
-			"resources": "资源",
-			"characters": "角色",
-			"documents": "文档",
-			"folders": "文件夹",
-			"messages": "留言",
-			"tags": "标签",
-			"collections": "收藏",
-			"trash": "回收站",
-			"contentSize": "内容大小",
-			"storage": "存储体积",
-			"firstRecord": "首次同步"
-		},
-		"toast": {
-			"deviceAdded": "已添加设备并同步",
-			"deviceAddFailed": "添加设备失败",
-			"deviceUpdated": "已更新设备",
-			"deviceUpdateFailed": "更新设备失败",
-			"deviceDeleted": "已删除设备",
-			"deviceDeleteFailed": "删除设备失败",
-			"recorded": "已同步",
-			"recordFailed": "同步失败"
 		},
 		"banner": {
 			"noDevicesTitle": "暂无同步设备。",
 			"noDevicesDescription": "至少添加一个设备才能追踪同步。",
-			"configureLink": "去配置",
-			"neverSyncedTitle": "{{name}} 从未同步过",
-			"neverSyncedDescription": "该设备暂无同步记录。",
-			"overdueTitle_one": "{{name}} 上次同步在 {{count}} 天前",
-			"overdueTitle_other": "{{name}} 上次同步在 {{count}} 天前",
-			"overdueDescription": "已超过你设定的 {{count}} 天提醒间隔。",
-			"recordLink": "去同步"
+			"configureLink": "去配置"
 		}
 	},
 	"desktopShell": {
@@ -2450,9 +2370,6 @@
 		"receivedFrom": "来自 {{source}} · 备份时间 {{time}}",
 		"libraryUnchanged": "收到备份不会改变正在使用的资料库。还原后才能在本机使用其中的数据。",
 		"waitingFirst": "等待从发送端接收第一份完整备份。",
-		"externalRecord": "添加外部同步记录",
-		"externalRecords": "外部同步记录",
-		"externalHelp": "适用于使用其他软件备份的设备。这里只记录进度和提醒，不会传输文件。",
 		"pasteInvitation": "粘贴配对邀请",
 		"invalidInvitation": "邀请无效或已过期，请从发送端重新复制邀请。",
 		"manualConnection": "手动填写连接信息",

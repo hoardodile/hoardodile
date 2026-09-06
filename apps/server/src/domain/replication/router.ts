@@ -41,11 +41,6 @@ export function buildReplicationRouter(
 		revoke: authedProcedure
 			.input(z.object({ id: z.uuid() }))
 			.mutation(({ input }) => get().revoke(input.id)),
-		linkDevice: authedProcedure
-			.input(z.object({ recordId: z.uuid(), instanceId: z.uuid().nullable() }))
-			.mutation(({ input }) =>
-				get().linkDevice(input.recordId, input.instanceId),
-			),
 		receive: authedProcedure.mutation(() => {
 			if (!protection) throw new TRPCError({ code: "SERVICE_UNAVAILABLE" })
 			const active = protection.jobs

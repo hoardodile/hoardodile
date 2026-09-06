@@ -5,7 +5,6 @@ import {
 	History,
 	InfoCircle,
 	PlugCircle,
-	RefreshCircle,
 	ShieldCheck,
 	Shop2,
 	SliderHorizontal,
@@ -24,7 +23,6 @@ export type SettingsTabKey =
 	| "archives"
 	| "plugins"
 	| "marketplace"
-	| "sync"
 
 export type SettingsTab = {
 	readonly key: SettingsTabKey
@@ -39,7 +37,6 @@ export type SettingsTab = {
 		| "/settings/archives"
 		| "/settings/plugins"
 		| "/settings/marketplace"
-		| "/settings/sync"
 	readonly icon: IconType
 	readonly testId: string
 	/** Desktop-shell-only tab; hidden in a normal browser tab. */
@@ -101,12 +98,6 @@ export const SETTINGS_TABS: readonly SettingsTab[] = [
 		path: "/settings/backups",
 		icon: Archive,
 		testId: "me-tab-archive",
-	},
-	{
-		key: "sync",
-		path: "/settings/sync",
-		icon: RefreshCircle,
-		testId: "me-tab-sync",
 	},
 	{
 		key: "about",

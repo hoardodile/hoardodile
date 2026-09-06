@@ -30,7 +30,6 @@ import {
 	relationshipType,
 	resources,
 	siblingPairs,
-	syncDevice,
 	tags,
 	traits,
 } from "./catalog.ts"
@@ -104,13 +103,6 @@ async function cleanupManifest(
 			() => rt.comments.softDelete(id),
 			() => rt.comments.hardDelete(id),
 		)
-	}
-	for (const id of [...manifest.syncDevices].reverse()) {
-		try {
-			await rt.sync.deviceRemove(id)
-		} catch (err) {
-			warnCleanup(`sync ${id}`, err)
-		}
 	}
 	for (const row of [...manifest.docs].reverse()) {
 		await purgeSoftThenHard(
@@ -271,10 +263,7 @@ export async function fillDemoLibrary(
 			"seed: missing demo-seed sentinel; refusing to fill an unmarked library",
 		)
 	}
-	assertUnmixedLibrary(
-		readMixedSnapshot(rt.db.db, rt.hostDb.db, rt.paths.root),
-		existing,
-	)
+	assertUnmixedLibrary(readMixedSnapshot(rt.db.db, rt.paths.root), existing)
 	if (existing.status === "complete") {
 		if (getAuthRow(rt.hostDb.db) === undefined) {
 			setAuthRow(rt.hostDb.db, {
@@ -693,14 +682,6 @@ export async function fillDemoLibrary(
 		commentIds.push(created.id)
 		manifest.comments.push(created.id)
 	}
-	writeManifest(rt, manifest)
-
-	log("seed: creating sync device")
-	const device = await rt.sync.deviceCreate({
-		name: syncDevice.name.text,
-		notes: syncDevice.notes.text,
-	})
-	manifest.syncDevices.push(device.id)
 	writeManifest(rt, manifest)
 
 	log("seed: rebuilding resource metadata")

@@ -71,14 +71,6 @@ async function fixture() {
 		weakPassword: false,
 	})
 	db.db
-		.insert(schema.syncDevices)
-		.values({ id: "device", name: "Desktop", createdAt: 1, updatedAt: 1 })
-		.run()
-	db.db
-		.insert(schema.syncRecords)
-		.values({ id: "record", deviceId: "device", recordedAt: 1, createdAt: 1 })
-		.run()
-	db.db
 		.insert(schema.systemPreferences)
 		.values([
 			{ key: "theme", value: '"dark"', updatedAt: 1 },
@@ -127,10 +119,6 @@ it("separates host state, keeps media in place, preserves old backups, and start
 	try {
 		expect(getAuthRow(live.db)).toBeUndefined()
 		expect(getAuthRow(host.db)).toEqual(getAuthRow(original.db))
-		expect(live.db.select().from(schema.syncDevices).all()).toEqual([])
-		expect(host.db.select().from(schema.syncRecords).get()?.deviceId).toBe(
-			"device",
-		)
 		expect(
 			host.db
 				.select()
@@ -239,7 +227,6 @@ it("resumes after host rows were removed but host publication was interrupted", 
 	const host = openDb(join(root, "local/host.sqlite"))
 	try {
 		expect(getAuthRow(host.db)?.hash).toBeTruthy()
-		expect(host.db.select().from(schema.syncRecords).all()).toHaveLength(1)
 	} finally {
 		host.close()
 	}

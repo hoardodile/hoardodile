@@ -14,7 +14,6 @@ describe("settingsTabs", () => {
 			"marketplace",
 			"archives",
 			"archive",
-			"sync",
 			"about",
 		])
 	})

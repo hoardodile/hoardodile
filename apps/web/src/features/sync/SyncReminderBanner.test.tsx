@@ -1,4 +1,3 @@
-import type { SyncSummary } from "@hoardodile/schemas"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import {
 	createMemoryHistory,
@@ -48,45 +47,41 @@ function createMockTrpcClient(
 	) as unknown as TRPCClient
 }
 
-const laptop = {
-	id: "dev-laptop",
-	name: "Laptop",
-	notes: "USB 4TB",
-	createdAt: 1_000_000,
-	updatedAt: 1_000_000,
-}
-const phone = {
-	id: "dev-phone",
-	name: "Phone",
-	notes: "",
-	createdAt: 2_000_000,
-	updatedAt: 2_000_000,
-}
-const laptopRecord = {
-	id: "rec-1",
-	deviceId: "dev-laptop",
-	recordedAt: 1_000_000,
-	resourceCount: 3,
-	characterCount: 2,
-	documentCount: 1,
-	folderCount: 0,
-	commentCount: 0,
-	tagCount: 4,
-	collectionCount: 0,
-	trashCount: 0,
-	storageBytes: 4096,
-	resourceBytes: 1024,
-	createdAt: 1_000_000,
+function connection(
+	id: string,
+	name: string,
+	receivedAt: number | null,
+): Record<string, unknown> {
+	return {
+		id,
+		name,
+		lastSeenAt: 1,
+		receivedPointId: null,
+		receivedAt,
+		receivedDataAt: 0,
+	}
 }
 
-let summary: SyncSummary
+let peers: Record<string, unknown>[]
+let source: Record<string, unknown> | null
+let role: "unconfigured" | "send" | "receive"
 
-const summaryHandler = vi.fn(() => summary)
+const statusHandler = vi.fn(() => ({
+	role,
+	name: "Test",
+	paused: false,
+	source,
+	peers,
+	receiving: false,
+	activeTransfers: 0,
+}))
 
 beforeAll(() => {
 	setTrpcClient(
 		createMockTrpcClient({
-			"sync.summary": summaryHandler,
+			"replication.status": statusHandler,
+			// The health hook reads the reminder interval from the summary.
+			"sync.summary": () => ({ remindDays: 7 }),
 		}),
 	)
 })
@@ -136,8 +131,10 @@ async function renderBanner() {
 }
 
 describe("SyncReminderBanner", () => {
-	it("shows the permanent warning when no sync devices are configured", async () => {
-		summary = { remindDays: 7, devices: [] }
+	it("shows the permanent warning when no device is connected", async () => {
+		role = "unconfigured"
+		source = null
+		peers = []
 		await renderBanner()
 		await waitFor(() => {
 			expect(screen.getByTestId("sync-warning-no-devices")).toBeInTheDocument()
@@ -145,100 +142,37 @@ describe("SyncReminderBanner", () => {
 		expect(
 			screen.getByText("No sync devices configured yet."),
 		).toBeInTheDocument()
+	})
+
+	it("shows the attention banner when a connected device is due", async () => {
+		role = "send"
+		source = null
+		peers = [
+			connection("peer-1", "Backup drive", Date.now() - 10 * 86400_000),
+			connection("peer-2", "Spare drive", Date.now()),
+		]
+		await renderBanner()
+		await waitFor(() => {
+			expect(screen.getByTestId("sync-warning-connections")).toBeInTheDocument()
+		})
 		expect(
-			screen.queryByTestId("sync-warning-due-dev-laptop"),
+			screen.queryByTestId("sync-warning-no-devices"),
 		).not.toBeInTheDocument()
 	})
 
-	it("shows one overdue alert per due device with the device name", async () => {
-		summary = {
-			remindDays: 7,
-			devices: [
-				{
-					device: laptop,
-					lastRecordedAt: 1_000_000,
-					elapsedDays: 9,
-					due: true,
-					latestRecord: laptopRecord,
-				},
-				{
-					device: phone,
-					lastRecordedAt: 1_000_000,
-					elapsedDays: 1,
-					due: false,
-					latestRecord: laptopRecord,
-				},
-			],
-		}
+	it("renders nothing when every connected device is up to date", async () => {
+		role = "receive"
+		source = { ...connection("peer-1", "Sender", Date.now()), url: "https://x" }
+		peers = []
 		await renderBanner()
 		await waitFor(() => {
-			expect(
-				screen.getByTestId("sync-warning-due-dev-laptop"),
-			).toBeInTheDocument()
+			expect(statusHandler).toHaveBeenCalled()
 		})
 		expect(
 			screen.queryByTestId("sync-warning-no-devices"),
 		).not.toBeInTheDocument()
 		expect(
-			screen.getByText("Laptop last synced 9 days ago"),
-		).toBeInTheDocument()
-		expect(
-			screen.queryByTestId("sync-warning-due-dev-phone"),
-		).not.toBeInTheDocument()
-	})
-
-	it("shows the never-synced reminder per device when no record exists yet", async () => {
-		summary = {
-			remindDays: 7,
-			devices: [
-				{ device: laptop, due: true },
-				{
-					device: phone,
-					lastRecordedAt: 1_000_000,
-					elapsedDays: 1,
-					due: false,
-					latestRecord: laptopRecord,
-				},
-			],
-		}
-		await renderBanner()
-		await waitFor(() => {
-			expect(
-				screen.getByTestId("sync-warning-due-dev-laptop"),
-			).toBeInTheDocument()
-		})
-		expect(screen.getByText("Laptop has never been synced")).toBeInTheDocument()
-	})
-
-	it("renders nothing when no device is due", async () => {
-		summary = {
-			remindDays: 7,
-			devices: [
-				{
-					device: laptop,
-					lastRecordedAt: 1_000_000,
-					elapsedDays: 1,
-					due: false,
-					latestRecord: laptopRecord,
-				},
-				{
-					device: phone,
-					lastRecordedAt: 1_000_000,
-					elapsedDays: 2,
-					due: false,
-					latestRecord: laptopRecord,
-				},
-			],
-		}
-		await renderBanner()
-		await waitFor(() => {
-			expect(summaryHandler).toHaveBeenCalled()
-		})
-		expect(
-			screen.queryByTestId("sync-warning-no-devices"),
-		).not.toBeInTheDocument()
-		expect(
-			screen.queryByTestId("sync-warning-due-dev-laptop"),
+			screen.queryByTestId("sync-warning-connections"),
 		).not.toBeInTheDocument()
 	})
 })

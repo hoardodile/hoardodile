@@ -9,7 +9,6 @@ export const syncPlugin = buildServicePlugin({
 		createSyncService({
 			db: app.db,
 			hostDb: app.hostDb,
-			storageService: app.storageService,
 		}),
-	dependencies: ["db-plugin", "storage-plugin"],
+	dependencies: ["db-plugin"],
 })

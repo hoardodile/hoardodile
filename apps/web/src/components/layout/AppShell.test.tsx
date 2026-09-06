@@ -82,14 +82,13 @@ const baseHandlers: Record<string, (input: unknown) => unknown> = {
 			unattributedCount: 5,
 		},
 	}),
-	"sync.summary": () => ({ remindDays: 7, devices: [] }),
+	"sync.summary": () => ({ remindDays: 7 }),
 	"replication.status": () => ({
 		role: "unconfigured",
 		name: "Test",
 		paused: false,
 		source: null,
 		peers: [],
-		links: {},
 		receiving: false,
 		activeTransfers: 0,
 	}),
@@ -378,46 +377,51 @@ describe("AppShell sync status", () => {
 		setTrpcClient(
 			createMockTrpcClient({
 				...baseHandlers,
-				"sync.summary": () => ({
-					remindDays: 7,
-					devices: [
+				"replication.status": () => ({
+					role: "send",
+					name: "Test",
+					paused: false,
+					source: null,
+					peers: [
 						{
-							device: {
-								id: "device-1",
-								name: "Backup drive",
-								notes: "",
-								createdAt: 1,
-								updatedAt: 1,
-							},
-							due: false,
+							id: "peer-1",
+							name: "Backup drive",
+							lastSeenAt: 1,
+							receivedPointId: "99999999-9999-4999-8999-999999999999",
+							receivedAt: Date.now(),
+							receivedDataAt: 0,
 						},
 					],
+					receiving: false,
+					activeTransfers: 0,
 				}),
 			}),
 		)
 		const { findByText } = renderAppShell()
-		await findByText("Records up to date")
+		await findByText("Backups received")
 	})
 
 	it("shows the due state when a device reminder is pending", async () => {
 		setTrpcClient(
 			createMockTrpcClient({
 				...baseHandlers,
-				"sync.summary": () => ({
-					remindDays: 7,
-					devices: [
+				"replication.status": () => ({
+					role: "send",
+					name: "Test",
+					paused: false,
+					source: null,
+					peers: [
 						{
-							device: {
-								id: "device-1",
-								name: "Backup drive",
-								notes: "",
-								createdAt: 1,
-								updatedAt: 1,
-							},
-							due: true,
-							elapsedDays: 10,
+							id: "peer-1",
+							name: "Backup drive",
+							lastSeenAt: 1,
+							receivedPointId: "99999999-9999-4999-8999-999999999999",
+							receivedAt: Date.now() - 10 * 86400_000,
+							receivedDataAt: 0,
 						},
 					],
+					receiving: false,
+					activeTransfers: 0,
 				}),
 			}),
 		)

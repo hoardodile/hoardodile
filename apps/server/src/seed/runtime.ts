@@ -286,7 +286,6 @@ async function assembleRuntime({
 		sync: createSyncService({
 			db: db.db,
 			hostDb: hostDb.db,
-			storageService: storage,
 		}),
 		close,
 	}

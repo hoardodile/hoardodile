@@ -6,17 +6,16 @@ import { useTranslation } from "react-i18next"
 import { useSyncHealth } from "@/features/protection/syncHealth"
 
 /**
- * Dashboard reminder banners for the sync-device feature. Shows one
- * banner per device that is due (never synced or past the configured
- * interval), or a permanent warning when no devices are configured. The
- * server computes `due`; this component only renders.
+ * Dashboard reminder banners for the backup-sync feature: a permanent
+ * warning when no device is connected, or one banner while a connected
+ * device is due (never received or past the configured interval). The
+ * server computes `receivedAt`; this component only renders.
  */
 export function SyncReminderBanner() {
 	const { t } = useTranslation()
 	const health = useSyncHealth()
-	const summary = health.summary
 
-	if (summary === undefined) return null
+	if (!health.loaded) return null
 	if (health.count === 0) {
 		return (
 			<BannerRow
@@ -38,38 +37,7 @@ export function SyncReminderBanner() {
 				buttonLabel={t("sync.banner.configureLink")}
 			/>
 		)
-	const dueDevices = health.manual.filter((entry) => entry.due)
-	if (dueDevices.length === 0) return null
-	return (
-		<div className="flex flex-col gap-3">
-			{dueDevices.map(({ device, latestRecord, elapsedDays }) => {
-				const neverSynced = latestRecord === undefined
-				return (
-					<BannerRow
-						key={device.id}
-						testId={`sync-warning-due-${device.id}`}
-						icon={RefreshCircle}
-						title={
-							neverSynced
-								? t("sync.banner.neverSyncedTitle", { name: device.name })
-								: t("sync.banner.overdueTitle", {
-										name: device.name,
-										count: elapsedDays ?? 0,
-									})
-						}
-						description={
-							neverSynced
-								? t("sync.banner.neverSyncedDescription")
-								: t("sync.banner.overdueDescription", {
-										count: summary.remindDays,
-									})
-						}
-						buttonLabel={t("sync.banner.recordLink")}
-					/>
-				)
-			})}
-		</div>
-	)
+	return null
 }
 
 function BannerRow(props: {
@@ -100,7 +68,7 @@ function BannerRow(props: {
 				nativeButton={false}
 				className="shrink-0"
 				render={
-					<Link to="/settings/sync">
+					<Link to="/settings/backups">
 						<Icon icon={RefreshCircle} />
 						{buttonLabel}
 					</Link>

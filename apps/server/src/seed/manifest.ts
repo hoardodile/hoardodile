@@ -27,7 +27,6 @@ export type SeedManifest = {
 	docs: NamedId[]
 	comments: string[]
 	danmaku: string[]
-	syncDevices: string[]
 }
 
 export function seedManifestPath(root: string): string {
@@ -49,7 +48,6 @@ export function emptySeedManifest(): SeedManifest {
 		docs: [],
 		comments: [],
 		danmaku: [],
-		syncDevices: [],
 	}
 }
 
@@ -98,9 +96,7 @@ export function isSeedManifest(value: unknown): value is SeedManifest {
 		"comments" in row &&
 		isStringArray(row.comments) &&
 		"danmaku" in row &&
-		isStringArray(row.danmaku) &&
-		"syncDevices" in row &&
-		isStringArray(row.syncDevices)
+		isStringArray(row.danmaku)
 	)
 }
 

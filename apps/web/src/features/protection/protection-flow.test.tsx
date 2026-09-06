@@ -49,8 +49,7 @@ function mount(
 		"protection.status": () => status,
 		"protection.points": () => [],
 		"protection.jobs": () => [],
-		"sync.summary": () => ({ devices: [], remindDays: 7 }),
-		"sync.current": () => ({}),
+		"sync.summary": () => ({ remindDays: 7 }),
 		...handlers,
 	}
 	setTrpcClient(
@@ -250,7 +249,6 @@ it("connects from one pasted invitation and preserves its certificate pin", asyn
 			paused: false,
 			peers: [],
 			source: null,
-			links: {},
 		}),
 		"replication.connect": connect,
 	})
@@ -279,7 +277,7 @@ it("connects from one pasted invitation and preserves its certificate pin", asyn
 	)
 })
 
-it("starts sync setup from the device's purpose and keeps external records separate", async () => {
+it("starts sync setup from the device's purpose without external records", async () => {
 	const configure = vi.fn(async () => ({}))
 	mount(<ReplicationPanel />, {
 		"replication.status": () => ({
@@ -288,7 +286,6 @@ it("starts sync setup from the device's purpose and keeps external records separ
 			paused: false,
 			peers: [],
 			source: null,
-			links: {},
 		}),
 		"replication.configure": configure,
 	})
@@ -305,8 +302,9 @@ it("starts sync setup from the device's purpose and keeps external records separ
 			paused: false,
 		}),
 	)
-	expect(screen.getByTestId("external-sync-records")).toBeInTheDocument()
-	expect(screen.getByTestId("sync-device-add")).toBeVisible()
+	// The manual external-record management is gone; paired devices only.
+	expect(screen.queryByTestId("external-sync-records")).not.toBeInTheDocument()
+	expect(screen.queryByTestId("sync-device-add")).not.toBeInTheDocument()
 })
 
 it("gives a next step for low disk space while keeping diagnostic details collapsed", async () => {
@@ -366,7 +364,6 @@ it("renders the sync service settings as labeled rows", async () => {
 			paused: false,
 			peers: [],
 			source: null,
-			links: {},
 		}),
 	})
 	await screen.findByLabelText("Service name")
@@ -378,7 +375,7 @@ it("renders the sync service settings as labeled rows", async () => {
 	).toBeInTheDocument()
 })
 
-it("renders the sync page as two unified sections without a page-level heading", async () => {
+it("renders the backup-sync area as two unified sections without a page-level heading", async () => {
 	mount(<ReplicationPanel />, {
 		"replication.status": () => ({
 			name: "Laptop",
@@ -386,7 +383,6 @@ it("renders the sync page as two unified sections without a page-level heading",
 			paused: false,
 			peers: [],
 			source: null,
-			links: {},
 		}),
 	})
 	await screen.findByTestId("replication-service-section")
