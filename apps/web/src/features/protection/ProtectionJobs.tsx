@@ -11,9 +11,12 @@ import { jobErrorKey } from "./job-error"
 export function ProtectionJobs({
 	activeOnly = false,
 	restoreOnly = false,
+	showHeading = true,
 }: {
 	activeOnly?: boolean
 	restoreOnly?: boolean
+	/** Set when a wrapping SettingsSection already supplies the title. */
+	showHeading?: boolean
 } = {}) {
 	const { t } = useTranslation()
 	const tr = loose(t)
@@ -52,9 +55,11 @@ export function ProtectionJobs({
 	if (activeOnly && !visibleJobs?.length) return null
 	return (
 		<section className="space-y-3" aria-label={t("protection.jobs")}>
-			<h3 className="text-ui font-medium">
-				{t(activeOnly ? "protectionUx.activity" : "protection.jobs")}
-			</h3>
+			{showHeading && (
+				<h3 className="text-ui font-medium">
+					{t(activeOnly ? "protectionUx.activity" : "protection.jobs")}
+				</h3>
+			)}
 			{query.data?.length === 0 && (
 				<p className="text-xs text-muted-foreground">
 					{t("protection.noJobs")}
@@ -113,7 +118,7 @@ export function ProtectionJobs({
 							</div>
 							{running ? (
 								<Button
-									variant="ghost"
+									variant="secondary"
 									disabled={cancel.isPending || job.state === "cancelling"}
 									onClick={() => cancel.mutate({ id: job.id })}
 								>
@@ -124,7 +129,7 @@ export function ProtectionJobs({
 								job.kind !== "file-write" &&
 								job.kind !== "damaged-record" && (
 									<Button
-										variant="ghost"
+										variant="secondary"
 										disabled={retry.isPending}
 										onClick={() => retry.mutate({ id: job.id })}
 									>

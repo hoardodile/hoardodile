@@ -1,8 +1,19 @@
 import { Button } from "@hoardodile/ui/components/button"
 import { DropdownSelect } from "@hoardodile/ui/components/dropdown-select"
+import {
+	Empty,
+	EmptyHeader,
+	EmptyMedia,
+	EmptyTitle,
+} from "@hoardodile/ui/components/empty"
+import { Icon } from "@hoardodile/ui/components/icon"
+import { Switch } from "@hoardodile/ui/components/switch"
+import { Database, History, Server } from "@hoardodile/ui/icons/registry"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { useState } from "react"
+import { type ReactNode, useState } from "react"
 import { useTranslation } from "react-i18next"
+import { SettingsSection } from "@/features/settings/SettingsSection"
+import { SectionDivider } from "@/features/settings/SettingsSheet"
 import { useToastMutation } from "@/hooks/useToastMutation"
 import { formatBytes } from "@/lib/formatBytes"
 import { trpcMutation } from "@/trpc/factory"
@@ -94,117 +105,130 @@ export function RecoveryPanel({
 		repositoryId === "local"
 			? t("protectionUx.localBackups")
 			: (repository?.name ?? repositoryId)
-	return (
-		<div className="space-y-5" data-testid="complete-backups">
-			{!restoreOnly && (
-				<header className="space-y-1">
-					<h2 className="text-lg font-medium">{t("protection.title")}</h2>
-					<p className="text-xs text-secondary-foreground">
-						{t("protectionUx.description")}
-					</p>
-				</header>
-			)}
-			{status.isPending && <p>{t("common.loading")}</p>}
-			{status.error && <p role="alert">{status.error.message}</p>}
-			{status.data && !localConfigured && !maintenance && !restoreOnly && (
-				<BackupSetup
-					backupRoot={status.data.backupRoot}
-					repositoryPath={status.data.localRepositoryPath}
-					onStarted={() => setSelectedRepository("local")}
-				/>
-			)}
-			{localConfigured && !restoreOnly && (
-				<section className="space-y-3" aria-label={t("protectionUx.status")}>
-					<p className="text-ui font-medium" data-testid="backup-summary">
-						{activeBackup
-							? t(
-									latest
-										? "protectionUx.backupRunning"
-										: "protectionUx.firstBackupRunning",
-								)
-							: latest
-								? t("protectionUx.backupCompleted", {
+
+	const sections: ReactNode[] = []
+	if (!restoreOnly)
+		sections.push(
+			<SettingsSection
+				key="complete-backups"
+				icon={Database}
+				title={t("protection.title")}
+				description={t("protectionUx.description")}
+				layout="stack"
+				data-testid="complete-backups-section"
+			>
+				<div className="space-y-5">
+					{status.data && !localConfigured && !maintenance && (
+						<BackupSetup
+							backupRoot={status.data.backupRoot}
+							repositoryPath={status.data.localRepositoryPath}
+							onStarted={() => setSelectedRepository("local")}
+						/>
+					)}
+					{localConfigured && (
+						<section
+							className="space-y-3"
+							aria-label={t("protectionUx.status")}
+						>
+							<p className="text-ui font-medium" data-testid="backup-summary">
+								{activeBackup
+									? t(
+											latest
+												? "protectionUx.backupRunning"
+												: "protectionUx.firstBackupRunning",
+										)
+									: latest
+										? t("protectionUx.backupCompleted", {
+												time: new Date(latest.createdAt).toLocaleString(),
+											})
+										: t("protectionUx.firstBackupMissing")}
+							</p>
+							{latest && activeBackup && (
+								<p className="text-xs text-muted-foreground">
+									{t("protectionUx.backupCompleted", {
 										time: new Date(latest.createdAt).toLocaleString(),
-									})
-								: t("protectionUx.firstBackupMissing")}
-					</p>
-					{latest && activeBackup && (
-						<p className="text-xs text-muted-foreground">
-							{t("protectionUx.backupCompleted", {
-								time: new Date(latest.createdAt).toLocaleString(),
-							})}
-						</p>
-					)}
-					<p className="break-all text-xs">
-						{t("protection.folder")}: {status.data?.backupRoot}
-					</p>
-					<p className="text-xs text-secondary-foreground">
-						{t("protectionUx.locationHelp")}
-					</p>
-					<div className="flex flex-wrap items-center gap-4">
-						<Button
-							data-testid="complete-backup-now"
-							disabled={
-								backup.isPending || Boolean(activeBackup) || maintenance
-							}
-							onClick={() =>
-								backup.mutate({
-									name: "",
-									note: "",
-									kind: "manual",
-									pinned: true,
-								})
-							}
-						>
-							{t("protection.create")}
-						</Button>
-						<label className="flex items-center gap-2 text-xs">
-							<input
-								type="checkbox"
-								checked={status.data?.enabled ?? false}
-								disabled={enabled.isPending}
-								onChange={(event) =>
-									enabled.mutate({ enabled: event.target.checked })
-								}
-							/>
-							{t("protection.automatic")}
-						</label>
-					</div>
-					{!keySaved && (
-						<div
-							className="flex flex-wrap items-center gap-3 rounded-lg bg-muted p-4"
-							data-testid="recovery-key-notice"
-						>
-							<div className="min-w-0 flex-1">
-								<p className="text-ui font-medium">
-									{t("protectionUx.saveKey")}
+									})}
 								</p>
-								<p className="mt-1 text-xs text-secondary-foreground">
-									{t("protection.keyHelp")}
-								</p>
+							)}
+							<p className="break-all text-xs">
+								{t("protection.folder")}: {status.data?.backupRoot}
+							</p>
+							<p className="text-xs text-secondary-foreground">
+								{t("protectionUx.locationHelp")}
+							</p>
+							<div className="flex flex-wrap items-center gap-4">
+								<Button
+									data-testid="complete-backup-now"
+									disabled={
+										backup.isPending || Boolean(activeBackup) || maintenance
+									}
+									onClick={() =>
+										backup.mutate({
+											name: "",
+											note: "",
+											kind: "manual",
+											pinned: true,
+										})
+									}
+								>
+									{t("protection.create")}
+								</Button>
+								<div className="flex items-center gap-2 text-xs">
+									<Switch
+										checked={status.data?.enabled ?? false}
+										disabled={enabled.isPending}
+										onCheckedChange={(checked) =>
+											enabled.mutate({ enabled: checked })
+										}
+										aria-label={t("protection.automatic")}
+									/>
+									<span>{t("protection.automatic")}</span>
+								</div>
 							</div>
-							<Button
-								variant="secondary"
-								disabled={key.isPending}
-								onClick={() => key.mutate({ repositoryId: "local" })}
-							>
-								{t("protection.key")}
-							</Button>
-						</div>
+							{!keySaved && (
+								<div
+									className="flex flex-wrap items-center gap-3 rounded-lg bg-muted p-4"
+									data-testid="recovery-key-notice"
+								>
+									<div className="min-w-0 flex-1">
+										<p className="text-ui font-medium">
+											{t("protectionUx.saveKey")}
+										</p>
+										<p className="mt-1 text-xs text-secondary-foreground">
+											{t("protection.keyHelp")}
+										</p>
+									</div>
+									<Button
+										variant="secondary"
+										disabled={key.isPending}
+										onClick={() => key.mutate({ repositoryId: "local" })}
+									>
+										{t("protection.key")}
+									</Button>
+								</div>
+							)}
+						</section>
 					)}
-				</section>
-			)}
-			{!restoreOnly && <ProtectionJobs activeOnly />}
-			{repository && (
-				<section
-					className="space-y-3"
-					aria-label={t("protectionUx.availableBackups")}
-				>
-					<div className="flex flex-wrap items-center justify-between gap-3">
-						<h3 className="text-ui font-medium">
-							{t("protectionUx.availableBackups")}
-						</h3>
-						{repositories.length > 1 && (
+					<ProtectionJobs activeOnly />
+				</div>
+			</SettingsSection>,
+		)
+	if (repository) {
+		if (sections.length > 0) sections.push(<SectionDivider key="divider-1" />)
+		sections.push(
+			<SettingsSection
+				key="available-backups"
+				icon={Server}
+				title={t("protectionUx.availableBackups")}
+				layout="stack"
+				data-testid="available-backups-section"
+			>
+				<div className="space-y-4">
+					{repositories.length > 1 && (
+						<div className="flex items-center justify-between gap-3">
+							<span className="text-xs text-muted-foreground">
+								{t("protection.repository")}
+							</span>
 							<DropdownSelect
 								value={repositoryId}
 								onValueChange={setSelectedRepository}
@@ -217,58 +241,95 @@ export function RecoveryPanel({
 								}))}
 								aria-label={t("protection.repository")}
 							/>
-						)}
-					</div>
+						</div>
+					)}
 					{points.error && <p role="alert">{points.error.message}</p>}
 					{points.isPending && <p className="text-xs">{t("common.loading")}</p>}
 					{points.data?.length === 0 && (
-						<p className="text-xs text-secondary-foreground">
-							{t("protection.empty")}
-						</p>
-					)}
-					<div className="divide-y divide-border">
-						{points.data
-							?.toSorted((a, b) => b.createdAt - a.createdAt)
-							.map((point) => (
-								<details
-									key={repositoryId + point.id}
-									data-testid={`recovery-point-${point.id}`}
+						<Empty className="py-8">
+							<EmptyHeader>
+								<EmptyMedia variant="icon">
+									<Icon icon={Server} className="size-6" />
+								</EmptyMedia>
+								<EmptyTitle>{t("protection.empty")}</EmptyTitle>
+							</EmptyHeader>
+							{!restoreOnly && !maintenance && (
+								<Button
+									disabled={backup.isPending || Boolean(activeBackup)}
+									onClick={() =>
+										backup.mutate({
+											name: "",
+											note: "",
+											kind: "manual",
+											pinned: true,
+										})
+									}
 								>
-									<summary className="cursor-pointer py-3 text-ui">
-										<span>
-											{point.name || new Date(point.createdAt).toLocaleString()}
-										</span>
-										<span className="ml-3 text-xs text-muted-foreground">
-											{t(`protection.${point.kind}`)}
-											{point.totalBytes !== undefined
-												? ` · ${formatBytes(point.totalBytes)}`
-												: ""}
-											{point.pinned ? ` · ${t("protection.pinned")}` : ""}
-										</span>
-									</summary>
-									<BackupPointActions
-										point={point}
-										repositoryId={repositoryId}
-										source={sourceName}
-										canDelete={(points.data?.length ?? 0) > 1}
-										restoreOnly={restoreOnly || maintenance}
-									/>
-								</details>
-							))}
-					</div>
-				</section>
-			)}
-			{repository && !restoreOnly && !maintenance && (
-				<BackupManagement key={repositoryId} repositoryId={repositoryId} />
-			)}
-			{!restoreOnly && (
-				<details className="border-t border-border pt-3">
-					<summary className="cursor-pointer py-2 text-ui">
-						{t("protection.jobs")}
-					</summary>
-					<ProtectionJobs />
-				</details>
-			)}
+									{t("protection.create")}
+								</Button>
+							)}
+						</Empty>
+					)}
+					{points.data && points.data.length > 0 && (
+						<div className="divide-y divide-border">
+							{points.data
+								.toSorted((a, b) => b.createdAt - a.createdAt)
+								.map((point) => (
+									<details
+										key={repositoryId + point.id}
+										data-testid={`recovery-point-${point.id}`}
+									>
+										<summary className="cursor-pointer py-3 text-ui">
+											<span>
+												{point.name ||
+													new Date(point.createdAt).toLocaleString()}
+											</span>
+											<span className="ml-3 text-xs text-muted-foreground">
+												{t(`protection.${point.kind}`)}
+												{point.totalBytes !== undefined
+													? ` · ${formatBytes(point.totalBytes)}`
+													: ""}
+												{point.pinned ? ` · ${t("protection.pinned")}` : ""}
+											</span>
+										</summary>
+										<BackupPointActions
+											point={point}
+											repositoryId={repositoryId}
+											source={sourceName}
+											canDelete={(points.data?.length ?? 0) > 1}
+											restoreOnly={restoreOnly || maintenance}
+										/>
+									</details>
+								))}
+						</div>
+					)}
+					{!restoreOnly && !maintenance && (
+						<BackupManagement key={repositoryId} repositoryId={repositoryId} />
+					)}
+				</div>
+			</SettingsSection>,
+		)
+	}
+	if (!restoreOnly) {
+		if (sections.length > 0) sections.push(<SectionDivider key="divider-2" />)
+		sections.push(
+			<SettingsSection
+				key="recent-operations"
+				icon={History}
+				title={t("protection.jobs")}
+				layout="stack"
+				data-testid="recent-operations-section"
+			>
+				<ProtectionJobs showHeading={false} />
+			</SettingsSection>,
+		)
+	}
+
+	return (
+		<div data-testid="complete-backups">
+			{status.isPending && <p>{t("common.loading")}</p>}
+			{status.error && <p role="alert">{status.error.message}</p>}
+			{sections}
 		</div>
 	)
 }

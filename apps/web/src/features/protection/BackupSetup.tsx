@@ -1,7 +1,9 @@
 import { Button } from "@hoardodile/ui/components/button"
+import { Icon } from "@hoardodile/ui/components/icon"
 import { Input } from "@hoardodile/ui/components/input"
+import { FolderOpen } from "@hoardodile/ui/icons/registry"
 import { useQueryClient } from "@tanstack/react-query"
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useToastMutation } from "@/hooks/useToastMutation"
 import { trpcMutation } from "@/trpc/factory"
@@ -19,7 +21,9 @@ export function BackupSetup({
 	const qc = useQueryClient()
 	const [mode, setMode] = useState<"choose" | "new" | "existing">("choose")
 	const [key, setKey] = useState("")
+	const [fileName, setFileName] = useState("")
 	const [fileError, setFileError] = useState(false)
+	const fileInputRef = useRef<HTMLInputElement>(null)
 	const initialize = useToastMutation({
 		...trpcMutation("protection", "initialize"),
 		onSuccess: async () => {
@@ -28,10 +32,7 @@ export function BackupSetup({
 		},
 	})
 	return (
-		<section
-			className="space-y-4 rounded-lg bg-muted p-5"
-			aria-label={t("protectionUx.setup")}
-		>
+		<section className="space-y-4" aria-label={t("protectionUx.setup")}>
 			<p className="text-ui font-medium">{t("protectionUx.noBackup")}</p>
 			<p className="text-xs text-secondary-foreground">
 				{t("protectionUx.setupHelp")}
@@ -60,15 +61,31 @@ export function BackupSetup({
 					</p>
 					{mode === "existing" && (
 						<div className="space-y-3">
-							<label
-								htmlFor="recovery-key-file"
-								className="block space-y-2 text-xs"
-							>
-								<span>{t("protectionUx.importKeyFile")}</span>
-								<Input
+							<div className="space-y-2">
+								<div className="flex flex-wrap items-center gap-3">
+									<Button
+										variant="secondary"
+										onClick={() => fileInputRef.current?.click()}
+									>
+										<Icon icon={FolderOpen} />
+										{t("protectionUx.importKeyFile")}
+									</Button>
+									{fileName && (
+										<span
+											className="text-xs text-muted-foreground"
+											data-testid="recovery-key-file-name"
+										>
+											{fileName}
+										</span>
+									)}
+								</div>
+								<input
+									ref={fileInputRef}
 									id="recovery-key-file"
 									type="file"
 									accept=".json,application/json"
+									aria-label={t("protectionUx.importKeyFile")}
+									className="sr-only"
 									onChange={(event) => {
 										const file = event.target.files?.[0]
 										if (!file) return
@@ -80,12 +97,13 @@ export function BackupSetup({
 											.text()
 											.then((value) => {
 												setKey(value)
+												setFileName(file.name)
 												setFileError(false)
 											})
 											.catch(() => setFileError(true))
 									}}
 								/>
-							</label>
+							</div>
 							<Input
 								type="password"
 								aria-label={t("protection.importKey")}
@@ -121,7 +139,7 @@ export function BackupSetup({
 									)}
 						</Button>
 						<Button
-							variant="ghost"
+							variant="secondary"
 							disabled={initialize.isPending}
 							onClick={() => setMode("choose")}
 						>

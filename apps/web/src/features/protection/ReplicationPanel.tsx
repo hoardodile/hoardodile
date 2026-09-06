@@ -2,16 +2,38 @@ import { SYNC_REMIND_DAYS_OPTIONS } from "@hoardodile/schemas"
 import { AppDialog } from "@hoardodile/ui/components/app-dialog"
 import { Button } from "@hoardodile/ui/components/button"
 import { ConfirmDialog } from "@hoardodile/ui/components/confirm-dialog"
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from "@hoardodile/ui/components/dropdown-menu"
 import { DropdownSelect } from "@hoardodile/ui/components/dropdown-select"
+import {
+	Empty,
+	EmptyHeader,
+	EmptyMedia,
+	EmptyTitle,
+} from "@hoardodile/ui/components/empty"
+import { Icon } from "@hoardodile/ui/components/icon"
 import { Input } from "@hoardodile/ui/components/input"
+import { Switch } from "@hoardodile/ui/components/switch"
+import { More } from "@hoardodile/ui/icons/actions"
+import {
+	InfoCircle,
+	Link,
+	Pen,
+	Server,
+	TransferHorizontal,
+	TrashBinMinimalistic,
+	UserMinus,
+} from "@hoardodile/ui/icons/registry"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { Link } from "@tanstack/react-router"
+import { Link as RouterLink } from "@tanstack/react-router"
 import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
-import {
-	SectionDivider,
-	SettingsSheet,
-} from "@/features/settings/SettingsSheet"
+import { SettingsSection } from "@/features/settings/SettingsSection"
+import { SectionDivider } from "@/features/settings/SettingsSheet"
 import {
 	syncCurrentQueryOptions,
 	syncSummaryQueryOptions,
@@ -26,6 +48,18 @@ import { ReceivedBackup } from "./ReceivedBackup"
 
 type ManualDevice = RouterOutputs["sync"]["summary"]["devices"][number]
 type Connection = { id: string; name: string; receivedAt: number | null }
+type Row = {
+	id: string
+	name: string
+	manual?: ManualDevice
+	connection?: Connection
+}
+type Removal = {
+	kind: "unlink" | "revoke" | "disconnect" | "remove"
+	recordId?: string
+	connectionId?: string
+	name: string
+}
 
 export function ReplicationPanel() {
 	const { t } = useTranslation()
@@ -44,11 +78,7 @@ export function ReplicationPanel() {
 		name: string
 		notes: string
 	} | null>(null)
-	const [removing, setRemoving] = useState<{
-		recordId?: string
-		connectionId?: string
-		name: string
-	} | null>(null)
+	const [removing, setRemoving] = useState<Removal | null>(null)
 	const [linking, setLinking] = useState<Connection | null>(null)
 	const [recordId, setRecordId] = useState("")
 	const [details, setDetails] = useState<ManualDevice | null>(null)
@@ -124,12 +154,7 @@ export function ReplicationPanel() {
 		? [state.source]
 		: (state?.peers ?? [])
 	const links = state?.links ?? {}
-	const rows: {
-		id: string
-		name: string
-		manual?: ManualDevice
-		connection?: Connection
-	}[] = records.map((entry) => ({
+	const rows: Row[] = records.map((entry) => ({
 		id: entry.device.id,
 		name: entry.device.name,
 		manual: entry,
@@ -149,360 +174,399 @@ export function ReplicationPanel() {
 		else
 			createRecord.mutate({ name: editing.name.trim(), notes: editing.notes })
 	}
+	function rowActions(row: Row) {
+		const menu = (
+			<DropdownMenu>
+				<DropdownMenuTrigger
+					render={
+						<Button
+							variant="ghost"
+							size="icon-xs"
+							aria-label={t("me.custom.more")}
+						>
+							<Icon icon={More} size="sm" />
+						</Button>
+					}
+				/>
+				<DropdownMenuContent align="end" className="min-w-48">
+					{row.manual && (
+						<>
+							<DropdownMenuItem
+								onClick={() =>
+									setEditing({
+										id: row.manual!.device.id,
+										name: row.manual!.device.name,
+										notes: row.manual!.device.notes,
+									})
+								}
+							>
+								<Icon icon={Pen} />
+								{t("protection.metadata")}
+							</DropdownMenuItem>
+							<DropdownMenuItem onClick={() => setDetails(row.manual!)}>
+								<Icon icon={InfoCircle} />
+								{t("replication.details")}
+							</DropdownMenuItem>
+						</>
+					)}
+					{row.connection && row.manual && (
+						<DropdownMenuItem
+							onClick={() =>
+								setRemoving({
+									kind: "unlink",
+									recordId: row.manual!.device.id,
+									name: row.name,
+								})
+							}
+						>
+							<Icon icon={Link} />
+							{t("replication.unlink")}
+						</DropdownMenuItem>
+					)}
+					<DropdownMenuItem
+						variant="destructive"
+						onClick={() =>
+							row.connection
+								? setRemoving({
+										kind:
+											row.connection.id === state?.source?.id
+												? "disconnect"
+												: "revoke",
+										connectionId: row.connection.id,
+										name: row.name,
+									})
+								: setRemoving({
+										kind: "remove",
+										recordId: row.manual!.device.id,
+										name: row.name,
+									})
+						}
+					>
+						<Icon icon={row.connection ? UserMinus : TrashBinMinimalistic} />
+						{row.connection ? t("replication.revoke") : t("replication.remove")}
+					</DropdownMenuItem>
+				</DropdownMenuContent>
+			</DropdownMenu>
+		)
+		if (row.connection && row.manual) return menu
+		return (
+			<div className="flex shrink-0 items-center gap-2">
+				<Button
+					variant="secondary"
+					disabled={row.manual ? record.isPending : false}
+					onClick={() => {
+						if (row.manual) record.mutate({ deviceId: row.manual.device.id })
+						else {
+							setLinking(row.connection!)
+							setRecordId("")
+						}
+					}}
+				>
+					{row.manual ? t("replication.record") : t("replication.link")}
+				</Button>
+				{menu}
+			</div>
+		)
+	}
 	return (
-		<SettingsSheet>
-			<div className="space-y-5" data-testid="backup-sync">
-				<header>
-					<h2 className="text-lg font-medium">{t("replication.title")}</h2>
-					<p className="mt-1 text-xs text-secondary-foreground">
-						{t("replication.description")}
-					</p>
-				</header>
-				{stateQuery.isPending && <p>{t("common.loading")}</p>}
-				{stateQuery.error && <p role="alert">{stateQuery.error.message}</p>}
-				{state?.role === "unconfigured" && (
-					<section className="space-y-3 rounded-lg bg-muted p-5">
-						<p className="text-ui font-medium">
-							{t("replicationUx.unconfigured")}
-						</p>
-						<div className="flex flex-wrap gap-3">
-							<Button
-								disabled={configure.isPending}
-								onClick={() =>
-									configure.mutate({
-										role: "send",
-										name: state.name,
-										paused: false,
-									})
-								}
-							>
-								{t("replicationUx.send")}
-							</Button>
-							<Button
-								variant="secondary"
-								disabled={configure.isPending}
-								onClick={() =>
-									configure.mutate({
-										role: "receive",
-										name: state.name,
-										paused: false,
-									})
-								}
-							>
-								{t("replicationUx.receive")}
-							</Button>
-						</div>
-					</section>
-				)}
-				{state && state.role !== "unconfigured" && (
-					<>
-						<div className="flex flex-wrap items-end gap-3">
-							<label
-								htmlFor="replication-service-name"
-								className="space-y-1 text-xs"
-							>
-								<span>{t("replication.name")}</span>
-								<Input
-									id="replication-service-name"
-									value={name}
-									onChange={(event) => setName(event.target.value)}
-								/>
-							</label>
-							<Button
-								variant="secondary"
-								disabled={
-									!name.trim() || name === state.name || configure.isPending
-								}
-								onClick={() =>
-									configure.mutate({
-										role: state.role,
-										name,
-										paused: state.paused,
-									})
-								}
-							>
-								{t("protection.save")}
-							</Button>
-							<DropdownSelect
-								value={state.role}
-								aria-label={t("replication.role")}
-								disabled={
-									Boolean(state.source || state.peers.length) ||
-									configure.isPending
-								}
-								options={(["unconfigured", "send", "receive"] as const).map(
-									(role) => ({
-										value: role,
-										label: t(`replicationUx.${role}`),
-									}),
-								)}
-								onValueChange={(role) => {
-									if (
-										role === "unconfigured" ||
-										role === "send" ||
-										role === "receive"
-									)
-										configure.mutate({
-											role,
-											name: name.trim() || state.name,
-											paused: state.paused,
-										})
-								}}
-							/>
-							<label className="flex items-center gap-2 text-xs">
-								<input
-									type="checkbox"
-									checked={state.paused}
-									onChange={(event) =>
-										configure.mutate({
-											role: state.role,
-											name: state.name,
-											paused: event.target.checked,
-										})
-									}
-								/>
-								{t("replication.paused")}
-							</label>
-						</div>
-						<div className="flex flex-wrap gap-2">
-							{state.role === "send" && (
-								<PairingInviteButton disabled={!canInvite} />
-							)}
-							{state.role !== "send" && !state.source && (
-								<ConnectSenderButton onConnected={invalidate} />
-							)}
-							{state.source && (
-								<Button
-									disabled={
-										receive.isPending || state.receiving || state.paused
-									}
-									onClick={() => receive.mutate(undefined)}
-								>
-									{t("replication.receiveNow")}
-								</Button>
-							)}
-						</div>
-						<p className="text-xs text-secondary-foreground">
-							{t(
-								state.role === "send"
-									? "replicationUx.sendHelp"
-									: "replicationUx.receiveHelp",
-							)}
-						</p>
-						{state.role === "send" && !canInvite && (
-							<Link to="/settings/backups" className="text-xs underline">
-								{t("protectionUx.start")}
-							</Link>
-						)}
-						{state.source && <ReceivedBackup source={state.source} />}
-					</>
-				)}
-				<SectionDivider />
-				<h3 className="text-ui font-medium">{t("replication.devices")}</h3>
-				{rows.length > 0 && (
-					<div className="flex items-center gap-3 text-xs">
-						<span>{t("sync.config.remindLabel")}</span>
-						<DropdownSelect
-							value={String(summary?.remindDays ?? 7)}
-							disabled={remind.isPending}
-							options={SYNC_REMIND_DAYS_OPTIONS.map((days) => ({
-								value: String(days),
-								label: t("sync.config.remindDays", { count: days }),
-							}))}
-							onValueChange={(days) => remind.mutate({ days: Number(days) })}
-						/>
-					</div>
-				)}
-				{rows.length === 0 && (
-					<p className="text-xs text-muted-foreground">
-						{t("replication.noDevices")}
-					</p>
-				)}
-				<div className="divide-y divide-border">
-					{rows
-						.filter((row) => row.connection)
-						.map((row) => (
-							<div
-								key={row.id}
-								className="flex flex-wrap items-center gap-3 py-4"
-								data-testid={`sync-device-${row.id}`}
-							>
-								<div className="min-w-0 flex-1">
-									<p className="text-ui">{row.name}</p>
-									<p className="mt-1 text-xs text-muted-foreground">
-										{row.connection
-											? t("replication.paired")
-											: t("replication.recordOnly")}{" "}
-										·{" "}
-										{row.connection
-											? row.connection.receivedAt
-												? `${t("replication.received")}: ${new Date(row.connection.receivedAt).toLocaleString()}`
-												: t("replication.never")
-											: row.manual?.lastRecordedAt
-												? new Date(row.manual.lastRecordedAt).toLocaleString()
-												: t("protection.never")}
-									</p>
-									{row.manual?.device.notes && (
-										<p className="mt-1 text-xs">{row.manual.device.notes}</p>
-									)}
-									{row.connection &&
-										lastRestore?.repositoryId === row.connection.id && (
-											<p className="mt-1 text-xs text-muted-foreground">
-												{t("protection.lastRestore")}:{" "}
-												{new Date(lastRestore.restoredAt).toLocaleString()} ·{" "}
-												{lastRestore.pointId.slice(0, 8)}
-												<br />
-												{t("protection.restoredEditable")}
-											</p>
-										)}
+		<>
+			<div data-testid="backup-sync">
+				<SettingsSection
+					icon={TransferHorizontal}
+					title={t("replication.title")}
+					description={t("replication.description")}
+					layout="stack"
+					data-testid="replication-service-section"
+				>
+					<div className="space-y-5">
+						{stateQuery.isPending && <p>{t("common.loading")}</p>}
+						{stateQuery.error && <p role="alert">{stateQuery.error.message}</p>}
+						{state?.role === "unconfigured" && (
+							<section className="space-y-3">
+								<p className="text-ui font-medium">
+									{t("replicationUx.unconfigured")}
+								</p>
+								<div className="flex flex-wrap gap-3">
+									<Button
+										disabled={configure.isPending}
+										onClick={() =>
+											configure.mutate({
+												role: "send",
+												name: state.name,
+												paused: false,
+											})
+										}
+									>
+										{t("replicationUx.send")}
+									</Button>
+									<Button
+										variant="secondary"
+										disabled={configure.isPending}
+										onClick={() =>
+											configure.mutate({
+												role: "receive",
+												name: state.name,
+												paused: false,
+											})
+										}
+									>
+										{t("replicationUx.receive")}
+									</Button>
 								</div>
-								{row.manual && (
-									<>
-										<Button
-											variant="ghost"
-											onClick={() =>
-												setEditing({
-													id: row.manual!.device.id,
-													name: row.manual!.device.name,
-													notes: row.manual!.device.notes,
-												})
-											}
+							</section>
+						)}
+						{state && state.role !== "unconfigured" && (
+							<>
+								<div className="flex flex-col gap-4">
+									<div className="flex flex-wrap items-center justify-between gap-3">
+										<label
+											htmlFor="replication-service-name"
+											className="text-ui font-semibold text-foreground"
 										>
-											{t("protection.metadata")}
-										</Button>
-										<Button
-											variant="ghost"
-											onClick={() => setDetails(row.manual!)}
-										>
-											{t("replication.details")}
-										</Button>
-										{!row.connection && (
+											{t("replication.name")}
+										</label>
+										<div className="flex shrink-0 items-center gap-2">
+											<Input
+												id="replication-service-name"
+												className="w-56"
+												value={name}
+												onChange={(event) => setName(event.target.value)}
+											/>
 											<Button
 												variant="secondary"
-												disabled={record.isPending}
+												disabled={
+													!name.trim() ||
+													name === state.name ||
+													configure.isPending
+												}
 												onClick={() =>
-													record.mutate({ deviceId: row.manual!.device.id })
+													configure.mutate({
+														role: state.role,
+														name,
+														paused: state.paused,
+													})
 												}
 											>
-												{t("replication.record")}
+												{t("protection.save")}
 											</Button>
-										)}
-									</>
-								)}
-								{row.connection && (
-									<Button
-										variant="ghost"
-										onClick={() => {
-											if (row.manual)
-												link.mutate({
-													recordId: row.manual.device.id,
-													instanceId: null,
-												})
-											else {
-												setLinking(row.connection!)
-												setRecordId("")
+										</div>
+									</div>
+									<div className="flex flex-wrap items-center justify-between gap-3">
+										<span className="text-ui font-semibold text-foreground">
+											{t("replication.role")}
+										</span>
+										<DropdownSelect
+											value={state.role}
+											aria-label={t("replication.role")}
+											disabled={
+												Boolean(state.source || state.peers.length) ||
+												configure.isPending
 											}
-										}}
-									>
-										{row.manual
-											? t("replication.unlink")
-											: t("replication.link")}
-									</Button>
-								)}
-								<Button
-									variant="ghost"
-									onClick={() =>
-										setRemoving({
-											recordId: row.connection
-												? undefined
-												: row.manual?.device.id,
-											connectionId: row.connection?.id,
-											name: row.name,
-										})
-									}
-								>
-									{row.connection
-										? t("replication.revoke")
-										: t("replication.remove")}
-								</Button>
-							</div>
-						))}
-				</div>
-				<details
-					className="border-t border-border pt-3"
-					data-testid="external-sync-records"
-				>
-					<summary className="cursor-pointer py-2 text-ui">
-						{t("replicationUx.externalRecords")} (
-						{rows.filter((row) => !row.connection).length})
-					</summary>
-					<p className="my-2 text-xs text-secondary-foreground">
-						{t("replicationUx.externalHelp")}
-					</p>
-					<Button
-						variant="secondary"
-						onClick={() => setEditing({ name: "", notes: "" })}
-						data-testid="sync-device-add"
-					>
-						{t("replicationUx.externalRecord")}
-					</Button>
-					{rows
-						.filter((row) => !row.connection && row.manual)
-						.map((row) => (
-							<div
-								key={row.id}
-								className="flex flex-wrap items-center gap-3 border-b border-border py-3"
-								data-testid={`sync-device-${row.id}`}
-							>
-								<div className="min-w-0 flex-1">
-									<p className="text-ui">{row.name}</p>
-									<p className="text-xs text-muted-foreground">
-										{t("replication.recordOnly")} ·{" "}
-										{row.manual?.lastRecordedAt
-											? new Date(row.manual.lastRecordedAt).toLocaleString()
-											: t("protection.never")}
-									</p>
+											options={(
+												["unconfigured", "send", "receive"] as const
+											).map((role) => ({
+												value: role,
+												label: t(`replicationUx.${role}`),
+											}))}
+											onValueChange={(role) => {
+												if (
+													role === "unconfigured" ||
+													role === "send" ||
+													role === "receive"
+												)
+													configure.mutate({
+														role,
+														name: name.trim() || state.name,
+														paused: state.paused,
+													})
+											}}
+										/>
+									</div>
+									<div className="flex flex-wrap items-center justify-between gap-3">
+										<span className="text-ui font-semibold text-foreground">
+											{t("replication.paused")}
+										</span>
+										<Switch
+											checked={state.paused}
+											onCheckedChange={(checked) =>
+												configure.mutate({
+													role: state.role,
+													name: state.name,
+													paused: checked,
+												})
+											}
+											aria-label={t("replication.paused")}
+										/>
+									</div>
 								</div>
-								<Button variant="ghost" onClick={() => setDetails(row.manual!)}>
-									{t("replication.details")}
-								</Button>
-								<Button
-									variant="ghost"
-									onClick={() =>
-										setEditing({
-											id: row.manual!.device.id,
-											name: row.name,
-											notes: row.manual!.device.notes,
-										})
-									}
-								>
-									{t("protection.metadata")}
-								</Button>
-								<Button
-									variant="secondary"
-									disabled={record.isPending}
-									onClick={() =>
-										record.mutate({ deviceId: row.manual!.device.id })
-									}
-								>
-									{t("replication.record")}
-								</Button>
-								<Button
-									variant="ghost"
-									onClick={() =>
-										setRemoving({
-											recordId: row.manual!.device.id,
-											name: row.name,
-										})
-									}
-								>
-									{t("replication.remove")}
-								</Button>
-							</div>
-						))}
-				</details>
+								<p className="text-xs text-secondary-foreground">
+									{t(
+										state.role === "send"
+											? "replicationUx.sendHelp"
+											: "replicationUx.receiveHelp",
+									)}
+								</p>
+								<div className="flex flex-wrap gap-2">
+									{state.role === "send" && (
+										<PairingInviteButton disabled={!canInvite} />
+									)}
+									{state.role !== "send" && !state.source && (
+										<ConnectSenderButton onConnected={invalidate} />
+									)}
+									{state.source && (
+										<Button
+											disabled={
+												receive.isPending || state.receiving || state.paused
+											}
+											onClick={() => receive.mutate(undefined)}
+										>
+											{t("replication.receiveNow")}
+										</Button>
+									)}
+								</div>
+								{state.role === "send" && !canInvite && (
+									<RouterLink
+										to="/settings/backups"
+										className="text-xs underline"
+									>
+										{t("protectionUx.start")}
+									</RouterLink>
+								)}
+								{state.source && <ReceivedBackup source={state.source} />}
+							</>
+						)}
+						<ProtectionJobs activeOnly />
+					</div>
+				</SettingsSection>
 				<SectionDivider />
-				<ProtectionJobs activeOnly />
+				<SettingsSection
+					icon={Server}
+					title={t("replication.devices")}
+					layout="stack"
+					data-testid="replication-devices-section"
+				>
+					<div className="space-y-4">
+						{rows.length > 0 && (
+							<div className="flex flex-wrap items-center justify-between gap-3">
+								<span className="text-ui font-semibold text-foreground">
+									{t("sync.config.remindLabel")}
+								</span>
+								<DropdownSelect
+									value={String(summary?.remindDays ?? 7)}
+									disabled={remind.isPending}
+									options={SYNC_REMIND_DAYS_OPTIONS.map((days) => ({
+										value: String(days),
+										label: t("sync.config.remindDays", { count: days }),
+									}))}
+									onValueChange={(days) =>
+										remind.mutate({ days: Number(days) })
+									}
+								/>
+							</div>
+						)}
+						{rows.length === 0 ? (
+							<Empty className="py-8">
+								<EmptyHeader>
+									<EmptyMedia variant="icon">
+										<Icon icon={Server} className="size-6" />
+									</EmptyMedia>
+									<EmptyTitle>{t("replication.noDevices")}</EmptyTitle>
+								</EmptyHeader>
+							</Empty>
+						) : (
+							<div className="divide-y divide-border">
+								{rows
+									.filter((row) => row.connection)
+									.map((row) => (
+										<div
+											key={row.id}
+											className="flex flex-wrap items-center gap-3 py-4"
+											data-testid={`sync-device-${row.id}`}
+										>
+											<div className="min-w-0 flex-1">
+												<p className="text-ui">{row.name}</p>
+												<p className="mt-1 text-xs text-muted-foreground">
+													{row.connection
+														? t("replication.paired")
+														: t("replication.recordOnly")}{" "}
+													·{" "}
+													{row.connection
+														? row.connection.receivedAt
+															? `${t("replication.received")}: ${new Date(row.connection.receivedAt).toLocaleString()}`
+															: t("replication.never")
+														: row.manual?.lastRecordedAt
+															? new Date(
+																	row.manual.lastRecordedAt,
+																).toLocaleString()
+															: t("protection.never")}
+												</p>
+												{row.manual?.device.notes && (
+													<p className="mt-1 text-xs">
+														{row.manual.device.notes}
+													</p>
+												)}
+												{row.connection &&
+													lastRestore?.repositoryId === row.connection.id && (
+														<p className="mt-1 text-xs text-muted-foreground">
+															{t("protection.lastRestore")}:{" "}
+															{new Date(
+																lastRestore.restoredAt,
+															).toLocaleString()}{" "}
+															· {lastRestore.pointId.slice(0, 8)}
+															<br />
+															{t("protection.restoredEditable")}
+														</p>
+													)}
+											</div>
+											{rowActions(row)}
+										</div>
+									))}
+							</div>
+						)}
+						<div className="space-y-3" data-testid="external-sync-records">
+							<div>
+								<h3 className="text-ui font-semibold text-foreground">
+									{t("replicationUx.externalRecords")} (
+									{rows.filter((row) => !row.connection).length})
+								</h3>
+								<p className="mt-0.5 text-xs leading-5 text-muted-foreground">
+									{t("replicationUx.externalHelp")}
+								</p>
+							</div>
+							<Button
+								variant="secondary"
+								onClick={() => setEditing({ name: "", notes: "" })}
+								data-testid="sync-device-add"
+							>
+								{t("replicationUx.externalRecord")}
+							</Button>
+							<div className="divide-y divide-border">
+								{rows
+									.filter((row) => !row.connection && row.manual)
+									.map((row) => (
+										<div
+											key={row.id}
+											className="flex flex-wrap items-center gap-3 py-3"
+											data-testid={`sync-device-${row.id}`}
+										>
+											<div className="min-w-0 flex-1">
+												<p className="text-ui">{row.name}</p>
+												<p className="text-xs text-muted-foreground">
+													{t("replication.recordOnly")} ·{" "}
+													{row.manual?.lastRecordedAt
+														? new Date(
+																row.manual.lastRecordedAt,
+															).toLocaleString()
+														: t("protection.never")}
+												</p>
+											</div>
+											{rowActions(row)}
+										</div>
+									))}
+							</div>
+						</div>
+					</div>
+				</SettingsSection>
 			</div>
 			<AppDialog
 				open={editing !== null}
@@ -549,18 +613,53 @@ export function ReplicationPanel() {
 				onOpenChange={(open) => {
 					if (!open) setRemoving(null)
 				}}
-				title={t("replication.remove")}
+				title={t(
+					removing?.kind === "unlink"
+						? "replication.unlink"
+						: removing?.kind === "revoke"
+							? "replication.revoke"
+							: removing?.kind === "disconnect"
+								? "replication.disconnect"
+								: "replication.remove",
+				)}
 				description={removing?.name}
-				confirmLabel={t("replication.remove")}
+				confirmLabel={t(
+					removing?.kind === "unlink"
+						? "replication.unlink"
+						: removing?.kind === "revoke"
+							? "replication.revoke"
+							: removing?.kind === "disconnect"
+								? "replication.disconnect"
+								: "replication.remove",
+				)}
 				isPending={
-					deleteRecord.isPending || revoke.isPending || disconnect.isPending
+					deleteRecord.isPending ||
+					revoke.isPending ||
+					disconnect.isPending ||
+					link.isPending
 				}
 				onConfirm={() => {
-					if (removing?.recordId) deleteRecord.mutate({ id: removing.recordId })
-					else if (removing?.connectionId === state?.source?.id)
-						disconnect.mutate(undefined)
-					else if (removing?.connectionId)
-						revoke.mutate({ id: removing.connectionId })
+					if (!removing) return
+					switch (removing.kind) {
+						case "unlink":
+							if (removing.recordId)
+								link.mutate({
+									recordId: removing.recordId,
+									instanceId: null,
+								})
+							break
+						case "disconnect":
+							disconnect.mutate(undefined)
+							break
+						case "revoke":
+							if (removing.connectionId)
+								revoke.mutate({ id: removing.connectionId })
+							break
+						case "remove":
+							if (removing.recordId)
+								deleteRecord.mutate({ id: removing.recordId })
+							break
+					}
 				}}
 			/>
 			<AppDialog
@@ -625,6 +724,6 @@ export function ReplicationPanel() {
 					</div>
 				)}
 			</AppDialog>
-		</SettingsSheet>
+		</>
 	)
 }

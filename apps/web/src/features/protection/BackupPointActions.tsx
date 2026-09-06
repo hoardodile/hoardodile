@@ -84,7 +84,7 @@ export function BackupPointActions({
 					</summary>
 					<div className="flex flex-wrap gap-2">
 						<Button
-							variant="ghost"
+							variant="secondary"
 							disabled={compare.isPending}
 							onClick={() =>
 								compare.mutate({ repositoryId, pointId: point.id })
@@ -92,11 +92,11 @@ export function BackupPointActions({
 						>
 							{t("protection.compare")}
 						</Button>
-						<Button variant="ghost" onClick={() => setEditing(point)}>
+						<Button variant="secondary" onClick={() => setEditing(point)}>
 							{t("protection.metadata")}
 						</Button>
 						<Button
-							variant="ghost"
+							variant="secondary"
 							onClick={() => {
 								setDrillPoint(point)
 								setFullDrill(false)
@@ -105,7 +105,7 @@ export function BackupPointActions({
 							{t("protection.drill")}
 						</Button>
 						<Button
-							variant="ghost"
+							variant="secondary"
 							disabled={!canDelete}
 							onClick={() => setDeletePoint(point)}
 						>

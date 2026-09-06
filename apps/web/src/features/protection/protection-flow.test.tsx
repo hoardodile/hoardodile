@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { render, screen, waitFor } from "@testing-library/react"
+import { render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import type { ReactNode } from "react"
 import { afterEach, beforeAll, expect, it, vi } from "vitest"
@@ -124,6 +124,9 @@ it("requires a recovery key when opening an existing backup", async () => {
 	await user.click(
 		screen.getByRole("button", { name: "Open an existing backup" }),
 	)
+	expect(
+		screen.getByRole("button", { name: "Choose recovery key file" }),
+	).toBeInTheDocument()
 	expect(screen.getByTestId("initialize-backups")).toBeDisabled()
 	await user.upload(
 		screen.getByLabelText("Choose recovery key file"),
@@ -135,6 +138,11 @@ it("requires a recovery key when opening an existing backup", async () => {
 	)
 	await waitFor(() =>
 		expect(screen.getByTestId("initialize-backups")).toBeEnabled(),
+	)
+	await waitFor(() =>
+		expect(screen.getByTestId("recovery-key-file-name")).toHaveTextContent(
+			"recovery.json",
+		),
 	)
 	await user.click(screen.getByTestId("initialize-backups"))
 	await waitFor(() =>
@@ -297,9 +305,8 @@ it("starts sync setup from the device's purpose and keeps external records separ
 			paused: false,
 		}),
 	)
-	expect(screen.getByTestId("external-sync-records")).not.toHaveAttribute(
-		"open",
-	)
+	expect(screen.getByTestId("external-sync-records")).toBeInTheDocument()
+	expect(screen.getByTestId("sync-device-add")).toBeVisible()
 })
 
 it("gives a next step for low disk space while keeping diagnostic details collapsed", async () => {
@@ -316,4 +323,76 @@ it("gives a next step for low disk space while keeping diagnostic details collap
 	})
 	expect(await screen.findByText(/Not enough free space/)).toBeVisible()
 	expect(screen.getByText("Native diagnostic")).not.toBeVisible()
+})
+
+it("renders the unified settings sections without a page-level heading", async () => {
+	mount(<RecoveryPanel />, {
+		"protection.points": () => [point],
+	})
+	await screen.findByTestId("backup-summary")
+	expect(
+		screen.queryByRole("heading", { name: "Complete backups" }),
+	).not.toBeInTheDocument()
+	expect(screen.getByTestId("complete-backups-section")).toBeInTheDocument()
+	expect(screen.getByTestId("available-backups-section")).toBeInTheDocument()
+	expect(
+		within(screen.getByTestId("recent-operations-section")).queryByRole(
+			"heading",
+			{ name: "Recent operations" },
+		),
+	).not.toBeInTheDocument()
+	expect(screen.getByTestId("complete-backups")).toBeInTheDocument()
+})
+
+it("renders only the restore list while in restore-only mode", async () => {
+	mount(<RecoveryPanel restoreOnly />, {
+		"protection.points": () => [point],
+	})
+	await screen.findByTestId("available-backups-section")
+	expect(
+		screen.queryByTestId("complete-backups-section"),
+	).not.toBeInTheDocument()
+	expect(
+		screen.queryByTestId("recent-operations-section"),
+	).not.toBeInTheDocument()
+	expect(screen.getByTestId("complete-backups")).toBeInTheDocument()
+})
+
+it("renders the sync service settings as labeled rows", async () => {
+	mount(<ReplicationPanel />, {
+		"replication.status": () => ({
+			name: "Laptop",
+			role: "receive",
+			paused: false,
+			peers: [],
+			source: null,
+			links: {},
+		}),
+	})
+	await screen.findByLabelText("Service name")
+	expect(screen.getByRole("button", { name: "Save" })).toBeInTheDocument()
+	expect(screen.getByText("Role")).toBeInTheDocument()
+	expect(screen.getByRole("switch", { name: "Pause sync" })).toBeInTheDocument()
+	expect(
+		screen.getByRole("button", { name: "Connect to sender" }),
+	).toBeInTheDocument()
+})
+
+it("renders the sync page as two unified sections without a page-level heading", async () => {
+	mount(<ReplicationPanel />, {
+		"replication.status": () => ({
+			name: "Laptop",
+			role: "receive",
+			paused: false,
+			peers: [],
+			source: null,
+			links: {},
+		}),
+	})
+	await screen.findByTestId("replication-service-section")
+	expect(
+		screen.queryByRole("heading", { name: "Backup sync" }),
+	).not.toBeInTheDocument()
+	expect(screen.getByTestId("replication-devices-section")).toBeInTheDocument()
+	expect(screen.getByTestId("backup-sync")).toBeInTheDocument()
 })

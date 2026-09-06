@@ -43,7 +43,9 @@ export function ConnectSenderButton({
 	})
 	return (
 		<>
-			<Button onClick={() => setOpen(true)}>{t("replication.connect")}</Button>
+			<Button variant="secondary" onClick={() => setOpen(true)}>
+				{t("replication.connect")}
+			</Button>
 			<AppDialog
 				open={open}
 				onOpenChange={setOpen}
@@ -168,6 +170,7 @@ export function PairingInviteButton({ disabled }: { disabled: boolean }) {
 	return (
 		<>
 			<Button
+				variant="secondary"
 				disabled={disabled || invite.isPending}
 				onClick={() => invite.mutate(undefined)}
 			>

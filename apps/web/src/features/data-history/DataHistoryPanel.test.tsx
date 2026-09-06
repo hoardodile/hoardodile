@@ -24,7 +24,7 @@ afterEach(() => {
 	for (const client of clients.splice(0)) client.clear()
 })
 
-function setup(readOnly = false) {
+function setup(readOnly = false, embedded = false) {
 	const versions: RouterOutputs["version"]["list"] = [
 		{
 			version: 1,
@@ -59,7 +59,7 @@ function setup(readOnly = false) {
 	clients.push(client)
 	render(
 		<QueryClientProvider client={client}>
-			<DataHistoryPanel />
+			<DataHistoryPanel embedded={embedded} />
 		</QueryClientProvider>,
 	)
 	return { select, metadata, create, user: userEvent.setup() }
@@ -116,4 +116,18 @@ it("starts archive publication as a job after the typed confirmation", async () 
 	await waitFor(() =>
 		expect(create).toHaveBeenCalledWith({ note: "Milestone" }),
 	)
+})
+
+it("opens the latest archive in the detail pane by default", async () => {
+	setup()
+	await screen.findByTestId("archive-2")
+	expect(screen.getByTestId("detail-archive-2")).toBeInTheDocument()
+})
+
+it("drops its own title when embedded while keeping the archive controls", async () => {
+	setup(false, true)
+	await screen.findByTestId("archive-2")
+	expect(screen.queryByText("Historical archives")).not.toBeInTheDocument()
+	expect(screen.getByTestId("create-archive")).toBeInTheDocument()
+	expect(screen.getByTestId("archive-status")).toBeInTheDocument()
 })

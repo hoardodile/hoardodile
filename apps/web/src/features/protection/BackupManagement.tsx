@@ -91,7 +91,7 @@ export function BackupManagement({ repositoryId }: { repositoryId: string }) {
 						{t("protection.checkFull")}
 					</Button>
 					<Button
-						variant="ghost"
+						variant="secondary"
 						disabled={key.isPending || !configured}
 						onClick={() => key.mutate({ repositoryId })}
 					>

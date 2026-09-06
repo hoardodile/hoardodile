@@ -9,10 +9,15 @@ test("complete backup, confirmed restore, and manual device management", async (
 	await login(page)
 	await page.goto("/settings/backups")
 	await expect(page.getByTestId("complete-backups")).toBeVisible()
+	await expect(page.getByTestId("complete-backups-section")).toBeVisible()
+	await expect(page.getByTestId("recent-operations-section")).toBeVisible()
+	await expect(page.getByTestId("archives-section")).toBeVisible()
 	await page.getByTestId("setup-new-backup").click()
 	await page.getByTestId("initialize-backups").click()
 	const point = page.locator('[data-testid^="recovery-point-"]').first()
 	await expect(point).toBeVisible({ timeout: 90_000 })
+	// Available backups only exists once a repository is configured.
+	await expect(page.getByTestId("available-backups-section")).toBeVisible()
 	const download = page.waitForEvent("download")
 	await page.getByTestId("recovery-key-notice").getByRole("button").click()
 	expect((await download).suggestedFilename()).toBe(
@@ -40,7 +45,8 @@ test("complete backup, confirmed restore, and manual device management", async (
 	await expect(page.getByTestId("app-sidebar")).toBeVisible({ timeout: 30_000 })
 	await page.goto("/settings/sync")
 	await expect(page.getByTestId("backup-sync")).toBeVisible()
-	await page.getByTestId("external-sync-records").locator("summary").click()
+	await expect(page.getByTestId("replication-service-section")).toBeVisible()
+	await expect(page.getByTestId("replication-devices-section")).toBeVisible()
 	await page.getByTestId("sync-device-add").click()
 	await page
 		.getByRole("dialog")
