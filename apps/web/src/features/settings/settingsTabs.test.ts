@@ -12,6 +12,7 @@ describe("settingsTabs", () => {
 			"desktop",
 			"plugins",
 			"marketplace",
+			"archives",
 			"archive",
 			"sync",
 			"about",

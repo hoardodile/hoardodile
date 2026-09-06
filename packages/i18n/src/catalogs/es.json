@@ -320,7 +320,8 @@
 			"desktop": "Escritorio",
 			"custom": "Personalizado",
 			"privacy": "Privacidad",
-			"archive": "Copias y archivos",
+			"archives": "Archivos",
+			"archive": "Copias",
 			"plugins": "Complementos",
 			"marketplace": "Mercado",
 			"sync": "Sincronización"

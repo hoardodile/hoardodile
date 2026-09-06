@@ -320,7 +320,8 @@
 			"desktop": "桌面",
 			"custom": "自制",
 			"privacy": "隐私",
-			"archive": "备份与归档",
+			"archives": "归档",
+			"archive": "备份",
 			"plugins": "插件",
 			"marketplace": "插件市场",
 			"sync": "同步"

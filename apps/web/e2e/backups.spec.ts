@@ -11,7 +11,12 @@ test("complete backup, confirmed restore, and manual device management", async (
 	await expect(page.getByTestId("complete-backups")).toBeVisible()
 	await expect(page.getByTestId("complete-backups-section")).toBeVisible()
 	await expect(page.getByTestId("recent-operations-section")).toBeVisible()
+	await expect(page.getByTestId("archives-section")).not.toBeVisible()
+	// The historical archives live on their own tab above the backups tab.
+	await page.goto("/settings/archives")
 	await expect(page.getByTestId("archives-section")).toBeVisible()
+	await expect(page.getByTestId("create-archive")).toBeVisible()
+	await page.goto("/settings/backups")
 	await page.getByTestId("setup-new-backup").click()
 	await page.getByTestId("initialize-backups").click()
 	const point = page.locator('[data-testid^="recovery-point-"]').first()

@@ -2,6 +2,7 @@ import type { IconType } from "@hoardodile/ui/components/icon"
 import {
 	Archive,
 	Database,
+	History,
 	InfoCircle,
 	PlugCircle,
 	RefreshCircle,
@@ -20,6 +21,7 @@ export type SettingsTabKey =
 	| "custom"
 	| "privacy"
 	| "archive"
+	| "archives"
 	| "plugins"
 	| "marketplace"
 	| "sync"
@@ -34,6 +36,7 @@ export type SettingsTab = {
 		| "/settings/custom"
 		| "/settings/privacy"
 		| "/settings/backups"
+		| "/settings/archives"
 		| "/settings/plugins"
 		| "/settings/marketplace"
 		| "/settings/sync"
@@ -86,6 +89,12 @@ export const SETTINGS_TABS: readonly SettingsTab[] = [
 		path: "/settings/marketplace",
 		icon: Shop2,
 		testId: "me-tab-marketplace",
+	},
+	{
+		key: "archives",
+		path: "/settings/archives",
+		icon: History,
+		testId: "me-tab-archives",
 	},
 	{
 		key: "archive",
