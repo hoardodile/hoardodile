@@ -39,10 +39,12 @@ const testPassword = "correct horse battery staple"
 const repoRoot = resolve(import.meta.dirname, "..", "..")
 
 // The preview-window e2e spec drives a real gallery plugin iframe, so
-// the e2e server loads the built plugin dist as a dev plugin. The dist is
-// NOT built here on purpose — run `pnpm build:pkgs` once before test:e2e
-// (or the plugin's own build when pointing E2E_PLUGIN_DIRS at an external
-// plugin repo).
+// the e2e server seeds the built plugin dist into the versioned plugin
+// store like a regular installed package (SEED_PLUGIN_PATHS). Dev
+// plugins would block complete backups and archives, which the backups
+// spec exercises. The dist is NOT built here on purpose — run
+// `pnpm build:pkgs` once before test:e2e (or the plugin's own build
+// when pointing E2E_PLUGIN_DIRS at an external plugin repo).
 const devPluginDirs = (
 	process.env.E2E_PLUGIN_DIRS ?? resolve(repoRoot, "plugins", "gallery", "dist")
 )
@@ -125,7 +127,7 @@ export default defineConfig({
 							STORAGE_ROOT: storageRoot,
 							BACKUP_ROOT: resolve(storageRoot, "backups"),
 							RESTART_ON_RESTORE: "false",
-							DEV_PLUGIN_PATHS: devPluginDirs.join(","),
+							SEED_PLUGIN_PATHS: devPluginDirs.join(","),
 							// The plugin-consent fixture downloads from the
 							// loopback runtime fixture server.
 							PLUGIN_DOWNLOAD_ALLOW_PRIVATE: "true",

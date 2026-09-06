@@ -5,7 +5,7 @@ import { solidPng } from "./testArchive"
 import { idFromTrpcJson } from "./trpcResourceCreate"
 
 const SERVER = `http://127.0.0.1:${process.env.E2E_SERVER_PORT ?? "3001"}`
-// The preinstalled gallery plugin (see playwright.config.ts DEV_PLUGIN_PATHS).
+// The preinstalled gallery plugin (see playwright.config.ts SEED_PLUGIN_PATHS).
 const GALLERY_PLUGIN_ID = "665cfbdd-1db6-48f5-9d53-1008b8cb84c3"
 
 test.describe("message anchor jump (real browser)", () => {
