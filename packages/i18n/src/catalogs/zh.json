@@ -2320,6 +2320,7 @@
 		}
 	},
 	"protectionUx": {
+		"protectionTitle": "保护",
 		"setup": "设置备份",
 		"noBackup": "还没有本机备份",
 		"setupHelp": "一起保存存储库、文件和各版本的插件。",

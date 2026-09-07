@@ -2320,6 +2320,7 @@
 		}
 	},
 	"protectionUx": {
+		"protectionTitle": "Schutz",
 		"setup": "Sicherungen einrichten",
 		"noBackup": "Noch keine lokale Sicherung",
 		"setupHelp": "Bibliothek, Dateien und versionierte Plugins gemeinsam sichern.",

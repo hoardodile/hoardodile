@@ -28,6 +28,7 @@ import { BackupPointActions } from "./BackupPointActions"
 import { BackupSetupWizard } from "./BackupSetupWizard"
 import { BackupStatusHeader } from "./BackupStatusHeader"
 import { ProtectionJobs } from "./ProtectionJobs"
+import { ReplicationPanel } from "./ReplicationPanel"
 import { useSyncHealth } from "./syncHealth"
 
 function wasKeyDownloaded(key: string | undefined) {
@@ -101,24 +102,18 @@ export function RecoveryPanel({
 			<SettingsSection
 				key="complete-backups"
 				icon={Database}
-				title={t("protection.title")}
+				title={t("protectionUx.protectionTitle")}
 				description={t("protectionUx.description")}
 				layout="stack"
 				data-testid="complete-backups-section"
 			>
-				<div className="space-y-5">
-					{localConfigured || health.hasReceivedBackup ? (
-						<BackupStatusHeader />
-					) : (
-						<section className="space-y-4" aria-label={t("protectionUx.setup")}>
-							<div>
-								<p className="text-ui font-medium text-foreground">
-									{t("backupHealth.noBackupsTitle")}
-								</p>
-								<p className="mt-1 text-xs text-muted-foreground">
-									{t("backupHealth.noBackupsSub")}
-								</p>
-							</div>
+				<div className="space-y-6">
+					<BackupStatusHeader />
+					<div className="space-y-4">
+						<div className="text-base font-semibold text-foreground">
+							{t("protection.title")}
+						</div>
+						{!localConfigured && !health.hasReceivedBackup ? (
 							<div className="grid gap-3">
 								<button
 									type="button"
@@ -147,56 +142,62 @@ export function RecoveryPanel({
 									</span>
 								</button>
 							</div>
-						</section>
-					)}
-					{localConfigured && (
-						<section
-							className="space-y-3"
-							aria-label={t("protectionUx.status")}
-						>
-							<p className="break-all text-xs">
-								{t("protection.folder")}: {status.data?.backupRoot}
-							</p>
-							<p className="text-xs text-secondary-foreground">
-								{t("protectionUx.locationHelp")}
-							</p>
-							<div className="flex flex-wrap items-center gap-4">
-								<div className="flex items-center gap-2 text-xs">
-									<Switch
-										checked={status.data?.enabled ?? false}
-										disabled={enabled.isPending}
-										onCheckedChange={(checked) =>
-											enabled.mutate({ enabled: checked })
-										}
-										aria-label={t("protection.automatic")}
-									/>
-									<span>{t("protection.automatic")}</span>
-								</div>
-							</div>
-							{!keySaved && (
-								<div
-									className="flex flex-wrap items-center gap-3 rounded-lg bg-muted p-4"
-									data-testid="recovery-key-notice"
-								>
-									<div className="min-w-0 flex-1">
-										<p className="text-ui font-medium">
-											{t("protectionUx.saveKey")}
-										</p>
-										<p className="mt-1 text-xs text-secondary-foreground">
-											{t("protection.keyHelp")}
-										</p>
+						) : localConfigured ? (
+							<section
+								className="space-y-3"
+								aria-label={t("protectionUx.status")}
+							>
+								<p className="break-all text-xs">
+									{t("protection.folder")}: {status.data?.backupRoot}
+								</p>
+								<p className="text-xs text-secondary-foreground">
+									{t("protectionUx.locationHelp")}
+								</p>
+								<div className="flex flex-wrap items-center gap-4">
+									<div className="flex items-center gap-2 text-xs">
+										<Switch
+											checked={status.data?.enabled ?? false}
+											disabled={enabled.isPending}
+											onCheckedChange={(checked) =>
+												enabled.mutate({ enabled: checked })
+											}
+											aria-label={t("protection.automatic")}
+										/>
+										<span>{t("protection.automatic")}</span>
 									</div>
-									<Button
-										variant="secondary"
-										disabled={key.isPending}
-										onClick={() => key.mutate({ repositoryId: "local" })}
-									>
-										{t("protection.key")}
-									</Button>
 								</div>
-							)}
-						</section>
-					)}
+								{!keySaved && (
+									<div
+										className="flex flex-wrap items-center gap-3 rounded-lg bg-muted p-4"
+										data-testid="recovery-key-notice"
+									>
+										<div className="min-w-0 flex-1">
+											<p className="text-ui font-medium">
+												{t("protectionUx.saveKey")}
+											</p>
+											<p className="mt-1 text-xs text-secondary-foreground">
+												{t("protection.keyHelp")}
+											</p>
+										</div>
+										<Button
+											variant="secondary"
+											disabled={key.isPending}
+											onClick={() => key.mutate({ repositoryId: "local" })}
+										>
+											{t("protection.key")}
+										</Button>
+									</div>
+								)}
+							</section>
+						) : null}
+					</div>
+					<div className="my-6 h-px bg-border" aria-hidden="true" />
+					<div className="space-y-4">
+						<div className="text-base font-semibold text-foreground">
+							{t("replication.title")}
+						</div>
+						<ReplicationPanel embedded />
+					</div>
 				</div>
 			</SettingsSection>,
 		)

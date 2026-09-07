@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { render, screen, waitFor } from "@testing-library/react"
+import { render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import type { ReactNode } from "react"
 import { afterEach, beforeAll, expect, it, vi } from "vitest"
@@ -327,6 +327,16 @@ it("renders the unified settings sections without a page-level heading", async (
 		screen.queryByTestId("recent-operations-section"),
 	).not.toBeInTheDocument()
 	expect(screen.getByTestId("complete-backups")).toBeInTheDocument()
+})
+
+it("merges local and offsite protection into one section", async () => {
+	mount(<RecoveryPanel />, {
+		"protection.points": () => [point],
+	})
+	const section = within(await screen.findByTestId("complete-backups-section"))
+	expect(section.getByText("On this device")).toBeInTheDocument()
+	expect(section.getByText("Offsite copy")).toBeInTheDocument()
+	expect(section.getByTestId("backup-sync")).toBeInTheDocument()
 })
 
 it("renders only the restore list while in restore-only mode", async () => {

@@ -2320,6 +2320,7 @@
 		}
 	},
 	"protectionUx": {
+		"protectionTitle": "Protección",
 		"setup": "Configurar copias",
 		"noBackup": "Aún no hay copias locales",
 		"setupHelp": "Guarda la biblioteca, los archivos y los plugins de cada versión.",

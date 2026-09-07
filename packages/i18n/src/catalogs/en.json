@@ -2320,6 +2320,7 @@
 		}
 	},
 	"protectionUx": {
+		"protectionTitle": "Protection",
 		"setup": "Set up backups",
 		"noBackup": "No local backup yet",
 		"setupHelp": "Save your library, files, and versioned plugins together.",
