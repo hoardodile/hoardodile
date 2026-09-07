@@ -28,6 +28,7 @@ import { BackupPointActions } from "./BackupPointActions"
 import { BackupSetupWizard } from "./BackupSetupWizard"
 import { BackupStatusHeader } from "./BackupStatusHeader"
 import { ProtectionJobs } from "./ProtectionJobs"
+import { useSyncHealth } from "./syncHealth"
 
 function wasKeyDownloaded(key: string | undefined) {
 	try {
@@ -45,6 +46,7 @@ export function RecoveryPanel({
 	const { t } = useTranslation()
 	const qc = useQueryClient()
 	const status = useQuery(protectionStatusOptions())
+	const health = useSyncHealth()
 	const [selectedRepository, setSelectedRepository] = useState("local")
 	const [savedKey, setSavedKey] = useState<string>()
 	const [wizardMode, setWizardMode] = useState<"new" | "existing" | null>(null)
@@ -105,7 +107,7 @@ export function RecoveryPanel({
 				data-testid="complete-backups-section"
 			>
 				<div className="space-y-5">
-					{localConfigured ? (
+					{localConfigured || health.hasReceivedBackup ? (
 						<BackupStatusHeader />
 					) : (
 						<section className="space-y-4" aria-label={t("protectionUx.setup")}>

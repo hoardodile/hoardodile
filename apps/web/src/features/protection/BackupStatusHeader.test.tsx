@@ -90,7 +90,7 @@ it("reports the healthy state with the last backup and device count", async () =
 	})
 	expect(await screen.findByTestId("backup-health-ok")).toBeInTheDocument()
 	expect(
-		screen.getByText(/Your backups and sync are up to date/),
+		screen.getByText(/Your library is protected locally and offsite/),
 	).toBeInTheDocument()
 })
 
@@ -124,6 +124,29 @@ it("prompts to turn on automatic backups when backups are off", async () => {
 		screen.getByRole("button", { name: "Turn on automatic backups" }),
 	)
 	await waitFor(() => expect(enable).toHaveBeenCalledWith({ enabled: true }))
+})
+
+it("stays quiet for a receive-role device already holding a source backup", async () => {
+	mount({
+		"protection.status": () => ({ ...localStatus, repositories: [] }),
+		"replication.status": () => ({
+			role: "receive",
+			name: "Laptop",
+			paused: false,
+			source: { id: "sender", name: "Sender PC", receivedAt: Date.now() },
+			peers: [],
+		}),
+	})
+	expect(
+		await screen.findByTestId("backup-health-receiver"),
+	).toBeInTheDocument()
+	expect(
+		screen.queryByRole("button", { name: "Set up backups" }),
+	).not.toBeInTheDocument()
+	expect(
+		screen.queryByRole("button", { name: "Turn on automatic backups" }),
+	).not.toBeInTheDocument()
+	expect(screen.queryByTestId("complete-backup-now")).not.toBeInTheDocument()
 })
 
 it("prompts to add a synced device when backups are current but no device exists", async () => {

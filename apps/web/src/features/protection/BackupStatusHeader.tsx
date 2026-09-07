@@ -12,6 +12,7 @@ type HeaderMode =
 	| "noBackups"
 	| "backupOff"
 	| "backupNow"
+	| "receiver"
 	| "syncUnconfigured"
 	| "syncDue"
 	| "ok"
@@ -68,7 +69,9 @@ export function BackupStatusHeader({
 	)
 
 	// State priority: a library restore overrides everything; an unsafe backup
-	// beats any sync need; only a healthy backup reaches the sync checks.
+	// beats any sync need; only a healthy backup reaches the sync checks. A
+	// receive-role device that already holds a backup from its source needs no
+	// separate local backup, so the local-backup nudges fold into `receiver`.
 	let mode: HeaderMode
 	if (maintenance) mode = "maintenance"
 	else if (!localConfigured) mode = "noBackups"
@@ -77,6 +80,11 @@ export function BackupStatusHeader({
 	else if (health.count === 0) mode = "syncUnconfigured"
 	else if (health.dueCount > 0 || health.paused) mode = "syncDue"
 	else mode = "ok"
+	if (
+		health.hasReceivedBackup &&
+		(mode === "noBackups" || mode === "backupOff" || mode === "backupNow")
+	)
+		mode = "receiver"
 
 	function scrollToSync() {
 		document
@@ -84,14 +92,20 @@ export function BackupStatusHeader({
 			?.scrollIntoView({ behavior: "smooth", block: "start" })
 	}
 
+	const remoteAt = health.connected.reduce(
+		(max, entry) => Math.max(max, entry.receivedAt ?? 0),
+		0,
+	)
+
 	const title = {
 		maintenance: t("protection.maintenance"),
 		noBackups: t("backupHealth.noBackupsTitle"),
 		backupOff: t("backupHealth.backupNeedsTitle"),
 		backupNow: t("backupHealth.backupNeedsTitle"),
+		receiver: t("backupHealth.receiverTitle"),
 		syncUnconfigured: t("backupHealth.syncUnconfiguredTitle"),
 		syncDue: t("backupHealth.syncDueTitle"),
-		ok: t("backupHealth.ok"),
+		ok: t("backupHealth.protectedTitle"),
 	}[mode]
 
 	const sub: Record<HeaderMode, string> = {
@@ -101,11 +115,14 @@ export function BackupStatusHeader({
 		noBackups: t("backupHealth.noBackupsSub"),
 		backupOff: t("backupHealth.backupOffSub"),
 		backupNow: t("backupHealth.neverBackedUpSub"),
+		receiver: t("backupHealth.receiverSub"),
 		syncUnconfigured: t("backupHealth.syncUnconfiguredSub"),
 		syncDue: t("backupHealth.syncDueSub"),
-		ok: t("backupHealth.okSub", {
-			time: new Date(lastBackupAt ?? Date.now()).toLocaleString(),
-			devices: t("backupHealth.syncedDevices", { count: health.count }),
+		ok: t("backupHealth.protectedSub", {
+			local: new Date(lastBackupAt ?? Date.now()).toLocaleString(),
+			remote: remoteAt
+				? new Date(remoteAt).toLocaleString()
+				: t("protection.never"),
 		}),
 	}
 
@@ -135,6 +152,7 @@ export function BackupStatusHeader({
 				{t("backupHealth.backupNow")}
 			</Button>
 		),
+		receiver: null,
 		syncUnconfigured: (
 			<Button onClick={scrollToSync}>
 				{t("backupHealth.syncUnconfiguredAction")}

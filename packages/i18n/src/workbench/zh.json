@@ -39,7 +39,7 @@
 		"columnCache": "缓存",
 		"resetPrefs": "重置设置",
 		"clearCache": "清空缓存",
-		"restoreState": "从资料库恢复",
+		"restoreState": "从存储库恢复",
 		"resetPrefsConfirmTitle": "重置插件设置？",
 		"resetPrefsConfirmDescription": "插件将看到空的设置，直至您将其恢复。",
 		"clearCacheConfirmTitle": "清空插件缓存？",

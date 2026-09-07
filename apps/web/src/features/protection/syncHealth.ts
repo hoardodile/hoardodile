@@ -18,6 +18,9 @@ export function useSyncHealth() {
 		(entry) => !entry.receivedAt || Date.now() - entry.receivedAt > threshold,
 	)
 	const dueCount = dueConnections.length
+	const role = replication?.role ?? null
+	const hasReceivedBackup =
+		role === "receive" && Boolean(replication?.source?.receivedAt)
 	return {
 		loaded: replication !== undefined,
 		connected,
@@ -25,6 +28,9 @@ export function useSyncHealth() {
 		count: connected.length,
 		dueCount,
 		paused: replication?.paused ?? false,
+		role,
+		/** A receive-role device that has pulled at least one backup. */
+		hasReceivedBackup,
 		labelKey:
 			dueCount || replication?.paused
 				? "replication.healthAttention"
