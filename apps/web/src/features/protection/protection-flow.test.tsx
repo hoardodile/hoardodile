@@ -354,6 +354,101 @@ it("shows the share option once a local backup exists", async () => {
 	).not.toBeInTheDocument()
 })
 
+it("hides the sender role option in the Role dropdown without a local backup", async () => {
+	mount(<ReplicationPanel />, {
+		"protection.status": () => ({
+			...status,
+			repositories: [{ id: "local", name: "Local backups" }],
+		}),
+		"replication.status": () => ({
+			name: "Laptop",
+			role: "receive",
+			paused: false,
+			peers: [],
+			source: null,
+		}),
+	})
+	const user = userEvent.setup()
+	await user.click(await screen.findByRole("button", { name: "Role" }))
+	await screen.findByRole("menuitemradio", {
+		name: "Hold another device's backups",
+	})
+	expect(
+		screen.queryByRole("menuitemradio", {
+			name: "Share this device's backups",
+		}),
+	).not.toBeInTheDocument()
+	expect(
+		screen.getByRole("menuitemradio", {
+			name: "Choose how to use this device",
+		}),
+	).toBeInTheDocument()
+})
+
+it("shows the sender role option in the Role dropdown once a local backup exists", async () => {
+	mount(<ReplicationPanel />, {
+		"protection.status": () => ({
+			...status,
+			repositories: [{ id: "local", name: "Local backups" }],
+			lastBackupAt: 1_700_000_000_000,
+		}),
+		"replication.status": () => ({
+			name: "Laptop",
+			role: "receive",
+			paused: false,
+			peers: [],
+			source: null,
+		}),
+	})
+	const user = userEvent.setup()
+	await user.click(await screen.findByRole("button", { name: "Role" }))
+	await screen.findByRole("menuitemradio", {
+		name: "Share this device's backups",
+	})
+	expect(
+		screen.getByRole("menuitemradio", {
+			name: "Hold another device's backups",
+		}),
+	).toBeInTheDocument()
+})
+
+it("switches to the connect flow after choosing to hold another device's backups", async () => {
+	let role: "unconfigured" | "send" | "receive" = "unconfigured"
+	const configure = vi.fn(async (input: unknown) => {
+		role = (input as { role: "receive" }).role
+		return {}
+	})
+	mount(<RecoveryPanel />, {
+		"protection.status": () => ({ ...status, repositories: [] }),
+		"replication.status": () => ({
+			name: "Laptop",
+			role,
+			paused: false,
+			source: null,
+			peers: [],
+		}),
+		"replication.configure": configure,
+	})
+	const user = userEvent.setup()
+	const receive = await screen.findByTestId("setup-sync-receive")
+	await waitFor(() => expect(receive).toBeEnabled())
+	await user.click(receive)
+	await waitFor(() =>
+		expect(configure).toHaveBeenCalledWith({
+			role: "receive",
+			name: "Laptop",
+			paused: false,
+		}),
+	)
+	// After the role flips to receive, the setup grid is replaced by the sync
+	// service's connect-to-sender flow.
+	expect(
+		await screen.findByRole("button", { name: "Connect to sender" }),
+	).toBeInTheDocument()
+	expect(screen.queryByTestId("setup-new-backup")).not.toBeInTheDocument()
+	expect(screen.getByTestId("backup-sync")).toBeInTheDocument()
+})
+
 it("gives a next step for low disk space while keeping diagnostic details collapsed", async () => {
 	mount(<ProtectionJobs activeOnly />, {
 		"protection.jobs": () => [
@@ -415,6 +510,7 @@ it("offers three setup options when there is no local backup", async () => {
 	const receive = screen.getByTestId("setup-sync-receive")
 	expect(receive).toBeInTheDocument()
 	expect(screen.queryByTestId("setup-sync-send")).not.toBeInTheDocument()
+	expect(screen.queryByTestId("backup-sync")).not.toBeInTheDocument()
 	await waitFor(() => expect(receive).toBeEnabled())
 	await user.click(receive)
 	await waitFor(() =>
