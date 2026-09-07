@@ -13,11 +13,10 @@ export const Route = createFileRoute("/settings/backups")({
 })
 
 /**
- * Backups settings tab: complete recovery points and their jobs
- * (RecoveryPanel renders its own "Complete backups", "Available backups"
- * and "Recent operations" sections) followed by the backup-sync service
- * and its paired devices (ReplicationPanel) — backups and backup sync
- * live on one page.
+ * Backups settings tab: the "Backups" section (RecoveryPanel — which leads
+ * with either the health verdict or the inline setup chooser) and the
+ * backup-sync service (paired devices). Backups and backup sync live on
+ * one page.
  */
 function BackupsSettingsRoute() {
 	return (

@@ -80,6 +80,14 @@ it("keeps the selected recovery point bound while the list refreshes and require
 			}),
 			"protection.points": () => points,
 			"protection.jobs": () => [],
+			"replication.status": () => ({
+				role: "receive",
+				name: "Laptop",
+				paused: false,
+				source: null,
+				peers: [],
+			}),
+			"sync.summary": () => ({ remindDays: 7 }),
 			"protection.prepareRestore": () => ({ id: planId, point }),
 			"protection.restore": restore,
 			"protection.drill": drill,
@@ -97,7 +105,7 @@ it("keeps the selected recovery point bound while the list refreshes and require
 	const row = await screen.findByTestId(`recovery-point-${id}`)
 	expect(restore).not.toHaveBeenCalled()
 	await user.click(within(row).getByText("Selected backup"))
-	await user.click(within(row).getByText("More backup actions"))
+	await user.click(within(row).getByText("Advanced backup actions"))
 	await user.click(within(row).getByRole("button", { name: "Recovery drill" }))
 	await user.click(
 		screen.getByRole("checkbox", {

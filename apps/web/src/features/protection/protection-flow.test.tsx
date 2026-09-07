@@ -1,11 +1,10 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { render, screen, waitFor, within } from "@testing-library/react"
+import { render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import type { ReactNode } from "react"
 import { afterEach, beforeAll, expect, it, vi } from "vitest"
 import { i18n } from "@/i18n"
 import { setTrpcClient, type TRPCClient } from "@/trpc/client"
-import { BackupSetup } from "./BackupSetup"
 import { ProtectionJobs } from "./ProtectionJobs"
 import { ReceivedBackup } from "./ReceivedBackup"
 import { RecoveryPanel } from "./RecoveryPanel"
@@ -49,6 +48,13 @@ function mount(
 		"protection.status": () => status,
 		"protection.points": () => [],
 		"protection.jobs": () => [],
+		"replication.status": () => ({
+			role: "receive",
+			name: "Laptop",
+			paused: false,
+			source: null,
+			peers: [],
+		}),
 		"sync.summary": () => ({ remindDays: 7 }),
 		...handlers,
 	}
@@ -80,55 +86,43 @@ function mount(
 	)
 }
 
+/** The Backups tab composition (recovery panel leads with the health verdict). */
+function Page() {
+	return <RecoveryPanel />
+}
+
 it("guides a new backup without asking for a recovery key first", async () => {
 	const initialize = vi.fn(async () => ({ id: "backup-job" }))
-	const started = vi.fn()
-	mount(
-		<BackupSetup
-			backupRoot="Configured folder"
-			repositoryPath="Configured folder/local"
-			onStarted={started}
-		/>,
-		{
-			"protection.initialize": initialize,
-		},
-	)
+	mount(<Page />, {
+		"protection.status": () => ({ ...status, repositories: [] }),
+		"protection.initialize": initialize,
+	})
 	const user = userEvent.setup()
-	expect(
-		screen.queryByLabelText("Existing repository recovery key (optional)"),
-	).not.toBeInTheDocument()
-	await user.click(screen.getByTestId("setup-new-backup"))
+	await user.click(await screen.findByTestId("setup-new-backup"))
 	expect(screen.getByText(/Large libraries take longer/)).toBeInTheDocument()
+	expect(screen.queryByLabelText("Recovery passphrase")).not.toBeInTheDocument()
 	expect(initialize).not.toHaveBeenCalled()
 	await user.click(screen.getByTestId("initialize-backups"))
 	await waitFor(() =>
 		expect(initialize).toHaveBeenCalledWith({ recoveryKey: undefined }),
 	)
-	expect(started).toHaveBeenCalledOnce()
+	expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
 })
 
 it("requires a recovery key when opening an existing backup", async () => {
 	const initialize = vi.fn(async () => null)
-	mount(
-		<BackupSetup
-			backupRoot="Configured folder"
-			repositoryPath="Configured folder/local"
-			onStarted={() => {}}
-		/>,
-		{
-			"protection.initialize": initialize,
-		},
-	)
+	mount(<Page />, {
+		"protection.status": () => ({ ...status, repositories: [] }),
+		"protection.initialize": initialize,
+	})
 	const user = userEvent.setup()
-	await user.click(
-		screen.getByRole("button", { name: "Open an existing backup" }),
-	)
+	await user.click(screen.getByTestId("setup-existing-backup"))
 	expect(
-		screen.getByRole("button", { name: "Choose recovery key file" }),
+		screen.getByLabelText("Choose recovery passphrase file"),
 	).toBeInTheDocument()
 	expect(screen.getByTestId("initialize-backups")).toBeDisabled()
 	await user.upload(
-		screen.getByLabelText("Choose recovery key file"),
+		screen.getByLabelText("Choose recovery passphrase file"),
 		new File(
 			[JSON.stringify({ key: "my-secret", format: "hoardodile-restic-v1" })],
 			"recovery.json",
@@ -154,8 +148,8 @@ it("requires a recovery key when opening an existing backup", async () => {
 	)
 })
 
-it("distinguishes first-backup progress from a completed backup", async () => {
-	mount(<RecoveryPanel />, {
+it("surfaces first-backup progress in the health header", async () => {
+	mount(<Page />, {
 		"protection.jobs": () => [
 			{
 				id: "first",
@@ -165,22 +159,21 @@ it("distinguishes first-backup progress from a completed backup", async () => {
 			},
 		],
 	})
-	expect(await screen.findByTestId("backup-summary")).toHaveTextContent(
-		"Creating the first backup",
-	)
-	expect(screen.queryByText(/Last completed backup:/)).not.toBeInTheDocument()
+	expect(
+		await screen.findByTestId("backup-health-backupNow"),
+	).toBeInTheDocument()
 	expect(screen.getByTestId("complete-backup-now")).toBeDisabled()
 	expect(screen.getByTestId("recovery-key-notice")).toBeVisible()
 })
 
-it("starts a daily manual backup directly while advanced tools remain collapsed", async () => {
+it("starts a manual backup directly while advanced tools remain collapsed", async () => {
 	const backup = vi.fn(async () => ({ id: "job" }))
-	mount(<RecoveryPanel />, {
+	mount(<Page />, {
 		"protection.points": () => [point],
 		"protection.backup": backup,
 	})
 	const user = userEvent.setup()
-	await screen.findByTestId("backup-summary")
+	await screen.findByTestId("complete-backup-now")
 	expect(screen.getByTestId("backup-management")).not.toHaveAttribute("open")
 	await user.click(screen.getByTestId("complete-backup-now"))
 	await waitFor(() =>
@@ -290,11 +283,8 @@ it("starts sync setup from the device's purpose without external records", async
 		"replication.configure": configure,
 	})
 	const user = userEvent.setup()
-	await user.click(
-		await screen.findByRole("button", {
-			name: "Receive another device's backups",
-		}),
-	)
+	await user.click(await screen.findByTestId("setup-sync-receive"))
+	await user.click(await screen.findByRole("button", { name: "Confirm" }))
 	await waitFor(() =>
 		expect(configure).toHaveBeenCalledWith({
 			role: "receive",
@@ -327,17 +317,14 @@ it("renders the unified settings sections without a page-level heading", async (
 	mount(<RecoveryPanel />, {
 		"protection.points": () => [point],
 	})
-	await screen.findByTestId("backup-summary")
+	await screen.findByTestId("available-backups-section")
 	expect(
 		screen.queryByRole("heading", { name: "Complete backups" }),
 	).not.toBeInTheDocument()
 	expect(screen.getByTestId("complete-backups-section")).toBeInTheDocument()
 	expect(screen.getByTestId("available-backups-section")).toBeInTheDocument()
 	expect(
-		within(screen.getByTestId("recent-operations-section")).queryByRole(
-			"heading",
-			{ name: "Recent operations" },
-		),
+		screen.queryByTestId("recent-operations-section"),
 	).not.toBeInTheDocument()
 	expect(screen.getByTestId("complete-backups")).toBeInTheDocument()
 })
@@ -369,7 +356,9 @@ it("renders the sync service settings as labeled rows", async () => {
 	await screen.findByLabelText("Service name")
 	expect(screen.getByRole("button", { name: "Save" })).toBeInTheDocument()
 	expect(screen.getByText("Role")).toBeInTheDocument()
-	expect(screen.getByRole("switch", { name: "Pause sync" })).toBeInTheDocument()
+	expect(
+		screen.getByRole("switch", { name: "Pause backup sync" }),
+	).toBeInTheDocument()
 	expect(
 		screen.getByRole("button", { name: "Connect to sender" }),
 	).toBeInTheDocument()
@@ -381,11 +370,17 @@ it("renders the backup-sync area as two unified sections without a page-level he
 			name: "Laptop",
 			role: "receive",
 			paused: false,
-			peers: [],
+			peers: [
+				{
+					id: "peer-1",
+					name: "Backup drive",
+					receivedAt: Date.now(),
+				},
+			],
 			source: null,
 		}),
 	})
-	await screen.findByTestId("replication-service-section")
+	await screen.findByText("Backup drive")
 	expect(
 		screen.queryByRole("heading", { name: "Backup sync" }),
 	).not.toBeInTheDocument()

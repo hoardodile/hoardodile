@@ -25,7 +25,8 @@ import {
 } from "./api"
 import { BackupManagement } from "./BackupManagement"
 import { BackupPointActions } from "./BackupPointActions"
-import { BackupSetup } from "./BackupSetup"
+import { BackupSetupWizard } from "./BackupSetupWizard"
+import { BackupStatusHeader } from "./BackupStatusHeader"
 import { ProtectionJobs } from "./ProtectionJobs"
 
 function wasKeyDownloaded(key: string | undefined) {
@@ -44,9 +45,9 @@ export function RecoveryPanel({
 	const { t } = useTranslation()
 	const qc = useQueryClient()
 	const status = useQuery(protectionStatusOptions())
-	const jobs = useQuery(protectionJobsOptions())
 	const [selectedRepository, setSelectedRepository] = useState("local")
 	const [savedKey, setSavedKey] = useState<string>()
+	const [wizardMode, setWizardMode] = useState<"new" | "existing" | null>(null)
 	const repositories = status.data?.repositories ?? []
 	const repository =
 		repositories.find((repo) => repo.id === selectedRepository) ??
@@ -57,22 +58,12 @@ export function RecoveryPanel({
 		...recoveryPointsOptions(repositoryId),
 		enabled: Boolean(repository),
 	})
-	const localPoints = useQuery({
-		...recoveryPointsOptions("local"),
-		enabled: localConfigured,
-	})
-	const latest = localPoints.data?.toSorted(
-		(a, b) => b.createdAt - a.createdAt,
-	)[0]
+	const jobs = useQuery(protectionJobsOptions())
+	const hasJobs = Boolean(jobs.data && jobs.data.length > 0)
 	const maintenance = Boolean(
 		status.data?.maintenance ||
 			status.data?.maintenanceActive ||
 			status.data?.maintenanceError,
-	)
-	const activeBackup = jobs.data?.find(
-		(job) =>
-			job.kind === "backup" &&
-			["queued", "running", "cancelling"].includes(job.state),
 	)
 	const keyStorage = status.data
 		? `hoardodile.recovery-key.${status.data.instanceId}`
@@ -81,10 +72,6 @@ export function RecoveryPanel({
 	const invalidate = async () => {
 		await qc.invalidateQueries({ queryKey: ["protection"] })
 	}
-	const backup = useToastMutation({
-		...trpcMutation("protection", "backup"),
-		onSuccess: invalidate,
-	})
 	const enabled = useToastMutation({
 		...trpcMutation("protection", "enabled"),
 		onSuccess: invalidate,
@@ -118,38 +105,53 @@ export function RecoveryPanel({
 				data-testid="complete-backups-section"
 			>
 				<div className="space-y-5">
-					{status.data && !localConfigured && !maintenance && (
-						<BackupSetup
-							backupRoot={status.data.backupRoot}
-							repositoryPath={status.data.localRepositoryPath}
-							onStarted={() => setSelectedRepository("local")}
-						/>
+					{localConfigured ? (
+						<BackupStatusHeader />
+					) : (
+						<section className="space-y-4" aria-label={t("protectionUx.setup")}>
+							<div>
+								<p className="text-ui font-medium text-foreground">
+									{t("backupHealth.noBackupsTitle")}
+								</p>
+								<p className="mt-1 text-xs text-muted-foreground">
+									{t("backupHealth.noBackupsSub")}
+								</p>
+							</div>
+							<div className="grid gap-3">
+								<button
+									type="button"
+									data-testid="setup-new-backup"
+									className="flex w-full flex-col items-start gap-1 rounded-lg bg-secondary px-4 py-4 text-left text-foreground transition-colors hover:bg-[color-mix(in_oklch,var(--secondary),var(--foreground)_5%)] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+									onClick={() => setWizardMode("new")}
+								>
+									<span className="text-ui font-medium">
+										{t("backupSetup.startNew")}
+									</span>
+									<span className="text-xs text-secondary-foreground">
+										{t("backupSetup.startNewHint")}
+									</span>
+								</button>
+								<button
+									type="button"
+									data-testid="setup-existing-backup"
+									className="flex w-full flex-col items-start gap-1 rounded-lg bg-secondary px-4 py-4 text-left text-foreground transition-colors hover:bg-[color-mix(in_oklch,var(--secondary),var(--foreground)_5%)] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+									onClick={() => setWizardMode("existing")}
+								>
+									<span className="text-ui font-medium">
+										{t("backupSetup.startExisting")}
+									</span>
+									<span className="text-xs text-secondary-foreground">
+										{t("backupSetup.startExistingHint")}
+									</span>
+								</button>
+							</div>
+						</section>
 					)}
 					{localConfigured && (
 						<section
 							className="space-y-3"
 							aria-label={t("protectionUx.status")}
 						>
-							<p className="text-ui font-medium" data-testid="backup-summary">
-								{activeBackup
-									? t(
-											latest
-												? "protectionUx.backupRunning"
-												: "protectionUx.firstBackupRunning",
-										)
-									: latest
-										? t("protectionUx.backupCompleted", {
-												time: new Date(latest.createdAt).toLocaleString(),
-											})
-										: t("protectionUx.firstBackupMissing")}
-							</p>
-							{latest && activeBackup && (
-								<p className="text-xs text-muted-foreground">
-									{t("protectionUx.backupCompleted", {
-										time: new Date(latest.createdAt).toLocaleString(),
-									})}
-								</p>
-							)}
 							<p className="break-all text-xs">
 								{t("protection.folder")}: {status.data?.backupRoot}
 							</p>
@@ -157,22 +159,6 @@ export function RecoveryPanel({
 								{t("protectionUx.locationHelp")}
 							</p>
 							<div className="flex flex-wrap items-center gap-4">
-								<Button
-									data-testid="complete-backup-now"
-									disabled={
-										backup.isPending || Boolean(activeBackup) || maintenance
-									}
-									onClick={() =>
-										backup.mutate({
-											name: "",
-											note: "",
-											kind: "manual",
-											pinned: true,
-										})
-									}
-								>
-									{t("protection.create")}
-								</Button>
 								<div className="flex items-center gap-2 text-xs">
 									<Switch
 										checked={status.data?.enabled ?? false}
@@ -209,7 +195,6 @@ export function RecoveryPanel({
 							)}
 						</section>
 					)}
-					<ProtectionJobs activeOnly />
 				</div>
 			</SettingsSection>,
 		)
@@ -253,21 +238,6 @@ export function RecoveryPanel({
 								</EmptyMedia>
 								<EmptyTitle>{t("protection.empty")}</EmptyTitle>
 							</EmptyHeader>
-							{!restoreOnly && !maintenance && (
-								<Button
-									disabled={backup.isPending || Boolean(activeBackup)}
-									onClick={() =>
-										backup.mutate({
-											name: "",
-											note: "",
-											kind: "manual",
-											pinned: true,
-										})
-									}
-								>
-									{t("protection.create")}
-								</Button>
-							)}
 						</Empty>
 					)}
 					{points.data && points.data.length > 0 && (
@@ -310,13 +280,14 @@ export function RecoveryPanel({
 			</SettingsSection>,
 		)
 	}
-	if (!restoreOnly) {
+	if (!restoreOnly && hasJobs) {
 		if (sections.length > 0) sections.push(<SectionDivider key="divider-2" />)
 		sections.push(
 			<SettingsSection
 				key="recent-operations"
 				icon={History}
 				title={t("protection.jobs")}
+				description={t("protectionUx.jobsHelp")}
 				layout="stack"
 				data-testid="recent-operations-section"
 			>
@@ -330,6 +301,14 @@ export function RecoveryPanel({
 			{status.isPending && <p>{t("common.loading")}</p>}
 			{status.error && <p role="alert">{status.error.message}</p>}
 			{sections}
+			<BackupSetupWizard
+				open={wizardMode !== null}
+				onOpenChange={(open) => {
+					if (!open) setWizardMode(null)
+				}}
+				onStarted={() => setWizardMode(null)}
+				mode={wizardMode ?? "new"}
+			/>
 		</div>
 	)
 }
