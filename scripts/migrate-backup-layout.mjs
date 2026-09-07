@@ -4,6 +4,9 @@
  * Defaults to inspection. Stop the service before adding --apply. Media stays
  * in place; the original database and old SQL backups remain under local/.
  * Frozen archives require their original plugin builds and are refused here.
+ * A supported legacy schema (e.g. v0.1.15, one migration behind) is upgraded
+ * in place during --apply; only an unarchived, current-or-single-behind
+ * library is accepted.
  *
  * node scripts/migrate-backup-layout.mjs <storageRoot> [--apply]
  *   [--builtin-dir <built-file-plugin-directory>]
@@ -23,7 +26,7 @@ import {
 	writeFileSync,
 } from "node:fs"
 import { createRequire } from "node:module"
-import { isAbsolute, join, relative, resolve, sep } from "node:path"
+import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path"
 import { pathToFileURL } from "node:url"
 import { WORKSPACE_ROOT } from "./lib/workspace.mjs"
 
@@ -82,23 +85,47 @@ function readState(work) {
 	return state.phase
 }
 
+/**
+ * Classify a library schema against the current migration journal.
+ * `"current"` matches the journal exactly. `"legacy"` is at least through the
+ * migration that introduces the host tables (0001) and a strict prefix of the
+ * journal — e.g. a v0.1.15 database, which is exactly one migration (0005)
+ * behind. `"future"` means the database was created by a newer application;
+ * anything else is `"unknown"`. Only `"current"` and `"legacy"` are supported
+ * here; `"legacy"` is upgraded in place during apply.
+ */
+function schemaKind(db) {
+	const applied = db
+		.prepare("SELECT created_at FROM __drizzle_migrations ORDER BY created_at")
+		.all()
+	const expected = json(join(MIGRATIONS, "meta/_journal.json")).entries
+	const isPrefix = (length) =>
+		applied.length === length &&
+		applied.every((entry, index) => entry.created_at === expected[index].when)
+	if (isPrefix(expected.length)) return "current"
+	if (
+		applied.length < expected.length &&
+		applied.length >= 2 &&
+		isPrefix(applied.length)
+	)
+		return "legacy"
+	return applied.length > expected.length ? "future" : "unknown"
+}
+
 function checkDatabase(db) {
 	const result = db.pragma("integrity_check")
 	if (result.length !== 1 || result[0].integrity_check !== "ok")
 		throw new Error("Database integrity check failed")
 	if (db.pragma("foreign_key_check").length)
 		throw new Error("Database contains broken foreign keys")
-	const applied = db
-		.prepare("SELECT created_at FROM __drizzle_migrations ORDER BY created_at")
-		.all()
-	const expected = json(join(MIGRATIONS, "meta/_journal.json")).entries
-	if (
-		applied.length !== expected.length ||
-		applied.some((entry, index) => entry.created_at !== expected[index].when)
-	)
+	const kind = schemaKind(db)
+	if (kind === "future")
+		throw new Error("This database requires a newer application version")
+	if (kind === "unknown")
 		throw new Error(
-			"Database schema is not current. This tool does not upgrade database schemas",
+			"Database schema is not current. This tool upgrades only an unarchived library at the supported legacy schema (e.g. v0.1.15)",
 		)
+	return kind
 }
 
 function hostRecords(db) {
@@ -136,8 +163,13 @@ function schemaDigest(db) {
 export function inspectBackupLayout(options) {
 	const root = realpathSync(resolve(options.root))
 	plain(root, "directory")
-	for (const name of ["local", "versions", "versions/1", "versions/1/plugins"])
+	// A minimal v0.1.15 library may have no `local/` (host state was never
+	// written) and no `versions/1/plugins/` (no plugins installed). Both are
+	// optional here and created as needed during apply.
+	for (const name of ["versions", "versions/1"])
 		plain(join(root, name), "directory")
+	for (const name of ["local", "versions/1/plugins"])
+		if (existsSync(join(root, name))) plain(join(root, name), "directory")
 	const work = join(root, "local", WORK_NAME)
 	const phase = readState(work)
 	if (existsSync(join(root, "local/host.sqlite"))) {
@@ -198,7 +230,8 @@ export function inspectBackupLayout(options) {
 		throw new Error("The supplied directory is not the built File plugin")
 	const builtinTarget = join(root, "versions/1/plugins", BUILTIN_ID)
 	const addBuiltin = !existsSync(builtinTarget)
-	let pluginBytes = treeBytes(join(root, "versions/1/plugins"))
+	const pluginsDir = join(root, "versions/1/plugins")
+	let pluginBytes = existsSync(pluginsDir) ? treeBytes(pluginsDir) : 0
 	if (addBuiltin) pluginBytes += treeBytes(builtinDir)
 	for (const name of OLD_FOLDERS) {
 		const source = join(root, "versions/1", name)
@@ -212,7 +245,7 @@ export function inspectBackupLayout(options) {
 	}
 	const db = new Database(database, { readonly: true, fileMustExist: true })
 	try {
-		checkDatabase(db)
+		const schema = checkDatabase(db)
 		for (const row of db
 			.prepare("SELECT id FROM content_plugins WHERE missing = 0")
 			.all()) {
@@ -243,6 +276,7 @@ export function inspectBackupLayout(options) {
 					rows.length,
 				]),
 			),
+			schemaUpgradeRequired: schema === "legacy",
 			migrated: false,
 		}
 	} finally {
@@ -252,6 +286,8 @@ export function inspectBackupLayout(options) {
 
 function acquireLock(root) {
 	const path = join(root, "local/instance-lock.sqlite")
+	// The lock lives under `local/`, which may not exist in a minimal library.
+	mkdirSync(dirname(path), { recursive: true })
 	if (existsSync(path)) plain(path, "file")
 	const db = new Database(path, { timeout: 0 })
 	try {
@@ -280,6 +316,16 @@ function removeStaged(path) {
 		}
 }
 
+/** Bring a legacy library schema current by applying any pending migrations. */
+function upgradeDatabase(path) {
+	const db = new Database(path, { fileMustExist: true })
+	try {
+		migrate(drizzle(db), { migrationsFolder: MIGRATIONS })
+	} finally {
+		db.close()
+	}
+}
+
 /** Publish host.sqlite last so the new runtime cannot open a partial conversion. */
 export async function applyBackupLayout(options) {
 	const initial = inspectBackupLayout(options)
@@ -300,6 +346,10 @@ export async function applyBackupLayout(options) {
 		}
 		const original = join(plan.work, "original.sqlite")
 		if (!plan.phase || plan.phase === "preparing") {
+			// Bring a legacy schema (e.g. v0.1.15) current before snapshotting so
+			// the saved copy and the live library compare like to like. The
+			// migrator is idempotent, so this is safe to re-run on resume.
+			if (plan.schemaUpgradeRequired) upgradeDatabase(plan.database)
 			const next = join(plan.work, "original.next.sqlite")
 			removeStaged(next)
 			const source = new Database(plan.database, {
@@ -325,8 +375,12 @@ export async function applyBackupLayout(options) {
 			timeout: 0,
 		})
 		try {
-			checkDatabase(saved)
-			checkDatabase(live)
+			const savedKind = checkDatabase(saved)
+			const liveKind = checkDatabase(live)
+			if (savedKind !== "current" || liveKind !== "current")
+				throw new Error(
+					"The library schema could not be upgraded; preserve both databases",
+				)
 			if (schemaDigest(saved) !== schemaDigest(live))
 				throw new Error(
 					"The library schema changed since migration was prepared",
@@ -361,6 +415,8 @@ export async function applyBackupLayout(options) {
 				host.close()
 			}
 			if (plan.addBuiltin) {
+				// The plugin dir may not exist in a minimal library.
+				mkdirSync(join(plan.root, "versions/1/plugins"), { recursive: true })
 				const plugin = join(plan.work, "builtin.next")
 				removeStaged(plugin)
 				cpSync(plan.builtinDir, plugin, {
@@ -418,7 +474,7 @@ async function main(argv) {
 	console.log(
 		plan.migrated
 			? "Separate host state is present. Original migration files, if any, remain under local/backup-layout-migration."
-			: "Inspection only; no files changed. Stop the service, then repeat with --apply. Resources are not copied. This tool accepts only an unarchived, current-schema library.",
+			: `Inspection only; no files changed. Stop the service, then repeat with --apply. Resources are not copied. This tool accepts an unarchived library at the supported legacy schema (e.g. v0.1.15) and upgrades it in place.${plan.schemaUpgradeRequired ? " The live database schema is one migration behind and will be upgraded during --apply." : ""}`,
 	)
 }
 
