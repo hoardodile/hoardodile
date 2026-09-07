@@ -10,10 +10,14 @@ test("complete backup, confirmed restore, and merged backup-sync page", async ({
 	await page.goto("/settings/backups")
 	await expect(page.getByTestId("complete-backups")).toBeVisible()
 	await expect(page.getByTestId("complete-backups-section")).toBeVisible()
-	await expect(page.getByTestId("recent-operations-section")).toBeVisible()
-	// The backup-sync service and devices live on the same page now.
-	await expect(page.getByTestId("replication-service-section")).toBeVisible()
-	await expect(page.getByTestId("replication-devices-section")).toBeVisible()
+	// The merged Protection section hosts both the local-backup block and the
+	// offsite-copy block — they are no longer two separate sections.
+	await expect(page.getByTestId("backup-sync")).toBeVisible()
+	await expect(page.getByTestId("setup-new-backup")).toBeVisible()
+	await expect(page.getByTestId("setup-sync-send")).toBeVisible()
+	await expect(page.getByTestId("setup-sync-receive")).toBeVisible()
+	// No jobs yet, so Recent operations stays hidden (empty-state hides it).
+	await expect(page.getByTestId("recent-operations-section")).not.toBeVisible()
 	// External manual sync records are gone.
 	await expect(page.getByTestId("external-sync-records")).not.toBeVisible()
 	await expect(page.getByTestId("sync-device-add")).not.toBeVisible()
