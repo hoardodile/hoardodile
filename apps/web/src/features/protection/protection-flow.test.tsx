@@ -96,6 +96,13 @@ it("guides a new backup without asking for a recovery key first", async () => {
 	mount(<Page />, {
 		"protection.status": () => ({ ...status, repositories: [] }),
 		"protection.initialize": initialize,
+		"replication.status": () => ({
+			role: "unconfigured",
+			name: "Laptop",
+			paused: false,
+			source: null,
+			peers: [],
+		}),
 	})
 	const user = userEvent.setup()
 	await user.click(await screen.findByTestId("setup-new-backup"))
@@ -114,6 +121,13 @@ it("requires a recovery key when opening an existing backup", async () => {
 	mount(<Page />, {
 		"protection.status": () => ({ ...status, repositories: [] }),
 		"protection.initialize": initialize,
+		"replication.status": () => ({
+			role: "unconfigured",
+			name: "Laptop",
+			paused: false,
+			source: null,
+			peers: [],
+		}),
 	})
 	const user = userEvent.setup()
 	await user.click(screen.getByTestId("setup-existing-backup"))
@@ -297,6 +311,49 @@ it("starts sync setup from the device's purpose without external records", async
 	expect(screen.queryByTestId("sync-device-add")).not.toBeInTheDocument()
 })
 
+it("hides the share option until a local backup exists", async () => {
+	mount(<ReplicationPanel />, {
+		"protection.status": () => ({
+			...status,
+			repositories: [{ id: "local", name: "Local backups" }],
+		}),
+		"replication.status": () => ({
+			name: "Laptop",
+			role: "unconfigured",
+			paused: false,
+			peers: [],
+			source: null,
+		}),
+	})
+	await screen.findByTestId("setup-sync-receive")
+	expect(screen.queryByTestId("setup-sync-send")).not.toBeInTheDocument()
+	expect(
+		screen.getByText(/Create a local backup first to share/),
+	).toBeInTheDocument()
+})
+
+it("shows the share option once a local backup exists", async () => {
+	mount(<ReplicationPanel />, {
+		"protection.status": () => ({
+			...status,
+			repositories: [{ id: "local", name: "Local backups" }],
+			lastBackupAt: 1_700_000_000_000,
+		}),
+		"replication.status": () => ({
+			name: "Laptop",
+			role: "unconfigured",
+			paused: false,
+			peers: [],
+			source: null,
+		}),
+	})
+	await screen.findByTestId("setup-sync-send")
+	expect(screen.getByTestId("setup-sync-receive")).toBeInTheDocument()
+	expect(
+		screen.queryByText(/Create a local backup first to share/),
+	).not.toBeInTheDocument()
+})
+
 it("gives a next step for low disk space while keeping diagnostic details collapsed", async () => {
 	mount(<ProtectionJobs activeOnly />, {
 		"protection.jobs": () => [
@@ -335,8 +392,38 @@ it("merges local and offsite protection into one section", async () => {
 	})
 	const section = within(await screen.findByTestId("complete-backups-section"))
 	expect(section.getByText("On this device")).toBeInTheDocument()
-	expect(section.getByText("Offsite copy")).toBeInTheDocument()
-	expect(section.getByTestId("backup-sync")).toBeInTheDocument()
+	expect(section.queryByText("Offsite copy")).not.toBeInTheDocument()
+	expect(await section.findByTestId("backup-sync")).toBeInTheDocument()
+})
+
+it("offers three setup options when there is no local backup", async () => {
+	const configure = vi.fn(async () => ({}))
+	mount(<RecoveryPanel />, {
+		"protection.status": () => ({ ...status, repositories: [] }),
+		"replication.status": () => ({
+			role: "unconfigured",
+			name: "Laptop",
+			paused: false,
+			source: null,
+			peers: [],
+		}),
+		"replication.configure": configure,
+	})
+	const user = userEvent.setup()
+	expect(await screen.findByTestId("setup-new-backup")).toBeInTheDocument()
+	expect(screen.getByTestId("setup-existing-backup")).toBeInTheDocument()
+	const receive = screen.getByTestId("setup-sync-receive")
+	expect(receive).toBeInTheDocument()
+	expect(screen.queryByTestId("setup-sync-send")).not.toBeInTheDocument()
+	await waitFor(() => expect(receive).toBeEnabled())
+	await user.click(receive)
+	await waitFor(() =>
+		expect(configure).toHaveBeenCalledWith({
+			role: "receive",
+			name: "Laptop",
+			paused: false,
+		}),
+	)
 })
 
 it("renders only the restore list while in restore-only mode", async () => {

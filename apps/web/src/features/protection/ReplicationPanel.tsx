@@ -49,6 +49,13 @@ export function ReplicationPanel({ embedded = false }: { embedded?: boolean }) {
 	const protection = useQuery(protectionStatusOptions()).data
 	const lastRestore = protection?.lastRestore
 	const canInvite = Boolean(protection?.lastBackupAt)
+	const canSend = Boolean(protection?.lastBackupAt)
+	// A device can only act as a sender (share its own backups) once it holds a
+	// local backup. Keep `send` when it is already the current role so a sender
+	// whose backups were later pruned still shows itself as such.
+	const roleOptions = (["unconfigured", "send", "receive"] as const)
+		.filter((role) => role !== "send" || canSend || state?.role === "send")
+		.map((role) => ({ value: role, label: t(`replicationUx.${role}`) }))
 	const summary = useQuery(syncSummaryQueryOptions()).data
 	const [name, setName] = useState("")
 	const [removing, setRemoving] = useState<Removal | null>(null)
@@ -103,19 +110,21 @@ export function ReplicationPanel({ embedded = false }: { embedded?: boolean }) {
 					aria-label={t("replicationUx.unconfigured")}
 				>
 					<div className="grid gap-3">
-						<button
-							type="button"
-							data-testid="setup-sync-send"
-							className="flex w-full flex-col items-start gap-1 rounded-lg bg-secondary px-4 py-4 text-left text-foreground transition-colors hover:bg-[color-mix(in_oklch,var(--secondary),var(--foreground)_5%)] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-							onClick={() => setSetupMode("send")}
-						>
-							<span className="text-ui font-medium">
-								{t("replicationUx.send")}
-							</span>
-							<span className="text-xs text-secondary-foreground">
-								{t("replicationUx.sendHelp")}
-							</span>
-						</button>
+						{canSend && (
+							<button
+								type="button"
+								data-testid="setup-sync-send"
+								className="flex w-full flex-col items-start gap-1 rounded-lg bg-secondary px-4 py-4 text-left text-foreground transition-colors hover:bg-[color-mix(in_oklch,var(--secondary),var(--foreground)_5%)] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+								onClick={() => setSetupMode("send")}
+							>
+								<span className="text-ui font-medium">
+									{t("replicationUx.send")}
+								</span>
+								<span className="text-xs text-secondary-foreground">
+									{t("replicationUx.sendHelp")}
+								</span>
+							</button>
+						)}
 						<button
 							type="button"
 							data-testid="setup-sync-receive"
@@ -130,6 +139,11 @@ export function ReplicationPanel({ embedded = false }: { embedded?: boolean }) {
 							</span>
 						</button>
 					</div>
+					{!canSend && (
+						<p className="text-xs text-secondary-foreground">
+							{t("protectionUx.sendRequiresBackup")}
+						</p>
+					)}
 				</section>
 			)}
 			{state && state.role !== "unconfigured" && (
@@ -177,12 +191,7 @@ export function ReplicationPanel({ embedded = false }: { embedded?: boolean }) {
 									Boolean(state.source || state.peers.length) ||
 									configure.isPending
 								}
-								options={(["unconfigured", "send", "receive"] as const).map(
-									(role) => ({
-										value: role,
-										label: t(`replicationUx.${role}`),
-									}),
-								)}
+								options={roleOptions}
 								onValueChange={(role) => {
 									if (
 										role === "unconfigured" ||

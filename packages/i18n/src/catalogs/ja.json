@@ -2320,7 +2320,8 @@
 		}
 	},
 	"protectionUx": {
-		"protectionTitle": "保護",
+		"protectionTitle": "バックアップ",
+		"sendRequiresBackup": "このデバイスのバックアップを共有するには、最初にローカルバックアップを作成してください。",
 		"setup": "バックアップを設定",
 		"noBackup": "この端末のバックアップはまだありません",
 		"setupHelp": "ライブラリ、ファイル、各バージョンのプラグインをまとめて保存します。",

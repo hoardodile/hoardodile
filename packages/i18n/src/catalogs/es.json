@@ -2320,7 +2320,8 @@
 		}
 	},
 	"protectionUx": {
-		"protectionTitle": "Protección",
+		"protectionTitle": "Copias de seguridad",
+		"sendRequiresBackup": "Primero crea una copia de seguridad local para compartir las copias de este dispositivo.",
 		"setup": "Configurar copias",
 		"noBackup": "Aún no hay copias locales",
 		"setupHelp": "Guarda la biblioteca, los archivos y los plugins de cada versión.",

@@ -2320,7 +2320,8 @@
 		}
 	},
 	"protectionUx": {
-		"protectionTitle": "Schutz",
+		"protectionTitle": "Backups",
+		"sendRequiresBackup": "Erstelle zuerst ein lokales Backup, um die Backups dieses Geräts freizugeben.",
 		"setup": "Sicherungen einrichten",
 		"noBackup": "Noch keine lokale Sicherung",
 		"setupHelp": "Bibliothek, Dateien und versionierte Plugins gemeinsam sichern.",

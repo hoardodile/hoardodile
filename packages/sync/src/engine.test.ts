@@ -9,6 +9,7 @@ import {
 	atomicWrite,
 	createBackupEngine,
 	type RecoveryManifest,
+	type RecoveryPoint,
 	type Repository,
 	sha256File,
 } from "@hoardodile/backup"
@@ -333,6 +334,83 @@ describe("one-way backup sync", () => {
 			await rm(foreignLock, { force: true })
 		}
 	}, 120_000)
+	it("refuses to let a device configure itself as sender without any local backup", async () => {
+		const root = await mkdtemp(join(tmpdir(), "hd-send-config-"))
+		roots.push(root)
+		const backup = createBackupEngine({ cacheDir: join(root, "cache") })
+		const repo: Repository = {
+			id: "local",
+			path: join(root, "repo"),
+			passwordFile: join(root, "key"),
+		}
+		let points: RecoveryPoint[] = []
+		const engine = await createSyncEngine({
+			instanceId: randomUUID(),
+			directory: join(root, "state"),
+			engine: backup,
+			localRepository: () => repo,
+			listLocalPoints: async () => points,
+			registerSource: async () => {
+				throw new Error("Sender must not receive")
+			},
+			withRepository: async (_id, operation) => operation(),
+		})
+		engines.push(engine)
+		await expect(
+			engine.configure({ role: "send", name: "Sender", paused: false }),
+		).rejects.toMatchObject({ code: "sender_requires_backup" })
+		// Once at least one backup exists, the device may become a sender.
+		points = [{} as RecoveryPoint]
+		await expect(
+			engine.configure({ role: "send", name: "Sender", paused: false }),
+		).resolves.toBeUndefined()
+		expect((await engine.createInvitation()).code.length).toBeGreaterThan(32)
+	}, 30_000)
+
+	it("refuses an invitation from a sender whose local backups are gone", async () => {
+		const root = await mkdtemp(join(tmpdir(), "hd-send-invite-"))
+		roots.push(root)
+		const backup = createBackupEngine({ cacheDir: join(root, "cache") })
+		const repo: Repository = {
+			id: "local",
+			path: join(root, "repo"),
+			passwordFile: join(root, "key"),
+		}
+		const stateDir = join(root, "state")
+		await mkdir(stateDir, { recursive: true })
+		await writeFile(
+			join(stateDir, "state.json"),
+			JSON.stringify({
+				role: "send",
+				name: "Sender",
+				paused: false,
+				peers: [],
+				source: null,
+				invitation: null,
+				locks: {},
+			}),
+		)
+		let points: RecoveryPoint[] = []
+		const engine = await createSyncEngine({
+			instanceId: randomUUID(),
+			directory: stateDir,
+			engine: backup,
+			localRepository: () => repo,
+			listLocalPoints: async () => points,
+			registerSource: async () => {
+				throw new Error("Sender must not receive")
+			},
+			withRepository: async (_id, operation) => operation(),
+		})
+		engines.push(engine)
+		// Configured as a sender but no backup remains: sharing is refused.
+		await expect(engine.createInvitation()).rejects.toMatchObject({
+			code: "sender_requires_backup",
+		})
+		// Restoring a backup re-enables sharing.
+		points = [{} as RecoveryPoint]
+		expect((await engine.createInvitation()).code.length).toBeGreaterThan(32)
+	}, 30_000)
 })
 
 function assertSession(value: {

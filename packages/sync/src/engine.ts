@@ -195,6 +195,18 @@ export async function createSyncEngine(options: {
 		match.lastSeenAt = Date.now()
 		return match
 	}
+	/**
+	 * A sender must already hold at least one local backup before it can share
+	 * its repository. "Local repository not configured / not initialized" counts
+	 * as no backup, so a fresh device can neither send nor invite.
+	 */
+	async function hasLocalBackups() {
+		try {
+			return (await options.listLocalPoints()).length > 0
+		} catch {
+			return false
+		}
+	}
 	async function removeOwnedLocks(peerId: string) {
 		const ids = Object.entries(state.locks)
 			.filter(([, owner]) => owner === peerId)
@@ -262,11 +274,16 @@ export async function createSyncEngine(options: {
 			name: string
 			paused: boolean
 		}) {
-			await mutate(() => {
+			await mutate(async () => {
 				if (input.role !== state.role && (state.source || state.peers.length))
 					throw new BackupError(
 						"paired_role",
 						"Disconnect paired devices before changing roles",
+					)
+				if (input.role === "send" && !(await hasLocalBackups()))
+					throw new BackupError(
+						"sender_requires_backup",
+						"Create a local backup before sharing this device's backups",
 					)
 				state.role = stateSchema.shape.role.parse(input.role)
 				state.name = z.string().trim().min(1).max(64).parse(input.name)
@@ -275,11 +292,16 @@ export async function createSyncEngine(options: {
 			})
 		},
 		async createInvitation() {
-			return mutate(() => {
+			return mutate(async () => {
 				if (state.role !== "send")
 					throw new BackupError(
 						"not_sender",
 						"Only a sender can create pairing invitations",
+					)
+				if (!(await hasLocalBackups()))
+					throw new BackupError(
+						"sender_requires_backup",
+						"Create a local backup before sharing this device's backups",
 					)
 				options.localRepository()
 				const code = randomBytes(32).toString("base64url")

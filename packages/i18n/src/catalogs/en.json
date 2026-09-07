@@ -2320,7 +2320,8 @@
 		}
 	},
 	"protectionUx": {
-		"protectionTitle": "Protection",
+		"protectionTitle": "Backups",
+		"sendRequiresBackup": "Create a local backup first to share this device's backups.",
 		"setup": "Set up backups",
 		"noBackup": "No local backup yet",
 		"setupHelp": "Save your library, files, and versioned plugins together.",

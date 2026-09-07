@@ -22,6 +22,7 @@ import {
 	protectionJobsOptions,
 	protectionStatusOptions,
 	recoveryPointsOptions,
+	replicationStatusOptions,
 } from "./api"
 import { BackupManagement } from "./BackupManagement"
 import { BackupPointActions } from "./BackupPointActions"
@@ -48,6 +49,7 @@ export function RecoveryPanel({
 	const qc = useQueryClient()
 	const status = useQuery(protectionStatusOptions())
 	const health = useSyncHealth()
+	const replicationStatus = useQuery(replicationStatusOptions())
 	const [selectedRepository, setSelectedRepository] = useState("local")
 	const [savedKey, setSavedKey] = useState<string>()
 	const [wizardMode, setWizardMode] = useState<"new" | "existing" | null>(null)
@@ -57,6 +59,14 @@ export function RecoveryPanel({
 		repositories[0]
 	const repositoryId = repository?.id ?? "local"
 	const localConfigured = repositories.some((repo) => repo.id === "local")
+	// The setup grid leads when there is no local backup, no received backup,
+	// and the device is not already committed to a sync role (an unconfigured
+	// or still-loading role counts as "no role yet").
+	const needsSetup =
+		!localConfigured &&
+		!health.hasReceivedBackup &&
+		health.role !== "send" &&
+		health.role !== "receive"
 	const points = useQuery({
 		...recoveryPointsOptions(repositoryId),
 		enabled: Boolean(repository),
@@ -91,10 +101,21 @@ export function RecoveryPanel({
 			setSavedKey(keyStorage)
 		},
 	})
+	const receiveSetup = useToastMutation({
+		...trpcMutation("replication", "configure"),
+		onSuccess: async () => {
+			await Promise.all([
+				qc.invalidateQueries({ queryKey: ["replication"] }),
+				qc.invalidateQueries({ queryKey: ["sync"] }),
+				invalidate(),
+			])
+		},
+	})
 	const sourceName =
 		repositoryId === "local"
 			? t("protectionUx.localBackups")
 			: (repository?.name ?? repositoryId)
+	const receiveName = replicationStatus.data?.name?.trim() || ""
 
 	const sections: ReactNode[] = []
 	if (!restoreOnly)
@@ -113,7 +134,7 @@ export function RecoveryPanel({
 						<div className="text-base font-semibold text-foreground">
 							{t("protection.title")}
 						</div>
-						{!localConfigured && !health.hasReceivedBackup ? (
+						{needsSetup && (
 							<div className="grid gap-3">
 								<button
 									type="button"
@@ -141,8 +162,29 @@ export function RecoveryPanel({
 										{t("backupSetup.startExistingHint")}
 									</span>
 								</button>
+								<button
+									type="button"
+									data-testid="setup-sync-receive"
+									disabled={receiveSetup.isPending || !receiveName}
+									className="flex w-full flex-col items-start gap-1 rounded-lg bg-secondary px-4 py-4 text-left text-foreground transition-colors hover:bg-[color-mix(in_oklch,var(--secondary),var(--foreground)_5%)] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+									onClick={() =>
+										receiveSetup.mutate({
+											role: "receive",
+											name: receiveName,
+											paused: false,
+										})
+									}
+								>
+									<span className="text-ui font-medium">
+										{t("replicationUx.receive")}
+									</span>
+									<span className="text-xs text-secondary-foreground">
+										{t("replicationUx.receiveHelp")}
+									</span>
+								</button>
 							</div>
-						) : localConfigured ? (
+						)}
+						{localConfigured && (
 							<section
 								className="space-y-3"
 								aria-label={t("protectionUx.status")}
@@ -189,14 +231,8 @@ export function RecoveryPanel({
 									</div>
 								)}
 							</section>
-						) : null}
-					</div>
-					<div className="my-6 h-px bg-border" aria-hidden="true" />
-					<div className="space-y-4">
-						<div className="text-base font-semibold text-foreground">
-							{t("replication.title")}
-						</div>
-						<ReplicationPanel embedded />
+						)}
+						{!needsSetup && <ReplicationPanel embedded />}
 					</div>
 				</div>
 			</SettingsSection>,
