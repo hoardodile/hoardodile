@@ -34,7 +34,7 @@ export function withTransaction<T>(db: SqliteDb, fn: (tx: TxClient) => T): T {
  * copies the folder to `dist/migrations` once; it does not duplicate it
  * beside every chunk.
  */
-function resolveMigrationsFolder(): string {
+export function resolveMigrationsFolder(): string {
 	const beside = join(import.meta.dirname, "migrations")
 	if (existsSync(beside)) return beside
 	return join(import.meta.dirname, "..", "migrations")

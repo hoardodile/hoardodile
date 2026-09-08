@@ -34,7 +34,11 @@ import {
 	runTagDedupe,
 } from "src/domain/tag/dedupe.ts"
 import { versionPlugin } from "src/domain/version/plugin.ts"
-import { type DbHandles, openDb } from "src/infra/db/connection.ts"
+import {
+	type DbHandles,
+	openDb,
+	resolveMigrationsFolder,
+} from "src/infra/db/connection.ts"
 import { openHostDatabase } from "src/infra/db/host.ts"
 import { authConfiguredPlugin } from "src/infra/http/auth-configured.ts"
 import { sendFile } from "src/infra/http/conditional-request.ts"
@@ -61,6 +65,7 @@ import {
 import { resolveStorageContext } from "src/infra/storage/bootstrap.ts"
 import { recoverCheckpointPublication } from "src/infra/storage/checkpoint.ts"
 import { acquireStorageInstance } from "src/infra/storage/instance-lock.ts"
+import { runStorageMigrations } from "src/infra/storage/migrations.ts"
 import {
 	createStoragePaths,
 	type StoragePaths,
@@ -219,6 +224,32 @@ async function buildServerWithStorageLock(
 	)
 	resources.app = app
 	if (release) app.addHook("onClose", async () => release())
+
+	// Structural storage-format migration (e.g. backup-layout for old-layout
+	// libraries) runs BEFORE the app opens any database handle, while this
+	// instance owns the storage lock. Only a writable, real (non-memory) boot
+	// path reaches here: a suspended boot (pending restore / busy native
+	// processes) and past-version read-only viewing must not touch the layout.
+	if (
+		opts.dbHandles === undefined &&
+		!bootstrap.readOnly &&
+		opts.env.DATABASE_URL !== ":memory:"
+	) {
+		const result = runStorageMigrations(storageRoot, {
+			builtinDir: opts.env.BUILTIN_PATH,
+			env: opts.env,
+			storagePaths: bootstrap.storagePaths,
+			migrationsFolder: resolveMigrationsFolder(),
+			openDb,
+			log: (msg, details) => app.log.info({ ...details }, msg),
+		})
+		if (result.ran.length > 0) {
+			app.log.info(
+				{ migrated: result.ran, format: result.format },
+				"storage.migrate.run",
+			)
+		}
+	}
 
 	const hostHandles =
 		opts.env.DATABASE_URL !== ":memory:" &&

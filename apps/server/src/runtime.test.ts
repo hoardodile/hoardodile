@@ -1,11 +1,14 @@
-import { mkdtempSync, rmSync } from "node:fs"
+import { mkdirSync, mkdtempSync, rmSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { eq } from "drizzle-orm"
 import { loadEnv } from "src/config/env.ts"
 import { verifyPassword } from "src/domain/auth/password.ts"
+import { setAuthRow } from "src/domain/auth/repo.ts"
 import { openDb, schema } from "src/infra/db/connection.ts"
 import { openHostDatabase } from "src/infra/db/host.ts"
+import { acquireStorageInstance } from "src/infra/storage/instance-lock.ts"
+import { readStorageFormat } from "src/infra/storage/storage-format.ts"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 import {
 	clearAuthPassword,
@@ -165,5 +168,63 @@ describe("isAuthConfigured", () => {
 		} satisfies NodeJS.ProcessEnv)
 		await writeAuthPassword(env, "hunter2")
 		expect(isAuthConfigured(env)).toBe(true)
+	})
+})
+
+describe("auth on an old-layout library migrates before recovery", () => {
+	let root: string
+
+	beforeEach(() => {
+		root = mkdtempSync(join(tmpdir(), "app-runtime-migrate-"))
+		mkdirSync(join(root, "versions", "1"), { recursive: true })
+		const db = openDb(join(root, "app.sqlite"))
+		db.runMigrations()
+		setAuthRow(db.db, {
+			hash: "legacy-hash",
+			updatedAt: 1,
+			weakPassword: false,
+		})
+		db.close()
+	})
+
+	afterEach(() => {
+		rmSync(root, { recursive: true, force: true })
+	})
+
+	const env = () =>
+		loadEnv({
+			NODE_ENV: "test",
+			LOG_LEVEL: "silent",
+			STORAGE_ROOT: root,
+		} satisfies NodeJS.ProcessEnv)
+
+	test("writeAuthPassword migrates the library and stores the new hash", async () => {
+		await writeAuthPassword(env(), "newpass")
+		expect(isAuthConfigured(env())).toBe(true)
+		expect(readStorageFormat(root)).toBe(1)
+		const dbh = openHostDatabase(root)
+		try {
+			const row = dbh.db.select().from(schema.auth).get()
+			expect(row).toBeDefined()
+		} finally {
+			dbh.close()
+		}
+	}, 30000)
+
+	test("clearAuthPassword migrates the library and removes the row", () => {
+		clearAuthPassword(env())
+		expect(isAuthConfigured(env())).toBe(false)
+		expect(readStorageFormat(root)).toBe(1)
+	}, 30000)
+
+	test("refuses when another instance owns the storage lock", () => {
+		const release = acquireStorageInstance(root)
+		try {
+			expect(() => clearAuthPassword(env())).toThrow(
+				"Another service already owns",
+			)
+		} finally {
+			release()
+		}
 	})
 })

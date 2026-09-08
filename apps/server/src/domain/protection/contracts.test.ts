@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm, stat } from "node:fs/promises"
+import { mkdtemp, rm, stat } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { loadEnv } from "src/config/env.ts"
@@ -28,7 +28,7 @@ const envFor = (root: string) =>
 		DISABLE_DEV_PLUGINS: "true",
 	})
 
-it("rejects a library without separate host state without converting its data or credentials", async () => {
+it("auto-migrates a library without separate host state and preserves its credentials", async () => {
 	const root = await fixture(),
 		path = join(root, "app.sqlite")
 	const db = openDb(path)
@@ -38,14 +38,22 @@ it("rejects a library without separate host state without converting its data or
 		.values({ singleton: 1, passwordHash: "old-private-hash", updatedAt: 1 })
 		.run()
 	db.close()
-	const before = await readFile(path)
-	await expect(buildServer({ env: envFor(root) })).rejects.toThrow(
-		"unsupported storage layout",
-	)
-	expect(await readFile(path)).toEqual(before)
-	await expect(stat(join(root, "local", "host.sqlite"))).rejects.toMatchObject({
-		code: "ENOENT",
-	})
+	built = await buildServer({ env: envFor(root) })
+	await built.app.ready()
+	// The host state was separated, not discarded.
+	await expect(stat(join(root, "local", "host.sqlite"))).resolves.toBeTruthy()
+	const host = openDb(join(root, "local", "host.sqlite"))
+	try {
+		expect(
+			host.db
+				.select()
+				.from(schema.auth)
+				.all()
+				.map((row) => row.passwordHash),
+		).toEqual(["old-private-hash"])
+	} finally {
+		host.close()
+	}
 })
 
 it("keeps host credentials independent and exposes only complete-backup and archive job APIs", async () => {

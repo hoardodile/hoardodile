@@ -9,9 +9,19 @@ import { resolveAvailablePort } from "src/config/port.ts"
 import { hashPassword } from "src/domain/auth/password.ts"
 import { deleteAuthRow, getAuthRow, setAuthRow } from "src/domain/auth/repo.ts"
 import { assessPasswordStrength } from "src/domain/auth/strength.ts"
-import { openDb, schema } from "src/infra/db/connection.ts"
+import {
+	openDb,
+	resolveMigrationsFolder,
+	schema,
+} from "src/infra/db/connection.ts"
 import { openHostDatabase } from "src/infra/db/host.ts"
 import { resolveStorageContext } from "src/infra/storage/bootstrap.ts"
+import {
+	isOldLayoutLibrary,
+	type MigrationContext,
+	withStorageMigrations,
+} from "src/infra/storage/migrations.ts"
+import { createStoragePaths } from "src/infra/storage/paths.ts"
 import { type BuiltServer, buildServer } from "src/server.ts"
 
 /**
@@ -20,20 +30,49 @@ import { type BuiltServer, buildServer } from "src/server.ts"
  * long-running server starts (and from other short-lived processes such as
  * the reset CLI); callers that already hold the live handle should use the
  * auth repo functions directly instead.
+ *
+ * An old-layout (pre-versioning) library is migrated first, under the
+ * instance lock, so password recovery works without a manual step.
  */
 function withRuntimeDb<T>(
 	env: Env,
 	fn: (db: ReturnType<typeof openDb>) => T,
 ): T {
-	const handles =
-		env.DATABASE_URL === ":memory:"
-			? openDb(":memory:")
-			: openHostDatabase(env.STORAGE_ROOT)
+	const memory = env.DATABASE_URL === ":memory:"
+	if (!memory && isOldLayoutLibrary(env.STORAGE_ROOT)) {
+		return withStorageMigrations(
+			env.STORAGE_ROOT,
+			migrationContext(env),
+			() => {
+				const handles = openHostDatabase(env.STORAGE_ROOT)
+				try {
+					return fn(handles)
+				} finally {
+					handles.close()
+				}
+			},
+		)
+	}
+	const handles = memory
+		? openDb(":memory:")
+		: openHostDatabase(env.STORAGE_ROOT)
 	try {
-		if (env.DATABASE_URL === ":memory:") handles.runMigrations()
+		if (memory) handles.runMigrations()
 		return fn(handles)
 	} finally {
 		handles.close()
+	}
+}
+
+/** Build the storage-migration context from an {@link Env}. */
+function migrationContext(env: Env): Omit<MigrationContext, "root"> {
+	return {
+		builtinDir: env.BUILTIN_PATH,
+		env,
+		storagePaths: createStoragePaths({ root: env.STORAGE_ROOT }),
+		migrationsFolder: resolveMigrationsFolder(),
+		openDb,
+		log: undefined,
 	}
 }
 
