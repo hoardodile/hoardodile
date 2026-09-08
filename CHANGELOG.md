@@ -1,5 +1,41 @@
 # Changelog
 
+## [0.2.0](https://github.com/hoardodile/hoardodile/compare/v0.1.15...v0.2.0) (2026-09-08)
+
+### ⚠ BREAKING CHANGES
+
+* **server:** add complete backups and one-way sync
+* **web:** merge backup sync into the backups page and drop manual sync records
+* **server:** remove legacy backup compatibility
+
+### Features
+
+* add per-tag visibility (watch-only / explicit-view) ([5d5e9ee](https://github.com/hoardodile/hoardodile/commit/5d5e9ee37d7d864bde92d6e8bcbdb5dd95421779))
+* **server:** add complete backups and one-way sync ([8c2bc00](https://github.com/hoardodile/hoardodile/commit/8c2bc00782bcd07834dcfe6959ae7f8754b947af))
+* **server:** add offline backup layout migration ([192e044](https://github.com/hoardodile/hoardodile/commit/192e044c97b75e524fe0894a1c030dad0fb64716))
+* **server:** run storage-layout migration at boot ([90028b8](https://github.com/hoardodile/hoardodile/commit/90028b86ea5238880c852bc4835d6ca9cca27318))
+* **web:** merge backup & offsite copy into one Backups section ([79c0f6b](https://github.com/hoardodile/hoardodile/commit/79c0f6b5e538eea3aa2f9c2271c17cec2f0a3ea2))
+* **web:** merge backup and sync into one protection section ([2c0e269](https://github.com/hoardodile/hoardodile/commit/2c0e2699011f52672871d653b73e9ec5b08f2268))
+* **web:** merge backup sync into the backups page and drop manual sync records ([da700e2](https://github.com/hoardodile/hoardodile/commit/da700e2d3acf4ea81a6f12764c11f03cfcdaa365))
+* **web:** redesign archive browser and plugin upload ([583119c](https://github.com/hoardodile/hoardodile/commit/583119cad551e1d7da8c66385414ef20c0c85968))
+* **web:** simplify backup & sync setup into inline chooser + single dialogs ([0ef0c43](https://github.com/hoardodile/hoardodile/commit/0ef0c43a515c7803d3efa6949f06db0dc96b2d3b))
+* **web:** simplify backup and sync workflows ([2dee215](https://github.com/hoardodile/hoardodile/commit/2dee215d4876842f2689b8096c5be08051082c54))
+* **web:** split archives into its own settings tab ([566c3bc](https://github.com/hoardodile/hoardodile/commit/566c3bc3025cb9ffaa29384a1169a40d74ef4921))
+* **web:** unify backup & sync protection framing + zh storage-library terminology ([44d5a3a](https://github.com/hoardodile/hoardodile/commit/44d5a3ad6f281c1064f0071af61866c658b97be0))
+
+### Bug Fixes
+
+* **desktop:** share development backend and avoid reserved ports ([2d74e1e](https://github.com/hoardodile/hoardodile/commit/2d74e1e728841ef77f20fbfd061a37068b0c0ea7))
+* **host:** canonicalize expected extracted paths in nested-view test ([4dd3bda](https://github.com/hoardodile/hoardodile/commit/4dd3bda669503a83362bfe0c4879be16d6b03951))
+* **host:** enforce resource read boundaries ([8b9c884](https://github.com/hoardodile/hoardodile/commit/8b9c884da4e35ddcb2c8d90f945dc7421759672e))
+* **server:** expect canonical paths in boundary assertions ([d30d2d1](https://github.com/hoardodile/hoardodile/commit/d30d2d19576c5de1ad99acf29f716c8f05c89f82))
+* **ui:** rewrite mobile overlay back navigation ([dfc6539](https://github.com/hoardodile/hoardodile/commit/dfc6539ff837781d4633eadd562e3017d25b8094))
+* **web:** unify archive confirmation with the shared type-to-confirm dialog ([c8ae15e](https://github.com/hoardodile/hoardodile/commit/c8ae15e21bca106e98fc1fe87b0cc49277deeb64))
+
+### Code Refactoring
+
+* **server:** remove legacy backup compatibility ([bf37463](https://github.com/hoardodile/hoardodile/commit/bf3746325e9302efaa97d54a237e927215600fb9))
+
 ## [0.1.15](https://github.com/hoardodile/hoardodile/compare/v0.1.14...v0.1.15) (2026-09-05)
 
 ### Features
