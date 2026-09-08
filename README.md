@@ -37,6 +37,14 @@ pnpm start    # http://127.0.0.1:3000
 docker compose up -d
 ```
 
+## Plugin development
+
+```bash
+pnpm dlx create-hoardodile-plugin <name>   # scaffold a new plugin
+
+hoardodile plugin build|package|run|bench|dev   # see packages/cli/README.md
+```
+
 ## Agent skills
 
 ```bash
