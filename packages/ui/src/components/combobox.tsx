@@ -5,7 +5,7 @@ import * as React from "react"
 import { Combobox as ComboboxPrimitive } from "@base-ui/react"
 
 import { cn } from "@hoardodile/ui/lib/utils"
-import { useMobileBackToClose } from "@hoardodile/ui/hooks/useMobileBackToClose"
+import { MobileBackScope, useMobileBackScope } from "@hoardodile/ui/hooks/useMobileBackToClose"
 import { Button } from "@hoardodile/ui/components/button"
 import {
   InputGroup,
@@ -43,13 +43,15 @@ function Combobox<Value, Multiple extends boolean | undefined = false>({
     if (!isControlled) setUncontrolledOpen(next)
     onOpenChange?.(next, eventDetails)
   }
-  useMobileBackToClose(currentOpen, handleOpenChange)
+  const backScope = useMobileBackScope(currentOpen, handleOpenChange)
   return (
+    <MobileBackScope id={backScope}>
     <ComboboxPrimitive.Root<Value, Multiple>
       open={currentOpen}
       onOpenChange={handleOpenChange}
       {...props}
     />
+    </MobileBackScope>
   )
 }
 

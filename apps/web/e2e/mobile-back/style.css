@@ -1,0 +1,11 @@
+@import "@hoardodile/ui/theme.css";
+@source "../../../../packages/ui/src";
+
+body {
+	margin: 16px;
+}
+button,
+a {
+	margin: 4px;
+	padding: 6px;
+}

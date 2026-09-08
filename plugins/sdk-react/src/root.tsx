@@ -3,11 +3,13 @@ import {
 	applyFonts,
 	applyTheme,
 	createIframeHostAPI,
+	createIframeOverlayRegistry,
 	ensureHostBridge,
 	getVisibilitySnapshot,
 	mountPlugin,
 	subscribeToVisibility,
 } from "@hoardodile/sdk-web"
+import { MobileBackProvider } from "@hoardodile/ui/hooks/useMobileBackToClose"
 import type { ComponentType, Provider, ReactNode } from "react"
 import { createElement, useEffect, useSyncExternalStore } from "react"
 import { flushSync } from "react-dom"
@@ -94,8 +96,10 @@ export function createPluginRoot<TSchema extends PluginSchema = PluginSchema>(
 	config: PluginRootConfig<TSchema>,
 ): void {
 	let root: ReturnType<typeof createRoot> | undefined
+	const overlays = createIframeOverlayRegistry(ensureHostBridge())
 
 	mountPlugin(function onContext(ctx) {
+		overlays.configure(ctx)
 		flushSync(() => {
 			if (root === undefined) {
 				const el = document.getElementById("root")
@@ -121,19 +125,23 @@ export function createPluginRoot<TSchema extends PluginSchema = PluginSchema>(
 			applyFonts(ctx.fonts.family, ctx.fonts.cssPaths)
 			root.render(
 				createElement(
-					config.provider,
-					{ value: api },
+					MobileBackProvider,
+					{ registry: overlays },
 					createElement(
-						ThemeSync,
-						null,
+						config.provider,
+						{ value: api },
 						createElement(
-							FontSync,
+							ThemeSync,
 							null,
 							createElement(
-								config.render,
-								config.remountOnResourceChange === false
-									? {}
-									: { key: ctx.resId },
+								FontSync,
+								null,
+								createElement(
+									config.render,
+									config.remountOnResourceChange === false
+										? {}
+										: { key: ctx.resId },
+								),
 							),
 						),
 					),

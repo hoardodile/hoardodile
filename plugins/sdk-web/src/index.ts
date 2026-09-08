@@ -37,6 +37,10 @@ export {
 	mountPlugin,
 	subscribeToVisibility,
 } from "./lifecycle.ts"
+export {
+	createIframeOverlayRegistry,
+	type OverlayRegistry,
+} from "./mobile-overlays.ts"
 export type {
 	Host,
 	HostMessage,

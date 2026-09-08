@@ -2,9 +2,10 @@ import "./index.css"
 import "./i18n"
 
 import { I18nProvider } from "@hoardodile/i18n/react"
-import { setNavigationResolver } from "@hoardodile/ui"
+import { MobileBackProvider } from "@hoardodile/ui"
 import { RoutePendingFallback } from "@hoardodile/ui/components/page-scaffold"
 import { TooltipProvider } from "@hoardodile/ui/components/tooltip"
+import { getMobileBackController } from "@hoardodile/ui/lib/mobile-back-browser"
 import { MOBILE_INITIAL_SCALE } from "@hoardodile/ui/viewport"
 import { QueryClientProvider } from "@tanstack/react-query"
 import { createRouter, RouterProvider } from "@tanstack/react-router"
@@ -38,6 +39,7 @@ import {
 import { getDesktopBridge, isHoardodileDesktop } from "@/lib/desktop"
 import { collectFontCssPaths } from "@/lib/fonts"
 import { armLastRouteRestore, writeLastRoute } from "@/lib/last-route"
+import { createMobileBackHistory } from "@/lib/mobile-back-history"
 import { dismissSplash } from "@/lib/splash-handoff"
 import {
 	createQueryClient,
@@ -106,7 +108,9 @@ if (import.meta.env.PROD && "serviceWorker" in navigator) {
 	}
 }
 
+const mobileBack = getMobileBackController()
 const router = createRouter({
+	history: createMobileBackHistory(mobileBack),
 	routeTree,
 	context: { queryClient, trpc },
 	defaultPreload: "intent",
@@ -133,11 +137,6 @@ if (isHoardodileDesktop()) {
 		if (isHoardodileDesktop()) writeLastRoute(router.state.location.href)
 	})
 }
-
-// Wire the router's navigation lifecycle into the mobile overlay
-// back-to-close hook so it can wait for navigation to resolve before
-// inspecting history.state (instead of relying on timing heuristics).
-setNavigationResolver((fn) => router.subscribe("onResolved", fn))
 
 declare module "@tanstack/react-router" {
 	interface Register {
@@ -205,26 +204,28 @@ holdSplashUntilReady({
 
 createRoot(rootElement).render(
 	<StrictMode>
-		<I18nProvider i18n={i18n}>
-			<AppRootErrorBoundary>
-				<ThemeProvider defaultPalette="mono">
-					<IconStyleProvider>
-						<FontProvider>
-							<ThemeBroadcast />
-							<FontBroadcast />
-							<TooltipProvider>
-								<QueryClientProvider client={queryClient}>
-									<PluginListProvider>
-										<PluginIframePoolHost />
-										<PrefsSync />
-										<RouterProvider router={router} />
-									</PluginListProvider>
-								</QueryClientProvider>
-							</TooltipProvider>
-						</FontProvider>
-					</IconStyleProvider>
-				</ThemeProvider>
-			</AppRootErrorBoundary>
-		</I18nProvider>
+		<MobileBackProvider registry={mobileBack}>
+			<I18nProvider i18n={i18n}>
+				<AppRootErrorBoundary>
+					<ThemeProvider defaultPalette="mono">
+						<IconStyleProvider>
+							<FontProvider>
+								<ThemeBroadcast />
+								<FontBroadcast />
+								<TooltipProvider>
+									<QueryClientProvider client={queryClient}>
+										<PluginListProvider>
+											<PluginIframePoolHost />
+											<PrefsSync />
+											<RouterProvider router={router} />
+										</PluginListProvider>
+									</QueryClientProvider>
+								</TooltipProvider>
+							</FontProvider>
+						</IconStyleProvider>
+					</ThemeProvider>
+				</AppRootErrorBoundary>
+			</I18nProvider>
+		</MobileBackProvider>
 	</StrictMode>,
 )

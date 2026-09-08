@@ -10,9 +10,11 @@
 		"preview": "vite preview",
 		"lint": "node scripts/gen-route-tree.mjs && node ../../scripts/generate-solar-lazy-index.mjs && tsc --noEmit",
 		"test": "node scripts/gen-route-tree.mjs && node ../../scripts/generate-solar-lazy-index.mjs && vitest run",
-		"test:e2e": "node ../../scripts/generate-solar-lazy-index.mjs && playwright test"
+		"test:e2e": "node ../../scripts/generate-solar-lazy-index.mjs && playwright test",
+		"test:mobile-back": "playwright test --config playwright.mobile-back.config.ts"
 	},
 	"devDependencies": {
+		"@hoardodile/sdk-react": "workspace:*",
 		"@hoardodile/server": "workspace:*",
 		"@playwright/test": "catalog:",
 		"@rolldown/plugin-babel": "catalog:",

@@ -2,7 +2,7 @@ import * as React from "react"
 import { Popover as PopoverPrimitive } from "@base-ui/react/popover"
 
 import { cn } from "@hoardodile/ui/lib/utils"
-import { useMobileBackToClose } from "@hoardodile/ui/hooks/useMobileBackToClose"
+import { MobileBackScope, useMobileBackScope } from "@hoardodile/ui/hooks/useMobileBackToClose"
 
 function Popover({
   open,
@@ -43,7 +43,7 @@ function Popover({
     if (!isControlled) setUncontrolledOpen(next)
     onOpenChange?.(next, eventDetails)
   }
-  useMobileBackToClose(currentOpen, handleOpenChange)
+  const backScope = useMobileBackScope(currentOpen, handleOpenChange)
   // A sandboxed plugin iframe click moves focus into the iframe and blurs
   // the host window; that blur is the only parent-side signal for a
   // cross-origin iframe interaction, so close on it when opted in.
@@ -54,12 +54,14 @@ function Popover({
     return () => window.removeEventListener("blur", onWindowBlur)
   }, [currentOpen, closeOnBlur])
   return (
+    <MobileBackScope id={backScope}>
     <PopoverPrimitive.Root
       data-slot="popover"
       open={currentOpen}
       onOpenChange={handleOpenChange}
       {...props}
     />
+    </MobileBackScope>
   )
 }
 

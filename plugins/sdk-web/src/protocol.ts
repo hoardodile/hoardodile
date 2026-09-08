@@ -56,6 +56,8 @@ export type PluginFonts = {
  * a reload), and every push re-invokes the `mountPlugin` mount callback.
  */
 export type PluginIframeContext = {
+	/** Host-owned mobile overlay registration lifetime (additive capability). */
+	readonly overlaySession?: string
 	readonly pluginId: string
 	readonly resId: string
 	readonly resName: string
@@ -179,6 +181,17 @@ export type HostMessage = HostResponse | HostPush
 
 /** Type-safe request protocol table. Each entry declares input and output. */
 export type PluginRequests = {
+	overlaySync: {
+		readonly input: {
+			readonly session: string
+			readonly revision: number
+			readonly overlays: readonly {
+				readonly id: string
+				readonly parentId?: string
+			}[]
+		}
+		readonly output: { readonly accepted: boolean }
+	}
 	logInfo: {
 		readonly input: {
 			readonly message: string
@@ -311,6 +324,8 @@ export type PluginRequests = {
 
 /** Type-safe push protocol table. */
 export type HostPushes = {
+	overlayClose: { readonly session: string; readonly id: string }
+	overlaySession: { readonly resId: string; readonly session?: string }
 	context: PluginIframeContext
 	visibility: { readonly visible: boolean }
 	themeChanged: {
@@ -369,6 +384,8 @@ export type InvalidateTarget = "resource" | "resources" | "messages" | "danmaku"
 
 /** Wire keys for host→plugin pushes, mirroring {@link HostPushes}. */
 export const hostPushKeys = {
+	overlayClose: "overlayClose",
+	overlaySession: "overlaySession",
 	context: "context",
 	visibility: "visibility",
 	themeChanged: "themeChanged",
@@ -385,6 +402,7 @@ export const hostPushKeys = {
 
 /** Wire method names for plugin→host requests, mirroring {@link PluginRequests}. */
 export const pluginMethods = {
+	overlaySync: "overlaySync",
 	// Files
 	readFile: "readFile",
 	listFiles: "listFiles",

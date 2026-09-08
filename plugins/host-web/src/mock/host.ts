@@ -4,6 +4,7 @@ import type {
 	PluginDownloadRequest,
 	PluginDownloadResult,
 } from "@hoardodile/sdk-types"
+import type { OverlayRegistry } from "@hoardodile/sdk-web"
 import {
 	type HostPush,
 	type HostResponse,
@@ -12,6 +13,7 @@ import {
 	type PluginIframeContext,
 	pluginMethods,
 } from "@hoardodile/sdk-web"
+import { createOverlayHost } from "../host-core/mobile-overlays.ts"
 import { requestSchemas } from "../host-core/request-schemas.ts"
 import type { HostBinding } from "../host-core/router.ts"
 import {
@@ -55,6 +57,7 @@ const defaultLogger: MockHostLogger = {
 }
 
 export type MockHostOptions = {
+	readonly overlays?: OverlayRegistry
 	/**
 	 * Window that receives plugin postMessage traffic: the page window in
 	 * a workbench, the test window in jsdom. The host listens on it and
@@ -137,8 +140,18 @@ export function createMockHost(opts: MockHostOptions): MockHost {
 	function pushToSource(source: unknown, key: string, data?: unknown): void {
 		postToSource(source, { type: "push", key, data })
 	}
+	const overlays =
+		opts.overlays === undefined
+			? undefined
+			: createOverlayHost({ registry: opts.overlays, send: postToSource })
 
 	const handlers: readonly HostHandlerEntry[] = [
+		defineHandler(
+			pluginMethods.overlaySync,
+			requestSchemas.overlaySync,
+			(ctx, input) =>
+				overlays?.sync(ctx.source, ctx.resId, input) ?? { accepted: false },
+		),
 		defineHandler(
 			pluginMethods.readFile,
 			requestSchemas[pluginMethods.readFile],
@@ -316,9 +329,11 @@ export function createMockHost(opts: MockHostOptions): MockHost {
 
 	return {
 		register(source, binding) {
+			overlays?.release(source)
 			bindings.set(source, binding)
 		},
 		unregister(source) {
+			overlays?.release(source)
 			bindings.delete(source)
 			subscriptions.delete(source)
 		},
@@ -326,7 +341,12 @@ export function createMockHost(opts: MockHostOptions): MockHost {
 			pushToSource(source, key, data)
 		},
 		pushContext(source, ctx) {
-			pushToSource(source, hostPushKeys.context, ctx)
+			const overlaySession = overlays?.bind(source, ctx.resId)
+			pushToSource(
+				source,
+				hostPushKeys.context,
+				overlaySession === undefined ? ctx : { ...ctx, overlaySession },
+			)
 		},
 		setVisibility(source, visible) {
 			pushToSource(source, hostPushKeys.visibility, { visible })
@@ -336,6 +356,7 @@ export function createMockHost(opts: MockHostOptions): MockHost {
 		prefs,
 		cache,
 		dispose() {
+			overlays?.dispose()
 			targetWindow.removeEventListener("message", onMessage)
 			bindings.clear()
 			subscriptions.clear()

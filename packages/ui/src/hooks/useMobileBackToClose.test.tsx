@@ -1,171 +1,104 @@
-import { act, cleanup, render } from "@testing-library/react"
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { act, cleanup, render, renderHook } from "@testing-library/react"
+import { type ReactNode, StrictMode, useState } from "react"
+import { afterEach, describe, expect, it, vi } from "vitest"
+import { createMobileBackController } from "../lib/mobile-back-controller"
+import { createBackHistory } from "../test/back-history"
 import {
-	setNavigationResolver,
+	MobileBackProvider,
 	useMobileBackToClose,
 } from "./useMobileBackToClose"
 
-const HISTORY_KEY = "__appMobileOverlay"
+afterEach(cleanup)
 
-function Overlay({
-	open,
-	onOpenChange,
-}: {
-	open: boolean
-	onOpenChange: (open: boolean) => void
-}) {
-	useMobileBackToClose(open, onOpenChange)
-	return null
-}
-
-function dispatchPop(state: unknown): void {
-	window.dispatchEvent(new PopStateEvent("popstate", { state }))
+function setup(enabled = true) {
+	const browser = createBackHistory()
+	const controller = createMobileBackController({
+		driver: browser.driver,
+		schedule: browser.schedule,
+		enabled,
+	})
+	const wrapper = ({ children }: { children: ReactNode }) => (
+		<MobileBackProvider registry={controller}>{children}</MobileBackProvider>
+	)
+	const settle = () => act(() => browser.settle())
+	return { browser, controller, wrapper, settle }
 }
 
 describe("useMobileBackToClose", () => {
-	beforeEach(() => {
-		vi.stubGlobal("matchMedia", () => ({ matches: true }))
-		// Simulate the production resolver: it only fires on actual route
-		// transitions, so UI-only closes must fall back to rAF cleanup.
-		setNavigationResolver(() => () => {})
-	})
-
-	afterEach(() => {
-		vi.unstubAllGlobals()
-		cleanup()
-		// Reset history.state between tests so each test starts from a
-		// clean base entry.
-		window.history.replaceState(null, "")
-	})
-
-	it("closes a single overlay when the back gesture returns to the base state", () => {
-		const onClose = vi.fn()
-		render(<Overlay open onOpenChange={onClose} />)
-
-		expect(window.history.state).toHaveProperty(HISTORY_KEY)
-
-		act(() => {
-			dispatchPop(null)
-		})
-
-		expect(onClose).toHaveBeenCalledWith(false)
-	})
-
-	it("closes nested overlays from top to bottom", () => {
-		const sheetClose = vi.fn()
-		const dialogClose = vi.fn()
-
-		const { rerender } = render(
-			<>
-				<Overlay open onOpenChange={sheetClose} />
-				<Overlay open={false} onOpenChange={dialogClose} />
-			</>,
+	it("is inert when closed, not mobile, or missing a close callback", async () => {
+		const { browser, controller, wrapper, settle } = setup(false)
+		const { rerender } = renderHook(
+			({ open, close }) => useMobileBackToClose(open, close),
+			{
+				initialProps: {
+					open: true,
+					close: vi.fn() as ((open: boolean) => void) | undefined,
+				},
+				wrapper,
+			},
 		)
+		await settle()
+		expect(browser.index).toBe(1)
+		controller.setEnabled(true)
+		rerender({ open: false, close: vi.fn() })
+		await settle()
+		expect(browser.index).toBe(1)
+		rerender({ open: true, close: undefined })
+		await settle()
+		expect(browser.index).toBe(1)
+	})
 
-		const sheetState = window.history.state
-		expect(sheetState).toHaveProperty(HISTORY_KEY)
-
-		rerender(
-			<>
-				<Overlay open onOpenChange={sheetClose} />
-				<Overlay open onOpenChange={dialogClose} />
-			</>,
+	it("uses the latest callback and restores protection when controlled state refuses the close", async () => {
+		const { browser, controller, wrapper, settle } = setup()
+		const first = vi.fn()
+		const latest = vi.fn()
+		const { rerender } = renderHook(
+			({ close }) => useMobileBackToClose(true, close),
+			{ wrapper, initialProps: { close: first } },
 		)
-
-		const dialogState = window.history.state
-		expect(dialogState).toHaveProperty(HISTORY_KEY)
-		expect(dialogState[HISTORY_KEY]).not.toBe(sheetState[HISTORY_KEY])
-
-		// Back from dialog lands on the sheet's synthetic entry.
-		act(() => {
-			dispatchPop(sheetState)
-		})
-		expect(dialogClose).toHaveBeenCalledWith(false)
-		expect(sheetClose).not.toHaveBeenCalled()
-
-		// Back from sheet lands on the base route state.
-		act(() => {
-			dispatchPop(null)
-		})
-		expect(sheetClose).toHaveBeenCalledWith(false)
+		await settle()
+		rerender({ close: latest })
+		await settle()
+		act(() => controller.go(-1))
+		await settle()
+		expect(first).not.toHaveBeenCalled()
+		expect(latest).toHaveBeenCalledExactlyOnceWith(false)
+		expect(browser.index).toBe(2)
 	})
 
-	it("does not let a closing lower overlay unwind history on top of a newly opened one", async () => {
-		const menuClose = vi.fn()
-		const dialogClose = vi.fn()
-
-		const { rerender } = render(<Overlay open onOpenChange={menuClose} />)
-
-		const menuState = window.history.state
-		expect(menuState).toHaveProperty(HISTORY_KEY)
-
-		// Close menu and open dialog in the same commit.
-		rerender(
-			<>
-				<Overlay open={false} onOpenChange={menuClose} />
-				<Overlay open onOpenChange={dialogClose} />
-			</>,
-		)
-
-		// Let the menu's deferred cleanup check run.
-		await act(async () => {
-			await new Promise((resolve) => requestAnimationFrame(resolve))
-		})
-
-		// The dialog's synthetic entry must still be current; the menu
-		// cleanup should NOT have called history.back() and replaced the
-		// state with the menu's base state.
-		const state = window.history.state
-		expect(state).toHaveProperty(HISTORY_KEY)
-		expect(state[HISTORY_KEY]).not.toBe(menuState[HISTORY_KEY])
-	})
-
-	it("cleans up the synthetic entry on UI close even when the navigation resolver never fires", async () => {
-		const onClose = vi.fn()
-		const { rerender } = render(<Overlay open onOpenChange={onClose} />)
-
-		expect(window.history.state).toHaveProperty(HISTORY_KEY)
-
-		rerender(<Overlay open={false} onOpenChange={onClose} />)
-
-		// Wait for the rAF check, then for the asynchronous popstate that
-		// fires after history.back() completes.
-		await act(async () => {
-			await new Promise((resolve) => requestAnimationFrame(resolve))
-			await new Promise((resolve) => setTimeout(resolve, 100))
-		})
-
-		expect(HISTORY_KEY in (window.history.state ?? {})).toBe(false)
-	})
-
-	it("keeps synthetic entries invisible to a router-style history wrapper", () => {
-		const onClose = vi.fn()
-		// Simulate TanStack Router's wrapper: installed after the overlay's
-		// module-load patch, it wraps the current pushState and records every
-		// call (the real wrapper treats each as a navigation).
-		const wrapped: unknown[] = []
-		const throughThis = window.history.pushState
-		window.history.pushState = (
-			data: unknown,
-			unused: string,
-			url?: string | URL | null,
-		) => {
-			wrapped.push(data)
-			return throughThis(data, unused, url)
+	it("coalesces StrictMode remounts and releases registrations on unmount", async () => {
+		const { browser, controller, settle } = setup()
+		function Example() {
+			const [open, setOpen] = useState(true)
+			useMobileBackToClose(open, setOpen)
+			return <output>{open ? "open" : "closed"}</output>
 		}
+		const rendered = render(
+			<StrictMode>
+				<MobileBackProvider registry={controller}>
+					<Example />
+				</MobileBackProvider>
+			</StrictMode>,
+		)
+		await settle()
+		expect(browser.index).toBe(2)
+		expect(controller.snapshot.overlays).toHaveLength(1)
+		act(() => controller.go(-1))
+		await settle()
+		expect(rendered.getByText("closed")).toBeInTheDocument()
+		rendered.unmount()
+		await settle()
+		expect(browser.index).toBe(1)
+		expect(controller.snapshot.registrations).toBe(0)
+	})
 
-		render(<Overlay open onOpenChange={onClose} />)
-
-		// The synthetic marker push must bypass the wrapper — otherwise the
-		// router re-pushes its own state and the interceptor closes the
-		// overlay we just opened.
-		expect(wrapped).toHaveLength(0)
-		expect(window.history.state).toHaveProperty(HISTORY_KEY)
-
-		// A real navigation (the router's own push) still closes overlays.
-		act(() => {
-			throughThis({ key: "router-key" }, "")
-		})
-		expect(onClose).toHaveBeenCalledWith(false)
+	it("does not change an unrelated browser history implementation", async () => {
+		const push = window.history.pushState
+		const replace = window.history.replaceState
+		const { wrapper, settle } = setup()
+		renderHook(() => useMobileBackToClose(true, vi.fn()), { wrapper })
+		await settle()
+		expect(window.history.pushState).toBe(push)
+		expect(window.history.replaceState).toBe(replace)
 	})
 })

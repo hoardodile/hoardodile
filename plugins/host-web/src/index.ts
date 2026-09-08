@@ -18,6 +18,10 @@ export {
 	resetDownloadConsent,
 	subscribeDownloadConsent,
 } from "./consent/consent-store.ts"
+export {
+	createOverlayHost,
+	type OverlayHost,
+} from "./host-core/mobile-overlays.ts"
 export { anchorData, requestSchemas } from "./host-core/request-schemas.ts"
 export {
 	createHostRouter,

@@ -2,7 +2,7 @@ import * as React from "react"
 import { Menu as MenuPrimitive } from "@base-ui/react/menu"
 
 import { cn } from "@hoardodile/ui/lib/utils"
-import { useMobileBackToClose } from "@hoardodile/ui/hooks/useMobileBackToClose"
+import { MobileBackScope, useMobileBackScope } from "@hoardodile/ui/hooks/useMobileBackToClose"
 import { AltArrowRight } from "@hoardodile/ui/icons/registry"
 import { Check } from "@hoardodile/ui/icons/marks"
 
@@ -33,14 +33,16 @@ function DropdownMenu({
     if (!isControlled) setUncontrolledOpen(next)
     onOpenChange?.(next, eventDetails)
   }
-  useMobileBackToClose(currentOpen, handleOpenChange)
+  const backScope = useMobileBackScope(currentOpen, handleOpenChange)
   return (
+    <MobileBackScope id={backScope}>
     <MenuPrimitive.Root
       data-slot="dropdown-menu"
       open={currentOpen}
       onOpenChange={handleOpenChange}
       {...props}
     />
+    </MobileBackScope>
   )
 }
 
@@ -139,8 +141,19 @@ function DropdownMenuItem({
   )
 }
 
-function DropdownMenuSub({ ...props }: MenuPrimitive.SubmenuRoot.Props) {
-  return <MenuPrimitive.SubmenuRoot data-slot="dropdown-menu-sub" {...props} />
+function DropdownMenuSub({ open, defaultOpen, onOpenChange, ...props }: Omit<MenuPrimitive.SubmenuRoot.Props, "onOpenChange"> & {
+  onOpenChange?: (open: boolean, details?: MenuPrimitive.Root.ChangeEventDetails) => void
+}) {
+  const [localOpen, setLocalOpen] = React.useState(defaultOpen ?? false)
+  const currentOpen = open ?? localOpen
+  function change(next: boolean, details?: MenuPrimitive.Root.ChangeEventDetails) {
+    if (open === undefined) setLocalOpen(next)
+    onOpenChange?.(next, details)
+  }
+  const backScope = useMobileBackScope(currentOpen, change)
+  return <MobileBackScope id={backScope}>
+    <MenuPrimitive.SubmenuRoot data-slot="dropdown-menu-sub" open={currentOpen} onOpenChange={change} {...props} />
+  </MobileBackScope>
 }
 
 function DropdownMenuSubTrigger({

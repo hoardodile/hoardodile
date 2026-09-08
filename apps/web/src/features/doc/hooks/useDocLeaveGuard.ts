@@ -23,10 +23,8 @@ type BlockLocation = {
  * native `confirm` dialog for both in-app navigation and tab close.
  *
  * Navigations that stay on the same location are always allowed: they cannot
- * lose unsaved changes. This exemption covers the synthetic history entries
- * pushed by `useMobileBackToClose` on mobile — closing an overlay (e.g. the
- * tag-chip color popover) calls `history.back()` to a same-URL entry, which
- * the blocker would otherwise mistake for leaving the page and spam confirms.
+ * lose unsaved changes. Mobile overlay traversals are filtered by the app's
+ * history adapter before reaching any router blocker.
  */
 export function useDocLeaveGuard(input: UseDocLeaveGuardInput): void {
 	const { dirty, message } = input

@@ -1,4 +1,4 @@
-import { useMobileBackToClose } from "@hoardodile/ui/hooks/useMobileBackToClose"
+import { MobileBackScope, useMobileBackScope } from "@hoardodile/ui/hooks/useMobileBackToClose"
 import { Cross } from "@hoardodile/ui/icons/marks"
 import { cn } from "@hoardodile/ui/lib/utils"
 import { type ReactNode, useEffect, useState } from "react"
@@ -47,10 +47,10 @@ export function MobileDrawer(props: MobileDrawerProps) {
 		if (open) setHasOpened(true)
 	}, [open])
 
-	useMobileBackToClose(open, onOpenChange)
+	const backScope = useMobileBackScope(open, onOpenChange)
 
 	return (
-		<>
+		<MobileBackScope id={backScope}>
 			{open && (
 				<button
 					type="button"
@@ -93,6 +93,6 @@ export function MobileDrawer(props: MobileDrawerProps) {
 					{hasOpened ? props.children : null}
 				</div>
 			</aside>
-		</>
+		</MobileBackScope>
 	)
 }

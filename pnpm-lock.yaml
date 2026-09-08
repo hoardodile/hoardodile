@@ -561,6 +561,9 @@ importers:
         specifier: 'catalog:'
         version: 5.0.15(@types/react@19.2.18)(immer@11.1.18)(react@19.2.8)(use-sync-external-store@1.6.0(react@19.2.8))
     devDependencies:
+      '@hoardodile/sdk-react':
+        specifier: workspace:*
+        version: link:../../plugins/sdk-react
       '@hoardodile/server':
         specifier: workspace:*
         version: link:../server
@@ -1240,6 +1243,9 @@ importers:
       '@hoardodile/sdk-web':
         specifier: workspace:*
         version: link:../sdk-web
+      '@hoardodile/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
       i18next:
         specifier: 'catalog:'
         version: 26.4.0(typescript@5.9.3)

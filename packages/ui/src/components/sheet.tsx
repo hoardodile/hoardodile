@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next"
 
 import { cn } from "@hoardodile/ui/lib/utils"
 import { Button } from "@hoardodile/ui/components/button"
-import { useMobileBackToClose } from "@hoardodile/ui/hooks/useMobileBackToClose"
+import { MobileBackScope, useMobileBackScope } from "@hoardodile/ui/hooks/useMobileBackToClose"
 import { Cross } from "@hoardodile/ui/icons/marks"
 
 function Sheet({
@@ -34,14 +34,16 @@ function Sheet({
     if (!isControlled) setUncontrolledOpen(next)
     onOpenChange?.(next, eventDetails)
   }
-  useMobileBackToClose(currentOpen, handleOpenChange)
+  const backScope = useMobileBackScope(currentOpen, handleOpenChange)
   return (
+    <MobileBackScope id={backScope}>
     <SheetPrimitive.Root
       data-slot="sheet"
       open={currentOpen}
       onOpenChange={handleOpenChange}
       {...props}
     />
+    </MobileBackScope>
   )
 }
 

@@ -30,6 +30,18 @@ const downloadItem = z.object({
 })
 
 export const requestSchemas = {
+	[pluginMethods.overlaySync]: z.object({
+		session: z.string().min(1).max(128),
+		revision: z.number().int().nonnegative(),
+		overlays: z
+			.array(
+				z.object({
+					id: z.string().min(1).max(256),
+					parentId: z.string().max(256).optional(),
+				}),
+			)
+			.max(64),
+	}),
 	[pluginMethods.readFile]: z.object({
 		path: z.string().min(1),
 		range: z

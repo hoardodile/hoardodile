@@ -45,7 +45,7 @@ enforced by the `scan-contract` test in the package.)
 | `@hoardodile/ui/lib/*` | Utilities (`cn`, …) |
 | `@hoardodile/ui/theme.css` | Theme CSS: `.light` / `.dark` variables and per-palette `.theme-<id>` blocks |
 | `@hoardodile/ui/viewport` | Shared mobile viewport constants (`MOBILE_BREAKPOINT_PX`, `MOBILE_QUERY`, …) |
-| `@hoardodile/ui` | App-owned root pieces: `AppDialog`, `cn`, navigation resolver |
+| `@hoardodile/ui` | App-owned root pieces: `AppDialog`, `cn`, `MobileBackProvider` |
 
 ## Example
 
@@ -63,6 +63,8 @@ export function Picker({ open, onClose }) {
 ```
 
 ## Theming
+
+Mobile back integration and migration: [mobile overlay history](../../docs/mobile-back.md).
 
 `@hoardodile/ui/theme.css` defines the design tokens both the host app
 and plugin iframes consume. The plugin iframe applies the host theme via

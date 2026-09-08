@@ -40,6 +40,7 @@
 		"test": "vitest run"
 	},
 	"dependencies": {
+		"@hoardodile/ui": "workspace:*",
 		"@hoardodile/i18n": "workspace:*",
 		"@hoardodile/sdk-types": "workspace:*",
 		"@hoardodile/sdk-web": "workspace:*",

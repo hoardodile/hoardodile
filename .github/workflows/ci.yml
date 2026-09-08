@@ -139,9 +139,11 @@ jobs:
           key: playwright-${{ hashFiles('pnpm-lock.yaml') }}
           restore-keys: playwright-
       - name: Install Playwright browser
-        run: pnpm -F @hoardodile/web exec playwright install --with-deps chromium
+        run: pnpm -F @hoardodile/web exec playwright install --with-deps chromium webkit
       - name: E2E
         run: pnpm -F @hoardodile/web test:e2e
+      - name: Mobile overlay history (Chromium and WebKit)
+        run: pnpm -F @hoardodile/web test:mobile-back
       - name: Upload Playwright report
         if: failure()
         uses: actions/upload-artifact@v7

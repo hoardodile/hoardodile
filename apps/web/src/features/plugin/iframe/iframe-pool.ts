@@ -5,6 +5,7 @@ import {
 	resolvePluginMessageSource,
 	unregisterIframe,
 } from "./iframe-registry"
+import { pluginOverlays } from "./mobile-overlays"
 import { createTransport, type PluginIframeTransport } from "./transport"
 
 // Pool: owns iframe elements (primary + capped ephemerals, LRU eviction,
@@ -356,6 +357,9 @@ export function claim(opts: {
 	const claimId = nextClaimId++
 	entry.claimId = claimId
 	const claimed = entry
+	if (resId !== undefined && claimed.iframe.contentWindow !== null) {
+		pluginOverlays.bind(claimed.iframe.contentWindow, resId)
+	}
 
 	// Primed claim: the entry already painted and acked exactly this
 	// resId (a prerender ran the full pipeline earlier), so the context
@@ -392,6 +396,8 @@ export function claim(opts: {
 		primedResId: primed ? resId : undefined,
 		release() {
 			if (claimed.claimId !== claimId) return
+			if (claimed.iframe.contentWindow !== null)
+				pluginOverlays.release(claimed.iframe.contentWindow)
 			claimed.transport.setVisibility(false)
 			claimed.claimId = undefined
 			claimed.lastReleased = performance.now()
@@ -434,6 +440,8 @@ export function claim(opts: {
 			claimed.lastAckedResId = undefined
 			claimed.loaded = false
 			claimed.assetVersion = assetVersion
+			if (claimed.iframe.contentWindow !== null)
+				pluginOverlays.release(claimed.iframe.contentWindow)
 			claimed.iframe.src = apiPaths.plugins.indexHtml(pluginId, assetVersion)
 			return true
 		},

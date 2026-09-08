@@ -6,6 +6,7 @@ import {
 } from "@hoardodile/host-web"
 import type { Danmaku, Message } from "@hoardodile/sdk-types"
 import { hostPushKeys, type PluginIframeContext } from "@hoardodile/sdk-web"
+import { getMobileBackController } from "@hoardodile/ui/lib/mobile-back-browser"
 import { createAssetVault } from "./consent-bridge.ts"
 import {
 	createHttpFileBackend,
@@ -66,6 +67,7 @@ export function mountIframe(opts: {
 		recorder.recordDanmaku,
 	)
 	const host = createMockHost({
+		overlays: getMobileBackController(),
 		targetWindow: window,
 		files: createHttpFileBackend(resource.id, () => ctx.snapshot),
 		messages,

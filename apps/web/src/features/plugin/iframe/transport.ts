@@ -4,6 +4,7 @@ import type {
 	PluginIframeContext,
 } from "@hoardodile/sdk-web"
 import { hostPushKeys } from "@hoardodile/sdk-web"
+import { pluginOverlays } from "./mobile-overlays"
 
 // Transport: wraps one iframe element with typed push/setVisibility/dispose,
 // and owns the layer's single postMessage exit point.
@@ -43,7 +44,14 @@ export function createTransport(
 	return {
 		pushContext(ctx) {
 			if (disposed) return
-			post({ type: "push", key: hostPushKeys.context, data: ctx })
+			const source = iframe.contentWindow
+			const overlaySession =
+				source === null ? undefined : pluginOverlays.bind(source, ctx.resId)
+			post({
+				type: "push",
+				key: hostPushKeys.context,
+				data: { ...ctx, overlaySession },
+			})
 		},
 		setVisibility(visible) {
 			if (disposed) return
@@ -54,6 +62,8 @@ export function createTransport(
 			post({ type: "push", key, data })
 		},
 		dispose() {
+			if (iframe.contentWindow !== null)
+				pluginOverlays.release(iframe.contentWindow)
 			disposed = true
 		},
 	}
