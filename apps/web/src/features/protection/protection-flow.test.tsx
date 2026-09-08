@@ -481,6 +481,14 @@ it("renders the unified settings sections without a page-level heading", async (
 	expect(screen.getByTestId("complete-backups")).toBeInTheDocument()
 })
 
+it("hides the available-backups section when there are no recovery points", async () => {
+	mount(<RecoveryPanel />)
+	await screen.findByTestId("complete-backups-section")
+	expect(
+		screen.queryByTestId("available-backups-section"),
+	).not.toBeInTheDocument()
+})
+
 it("merges local and offsite protection into one section", async () => {
 	mount(<RecoveryPanel />, {
 		"protection.points": () => [point],

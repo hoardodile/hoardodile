@@ -1,12 +1,5 @@
 import { Button } from "@hoardodile/ui/components/button"
 import { DropdownSelect } from "@hoardodile/ui/components/dropdown-select"
-import {
-	Empty,
-	EmptyHeader,
-	EmptyMedia,
-	EmptyTitle,
-} from "@hoardodile/ui/components/empty"
-import { Icon } from "@hoardodile/ui/components/icon"
 import { Switch } from "@hoardodile/ui/components/switch"
 import { Database, History, Server } from "@hoardodile/ui/icons/registry"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
@@ -71,6 +64,11 @@ export function RecoveryPanel({
 		...recoveryPointsOptions(repositoryId),
 		enabled: Boolean(repository),
 	})
+	// Hide the whole "Available backups" section when the selected repository
+	// has no recovery points; keep it (with loading/error states) while the
+	// points query is still pending or has failed.
+	const showAvailableBackups =
+		!points.isSuccess || (points.data?.length ?? 0) > 0
 	const jobs = useQuery(protectionJobsOptions())
 	const hasJobs = Boolean(jobs.data && jobs.data.length > 0)
 	const maintenance = Boolean(
@@ -237,7 +235,7 @@ export function RecoveryPanel({
 				</div>
 			</SettingsSection>,
 		)
-	if (repository) {
+	if (repository && showAvailableBackups) {
 		if (sections.length > 0) sections.push(<SectionDivider key="divider-1" />)
 		sections.push(
 			<SettingsSection
@@ -269,16 +267,6 @@ export function RecoveryPanel({
 					)}
 					{points.error && <p role="alert">{points.error.message}</p>}
 					{points.isPending && <p className="text-xs">{t("common.loading")}</p>}
-					{points.data?.length === 0 && (
-						<Empty className="py-8">
-							<EmptyHeader>
-								<EmptyMedia variant="icon">
-									<Icon icon={Server} className="size-6" />
-								</EmptyMedia>
-								<EmptyTitle>{t("protection.empty")}</EmptyTitle>
-							</EmptyHeader>
-						</Empty>
-					)}
 					{points.data && points.data.length > 0 && (
 						<div className="divide-y divide-border">
 							{points.data
