@@ -5,6 +5,7 @@ import { ConfirmDialog } from "@hoardodile/ui/components/confirm-dialog"
 import { DropdownSelect } from "@hoardodile/ui/components/dropdown-select"
 import { Icon } from "@hoardodile/ui/components/icon"
 import { Input } from "@hoardodile/ui/components/input"
+import { Skeleton } from "@hoardodile/ui/components/skeleton"
 import { Switch } from "@hoardodile/ui/components/switch"
 import {
 	Server,
@@ -102,7 +103,16 @@ export function ReplicationPanel({ embedded = false }: { embedded?: boolean }) {
 
 	const serviceBody = (
 		<div className="space-y-5">
-			{stateQuery.isPending && <p>{t("common.loading")}</p>}
+			{stateQuery.isPending && (
+				<div
+					className="space-y-3"
+					data-testid="replication-skeleton"
+					aria-hidden
+				>
+					<Skeleton className="h-10 w-full" />
+					<Skeleton className="h-24 w-full" />
+				</div>
+			)}
 			{stateQuery.error && <p role="alert">{stateQuery.error.message}</p>}
 			{state?.role === "unconfigured" && (
 				<section

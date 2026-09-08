@@ -130,7 +130,7 @@ it("requires a recovery key when opening an existing backup", async () => {
 		}),
 	})
 	const user = userEvent.setup()
-	await user.click(screen.getByTestId("setup-existing-backup"))
+	await user.click(await screen.findByTestId("setup-existing-backup"))
 	expect(
 		screen.getByLabelText("Choose recovery passphrase file"),
 	).toBeInTheDocument()
@@ -487,6 +487,17 @@ it("hides the available-backups section when there are no recovery points", asyn
 	expect(
 		screen.queryByTestId("available-backups-section"),
 	).not.toBeInTheDocument()
+})
+
+it("shows a skeleton while the protection status loads", async () => {
+	mount(<RecoveryPanel />, {
+		"protection.status": () => new Promise<never>(() => {}),
+	})
+	expect(await screen.findByTestId("backups-skeleton")).toBeInTheDocument()
+	expect(
+		screen.queryByTestId("complete-backups-section"),
+	).not.toBeInTheDocument()
+	expect(screen.queryByRole("alert")).not.toBeInTheDocument()
 })
 
 it("merges local and offsite protection into one section", async () => {

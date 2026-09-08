@@ -1,5 +1,6 @@
 import { Button } from "@hoardodile/ui/components/button"
 import { DropdownSelect } from "@hoardodile/ui/components/dropdown-select"
+import { Skeleton } from "@hoardodile/ui/components/skeleton"
 import { Switch } from "@hoardodile/ui/components/switch"
 import { Database, History, Server } from "@hoardodile/ui/icons/registry"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
@@ -31,6 +32,32 @@ function wasKeyDownloaded(key: string | undefined) {
 	} catch {
 		return false
 	}
+}
+
+/** Skeleton shown while the protection status loads — mirrors the
+    "Complete backups" section anatomy instead of a bare "Loading…". */
+function BackupsSkeleton() {
+	return (
+		<div className="space-y-6" data-testid="backups-skeleton" aria-hidden>
+			<div className="flex items-center gap-3">
+				<Skeleton className="size-8 rounded-lg" />
+				<div className="min-w-0 space-y-1.5">
+					<Skeleton className="h-4 w-52" />
+					<Skeleton className="h-3 w-72" />
+				</div>
+			</div>
+			<div className="space-y-4">
+				<div className="flex items-center gap-2">
+					<Skeleton className="h-4 w-56" />
+					<Skeleton className="h-4 w-24" />
+				</div>
+				<Skeleton className="h-5 w-48" />
+				<Skeleton className="h-10 w-full" />
+				<Skeleton className="h-10 w-full" />
+				<Skeleton className="h-24 w-full" />
+			</div>
+		</div>
+	)
 }
 
 export function RecoveryPanel({
@@ -266,7 +293,17 @@ export function RecoveryPanel({
 						</div>
 					)}
 					{points.error && <p role="alert">{points.error.message}</p>}
-					{points.isPending && <p className="text-xs">{t("common.loading")}</p>}
+					{points.isPending && (
+						<div
+							className="space-y-3"
+							data-testid="available-backups-skeleton"
+							aria-hidden
+						>
+							<Skeleton className="h-10 w-full" />
+							<Skeleton className="h-10 w-full" />
+							<Skeleton className="h-10 w-full" />
+						</div>
+					)}
 					{points.data && points.data.length > 0 && (
 						<div className="divide-y divide-border">
 							{points.data
@@ -325,9 +362,14 @@ export function RecoveryPanel({
 
 	return (
 		<div data-testid="complete-backups">
-			{status.isPending && <p>{t("common.loading")}</p>}
-			{status.error && <p role="alert">{status.error.message}</p>}
-			{sections}
+			{status.isPending ? (
+				<BackupsSkeleton />
+			) : (
+				<>
+					{status.error && <p role="alert">{status.error.message}</p>}
+					{sections}
+				</>
+			)}
 			<BackupSetupWizard
 				open={wizardMode !== null}
 				onOpenChange={(open) => {
