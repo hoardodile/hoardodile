@@ -1,5 +1,4 @@
 import { Button } from "@hoardodile/ui/components/button"
-import { ConfirmDialog } from "@hoardodile/ui/components/confirm-dialog"
 import { Icon } from "@hoardodile/ui/components/icon"
 import {
 	IconToggle,
@@ -76,7 +75,6 @@ export function MarketplacePanel() {
 	const [view, setView] = useState<MarketplaceView>("grid")
 	const [filter, setFilter] = useState<MarketplaceFilter>("all")
 	const [query, setQuery] = useState("")
-	const [refreshConfirmOpen, setRefreshConfirmOpen] = useState(false)
 	const [installTarget, setInstallTarget] = useState<InstallTarget | null>(null)
 	const [detailTarget, setDetailTarget] = useState<MarketPlugin | null>(null)
 	const [uninstallTarget, setUninstallTarget] = useState<MarketPlugin | null>(
@@ -155,7 +153,7 @@ export function MarketplacePanel() {
 					<Button
 						variant="secondary"
 						size="sm"
-						onClick={() => setRefreshConfirmOpen(true)}
+						onClick={() => refreshMut.mutate()}
 						disabled={refreshMut.isPending}
 						data-testid="marketplace-refresh"
 					>
@@ -192,7 +190,7 @@ export function MarketplacePanel() {
 								<Button
 									variant="secondary"
 									size="sm"
-									onClick={() => setRefreshConfirmOpen(true)}
+									onClick={() => refreshMut.mutate()}
 									disabled={refreshMut.isPending}
 									data-testid="marketplace-refresh"
 								>
@@ -259,21 +257,6 @@ export function MarketplacePanel() {
 					</div>
 				</>
 			)}
-
-			<ConfirmDialog
-				open={refreshConfirmOpen}
-				onOpenChange={setRefreshConfirmOpen}
-				title={t("marketplace.refreshConfirmTitle")}
-				description={t("marketplace.refreshConfirmDescription")}
-				confirmLabel={t("marketplace.refresh")}
-				pendingLabel={t("common.working")}
-				isPending={refreshMut.isPending}
-				onConfirm={() => {
-					setRefreshConfirmOpen(false)
-					refreshMut.mutate()
-				}}
-				confirmTestId="marketplace-refresh-confirm"
-			/>
 
 			<MarketplaceInstallDialog
 				request={installTarget}

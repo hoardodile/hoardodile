@@ -224,13 +224,10 @@ describe("MarketplacePanel", () => {
 		// No automatic retry: the query failed exactly once.
 		expect(snapshotQuery).toHaveBeenCalledTimes(1)
 
-		// Manual refresh first asks for confirmation (it burns GitHub API
-		// quota), then forces.
+		// Manual refresh forces a re-fetch with no confirmation — the
+		// marketplace reads only quota-free GitHub web endpoints, so a
+		// refresh no longer burns the GitHub API quota.
 		await user.click(screen.getByTestId("marketplace-refresh"))
-		expect(
-			await screen.findByTestId("marketplace-refresh-confirm"),
-		).toBeInTheDocument()
-		await user.click(screen.getByTestId("marketplace-refresh-confirm"))
 		await waitFor(() => {
 			expect(snapshotQuery).toHaveBeenCalledWith({ force: true })
 		})
