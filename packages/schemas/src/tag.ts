@@ -26,6 +26,16 @@ import {
  * pointer (which is deliberately not on this object, mirroring
  * {@link Character}`s `avatarVersion`/`fullbodyVersion`).
  */
+/**
+ * Tag visibility policy (see `apps/server/src/domain/tag/visibility.ts`).
+ * `watch_only` narrows character/resource content to entries carrying the
+ * tag when the global watch-only toggle is on; `explicit_view` hides such
+ * content unless the tag is explicitly selected for viewing. Everything
+ * else (default) is `normal`.
+ */
+export const tagVisibility = z.enum(["normal", "watch_only", "explicit_view"])
+export type TagVisibility = z.infer<typeof tagVisibility>
+
 export const tag = z.object({
 	id,
 	name: z.string().min(1).max(MAX_NAME_LENGTH),
@@ -35,6 +45,7 @@ export const tag = z.object({
 	imageMeta: imageSlotMeta.optional(),
 	position: z.number().int(),
 	pinned: z.boolean(),
+	visibility: tagVisibility.default("normal"),
 	catId: id,
 	displayTagId: id,
 	virtual: z.boolean().optional(),

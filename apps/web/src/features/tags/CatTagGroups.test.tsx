@@ -23,6 +23,7 @@ function makeTag(
 		color: "",
 		position: 0,
 		pinned: false,
+		visibility: "normal",
 		catId: "cat-1",
 		displayTagId: id,
 		...(opts.virtual === true ? { virtual: true } : {}),

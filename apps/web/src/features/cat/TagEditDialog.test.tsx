@@ -51,6 +51,7 @@ const tag: TagWithCounts = {
 	link: "www.example.com/harbor",
 	position: 0,
 	pinned: false,
+	visibility: "normal",
 	catId: commonCat.id,
 	displayTagId: "tag-1",
 	createdAt: 1,
@@ -117,5 +118,31 @@ describe("TagEditDialog", () => {
 			})
 		})
 		await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false))
+	})
+
+	test("switching visibility enables save and sends the chosen visibility", async () => {
+		const user = userEvent.setup()
+		const onOpenChange = vi.fn()
+		render(<TagEditDialog tag={tag} open onOpenChange={onOpenChange} />, {
+			wrapper: createWrapper(),
+		})
+
+		const save = screen.getByTestId("tag-save-tag-1")
+		expect(save).toBeDisabled()
+
+		await user.click(screen.getByTestId("tag-visibility-tag-1"))
+		await user.click(
+			await screen.findByRole("menuitemradio", { name: "Watch only" }),
+		)
+		await waitFor(() => expect(save).toBeEnabled())
+		await user.click(save)
+
+		await waitFor(() => {
+			const call = updateMutationFn.mock.calls[0]?.[0]
+			expect(call).toMatchObject({
+				id: "tag-1",
+				visibility: "watch_only",
+			})
+		})
 	})
 })

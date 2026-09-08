@@ -1,0 +1,1 @@
+ALTER TABLE `tags` ADD `visibility` text DEFAULT 'normal' NOT NULL;

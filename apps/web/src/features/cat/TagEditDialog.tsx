@@ -1,3 +1,4 @@
+import type { TagVisibility } from "@hoardodile/schemas"
 import { MAX_URL_LENGTH } from "@hoardodile/schemas"
 import { Button } from "@hoardodile/ui/components/button"
 import { DropdownSelect } from "@hoardodile/ui/components/dropdown-select"
@@ -20,6 +21,15 @@ import {
 import type { TagWithCounts } from "./panelModel"
 import { invalidateCategoriesAndTags, useCategoryOptions } from "./panelShared"
 
+export const TAG_VISIBILITY_OPTIONS: readonly {
+	readonly value: TagVisibility
+	readonly label: string
+}[] = [
+	{ value: "normal", label: "tags.visibility.normal" },
+	{ value: "watch_only", label: "tags.visibility.watchOnly" },
+	{ value: "explicit_view", label: "tags.visibility.explicitView" },
+]
+
 /**
  * Edit dialog for one tag: the shared entity-meta form plus the
  * tag-specific fields — the category select and the external link. The
@@ -39,6 +49,7 @@ export function TagEditDialog(props: {
 	const originalLink = tag.link ?? ""
 	const [catId, setCategoryId] = useState<string>(tag.catId)
 	const [linkDraft, setLinkDraft] = useState<string>(originalLink)
+	const [visibility, setVisibility] = useState<TagVisibility>(tag.visibility)
 	const categories = useCategoryOptions()
 	const tagsQ = useQuery(tagListWithCountsQueryOptions())
 	const [collision, setCollision] = useState<TagWithCounts | undefined>(
@@ -50,8 +61,9 @@ export function TagEditDialog(props: {
 		if (!open) return
 		setCategoryId(tag.catId)
 		setLinkDraft(tag.link ?? "")
+		setVisibility(tag.visibility)
 		setCollision(undefined)
-	}, [open, tag.catId, tag.link])
+	}, [open, tag.catId, tag.link, tag.visibility])
 
 	function handleSaveError(
 		_input: unknown,
@@ -79,6 +91,7 @@ export function TagEditDialog(props: {
 					...buildEntityMetaUpdatePayload(id, draft),
 					catId,
 					link: linkDraft.trim(),
+					visibility,
 				})}
 				onSaveError={handleSaveError}
 				contentTestId={`tag-edit-${tag.id}`}
@@ -91,7 +104,8 @@ export function TagEditDialog(props: {
 					draft.color !== tag.color ||
 					draft.pinned !== tag.pinned ||
 					linkDraft.trim() !== originalLink ||
-					catId !== tag.catId
+					catId !== tag.catId ||
+					visibility !== tag.visibility
 				}
 			>
 				<DropdownSelect
@@ -106,6 +120,26 @@ export function TagEditDialog(props: {
 						label: c.name,
 					}))}
 				/>
+				<div className="flex flex-col gap-1.5">
+					<Label
+						htmlFor={`tag-visibility-${tag.id}`}
+						className="text-xs font-normal text-muted-foreground"
+					>
+						{t("tags.edit.visibilityLabel")}
+					</Label>
+					<DropdownSelect
+						value={visibility}
+						onValueChange={(value) => setVisibility(value as TagVisibility)}
+						data-testid={`tag-visibility-${tag.id}`}
+						options={TAG_VISIBILITY_OPTIONS.map((opt) => ({
+							value: opt.value,
+							label: t(opt.label),
+						}))}
+					/>
+					<p className="text-xs text-muted-foreground">
+						{t("tags.edit.visibilityHint")}
+					</p>
+				</div>
 				<div className="flex flex-col gap-1.5">
 					<Label
 						htmlFor={`tag-link-${tag.id}`}

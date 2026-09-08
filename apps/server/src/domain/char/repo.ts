@@ -22,6 +22,7 @@ import {
 } from "src/domain/tag/collapse.ts"
 import { buildTagFilterClauses } from "src/domain/tag/filter.ts"
 import { charTags, tags } from "src/domain/tag/schema.ts"
+import { buildVisibilityClauses } from "src/domain/tag/visibility.ts"
 import {
 	buildFindById,
 	buildHydrate,
@@ -340,6 +341,21 @@ export function buildCharacterRepository(client: DbClient): CharRepository {
 				? isNotNull(characters.deletedAt)
 				: isNull(characters.deletedAt),
 		)
+		// Live browse/search only: the trash list is a recovery view, so the
+		// per-tag visibility policy (watch-only / explicit-view) is not
+		// applied there.
+		if (!q.trashed) {
+			clauses.push(
+				...buildVisibilityClauses({
+					db: client,
+					entityIdColumn: charTags.charId,
+					tagIdColumn: charTags.tagId,
+					outerEntityIdColumn: characters.id,
+					selfCharacterIdColumn: characters.id,
+					selectedTagIds: q.tagIds,
+				}),
+			)
+		}
 		if (q.ids !== undefined && q.ids.length > 0) {
 			clauses.push(inArray(characters.id, q.ids))
 		}

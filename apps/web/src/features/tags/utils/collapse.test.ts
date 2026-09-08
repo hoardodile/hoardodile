@@ -14,6 +14,7 @@ function makeTag(id: string, catId: string, displayTagId = id): Tag {
 		color: "",
 		position: 0,
 		pinned: false,
+		visibility: "normal",
 		catId,
 		displayTagId,
 		createdAt: 0,

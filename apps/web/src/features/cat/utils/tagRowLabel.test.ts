@@ -15,6 +15,7 @@ const tag = (id: string, catId: string): TagWithCounts => ({
 	color: "",
 	position: 0,
 	pinned: false,
+	visibility: "normal",
 	catId,
 	displayTagId: id,
 	createdAt: 0,

@@ -2,6 +2,7 @@ import type { IconType } from "@hoardodile/ui/components/icon"
 import { SectionTabs } from "@hoardodile/ui/components/section-tabs"
 import {
 	BranchingPathsUp,
+	Eye,
 	Layers,
 	Share,
 	Tag,
@@ -11,6 +12,7 @@ import { createFileRoute } from "@tanstack/react-router"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { CatsAndTagsPanel } from "@/features/cat/CatsAndTagsPanel"
+import { WatchOnlyToggleRow } from "@/features/cat/WatchOnlyToggleRow"
 import { RelationshipTypesMePanel } from "@/features/char/components/RelationshipTypesMePanel"
 import { ColManagementPanel } from "@/features/col/ColManagementPanel"
 import { SettingsSection } from "@/features/settings/SettingsSection"
@@ -75,6 +77,16 @@ function CustomSettingsRoute() {
 					{tab === "tags" ? (
 						<>
 							<CatsAndTagsPanel />
+							<SectionDivider />
+							<SettingsSection
+								icon={Eye}
+								title={t("me.custom.watchOnly.title")}
+								description={t("me.custom.watchOnly.description")}
+								layout="split"
+								data-testid="me-watch-only"
+							>
+								<WatchOnlyToggleRow />
+							</SettingsSection>
 							<SectionDivider />
 							<SettingsSection
 								icon={BranchingPathsUp}

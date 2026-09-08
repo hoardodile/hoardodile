@@ -38,6 +38,12 @@ export const prefKeys = {
 	authSessionIdleTimeoutSeconds: "auth.sessionIdleTimeoutSeconds",
 	searchLive: "search.live",
 	/**
+	 * Global watch-only toggle (server system preference, scope `sync`).
+	 * When on, character/resource browse narrows to content carrying a
+	 * `watch_only`-tag. Mirrored to the server via the prefSync queue.
+	 */
+	watchOnly: "tags.watchOnlyEnabled",
+	/**
 	 * Desktop-only: the user has already seen the update at this version
 	 * (opened About), so the update-available dot stays hidden until a
 	 * strictly newer release arrives. Never written or read in the browser.

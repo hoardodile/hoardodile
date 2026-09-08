@@ -3,6 +3,7 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { DomainError } from "@hoardodile/shared"
 import { createCharacterService } from "src/domain/char/service.ts"
+import { systemPreferences } from "src/domain/prefs/schema.ts"
 import { createResourceService } from "src/domain/res/service.ts"
 import { createTestHooks } from "src/domain/res/test-registry.ts"
 import { type DbHandles, openDb } from "src/infra/db/connection.ts"
@@ -10,6 +11,7 @@ import { createStoragePaths } from "src/infra/storage/paths.ts"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 import { createCategoryService } from "../cat/service.ts"
 import { createTagService, type TagService } from "./service.ts"
+import { WATCH_ONLY_PREF_KEY } from "./visibility.ts"
 
 describe("tag service", () => {
 	let root: string
@@ -325,5 +327,127 @@ describe("tag service", () => {
 		await expect(
 			svc.update({ id: twin.id, catId: catId }),
 		).rejects.toMatchObject({ kind: "tag.name_exists" })
+	})
+
+	test("visibility is persisted on create and update", async () => {
+		const t = await svc.create({
+			name: "Mature",
+			catId: catId,
+			visibility: "explicit_view",
+		})
+		expect(t.visibility).toBe("explicit_view")
+		const updated = await svc.update({
+			id: t.id,
+			visibility: "watch_only",
+		})
+		expect(updated.visibility).toBe("watch_only")
+	})
+
+	test("create defaults visibility to normal", async () => {
+		const t = await svc.create({ name: "Default", catId: catId })
+		expect(t.visibility).toBe("normal")
+	})
+
+	test("with watch-only on, listAllWithCounts narrows to visible content only", async () => {
+		// Need entities with real tags. Create tags and attach them.
+		const watch = await svc.create({
+			name: "Watch",
+			catId: catId,
+			visibility: "watch_only",
+		})
+		const exhibit = await svc.create({
+			name: "Exhibit",
+			catId: catId,
+			visibility: "normal",
+		})
+		await svc.attachToResource(resId, watch.id)
+		await svc.attachToResource(resId2, exhibit.id)
+
+		// Turn the global watch-only toggle on.
+		dbh.db
+			.insert(systemPreferences)
+			.values({
+				key: WATCH_ONLY_PREF_KEY,
+				scope: "sync",
+				value: "1",
+				updatedAt: Date.now(),
+			})
+			.onConflictDoUpdate({
+				target: systemPreferences.key,
+				set: { value: "1", updatedAt: Date.now() },
+			})
+			.run()
+
+		const withCounts = await svc.listAllWithCounts()
+		const watchRow = withCounts.find((t) => t.id === watch.id)
+		const exhibitRow = withCounts.find((t) => t.id === exhibit.id)
+		// Only the watch-only tag is on visible content.
+		expect(watchRow).toBeDefined()
+		expect(exhibitRow).toBeUndefined()
+		expect(watchRow).toMatchObject({ resCount: 1, charCount: 0 })
+	})
+
+	test("with watch-only on, listAll narrows to visible content only", async () => {
+		const watch = await svc.create({
+			name: "Watch2",
+			catId: catId,
+			visibility: "watch_only",
+		})
+		const plain = await svc.create({
+			name: "Plain2",
+			catId: catId,
+			visibility: "normal",
+		})
+		await svc.attachToResource(resId, watch.id)
+		await svc.attachToResource(resId2, plain.id)
+
+		dbh.db
+			.insert(systemPreferences)
+			.values({
+				key: WATCH_ONLY_PREF_KEY,
+				scope: "sync",
+				value: "1",
+				updatedAt: Date.now(),
+			})
+			.onConflictDoUpdate({
+				target: systemPreferences.key,
+				set: { value: "1", updatedAt: Date.now() },
+			})
+			.run()
+
+		const list = await svc.listAll()
+		const ids = list.map((t) => t.id)
+		expect(ids).toContain(watch.id)
+		expect(ids).not.toContain(plain.id)
+	})
+
+	test("with watch-only on but no watch-only tag defined, listAll stays unfiltered", async () => {
+		await svc.create({ name: "NoFocus", catId: catId })
+		dbh.db
+			.insert(systemPreferences)
+			.values({
+				key: WATCH_ONLY_PREF_KEY,
+				scope: "sync",
+				value: "1",
+				updatedAt: Date.now(),
+			})
+			.onConflictDoUpdate({
+				target: systemPreferences.key,
+				set: { value: "1", updatedAt: Date.now() },
+			})
+			.run()
+
+		const list = await svc.listAll()
+		expect(list.map((t) => t.name)).toContain("NoFocus")
+	})
+
+	test("with the toggle off, an explicit-view tag still appears in the tag list", async () => {
+		await svc.create({
+			name: "HiddenButTagged",
+			catId: catId,
+			visibility: "explicit_view",
+		})
+		const list = await svc.listAll()
+		expect(list.map((t) => t.name)).toContain("HiddenButTagged")
 	})
 })

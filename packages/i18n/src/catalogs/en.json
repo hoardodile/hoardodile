@@ -364,7 +364,11 @@
 				"relation": "Relation",
 				"collection": "Collection"
 			},
-			"link": "Link"
+			"link": "Link",
+			"watchOnly": {
+				"title": "Watch-only mode",
+				"description": "Restrict character and resource browsing to content carrying a watch-only tag."
+			}
 		},
 		"account": {
 			"title": "Account",
@@ -2031,7 +2035,14 @@
 			"linkHint": "Optional link to the tag's canonical page — shown in the hover preview.",
 			"uploadImage": "Upload image…",
 			"editImage": "Edit image…",
-			"imageDialogTitle": "Tag image"
+			"imageDialogTitle": "Tag image",
+			"visibilityLabel": "Visibility",
+			"visibilityHint": "Watch-only narrows browse to content carrying this tag; explicit-view hides that content until you pick the tag to view."
+		},
+		"visibility": {
+			"normal": "Normal",
+			"watchOnly": "Watch only",
+			"explicitView": "Explicit view"
 		},
 		"card": {
 			"openLink": "Open link",

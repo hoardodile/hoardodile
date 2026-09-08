@@ -46,6 +46,7 @@ import {
 } from "src/domain/tag/collapse.ts"
 import { buildTagFilterClauses } from "src/domain/tag/filter.ts"
 import { resTags, tags } from "src/domain/tag/schema.ts"
+import { buildVisibilityClauses } from "src/domain/tag/visibility.ts"
 import {
 	buildFindById,
 	buildHydrate,
@@ -464,6 +465,25 @@ export function buildResourceRepository(
 			? isNotNull(resources.deletedAt)
 			: isNull(resources.deletedAt)
 		const clauses: Array<ReturnType<typeof and>> = [lifecycle]
+		// Live browse/search only: the trash list is a recovery view, so the
+		// per-tag visibility policy (watch-only / explicit-view) is not
+		// applied there.
+		if (!trashed) {
+			clauses.push(
+				...buildVisibilityClauses({
+					db: client,
+					entityIdColumn: resTags.resId,
+					tagIdColumn: resTags.tagId,
+					outerEntityIdColumn: resources.id,
+					characterJoin: {
+						entityIdColumn: resCharacters.resId,
+						charIdColumn: resCharacters.charId,
+						outerEntityIdColumn: resources.id,
+					},
+					selectedTagIds: tagIds,
+				}),
+			)
+		}
 		if (ids !== undefined && ids.length > 0) {
 			clauses.push(inArray(resources.id, ids))
 		}
@@ -807,6 +827,17 @@ export function buildResourceRepository(
 					isNull(resources.deletedAt),
 					sql`strftime('%m-%d', ${resources.createdAt} / 1000, 'unixepoch', ${offset}) = ${mmdd}`,
 					sql`strftime('%Y', ${resources.createdAt} / 1000, 'unixepoch', ${offset}) != ${currentYear}`,
+					...buildVisibilityClauses({
+						db: client,
+						entityIdColumn: resTags.resId,
+						tagIdColumn: resTags.tagId,
+						outerEntityIdColumn: resources.id,
+						characterJoin: {
+							entityIdColumn: resCharacters.resId,
+							charIdColumn: resCharacters.charId,
+							outerEntityIdColumn: resources.id,
+						},
+					}),
 				),
 			)
 			.orderBy(desc(resources.createdAt))
@@ -832,6 +863,17 @@ export function buildResourceRepository(
 					isNull(resources.deletedAt),
 					isNotNull(resources.sourceName),
 					ne(resources.sourceName, ""),
+					...buildVisibilityClauses({
+						db: client,
+						entityIdColumn: resTags.resId,
+						tagIdColumn: resTags.tagId,
+						outerEntityIdColumn: resources.id,
+						characterJoin: {
+							entityIdColumn: resCharacters.resId,
+							charIdColumn: resCharacters.charId,
+							outerEntityIdColumn: resources.id,
+						},
+					}),
 				),
 			)
 			.groupBy(resources.sourceName)

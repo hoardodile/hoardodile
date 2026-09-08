@@ -1,4 +1,4 @@
-import { asc, count, eq } from "drizzle-orm"
+import { asc, count, eq, inArray } from "drizzle-orm"
 import { tags } from "src/domain/tag/schema.ts"
 import {
 	buildFindById,
@@ -41,6 +41,10 @@ export type CatRepository = {
 	countTags(catId: string): number
 	/** Returns a map of `catId → tag count` for every category. */
 	tagCountsByCategory(): ReadonlyMap<string, number>
+	/** Tag counts per category, scoped to a visible tag id set (watch-only facet). */
+	tagCountsByCategoryIn(tagIds: readonly string[]): ReadonlyMap<string, number>
+	/** The category ids that own at least one tag in the given set. */
+	catIdsOfTags(tagIds: readonly string[]): readonly string[]
 }
 
 export function buildCategoryRepository(client: DbClient): CatRepository {
@@ -74,6 +78,34 @@ export function buildCategoryRepository(client: DbClient): CatRepository {
 		return map
 	}
 
+	function tagCountsByCategoryIn(
+		tagIds: readonly string[],
+	): ReadonlyMap<string, number> {
+		if (tagIds.length === 0) return new Map()
+		const rows = client
+			.select({ catId: tags.catId, value: count() })
+			.from(tags)
+			.where(inArray(tags.id, tagIds))
+			.groupBy(tags.catId)
+			.all()
+		const map = new Map<string, number>()
+		for (const row of rows) {
+			if (row.catId !== null) map.set(row.catId, row.value)
+		}
+		return map
+	}
+
+	function catIdsOfTags(tagIds: readonly string[]): readonly string[] {
+		if (tagIds.length === 0) return []
+		return client
+			.select({ catId: tags.catId })
+			.from(tags)
+			.where(inArray(tags.id, tagIds))
+			.all()
+			.map((r) => r.catId)
+			.filter((c): c is string => c !== null)
+	}
+
 	return {
 		findById,
 		listAll,
@@ -82,5 +114,7 @@ export function buildCategoryRepository(client: DbClient): CatRepository {
 		remove,
 		countTags,
 		tagCountsByCategory,
+		tagCountsByCategoryIn,
+		catIdsOfTags,
 	}
 }

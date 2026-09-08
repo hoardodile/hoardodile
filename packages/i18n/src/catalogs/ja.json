@@ -364,7 +364,11 @@
 				"relation": "関係",
 				"collection": "コレクション"
 			},
-			"link": "リンク"
+			"link": "リンク",
+			"watchOnly": {
+				"title": "自分のみモード",
+				"description": "キャラクターとリソースの閲覧を「自分のみ」タグを含むコンテンツに絞り込みます。"
+			}
 		},
 		"account": {
 			"title": "アカウント",
@@ -2031,7 +2035,14 @@
 			"linkHint": "タグの正典ページへの任意リンク — ホバープレビューに表示されます。",
 			"uploadImage": "画像をアップロード…",
 			"editImage": "画像を編集…",
-			"imageDialogTitle": "タグ画像"
+			"imageDialogTitle": "タグ画像",
+			"visibilityLabel": "表示設定",
+			"visibilityHint": "「自分のみ」はこのタグを含むコンテンツに閲覧を絞り込み、「明示閲覧」はそのタグを選ぶまでコンテンツを隠します。"
+		},
+		"visibility": {
+			"normal": "通常",
+			"watchOnly": "自分のみ",
+			"explicitView": "明示閲覧"
 		},
 		"card": {
 			"openLink": "リンクを開く",

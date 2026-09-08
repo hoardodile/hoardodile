@@ -364,7 +364,11 @@
 				"relation": "Relación",
 				"collection": "Colección"
 			},
-			"link": "Enlazar"
+			"link": "Enlazar",
+			"watchOnly": {
+				"title": "Modo solo ver",
+				"description": "Restringe la navegación de personajes y recursos al contenido que lleva una etiqueta de «solo ver»."
+			}
 		},
 		"account": {
 			"title": "Cuenta",
@@ -2031,7 +2035,14 @@
 			"linkHint": "Enlace opcional a la página canónica de la etiqueta — se muestra en la vista previa al pasar el cursor.",
 			"uploadImage": "Subir imagen…",
 			"editImage": "Editar imagen…",
-			"imageDialogTitle": "Imagen de la etiqueta"
+			"imageDialogTitle": "Imagen de la etiqueta",
+			"visibilityLabel": "Visibilidad",
+			"visibilityHint": "«Solo ver» restringe la navegación al contenido con esta etiqueta; «ver explícito» oculta ese contenido hasta que elijas la etiqueta."
+		},
+		"visibility": {
+			"normal": "Normal",
+			"watchOnly": "Solo ver",
+			"explicitView": "Ver explícito"
 		},
 		"card": {
 			"openLink": "Abrir enlace",

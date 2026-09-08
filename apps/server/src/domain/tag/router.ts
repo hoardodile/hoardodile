@@ -4,6 +4,7 @@ import {
 	entityMetaUpdateInput,
 	MAX_NAME_LENGTH,
 	MAX_URL_LENGTH,
+	tagVisibility,
 } from "@hoardodile/schemas"
 import { authedProcedure, router, writeProcedure } from "src/infra/trpc/core.ts"
 import { idInput, tagAttachmentInput } from "src/infra/trpc/inputs.ts"
@@ -15,11 +16,14 @@ const createInput = entityMetaCreateInput(MAX_NAME_LENGTH).extend({
 	catId: z.string().min(1),
 	/** Optional external URL; stored raw (scheme-less pastes allowed). */
 	link: z.string().max(MAX_URL_LENGTH).default(""),
+	/** Visibility policy; defaults to `normal`. */
+	visibility: tagVisibility.default("normal"),
 })
 
 const updateInput = entityMetaUpdateInput(MAX_NAME_LENGTH).extend({
 	catId: z.string().min(1).optional(),
 	link: z.string().max(MAX_URL_LENGTH).optional(),
+	visibility: tagVisibility.optional(),
 })
 
 const reorderInput = entityMetaReorderInput.extend({

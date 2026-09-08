@@ -40,6 +40,20 @@ export const tags = sqliteTable(
 		imageMeta: text("image_meta"),
 		position: integer("position").notNull().default(0),
 		pinned: integer("pinned", { mode: "boolean" }).notNull().default(false),
+		/**
+		 * Visibility policy applied to every character/resource content
+		 * query that this tag contributes to (`tag/visibility.ts`):
+		 * - `watch_only`: when the global watch-only toggle is on, browse
+		 *   content narrows to entries carrying at least one such tag.
+		 * - `explicit_view`: such content is hidden from browse/search
+		 *   unless the tag is explicitly selected for viewing.
+		 * See `@hoardodile/schemas` `tagVisibility`.
+		 */
+		visibility: text("visibility", {
+			enum: ["normal", "watch_only", "explicit_view"],
+		})
+			.notNull()
+			.default("normal"),
 		catId: text("category_id").references(() => categories.id, {
 			onDelete: "set null",
 		}),

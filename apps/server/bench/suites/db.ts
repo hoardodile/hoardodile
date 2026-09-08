@@ -102,6 +102,7 @@ function seedDb(rows: number, seed: number): SeededDb {
 				link: "",
 				position: i,
 				pinned: i < 10,
+				visibility: "normal",
 				catId: null,
 			},
 			Date.now(),

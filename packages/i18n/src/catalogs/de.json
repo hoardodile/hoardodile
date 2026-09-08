@@ -364,7 +364,11 @@
 				"relation": "Beziehung",
 				"collection": "Sammlung"
 			},
-			"link": "Verknüpfen"
+			"link": "Verknüpfen",
+			"watchOnly": {
+				"title": "Nur-ansehen-Modus",
+				"description": "Beschränkt das Durchsuchen von Charakteren und Ressourcen auf Inhalte mit einem „Nur-ansehen“-Tag."
+			}
 		},
 		"account": {
 			"title": "Konto",
@@ -2031,7 +2035,14 @@
 			"linkHint": "Optionaler Link zur kanonischen Seite des Tags — erscheint in der Hover-Vorschau.",
 			"uploadImage": "Bild hochladen…",
 			"editImage": "Bild bearbeiten…",
-			"imageDialogTitle": "Tag-Bild"
+			"imageDialogTitle": "Tag-Bild",
+			"visibilityLabel": "Sichtbarkeit",
+			"visibilityHint": "„Nur ansehen“ engt das Durchsuchen auf Inhalte mit diesem Tag ein; „explizit ansehen“ blendet solche Inhalte aus, bis du den Tag auswählst."
+		},
+		"visibility": {
+			"normal": "Normal",
+			"watchOnly": "Nur ansehen",
+			"explicitView": "Explizit ansehen"
 		},
 		"card": {
 			"openLink": "Link öffnen",

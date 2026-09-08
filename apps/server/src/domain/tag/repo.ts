@@ -18,6 +18,7 @@ export type TagDbValues = {
 	readonly link: string
 	readonly position: number
 	readonly pinned: boolean
+	readonly visibility: "normal" | "watch_only" | "explicit_view"
 	readonly catId: string | null
 }
 
@@ -30,6 +31,7 @@ export type TagDbPatch = Partial<
 		| "link"
 		| "position"
 		| "pinned"
+		| "visibility"
 		| "catId"
 		| "updatedAt"
 		| "imageVersion"
@@ -53,6 +55,10 @@ export type TagRepository = {
 	countCharacterUsages(tagId: string): number
 	resUsageCounts(): ReadonlyMap<string, number>
 	charUsageCounts(): ReadonlyMap<string, number>
+	/** Usage counts scoped to a visible resource id set (watch-only facet). */
+	resUsageCountsIn(ids: readonly string[]): ReadonlyMap<string, number>
+	/** Usage counts scoped to a visible character id set (watch-only facet). */
+	charUsageCountsIn(ids: readonly string[]): ReadonlyMap<string, number>
 
 	listForResource(resId: string): readonly TagRow[]
 	listForCharacter(charId: string): readonly TagRow[]
@@ -152,6 +158,32 @@ export function buildTagRepository(client: DbClient): TagRepository {
 		return new Map(rows.map((r) => [r.tagId, r.value]))
 	}
 
+	function resUsageCountsIn(
+		ids: readonly string[],
+	): ReadonlyMap<string, number> {
+		if (ids.length === 0) return new Map()
+		const rows = client
+			.select({ tagId: resTags.tagId, value: count() })
+			.from(resTags)
+			.where(inArray(resTags.resId, ids))
+			.groupBy(resTags.tagId)
+			.all()
+		return new Map(rows.map((r) => [r.tagId, r.value]))
+	}
+
+	function charUsageCountsIn(
+		ids: readonly string[],
+	): ReadonlyMap<string, number> {
+		if (ids.length === 0) return new Map()
+		const rows = client
+			.select({ tagId: charTags.tagId, value: count() })
+			.from(charTags)
+			.where(inArray(charTags.charId, ids))
+			.groupBy(charTags.tagId)
+			.all()
+		return new Map(rows.map((r) => [r.tagId, r.value]))
+	}
+
 	return {
 		findById,
 		listAll,
@@ -162,6 +194,8 @@ export function buildTagRepository(client: DbClient): TagRepository {
 		countCharacterUsages,
 		resUsageCounts,
 		charUsageCounts,
+		resUsageCountsIn,
+		charUsageCountsIn,
 		listForResource,
 		listForCharacter,
 		listForManyResources,

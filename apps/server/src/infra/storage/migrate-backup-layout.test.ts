@@ -413,7 +413,7 @@ it("upgrades a v0.1.15 schema, separates host state, and starts the new server",
 		const migrations = db
 			.prepare("SELECT COUNT(*) AS n FROM __drizzle_migrations")
 			.get() as { n: number }
-		expect(migrations.n).toBe(6)
+		expect(migrations.n).toBe(7)
 	} finally {
 		db.close()
 	}
@@ -500,7 +500,7 @@ it("migrates a minimal v0.1.15 library that has no local folder", async () => {
 		const migrations = db
 			.prepare("SELECT COUNT(*) AS n FROM __drizzle_migrations")
 			.get() as { n: number }
-		expect(migrations.n).toBe(6)
+		expect(migrations.n).toBe(7)
 	} finally {
 		db.close()
 	}

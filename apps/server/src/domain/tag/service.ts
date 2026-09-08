@@ -4,6 +4,7 @@ import {
 	type EntityMetaCreateInput,
 	type EntityMetaUpdateInput,
 	type Tag,
+	type TagVisibility,
 } from "@hoardodile/schemas"
 import { conflict } from "@hoardodile/shared"
 import { and, eq, inArray, isNull } from "drizzle-orm"
@@ -54,6 +55,11 @@ import {
 	siblingPairs,
 	tags as tagsTable,
 } from "./schema.ts"
+import {
+	readWatchOnlyEnabled,
+	visibleEntityIds,
+	visibleTagUniverse,
+} from "./visibility.ts"
 
 export type { TagMergePreview, TagMergeResult } from "./merge.ts"
 
@@ -66,12 +72,16 @@ export type TagCreateInput = EntityMetaCreateInput & {
 	readonly catId: string
 	/** Optional external URL; trimmed, empty string means "no link". */
 	readonly link?: string
+	/** Visibility policy; defaults to `normal`. */
+	readonly visibility?: TagVisibility
 }
 
 export type TagUpdateInput = EntityMetaUpdateInput & {
 	readonly catId?: string
 	/** Optional external URL; trimmed, empty string clears the link. */
 	readonly link?: string
+	/** Visibility policy; omit to leave unchanged. */
+	readonly visibility?: TagVisibility
 }
 
 export type TagWithCounts = Tag & {
@@ -183,22 +193,59 @@ export function createTagService(deps: TagServiceDeps): TagService {
 	const files = buildTagFiles(deps.paths, deps.readOnly)
 	const { now, newId } = resolveClock(deps)
 
+	/**
+	 * The watch-only facet scope. When the global toggle is on and content
+	 * actually narrows, resolves the visible tag universe (tags attached to
+	 * content passing the visibility predicate) so the tag list, category
+	 * list and usage counts only reflect content the user can see. Returns
+	 * `undefined` when no narrowing applies (toggle off, or on but with no
+	 * watch-only tag defined — "nothing is the focus" is a no-op).
+	 */
+	function facetScope():
+		| {
+				readonly resIds: readonly string[]
+				readonly charIds: readonly string[]
+				readonly visible: ReadonlySet<string>
+		  }
+		| undefined {
+		if (!readWatchOnlyEnabled(deps.db)) return undefined
+		const resIds = visibleEntityIds(deps.db, "resource")
+		const charIds = visibleEntityIds(deps.db, "character")
+		if (resIds === undefined && charIds === undefined) return undefined
+		const visible = visibleTagUniverse(deps.db, resIds ?? [], charIds ?? [])
+		return { resIds: resIds ?? [], charIds: charIds ?? [], visible }
+	}
+
 	async function listAll(): Promise<readonly Tag[]> {
 		await ensureImageMetaOf(repo.listAll())
 		const displayOf = siblingDisplayMap()
-		return repo.listAll().map((row) => rowToTag(row, displayOf(row.id)))
+		const scope = facetScope()
+		return repo
+			.listAll()
+			.filter((row) => scope === undefined || scope.visible.has(row.id))
+			.map((row) => rowToTag(row, displayOf(row.id)))
 	}
 
 	async function listAllWithCounts(): Promise<readonly TagWithCounts[]> {
 		await ensureImageMetaOf(repo.listAll())
-		const resCounts = repo.resUsageCounts()
-		const charCounts = repo.charUsageCounts()
+		const scope = facetScope()
+		const resCounts =
+			scope === undefined
+				? repo.resUsageCounts()
+				: repo.resUsageCountsIn(scope.resIds)
+		const charCounts =
+			scope === undefined
+				? repo.charUsageCounts()
+				: repo.charUsageCountsIn(scope.charIds)
 		const displayOf = siblingDisplayMap()
-		return repo.listAll().map((row) => ({
-			...rowToTag(row, displayOf(row.id)),
-			resCount: resCounts.get(row.id) ?? 0,
-			charCount: charCounts.get(row.id) ?? 0,
-		}))
+		return repo
+			.listAll()
+			.filter((row) => scope === undefined || scope.visible.has(row.id))
+			.map((row) => ({
+				...rowToTag(row, displayOf(row.id)),
+				resCount: resCounts.get(row.id) ?? 0,
+				charCount: charCounts.get(row.id) ?? 0,
+			}))
 	}
 
 	/** Fill missing image-meta projections for rows that have none. */
@@ -433,6 +480,7 @@ export function createTagService(deps: TagServiceDeps): TagService {
 				name: input.name,
 				...meta,
 				link: input.link?.trim() ?? "",
+				visibility: input.visibility ?? "normal",
 				catId: input.catId,
 			},
 			ts,
@@ -451,6 +499,9 @@ export function createTagService(deps: TagServiceDeps): TagService {
 		const patch: TagDbPatch = {
 			...buildEntityMetaPatch(input, now()),
 			...(input.catId !== undefined ? { catId: input.catId } : {}),
+			...(input.visibility !== undefined
+				? { visibility: input.visibility }
+				: {}),
 			...(input.link !== undefined ? { link: input.link.trim() } : {}),
 		}
 		repo.patch(input.id, patch)
@@ -1264,6 +1315,7 @@ function rowToTag(row: TagRow, displayTagId = row.id, virtual = false): Tag {
 		...(imageMeta !== undefined ? { imageMeta } : {}),
 		position: row.position,
 		pinned: row.pinned,
+		visibility: row.visibility,
 		catId: row.catId!,
 		displayTagId,
 		...(virtual ? { virtual: true as const } : {}),

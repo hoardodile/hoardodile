@@ -2,10 +2,14 @@ import { mkdtempSync, rmSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { DomainError } from "@hoardodile/shared"
+import { systemPreferences } from "src/domain/prefs/schema.ts"
+import { createResourceService } from "src/domain/res/service.ts"
+import { createTestHooks } from "src/domain/res/test-registry.ts"
 import { type DbHandles, openDb } from "src/infra/db/connection.ts"
 import { createStoragePaths } from "src/infra/storage/paths.ts"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 import { createTagService } from "../tag/service.ts"
+import { WATCH_ONLY_PREF_KEY } from "../tag/visibility.ts"
 import { type CatService, createCategoryService } from "./service.ts"
 
 describe("category service", () => {
@@ -33,6 +37,33 @@ describe("category service", () => {
 			paths,
 			readOnly: { current: false },
 		})
+	}
+
+	function setWatchOnly(on: boolean): void {
+		dbh.db
+			.insert(systemPreferences)
+			.values({
+				key: WATCH_ONLY_PREF_KEY,
+				scope: "sync",
+				value: on ? "1" : "0",
+				updatedAt: Date.now(),
+			})
+			.onConflictDoUpdate({
+				target: systemPreferences.key,
+				set: { value: on ? "1" : "0", updatedAt: Date.now() },
+			})
+			.run()
+	}
+
+	async function createRes(name: string): Promise<string> {
+		const resSvc = createResourceService({
+			db: dbh.db,
+			paths,
+			readOnly: { current: false },
+			pluginHooks: createTestHooks(),
+		})
+		const r = await resSvc.create({ name })
+		return r.id
 	}
 
 	test("create category", async () => {
@@ -136,5 +167,49 @@ describe("category service", () => {
 		const a = await svc.create({ name: "A", kind: "common", position: 0 })
 		await svc.create({ name: "B", kind: "common", position: 1 })
 		await expect(svc.reorder("common", [a.id])).rejects.toThrow(DomainError)
+	})
+
+	test("with watch-only on, listAll/WithCounts narrow to categories with visible tags only", async () => {
+		const tagSvc = makeTagSvc()
+		const mediaCat = await svc.create({ name: "Media", kind: "resource" })
+		const otherCat = await svc.create({ name: "Other", kind: "resource" })
+		const watch = await tagSvc.create({
+			name: "Focus",
+			catId: mediaCat.id,
+			visibility: "watch_only",
+		})
+		await tagSvc.create({ name: "Plain", catId: otherCat.id })
+		await tagSvc.attachToResource(await createRes("r1"), watch.id)
+
+		setWatchOnly(true)
+
+		const rows = await svc.listAllWithCounts()
+		const byId = new Map(rows.map((r) => [r.id, r]))
+		expect(byId.get(mediaCat.id)).toMatchObject({ tagCount: 1 })
+		expect(byId.get(otherCat.id)).toBeUndefined()
+
+		const names = (await svc.listAll()).map((c) => c.name)
+		expect(names).toContain("Media")
+		expect(names).not.toContain("Other")
+	})
+
+	test("with watch-only off, listAll/WithCounts are not narrowed", async () => {
+		const tagSvc = makeTagSvc()
+		const mediaCat = await svc.create({ name: "Media2", kind: "resource" })
+		const otherCat = await svc.create({ name: "Other2", kind: "resource" })
+		const watch = await tagSvc.create({
+			name: "Focus2",
+			catId: mediaCat.id,
+			visibility: "watch_only",
+		})
+		await tagSvc.create({ name: "Plain2", catId: otherCat.id })
+		await tagSvc.attachToResource(await createRes("r2"), watch.id)
+
+		expect((await svc.listAll()).map((c) => c.name).sort()).toEqual([
+			"Media2",
+			"Other2",
+		])
+		const byId = new Map((await svc.listAllWithCounts()).map((r) => [r.id, r]))
+		expect(byId.get(otherCat.id)?.tagCount).toBe(1)
 	})
 })

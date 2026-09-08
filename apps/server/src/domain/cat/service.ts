@@ -6,6 +6,11 @@ import type {
 } from "@hoardodile/schemas"
 import { conflict } from "@hoardodile/shared"
 import {
+	readWatchOnlyEnabled,
+	visibleEntityIds,
+	visibleTagUniverse,
+} from "src/domain/tag/visibility.ts"
+import {
 	buildEntityMetaPatch,
 	buildForceDelete,
 	buildMaxPosition,
@@ -54,15 +59,47 @@ export function createCategoryService(deps: CatServiceDeps): CatService {
 	const { now, newId } = resolveClock(deps)
 
 	function listAll(): readonly Category[] {
-		return repo.listAll().map(rowToCategory)
+		const visibleCat = visibleCatIds()
+		return repo
+			.listAll()
+			.filter((row) => visibleCat === undefined || visibleCat.has(row.id))
+			.map(rowToCategory)
 	}
 
 	function listAllWithCounts(): readonly CatWithCounts[] {
-		const counts = repo.tagCountsByCategory()
-		return repo.listAll().map((row) => ({
-			...rowToCategory(row),
-			tagCount: counts.get(row.id) ?? 0,
-		}))
+		const visibleTag = visibleTags()
+		const visibleCat =
+			visibleTag === undefined ? undefined : catIdsOf(visibleTag)
+		const counts =
+			visibleTag === undefined
+				? repo.tagCountsByCategory()
+				: repo.tagCountsByCategoryIn([...visibleTag])
+		return repo
+			.listAll()
+			.filter((row) => visibleCat === undefined || visibleCat.has(row.id))
+			.map((row) => ({
+				...rowToCategory(row),
+				tagCount: counts.get(row.id) ?? 0,
+			}))
+	}
+
+	/** The visible tag universe when the watch-only toggle narrows content; `undefined` = no narrowing. */
+	function visibleTags(): ReadonlySet<string> | undefined {
+		if (!readWatchOnlyEnabled(deps.db)) return undefined
+		const resIds = visibleEntityIds(deps.db, "resource")
+		const charIds = visibleEntityIds(deps.db, "character")
+		if (resIds === undefined && charIds === undefined) return undefined
+		return visibleTagUniverse(deps.db, resIds ?? [], charIds ?? [])
+	}
+
+	/** The categories owning at least one visible tag; `undefined` = no narrowing. */
+	function visibleCatIds(): ReadonlySet<string> | undefined {
+		const tags = visibleTags()
+		return tags === undefined ? undefined : catIdsOf(tags)
+	}
+
+	function catIdsOf(tags: ReadonlySet<string>): ReadonlySet<string> {
+		return new Set(repo.catIdsOfTags([...tags]))
 	}
 
 	function detail(id: string): Category {

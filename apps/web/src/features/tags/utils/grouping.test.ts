@@ -32,6 +32,7 @@ function makeTag(id: string, catId: string, position: number): Tag {
 		color: "",
 		position,
 		pinned: false,
+		visibility: "normal",
 		catId,
 		displayTagId: id,
 		createdAt: 0,
