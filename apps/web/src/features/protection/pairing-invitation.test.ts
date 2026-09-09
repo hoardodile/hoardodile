@@ -35,3 +35,16 @@ it("rejects expired, malformed, oversized, and insecure invitations", () => {
 		formatPairingInvitation({ ...value, fingerprint: "invalid" }),
 	).toBeUndefined()
 })
+
+/**
+ * The invite dialog renders before the sender's public address is known
+ * (and on an http origin it stays empty), so an unusable address must only
+ * fail validation: a `TypeError` escaping `safeParse` propagates out of the
+ * component render and takes the whole pairing panel down.
+ */
+it("treats an unusable address as a format failure instead of throwing", () => {
+	for (const url of ["", "not-a-url", "https://", "//host:3443"])
+		expect(() => formatPairingInvitation({ ...value, url })).not.toThrow()
+	for (const url of ["", "not-a-url", "https://", "//host:3443"])
+		expect(formatPairingInvitation({ ...value, url })).toBeUndefined()
+})

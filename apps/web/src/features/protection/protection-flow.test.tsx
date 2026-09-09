@@ -354,6 +354,42 @@ it("shows the share option once a local backup exists", async () => {
 	).not.toBeInTheDocument()
 })
 
+it("opens the invitation dialog before an address is known instead of crashing", async () => {
+	mount(<ReplicationPanel />, {
+		"protection.status": () => ({
+			...status,
+			repositories: [{ id: "local", name: "Local backups" }],
+			lastBackupAt: 1_700_000_000_000,
+		}),
+		"replication.status": () => ({
+			name: "Laptop",
+			role: "send",
+			paused: false,
+			peers: [],
+			source: null,
+		}),
+		"replication.invitation": () => ({
+			code: "a".repeat(32),
+			expiresAt: 1_700_000_600_000,
+			instanceId,
+		}),
+	})
+	const user = userEvent.setup()
+	await user.click(
+		await screen.findByRole("button", { name: "Create pairing invitation" }),
+	)
+	const dialog = await screen.findByRole("dialog")
+	// The test origin is http, so no sender address is known yet: the dialog
+	// must still render (asking for the address) rather than throw out of the
+	// invitation formatter and take the whole pairing panel down.
+	expect(
+		within(dialog).getByText(/Enable HTTPS LAN sharing/),
+	).toBeInTheDocument()
+	expect(
+		within(dialog).getByRole("button", { name: "Copy pairing invitation" }),
+	).toBeDisabled()
+})
+
 it("hides the sender role option in the Role dropdown without a local backup", async () => {
 	mount(<ReplicationPanel />, {
 		"protection.status": () => ({

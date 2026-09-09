@@ -1,8 +1,15 @@
 import { z } from "zod"
 
-const invitation = z.object({
-	format: z.literal("hoardodile-pair-v1"),
-	url: z.url().refine((value) => {
+/**
+ * A pairing address is a bare HTTPS origin — no credentials, query or
+ * fragment. `URL` parsing is the only reliable test and it throws on
+ * unusable input, so this predicate must stay total: the invite dialog
+ * renders before the sender's public address is known (and on an http
+ * origin it stays empty), and a throw here would escape `safeParse` into
+ * the component render instead of merely failing validation.
+ */
+function isPairingAddress(value: string): boolean {
+	try {
 		const url = new URL(value)
 		return (
 			url.protocol === "https:" &&
@@ -11,7 +18,14 @@ const invitation = z.object({
 			!url.search &&
 			!url.hash
 		)
-	}),
+	} catch {
+		return false
+	}
+}
+
+const invitation = z.object({
+	format: z.literal("hoardodile-pair-v1"),
+	url: z.string().refine(isPairingAddress),
 	code: z.string().min(32).max(256),
 	fingerprint: z
 		.string()
