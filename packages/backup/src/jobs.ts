@@ -53,12 +53,25 @@ export async function createJobManager(options: {
 	const persist = (job: JobRecord) => {
 		const previous = writes.get(job.id) ?? Promise.resolve()
 		const content = JSON.stringify(job)
-		const next = previous.then(() =>
-			atomicWrite(join(options.directory, `${job.id}.json`), content),
-		)
+		// A failed write must not poison every later update of the same record
+		// (an earlier rejection would reject the whole chain behind it).
+		const next = previous
+			.catch(() => {})
+			.then(() =>
+				atomicWrite(join(options.directory, `${job.id}.json`), content),
+			)
 		writes.set(job.id, next)
 		return next
 	}
+	/**
+	 * The record is a status cache, never a precondition: a failed write is
+	 * reported through `onError` and the operation still runs (a library
+	 * restore that never started is far worse than a lost progress file).
+	 */
+	const persistBestEffort = (job: JobRecord) =>
+		persist(job).catch((error: unknown) => {
+			options.onError?.(error)
+		})
 	for (const name of await readdir(options.directory)) {
 		if (!/^[a-f0-9-]{36}\.json$/.test(name)) continue
 		let job: JobRecord
@@ -99,7 +112,7 @@ export async function createJobManager(options: {
 		try {
 			job.state = "running"
 			changed(job)
-			await persist(job)
+			await persistBestEffort(job)
 			const handler = options.handlers[job.kind]
 			if (!handler)
 				throw new BackupError("unknown_job", "The job is unsupported")
@@ -143,7 +156,7 @@ export async function createJobManager(options: {
 		} finally {
 			changed(job)
 			try {
-				await persist(job)
+				await persistBestEffort(job)
 			} finally {
 				active.delete(job.id)
 			}
@@ -162,7 +175,9 @@ export async function createJobManager(options: {
 			createdAt: Date.now(),
 			updatedAt: Date.now(),
 		}
-		await persist(job)
+		// Best effort too: the accepted operation must run even when its first
+		// record write fails, or the caller would wait on nothing.
+		await persistBestEffort(job)
 		jobs.set(job.id, job)
 		const controller = new AbortController()
 		const done = Promise.resolve().then(() => execute(job, controller))

@@ -10,7 +10,40 @@ import {
 	rm,
 } from "node:fs/promises"
 import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path"
+import { setTimeout as delay } from "node:timers/promises"
 import { BackupError, safeRelativePath } from "./types.ts"
+
+/**
+ * Windows rejects a rename onto an existing file while another process holds
+ * it open — file watchers, indexers and antivirus do this for milliseconds at
+ * a time. Those failures are transient, so the atomic swap retries them
+ * instead of losing the write; anything else (a full disk, a bad path) still
+ * surfaces immediately.
+ */
+const TRANSIENT_RENAME_CODES = new Set(["EPERM", "EBUSY", "EACCES"])
+const RENAME_ATTEMPTS = 6
+const RENAME_RETRY_BASE_MS = 20
+
+function isTransientRename(error: unknown): boolean {
+	return (
+		typeof error === "object" &&
+		error !== null &&
+		"code" in error &&
+		TRANSIENT_RENAME_CODES.has(String(error.code))
+	)
+}
+
+async function renameWithRetry(from: string, to: string): Promise<void> {
+	for (let attempt = 1; ; attempt++) {
+		try {
+			await rename(from, to)
+			return
+		} catch (error) {
+			if (attempt >= RENAME_ATTEMPTS || !isTransientRename(error)) throw error
+			await delay(RENAME_RETRY_BASE_MS * attempt)
+		}
+	}
+}
 
 export async function atomicWrite(
 	path: string,
@@ -26,7 +59,7 @@ export async function atomicWrite(
 		} finally {
 			await handle.close()
 		}
-		await rename(temporary, path)
+		await renameWithRetry(temporary, path)
 	} finally {
 		await rm(temporary, { force: true })
 	}
