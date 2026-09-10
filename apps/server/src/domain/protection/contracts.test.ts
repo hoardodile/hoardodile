@@ -107,6 +107,25 @@ it("keeps host credentials independent and exposes only complete-backup and arch
 		{ timeout: 15000 },
 	)
 	expect(app.versionService.current()).toBe(2)
+	// The automatic-backup cadence is one authenticated mutation; the status
+	// read reports the persisted value, and a fresh server starts without an
+	// automatic baseline (so the first automatic run is not skipped).
+	const interval = await app.inject({
+		method: "POST",
+		url: "/trpc/protection.interval",
+		headers: { cookie },
+		payload: { hours: 6 },
+	})
+	expect(interval.statusCode).toBe(200)
+	const protectionStatus = (
+		await app.inject({
+			method: "GET",
+			url: "/trpc/protection.status",
+			headers: { cookie },
+		})
+	).json()
+	expect(protectionStatus.result.data.autoBackupIntervalHours).toBe(6)
+	expect(protectionStatus.result.data.lastAutoBackupAt).toBeNull()
 	const health = (
 		await app.inject({ method: "GET", url: "/api/health" })
 	).json()

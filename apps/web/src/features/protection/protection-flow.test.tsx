@@ -5,6 +5,7 @@ import type { ReactNode } from "react"
 import { afterEach, beforeAll, expect, it, vi } from "vitest"
 import { i18n } from "@/i18n"
 import { setTrpcClient, type TRPCClient } from "@/trpc/client"
+import { BackupManagement } from "./BackupManagement"
 import { ProtectionJobs } from "./ProtectionJobs"
 import { ReceivedBackup } from "./ReceivedBackup"
 import { RecoveryPanel } from "./RecoveryPanel"
@@ -390,6 +391,19 @@ it("opens the invitation dialog before an address is known instead of crashing",
 	expect(
 		within(dialog).getByRole("button", { name: "Copy pairing invitation" }),
 	).toBeDisabled()
+	// The raw invitation fields live behind a button, never a disclosure
+	// triangle: collapsed first, then revealed inline inside the dialog.
+	const details = within(dialog).getByTestId("replication-details")
+	expect(details).toHaveAttribute("aria-expanded", "false")
+	expect(
+		within(dialog).queryByLabelText("Pairing code"),
+	).not.toBeInTheDocument()
+	await user.click(details)
+	expect(details).toHaveAttribute("aria-expanded", "true")
+	expect(within(dialog).getByLabelText("Pairing code")).toHaveValue(
+		"a".repeat(32),
+	)
+	expect(document.querySelector("details")).toBeNull()
 })
 
 it("hides the sender role option in the Role dropdown without a local backup", async () => {
@@ -639,4 +653,131 @@ it("renders the backup-sync area as two unified sections without a page-level he
 	).not.toBeInTheDocument()
 	expect(screen.getByTestId("replication-devices-section")).toBeInTheDocument()
 	expect(screen.getByTestId("backup-sync")).toBeInTheDocument()
+})
+
+it("changes the automatic backup frequency from the backups section", async () => {
+	const interval = vi.fn(async () => 6)
+	mount(<Page />, { "protection.interval": interval })
+	const user = userEvent.setup()
+	const select = await screen.findByTestId("backup-frequency")
+	expect(select).toHaveTextContent("Daily")
+	await user.click(select)
+	await user.click(
+		await screen.findByRole("menuitemradio", { name: "Every 6 hours" }),
+	)
+	expect(interval).toHaveBeenCalledWith({ hours: 6 })
+})
+
+it("edits the retention policy in its own dialog", async () => {
+	const policy = vi.fn(async () => ({ automatic: 5 }))
+	mount(<BackupManagement repositoryId="local" />, {
+		"protection.policy": policy,
+	})
+	const user = userEvent.setup()
+	await user.click(await screen.findByTestId("backup-retention"))
+	const dialog = within(await screen.findByRole("dialog"))
+	const save = dialog.getByRole("button", { name: "Save" })
+	expect(save).toBeDisabled()
+	const count = dialog.getByLabelText("Automatic backups to keep")
+	await user.clear(count)
+	await user.type(count, "5")
+	expect(save).toBeEnabled()
+	await user.click(save)
+	expect(policy).toHaveBeenCalledWith({ automatic: 5 })
+})
+
+it("runs repository checks and exports the recovery key from the advanced dialog", async () => {
+	const check = vi.fn(async () => ({ ok: true, readData: true }))
+	const key = vi.fn(async () => ({
+		repositoryId: "local",
+		key: "recovery-key",
+	}))
+	// jsdom has no blob-URL factory — the key export downloads through one.
+	Object.defineProperty(URL, "createObjectURL", {
+		writable: true,
+		configurable: true,
+		value: vi.fn(() => "blob:mock-key"),
+	})
+	Object.defineProperty(URL, "revokeObjectURL", {
+		writable: true,
+		configurable: true,
+		value: vi.fn(),
+	})
+	mount(<BackupManagement repositoryId="local" />, {
+		"protection.check": check,
+		"protection.recoveryKey": key,
+	})
+	const user = userEvent.setup()
+	await user.click(await screen.findByTestId("backup-checks"))
+	const dialog = within(await screen.findByRole("dialog"))
+	expect(dialog.getByText(/Last full verification/)).toBeInTheDocument()
+	await user.click(
+		dialog.getByRole("button", { name: "Verify all backup data" }),
+	)
+	expect(check).toHaveBeenCalledWith({ repositoryId: "local", readData: true })
+	await user.click(dialog.getByRole("button", { name: "Export recovery key" }))
+	await waitFor(() =>
+		expect(key).toHaveBeenCalledWith({ repositoryId: "local" }),
+	)
+})
+
+it("previews the cleanup, then applies it with storage reclaim from the confirmation", async () => {
+	const retention = vi.fn(async () => ({ removed: 2 }))
+	const expired = [
+		{
+			id: "0b2a4c6e-1f3a-4b5c-8d7e-9f0a1b2c3d4e",
+			createdAt: 1_700_000_000_000,
+			name: "Oldest automatic",
+			note: "",
+			kind: "auto",
+			pinned: false,
+		},
+		{
+			id: "1c3b5d7f-2a4b-4c6d-9e8f-0a1b2c3d4e5f",
+			createdAt: 1_700_000_600_000,
+			name: "",
+			note: "",
+			kind: "auto",
+			pinned: false,
+		},
+	]
+	mount(<BackupManagement repositoryId="local" />, {
+		"protection.previewRetention": () => expired,
+		"protection.retention": retention,
+	})
+	const user = userEvent.setup()
+	await user.click(await screen.findByTestId("backup-cleanup"))
+	const dialog = within(await screen.findByRole("dialog"))
+	expect(await dialog.findByText("Oldest automatic")).toBeInTheDocument()
+	const confirm = dialog.getByRole("button", { name: "Remove expired points" })
+	expect(confirm).toBeEnabled()
+	await user.click(
+		dialog.getByRole("checkbox", { name: "Also reclaim unused storage" }),
+	)
+	await user.click(confirm)
+	expect(retention).toHaveBeenCalledWith({
+		repositoryId: "local",
+		prune: true,
+	})
+})
+
+it("keeps cleanup disabled while nothing has expired", async () => {
+	mount(<BackupManagement repositoryId="local" />, {
+		"protection.previewRetention": () => [],
+	})
+	const user = userEvent.setup()
+	await user.click(await screen.findByTestId("backup-cleanup"))
+	const dialog = within(await screen.findByRole("dialog"))
+	await waitFor(() =>
+		expect(
+			dialog.getByRole("button", { name: "Remove expired points" }),
+		).toBeDisabled(),
+	)
+})
+
+it("hides the retention and cleanup rows for a received repository", async () => {
+	mount(<BackupManagement repositoryId={sourceId} />)
+	expect(await screen.findByTestId("backup-checks")).toBeInTheDocument()
+	expect(screen.queryByTestId("backup-retention")).not.toBeInTheDocument()
+	expect(screen.queryByTestId("backup-cleanup")).not.toBeInTheDocument()
 })

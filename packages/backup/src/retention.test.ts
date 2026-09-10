@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 import { selectExpiredPoints } from "./engine.ts"
-import type { RecoveryPoint } from "./types.ts"
+import { type RecoveryPoint, retentionPolicy } from "./types.ts"
 
 const LIBRARY = "0f1d8e2c-3f4a-4b5c-8d6e-7a8b9c0d1e2f"
 const OTHER_LIBRARY = "1a2b3c4d-5e6f-4a8b-9c0d-1e2f3a4b5c6d"
@@ -105,5 +105,16 @@ describe("retention selection", () => {
 			point({ createdAt: 1_000 }),
 		)
 		expect(expired(points, 1)).toEqual([points[2]?.id])
+	})
+})
+
+describe("retention policy bounds", () => {
+	it("defaults to keeping the three newest automatic points", () => {
+		expect(retentionPolicy.parse({}).automatic).toBe(3)
+	})
+
+	it("rejects a count below one or above a year", () => {
+		expect(retentionPolicy.safeParse({ automatic: 0 }).success).toBe(false)
+		expect(retentionPolicy.safeParse({ automatic: 366 }).success).toBe(false)
 	})
 })

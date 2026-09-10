@@ -330,3 +330,50 @@ describe("complete library recovery", () => {
 		}
 	}, 60_000)
 })
+
+describe("automatic backup scheduling", () => {
+	it("separates the automatic baseline from manual backups and persists the interval", async () => {
+		const root = await mkdtemp(join(tmpdir(), "hd-backup-schedule-"))
+		roots.push(root)
+		built = await buildServer({
+			env: loadEnv({
+				NODE_ENV: "test",
+				LOG_LEVEL: "silent",
+				STORAGE_ROOT: root,
+				DISABLE_DEV_PLUGINS: "true",
+			}),
+		})
+		await built.app.ready()
+		const setup = await built.app.inject({
+			method: "POST",
+			url: "/auth/setup",
+			payload: { password: "schedule-test-password" },
+		})
+		expect(setup.statusCode).toBe(200)
+		const service = built.app.protectionService
+		expect(service.getStatus().autoBackupIntervalHours).toBe(24)
+		const initial = await service.initialize()
+		expect(initial).not.toBeNull()
+		expect((await finish(service, initial!.id)).state).toBe("succeeded")
+		// The first (manual, pinned) backup must not satisfy the automatic
+		// baseline, or the scheduler would skip the first automatic run.
+		expect(service.getStatus().lastBackupAt).not.toBeNull()
+		expect(service.getStatus().lastAutoBackupAt).toBeNull()
+		const automatic = await service.createBackup({
+			name: "",
+			note: "",
+			kind: "auto",
+			pinned: false,
+		})
+		expect((await finish(service, automatic.id)).state).toBe("succeeded")
+		const status = service.getStatus()
+		expect(status.lastAutoBackupAt).not.toBeNull()
+		expect(status.lastAutoBackupAt).toBe(status.lastBackupAt)
+		expect(await service.setAutoBackupInterval(6)).toBe(6)
+		expect(service.getStatus().autoBackupIntervalHours).toBe(6)
+		const state = JSON.parse(
+			await readFile(join(root, "local", "protection", "state.json"), "utf8"),
+		) as { autoBackupIntervalHours: number }
+		expect(state.autoBackupIntervalHours).toBe(6)
+	}, 180_000)
+})

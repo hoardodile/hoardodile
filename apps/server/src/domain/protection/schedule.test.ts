@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { autoBackupDue } from "./schedule.ts"
+import { autoBackupDue, autoBackupIntervalHours } from "./schedule.ts"
 
 const HOUR = 3_600_000
 const NOW = 1_700_000_000_000
@@ -51,5 +51,22 @@ describe("automatic backup cadence", () => {
 		expect(due({ intervalHours: 6, lastAutoBackupAt: NOW - 5 * HOUR })).toBe(
 			false,
 		)
+	})
+})
+
+describe("configured interval bounds", () => {
+	it("defaults to a daily interval", () => {
+		expect(autoBackupIntervalHours.parse(undefined)).toBe(24)
+	})
+
+	it("rejects anything outside 1–168 hours", () => {
+		expect(autoBackupIntervalHours.safeParse(0).success).toBe(false)
+		expect(autoBackupIntervalHours.safeParse(169).success).toBe(false)
+		expect(autoBackupIntervalHours.safeParse(1.5).success).toBe(false)
+	})
+
+	it("accepts the shortest and longest presets", () => {
+		expect(autoBackupIntervalHours.parse(1)).toBe(1)
+		expect(autoBackupIntervalHours.parse(168)).toBe(168)
 	})
 })
