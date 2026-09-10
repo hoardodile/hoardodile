@@ -72,7 +72,8 @@ it("keeps the selected recovery point bound while the list refreshes and require
 					{ id: "local", path: "Default scratch folder" },
 					{ id: "external", path: "Alternate disk" },
 				],
-				policy: { withinHours: 24, daily: 7, weekly: 4, monthly: 12 },
+				policy: { automatic: 3 },
+				autoBackupIntervalHours: 24,
 				storage: { frozen: false },
 				maintenance: null,
 				maintenanceError: null,
@@ -102,11 +103,14 @@ it("keeps the selected recovery point bound while the list refreshes and require
 		</QueryClientProvider>,
 	)
 	const user = userEvent.setup()
-	const row = await screen.findByTestId(`recovery-point-${id}`)
+	const card = await screen.findByTestId(`recovery-point-${id}`)
 	expect(restore).not.toHaveBeenCalled()
-	await user.click(within(row).getByText("Selected backup"))
-	await user.click(within(row).getByText("Advanced backup actions"))
-	await user.click(within(row).getByRole("button", { name: "Recovery drill" }))
+	await user.click(
+		within(card).getByRole("button", { name: "Advanced backup actions" }),
+	)
+	await user.click(
+		await screen.findByRole("menuitem", { name: "Recovery drill" }),
+	)
 	await user.click(
 		screen.getByRole("checkbox", {
 			name: "Restore and verify a full temporary copy",
@@ -132,7 +136,7 @@ it("keeps the selected recovery point bound while the list refreshes and require
 	await waitFor(() =>
 		expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
 	)
-	await user.click(within(row).getByRole("button", { name: "Restore" }))
+	await user.click(within(card).getByRole("button", { name: "Restore" }))
 	const confirmation = await screen.findByTestId("full-restore-confirm")
 	const submit = screen.getByTestId("full-restore-submit")
 	expect(submit).toBeDisabled()

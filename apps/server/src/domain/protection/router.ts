@@ -6,6 +6,7 @@ import {
 import { TRPCError } from "@trpc/server"
 import { authedProcedure, router } from "src/infra/trpc/core.ts"
 import { z } from "zod"
+import { autoBackupIntervalHours } from "./schedule.ts"
 import type { ProtectionService } from "./service.ts"
 
 const id = z.union([z.literal("local"), z.uuid()])
@@ -115,6 +116,9 @@ export function buildProtectionRouter(service?: ProtectionService) {
 		policy: procedure
 			.input(retentionPolicy)
 			.mutation(({ input }) => get().updatePolicy(input)),
+		interval: procedure
+			.input(z.object({ hours: autoBackupIntervalHours }))
+			.mutation(({ input }) => get().setAutoBackupInterval(input.hours)),
 		previewRetention: procedure
 			.input(z.object({ repositoryId: id }))
 			.query(({ input }) => get().previewRetention(input.repositoryId)),

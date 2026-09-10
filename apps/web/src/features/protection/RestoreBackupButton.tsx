@@ -15,11 +15,14 @@ export function RestoreBackupButton({
 	pointId,
 	source,
 	received = false,
+	size = "default",
 }: {
 	repositoryId: string
 	pointId: string
 	source: string
 	received?: boolean
+	/** Card footers use the compact `sm` tier. */
+	size?: "sm" | "default"
 }) {
 	const { t } = useTranslation()
 	const qc = useQueryClient()
@@ -46,6 +49,7 @@ export function RestoreBackupButton({
 		<>
 			<Button
 				variant="secondary"
+				size={size}
 				disabled={prepare.isPending}
 				onClick={() => prepare.mutate({ repositoryId, pointId })}
 			>

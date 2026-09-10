@@ -80,10 +80,12 @@ export type SourceDifference = {
 }
 
 export const retentionPolicy = z.object({
-	withinHours: z.number().int().min(1).max(8760).default(24),
-	daily: z.number().int().min(1).max(365).default(7),
-	weekly: z.number().int().min(1).max(104).default(4),
-	monthly: z.number().int().min(1).max(120).default(12),
+	/**
+	 * Newest automatic recovery points kept per library. Manual and pinned
+	 * points, the newest point, and points protected by a running operation
+	 * are never selected for removal.
+	 */
+	automatic: z.number().int().min(1).max(365).default(3),
 })
 export type RetentionPolicy = z.infer<typeof retentionPolicy>
 

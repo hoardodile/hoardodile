@@ -20,6 +20,7 @@ import { validateRecoveryMetadata } from "src/infra/storage/recovery-metadata.ts
 import workspaceManifest from "../../../../../package.json" with {
 	type: "json",
 }
+import { autoBackupDue } from "./schedule.ts"
 import { createProtectionService, protectionDirectory } from "./service.ts"
 
 export async function registerProtection(
@@ -181,8 +182,20 @@ export async function registerProtection(
 				fileMustExist: true,
 			})
 			const database = Number(observer.pragma("data_version", { simple: true }))
-			const files = service.getStatus().storage.revision
-			if (database !== observedVersion || files !== observedFiles) {
+			const status = service.getStatus()
+			const files = status.storage.revision
+			// A change only becomes a recovery point once the configured
+			// interval elapsed; the baseline stays put otherwise, so the
+			// changes gathered during the wait are captured at the next due
+			// run instead of every poll.
+			if (
+				autoBackupDue({
+					changed: database !== observedVersion || files !== observedFiles,
+					lastAutoBackupAt: status.lastAutoBackupAt,
+					lastBackupAt: status.lastBackupAt,
+					intervalHours: status.autoBackupIntervalHours,
+				})
+			) {
 				pendingObservation = { database, files }
 				autoJobId = (
 					await service.createBackup({
@@ -210,6 +223,10 @@ export async function registerProtection(
 	timer.unref()
 	app.addHook("onReady", async () => {
 		void poll()
+			.then(() => service.scheduleMaintenance())
+			.catch((error) =>
+				app.log.error({ error }, "protection.maintenance_failed"),
+			)
 	})
 	app.addHook("preClose", async () => {
 		clearInterval(timer)

@@ -1,18 +1,46 @@
 import { AppDialog } from "@hoardodile/ui/components/app-dialog"
 import { Button } from "@hoardodile/ui/components/button"
 import { ConfirmDialog } from "@hoardodile/ui/components/confirm-dialog"
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from "@hoardodile/ui/components/dropdown-menu"
 import { DropdownSelect } from "@hoardodile/ui/components/dropdown-select"
+import { Icon } from "@hoardodile/ui/components/icon"
+import { IconTile } from "@hoardodile/ui/components/icon-tile"
 import { Input } from "@hoardodile/ui/components/input"
+import { MetaChip } from "@hoardodile/ui/components/meta-chip"
+import {
+	CheckCircle,
+	ClockCircle,
+	Database,
+	Eye,
+	MenuDots,
+	Pin,
+	Refresh,
+	TrashBinMinimalistic,
+} from "@hoardodile/ui/icons/registry"
+import { cn } from "@hoardodile/ui/lib/utils"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useToastMutation } from "@/hooks/useToastMutation"
+import { formatBytes } from "@/lib/formatBytes"
 import { trpcMutation } from "@/trpc/factory"
 import { protectionStatusOptions, type RecoveryPoint } from "./api"
 import { FileComparison } from "./FileComparison"
 import { RestoreBackupButton } from "./RestoreBackupButton"
 
-export function BackupPointActions({
+/**
+ * One recovery point as a standard card — the plugin card/row anatomy
+ * (icon tile, name, meta line, chips and actions in one bordered box)
+ * instead of a disclosure triangle. The card is the whole interaction:
+ * restore sits in the footer, the secondary operations live behind a
+ * More menu, and every menu entry opens its own top-level surface.
+ */
+export function RecoveryPointCard({
 	point,
 	repositoryId,
 	source,
@@ -69,54 +97,114 @@ export function BackupPointActions({
 			await invalidate()
 		},
 	})
+	const timestamp = new Date(point.createdAt).toLocaleString()
+	const title = point.name || timestamp
+	const meta = [
+		point.name ? timestamp : undefined,
+		point.totalBytes === undefined ? undefined : formatBytes(point.totalBytes),
+	]
+		.filter(Boolean)
+		.join(" · ")
+	// A file comparison is a wide, dense list — the compared card spans the
+	// whole grid row rather than squeezing the list into one cell.
+	const expanded = comparison !== null
 	return (
-		<div className="space-y-3 py-3">
-			{point.note && <p className="text-xs">{point.note}</p>}
-			<RestoreBackupButton
-				repositoryId={repositoryId}
-				pointId={point.id}
-				source={source}
-			/>
-			{!restoreOnly && (
-				<details className="text-xs">
-					<summary className="cursor-pointer py-2">
-						{t("protectionUx.pointTools")}
-					</summary>
-					<div className="flex flex-wrap gap-2">
-						<Button
-							variant="secondary"
-							disabled={compare.isPending}
-							onClick={() =>
-								compare.mutate({ repositoryId, pointId: point.id })
-							}
-						>
-							{t("protection.compare")}
-						</Button>
-						<Button variant="secondary" onClick={() => setEditing(point)}>
-							{t("protection.metadata")}
-						</Button>
-						<Button
-							variant="secondary"
-							onClick={() => {
-								setDrillPoint(point)
-								setFullDrill(false)
-							}}
-						>
-							{t("protection.drill")}
-						</Button>
-						<Button
-							variant="secondary"
-							disabled={!canDelete}
-							onClick={() => setDeletePoint(point)}
-						>
-							{t("replication.remove")}
-						</Button>
-					</div>
-					<p className="mt-2 text-muted-foreground">
-						{t("protection.drillHelp")}
-					</p>
-				</details>
+		<div
+			className={cn(
+				"relative flex flex-col gap-2.5 overflow-hidden rounded-xl border border-border p-4 transition-colors hover:bg-accent/40",
+				expanded && "col-span-full",
 			)}
+			data-testid={`recovery-point-${point.id}`}
+		>
+			<div className="flex items-center gap-2.5">
+				<IconTile
+					icon={
+						point.pinned
+							? Pin
+							: point.kind === "manual"
+								? Database
+								: ClockCircle
+					}
+				/>
+				<div className="min-w-0 flex-1">
+					<span className="block truncate text-ui font-medium" title={title}>
+						{title}
+					</span>
+					{meta !== "" && (
+						<span className="block truncate font-mono text-tiny text-muted-foreground">
+							{meta}
+						</span>
+					)}
+				</div>
+				{!restoreOnly && (
+					<DropdownMenu>
+						<DropdownMenuTrigger
+							render={
+								<Button
+									variant="ghost"
+									size="icon-sm"
+									className="relative size-7"
+									aria-label={t("protectionUx.pointTools")}
+									data-testid={`recovery-point-menu-${point.id}`}
+								>
+									<Icon icon={MenuDots} size="sm" />
+								</Button>
+							}
+						/>
+						<DropdownMenuContent align="end" className="w-44">
+							<DropdownMenuItem
+								disabled={compare.isPending}
+								onClick={() =>
+									compare.mutate({ repositoryId, pointId: point.id })
+								}
+							>
+								<Icon icon={Refresh} />
+								{t("protection.compare")}
+							</DropdownMenuItem>
+							<DropdownMenuItem onClick={() => setEditing(point)}>
+								<Icon icon={Eye} />
+								{t("protection.metadata")}
+							</DropdownMenuItem>
+							<DropdownMenuItem
+								onClick={() => {
+									setDrillPoint(point)
+									setFullDrill(false)
+								}}
+							>
+								<Icon icon={CheckCircle} />
+								{t("protection.drill")}
+							</DropdownMenuItem>
+							<DropdownMenuItem
+								variant="destructive"
+								disabled={!canDelete}
+								onClick={() => setDeletePoint(point)}
+							>
+								<Icon icon={TrashBinMinimalistic} />
+								{t("replication.remove")}
+							</DropdownMenuItem>
+						</DropdownMenuContent>
+					</DropdownMenu>
+				)}
+			</div>
+			{point.note && (
+				<p className="line-clamp-2 text-xs text-muted-foreground">
+					{point.note}
+				</p>
+			)}
+			<div className="flex min-w-0 items-center gap-1.5">
+				<MetaChip tone="muted">{t(`protection.${point.kind}`)}</MetaChip>
+				{point.pinned && (
+					<MetaChip tone="bordered">{t("protection.pinned")}</MetaChip>
+				)}
+				<div className="ml-auto flex shrink-0 items-center gap-2">
+					<RestoreBackupButton
+						repositoryId={repositoryId}
+						pointId={point.id}
+						source={source}
+						size="sm"
+					/>
+				</div>
+			</div>
 			{comparison && <FileComparison key={comparison.jobId} {...comparison} />}
 			<AppDialog
 				open={editing !== null}

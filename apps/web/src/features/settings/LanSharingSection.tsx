@@ -3,6 +3,7 @@ import type {
 	HoardodileDesktopBridge,
 	LanInfo,
 } from "@hoardodile/shared/desktop"
+import { AppDialog } from "@hoardodile/ui/components/app-dialog"
 import { Button } from "@hoardodile/ui/components/button"
 import { ConfirmDialog } from "@hoardodile/ui/components/confirm-dialog"
 import { Icon } from "@hoardodile/ui/components/icon"
@@ -93,6 +94,7 @@ function LanSharingForm(props: {
 	// a required confirm dialog must appear before a spinner ever does.
 	const [pending, setPending] = useState(false)
 	const [weakConfirmOpen, setWeakConfirmOpen] = useState(false)
+	const [moreAddressesOpen, setMoreAddressesOpen] = useState(false)
 	// Device-local dismiss of the port-conflict notice: value is the
 	// `(preferredPort, port)` pair it was dismissed for, so a later
 	// conflict on a different fallback port shows the notice again.
@@ -507,44 +509,55 @@ function LanSharingForm(props: {
 								</p>
 							)}
 							{others.length > 0 ? (
-								<details className="group">
-									<summary
-										className="cursor-pointer select-none text-xs text-muted-foreground hover:text-secondary-foreground"
+								<>
+									<Button
+										variant="secondary"
+										size="sm"
+										className="[-webkit-app-region:no-drag]"
+										onClick={() => setMoreAddressesOpen(true)}
 										data-testid="desktop-lan-more-addresses"
 									>
 										{t("me.desktop.lan.moreAddresses", {
 											count: others.length,
 										})}
-									</summary>
-									<ul className="mt-2 flex flex-col gap-2">
-										{others.map((entry) => (
-											<li
-												key={entry.url}
-												className="flex flex-wrap items-center justify-between gap-3"
-											>
-												<div className="min-w-0">
-													<div className="truncate text-ui text-foreground">
-														{entry.url}
-													</div>
-													<p className="truncate text-xs text-muted-foreground">
-														{entry.interfaceName}
-													</p>
-												</div>
-												<Button
-													variant="secondary"
-													className="shrink-0 [-webkit-app-region:no-drag]"
-													onClick={() => {
-														handleCopy(entry.url)
-													}}
-													data-testid={`desktop-lan-copy-${entry.address}`}
+									</Button>
+									<AppDialog
+										open={moreAddressesOpen}
+										onOpenChange={setMoreAddressesOpen}
+										title={t("me.desktop.lan.moreAddresses", {
+											count: others.length,
+										})}
+									>
+										<ul className="flex flex-col gap-2">
+											{others.map((entry) => (
+												<li
+													key={entry.url}
+													className="flex flex-wrap items-center justify-between gap-3"
 												>
-													<Icon icon={Copy} />
-													{t("me.desktop.lan.copy")}
-												</Button>
-											</li>
-										))}
-									</ul>
-								</details>
+													<div className="min-w-0">
+														<div className="truncate text-ui text-foreground">
+															{entry.url}
+														</div>
+														<p className="truncate text-xs text-muted-foreground">
+															{entry.interfaceName}
+														</p>
+													</div>
+													<Button
+														variant="secondary"
+														className="shrink-0"
+														onClick={() => {
+															handleCopy(entry.url)
+														}}
+														data-testid={`desktop-lan-copy-${entry.address}`}
+													>
+														<Icon icon={Copy} />
+														{t("me.desktop.lan.copy")}
+													</Button>
+												</li>
+											))}
+										</ul>
+									</AppDialog>
+								</>
 							) : null}
 							{lan.https ? (
 								<div

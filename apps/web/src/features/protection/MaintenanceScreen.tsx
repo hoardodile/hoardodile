@@ -1,3 +1,4 @@
+import { Button } from "@hoardodile/ui/components/button"
 import { useQuery } from "@tanstack/react-query"
 import { Link } from "@tanstack/react-router"
 import { useState } from "react"
@@ -33,19 +34,22 @@ export function MaintenanceScreen() {
 								{status.data.maintenanceError}
 							</p>
 						)}
-						<details
-							className="mt-5 border-t border-border pt-3"
-							onToggle={(event) => setChooseBackup(event.currentTarget.open)}
-						>
-							<summary className="cursor-pointer text-ui">
+						<div className="mt-5 border-t border-border pt-3">
+							<Button
+								variant="secondary"
+								size="sm"
+								aria-expanded={chooseBackup}
+								onClick={() => setChooseBackup((open) => !open)}
+								data-testid="choose-another-backup"
+							>
 								{t("protectionUx.chooseAnotherBackup")}
-							</summary>
+							</Button>
 							{chooseBackup && (
 								<div className="pt-4">
 									<RecoveryPanel restoreOnly />
 								</div>
 							)}
-						</details>
+						</div>
 					</SettingsSheet>
 				) : (
 					<Link to="/login" className="text-sm underline">

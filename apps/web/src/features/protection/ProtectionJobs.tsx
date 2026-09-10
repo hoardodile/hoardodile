@@ -1,5 +1,7 @@
+import { AppDialog } from "@hoardodile/ui/components/app-dialog"
 import { Button } from "@hoardodile/ui/components/button"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useToastMutation } from "@/hooks/useToastMutation"
 import { loose } from "@/i18n"
@@ -21,6 +23,10 @@ export function ProtectionJobs({
 	const { t } = useTranslation()
 	const tr = loose(t)
 	const query = useQuery(protectionJobsOptions())
+	const [failedError, setFailedError] = useState<{
+		code: string
+		message: string
+	} | null>(null)
 	const qc = useQueryClient()
 	const invalidate = async () => {
 		await qc.invalidateQueries({ queryKey: ["protection"] })
@@ -107,12 +113,15 @@ export function ProtectionJobs({
 								{job.error && (
 									<div className="mt-1 text-xs" role="alert">
 										<p>{t(jobErrorKey(job.error))}</p>
-										<details className="mt-1">
-											<summary className="cursor-pointer">
-												{t("protectionUx.errorDetails")}
-											</summary>
-											<p className="mt-1 break-words">{job.error.message}</p>
-										</details>
+										<Button
+											variant="secondary"
+											size="xs"
+											className="mt-1"
+											onClick={() => setFailedError(job.error ?? null)}
+											data-testid={`protection-job-details-${job.id}`}
+										>
+											{t("protectionUx.errorDetails")}
+										</Button>
 									</div>
 								)}
 							</div>
@@ -141,6 +150,17 @@ export function ProtectionJobs({
 					)
 				})}
 			</div>
+			<AppDialog
+				open={failedError !== null}
+				onOpenChange={(open) => {
+					if (!open) setFailedError(null)
+				}}
+				title={t("protectionUx.errorDetails")}
+				description={failedError ? t(jobErrorKey(failedError)) : undefined}
+				size="lg"
+			>
+				<p className="break-words text-xs">{failedError?.message}</p>
+			</AppDialog>
 		</section>
 	)
 }

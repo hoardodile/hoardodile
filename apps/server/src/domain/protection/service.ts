@@ -39,12 +39,14 @@ import {
 import { type StoragePaths, storageCoordinator } from "@hoardodile/host/hoard"
 import { prepareCheckpoint } from "src/infra/storage/checkpoint.ts"
 import { z } from "zod"
+import { autoBackupIntervalHours } from "./schedule.ts"
 
 const repositoryId = z.union([z.literal("local"), z.uuid()])
 const stateSchema = z.object({
 	instanceId: z.uuid(),
 	libraryId: z.uuid(),
 	enabled: z.boolean(),
+	autoBackupIntervalHours,
 	policy: retentionPolicy,
 	repositories: z.array(
 		z.object({
@@ -58,6 +60,7 @@ const stateSchema = z.object({
 		}),
 	),
 	lastBackupAt: z.number().nullable(),
+	lastAutoBackupAt: z.number().nullable().default(null),
 	lastContentCheckAt: z.number().nullable(),
 })
 const restorePlanSchema = z.object({
@@ -170,9 +173,11 @@ export async function createProtectionService(deps: ProtectionDependencies) {
 		instanceId: randomUUID(),
 		libraryId: randomUUID(),
 		enabled: false,
+		autoBackupIntervalHours: autoBackupIntervalHours.parse(undefined),
 		policy: retentionPolicy.parse({}),
 		repositories: [],
 		lastBackupAt: null,
+		lastAutoBackupAt: null,
 		lastContentCheckAt: null,
 	}))
 	await atomicWrite(statePath, JSON.stringify(state))
@@ -322,6 +327,7 @@ export async function createProtectionService(deps: ProtectionDependencies) {
 						...commandContext(context),
 					})
 					state.lastBackupAt = manifest.createdAt
+					if (input.kind === "auto") state.lastAutoBackupAt = manifest.createdAt
 					const localRepository = state.repositories.find(
 						(entry) => entry.id === "local",
 					)
@@ -909,6 +915,11 @@ export async function createProtectionService(deps: ProtectionDependencies) {
 			state.policy = retentionPolicy.parse(value)
 			await persist()
 			return state.policy
+		},
+		async setAutoBackupInterval(hours: number) {
+			state.autoBackupIntervalHours = autoBackupIntervalHours.parse(hours)
+			await persist()
+			return state.autoBackupIntervalHours
 		},
 		previewRetention: (id: string) =>
 			locks.run(id, () =>

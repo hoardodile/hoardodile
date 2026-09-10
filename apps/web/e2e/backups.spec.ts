@@ -68,7 +68,6 @@ test("complete backup, confirmed restore, and merged backup-sync page", async ({
 		path: testInfo.outputPath("complete-backups.png"),
 		fullPage: true,
 	})
-	await point.locator("summary").first().click()
 	await point.getByRole("button", { name: "Restore", exact: true }).click()
 	const confirmation = page.getByTestId("full-restore-confirm")
 	await expect(confirmation).toBeVisible({ timeout: 30_000 })

@@ -14,7 +14,8 @@ const localStatus = {
 	enabled: true,
 	lastBackupAt: 1_700_000_000_000,
 	backupRoot: "Configured folder",
-	policy: { withinHours: 24, daily: 7, weekly: 4, monthly: 12 },
+	policy: { automatic: 3 },
+	autoBackupIntervalHours: 24,
 	storage: { frozen: false },
 	lastRestore: null,
 }

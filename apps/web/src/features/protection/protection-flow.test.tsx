@@ -27,7 +27,8 @@ const status = {
 	repositories: [{ id: "local", name: "Local backups" }],
 	enabled: true,
 	backupRoot: "Configured folder",
-	policy: { withinHours: 24, daily: 7, weekly: 4, monthly: 12 },
+	policy: { automatic: 3 },
+	autoBackupIntervalHours: 24,
 	storage: { frozen: false },
 	lastRestore: null,
 }
@@ -180,7 +181,7 @@ it("surfaces first-backup progress in the health header", async () => {
 	expect(screen.getByTestId("recovery-key-notice")).toBeVisible()
 })
 
-it("starts a manual backup directly while advanced tools remain collapsed", async () => {
+it("starts a manual backup directly while the advanced settings stay closed", async () => {
 	const backup = vi.fn(async () => ({ id: "job" }))
 	mount(<Page />, {
 		"protection.points": () => [point],
@@ -188,7 +189,8 @@ it("starts a manual backup directly while advanced tools remain collapsed", asyn
 	})
 	const user = userEvent.setup()
 	await screen.findByTestId("complete-backup-now")
-	expect(screen.getByTestId("backup-management")).not.toHaveAttribute("open")
+	expect(screen.getByTestId("backup-retention")).toBeInTheDocument()
+	expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
 	await user.click(screen.getByTestId("complete-backup-now"))
 	await waitFor(() =>
 		expect(backup).toHaveBeenCalledWith({
@@ -485,7 +487,7 @@ it("switches to the connect flow after choosing to hold another device's backups
 	expect(screen.getByTestId("backup-sync")).toBeInTheDocument()
 })
 
-it("gives a next step for low disk space while keeping diagnostic details collapsed", async () => {
+it("gives a next step for low disk space and opens the technical details on demand", async () => {
 	mount(<ProtectionJobs activeOnly />, {
 		"protection.jobs": () => [
 			{
@@ -497,8 +499,11 @@ it("gives a next step for low disk space while keeping diagnostic details collap
 			},
 		],
 	})
+	const user = userEvent.setup()
 	expect(await screen.findByText(/Not enough free space/)).toBeVisible()
-	expect(screen.getByText("Native diagnostic")).not.toBeVisible()
+	expect(screen.queryByText("Native diagnostic")).not.toBeInTheDocument()
+	await user.click(screen.getByRole("button", { name: "Technical details" }))
+	expect(await screen.findByText("Native diagnostic")).toBeVisible()
 })
 
 it("renders the unified settings sections without a page-level heading", async () => {

@@ -140,6 +140,7 @@ export function PairingInviteButton({ disabled }: { disabled: boolean }) {
 	const [fingerprint, setFingerprint] = useState("")
 	const [copied, setCopied] = useState(false)
 	const [copyFailed, setCopyFailed] = useState(false)
+	const [detailsOpen, setDetailsOpen] = useState(false)
 	const invite = useToastMutation({
 		...trpcMutation("replication", "invitation"),
 		onSuccess: async (value) => {
@@ -224,11 +225,17 @@ export function PairingInviteButton({ disabled }: { disabled: boolean }) {
 								{t("replicationUx.copyFailed")}
 							</p>
 						)}
-						<details open={copyFailed} className="text-xs">
-							<summary className="cursor-pointer py-2">
-								{t("replication.details")}
-							</summary>
-							<div className="space-y-2">
+						<Button
+							variant="secondary"
+							size="sm"
+							aria-expanded={detailsOpen || copyFailed}
+							onClick={() => setDetailsOpen((open) => !open)}
+							data-testid="replication-details"
+						>
+							{t("replication.details")}
+						</Button>
+						{(detailsOpen || copyFailed) && (
+							<div className="space-y-2 rounded-xl border border-border p-4">
 								<Input
 									readOnly
 									value={invitation.code}
@@ -253,7 +260,7 @@ export function PairingInviteButton({ disabled }: { disabled: boolean }) {
 									/>
 								)}
 							</div>
-						</details>
+						)}
 						<p className="text-xs text-muted-foreground">
 							{new Date(invitation.expiresAt).toLocaleString()}
 						</p>

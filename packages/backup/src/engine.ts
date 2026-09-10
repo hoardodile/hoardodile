@@ -65,6 +65,48 @@ function decode(value: string): unknown {
 	return JSON.parse(Buffer.from(value, "base64url").toString("utf8"))
 }
 
+/**
+ * Recovery points selected for removal by the retention policy. Every
+ * library keeps its newest point, all manual and pinned points, points
+ * protected by a running operation, and the newest `policy.automatic`
+ * automatic points; `points` arrives newest first (`listRecoveryPoints`).
+ */
+export function selectExpiredPoints(
+	points: RecoveryPoint[],
+	policy: RetentionPolicy,
+	protectedIds: readonly string[] = [],
+): RecoveryPoint[] {
+	const groups = new Map<string, RecoveryPoint[]>()
+	for (const point of points) {
+		const group = groups.get(point.manifest.libraryId) ?? []
+		group.push(point)
+		groups.set(point.manifest.libraryId, group)
+	}
+	return [...groups.values()].flatMap((group) =>
+		selectLibraryExpired(group, policy, protectedIds),
+	)
+}
+
+function selectLibraryExpired(
+	points: RecoveryPoint[],
+	policy: RetentionPolicy,
+	protectedIds: readonly string[],
+): RecoveryPoint[] {
+	const keep = new Set(protectedIds)
+	if (points[0]) keep.add(points[0].id)
+	let automatic = 0
+	for (const entry of points) {
+		if (entry.kind === "manual" || entry.pinned) {
+			keep.add(entry.id)
+			continue
+		}
+		if (automatic >= policy.automatic) continue
+		automatic += 1
+		keep.add(entry.id)
+	}
+	return points.filter((entry) => !keep.has(entry.id))
+}
+
 export function createBackupEngine(options: {
 	binary?: string
 	run?: BinaryRunner
@@ -423,65 +465,6 @@ export function createBackupEngine(options: {
 		}
 	}
 
-	function selectRetention(
-		points: RecoveryPoint[],
-		policy: RetentionPolicy,
-		protectedIds: readonly string[],
-	) {
-		const groups = new Map<string, RecoveryPoint[]>()
-		for (const point of points) {
-			const group = groups.get(point.manifest.libraryId) ?? []
-			group.push(point)
-			groups.set(point.manifest.libraryId, group)
-		}
-		return [...groups.values()].flatMap((group) =>
-			selectLibraryRetention(group, policy, protectedIds),
-		)
-	}
-
-	function selectLibraryRetention(
-		points: RecoveryPoint[],
-		policy: RetentionPolicy,
-		protectedIds: readonly string[],
-	) {
-		const keep = new Set(protectedIds)
-		const latest = points[0]
-		if (latest) keep.add(latest.id)
-		const threshold =
-			(latest?.createdAt ?? Date.now()) - policy.withinHours * 3600_000
-		for (const entry of points)
-			if (
-				entry.kind === "manual" ||
-				entry.pinned ||
-				entry.createdAt >= threshold
-			)
-				keep.add(entry.id)
-		for (const [limit, period] of [
-			[policy.daily, "day"],
-			[policy.weekly, "week"],
-			[policy.monthly, "month"],
-		] as const) {
-			const buckets = new Set<string>()
-			for (const entry of points) {
-				const date = new Date(entry.createdAt)
-				const key =
-					period === "month"
-						? `${date.getUTCFullYear()}-${date.getUTCMonth()}`
-						: String(
-								Math.floor(
-									(entry.createdAt + (period === "week" ? 3 * 86400_000 : 0)) /
-										(period === "week" ? 7 * 86400_000 : 86400_000),
-								),
-							)
-				if (buckets.has(key)) continue
-				if (buckets.size >= limit) break
-				buckets.add(key)
-				keep.add(entry.id)
-			}
-		}
-		return points.filter((entry) => !keep.has(entry.id))
-	}
-
 	return {
 		async capabilities() {
 			const result = await run({ binary, args: ["version"] })
@@ -739,7 +722,7 @@ export function createBackupEngine(options: {
 			policy: RetentionPolicy,
 			protectedIds: readonly string[] = [],
 		) {
-			return selectRetention(
+			return selectExpiredPoints(
 				await listRecoveryPoints(repo),
 				retentionPolicy.parse(policy),
 				protectedIds,
@@ -752,7 +735,7 @@ export function createBackupEngine(options: {
 				protectedIds?: readonly string[]
 			} & CommandOptions,
 		) {
-			const expired = selectRetention(
+			const expired = selectExpiredPoints(
 				await listRecoveryPoints(repo),
 				retentionPolicy.parse(input.policy),
 				input.protectedIds ?? [],

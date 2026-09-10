@@ -9,7 +9,6 @@ import { useTranslation } from "react-i18next"
 import { SettingsSection } from "@/features/settings/SettingsSection"
 import { SectionDivider } from "@/features/settings/SettingsSheet"
 import { useToastMutation } from "@/hooks/useToastMutation"
-import { formatBytes } from "@/lib/formatBytes"
 import { trpcMutation } from "@/trpc/factory"
 import {
 	downloadRecoveryKey,
@@ -19,12 +18,21 @@ import {
 	replicationStatusOptions,
 } from "./api"
 import { BackupManagement } from "./BackupManagement"
-import { BackupPointActions } from "./BackupPointActions"
 import { BackupSetupWizard } from "./BackupSetupWizard"
 import { BackupStatusHeader } from "./BackupStatusHeader"
 import { ProtectionJobs } from "./ProtectionJobs"
+import { RecoveryPointCard } from "./RecoveryPointCard"
 import { ReplicationPanel } from "./ReplicationPanel"
 import { useSyncHealth } from "./syncHealth"
+
+/** Automatic backup interval presets, in hours — daily unless changed. */
+const FREQUENCIES = [
+	{ hours: 1, label: "protectionUx.frequencyHourly" },
+	{ hours: 6, label: "protectionUx.frequency6Hours" },
+	{ hours: 12, label: "protectionUx.frequency12Hours" },
+	{ hours: 24, label: "protectionUx.frequencyDaily" },
+	{ hours: 168, label: "protectionUx.frequencyWeekly" },
+] as const
 
 function wasKeyDownloaded(key: string | undefined) {
 	try {
@@ -112,6 +120,10 @@ export function RecoveryPanel({
 	}
 	const enabled = useToastMutation({
 		...trpcMutation("protection", "enabled"),
+		onSuccess: invalidate,
+	})
+	const interval = useToastMutation({
+		...trpcMutation("protection", "interval"),
 		onSuccess: invalidate,
 	})
 	const key = useToastMutation({
@@ -220,7 +232,7 @@ export function RecoveryPanel({
 								<p className="text-xs text-secondary-foreground">
 									{t("protectionUx.locationHelp")}
 								</p>
-								<div className="flex flex-wrap items-center gap-4">
+								<div className="flex flex-wrap items-center justify-between gap-4">
 									<div className="flex items-center gap-2 text-xs">
 										<Switch
 											checked={status.data?.enabled ?? false}
@@ -232,7 +244,28 @@ export function RecoveryPanel({
 										/>
 										<span>{t("protection.automatic")}</span>
 									</div>
+									<div className="flex items-center gap-2">
+										<span className="text-xs text-muted-foreground">
+											{t("protectionUx.frequency")}
+										</span>
+										<DropdownSelect
+											value={String(status.data?.autoBackupIntervalHours ?? 24)}
+											disabled={interval.isPending}
+											onValueChange={(value) =>
+												interval.mutate({ hours: Number(value) })
+											}
+											options={FREQUENCIES.map((frequency) => ({
+												value: String(frequency.hours),
+												label: t(frequency.label),
+											}))}
+											aria-label={t("protectionUx.frequency")}
+											data-testid="backup-frequency"
+										/>
+									</div>
 								</div>
+								<p className="text-xs text-muted-foreground">
+									{t("protectionUx.frequencyHelp")}
+								</p>
 								{!keySaved && (
 									<div
 										className="flex flex-wrap items-center gap-3 rounded-lg bg-muted p-4"
@@ -305,35 +338,18 @@ export function RecoveryPanel({
 						</div>
 					)}
 					{points.data && points.data.length > 0 && (
-						<div className="divide-y divide-border">
+						<div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
 							{points.data
 								.toSorted((a, b) => b.createdAt - a.createdAt)
 								.map((point) => (
-									<details
+									<RecoveryPointCard
 										key={repositoryId + point.id}
-										data-testid={`recovery-point-${point.id}`}
-									>
-										<summary className="cursor-pointer py-3 text-ui">
-											<span>
-												{point.name ||
-													new Date(point.createdAt).toLocaleString()}
-											</span>
-											<span className="ml-3 text-xs text-muted-foreground">
-												{t(`protection.${point.kind}`)}
-												{point.totalBytes !== undefined
-													? ` · ${formatBytes(point.totalBytes)}`
-													: ""}
-												{point.pinned ? ` · ${t("protection.pinned")}` : ""}
-											</span>
-										</summary>
-										<BackupPointActions
-											point={point}
-											repositoryId={repositoryId}
-											source={sourceName}
-											canDelete={(points.data?.length ?? 0) > 1}
-											restoreOnly={restoreOnly || maintenance}
-										/>
-									</details>
+										point={point}
+										repositoryId={repositoryId}
+										source={sourceName}
+										canDelete={(points.data?.length ?? 0) > 1}
+										restoreOnly={restoreOnly || maintenance}
+									/>
 								))}
 						</div>
 					)}
