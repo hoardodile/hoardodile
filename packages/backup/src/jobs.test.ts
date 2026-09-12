@@ -70,18 +70,18 @@ describe("job manager records", () => {
 			directory,
 			handlers: { probe: handler },
 		})
+		const job = await jobs.start("probe", { value: 1 })
 		try {
-			const job = await jobs.start("probe", { value: 1 })
 			const settled = await settle(jobs, job.id)
 			expect(settled.state).toBe("succeeded")
 			expect(settled.result).toEqual({ ok: true })
 			expect(handler).toHaveBeenCalledTimes(1)
-			expect(JSON.parse(await record(directory, job.id)).state).toBe(
-				"succeeded",
-			)
 		} finally {
 			await jobs.close()
 		}
+		// Status writes are best effort and trail the in-memory state, so the
+		// record is read only once close() has drained the write queue.
+		expect(JSON.parse(await record(directory, job.id)).state).toBe("succeeded")
 	})
 
 	it("runs an accepted job even when its record cannot be written", async () => {
@@ -103,20 +103,20 @@ describe("job manager records", () => {
 			handlers: { probe: handler },
 			onError: (error) => errors.push(error),
 		})
+		const job = await jobs.start("probe", {})
 		try {
-			const job = await jobs.start("probe", {})
 			const settled = await settle(jobs, job.id)
 			// The operation ran despite the two lost status writes, and the
 			// failures were reported instead of silently swallowed.
 			expect(handler).toHaveBeenCalledTimes(1)
 			expect(settled.state).toBe("succeeded")
 			expect(errors).toHaveLength(2)
-			expect(JSON.parse(await record(directory, job.id)).state).toBe(
-				"succeeded",
-			)
 		} finally {
 			await jobs.close()
 		}
+		// The first write that reaches the disk is the one in the finally
+		// above, so the record only exists once close() drained the queue.
+		expect(JSON.parse(await record(directory, job.id)).state).toBe("succeeded")
 	})
 
 	it("records a failing handler", async () => {

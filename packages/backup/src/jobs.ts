@@ -217,6 +217,8 @@ export async function createJobManager(options: {
 			closed = true
 			for (const entry of active.values()) entry.controller.abort()
 			await Promise.allSettled([...active.values()].map((entry) => entry.done))
+			// Draining the queue here is what makes a record read after close()
+			// deterministic: every write trails the state it belongs to.
 			await Promise.all([...writes.values()])
 		},
 	}
