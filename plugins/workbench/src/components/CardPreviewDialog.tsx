@@ -33,14 +33,19 @@ export function CardPreviewDialog(props: {
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogContent className="max-w-sm">
+			{/* `max-w-md` gives the body the 400px the app card can reach at
+			    its widest, so a wide cover is previewed at its real size. */}
+			<DialogContent className="max-w-md">
 				<DialogHeader>
 					<DialogTitle>{tw("popover.cardPreviewTitle")}</DialogTitle>
 					<DialogDescription>
 						{tw("popover.cardPreviewDescription")}
 					</DialogDescription>
 				</DialogHeader>
-				<DialogBody className="flex flex-col gap-3 pb-6">
+				{/* `items-center` centres the card in the body: the card is as
+				    wide as its cover box, so left-aligning it would pin the
+				    preview (and its metadata) to the dialog's edge. */}
+				<DialogBody className="flex flex-col items-center gap-3 pb-6">
 					{manifest !== null && resource !== undefined && ctx !== null ? (
 						<ResCardPreview
 							manifest={manifest}

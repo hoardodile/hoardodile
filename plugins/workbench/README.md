@@ -77,7 +77,7 @@ published `dist/`):
 | --- | --- |
 | `resources()` | the resource list (sidebar / toolbar chips) |
 | `files` | `/data` reads and the plugin file URL shape |
-| `snapshot(resId)` | sandboxed `detect` / `sourceMeta` / `searchMeta` / `listFiles` / `coverLocal` / `imageHashes` |
+| `snapshot(resId)` | sandboxed `detect` / `sourceMeta` / `searchMeta` / `listFiles` / `coverLocal` / cover probe (kind + dimensions) / `imageHashes` |
 | `state(resId)` | seeds the mock host with the resource's comments, danmaku, prefs and cache |
 | `preview(resId, path)` | `?size=preview` variants |
 | `frame(resId, path, timeMs)` | video seek-preview thumbnails |

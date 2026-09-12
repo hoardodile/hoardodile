@@ -6,7 +6,11 @@ import {
 	type PluginHooks,
 	type ResourceAPI,
 } from "@hoardodile/host"
-import type { FileStats, PluginManifest } from "@hoardodile/sdk-types"
+import type {
+	FileStats,
+	PluginManifest,
+	ProbeResult,
+} from "@hoardodile/sdk-types"
 import { pluginManifest as pluginManifestSchema } from "@hoardodile/sdk-types/schema"
 import type { PluginTarget } from "./runner.ts"
 import { CliError, createCliHooks } from "./runner.ts"
@@ -31,14 +35,24 @@ export type PluginHookSnapshot = {
 	readonly searchMeta: unknown
 	readonly coverLocal: string | undefined
 	/**
-	 * The resource's cover kind (`image` | `video` | `audio`), sniffed
-	 * from the cover source the plugin's `coverLocal` hook picked. The
-	 * host app selects the manifest's `ui.card.<kind>` block from the
-	 * comparable `coverMeta.kind`, so the workbench needs this to render
-	 * the same card templates. `undefined` when there is no cover source
-	 * or the file cannot be classified as a cover kind.
+	 * The resource's cover kind (`image` | `video` | `audio`), taken from
+	 * the probe of the cover source the plugin's `coverLocal` hook picked
+	 * (or from its sniff when the probe cannot demux it). The host app
+	 * selects the manifest's `ui.card.<kind>` block from the comparable
+	 * `coverMeta.kind`, so the workbench needs this to render the same
+	 * card templates. `undefined` when there is no cover source or the
+	 * file cannot be classified as a cover kind.
 	 */
 	readonly coverKind?: string
+	/**
+	 * The cover's pixel dimensions from that same probe — the workbench's
+	 * stand-in for `coverMeta.width`/`height`, which the app's card
+	 * reserves its cover box from. `undefined` when the cover could not
+	 * be decoded: a non-media cover, a failed probe, or an audio
+	 * container without embedded artwork.
+	 */
+	readonly coverWidth?: number
+	readonly coverHeight?: number
 	readonly files: readonly unknown[] | undefined
 	readonly fileStats: FileStats
 	readonly imageHashes?: readonly unknown[]
@@ -142,9 +156,11 @@ async function collectHookResults(opts: {
 		: undefined
 	const fileStats =
 		(await attempt("fileStats", () => measureFileStats(api))) ?? {}
-	// Sniff the selected cover source so the workbench can pick the same
-	// `ui.card.<kind>` block the host app does from `coverMeta.kind`.
-	const coverKind = await sniffCoverKind(api, coverLocal, attempt)
+	// One probe pass over the selected cover source feeds both the
+	// `ui.card.<kind>` block selection and the preview card's cover box,
+	// exactly like the app fills `coverMeta.kind`/`width`/`height` from
+	// its own cover probe.
+	const cover = await probeCoverSource(api, coverLocal, attempt)
 
 	return {
 		pluginId: target.id,
@@ -152,7 +168,9 @@ async function collectHookResults(opts: {
 		sourceMeta: meta?.sourceMeta?.value,
 		searchMeta: meta?.searchMeta?.value,
 		coverLocal,
-		coverKind,
+		coverKind: cover?.kind,
+		coverWidth: cover?.width,
+		coverHeight: cover?.height,
 		files,
 		fileStats,
 		imageHashes: hashes?.hashes,
@@ -161,18 +179,88 @@ async function collectHookResults(opts: {
 	}
 }
 
-/** Sniff the cover source's kind (image/video/audio), or `undefined`. */
-async function sniffCoverKind(
+/**
+ * What the workbench card needs from the cover source: the kind that
+ * selects the manifest's `ui.card.<kind>` block and the box the card
+ * reserves for the cover.
+ */
+export type CoverProbe = {
+	readonly kind: string
+	readonly width?: number
+	readonly height?: number
+}
+
+/**
+ * Cover families a manifest can declare a `ui.card.<kind>` block for.
+ */
+const COVER_KINDS = new Set(["image", "video", "audio"])
+
+/**
+ * Reduce a probe result to the cover kind and its dimensions. Only
+ * decodable media answers; audio carries dimensions just when its
+ * container embeds artwork (the app's audio tile takes over otherwise).
+ */
+export function coverProbeInfo(probe: ProbeResult): CoverProbe | undefined {
+	switch (probe.kind) {
+		case "image":
+			return withCoverDims("image", probe.width, probe.height)
+		case "video":
+			return withCoverDims("video", probe.width, probe.height)
+		case "audio":
+			return withCoverDims(
+				"audio",
+				probe.coverArt?.width,
+				probe.coverArt?.height,
+			)
+		default:
+			return undefined
+	}
+}
+
+/**
+ * The cover kind a failed probe still leaves standing: the sniffed one,
+ * dimensions unknown. The app's cover probe behaves the same — a video
+ * whose demux fails still lands in `coverMeta` as `kind: "video"` (its
+ * extension decides), just without a box.
+ */
+export function coverKindFromSniff(
+	sniffed: string | undefined,
+): CoverProbe | undefined {
+	return sniffed !== undefined && COVER_KINDS.has(sniffed)
+		? { kind: sniffed }
+		: undefined
+}
+
+function withCoverDims(
+	kind: string,
+	width: number | undefined,
+	height: number | undefined,
+): CoverProbe {
+	return isPixelCount(width) && isPixelCount(height)
+		? { kind, width, height }
+		: { kind }
+}
+
+function isPixelCount(value: number | undefined): value is number {
+	return typeof value === "number" && Number.isFinite(value) && value > 0
+}
+
+/** Probe the cover source, or `undefined` when there is nothing to probe. */
+async function probeCoverSource(
 	api: ResourceAPI,
 	coverLocal: string | undefined,
 	attempt: <T>(hook: string, run: () => Promise<T>) => Promise<T | undefined>,
-): Promise<string | undefined> {
+): Promise<CoverProbe | undefined> {
 	if (coverLocal === undefined) return undefined
-	const probe = await attempt("coverKind", () => api.sniff(coverLocal!))
-	const kind = probe?.kind
-	return kind === "image" || kind === "video" || kind === "audio"
-		? kind
-		: undefined
+	// Both calls read the same cached header. The probe is authoritative
+	// when it answers — it settles containers that carry either family
+	// and it carries the dimensions — while the sniff is the floor.
+	const [probe, sniff] = await Promise.all([
+		attempt("coverProbe", () => api.probe(coverLocal)),
+		attempt("coverKind", () => api.sniff(coverLocal)),
+	])
+	const info = probe === undefined ? undefined : coverProbeInfo(probe)
+	return info ?? coverKindFromSniff(sniff?.kind)
 }
 
 /**
@@ -201,7 +289,11 @@ export function formatHookSnapshot(snapshot: PluginHookSnapshot): string {
 	if (snapshot.sourceMeta !== undefined) parts.push("sourceMeta")
 	if (snapshot.searchMeta !== undefined) parts.push("searchMeta")
 	if (snapshot.coverLocal !== undefined) {
-		parts.push(`cover ${snapshot.coverLocal}`)
+		const box =
+			snapshot.coverWidth !== undefined && snapshot.coverHeight !== undefined
+				? ` ${snapshot.coverWidth}x${snapshot.coverHeight}`
+				: ""
+		parts.push(`cover ${snapshot.coverLocal}${box}`)
 	}
 	for (const [hook, message] of Object.entries(snapshot.errors)) {
 		parts.push(`${hook} failed: ${message}`)

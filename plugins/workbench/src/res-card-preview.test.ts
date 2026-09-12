@@ -3,9 +3,11 @@ import type { HookSnapshot, WorkbenchManifest } from "./context.ts"
 import {
 	buildMockCardMeta,
 	buildResCardAssetUrl,
+	cardWidth,
+	fitCoverBox,
 	formatMockDate,
 	pickCardSlotUi,
-	readSourceMetaDims,
+	readCoverDims,
 	resolveCoverKind,
 } from "./res-card-preview.ts"
 
@@ -96,27 +98,86 @@ describe("buildResCardAssetUrl", () => {
 	})
 })
 
-describe("readSourceMetaDims", () => {
-	it("reads finite positive width/height from sourceMeta", () => {
-		expect(readSourceMetaDims(snapshot({ width: 800, height: 600 }))).toEqual({
-			width: 800,
+describe("readCoverDims", () => {
+	it("reads the probed cover dimensions", () => {
+		expect(
+			readCoverDims({
+				...snapshot(undefined),
+				coverWidth: 1600,
+				coverHeight: 900,
+			}),
+		).toEqual({ width: 1600, height: 900 })
+	})
+
+	it("returns undefined without a snapshot, a probe box or a usable pair", () => {
+		expect(readCoverDims(null)).toBeUndefined()
+		expect(readCoverDims(snapshot(undefined))).toBeUndefined()
+		expect(
+			readCoverDims({
+				...snapshot(undefined),
+				coverWidth: 0,
+				coverHeight: 900,
+			}),
+		).toBeUndefined()
+		expect(
+			readCoverDims({
+				...snapshot(undefined),
+				coverWidth: Number.NaN,
+				coverHeight: 900,
+			}),
+		).toBeUndefined()
+		expect(
+			readCoverDims({ ...snapshot(undefined), coverHeight: 900 }),
+		).toBeUndefined()
+	})
+
+	it("ignores plugin-declared sourceMeta dimensions", () => {
+		// The card reads the cover probe, not the resource's own media
+		// metadata — a video resource's source dims must not size a cover.
+		expect(
+			readCoverDims(snapshot({ width: 1920, height: 1080 })),
+		).toBeUndefined()
+	})
+})
+
+describe("fitCoverBox", () => {
+	it("scales a large cover down into the card window, aspect kept", () => {
+		expect(fitCoverBox({ width: 1600, height: 900 })).toEqual({
+			width: 400,
+			height: 225,
+		})
+		expect(fitCoverBox({ width: 600, height: 1200 })).toEqual({
+			width: 300,
 			height: 600,
 		})
 	})
 
-	it("returns undefined without a snapshot or dims", () => {
-		expect(readSourceMetaDims(null)).toBeUndefined()
-		expect(readSourceMetaDims(snapshot(undefined))).toBeUndefined()
+	it("never scales a small cover up", () => {
+		expect(fitCoverBox({ width: 320, height: 200 })).toEqual({
+			width: 320,
+			height: 200,
+		})
 	})
 
-	it("drops missing, non-finite or non-positive dims", () => {
-		expect(
-			readSourceMetaDims(snapshot({ width: 0, height: 600 })),
-		).toBeUndefined()
-		expect(
-			readSourceMetaDims(snapshot({ width: Number.NaN, height: 600 })),
-		).toBeUndefined()
-		expect(readSourceMetaDims(snapshot({ height: 600 }))).toBeUndefined()
+	it("falls back to the compact square without a probe box", () => {
+		expect(fitCoverBox(undefined)).toEqual({ width: 200, height: 200 })
+	})
+
+	it("keeps an ultra-wide cover inside the height clamp", () => {
+		expect(fitCoverBox({ width: 4000, height: 1000 })).toEqual({
+			width: 400,
+			height: 100,
+		})
+	})
+})
+
+describe("cardWidth", () => {
+	it("follows the cover box", () => {
+		expect(cardWidth({ width: 320, height: 200 })).toBe(320)
+	})
+
+	it("floors a tiny cover at the compact width", () => {
+		expect(cardWidth({ width: 80, height: 80 })).toBe(200)
 	})
 })
 

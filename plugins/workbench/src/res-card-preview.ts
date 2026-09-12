@@ -11,7 +11,7 @@ const COVER_KINDS = new Set(["image", "video", "audio"])
 
 /**
  * Pick the manifest card block kind for a resource. The dev pipeline
- * sniffs the cover source and reports `snapshot.coverKind` (the host app
+ * probes the cover source and reports `snapshot.coverKind` (the host app
  * selects `ui.card.<kind>` from the comparable `coverMeta.kind`); a
  * plugin may also declare it in `sourceMeta.coverKind`. Everything else
  * falls back to `"default"`.
@@ -57,28 +57,67 @@ export function buildResCardAssetUrl(resId: string, path: string): string {
 }
 
 /**
- * Read the cover's pixel dimensions from the plugin's `sourceMeta`
- * (`width`/`height`) so the preview card can fit the cover to its own
- * aspect ratio instead of cropping it into a square. Returns `undefined`
- * when either dimension is missing or non-finite.
+ * The app resource card's cover window, mirroring `ResCard`'s
+ * `MIN/MAX_WIDTH/HEIGHT_PX` bounds. A preview sized by these rules
+ * reserves exactly the box the grid would give this resource.
  */
-export function readSourceMetaDims(
+const CARD_MIN_WIDTH_PX = 200
+const CARD_MAX_WIDTH_PX = 400
+const CARD_MAX_HEIGHT_PX = 600
+
+export type CoverBox = {
+	readonly width: number
+	readonly height: number
+}
+
+/**
+ * The cover dimensions the dev server probed for this resource — the
+ * workbench's stand-in for the app's `coverMeta`, which the server fills
+ * by probing the same cover source. Returns `undefined` when the probe
+ * had no box (a non-media cover, a failed probe, artwork-less audio) —
+ * exactly when the app's card falls back to its compact square floor.
+ */
+export function readCoverDims(
 	snapshot: HookSnapshot | null,
-): { readonly width: number; readonly height: number } | undefined {
-	const sourceMeta = snapshot?.sourceMeta
-	if (typeof sourceMeta !== "object" || sourceMeta === null) return undefined
-	const { width, height } = sourceMeta as { width?: unknown; height?: unknown }
-	if (
-		typeof width === "number" &&
-		Number.isFinite(width) &&
-		width > 0 &&
-		typeof height === "number" &&
-		Number.isFinite(height) &&
-		height > 0
-	) {
-		return { width, height }
+): CoverBox | undefined {
+	const { coverWidth: width, coverHeight: height } = snapshot ?? {}
+	if (!isPixelCount(width) || !isPixelCount(height)) return undefined
+	return { width, height }
+}
+
+/**
+ * The box the card reserves for its cover: the probed dimensions scaled
+ * down to fit the card's window, aspect kept, never scaled up — the
+ * app's `buildIntrinsicStyle` intrinsic branch. Without a probe box the
+ * tile falls back to the compact square the app uses for a cover it
+ * cannot size.
+ */
+export function fitCoverBox(dims: CoverBox | undefined): CoverBox {
+	if (dims === undefined) {
+		return { width: CARD_MIN_WIDTH_PX, height: CARD_MIN_WIDTH_PX }
 	}
-	return undefined
+	const scale = Math.min(
+		CARD_MAX_WIDTH_PX / dims.width,
+		CARD_MAX_HEIGHT_PX / dims.height,
+		1,
+	)
+	return {
+		width: Math.round(dims.width * scale),
+		height: Math.round(dims.height * scale),
+	}
+}
+
+/**
+ * The card's own width: the cover box, floored at the compact width so a
+ * tiny cover still has room for the name — the app clamps the card to
+ * `MIN_WIDTH_PX`/`MAX_WIDTH_PX` around the tile it centers.
+ */
+export function cardWidth(box: CoverBox): number {
+	return Math.max(CARD_MIN_WIDTH_PX, box.width)
+}
+
+function isPixelCount(value: number | undefined): value is number {
+	return typeof value === "number" && Number.isFinite(value) && value > 0
 }
 
 /**

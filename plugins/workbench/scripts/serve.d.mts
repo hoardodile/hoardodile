@@ -36,6 +36,9 @@ export type WorkbenchHookSnapshot = {
 	readonly searchMeta: unknown
 	readonly coverLocal: string | undefined
 	readonly coverKind?: string
+	/** Cover dimensions from the same probe pass, in pixels. */
+	readonly coverWidth?: number
+	readonly coverHeight?: number
 	readonly files: readonly unknown[] | undefined
 	readonly fileStats: {
 		readonly count?: number

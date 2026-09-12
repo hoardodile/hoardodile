@@ -20,7 +20,6 @@ import {
 	VideoFrame,
 	VideoFramePlayHorizontal,
 } from "@hoardodile/ui/icons/registry"
-import { cn } from "@hoardodile/ui/lib/utils"
 import {
 	formatBytes,
 	type IconRef,
@@ -39,9 +38,11 @@ import { resolveSolarIconComponent } from "../icons/solar-icon"
 import {
 	buildMockCardMeta,
 	buildResCardAssetUrl,
+	cardWidth,
+	fitCoverBox,
 	formatMockDate,
 	pickCardSlotUi,
-	readSourceMetaDims,
+	readCoverDims,
 	resolveCoverKind,
 } from "../res-card-preview.ts"
 
@@ -83,6 +84,11 @@ const SYNC_ICONS: Readonly<
  * so the preview reads like a real in-app resource. Hover shows the
  * cover wash + magnifier affordance and the name underline, but nothing
  * is clickable — it is a visual preview.
+ *
+ * The card and its cover box are sized the way the app sizes them: both
+ * follow the cover probe (`coverMeta` in the app, the dev server's cover
+ * probe here) through the card's own min/max window, so the preview
+ * shows the same geometry the grid would rather than a full-width tile.
  */
 export function ResCardPreview(props: {
 	readonly manifest: WorkbenchManifest
@@ -96,7 +102,7 @@ export function ResCardPreview(props: {
 
 	const coverKind = resolveCoverKind(snapshot)
 	const slotUi = pickCardSlotUi(manifest, coverKind)
-	const coverDims = readSourceMetaDims(snapshot)
+	const coverBox = fitCoverBox(readCoverDims(snapshot))
 
 	const scope = {
 		file: snapshot?.fileStats,
@@ -118,18 +124,11 @@ export function ResCardPreview(props: {
 	const coverSrc = `/api/resources/${encodeURIComponent(resource.id)}/cover`
 
 	return (
-		<div className="flex flex-col gap-1">
+		<div className="flex flex-col gap-1" style={{ width: cardWidth(coverBox) }}>
 			{/* ── Thumbnail: cover + badges + hover (fake, no click) ── */}
 			<div
-				className={cn(
-					"group relative m-auto w-full max-w-sm overflow-hidden rounded-xl bg-muted",
-					coverDims === undefined && "aspect-square",
-				)}
-				style={
-					coverDims
-						? { aspectRatio: `${coverDims.width} / ${coverDims.height}` }
-						: undefined
-				}
+				className="group relative m-auto overflow-hidden rounded-xl bg-muted"
+				style={{ width: coverBox.width, height: coverBox.height }}
 			>
 				{!coverFailed ? (
 					<img

@@ -53,6 +53,9 @@ export type HookSnapshot = {
 	readonly searchMeta: unknown
 	readonly coverLocal?: string
 	readonly coverKind?: string
+	/** Cover dimensions from the dev server's cover probe (the app's `coverMeta`). */
+	readonly coverWidth?: number
+	readonly coverHeight?: number
 	readonly files: readonly unknown[] | undefined
 	readonly fileStats: FileStats
 	readonly imageHashes?: readonly unknown[]
