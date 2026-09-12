@@ -21,11 +21,11 @@ import {
 	switchVersionMutation,
 	updateVersionMetaMutation,
 } from "./api"
-import { DataHistoryTimeline } from "./DataHistoryTimeline"
+import { DataHistoryCards, DataHistoryCardsSkeleton } from "./DataHistoryCards"
 import { EditArchiveDialog } from "./EditArchiveDialog"
 
 /**
- * Archives browser — one row per version with the actions on it (edit
+ * Archives browser — one card per version with the actions on it (edit
  * for the current, switch for the rest). The route owns the page-level
  * action bar and the section wrapper; this component is pure content.
  */
@@ -54,7 +54,7 @@ export function DataHistoryPanel() {
 			<QueryStateView
 				result={listQuery}
 				isEmpty={(data) => data.archives.length === 0}
-				loading={<p>{t("common.loading")}</p>}
+				loading={<DataHistoryCardsSkeleton />}
 				empty={
 					<Empty className="py-8">
 						<EmptyHeader>
@@ -69,7 +69,7 @@ export function DataHistoryPanel() {
 				}
 			>
 				{(data) => (
-					<DataHistoryTimeline
+					<DataHistoryCards
 						data={data}
 						onSwitchVersion={switchConfirm.open}
 						onEdit={setEditing}

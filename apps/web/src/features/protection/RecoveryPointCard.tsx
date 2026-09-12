@@ -191,7 +191,9 @@ export function RecoveryPointCard({
 					{point.note}
 				</p>
 			)}
-			<div className="flex min-w-0 items-center gap-1.5">
+			{/* Wraps like the archive card: a long locale label ("Wiederherstellen")
+			    drops to its own line instead of being clipped by the card. */}
+			<div className="flex min-w-0 flex-wrap items-center gap-1.5">
 				<MetaChip tone="muted">{t(`protection.${point.kind}`)}</MetaChip>
 				{point.pinned && (
 					<MetaChip tone="bordered">{t("protection.pinned")}</MetaChip>

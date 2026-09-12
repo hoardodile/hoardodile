@@ -69,14 +69,27 @@ function setup(readOnly = false) {
 	return { select, metadata, create, user: userEvent.setup() }
 }
 
-it("lists archives newest first and switches only after confirmation", async () => {
+it("lists archives newest first as cards and switches only after confirmation", async () => {
 	const { user, select } = setup()
 	const current = await screen.findByTestId("archive-2")
 	const past = screen.getByTestId("archive-1")
+	// Both versions render as cards of the one grid, newest first.
+	const grid = screen.getByTestId("data-history-cards")
+	expect(grid).toContainElement(current)
+	expect(grid).toContainElement(past)
 	expect(
 		current.compareDocumentPosition(past) & Node.DOCUMENT_POSITION_FOLLOWING,
 	).toBeTruthy()
-	// The description rides directly under the past version's title line.
+	// The writable current version wears the "Latest" top banner (the
+	// marketplace's installed strip), the historical one the read-only chip,
+	// and the note sits under the title.
+	expect(screen.getByTestId("archive-latest-banner-2")).toHaveTextContent(
+		"Latest",
+	)
+	expect(
+		screen.queryByTestId("archive-latest-banner-1"),
+	).not.toBeInTheDocument()
+	expect(past).toHaveTextContent("Read-only")
 	expect(past).toHaveTextContent("Frozen note")
 	await user.click(screen.getByTestId("switch-1"))
 	expect(select).not.toHaveBeenCalled()
@@ -112,7 +125,9 @@ it("edits only the current version while others offer the switch button", async 
 
 it("disables creation and edits while viewing history, offering switch back", async () => {
 	const { user, metadata } = setup(true)
-	await screen.findByTestId("archive-1")
+	const viewed = await screen.findByTestId("archive-1")
+	// The viewed archive is marked on its card.
+	expect(viewed).toHaveTextContent("Viewing")
 	expect(screen.getByTestId("create-archive")).toBeDisabled()
 	// The viewed (active) version offers nothing; the current version is
 	// the way back and carries no edit button in read-only mode.
