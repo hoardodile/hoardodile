@@ -45,7 +45,7 @@ catalog:
   react-use: ^17.6.1
   '@solar-icons/react': ^2.1.0
   release-it: ^21.0.2
-  sharp: ^0.35.3
+  sharp: ^0.35.4
   semver: ^7.8.5
   tailwindcss: ^4.3.3
   tar: ^7.4.3
@@ -80,3 +80,42 @@ minimumReleaseAgeExclude:
 overrides:
   fast-uri@^3: 3.1.7
   fast-uri@^4: 4.1.4
+  # Same reason as fast-uri above: the release workflow's
+  # `pnpm audit --prod --audit-level high` gate fails on advisories whose
+  # patched releases the parent ranges already allow, so pin the first fixed
+  # version of each. Both were caught by the gate for v0.2.1.
+  sharp@^0.35: 0.35.4
+  js-yaml@^4: 4.3.2
+  # Compatibility, not security: BlockNote 0.51.4 declares `@tiptap/*`
+  # ^3.13.0, but tiptap 3.30+ stops rendering the inline content nodes
+  # BlockNote builds — the `data-inline-content-type` attribute disappears
+  # (tag/char chips render as empty spans) and the editor mount throws in
+  # prosemirror-view's decoration walk. BlockNote is pinned to 0.51.4 for the
+  # document diff (scripts/guard-protected-deps.mjs), so the family below is
+  # frozen at the last release that works with it. Drop these together with
+  # the `audit.ignore` entries at the bottom when that pin moves.
+  '@tiptap/core': 3.29.2
+  '@tiptap/pm': 3.29.2
+  '@tiptap/react': 3.29.2
+  '@tiptap/extensions': 3.29.2
+  '@tiptap/extension-bold': 3.29.2
+  '@tiptap/extension-bubble-menu': 3.29.2
+  '@tiptap/extension-code': 3.29.2
+  '@tiptap/extension-floating-menu': 3.29.2
+  '@tiptap/extension-horizontal-rule': 3.29.2
+  '@tiptap/extension-italic': 3.29.2
+  '@tiptap/extension-paragraph': 3.29.2
+  '@tiptap/extension-strike': 3.29.2
+  '@tiptap/extension-text': 3.29.2
+  '@tiptap/extension-underline': 3.29.2
+
+# The one advisory that cannot be fixed yet is tolerated deliberately here:
+# `@tiptap/core` <3.30.5 carries GHSA-j95f-988m-3j2f, but 3.30+ broke
+# BlockNote 0.51.4's inline content rendering (see the tiptap overrides
+# above), and that pin cannot move without the document-diff machinery.
+# Neither advisory is reachable from the packages this repo publishes.
+audit:
+  level: high
+  ignore:
+    - GHSA-j95f-988m-3j2f
+    - GHSA-cp6q-959q-f8rh

@@ -71,7 +71,7 @@
 		"drizzle-orm": "^0.45.2",
 		"es-toolkit": "catalog:",
 		"eventemitter3": "^5.0.4",
-		"fastify": "5.11.3",
+		"fastify": "^5.12.4",
 		"fastify-plugin": "^6.0.0",
 		"get-port": "^7.2.0",
 		"iron-session": "^8.0.4",
