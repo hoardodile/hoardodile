@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.2.1](https://github.com/hoardodile/hoardodile/compare/v0.2.0...v0.2.1) (2026-09-12)
+
+### Features
+
+* cap automatic backups to a daily interval with 3-point retention ([c1667c2](https://github.com/hoardodile/hoardodile/commit/c1667c23c0bc72724a3fb2098f28e0adc3b16186))
+* **web:** render archive versions and backup points as plugin-style cards ([f83cc84](https://github.com/hoardodile/hoardodile/commit/f83cc843b8c2ffc6e54d62713ef728ddf226cc54))
+* **web:** show skeleton screens while the backups page loads ([d1b8f1d](https://github.com/hoardodile/hoardodile/commit/d1b8f1dbb1121b827b665a33731534046e981a26))
+* **workbench:** size the res-card preview from the cover probe ([1cefbdf](https://github.com/hoardodile/hoardodile/commit/1cefbdf1adcf2f8a79cb4c39d37195fcb71aad17))
+
+### Bug Fixes
+
+* **backup:** stop a locked job record from blocking its own operation ([cfd126c](https://github.com/hoardodile/hoardodile/commit/cfd126cc18e04c6833d350224886b1a3ea4b4d95))
+* **web:** hide empty Available backups section when no recovery points ([ae689ea](https://github.com/hoardodile/hoardodile/commit/ae689eab51ed49f9d85abc4877dcc93a83a650b2))
+* **web:** keep the pairing invitation dialog from crashing without an address ([ef52b83](https://github.com/hoardodile/hoardodile/commit/ef52b8378e33129d76ea9dbe8d53caac01734745))
+* **web:** lay res-card corner badges out across the card, not the cover ([e9edb3c](https://github.com/hoardodile/hoardodile/commit/e9edb3caf2a4b920f11a3eed93d74a630bdee753))
+
 ## [0.2.0](https://github.com/hoardodile/hoardodile/compare/v0.1.15...v0.2.0) (2026-09-08)
 
 ### ⚠ BREAKING CHANGES
