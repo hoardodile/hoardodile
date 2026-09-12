@@ -190,9 +190,14 @@ export const ResCard = memo(function ResCard(props: ResCardProps) {
 			}
 			data-resource-card-id={id}
 		>
-			{/* The selection ring hugs the thumb only. */}
+			{/* The selection ring hugs the thumb only. `w-full` makes this row
+			    span the card's width (a shrink-to-fit card keeps resolving it
+			    to the cover width), so the `ui.card` corner badges have the
+			    card's full width to lay out in while their top/bottom edges
+			    stay on the cover row — the thumb inside re-centers itself with
+			    `m-auto`. */}
 			<div
-				className={`group relative m-auto rounded-xl ${selection?.selected ? "ring-2 ring-primary" : ""}`}
+				className={`group relative w-full rounded-xl ${selection?.selected ? "ring-2 ring-primary" : ""}`}
 			>
 				<ResMediaThumb
 					resource={resource}

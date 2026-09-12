@@ -87,6 +87,12 @@ export type ResMediaThumbProps = {
  * Used as the visual core of {@link ResCard} on the resources page,
  * and standalone as an inline embed inside documents where the full card
  * (action menu, edit dialogs, preview button, etc.) would be visual noise.
+ *
+ * The tile stretches to the width the caller gives it and re-centers the
+ * cover inside that width, while the `ui.card` corner badge layers sit in a
+ * separate, full-size layer over the tile. `ResCard` hands the tile its cover
+ * row, so the badges span the card while their vertical edges stay on the
+ * cover row — a narrow cover can never squeeze them.
  */
 export function ResMediaThumb(props: ResMediaThumbProps) {
 	const {
@@ -170,11 +176,55 @@ export function ResMediaThumb(props: ResMediaThumbProps) {
 		? renderSlotBadges(cardUi.slotUi.br, scope, ctx)
 		: []
 
-	return (
-		<div
-			className={`group relative overflow-hidden rounded-xl ${className ?? ""}`}
-			style={style}
-		>
+	/**
+	 * One corner slot's overlay: the badges stack in the layer's flow, the
+	 * layer's own offsets put the stack in its corner. The layer resolves
+	 * against the tile (see {@link ResMediaThumb}), so the corners are the
+	 * tile's — the card's cover row — not the cover's. `trailing` renders as
+	 * the stack's last (lowest) item, so a plugin's own badge always sits at
+	 * the very bottom of the bottom-left corner, alongside the plugin-configured
+	 * `bl` badges rather than in its own row.
+	 */
+	function badgeLayer(
+		containerClassName: string,
+		badges: readonly ReactNode[],
+		trailing?: ReactNode,
+	): ReactNode {
+		const hasTrailing = trailing !== undefined && trailing !== null
+		if (badges.length === 0 && !hasTrailing) return null
+		return (
+			<div className={containerClassName}>
+				{badges.map((badge, i) => (
+					<SlotBadge key={i}>
+						{Array.isArray(badge)
+							? Children.toArray(badge).map((node, j) => (
+									<Fragment key={j}>{node}</Fragment>
+								))
+							: badge}
+					</SlotBadge>
+				))}
+				{trailing}
+			</div>
+		)
+	}
+
+	const tlLayer = badgeLayer(
+		"absolute top-2 left-2 z-10 flex flex-col items-start gap-1",
+		tlBadges,
+	)
+	const blLayer = badgeLayer(
+		"absolute bottom-2 left-2 z-10 flex flex-col items-start gap-1",
+		blBadges,
+		blTrailingBadge,
+	)
+	const brLayer = badgeLayer(
+		"absolute right-2 bottom-2 z-10 flex flex-col items-end gap-1",
+		brBadges,
+	)
+
+	/** The cover and its own overlays and controls, without the cover box. */
+	const coverContent = (
+		<>
 			{audioTileOnly ? (
 				<ResAudioPlayer resId={id} resName={name} variant="tile" />
 			) : (
@@ -198,47 +248,6 @@ export function ResMediaThumb(props: ResMediaThumbProps) {
 			) : null}
 			{hasAudioArtwork ? (
 				<ResAudioPlayer resId={id} resName={name} variant="overlay" />
-			) : null}
-			{/* ── Slot overlays ──────────────────────────────────────── */}
-			{tlBadges.length > 0 ? (
-				<div className="absolute top-2 left-2 z-10 flex flex-col items-start gap-1">
-					{tlBadges.map((badge, i) => (
-						<SlotBadge key={i}>
-							{Array.isArray(badge)
-								? Children.toArray(badge).map((node, j) => (
-										<Fragment key={j}>{node}</Fragment>
-									))
-								: badge}
-						</SlotBadge>
-					))}
-				</div>
-			) : null}
-			{blBadges.length > 0 || blTrailingBadge !== undefined ? (
-				<div className="absolute bottom-2 left-2 z-10 flex flex-col items-start gap-1">
-					{blBadges.map((badge, i) => (
-						<SlotBadge key={i}>
-							{Array.isArray(badge)
-								? Children.toArray(badge).map((node, j) => (
-										<Fragment key={j}>{node}</Fragment>
-									))
-								: badge}
-						</SlotBadge>
-					))}
-					{blTrailingBadge}
-				</div>
-			) : null}
-			{brBadges.length > 0 ? (
-				<div className="absolute right-2 bottom-2 z-10 flex flex-col items-end gap-1">
-					{brBadges.map((badge, i) => (
-						<SlotBadge key={i}>
-							{Array.isArray(badge)
-								? Children.toArray(badge).map((node, j) => (
-										<Fragment key={j}>{node}</Fragment>
-									))
-								: badge}
-						</SlotBadge>
-					))}
-				</div>
 			) : null}
 			{/* Hover wash for still covers. Video and the audio tile carry
 			    their own playback surfaces, so the wash would only muddy
@@ -268,6 +277,39 @@ export function ResMediaThumb(props: ResMediaThumbProps) {
 					<MagniferZoomIn className="size-4" />
 				</button>
 			) : null}
+		</>
+	)
+
+	/** The corner badge layers, laid out across the tile. */
+	const slotLayers = (
+		<>
+			{tlLayer}
+			{blLayer}
+			{brLayer}
+		</>
+	)
+
+	// The tile stretches to whatever width the caller gives it and the cover
+	// re-centers itself inside that width (`m-auto`), so the cover keeps the
+	// geometry it had before the badge layers moved out of it. The badges live
+	// in a separate, full-size layer over the same tile: `ResCard` hands the
+	// tile its cover row, so they span the card while their top/bottom edges
+	// stay on the cover row — a narrow cover can never squeeze them.
+	return (
+		<div
+			className="relative max-w-full"
+			data-testid={`resource-thumb-tile-${id}`}
+		>
+			<div
+				className={`group relative m-auto overflow-hidden rounded-xl ${className ?? ""}`}
+				style={style}
+			>
+				{coverContent}
+			</div>
+			{/* The three slot layers position themselves in their own corners. */}
+			<div className="pointer-events-none absolute inset-0 z-10" aria-hidden>
+				{slotLayers}
+			</div>
 		</div>
 	)
 }

@@ -196,10 +196,13 @@ describe("ResMediaThumb", () => {
 		expect(screen.queryByTestId("resource-thumb-res-1")).toBeNull()
 		// The tile owns a deliberate rectangle: audio has no intrinsic
 		// geometry to scale, so the height is fixed and the width follows
-		// the card.
-		const box = tile.parentElement
-		expect(box?.style.height).toBe(`${AUDIO_TILE_HEIGHT}px`)
-		expect(box?.style.width).toBe("100%")
+		// the card. The cover box carries those bounds.
+		const coverBox = tile.parentElement
+		expect(coverBox?.style.height).toBe(`${AUDIO_TILE_HEIGHT}px`)
+		expect(coverBox?.style.width).toBe("100%")
+		expect(coverBox?.parentElement).toBe(
+			screen.getByTestId("resource-thumb-tile-res-1"),
+		)
 	})
 
 	it("keeps the thumbnail and overlays the player when audio has artwork", () => {
