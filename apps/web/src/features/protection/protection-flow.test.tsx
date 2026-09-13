@@ -544,6 +544,117 @@ it("hides the available-backups section when there are no recovery points", asyn
 	).not.toBeInTheDocument()
 })
 
+it("keeps recent operations behind a button that opens the job dialog", async () => {
+	mount(<RecoveryPanel />, {
+		"protection.points": () => [point],
+		"protection.jobs": () => [
+			{
+				id: "job-1",
+				kind: "backup",
+				state: "succeeded",
+				createdAt: 1700000000000,
+			},
+		],
+	})
+	const user = userEvent.setup()
+	const open = await screen.findByTestId("recent-operations-open")
+	// The page shows one control, not a standing list. The control says just
+	// "View": the row's own title already names what it opens.
+	expect(open).toHaveTextContent("View")
+	expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+	expect(screen.queryByTestId("protection-job-job-1")).not.toBeInTheDocument()
+
+	await user.click(open)
+	const dialog = await screen.findByTestId("recent-operations-dialog")
+	expect(within(dialog).getByTestId("protection-job-job-1")).toBeInTheDocument()
+	expect(dialog).toHaveTextContent("Recent operations")
+})
+
+it("pages the operations dialog at five jobs per page", async () => {
+	mount(<RecoveryPanel />, {
+		"protection.points": () => [point],
+		"protection.jobs": () =>
+			Array.from({ length: 12 }, (_, index) => ({
+				id: `job-${index}`,
+				kind: "backup",
+				state: "succeeded",
+				createdAt: 1700000000000 - index * 1000,
+			})),
+	})
+	const user = userEvent.setup()
+	await user.click(await screen.findByTestId("recent-operations-open"))
+	const dialog = await screen.findByTestId("recent-operations-dialog")
+	await waitFor(() =>
+		expect(within(dialog).getAllByTestId(/^protection-job-/)).toHaveLength(5),
+	)
+	expect(within(dialog).getByText("12 operations")).toBeInTheDocument()
+	expect(within(dialog).getAllByTestId("pagination-bar")).toHaveLength(1)
+
+	await user.click(within(dialog).getByRole("button", { name: "2" }))
+	await waitFor(() =>
+		expect(
+			within(dialog).getByTestId("protection-job-job-5"),
+		).toBeInTheDocument(),
+	)
+	expect(
+		within(dialog).queryByTestId("protection-job-job-0"),
+	).not.toBeInTheDocument()
+})
+
+it("pages the recovery points at 20 per page with a pager above and below", async () => {
+	const many = Array.from({ length: 41 }, (_, index) => ({
+		...point,
+		id: `point-${index}`,
+		name: `Backup ${index}`,
+		createdAt: 1700000000000 + index * 1000,
+	}))
+	mount(<RecoveryPanel />, {
+		"protection.points": () => many,
+	})
+	const user = userEvent.setup()
+
+	const cards = () => screen.getAllByTestId(/^recovery-point-point-/)
+	// Newest first: the first page holds the 20 latest points.
+	await screen.findByTestId("available-backups-section")
+	await waitFor(() => expect(cards()).toHaveLength(20))
+	expect(screen.getByTestId("recovery-point-point-40")).toBeInTheDocument()
+	expect(screen.queryByTestId("recovery-point-point-0")).not.toBeInTheDocument()
+	expect(screen.getAllByTestId("pagination-bar")).toHaveLength(2)
+	// The count label travels with both pagers.
+	expect(screen.getAllByText("41 backups")).toHaveLength(2)
+
+	// The bottom pager advances: page 2 holds the next 20, page 3 the last one.
+	const bars = screen.getAllByTestId("pagination-bar")
+	await user.click(
+		within(bars[1] as HTMLElement).getByRole("button", { name: "Next" }),
+	)
+	await waitFor(() => expect(cards()).toHaveLength(20))
+	expect(screen.getByTestId("recovery-point-point-1")).toBeInTheDocument()
+	expect(
+		screen.queryByTestId("recovery-point-point-40"),
+	).not.toBeInTheDocument()
+	expect(screen.getAllByTestId("pagination-current")[0]).toHaveTextContent("2")
+
+	await user.click(
+		within(screen.getAllByTestId("pagination-bar")[1] as HTMLElement).getByRole(
+			"button",
+			{ name: "Next" },
+		),
+	)
+	await waitFor(() => expect(cards()).toHaveLength(1))
+	expect(screen.getByTestId("recovery-point-point-0")).toBeInTheDocument()
+	expect(screen.queryByTestId("recovery-point-point-1")).not.toBeInTheDocument()
+})
+
+it("shows no pager while every recovery point fits on one page", async () => {
+	mount(<RecoveryPanel />, {
+		"protection.points": () => [point],
+	})
+	await screen.findByTestId("available-backups-section")
+	await screen.findByTestId(`recovery-point-${pointId}`)
+	expect(screen.queryByTestId("pagination-bar")).not.toBeInTheDocument()
+})
+
 it("shows a skeleton while the protection status loads", async () => {
 	mount(<RecoveryPanel />, {
 		"protection.status": () => new Promise<never>(() => {}),

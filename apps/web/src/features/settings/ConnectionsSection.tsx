@@ -1,3 +1,6 @@
+import { AppDialog } from "@hoardodile/ui/components/app-dialog"
+import { Button } from "@hoardodile/ui/components/button"
+import { Icon } from "@hoardodile/ui/components/icon"
 import { PaginationBar } from "@hoardodile/ui/components/pagination-bar"
 import { UsersGroupRounded } from "@hoardodile/ui/icons/registry"
 import { pageCountOf } from "@hoardodile/ui/lib/pagination"
@@ -8,7 +11,7 @@ import { useDateFormatter } from "@/features/settings/datePrefs"
 import { trpcQueryOptions } from "@/trpc/factory"
 import { SettingsSection } from "./SettingsSection"
 
-/** Rows per page in the recent-connections list. */
+/** Rows per page in the recent-connections dialog. */
 const CONNECTIONS_PAGE_SIZE = 5
 
 const connectionsKeys = {
@@ -29,8 +32,41 @@ function connectionsQueryOptions() {
  * Recent sign-in events — device, IP, origin and time. Works identically
  * in the browser and the desktop shell; the data lives only in the local
  * database and rows older than 90 days are pruned by the server.
+ *
+ * The settings row stays one control (title + description on the left, a
+ * button on the right); the list itself opens in a dialog, five rows to a
+ * page with a single pager at the bottom — the same shape as the licenses
+ * row above it.
  */
 export function ConnectionsSection() {
+	const { t } = useTranslation()
+	const [open, setOpen] = useState(false)
+
+	return (
+		<SettingsSection
+			icon={UsersGroupRounded}
+			title={t("me.connections.title")}
+			description={t("me.connections.description")}
+			layout="compact"
+			data-testid="me-connections-section"
+		>
+			<Button
+				variant="secondary"
+				onClick={() => setOpen(true)}
+				data-testid="me-connections-button"
+			>
+				<Icon icon={UsersGroupRounded} />
+				{t("common.view")}
+			</Button>
+			<ConnectionsDialog open={open} onOpenChange={setOpen} />
+		</SettingsSection>
+	)
+}
+
+function ConnectionsDialog(props: {
+	readonly open: boolean
+	readonly onOpenChange: (open: boolean) => void
+}) {
 	const { t } = useTranslation()
 	const formatter = useDateFormatter()
 	const query = useQuery(connectionsQueryOptions())
@@ -48,22 +84,20 @@ export function ConnectionsSection() {
 	)
 
 	return (
-		<SettingsSection
-			icon={UsersGroupRounded}
+		<AppDialog
+			open={props.open}
+			onOpenChange={props.onOpenChange}
 			title={t("me.connections.title")}
 			description={t("me.connections.description")}
-			layout="stack"
-			data-testid="me-connections-section"
+			size="lg"
+			contentTestId="me-connections-dialog"
 		>
-			{connections.length === 0 ? (
-				<p
-					className="text-xs leading-5 text-muted-foreground"
-					data-testid="me-connections-empty"
-				>
+			{total === 0 ? (
+				<p className="text-xs leading-5 text-muted-foreground">
 					{t("me.connections.empty")}
 				</p>
 			) : (
-				<>
+				<div className="flex flex-col">
 					<ul className="flex flex-col">
 						{visible.map((conn) => (
 							<li
@@ -90,7 +124,7 @@ export function ConnectionsSection() {
 						))}
 					</ul>
 					{pageCount > 1 && (
-						<div className="mt-6">
+						<div className="mt-4">
 							<PaginationBar
 								page={currentPage}
 								pageCount={pageCount}
@@ -99,8 +133,8 @@ export function ConnectionsSection() {
 							/>
 						</div>
 					)}
-				</>
+				</div>
 			)}
-		</SettingsSection>
+		</AppDialog>
 	)
 }

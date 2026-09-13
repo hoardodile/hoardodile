@@ -1,10 +1,13 @@
 import { Button } from "@hoardodile/ui/components/button"
 import { DropdownSelect } from "@hoardodile/ui/components/dropdown-select"
+import { Icon } from "@hoardodile/ui/components/icon"
+import { PaginationBar } from "@hoardodile/ui/components/pagination-bar"
 import { Skeleton } from "@hoardodile/ui/components/skeleton"
 import { Switch } from "@hoardodile/ui/components/switch"
 import { Database, History, Server } from "@hoardodile/ui/icons/registry"
+import { pageCountOf } from "@hoardodile/ui/lib/pagination"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { type ReactNode, useState } from "react"
+import { type ReactNode, useEffect, useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { SettingsSection } from "@/features/settings/SettingsSection"
 import { SectionDivider } from "@/features/settings/SettingsSheet"
@@ -20,10 +23,13 @@ import {
 import { BackupManagement } from "./BackupManagement"
 import { BackupSetupWizard } from "./BackupSetupWizard"
 import { BackupStatusHeader } from "./BackupStatusHeader"
-import { ProtectionJobs } from "./ProtectionJobs"
+import { RecentOperationsDialog } from "./RecentOperationsDialog"
 import { RecoveryPointCard } from "./RecoveryPointCard"
 import { ReplicationPanel } from "./ReplicationPanel"
 import { useSyncHealth } from "./syncHealth"
+
+/** Recovery points per page (client-side: the query returns them all). */
+const RECOVERY_POINTS_PAGE_SIZE = 20
 
 /** Automatic backup interval presets, in hours — daily unless changed. */
 const FREQUENCIES = [
@@ -81,6 +87,11 @@ export function RecoveryPanel({
 	const [selectedRepository, setSelectedRepository] = useState("local")
 	const [savedKey, setSavedKey] = useState<string>()
 	const [wizardMode, setWizardMode] = useState<"new" | "existing" | null>(null)
+	// The job list moved behind its own dialog (the page keeps one control
+	// instead of a standing section), and the recovery-point list pages
+	// client-side: the query returns every point for the repository.
+	const [operationsOpen, setOperationsOpen] = useState(false)
+	const [pointsPage, setPointsPage] = useState(1)
 	const repositories = status.data?.repositories ?? []
 	const repository =
 		repositories.find((repo) => repo.id === selectedRepository) ??
@@ -104,6 +115,25 @@ export function RecoveryPanel({
 	// points query is still pending or has failed.
 	const showAvailableBackups =
 		!points.isSuccess || (points.data?.length ?? 0) > 0
+	// Newest first, then sliced: deleting the last card of the last page (or
+	// switching repository) must never strand the pager on an empty page.
+	const sortedPoints = useMemo(
+		() => points.data?.toSorted((a, b) => b.createdAt - a.createdAt) ?? [],
+		[points.data],
+	)
+	const pointsPageCount = pageCountOf(
+		sortedPoints.length,
+		RECOVERY_POINTS_PAGE_SIZE,
+	)
+	const currentPointsPage = Math.min(pointsPage, pointsPageCount)
+	const visiblePoints = sortedPoints.slice(
+		(currentPointsPage - 1) * RECOVERY_POINTS_PAGE_SIZE,
+		currentPointsPage * RECOVERY_POINTS_PAGE_SIZE,
+	)
+	useEffect(() => {
+		// A different repository starts on its own first page.
+		setPointsPage(1)
+	}, [repositoryId])
 	const jobs = useQuery(protectionJobsOptions())
 	const hasJobs = Boolean(jobs.data && jobs.data.length > 0)
 	const maintenance = Boolean(
@@ -337,22 +367,43 @@ export function RecoveryPanel({
 							<Skeleton className="h-10 w-full" />
 						</div>
 					)}
-					{points.data && points.data.length > 0 && (
+					{/* Pagers bracket the list, like the resources search page: the
+					    top one sits where the list starts, the bottom one where it
+					    ends. Both disappear for a single page. */}
+					{pointsPageCount > 1 && sortedPoints.length > 0 ? (
+						<PaginationBar
+							page={currentPointsPage}
+							pageCount={pointsPageCount}
+							onChangePage={setPointsPage}
+							totalLabel={t("protectionUx.pointsCount", {
+								count: sortedPoints.length,
+							})}
+						/>
+					) : null}
+					{visiblePoints.length > 0 && (
 						<div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-							{points.data
-								.toSorted((a, b) => b.createdAt - a.createdAt)
-								.map((point) => (
-									<RecoveryPointCard
-										key={repositoryId + point.id}
-										point={point}
-										repositoryId={repositoryId}
-										source={sourceName}
-										canDelete={(points.data?.length ?? 0) > 1}
-										restoreOnly={restoreOnly || maintenance}
-									/>
-								))}
+							{visiblePoints.map((point) => (
+								<RecoveryPointCard
+									key={point.id}
+									point={point}
+									repositoryId={repositoryId}
+									source={sourceName}
+									canDelete={sortedPoints.length > 1}
+									restoreOnly={restoreOnly || maintenance}
+								/>
+							))}
 						</div>
 					)}
+					{pointsPageCount > 1 && sortedPoints.length > 0 ? (
+						<PaginationBar
+							page={currentPointsPage}
+							pageCount={pointsPageCount}
+							onChangePage={setPointsPage}
+							totalLabel={t("protectionUx.pointsCount", {
+								count: sortedPoints.length,
+							})}
+						/>
+					) : null}
 					{!restoreOnly && !maintenance && (
 						<BackupManagement key={repositoryId} repositoryId={repositoryId} />
 					)}
@@ -363,15 +414,25 @@ export function RecoveryPanel({
 	if (!restoreOnly && hasJobs) {
 		if (sections.length > 0) sections.push(<SectionDivider key="divider-2" />)
 		sections.push(
+			// Left column: title + help. Right column: the one control — the
+			// job list itself lives in the dialog (compact layout), matching
+			// the licenses/connections rows.
 			<SettingsSection
 				key="recent-operations"
 				icon={History}
 				title={t("protection.jobs")}
 				description={t("protectionUx.jobsHelp")}
-				layout="stack"
+				layout="compact"
 				data-testid="recent-operations-section"
 			>
-				<ProtectionJobs showHeading={false} />
+				<Button
+					variant="secondary"
+					onClick={() => setOperationsOpen(true)}
+					data-testid="recent-operations-open"
+				>
+					<Icon icon={History} />
+					{t("common.view")}
+				</Button>
 			</SettingsSection>,
 		)
 	}
@@ -393,6 +454,10 @@ export function RecoveryPanel({
 				}}
 				onStarted={() => setWizardMode(null)}
 				mode={wizardMode ?? "new"}
+			/>
+			<RecentOperationsDialog
+				open={operationsOpen}
+				onOpenChange={setOperationsOpen}
 			/>
 		</div>
 	)

@@ -180,6 +180,9 @@ function DialogBody({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="dialog-body"
       className={cn(
+        // Horizontal inset only: the dialog's bottom edge belongs to whoever
+        // sits last. A footer supplies it (`pb-5`); a footerless dialog gets
+        // it from `AppDialog`, which knows whether a footer will render.
         "flex-1 overflow-y-auto overscroll-contain px-5",
         className
       )}

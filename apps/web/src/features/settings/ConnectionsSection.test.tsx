@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { render, screen, waitFor } from "@testing-library/react"
+import { render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { beforeAll, describe, expect, it } from "vitest"
 import {
@@ -72,27 +72,43 @@ function renderSection() {
 	)
 }
 
+/** The list lives in a dialog now: the row itself is one button. */
+async function openDialog() {
+	const user = userEvent.setup()
+	await user.click(await screen.findByTestId("me-connections-button"))
+	return screen.findByTestId("me-connections-dialog")
+}
+
 describe("ConnectionsSection", () => {
 	it("renders the sign-in list with device, IP and loopback marker", async () => {
 		renderSection()
+		// The settings row keeps one control; the list is behind it. The
+		// control is a plain "View" now — the row's own title says what it
+		// opens, so the button does not repeat it.
+		expect(
+			await screen.findByRole("button", { name: "View" }),
+		).toBeInTheDocument()
+		const dialog = await openDialog()
 		await waitFor(() => {
-			expect(screen.getByText("Chrome on Windows")).toBeInTheDocument()
+			expect(within(dialog).getByText("Chrome on Windows")).toBeInTheDocument()
 		})
-		expect(screen.getByText("192.168.1.50")).toBeInTheDocument()
-		expect(screen.getByText("Electron desktop")).toBeInTheDocument()
-		expect(screen.getByText("this device")).toBeInTheDocument()
+		expect(within(dialog).getByText("192.168.1.50")).toBeInTheDocument()
+		expect(within(dialog).getByText("Electron desktop")).toBeInTheDocument()
+		expect(within(dialog).getByText("this device")).toBeInTheDocument()
 		// The sign-in time is a full date (same-year dates drop the year),
 		// not a relative "x minutes ago".
 		expect(
-			screen.getByText(
+			within(dialog).getByText(
 				formatDateTime(FIRST_RECORDED_AT, DEFAULT_DATE_FORMAT, "local"),
 			),
 		).toBeInTheDocument()
 		// Fewer than six entries: no pager, one flat list.
-		expect(screen.queryByTestId("pagination-bar")).toBeNull()
+		expect(
+			within(dialog).queryByTestId("pagination-bar"),
+		).not.toBeInTheDocument()
 	})
 
-	it("paginates above and below when there are more than five sign-ins", async () => {
+	it("paginates the dialog at five sign-ins with a single pager", async () => {
 		setTrpcClient(
 			createMockTrpcClient({
 				"access.connections": () => ({
@@ -108,22 +124,23 @@ describe("ConnectionsSection", () => {
 		)
 		const user = userEvent.setup()
 		renderSection()
+		const dialog = await openDialog()
 		await waitFor(() => {
-			expect(screen.getByText("Device 1")).toBeInTheDocument()
+			expect(within(dialog).getByText("Device 1")).toBeInTheDocument()
 		})
 
-		// One pager below the list with the count label.
-		expect(screen.getAllByTestId("pagination-bar")).toHaveLength(1)
-		expect(screen.getByText("7 sign-ins")).toBeInTheDocument()
+		// One pager at the bottom with the count label.
+		expect(within(dialog).getAllByTestId("pagination-bar")).toHaveLength(1)
+		expect(within(dialog).getByText("7 sign-ins")).toBeInTheDocument()
 		// First page: five rows, the rest hidden.
-		expect(screen.getByText("Device 5")).toBeInTheDocument()
-		expect(screen.queryByText("Device 6")).toBeNull()
+		expect(within(dialog).getByText("Device 5")).toBeInTheDocument()
+		expect(within(dialog).queryByText("Device 6")).toBeNull()
 
-		await user.click(screen.getByRole("button", { name: "2" }))
+		await user.click(within(dialog).getByRole("button", { name: "2" }))
 
-		expect(screen.getByText("Device 6")).toBeInTheDocument()
-		expect(screen.getByText("Device 7")).toBeInTheDocument()
-		expect(screen.queryByText("Device 1")).toBeNull()
+		expect(within(dialog).getByText("Device 6")).toBeInTheDocument()
+		expect(within(dialog).getByText("Device 7")).toBeInTheDocument()
+		expect(within(dialog).queryByText("Device 1")).toBeNull()
 	})
 
 	it("renders an empty state without sign-ins", async () => {
@@ -133,8 +150,7 @@ describe("ConnectionsSection", () => {
 			}),
 		)
 		renderSection()
-		await waitFor(() => {
-			expect(screen.getByText("No sign-ins yet.")).toBeInTheDocument()
-		})
+		const dialog = await openDialog()
+		expect(within(dialog).getByText("No sign-ins yet.")).toBeInTheDocument()
 	})
 })

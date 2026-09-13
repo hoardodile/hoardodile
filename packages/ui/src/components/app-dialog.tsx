@@ -150,6 +150,14 @@ export function AppDialog(props: AppDialogProps) {
 		() => ({ setFooterActions, setLeadingActions }),
 		[setFooterActions, setLeadingActions],
 	)
+	// The footer bar owns the card's bottom padding; a dialog without one
+	// (an informational panel, a details view) must carry it on the body
+	// instead, or the content ends flush against the card's border. Panel
+	// contributions count, so the padding follows the bar's actual presence.
+	const hasFooter =
+		(footer !== undefined && footer !== null) ||
+		footerActions !== null ||
+		leadingActions !== null
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
@@ -193,14 +201,12 @@ export function AppDialog(props: AppDialogProps) {
 				    type, and a wrapper in between would re-wrap the body in a
 				    second DialogBody. The footer-actions context therefore
 				    wraps only the body's own content. */}
-				<DialogBody className={flush ? "p-0" : undefined}>
+				<DialogBody className={flush ? "p-0" : !hasFooter ? "pb-5" : undefined}>
 					<DialogFooterActionsContext.Provider value={actionsValue}>
 						{children}
 					</DialogFooterActionsContext.Provider>
 				</DialogBody>
-				{(footer !== undefined && footer !== null) ||
-				footerActions !== null ||
-				leadingActions !== null ? (
+				{hasFooter ? (
 					// Footer-action placement (DESIGN.md — dialog anatomy):
 					// with a primary action the bar splits — the leading
 					// function key sits at the left edge while cancel + the

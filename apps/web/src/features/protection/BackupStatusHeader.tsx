@@ -153,8 +153,11 @@ export function BackupStatusHeader({
 			</Button>
 		),
 		receiver: null,
+		// Not paired yet is a normal state, not something to fix: the copy is
+		// informational and its control stays quiet (a ghost button), unlike
+		// the actionable states above. See `backupHealth.syncUnconfigured*`.
 		syncUnconfigured: (
-			<Button onClick={scrollToSync}>
+			<Button variant="ghost" onClick={scrollToSync}>
 				{t("backupHealth.syncUnconfiguredAction")}
 			</Button>
 		),

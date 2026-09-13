@@ -14,11 +14,19 @@ export function ProtectionJobs({
 	activeOnly = false,
 	restoreOnly = false,
 	showHeading = true,
+	visibleRange,
 }: {
 	activeOnly?: boolean
 	restoreOnly?: boolean
 	/** Set when a wrapping SettingsSection already supplies the title. */
 	showHeading?: boolean
+	/**
+	 * `[start, end)` slice of the visible jobs, applied after the
+	 * active-only filter and the 15-row cap. The recent-operations dialog
+	 * hands it one page at a time; callers that render a short inline list
+	 * leave it out and keep the built-in cap.
+	 */
+	visibleRange?: readonly [number, number]
 } = {}) {
 	const { t } = useTranslation()
 	const tr = loose(t)
@@ -39,25 +47,29 @@ export function ProtectionJobs({
 		...trpcMutation("protection", "retry"),
 		onSuccess: invalidate,
 	})
-	const visibleJobs = query.data
-		?.filter((job) => {
-			if (restoreOnly && job.kind !== "restore") return false
-			if (
-				activeOnly &&
-				["failed", "interrupted"].includes(job.state) &&
-				query.data?.some(
-					(next) => next.kind === job.kind && next.createdAt > job.createdAt,
-				)
+	const filteredJobs = query.data?.filter((job) => {
+		if (restoreOnly && job.kind !== "restore") return false
+		if (
+			activeOnly &&
+			["failed", "interrupted"].includes(job.state) &&
+			query.data?.some(
+				(next) => next.kind === job.kind && next.createdAt > job.createdAt,
 			)
-				return false
-			return (
-				!activeOnly ||
-				["queued", "running", "cancelling", "failed", "interrupted"].includes(
-					job.state,
-				)
+		)
+			return false
+		return (
+			!activeOnly ||
+			["queued", "running", "cancelling", "failed", "interrupted"].includes(
+				job.state,
 			)
-		})
-		.slice(0, activeOnly ? 3 : 15)
+		)
+	})
+	// A caller-owned window (the recent-operations dialog) wins over the
+	// built-in cap, so paging can reach every job.
+	const visibleJobs =
+		visibleRange !== undefined
+			? filteredJobs?.slice(visibleRange[0], visibleRange[1])
+			: filteredJobs?.slice(0, activeOnly ? 3 : 15)
 	if (activeOnly && !visibleJobs?.length) return null
 	return (
 		<section className="space-y-3" aria-label={t("protection.jobs")}>

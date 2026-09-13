@@ -296,8 +296,9 @@ async function waitLogin(page) {
 async function setupFirstBackup(page) {
 	await page.getByTestId("setup-new-backup").click()
 	await page.getByTestId("initialize-backups").click()
+	// The job list lives behind the Recent operations dialog.
 	const retry = page
-		.getByTestId("recent-operations-section")
+		.getByTestId("recent-operations-dialog")
 		.getByRole("button", { name: "Retry" })
 	for (let attempt = 0; attempt < 5; attempt++) {
 		const visible = await page
@@ -307,7 +308,12 @@ async function setupFirstBackup(page) {
 			.then(() => true)
 			.catch(() => false)
 		if (visible) return
-		if (await retry.count()) await retry.first().click()
+		const open = page.getByTestId("recent-operations-open")
+		if ((await open.count()) > 0) {
+			await open.click()
+			if (await retry.count()) await retry.first().click()
+			await page.keyboard.press("Escape")
+		}
 	}
 	throw new Error("the first backup never produced a recovery point card")
 }
@@ -556,14 +562,10 @@ async function main() {
 			.catch(() => false)
 	let restored = await waitRestored(90_000)
 	if (!restored) {
-		const retry = page
-			.getByTestId("recent-operations-section")
-			.getByRole("button", { name: "Retry" })
-		if (await retry.count()) {
-			log("restore stalled (see the server log) — retrying from the screen")
-			await retry.first().click()
-			restored = await waitRestored(150_000)
-		}
+		// Maintenance hides the operations panel, so the job list is not
+		// reachable from this screen; report and keep waiting instead.
+		log("restore stalled (see the server log) — waiting for the retry window")
+		restored = await waitRestored(150_000)
 	}
 	if (!restored) {
 		log(

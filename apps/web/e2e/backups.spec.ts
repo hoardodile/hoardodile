@@ -37,10 +37,11 @@ test("complete backup, confirmed restore, and merged backup-sync page", async ({
 	// The first backup can fail to start once — an intermittent cold-start or
 	// managed-process lease race in the restic engine. Retry a failed backup
 	// so this spec checks the backups UI flow rather than restic's first-run
-	// reliability.
+	// reliability: the job list lives behind the Recent operations dialog now,
+	// five rows to a page, so a failed first job is always on page one.
 	const point = page.locator('[data-testid^="recovery-point-"]').first()
 	const retry = page
-		.getByTestId("recent-operations-section")
+		.getByTestId("recent-operations-dialog")
 		.getByRole("button", { name: "Retry" })
 	for (let attempt = 0; attempt < 3; attempt++) {
 		const visible = await point
@@ -49,7 +50,12 @@ test("complete backup, confirmed restore, and merged backup-sync page", async ({
 			.then(() => true)
 			.catch(() => false)
 		if (visible) break
-		if (await retry.count()) await retry.first().click()
+		const open = page.getByTestId("recent-operations-open")
+		if ((await open.count()) > 0) {
+			await open.click()
+			if (await retry.count()) await retry.first().click()
+			await page.keyboard.press("Escape")
+		}
 	}
 	await expect(point).toBeVisible({ timeout: 30_000 })
 	// Available backups only exists once a repository is configured.

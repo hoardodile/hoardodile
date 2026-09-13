@@ -150,7 +150,7 @@ it("stays quiet for a receive-role device already holding a source backup", asyn
 	expect(screen.queryByTestId("complete-backup-now")).not.toBeInTheDocument()
 })
 
-it("prompts to add a synced device when backups are current but no device exists", async () => {
+it("reports a not-yet-paired device as information, not as something to fix", async () => {
 	mount({
 		"replication.status": () => ({
 			role: "unconfigured",
@@ -163,9 +163,16 @@ it("prompts to add a synced device when backups are current but no device exists
 	expect(
 		await screen.findByTestId("backup-health-syncUnconfigured"),
 	).toBeInTheDocument()
+	// Neutral statement of fact, not a call to action.
 	expect(
-		screen.getByRole("button", { name: "Set up backup sync" }),
+		screen.getByText("Only this device holds a copy so far."),
 	).toBeInTheDocument()
+	expect(screen.queryByText(/Add a synced device/)).not.toBeInTheDocument()
+	// The control is a quiet one (ghost, not the primary fill the actionable
+	// states use), so the state does not read as an alert…
+	const action = screen.getByRole("button", { name: "Set up backup sync" })
+	expect(action).toHaveClass("hover:bg-muted")
+	expect(action).not.toHaveClass("bg-primary")
 })
 
 it("offers to open backups when a synced device is overdue", async () => {
