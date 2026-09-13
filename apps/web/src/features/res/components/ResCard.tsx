@@ -19,6 +19,7 @@ import { ResCardActions } from "./ResCardActions"
 import { ResMediaThumb } from "./ResMediaThumb"
 import { ResPreviewDialog } from "./ResPreviewDialog"
 import { SourceChip } from "./SourceChip"
+import { ThumbPreviewButton } from "./ThumbPreviewButton"
 
 function PluginCornerBadge({ pluginId }: { readonly pluginId: string }) {
 	const { i18n } = useTranslation()
@@ -215,12 +216,6 @@ export const ResCard = memo(function ResCard(props: ResCardProps) {
 					}
 					minWidth={!fitWidthMode && !fitHeightMode ? MIN_WIDTH_PX : undefined}
 					onVideoZoomRequest={isSelectMode ? undefined : openPreview}
-					onPreviewRequest={
-						isPreviewable && !isSelectMode ? openPreview : undefined
-					}
-					// Touch screens have no hover: keep the preview button
-					// always visible below `md`, like the actions trigger.
-					previewButtonTouchVisible
 					blTrailingBadge={
 						contentPluginId != null ? (
 							<PluginCornerBadge pluginId={contentPluginId} />
@@ -228,6 +223,21 @@ export const ResCard = memo(function ResCard(props: ResCardProps) {
 					}
 					className="m-auto"
 				/>
+
+				{/* Preview control — anchored to the card's cover row, the
+				    same box the corner badges and the actions trigger use,
+				    so it sits on the card's edge rather than the fitted
+				    cover's. A narrow cover therefore never insets it.
+				    Touch screens have no hover: keep it always visible
+				    below `md`, like the actions trigger. */}
+				{isPreviewable && !isSelectMode ? (
+					<ThumbPreviewButton
+						name={name}
+						resourceId={id}
+						onPreviewRequest={openPreview}
+						touchVisible
+					/>
+				) : null}
 
 				{!isSelectMode ? (
 					onOpenCard !== undefined ? (

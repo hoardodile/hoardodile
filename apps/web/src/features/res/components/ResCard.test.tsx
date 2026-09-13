@@ -337,6 +337,49 @@ describe("ResCard corner badges", () => {
 	})
 })
 
+describe("ResCard preview control", () => {
+	it("anchors the preview button to the cover row, not the fitted cover box", async () => {
+		// A cover far narrower than the card's 200px floor: the button must
+		// follow the card's edge (like the corner badges and the actions
+		// trigger), never the centered cover's.
+		const resource = stubResCard("res-1", "Some resource", {
+			coverMeta: { kind: "image", width: 100, height: 400 },
+			sourceMeta: { width: 100, height: 400 },
+		})
+		await renderCard(<ResCard resource={resource} />)
+
+		const card = cardContainer("res-1")
+		const tile = screen.getByTestId("resource-thumb-tile-res-1")
+		const row = tile.parentElement
+		const button = screen.getByTestId("resource-preview-res-1")
+
+		expect(row?.parentElement).toBe(card)
+		expect(button.parentElement).toBe(row)
+		// Outside the thumb: the fitted cover box re-centers inside the row,
+		// so anchoring to it would inset the button on a narrow cover.
+		expect(tile.contains(button)).toBe(false)
+		expect(button.className.split(/\s+/)).toEqual(
+			expect.arrayContaining(["absolute", "right-2", "top-2", "z-10"]),
+		)
+	})
+
+	it("shows the preview button on touch screens like the actions trigger", async () => {
+		const resource = stubResCard("res-1", "Some resource", {
+			coverMeta: { kind: "image", width: 800, height: 600 },
+		})
+		await renderCard(<ResCard resource={resource} />)
+
+		const button = screen.getByTestId("resource-preview-res-1")
+		expect(button).toHaveClass("opacity-100", "pointer-events-auto")
+		// Desktop (`md:` and up) keeps the hover-reveal behavior.
+		expect(button).toHaveClass(
+			"md:opacity-0",
+			"md:pointer-events-none",
+			"md:group-hover:opacity-100",
+		)
+	})
+})
+
 describe("ResCard source chip", () => {
 	it("renders a clickable chip when source fields are set", async () => {
 		const resource = stubResCard("res-1", "Some resource", {

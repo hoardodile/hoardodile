@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next"
 import { resDetailCardQueryOptions } from "@/features/res/api"
 import { ResMediaThumb } from "@/features/res/components/ResMediaThumb"
 import { ResPreviewDialog } from "@/features/res/components/ResPreviewDialog"
+import { ThumbPreviewButton } from "@/features/res/components/ThumbPreviewButton"
 
 const MIN_HEIGHT_PX = 120
 const MAX_HEIGHT_PX = 600
@@ -39,11 +40,16 @@ export const resCardInlineSpec = createReactInlineContentSpec(
 	},
 )
 
-type ResCardViewProps = {
+export type ResCardViewProps = {
 	readonly resId: string
 }
 
-function ResCardView(props: ResCardViewProps) {
+/**
+ * The embed's layout: thumb + hover preview control + its dialog. Exported
+ * (the spec's own `render` needs a BlockNote editor context) so the layout
+ * contract — the button sits beside the tile, hover-only — stays testable.
+ */
+export function ResCardView(props: ResCardViewProps) {
 	const { t } = useTranslation()
 	const enabled = props.resId.length > 0
 	const query = useQuery({
@@ -81,18 +87,28 @@ function ResCardView(props: ResCardViewProps) {
 			title={card.name}
 			className="inline-block align-middle mx-0.5"
 		>
-			<ResMediaThumb
-				resource={card}
-				maxWidth={MAX_WIDTH_PX}
-				maxHeight={MAX_HEIGHT_PX}
-				minHeight={MIN_HEIGHT_PX}
-				// No-cover embeds fall back to a square tile; without the
-				// width floor the box would collapse (the thumb's only
-				// in-flow content is the cover image).
-				minWidth={MIN_HEIGHT_PX}
-				onPreviewRequest={() => setPreviewOpen(true)}
-				onVideoZoomRequest={() => setPreviewOpen(true)}
-			/>
+			{/* The preview control hugs the inline embed's own tile (this
+			    box), not the card cover row: a document node has no card
+			    layout around it. Hover-only — the embed relies on
+			    ProseMirror receiving its mousedown. */}
+			<span className="relative inline-block align-middle">
+				<ResMediaThumb
+					resource={card}
+					maxWidth={MAX_WIDTH_PX}
+					maxHeight={MAX_HEIGHT_PX}
+					minHeight={MIN_HEIGHT_PX}
+					// No-cover embeds fall back to a square tile; without the
+					// width floor the box would collapse (the thumb's only
+					// in-flow content is the cover image).
+					minWidth={MIN_HEIGHT_PX}
+					onVideoZoomRequest={() => setPreviewOpen(true)}
+				/>
+				<ThumbPreviewButton
+					name={card.name}
+					resourceId={card.id}
+					onPreviewRequest={() => setPreviewOpen(true)}
+				/>
+			</span>
 			<ResPreviewDialog
 				open={previewOpen}
 				onOpenChange={setPreviewOpen}

@@ -2,7 +2,7 @@ import type { CoverKindUiMap } from "@hoardodile/sdk-types"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { fireEvent, render, screen } from "@testing-library/react"
 import type { ComponentProps } from "react"
-import { describe, expect, it, vi } from "vitest"
+import { describe, expect, it } from "vitest"
 import { pluginKeys } from "@/features/plugin/pluginApi"
 import { AUDIO_TILE_HEIGHT } from "./ResAudioPlayer"
 import type { ResMediaThumbResource } from "./ResMediaThumb"
@@ -273,36 +273,8 @@ describe("ResMediaThumb", () => {
 		)
 	})
 
-	it("keeps the preview button hover-only by default", () => {
-		renderThumb(undefined, { onPreviewRequest: () => {} })
-		const button = screen.getByRole("button", { name: "Test Resource" })
-		expect(button).toHaveClass("opacity-0", "pointer-events-none")
-		expect(button).not.toHaveClass("opacity-100")
-	})
-
-	it("shows the preview button on touch screens when opted in", () => {
-		renderThumb(undefined, {
-			onPreviewRequest: () => {},
-			previewButtonTouchVisible: true,
-		})
-		const button = screen.getByRole("button", { name: "Test Resource" })
-		expect(button).toHaveClass("opacity-100", "pointer-events-auto")
-		// Desktop (`md:` and up) keeps the hover-reveal behavior.
-		expect(button).toHaveClass(
-			"md:opacity-0",
-			"md:pointer-events-none",
-			"md:group-hover:opacity-100",
-			"md:group-hover:pointer-events-auto",
-		)
-	})
-
-	it("fires onPreviewRequest from the touch-visible button", () => {
-		const onPreviewRequest = vi.fn()
-		renderThumb(undefined, {
-			onPreviewRequest,
-			previewButtonTouchVisible: true,
-		})
-		fireEvent.click(screen.getByRole("button", { name: "Test Resource" }))
-		expect(onPreviewRequest).toHaveBeenCalledTimes(1)
+	it("renders no preview control — callers place ThumbPreviewButton themselves", () => {
+		renderThumb()
+		expect(screen.queryByRole("button")).toBeNull()
 	})
 })

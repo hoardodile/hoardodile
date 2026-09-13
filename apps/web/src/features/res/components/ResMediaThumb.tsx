@@ -1,7 +1,6 @@
 import { pickCoverKind, populatedCover } from "@hoardodile/schemas"
 import type { CoverKindUi, PluginManifest } from "@hoardodile/sdk-types"
 import { buildResThumbCacheKey } from "@hoardodile/shared"
-import { MagnifierZoomIn as MagniferZoomIn } from "@hoardodile/ui/icons/registry"
 import { useQuery } from "@tanstack/react-query"
 import {
 	Children,
@@ -61,18 +60,6 @@ export type ResMediaThumbProps = {
 	 */
 	readonly onVideoZoomRequest?: () => void
 	/**
-	 * When provided, renders a magnifying-glass button that calls this
-	 * callback. Also shows a white hover overlay for non-video resources.
-	 */
-	readonly onPreviewRequest?: () => void
-	/**
-	 * Show the magnifying-glass preview button on touch screens (below
-	 * `md`) without a hover, mirroring the card actions trigger. Defaults
-	 * to false: the button stays hover-only, which inline BlockNote
-	 * embeds rely on so ProseMirror mousedowns are never intercepted.
-	 */
-	readonly previewButtonTouchVisible?: boolean
-	/**
 	 * Optional badge rendered as the last (lowest) item of the bottom-left
 	 * slot-badge stack, e.g. the plugin-type badge on cards. Plugin-configured
 	 * `bl` badges always stack above it.
@@ -86,13 +73,16 @@ export type ResMediaThumbProps = {
  *
  * Used as the visual core of {@link ResCard} on the resources page,
  * and standalone as an inline embed inside documents where the full card
- * (action menu, edit dialogs, preview button, etc.) would be visual noise.
+ * (action menu, edit dialogs, preview control, etc.) would be visual noise.
  *
  * The tile stretches to the width the caller gives it and re-centers the
  * cover inside that width, while the `ui.card` corner badge layers sit in a
  * separate, full-size layer over the tile. `ResCard` hands the tile its cover
  * row, so the badges span the card while their vertical edges stay on the
- * cover row — a narrow cover can never squeeze them.
+ * cover row — a narrow cover can never squeeze them. The hover preview
+ * control is deliberately not rendered here: callers place
+ * {@link ThumbPreviewButton} themselves, in whichever box it should anchor
+ * to (the card's cover row, or a box hugging the inline embed).
  */
 export function ResMediaThumb(props: ResMediaThumbProps) {
 	const {
@@ -104,8 +94,6 @@ export function ResMediaThumb(props: ResMediaThumbProps) {
 		minHeight,
 		minWidth,
 		onVideoZoomRequest,
-		onPreviewRequest,
-		previewButtonTouchVisible,
 		blTrailingBadge,
 	} = props
 	const resource = useResDisplayResource(resourceProp)
@@ -254,28 +242,6 @@ export function ResMediaThumb(props: ResMediaThumbProps) {
 			    their controls. */}
 			{!isVideo && !audioTileOnly ? (
 				<div className="pointer-events-none absolute inset-0 rounded-xl bg-white opacity-0 transition-opacity duration-300 group-hover:opacity-20" />
-			) : null}
-			{/* Magnifying-glass preview button at top-right. Revealed on
-			    hover so it never occludes the underlying thumb area —
-			    important when the thumb is an inline BlockNote node, where
-			    a permanently-mounted button intercepts the mousedown that
-			    ProseMirror needs to start a NodeSelection. While hidden it
-			    ignores pointer events. Card grids opt into
-			    `previewButtonTouchVisible` so touch screens (no hover)
-			    see the button like the actions trigger. */}
-			{onPreviewRequest !== undefined ? (
-				<button
-					type="button"
-					aria-label={name}
-					onClick={onPreviewRequest}
-					className={
-						previewButtonTouchVisible
-							? "pointer-events-auto absolute right-2 top-2 z-10 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full bg-foreground/90 text-background opacity-100 shadow-card transition-opacity duration-200 focus-visible:opacity-100 md:pointer-events-none md:opacity-0 md:group-hover:pointer-events-auto md:group-hover:opacity-100 hover:bg-foreground hover:text-background"
-							: "pointer-events-none absolute right-2 top-2 z-10 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full bg-foreground/90 text-background opacity-0 shadow-card transition-opacity duration-200 group-hover:pointer-events-auto group-hover:opacity-100 hover:bg-foreground hover:text-background"
-					}
-				>
-					<MagniferZoomIn className="size-4" />
-				</button>
 			) : null}
 		</>
 	)
