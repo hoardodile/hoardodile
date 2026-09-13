@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.2.2](https://github.com/hoardodile/hoardodile/compare/v0.2.1...v0.2.2) (2026-09-13)
+
+### Features
+
+* **marketplace:** refresh plugin release info on demand instead of caching a minute ([8883b04](https://github.com/hoardodile/hoardodile/commit/8883b04d3f2a9327c29945640b01e50c1db44979))
+* **web:** page the recent-operations and connections dialogs ([45461ef](https://github.com/hoardodile/hoardodile/commit/45461ef39836f748b7275f9f2e2e456bcfb1206b))
+
+### Bug Fixes
+
+* **desktop:** stop the SPA shell replaying itself after a resource update ([e81b4da](https://github.com/hoardodile/hoardodile/commit/e81b4da2451dced50fcd78506495451888c9c964))
+* **web:** anchor the res-card preview control to the card, not the cover ([c3d710c](https://github.com/hoardodile/hoardodile/commit/c3d710c9cefaf96240c1fd60feb63a9496d02b43))
+
 ## [0.2.1](https://github.com/hoardodile/hoardodile/compare/v0.2.0...v0.2.1) (2026-09-12)
 
 ### Features
