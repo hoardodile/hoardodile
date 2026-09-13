@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { render, screen, waitFor } from "@testing-library/react"
+import { render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeAll, expect, it, vi } from "vitest"
 import { i18n } from "@/i18n"
@@ -69,6 +69,15 @@ function setup(readOnly = false) {
 	return { select, metadata, create, user: userEvent.setup() }
 }
 
+/** The card's More menu lives bottom-right; open it and return its content. */
+async function openArchiveMenu(
+	user: ReturnType<typeof userEvent.setup>,
+	version: number,
+): Promise<HTMLElement> {
+	await user.click(screen.getByTestId(`archive-menu-${version}`))
+	return (await screen.findByRole("menu")) as HTMLElement
+}
+
 it("lists archives newest first as cards and switches only after confirmation", async () => {
 	const { user, select } = setup()
 	const current = await screen.findByTestId("archive-2")
@@ -91,20 +100,71 @@ it("lists archives newest first as cards and switches only after confirmation", 
 	).not.toBeInTheDocument()
 	expect(past).toHaveTextContent("Read-only")
 	expect(past).toHaveTextContent("Frozen note")
+	// A card without a note keeps the description line and says so.
+	expect(current).toHaveTextContent("No description")
+
+	await openArchiveMenu(user, 1)
 	await user.click(screen.getByTestId("switch-1"))
 	expect(select).not.toHaveBeenCalled()
 	await user.click(screen.getByTestId("switch-confirm-submit"))
 	await waitFor(() => expect(select).toHaveBeenCalledWith({ version: 1 }))
 })
 
-it("edits only the current version while others offer the switch button", async () => {
+it("puts the name on the title line and version · date · size on the meta line", async () => {
+	setup()
+	const current = await screen.findByTestId("archive-2")
+	// Named archive: the name is the title, the version leads the second line.
+	expect(within(current).getByText("Current")).toBeInTheDocument()
+	expect(current).toHaveTextContent("v2 ·")
+	// The tile carries the section's full name as its hover hint / accessible
+	// name (the page title is the nav's short "Archives").
+	expect(within(current).getByTitle("Historical archives")).toBeInTheDocument()
+})
+
+it("falls back to an italic 'No name' title when the archive has no name", async () => {
+	const versions: RouterOutputs["version"]["list"] = [
+		{
+			version: 3,
+			current: true,
+			active: false,
+			dbSize: 100,
+		},
+	]
+	setTrpcClient({
+		version: {
+			list: { query: async () => versions },
+			switchTo: { mutate: vi.fn(async () => ({})) },
+			updateMeta: { mutate: vi.fn(async () => undefined) },
+		},
+		protection: { archive: { mutate: vi.fn(async () => ({})) } },
+	} as unknown as TRPCClient)
+	const client = new QueryClient({
+		defaultOptions: { queries: { retry: false } },
+	})
+	clients.push(client)
+	render(
+		<QueryClientProvider client={client}>
+			<DataHistoryPanel />
+		</QueryClientProvider>,
+	)
+	const card = await screen.findByTestId("archive-3")
+	expect(within(card).getByText("No name")).toBeInTheDocument()
+	expect(card).toHaveTextContent("v3 ·")
+})
+
+it("edits only the current version while others offer the switch action", async () => {
 	const { user, metadata } = setup()
 	await screen.findByTestId("archive-2")
+	await openArchiveMenu(user, 2)
 	expect(screen.getByTestId("edit-2")).toBeInTheDocument()
 	expect(screen.queryByTestId("edit-1")).not.toBeInTheDocument()
+	await user.keyboard("{Escape}")
+	await openArchiveMenu(user, 1)
 	expect(screen.getByTestId("switch-1")).toBeInTheDocument()
 	expect(screen.queryByTestId("switch-2")).not.toBeInTheDocument()
+	await user.keyboard("{Escape}")
 
+	await openArchiveMenu(user, 2)
 	await user.click(screen.getByTestId("edit-2"))
 	const dialog = screen.getByTestId("archive-meta-dialog")
 	const name = screen.getByLabelText("Name")
@@ -123,17 +183,21 @@ it("edits only the current version while others offer the switch button", async 
 	expect(dialog).not.toBeInTheDocument()
 })
 
-it("disables creation and edits while viewing history, offering switch back", async () => {
+it("marks the viewed archive with the eye and disables edits while viewing history", async () => {
 	const { user, metadata } = setup(true)
 	const viewed = await screen.findByTestId("archive-1")
-	// The viewed archive is marked on its card.
-	expect(viewed).toHaveTextContent("Viewing")
+	// The viewed archive carries the eye mark, not a text chip.
+	expect(screen.getByTestId("archive-active-1")).toHaveAttribute(
+		"aria-label",
+		"Viewing",
+	)
+	expect(viewed).not.toHaveTextContent("Viewing")
 	expect(screen.getByTestId("create-archive")).toBeDisabled()
 	// The viewed (active) version offers nothing; the current version is
-	// the way back and carries no edit button in read-only mode.
-	expect(screen.queryByTestId("switch-1")).not.toBeInTheDocument()
+	// the way back and carries no edit action in read-only mode.
+	expect(screen.queryByTestId("archive-menu-1")).not.toBeInTheDocument()
+	await openArchiveMenu(user, 2)
 	expect(screen.queryByTestId("edit-2")).not.toBeInTheDocument()
-	expect(screen.getByTestId("switch-2")).toBeInTheDocument()
 	await user.click(screen.getByTestId("switch-2"))
 	await user.click(screen.getByTestId("switch-confirm-submit"))
 	await waitFor(() => expect(metadata).not.toHaveBeenCalled())
@@ -142,6 +206,7 @@ it("disables creation and edits while viewing history, offering switch back", as
 it("saves a current archive name and note through the edit dialog", async () => {
 	const { user, metadata } = setup()
 	await screen.findByTestId("archive-2")
+	await openArchiveMenu(user, 2)
 	await user.click(screen.getByTestId("edit-2"))
 	await user.type(screen.getByLabelText("Name"), " Milestone")
 	await user.type(screen.getByLabelText("Note"), "Before release")

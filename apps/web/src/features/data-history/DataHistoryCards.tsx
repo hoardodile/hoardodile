@@ -1,9 +1,22 @@
 import { Button } from "@hoardodile/ui/components/button"
+import { CardShell } from "@hoardodile/ui/components/card-shell"
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from "@hoardodile/ui/components/dropdown-menu"
 import { Icon } from "@hoardodile/ui/components/icon"
 import { IconTile } from "@hoardodile/ui/components/icon-tile"
 import { MetaChip } from "@hoardodile/ui/components/meta-chip"
 import { Skeleton } from "@hoardodile/ui/components/skeleton"
-import { Archive, Pen, UndoRightRound } from "@hoardodile/ui/icons/registry"
+import {
+	Archive,
+	Eye,
+	MenuDots,
+	Pen,
+	UndoRightRound,
+} from "@hoardodile/ui/icons/registry"
 import { useTranslation } from "react-i18next"
 import { useDateFormatter } from "@/features/settings/datePrefs"
 import { formatBytes } from "@/lib/formatBytes"
@@ -19,8 +32,8 @@ export type DataHistoryCardsProps = {
 /** Shared with the skeleton so the placeholder can never drift from the
     grid; the column ladder is the marketplace/plugins one. */
 const GRID_CLASS = "grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3"
+/** The skeleton's card box — the same rhythm {@link CardShell} renders. */
 const CARD_SHELL = "flex flex-col gap-2.5 rounded-xl border border-border p-4"
-const CARD_CLASS = `${CARD_SHELL} relative overflow-hidden transition-colors hover:bg-accent/40`
 
 /**
  * One sheet-flat card per archive — the backup recovery-point and
@@ -102,10 +115,12 @@ function ArchiveCard({
 	const { formatDateTime } = useDateFormatter()
 	const editCurrent = archive.current && !readOnly
 	const canSwitch = !archive.active && !editCurrent
-	const title = archive.name
-		? `v${archive.version} · ${archive.name}`
-		: `v${archive.version}`
+	// The title line is the archive's own name; the version, date and size
+	// ride the second line together (the plugins card's meta line), so a
+	// named archive reads like every other card in the app.
+	const title = archive.name?.trim() ? archive.name : t("common.noName")
 	const meta = [
+		`v${archive.version}`,
 		archive.createdAt === undefined
 			? undefined
 			: formatDateTime(archive.createdAt),
@@ -114,71 +129,94 @@ function ArchiveCard({
 		.filter(Boolean)
 		.join(" · ")
 	return (
-		<div className={CARD_CLASS} data-testid={archive.id}>
-			{/* Same banner the marketplace card wears for installed plugins —
-			    the writable current archive is the "latest" one. */}
-			{archive.current && (
-				<span
-					className="pointer-events-none absolute inset-x-0 top-0 flex h-3 items-center justify-center bg-foreground text-tiny font-semibold text-background"
-					data-testid={`archive-latest-banner-${archive.version}`}
-				>
-					{t("dataHistory.chip.latest")}
-				</span>
-			)}
-			<div className="flex items-center gap-2.5">
-				<IconTile icon={Archive} />
-				<div className="min-w-0 flex-1">
-					<span className="block truncate text-ui font-medium" title={title}>
-						{title}
+		<CardShell
+			icon={<IconTile icon={Archive} />}
+			iconTitle={t("protection.archives")}
+			title={title}
+			meta={meta}
+			metaClassName="text-xs"
+			description={
+				archive.note && archive.note.length > 0
+					? archive.note
+					: // An archive without a note keeps the reserved description line
+						// and says so rather than leaving the row short.
+						t("common.noDescription")
+			}
+			banner={
+				/* Same banner the marketplace card wears for installed plugins —
+				   the writable current archive is the "latest" one. */
+				archive.current ? (
+					<span
+						className="pointer-events-none absolute inset-x-0 top-0 flex h-3 items-center justify-center bg-foreground text-tiny font-semibold text-background"
+						data-testid={`archive-latest-banner-${archive.version}`}
+					>
+						{t("dataHistory.chip.latest")}
 					</span>
-					<span className="block truncate font-mono text-tiny text-muted-foreground">
-						{meta}
-					</span>
-				</div>
-			</div>
-			{archive.note && archive.note.length > 0 && (
-				<p className="line-clamp-2 text-xs text-muted-foreground">
-					{archive.note}
-				</p>
-			)}
-			{/* The row wraps so a long switch label (de, zh) drops to its own
-			    line inside the card instead of overflowing the column. */}
-			<div className="flex min-w-0 flex-wrap items-center gap-1.5">
-				{!archive.current && (
-					<MetaChip tone="bordered">{t("dataHistory.chip.readOnly")}</MetaChip>
-				)}
-				{archive.active && (
-					<MetaChip tone="muted">{t("dataHistory.archive.tagActive")}</MetaChip>
-				)}
-				{(editCurrent || canSwitch) && (
-					<div className="ml-auto flex shrink-0 items-center gap-2">
-						{editCurrent ? (
-							<Button
-								variant="secondary"
-								size="sm"
-								onClick={() => onEdit(archive)}
-								data-testid={`edit-${archive.version}`}
-							>
-								<Icon icon={Pen} />
-								{t("dataHistory.action.edit")}
-							</Button>
-						) : (
-							<Button
-								variant="secondary"
-								size="sm"
-								onClick={() => onSwitchVersion(archive.version)}
-								disabled={isSwitching}
-								data-testid={`switch-${archive.version}`}
-							>
-								<Icon icon={UndoRightRound} />
-								{isSwitching
-									? t("dataHistory.action.switching")
-									: t("dataHistory.action.switchToVersion")}
-							</Button>
-						)}
-					</div>
-				)}
-			</div>
-		</div>
+				) : undefined
+			}
+			data-testid={archive.id}
+			footer={
+				<>
+					{!archive.current && (
+						<MetaChip tone="bordered">
+							{t("dataHistory.chip.readOnly")}
+						</MetaChip>
+					)}
+					{archive.active && (
+						// State reads as a mark, not a word: the eye says "this is the
+						// one you're running" next to the Latest banner.
+						<span
+							role="img"
+							aria-label={t("dataHistory.archive.tagActive")}
+							data-testid={`archive-active-${archive.version}`}
+							className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-muted text-secondary-foreground"
+						>
+							<Icon icon={Eye} size="sm" />
+						</span>
+					)}
+					{(editCurrent || canSwitch) && (
+						<div className="ml-auto flex shrink-0 items-center gap-2">
+							<DropdownMenu>
+								<DropdownMenuTrigger
+									render={
+										<Button
+											variant="ghost"
+											size="icon-sm"
+											className="size-7"
+											aria-label={t("dataHistory.action.moreActions")}
+											data-testid={`archive-menu-${archive.version}`}
+										>
+											<Icon icon={MenuDots} size="sm" />
+										</Button>
+									}
+								/>
+								<DropdownMenuContent align="end" className="w-52">
+									{editCurrent ? (
+										<DropdownMenuItem
+											onClick={() => onEdit(archive)}
+											data-testid={`edit-${archive.version}`}
+										>
+											<Icon icon={Pen} />
+											{t("dataHistory.action.edit")}
+										</DropdownMenuItem>
+									) : (
+										<DropdownMenuItem
+											disabled={isSwitching}
+											onClick={() => onSwitchVersion(archive.version)}
+											data-testid={`switch-${archive.version}`}
+										>
+											<Icon icon={UndoRightRound} />
+											{isSwitching
+												? t("dataHistory.action.switching")
+												: t("dataHistory.action.switchToVersion")}
+										</DropdownMenuItem>
+									)}
+								</DropdownMenuContent>
+							</DropdownMenu>
+						</div>
+					)}
+				</>
+			}
+		/>
 	)
 }

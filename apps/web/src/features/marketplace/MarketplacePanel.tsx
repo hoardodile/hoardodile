@@ -1,4 +1,5 @@
 import { Button } from "@hoardodile/ui/components/button"
+import { CardShell } from "@hoardodile/ui/components/card-shell"
 import { Icon } from "@hoardodile/ui/components/icon"
 import {
 	IconToggle,
@@ -491,69 +492,66 @@ function MarketplaceCard(props: {
 				: null
 
 	return (
-		<div
-			className="relative flex flex-col gap-2.5 overflow-hidden rounded-xl border border-border p-4 transition-colors hover:bg-accent/40"
-			data-testid={`marketplace-plugin-${plugin.id}`}
-		>
-			{installedVersion !== undefined && (
-				<span
-					className="pointer-events-none absolute inset-x-0 top-0 flex h-3 items-center justify-center bg-foreground text-tiny font-semibold text-background"
-					data-testid={`marketplace-installed-banner-${plugin.id}`}
-				>
-					{t("marketplace.installedBadge")}
-				</span>
-			)}
-			{footerMode !== null && (
-				<MarketplaceCardFooterStrip plugin={plugin} mode={footerMode} />
-			)}
-			<div className="flex items-center gap-2.5">
+		<CardShell
+			icon={
 				<PluginTileIcon
 					iconRef={plugin.icon}
 					pluginId={plugin.id}
 					fallback={PlugCircle}
 				/>
-				<div className="min-w-0 flex-1">
-					<span className="block truncate text-ui font-medium">
-						{resolveManifestName(plugin.manifest, i18n.language)}
-					</span>
-					<span className="block truncate font-mono text-tiny text-muted-foreground">
-						{versionDateLine(latest, i18n.language)}
-					</span>
-				</div>
-			</div>
-			<p className="line-clamp-2 min-h-8 text-xs text-muted-foreground">
-				{resolveManifestDescription(plugin.manifest, i18n.language)}
-			</p>
-			<div className="flex min-w-0 items-center gap-1.5">
-				<PermissionMarks
-					p={{
-						id: plugin.id,
-						permissions: plugin.permissions,
-						manifest: plugin.manifest,
-					}}
-				/>
-				<div className="ml-auto flex shrink-0 items-center gap-2">
-					{plugin.state === "no_release" && (
-						<span className="inline-flex h-6 shrink-0 items-center rounded-full bg-muted px-2 text-tiny text-muted-foreground">
-							{t("marketplace.noRelease")}
+			}
+			title={resolveManifestName(plugin.manifest, i18n.language)}
+			iconTitle={t("plugins.title")}
+			meta={versionDateLine(latest, i18n.language)}
+			description={resolveManifestDescription(plugin.manifest, i18n.language)}
+			banner={
+				<>
+					{installedVersion !== undefined && (
+						<span
+							className="pointer-events-none absolute inset-x-0 top-0 flex h-3 items-center justify-center bg-foreground text-tiny font-semibold text-background"
+							data-testid={`marketplace-installed-banner-${plugin.id}`}
+						>
+							{t("marketplace.installedBadge")}
 						</span>
 					)}
-					<Button
-						size="sm"
-						variant="secondary"
-						className="relative"
-						onClick={props.onDetails}
-						data-testid={`marketplace-view-${plugin.id}`}
-					>
-						<Icon icon={Eye} />
-						{t("marketplace.view")}
-						{marketUpdateAvailable(plugin, installedVersion) ? (
-							<UpdateDot pluginId={plugin.id} />
-						) : null}
-					</Button>
-				</div>
-			</div>
-		</div>
+					{footerMode !== null && (
+						<MarketplaceCardFooterStrip plugin={plugin} mode={footerMode} />
+					)}
+				</>
+			}
+			data-testid={`marketplace-plugin-${plugin.id}`}
+			footer={
+				<>
+					<PermissionMarks
+						p={{
+							id: plugin.id,
+							permissions: plugin.permissions,
+							manifest: plugin.manifest,
+						}}
+					/>
+					<div className="ml-auto flex shrink-0 items-center gap-2">
+						{plugin.state === "no_release" && (
+							<span className="inline-flex h-6 shrink-0 items-center rounded-full bg-muted px-2 text-tiny text-muted-foreground">
+								{t("marketplace.noRelease")}
+							</span>
+						)}
+						<Button
+							size="sm"
+							variant="secondary"
+							className="relative"
+							onClick={props.onDetails}
+							data-testid={`marketplace-view-${plugin.id}`}
+						>
+							<Icon icon={Eye} />
+							{t("marketplace.view")}
+							{marketUpdateAvailable(plugin, installedVersion) ? (
+								<UpdateDot pluginId={plugin.id} />
+							) : null}
+						</Button>
+					</div>
+				</>
+			}
+		/>
 	)
 }
 

@@ -1,4 +1,5 @@
 import { Button } from "@hoardodile/ui/components/button"
+import { CardShell } from "@hoardodile/ui/components/card-shell"
 import { Icon } from "@hoardodile/ui/components/icon"
 import { toast } from "@hoardodile/ui/components/toast"
 import { Box, PlugCircle, Restart } from "@hoardodile/ui/icons/registry"
@@ -95,51 +96,47 @@ function BundledPluginCard(props: {
 	const { t, i18n } = useTranslation()
 	const { row, restorePending, onRestore } = props
 	return (
-		<div className="flex flex-col gap-2.5 rounded-xl border border-border p-4">
-			<div className="flex items-center gap-2.5">
+		<CardShell
+			icon={
 				<PluginTileIcon
 					iconRef={row.manifest.icon}
 					pluginId={row.id}
 					fallback={PlugCircle}
 				/>
-				<div className="min-w-0 flex-1">
-					<span className="block truncate text-ui font-medium">
-						{resolveManifestName(row.manifest, i18n.language)}
-					</span>
-					<span className="block truncate font-mono text-tiny text-muted-foreground">
-						v{row.manifest.version}
-					</span>
-				</div>
-			</div>
-			<p className="line-clamp-2 min-h-8 text-xs text-muted-foreground">
-				{resolveManifestDescription(row.manifest, i18n.language)}
-			</p>
-			<div className="flex min-w-0 items-center gap-1.5 overflow-hidden">
-				<PermissionMarks
-					p={{
-						id: row.id,
-						permissions: row.manifest.permissions,
-						manifest: row.manifest,
-					}}
-				/>
-				<div className="ml-auto flex shrink-0 items-center gap-2">
-					{row.restorable && (
-						<Button
-							size="sm"
-							variant="secondary"
-							disabled={restorePending}
-							onClick={onRestore}
-							data-testid={`bundled-restore-${row.id}`}
-						>
-							<Icon
-								icon={Restart}
-								className={restorePending ? "animate-spin" : ""}
-							/>
-							{t("plugins.bundledRestore")}
-						</Button>
-					)}
-				</div>
-			</div>
-		</div>
+			}
+			title={resolveManifestName(row.manifest, i18n.language)}
+			iconTitle={t("plugins.installed")}
+			meta={`v${row.manifest.version}`}
+			description={resolveManifestDescription(row.manifest, i18n.language)}
+			className="overflow-hidden"
+			footer={
+				<>
+					<PermissionMarks
+						p={{
+							id: row.id,
+							permissions: row.manifest.permissions,
+							manifest: row.manifest,
+						}}
+					/>
+					<div className="ml-auto flex shrink-0 items-center gap-2">
+						{row.restorable && (
+							<Button
+								size="sm"
+								variant="secondary"
+								disabled={restorePending}
+								onClick={onRestore}
+								data-testid={`bundled-restore-${row.id}`}
+							>
+								<Icon
+									icon={Restart}
+									className={restorePending ? "animate-spin" : ""}
+								/>
+								{t("plugins.bundledRestore")}
+							</Button>
+						)}
+					</div>
+				</>
+			}
+		/>
 	)
 }

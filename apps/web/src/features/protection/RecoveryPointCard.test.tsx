@@ -115,11 +115,42 @@ it("renders the recovery point as a card with its chips, restore action and tool
 	mount(card())
 	expect(screen.getByText("Laptop backup")).toBeInTheDocument()
 	expect(screen.getByText("Manual")).toBeInTheDocument()
-	expect(screen.getByText("Keep indefinitely")).toBeInTheDocument()
+	// "Keep indefinitely" is a mark on the card now, not a text chip, and an
+	// un-annotated point keeps the description line with a placeholder.
+	expect(
+		screen.getByTestId(`recovery-point-pinned-${pointId}`),
+	).toHaveAttribute("aria-label", "Keep indefinitely")
+	expect(screen.queryByText("Keep indefinitely")).not.toBeInTheDocument()
+	expect(screen.getByText("No description")).toBeInTheDocument()
 	expect(screen.getByRole("button", { name: "Restore" })).toBeInTheDocument()
 	expect(
 		screen.getByRole("button", { name: "Advanced backup actions" }),
 	).toBeInTheDocument()
+})
+
+it("shows the note in place of the placeholder when the point is annotated", () => {
+	mount(card({ point: { note: "Before the migration" } }))
+	expect(screen.getByText("Before the migration")).toBeInTheDocument()
+	expect(screen.queryByText("No description")).not.toBeInTheDocument()
+})
+
+it("names the tile for its section and dates the meta line", () => {
+	mount(card())
+	// The tile's hover hint names the section the card belongs to.
+	expect(screen.getByTitle("Available backups")).toBeInTheDocument()
+	// The name owns the title line; time and size share the meta line below it.
+	const description = document.querySelector('[data-slot="card-description"]')
+	const meta = description?.previousElementSibling?.querySelector("span + span")
+	expect(meta?.textContent).toMatch(/ · 2 MB$/)
+	// The meta line is content the user reads (like the archive card's
+	// "v1 · date · size"), not the smaller decorative mono ramp.
+	expect(meta).toHaveClass("text-xs")
+})
+
+it("falls back to an italic 'No name' title for an unnamed point", () => {
+	mount(card({ point: { name: "" } }))
+	expect(screen.getByText("No name")).toBeInTheDocument()
+	expect(screen.getByText("No description")).toBeInTheDocument()
 })
 
 it("hides the card tools in restore-only mode", () => {

@@ -18,6 +18,7 @@ import { CSS } from "@dnd-kit/utilities"
 import type { PluginManifest, PluginPermissions } from "@hoardodile/sdk-types"
 import { AppDialog } from "@hoardodile/ui/components/app-dialog"
 import { Button } from "@hoardodile/ui/components/button"
+import { CardShell } from "@hoardodile/ui/components/card-shell"
 import { ConfirmDialog } from "@hoardodile/ui/components/confirm-dialog"
 import {
 	DropdownMenu,
@@ -899,55 +900,50 @@ function PluginCard(props: {
 	const { p, priority, onToggleEnabled, onSaveAppearance } = props
 	const { t, i18n } = useTranslation()
 	return (
-		<div
-			className="flex flex-col gap-2.5 overflow-hidden rounded-xl border border-border p-4 transition-colors hover:bg-accent/40"
-			data-testid={`plugin-row-${p.id}`}
-		>
-			<div className="flex items-center gap-2.5">
+		<CardShell
+			icon={
 				<PluginTileIcon
 					iconRef={p.manifest.icon}
 					pluginId={p.id}
 					fallback={pluginIcons[p.id] ?? PlugCircle}
 				/>
-				<div className="min-w-0 flex-1">
-					<span className="block truncate text-ui font-medium">
-						{resolveManifestName(p.manifest, i18n.language)}
-					</span>
-					<span className="block truncate font-mono text-tiny text-muted-foreground">
-						v{p.manifest.version} · #{priority}
-					</span>
-				</div>
+			}
+			title={resolveManifestName(p.manifest, i18n.language)}
+			iconTitle={t("plugins.installed")}
+			meta={`v${p.manifest.version} · #${priority}`}
+			description={resolveManifestDescription(p.manifest, i18n.language)}
+			data-testid={`plugin-row-${p.id}`}
+			trailing={
 				<Switch
 					checked={p.enabled}
 					onCheckedChange={(checked) => onToggleEnabled(p.id, checked)}
 					aria-label={t("plugins.enableToggle")}
 					data-testid={`plugin-toggle-${p.id}`}
 				/>
-			</div>
-			<p className="line-clamp-2 min-h-8 text-xs text-muted-foreground">
-				{resolveManifestDescription(p.manifest, i18n.language)}
-			</p>
-			{/* Badges ride the bottom row — the header meta line is too narrow
-			    to hold them next to the version. */}
-			<div className="flex min-w-0 items-center gap-1.5">
-				<PermissionMarks
-					p={{
-						id: p.id,
-						permissions: p.manifest.permissions,
-						manifest: p.manifest,
-					}}
-				/>
-				<StateBadges p={p} />
-				<span className="ml-auto shrink-0">
-					<PluginRowActions
-						plugin={p}
-						marketPlugin={props.marketPlugin}
-						onShowDetails={props.onShowDetails}
-						onSaveAppearance={onSaveAppearance}
+			}
+			footer={
+				<>
+					{/* Badges ride the bottom row — the header meta line is too
+					    narrow to hold them next to the version. */}
+					<PermissionMarks
+						p={{
+							id: p.id,
+							permissions: p.manifest.permissions,
+							manifest: p.manifest,
+						}}
 					/>
-				</span>
-			</div>
-		</div>
+					<StateBadges p={p} />
+					<span className="ml-auto shrink-0">
+						<PluginRowActions
+							plugin={p}
+							marketPlugin={props.marketPlugin}
+							onShowDetails={props.onShowDetails}
+							onSaveAppearance={onSaveAppearance}
+						/>
+					</span>
+				</>
+			}
+		/>
 	)
 }
 
