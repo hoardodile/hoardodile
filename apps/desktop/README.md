@@ -127,7 +127,7 @@ If one machine shows the correct icon and another shows the default (same build)
 
 - `HOST=127.0.0.1` always — the sidecar never binds `0.0.0.0`. Local-network sharing is an authenticated Settings toggle that raises an **embedded TLS terminator** (`0.0.0.0:<lanPort>`, self-generated CA + leaf with the machine's addresses as SANs) in the shell and proxies to the loopback sidecar; it requires an admin password, is never offered by the wizard, and a weak password needs an explicit in-app confirmation before enabling. Toggling it never restarts the sidecar. `/api/internal/*` is refused by the terminator.
 - `/api/internal/*` control routes are loopback-gated: non-loopback peers get 403 even with a valid token. A browser on the same machine may open the same URL; cookies are not shared with Electron.
-- Production desktop never registers `/sw.js` (a SW on `http://127.0.0.1` stale-caches across installer updates) and unregisters any existing controller.
+- Production desktop never registers `/sw.js` (a SW on `http://127.0.0.1` stale-caches across installer updates) and unregisters any existing controller. The same hazard applies to the HTTP cache after a resource-pack update: the pack replaces `resources/server/web` while the renderer origin (scheme + host + **persisted port**) stays identical, so `reloadWindow` clears the cache-like session storages (`clearStaleWebShellCaches`) and reloads ignoring the cache — cookies, localStorage and IndexedDB are untouched.
 - Folder picker in main, not the renderer; shutdown is token-gated; external https via `openExternal`.
 
 ## Dev

@@ -483,6 +483,34 @@ test("resource update applies in place against a fixture feed", async () => {
 		// the same port + library; cookie keyed by host+port survived).
 		await expectShellRendered(appWin, { timeout: 120_000 })
 
+		// The first load after the pack applied must not be able to replay
+		// the previous web build. The renderer origin (scheme + host + port)
+		// is unchanged across the swap, so the fix is twofold: the reload
+		// path drops the cache storages that could answer it, and forces the
+		// navigation past the HTTP cache. A cached answer reports no
+		// transferred bytes; a cleared origin owns no cache storage. Either
+		// proves the stale replay is impossible — the pre-fix shell hits
+		// neither (and showed the old bundle until a manual refresh).
+		await expect
+			.poll(
+				async () => {
+					const transferSize = await appWin.evaluate(() => {
+						const entry = performance.getEntriesByType("navigation")[0] as
+							| PerformanceNavigationTiming
+							| undefined
+						return entry?.transferSize ?? -1
+					})
+					if (transferSize > 0) return true
+					return await appWin.evaluate(() =>
+						typeof caches === "undefined"
+							? true
+							: caches.keys().then((keys) => keys.length === 0),
+					)
+				},
+				{ timeout: 30_000 },
+			)
+			.toBe(true)
+
 		// The tree, the config and the library all agree on the version.
 		await expect
 			.poll(

@@ -693,7 +693,13 @@ async function registerStaticAssets(
 			void sendSpaUnavailable(reply)
 			return
 		}
-		void reply.sendFile("index.html")
+		// `cacheControl: false` is load-bearing: the static plugin is
+		// registered `immutable`, and `sendFile` would otherwise overwrite
+		// the `no-cache` above with `public, max-age=31536000, immutable`.
+		// A deep SPA route (the desktop's restored route, a shared link)
+		// would then pin the shell document across a web rebuild and keep
+		// serving the old bundle until a manual hard refresh.
+		void reply.sendFile("index.html", { cacheControl: false })
 	})
 }
 

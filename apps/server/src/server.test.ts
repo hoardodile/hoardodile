@@ -795,6 +795,9 @@ describe("buildServer lifecycle (9a)", () => {
 			expect(rootRes.headers["content-security-policy"]).toBe(
 				"frame-ancestors 'self'",
 			)
+			// The shell document must never be cached: a web rebuild reuses
+			// the same paths, so an immutable shell would outlive the build.
+			expect(rootRes.headers["cache-control"]).toBe("no-cache")
 
 			const assetRes = await built.app.inject({
 				method: "GET",
@@ -814,6 +817,32 @@ describe("buildServer lifecycle (9a)", () => {
 			expect(deepRes.headers["content-security-policy"]).toBe(
 				"frame-ancestors 'self'",
 			)
+			// Regression: the SPA fallback goes through `@fastify/static`
+			// (`immutable: true`), whose `Cache-Control` used to overwrite
+			// this `no-cache` and pin the deep-route document.
+			expect(deepRes.headers["cache-control"]).toBe("no-cache")
+
+			// The real SPA route shape (a clean path plus a query string,
+			// `/resources` is the router's index) takes the same fallback and
+			// must not be cached either.
+			const spaRoute = await built.app.inject({
+				method: "GET",
+				url: "/resources?sort=updated",
+				remoteAddress: "127.0.0.1",
+			})
+			expect(spaRoute.statusCode).toBe(200)
+			expect(spaRoute.body).toContain("data-testid=spa")
+			expect(spaRoute.headers["cache-control"]).toBe("no-cache")
+
+			// A file request that does not exist must stay a 404 — never
+			// index.html with a JS asset's MIME type (and never cached).
+			const missingAsset = await built.app.inject({
+				method: "GET",
+				url: "/assets/gone.js",
+				remoteAddress: "127.0.0.1",
+			})
+			expect(missingAsset.statusCode).toBe(404)
+			expect(missingAsset.body).not.toContain("data-testid=spa")
 
 			// API/trpc routes are unaffected by the SPA fallback.
 			const health = await built.app.inject({

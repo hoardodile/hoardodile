@@ -106,3 +106,32 @@ export async function clearShellCache(deps: ShellCacheDeps): Promise<number> {
 	const after = await getShellCacheSize(deps)
 	return Math.max(0, before - after)
 }
+
+export type StaleWebShellSession = Pick<
+	Session,
+	"clearCache" | "clearStorageData"
+>
+
+/**
+ * Drop the caches that can replay a *previous* web build's shell document.
+ *
+ * The renderer loads the SPA from `http://127.0.0.1:<port>`, and a resource
+ * pack swaps the `server/web` tree in place while that origin keeps its port
+ * — so nothing in the URL tells Chromium the document changed. The HTTP disk
+ * cache (and a service-worker registration left behind by a browser session
+ * on the same origin) would answer the post-update reload with the old
+ * bundle; the user sees the previous UI until a manual hard refresh.
+ *
+ * Scoped to cache-like storages only: cookies (the session), localStorage
+ * and IndexedDB are user data and are never touched — the same whitelist
+ * policy as {@link clearShellCache}, minus the code cache and the updater
+ * download cache, which have nothing to do with a stale shell.
+ */
+export async function clearStaleWebShellCaches(
+	session: StaleWebShellSession,
+): Promise<void> {
+	await session.clearCache()
+	await session.clearStorageData({
+		storages: ["cachestorage", "serviceworkers"],
+	})
+}

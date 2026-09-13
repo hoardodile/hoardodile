@@ -4,11 +4,13 @@ import { join } from "node:path"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import {
 	clearShellCache,
+	clearStaleWebShellCaches,
 	dirSize,
 	getShellCacheSize,
 	platformCacheBase,
 	resolveUpdaterCacheDir,
 	type ShellCacheSession,
+	type StaleWebShellSession,
 } from "./shell-cache"
 
 function fakeSession(
@@ -175,5 +177,24 @@ describe("clearShellCache", () => {
 		})
 		expect(freed).toBe(1000) // updater dir untouched
 		expect(await readdir(root)).toEqual(["update.exe"])
+	})
+})
+
+describe("clearStaleWebShellCaches", () => {
+	it("drops the HTTP cache and the service-worker storages, never user data", async () => {
+		const session = fakeSession()
+		await clearStaleWebShellCaches(session as StaleWebShellSession)
+
+		expect(session.clearCache).toHaveBeenCalledTimes(1)
+		expect(session.clearStorageData).toHaveBeenCalledWith({
+			storages: ["cachestorage", "serviceworkers"],
+		})
+		// The post-update reload must not sign the user out or lose their
+		// local preferences/state.
+		const storages =
+			vi.mocked(session.clearStorageData).mock.calls[0]?.[0]?.storages ?? []
+		expect(storages).not.toContain("cookies")
+		expect(storages).not.toContain("localstorage")
+		expect(storages).not.toContain("indexdb")
 	})
 })

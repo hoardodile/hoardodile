@@ -77,7 +77,8 @@ import {
 	type UpdateManagerHandle,
 } from "./update-manager.ts"
 import { startFullUpdater } from "./updater.ts"
-import { appUrlPreservingRoute, isHttpReachable } from "./urls.ts"
+import { isHttpReachable } from "./urls.ts"
+import { reloadAppWindow } from "./web-shell-reload.ts"
 import {
 	createDesktopWindow,
 	loadShellPage,
@@ -1265,24 +1266,11 @@ async function boot(): Promise<void> {
 					reloadWindow: async () => {
 						const win = runtime.window
 						if (win !== undefined && !win.isDestroyed()) {
-							// The restarted sidecar may have landed on a
-							// different port (its predecessor's sockets can
-							// linger between stop and rebind, e.g. TIME_WAIT
-							// on Windows); a bare `reload()` would retry the
-							// stale URL and park the window on the shell
-							// error page. Follow the sidecar's actual
-							// endpoint instead — the session cookie is
-							// host-scoped (127.0.0.1), so a port change keeps
-							// the user signed in. A failed load falls through
-							// to the in-window error page + Retry.
-							const url = runtime.sidecar?.url
-							if (url !== undefined && win.webContents.getURL() !== url) {
-								await win
-									.loadURL(appUrlPreservingRoute(win.webContents.getURL(), url))
-									.catch(() => undefined)
-								return
-							}
-							win.webContents.reload()
+							await reloadAppWindow({
+								win,
+								sidecarUrl: runtime.sidecar?.url,
+								session: session.defaultSession,
+							})
 							return
 						}
 						await openAppWindow(runtime)
