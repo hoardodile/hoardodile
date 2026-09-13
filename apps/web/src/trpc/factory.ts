@@ -163,6 +163,13 @@ export function trpcQueryOptions<
 	readonly gcTime?: number
 	readonly enabled?: boolean
 	readonly placeholderData?: PlaceholderDataFunction<RouterOutputs[N][P], Error>
+	/**
+	 * Override TanStack's mount policy. The default (`true`) refetches a
+	 * query whose `staleTime` has passed; `"always"` refetches on every
+	 * mount even inside the window (for surfaces that must show fresh
+	 * server state on each open).
+	 */
+	readonly refetchOnMount?: boolean | "always"
 }) {
 	const {
 		namespace,
@@ -173,6 +180,7 @@ export function trpcQueryOptions<
 		gcTime,
 		enabled,
 		placeholderData,
+		refetchOnMount,
 	} = args
 	return queryOptions({
 		queryKey,
@@ -181,6 +189,7 @@ export function trpcQueryOptions<
 		gcTime,
 		enabled,
 		placeholderData,
+		refetchOnMount,
 	})
 }
 

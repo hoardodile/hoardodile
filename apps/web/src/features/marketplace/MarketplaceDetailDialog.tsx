@@ -4,13 +4,15 @@ import { Icon } from "@hoardodile/ui/components/icon"
 import { MetaChip } from "@hoardodile/ui/components/meta-chip"
 import { SectionTabs } from "@hoardodile/ui/components/section-tabs"
 import { Skeleton } from "@hoardodile/ui/components/skeleton"
+import { toast } from "@hoardodile/ui/components/toast"
 import {
 	Bug,
 	MagicWand2,
 	PlugCircle,
+	Refresh,
 	ShieldCheck,
 } from "@hoardodile/ui/icons/registry"
-import { useQuery } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { type ReactNode, useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { ExternalLink } from "@/components/common/ExternalLink"
@@ -25,7 +27,11 @@ import { errorMessage } from "@/lib/errors"
 import { isNewer } from "@/lib/versions"
 import type { RouterOutputs } from "@/trpc/client"
 import { isMinAppSatisfied, marketUpdateAvailable } from "./compat"
-import { marketplaceDetailQueryOptions } from "./marketplaceApi"
+import {
+	marketplaceDetailQueryOptions,
+	marketplaceDetailRefresh,
+	marketplaceKeys,
+} from "./marketplaceApi"
 import { PluginMarkdown } from "./PluginMarkdown"
 
 export type MarketPlugin =
@@ -136,17 +142,45 @@ export function MarketplaceDetailDialog(props: {
 	readonly onUninstall: () => void
 }) {
 	const { t, i18n } = useTranslation()
+	const qc = useQueryClient()
 	const { plugin } = props
 	const installedVersion = props.installed?.manifest.version
 	const compatible = isMinAppSatisfied(plugin.manifest)
 
-	// The on-demand authoritative release — fetched only when the view opens.
+	// The on-demand authoritative release — fetched only when the view
+	// opens, and reused for a day (see `marketplaceDetailQueryOptions`).
 	const detailQuery = useQuery(
 		marketplaceDetailQueryOptions(plugin.repo, plugin.id),
 	)
 	const detail = detailQuery.data
 	const detailPending = detailQuery.isPending
 	const detailFailed = detailQuery.isError
+
+	// The body's refresh control: an explicit re-check against GitHub that
+	// bypasses both caches (the day-old query entry here, the server's
+	// release cache). No success toast — the version line, date, asset and
+	// readme below update in place, which is the feedback. A rate-limited
+	// pass still answers from cache, so that outcome (and a hard failure)
+	// is announced.
+	const refreshMut = useMutation({
+		mutationFn: () =>
+			marketplaceDetailRefresh({ id: plugin.id, repo: plugin.repo }),
+		onSuccess: (fresh) => {
+			qc.setQueryData(marketplaceKeys.detail(plugin.repo), fresh)
+			if (fresh.rateLimited === true) {
+				toast.add({
+					title: t("marketplace.refreshRateLimited"),
+					type: "error",
+				})
+			}
+		},
+		onError: (err) => {
+			toast.add({
+				title: errorMessage(err, t("marketplace.refreshFailed")),
+				type: "error",
+			})
+		},
+	})
 
 	// The version line renders immediately from the snapshot's free-feed
 	// `latest`; the authoritative detail (once loaded) refines it.
@@ -382,16 +416,44 @@ export function MarketplaceDetailDialog(props: {
 											@{plugin.repo}
 										</ExternalLink>
 									</MetadataRow>
-									{displayLatest !== undefined && (
-										<MetadataRow label={t("marketplace.latestRelease")}>
-											<ExternalLink
-												href={displayLatest.releaseUrl}
-												className="break-all underline-offset-2 hover:underline"
+									{/* Always rendered: it carries the release-info refresh,
+									    so a plugin whose snapshot has no version yet can
+									    still be checked by hand. */}
+									<MetadataRow label={t("marketplace.latestRelease")}>
+										<span className="flex min-w-0 items-center gap-1.5">
+											{displayLatest !== undefined ? (
+												<ExternalLink
+													href={displayLatest.releaseUrl}
+													className="min-w-0 break-all underline-offset-2 hover:underline"
+												>
+													{versionDateLine(displayLatest, i18n.language)}
+												</ExternalLink>
+											) : (
+												<span className="text-muted-foreground">—</span>
+											)}
+											{/* The release-info refresh lives here, in the body
+											    beside the version it updates — never in the
+											    dialog's action bar, which stays
+											    cancel/install/update/uninstall. It is an explicit
+											    opt-in to re-check GitHub; the automatic window is
+											    a day. */}
+											<Button
+												variant="ghost"
+												size="icon-xs"
+												className="shrink-0"
+												onClick={() => refreshMut.mutate()}
+												disabled={refreshMut.isPending || detailPending}
+												aria-label={t("marketplace.detailRefresh")}
+												title={t("marketplace.detailRefresh")}
+												data-testid="marketplace-detail-refresh"
 											>
-												{versionDateLine(displayLatest, i18n.language)}
-											</ExternalLink>
-										</MetadataRow>
-									)}
+												<Icon
+													icon={Refresh}
+													className={refreshMut.isPending ? "animate-spin" : ""}
+												/>
+											</Button>
+										</span>
+									</MetadataRow>
 									{detail?.latest?.assetName !== undefined && (
 										<MetadataRow label={t("marketplace.packageAsset")}>
 											<span className="break-all font-mono">

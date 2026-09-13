@@ -194,8 +194,19 @@ export type MarketplaceService = {
 	 * the user opens a plugin's view, and cached per repo (persisted
 	 * release cache + cooldown) so an open is served from cache instead
 	 * of re-fetching the endpoints.
+	 *
+	 * `force` is the dialog's refresh button: it re-checks the web
+	 * endpoints regardless of the cache window AND bypasses the
+	 * rate-limit cooldown — the user explicitly asked to retry, so one
+	 * bounded pass re-hits them and re-arms the cooldown if the limit is
+	 * still in effect. A forced pass that fails keeps serving the cached
+	 * payload rather than emptying the view.
 	 */
-	detail(repo: string, id: string): Promise<MarketPluginDetail>
+	detail(
+		repo: string,
+		id: string,
+		options?: { readonly force?: boolean },
+	): Promise<MarketPluginDetail>
 }
 
 type MarketFetchErrorKind = "missing" | "rate_limited" | "failed"
@@ -739,12 +750,17 @@ export function createMarketplaceService(
 	 * GitHub web endpoints, so a shared IP's exhausted API quota can
 	 * never block the view. Cached per repo (persisted release cache +
 	 * cooldown), so repeated opens reuse the cache instead of re-hitting
-	 * the endpoints.
+	 * the endpoints. `options.force` — the dialog's refresh button —
+	 * re-checks them regardless of that window (see the service type).
 	 */
-	async function detail(repo: string, id: string): Promise<MarketPluginDetail> {
+	async function detail(
+		repo: string,
+		id: string,
+		options?: { readonly force?: boolean },
+	): Promise<MarketPluginDetail> {
 		const normalized = normalizeRepoAddress(repo)
 		try {
-			const result = await loadLatest(normalized, id, false)
+			const result = await loadLatest(normalized, id, options?.force === true)
 			return {
 				repo: normalized,
 				state: "ok",

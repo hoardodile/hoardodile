@@ -871,6 +871,72 @@ describe("createMarketplaceService.detail", () => {
 		expect(detail.latest).toBeUndefined()
 	})
 
+	test("a forced detail re-checks the web endpoints while the cache is still fresh", async () => {
+		const f = fixture!
+		seedRelease(f, "v1.2.3")
+		const first = await f.service.detail("me/cat", PLUGIN_ID)
+		expect(first.latest?.version).toBe("1.2.3")
+		expect(expandedCalls(f)).toBe(1)
+
+		// A plain open inside the cache window keeps answering from cache…
+		const cached = await f.service.detail("me/cat", PLUGIN_ID)
+		expect(cached.latest?.version).toBe("1.2.3")
+		expect(expandedCalls(f)).toBe(1)
+
+		// …while the dialog's refresh button (force) ignores the window the
+		// moment the upstream publishes a newer release.
+		seedRelease(f, "v1.3.0")
+		const forced = await f.service.detail("me/cat", PLUGIN_ID, { force: true })
+		expect(expandedCalls(f)).toBe(2)
+		expect(forced.latest?.tag).toBe("v1.3.0")
+		expect(forced.latest?.version).toBe("1.3.0")
+		expect(forced.latest?.assetUrl).toBe(
+			downloadUrl("v1.3.0", `${PLUGIN_ID}-v1.3.0.zip`),
+		)
+		expect(forced.rateLimited).toBeUndefined()
+		expect(apiCalls(f)).toBe(0)
+
+		// The forced answer is authoritative and now cached: a following
+		// plain open serves it without another endpoint hit.
+		const after = await f.service.detail("me/cat", PLUGIN_ID)
+		expect(after.latest?.version).toBe("1.3.0")
+		expect(expandedCalls(f)).toBe(2)
+	})
+
+	test("a forced detail bypasses an active rate-limit cooldown and re-arms it on a fresh 403", async () => {
+		const f = fixture!
+		seedRelease(f, "v1.2.3")
+		await f.service.detail("me/cat", PLUGIN_ID) // seed v1.2.3 + asset
+		// The release cache now carries an active cooldown from the 403.
+		rateLimitFetcher(f)
+		f.advance(60 * 60_000 + 1)
+		const degraded = await f.service.detail("me/cat", PLUGIN_ID)
+		expect(degraded.rateLimited).toBe(true)
+
+		// The user explicitly asked to retry: the forced pass re-hits the
+		// endpoints instead of waiting the cooldown out, and keeps the cached
+		// payload rather than emptying the view.
+		const before = expandedCalls(f)
+		const forced = await f.service.detail("me/cat", PLUGIN_ID, {
+			force: true,
+		})
+		expect(expandedCalls(f)).toBeGreaterThan(before)
+		expect(forced.state).toBe("ok")
+		expect(forced.latest?.version).toBe("1.2.3")
+		expect(forced.latest?.assetUrl).toBe(
+			downloadUrl("v1.2.3", `${PLUGIN_ID}-v1.2.3.zip`),
+		)
+		expect(forced.rateLimited).toBe(true)
+
+		// The failure re-armed the cooldown, so the next plain open stays on
+		// the cached payload without touching the endpoints again.
+		const afterForced = expandedCalls(f)
+		const quiet = await f.service.detail("me/cat", PLUGIN_ID)
+		expect(expandedCalls(f)).toBe(afterForced)
+		expect(quiet.rateLimited).toBe(true)
+		expect(quiet.latest?.version).toBe("1.2.3")
+	})
+
 	test("caches a fresh release per repo and persists it across restarts", async () => {
 		const f = fixture!
 		seedRelease(f, "v1.2.3")

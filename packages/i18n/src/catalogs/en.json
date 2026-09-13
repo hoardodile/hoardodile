@@ -746,6 +746,8 @@
 		"refreshConfirmDescription": "This re-checks every plugin's latest release through the GitHub API, limited to 60 requests per hour without a token. Frequent refreshes can hit that limit; the catalog then falls back to cached release data until the quota resets.",
 		"refreshed": "Marketplace refreshed",
 		"refreshFailed": "Marketplace refresh failed",
+		"detailRefresh": "Refresh release info",
+		"refreshRateLimited": "GitHub rate limit hit — still showing the cached release",
 		"emptyHint": "The registry lists no plugins yet. Add repository addresses to registry.json and refresh.",
 		"install": "Install",
 		"update": "Update",

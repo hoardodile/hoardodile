@@ -235,6 +235,103 @@ describe("InstalledPluginsPanel marketplace details", () => {
 		).not.toBeInTheDocument()
 	})
 
+	it("reuses the detail entry when the dialog is reopened the same day", async () => {
+		// The automatic window is a day: GitHub traffic stays at one check per
+		// plugin per day, and the explicit refresh below is the opt-in.
+		installClient({ catalog: [marketPlugin(PLUGIN_ID, "Cat Viewer")] })
+		renderPanel()
+
+		const detailQuery = (
+			mockClient.marketplace as {
+				detail: { query: ReturnType<typeof vi.fn> }
+			}
+		).detail.query
+
+		await user.click(await screen.findByTestId(`plugin-menu-${PLUGIN_ID}`))
+		await user.click(
+			await screen.findByTestId(`plugin-menu-detail-${PLUGIN_ID}`),
+		)
+		const dialog = await screen.findByTestId("marketplace-detail-dialog")
+		await within(dialog).findByTestId("marketplace-detail-uninstall")
+		expect(detailQuery).toHaveBeenCalledTimes(1)
+		await user.click(within(dialog).getByText("Cancel"))
+
+		await waitFor(() => {
+			expect(screen.queryByTestId("marketplace-detail-dialog")).toBeNull()
+		})
+		await user.click(screen.getByTestId(`plugin-menu-${PLUGIN_ID}`))
+		await user.click(screen.getByTestId(`plugin-menu-detail-${PLUGIN_ID}`))
+		await screen.findByTestId("marketplace-detail-dialog")
+
+		expect(detailQuery).toHaveBeenCalledTimes(1)
+	})
+
+	it("refreshes the release info on demand from the dialog body", async () => {
+		// The refresh button lives in the dialog body (never the action bar)
+		// and re-checks GitHub regardless of the day-old cache entry.
+		installClient({ catalog: [marketPlugin(PLUGIN_ID, "Cat Viewer")] })
+		renderPanel()
+
+		const detailQuery = (
+			mockClient.marketplace as {
+				detail: { query: ReturnType<typeof vi.fn> }
+			}
+		).detail.query
+		// The cached open answers with the release the snapshot knows; only
+		// the forced re-check learns about the newer one.
+		const release = (version: string, publishedAt: string) => ({
+			repo: "me/cat-viewer",
+			state: "ok" as const,
+			latest: {
+				tag: `v${version}`,
+				version,
+				releaseUrl: `https://github.com/me/cat-viewer/releases/tag/v${version}`,
+				publishedAt,
+				notes: null,
+				assetName: `${PLUGIN_ID}-v${version}.zip`,
+				assetUrl: "",
+				readme: undefined,
+			},
+			error: undefined,
+		})
+		let opened = 0
+		detailQuery.mockImplementation(() =>
+			Promise.resolve(
+				opened++ === 0
+					? release("1.2.3", "2025-01-02T03:04:05Z")
+					: release("1.2.4", "2025-02-02T03:04:05Z"),
+			),
+		)
+
+		await user.click(await screen.findByTestId(`plugin-menu-${PLUGIN_ID}`))
+		await user.click(
+			await screen.findByTestId(`plugin-menu-detail-${PLUGIN_ID}`),
+		)
+		const dialog = await screen.findByTestId("marketplace-detail-dialog")
+		// The latest-release link carries the version line; role-based lookup
+		// stays robust to the date suffix and the link/span nesting.
+		await screen.findByRole("link", { name: /v1\.2\.3/ })
+
+		await user.click(within(dialog).getByTestId("marketplace-detail-refresh"))
+
+		await waitFor(() => {
+			expect(detailQuery).toHaveBeenCalledWith({
+				id: PLUGIN_ID,
+				repo: "me/cat-viewer",
+				force: true,
+			})
+		})
+		// The forced answer replaces the cached release in place.
+		await waitFor(() => {
+			expect(screen.getByRole("link", { name: /v1\.2\.4/ })).toBeInTheDocument()
+		})
+		expect(screen.queryByRole("link", { name: /v1\.2\.3/ })).toBeNull()
+		// And the footer still holds only the dialog's own actions.
+		expect(
+			within(dialog).getByTestId("marketplace-detail-uninstall"),
+		).toBeInTheDocument()
+	})
+
 	it("updates a plugin from the detail dialog opened via the More menu", async () => {
 		installClient({ catalog: [marketPlugin(PLUGIN_ID, "Cat Viewer")] })
 		renderPanel()

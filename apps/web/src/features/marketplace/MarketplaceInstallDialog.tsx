@@ -9,7 +9,7 @@ import { PluginPermissionBadges } from "@/features/plugin/PluginPermissionBadges
 import { pluginKeys } from "@/features/plugin/pluginApi"
 import { errorMessage } from "@/lib/errors"
 import type { MarketLatest, MarketPlugin } from "./MarketplaceDetailDialog"
-import { marketplaceInstall } from "./marketplaceApi"
+import { marketplaceInstall, marketplaceKeys } from "./marketplaceApi"
 
 export type InstallTarget = {
 	readonly plugin: MarketPlugin
@@ -119,6 +119,20 @@ export function useMarketplaceInstall(
 		onSuccess: (_result, target) => {
 			onSuccess?.(target)
 			void qc.invalidateQueries({ queryKey: pluginKeys.all })
+			// The release metadata just changed meaning: the installed version
+			// may now equal the catalog's latest, and the detail view must not
+			// replay its pre-install release. Mark both stale without eager
+			// refetches — the catalog refetches when the page is next looked
+			// at, the detail when its dialog reopens
+			// (`refetchOnMount: "always"`).
+			void qc.invalidateQueries({
+				queryKey: marketplaceKeys.snapshot(),
+				refetchType: "none",
+			})
+			void qc.invalidateQueries({
+				queryKey: marketplaceKeys.detail(target.plugin.repo),
+				refetchType: "none",
+			})
 			toast.add({
 				title:
 					target.mode === "update"

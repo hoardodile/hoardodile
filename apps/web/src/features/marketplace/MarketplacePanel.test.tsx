@@ -9,6 +9,7 @@ import {
 } from "@testing-library/react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { MarketplacePanel } from "./MarketplacePanel"
+import { marketplaceKeys } from "./marketplaceApi"
 
 vi.mock("@hoardodile/ui/components/toast", () => ({
 	toast: { add: vi.fn() },
@@ -127,6 +128,7 @@ function installClient(overrides?: {
 	readonly detailQuery?: (input: {
 		id: string
 		repo: string
+		force?: boolean
 	}) => Promise<unknown>
 }) {
 	mockClient.marketplace = {
@@ -386,6 +388,36 @@ describe("MarketplacePanel", () => {
 		)
 	})
 
+	it("marks the catalog and the plugin detail stale after an install", async () => {
+		// Regression: an update used to invalidate only the installed-plugin
+		// list, so the catalog's version line and the detail dialog's release
+		// kept replaying pre-install data.
+		installClient({ config: { registryRepo: "me/registry" } })
+		const { queryClient } = renderPanel()
+
+		await user.click(await screen.findByTestId(`marketplace-view-${PLUGIN_ID}`))
+		await user.click(
+			await within(
+				await screen.findByTestId("marketplace-detail-dialog"),
+			).findByTestId("marketplace-detail-install"),
+		)
+		await user.click(await screen.findByTestId("marketplace-install-confirm"))
+
+		await waitFor(() => {
+			const data = queryClient.getQueryState(
+				marketplaceKeys.detail("me/cat-viewer"),
+			)?.data
+			expect(data).toBeDefined()
+		})
+		expect(
+			queryClient.getQueryState(marketplaceKeys.snapshot())?.isInvalidated,
+		).toBe(true)
+		expect(
+			queryClient.getQueryState(marketplaceKeys.detail("me/cat-viewer"))
+				?.isInvalidated,
+		).toBe(true)
+	})
+
 	it("installed card: straight banner + View only; dialog offers Update and Uninstall", async () => {
 		installClient({
 			config: { registryRepo: "me/registry" },
@@ -441,6 +473,59 @@ describe("MarketplacePanel", () => {
 				).mutate,
 			).toHaveBeenCalledWith({ id: PLUGIN_ID })
 		})
+	})
+
+	it("serves the day-old detail entry on reopen and picks up a new release on refresh", async () => {
+		// The quota-conscious policy: opening the dialog reuses the entry for a
+		// day (one GitHub check per plugin per day), while the body's refresh
+		// button re-checks on demand and updates the dialog in place.
+		const published = {
+			...DETAIL,
+			latest: {
+				...DETAIL.latest,
+				tag: "v1.2.4",
+				version: "1.2.4",
+				releaseUrl: "https://github.com/me/cat-viewer/releases/tag/v1.2.4",
+			},
+		}
+		const detailQuery = vi.fn(async (input: { readonly force?: boolean }) =>
+			input.force === true ? published : DETAIL,
+		)
+		installClient({
+			config: { registryRepo: "me/registry" },
+			installed: [installedRow("1.1.0")],
+			detailQuery,
+		})
+		renderPanel()
+
+		await user.click(await screen.findByTestId(`marketplace-view-${PLUGIN_ID}`))
+		const first = await screen.findByTestId("marketplace-detail-dialog")
+		expect(await within(first).findByText("1.1.0 → 1.2.3")).toBeInTheDocument()
+		await user.click(within(first).getByRole("button", { name: "Cancel" }))
+
+		await waitFor(() => {
+			expect(screen.queryByTestId("marketplace-detail-dialog")).toBeNull()
+		})
+		await user.click(screen.getByTestId(`marketplace-view-${PLUGIN_ID}`))
+
+		// Reopening inside the window does not re-ask…
+		const second = await screen.findByTestId("marketplace-detail-dialog")
+		expect(await within(second).findByText("1.1.0 → 1.2.3")).toBeInTheDocument()
+		expect(detailQuery).toHaveBeenCalledTimes(1)
+
+		// …while the refresh button re-checks and repaints every readout.
+		await user.click(within(second).getByTestId("marketplace-detail-refresh"))
+		await waitFor(() => {
+			expect(detailQuery).toHaveBeenCalledWith({
+				id: PLUGIN_ID,
+				repo: "me/cat-viewer",
+				force: true,
+			})
+		})
+		expect(await within(second).findByText("1.1.0 → 1.2.4")).toBeInTheDocument()
+		expect(
+			await within(second).findByRole("button", { name: "Update to v1.2.4" }),
+		).toBeInTheDocument()
 	})
 
 	it("updates from the detail dialog and shows the version arrow", async () => {

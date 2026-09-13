@@ -746,6 +746,8 @@
 		"refreshConfirmDescription": "各プラグインの最新リリースを GitHub API で再取得します（トークンなしでは毎時60回まで）。頻繁に更新すると上限に達する可能性があり、その間はキャッシュされたリリース情報を表示します。",
 		"refreshed": "マーケットを更新しました",
 		"refreshFailed": "マーケットの更新に失敗しました",
+		"detailRefresh": "リリース情報を更新",
+		"refreshRateLimited": "GitHub のレート制限に達したため、キャッシュされたリリース情報を表示しています",
 		"emptyHint": "レジストリにプラグインがまだありません。registry.json にリポジトリを追加して更新してください。",
 		"install": "インストール",
 		"update": "更新",

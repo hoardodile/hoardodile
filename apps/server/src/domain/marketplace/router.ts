@@ -17,6 +17,8 @@ const detailInput = z.object({
 	id: z.string().uuid(),
 	/** Normalized `owner/repo` of the plugin to inspect. */
 	repo: z.string().min(1).max(300),
+	/** The dialog's refresh button: bypass the server's release cache. */
+	force: z.boolean().optional(),
 })
 
 export function buildMarketplaceRouter(deps: {
@@ -42,10 +44,14 @@ export function buildMarketplaceRouter(deps: {
 		 * per repo. Both the catalog snapshot and this detail read only
 		 * quota-free GitHub web endpoints, so the marketplace keeps working
 		 * even while the GitHub API's 60/hour-per-IP quota is exhausted.
+		 * `force` is the dialog's refresh button — it re-checks the
+		 * endpoints instead of answering from the cache window.
 		 */
 		detail: authedProcedure
 			.input(detailInput)
-			.query(({ input }) => service.detail(input.repo, input.id)),
+			.query(({ input }) =>
+				service.detail(input.repo, input.id, { force: input.force === true }),
+			),
 	})
 }
 

@@ -746,6 +746,8 @@
 		"refreshConfirmDescription": "该操作会通过 GitHub API 重新查询每个插件的最新发布（未认证限额为每小时 60 次）。频繁刷新可能触发限流；限流期间将回退展示缓存的发布信息，直至配额恢复。",
 		"refreshed": "插件市场已刷新",
 		"refreshFailed": "插件市场刷新失败",
+		"detailRefresh": "刷新发布信息",
+		"refreshRateLimited": "触发 GitHub 限额，仍显示缓存的发布信息",
 		"emptyHint": "注册表还没有收录任何插件。在 registry.json 中添加仓库地址后刷新即可。",
 		"install": "安装",
 		"update": "更新",

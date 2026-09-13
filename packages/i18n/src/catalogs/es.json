@@ -746,6 +746,8 @@
 		"refreshConfirmDescription": "Se volverá a consultar el último lanzamiento de cada plugin en la API de GitHub, limitada a 60 peticiones por hora sin token. Actualizar con frecuencia puede agotar ese límite; después se mostrará la información de lanzamiento en caché hasta que se restablezca.",
 		"refreshed": "Mercado actualizado",
 		"refreshFailed": "Error al actualizar el mercado",
+		"detailRefresh": "Actualizar la información del lanzamiento",
+		"refreshRateLimited": "Límite de GitHub alcanzado — se sigue mostrando el lanzamiento en caché",
 		"emptyHint": "El registro no incluye plugins todavía. Añade direcciones a registry.json y actualiza.",
 		"install": "Instalar",
 		"update": "Actualizar",

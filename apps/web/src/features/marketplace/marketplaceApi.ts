@@ -54,16 +54,44 @@ type MarketSnapshot = RouterOutputs["marketplace"]["snapshot"]
  * sha256), requested when the user opens its "View" dialog. The server
  * assembles it from quota-free GitHub web endpoints (atom feed +
  * `releases/expanded_assets`), on demand — the list snapshot only ever
- * reads the free feed. Cached per repo (and cached server-side per repo),
- * so re-opening a plugin reuses cache instead of re-fetching.
+ * reads the free feed, and the built payload is cached per repo on the
+ * server for the same window.
+ *
+ * The `staleTime` is the whole policy: a fresh entry is reused when the
+ * dialog is reopened, and only after a day does opening it re-ask. That
+ * keeps GitHub traffic to roughly one check per plugin per day (the free
+ * web endpoints are rate-limited), while {@link marketplaceDetailRefresh}
+ * gives the user an explicit "check now" for the case where they know a
+ * release just landed.
  */
+export const MARKETPLACE_DETAIL_STALE_MS = 24 * 60 * 60_000
+
 export function marketplaceDetailQueryOptions(repo: string, id: string) {
 	return trpcQueryOptions({
 		namespace: "marketplace",
 		procedure: "detail",
 		input: { id, repo },
 		queryKey: marketplaceKeys.detail(repo),
-		staleTime: 60_000,
+		staleTime: MARKETPLACE_DETAIL_STALE_MS,
+	})
+}
+
+/**
+ * The detail dialog's refresh button: re-checks this plugin's release
+ * against the GitHub web endpoints, bypassing both the day-old query entry
+ * and the server's release cache. The result is written into the shared
+ * detail key by the caller, so the catalog's version line updates with it.
+ * A rate-limited pass still answers from cache (flagged) rather than
+ * failing the view.
+ */
+export function marketplaceDetailRefresh(input: {
+	readonly id: string
+	readonly repo: string
+}): Promise<RouterOutputs["marketplace"]["detail"]> {
+	return trpcQuery("marketplace", "detail", {
+		id: input.id,
+		repo: input.repo,
+		force: true,
 	})
 }
 

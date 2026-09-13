@@ -746,6 +746,8 @@
 		"refreshConfirmDescription": "Dabei wird das neueste Release jedes Plugins über die GitHub-API abgefragt (ohne Token: 60 Anfragen/Stunde). Häufiges Aktualisieren kann dieses Limit erreichen; danach wird bis zum Reset die zwischengespeicherte Release-Info angezeigt.",
 		"refreshed": "Marktplatz aktualisiert",
 		"refreshFailed": "Marktplatz-Aktualisierung fehlgeschlagen",
+		"detailRefresh": "Release-Infos aktualisieren",
+		"refreshRateLimited": "GitHub-Limit erreicht — es wird weiterhin die zwischengespeicherte Release-Info angezeigt",
 		"emptyHint": "Das Registry enthält noch keine Plugins. Füge Repository-Adressen zu registry.json hinzu und aktualisiere.",
 		"install": "Installieren",
 		"update": "Aktualisieren",
