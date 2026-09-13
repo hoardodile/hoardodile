@@ -109,6 +109,11 @@ describe("NetworkSection", () => {
 			expect(screen.getByText("Not tested yet")).toBeInTheDocument()
 		})
 		expect(screen.queryByTestId("network-test-result")).toBeNull()
+		// The probe control is icon + "Test" — the row's own label already
+		// names the GitHub connection.
+		const button = screen.getByTestId("network-test-button")
+		expect(button).toHaveTextContent("Test")
+		expect(button.querySelector("svg")).not.toBeNull()
 	})
 
 	it("reports a successful test with an emerald result", async () => {

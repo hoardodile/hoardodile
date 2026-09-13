@@ -1,5 +1,6 @@
 import { Button } from "@hoardodile/ui/components/button"
-import { Global } from "@hoardodile/ui/icons/registry"
+import { Icon } from "@hoardodile/ui/components/icon"
+import { Global, Pulse } from "@hoardodile/ui/icons/registry"
 import { cn } from "@hoardodile/ui/lib/utils"
 import { useMutation, useQuery } from "@tanstack/react-query"
 import { useTranslation } from "react-i18next"
@@ -136,6 +137,9 @@ export function NetworkSection() {
 							disabled={testMut.isPending}
 							data-testid="network-test-button"
 						>
+							{/* Icon + verb, like the other settings rows: the row's own
+							    label already says it is the GitHub connection. */}
+							<Icon icon={Pulse} />
 							{t(testMut.isPending ? "me.network.testing" : "me.network.test")}
 						</Button>
 					</div>

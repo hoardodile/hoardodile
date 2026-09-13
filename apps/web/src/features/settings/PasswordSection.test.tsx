@@ -75,7 +75,10 @@ describe("PasswordSection", () => {
 		const user = userEvent.setup()
 		renderPasswordSection()
 
-		await user.click(screen.getByTestId("change-password"))
+		// Icon + "Change": the row's title already says it changes the password.
+		const open = screen.getByTestId("change-password")
+		expect(open).toHaveTextContent("Change")
+		await user.click(open)
 		await screen.findByTestId("change-password-dialog")
 
 		await user.type(screen.getByLabelText("Current password"), "old-pass")
