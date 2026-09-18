@@ -158,6 +158,7 @@ export async function renderImageThumbOnce(opts: {
 			quality:
 				format === "webp" ? opts.variant.webpQuality : opts.variant.avifQuality,
 			animated: animated || undefined,
+			preserveTransparentRgb: opts.variant.preserveTransparentRgb,
 		},
 		format,
 	)
@@ -283,6 +284,14 @@ type EncodeImageFileOptions = {
 	 * orientation, so dropping the rotate is safe.
 	 */
 	readonly animated?: boolean
+	/**
+	 * Encode WebP with libwebp's `exact` flag: keep the source RGB under
+	 * fully transparent pixels. libwebp cleans that RGB by default to help
+	 * compressibility, which erases the edge bleed a model atlas stores in
+	 * its transparent padding — the GPU then samples blank pixels along
+	 * every mesh seam and the model shows blocky/dark fringes.
+	 */
+	readonly preserveTransparentRgb?: boolean
 }
 
 /**
@@ -336,7 +345,10 @@ async function encodeImageFile(
 					})
 		const encoded =
 			format === "webp"
-				? resized.webp({ quality: opts.quality })
+				? resized.webp({
+						quality: opts.quality,
+						...(opts.preserveTransparentRgb === true ? { exact: true } : {}),
+					})
 				: resized.avif({ quality: opts.quality, effort: AVIF_EFFORT })
 		const info = await encoded.toFile(tmp)
 		await rename(tmp, destPath)

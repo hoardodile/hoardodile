@@ -160,6 +160,7 @@ export function createRenderProviders(opts: {
 						maxArea: RESOURCE_COVER_MAX_AREA,
 						webpQuality: render.WEBP_QUALITY,
 						avifQuality: render.AVIF_QUALITY,
+						preserveTransparentRgb: false,
 					},
 				})
 				return {

@@ -167,6 +167,7 @@ export function createThumbService(deps: ThumbServiceDeps): ThumbService {
 		maxArea: RESOURCE_COVER_MAX_AREA,
 		webpQuality: WEBP_QUALITY,
 		avifQuality: AVIF_QUALITY,
+		preserveTransparentRgb: false,
 	}
 
 	async function renderVideoCoverFrame(
@@ -390,6 +391,7 @@ export function createThumbService(deps: ThumbServiceDeps): ThumbService {
 			maxArea,
 			webpQuality: WEBP_QUALITY,
 			avifQuality: AVIF_QUALITY,
+			preserveTransparentRgb: false,
 		}
 
 		return renderArtifact({

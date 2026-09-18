@@ -70,6 +70,7 @@ export async function generateUploadPreview(
 		maxArea: UPLOAD_PREVIEW_MAX_AREA,
 		webpQuality: WEBP_QUALITY,
 		avifQuality: AVIF_QUALITY,
+		preserveTransparentRgb: false,
 	}
 
 	return withSourceThumbInput(

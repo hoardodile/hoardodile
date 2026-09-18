@@ -75,6 +75,7 @@ describe("normalizeImageVariantSpec", () => {
 			maxArea: RESOURCE_PREVIEW_MAX_AREA,
 			avifQuality: 65,
 			webpQuality: 90,
+			preserveTransparentRgb: false,
 		})
 	})
 
@@ -89,7 +90,27 @@ describe("normalizeImageVariantSpec", () => {
 			maxArea: RESOURCE_PREVIEW_MAX_AREA,
 			avifQuality: 80,
 			webpQuality: 80,
+			preserveTransparentRgb: true,
 		})
+	})
+
+	/**
+	 * `exact` promises a pure format change — the same pixels with the same
+	 * meaning. Model atlases keep their edge bleed in transparent pixels,
+	 * so the transcode must not let libwebp clean it away.
+	 */
+	test("only the exact fit preserves transparent-area RGB", () => {
+		expect(
+			normalizeImageVariantSpec({ fit: "exact" }, QUALITY_DEFAULTS)
+				.preserveTransparentRgb,
+		).toBe(true)
+		expect(
+			normalizeImageVariantSpec({ fit: "inside" }, QUALITY_DEFAULTS)
+				.preserveTransparentRgb,
+		).toBe(false)
+		expect(
+			normalizeImageVariantSpec({}, QUALITY_DEFAULTS).preserveTransparentRgb,
+		).toBe(false)
 	})
 
 	test("out-of-range values are clamped, not rejected", () => {
@@ -127,6 +148,24 @@ describe("imageVariantCanonical", () => {
 		const a = normalizeImageVariantSpec({ quality: 80 }, QUALITY_DEFAULTS)
 		const b = normalizeImageVariantSpec({ quality: 81 }, QUALITY_DEFAULTS)
 		expect(imageVariantCanonical(a)).not.toBe(imageVariantCanonical(b))
+	})
+
+	test("the transparent-RGB flag is part of the cache identity", () => {
+		// Same request parameters, different encoded bytes: the two must not
+		// share a cached artifact.
+		const cleaned = normalizeImageVariantSpec(
+			{ format: "webp", fit: "inside", quality: 90 },
+			QUALITY_DEFAULTS,
+		)
+		const preserved = normalizeImageVariantSpec(
+			{ format: "webp", fit: "exact", quality: 90 },
+			QUALITY_DEFAULTS,
+		)
+		expect(imageVariantCanonical(cleaned)).toContain("clean")
+		expect(imageVariantCanonical(preserved)).toContain("rgba")
+		expect(imageVariantCanonical(cleaned)).not.toBe(
+			imageVariantCanonical(preserved),
+		)
 	})
 })
 

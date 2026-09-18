@@ -25,7 +25,9 @@ export type ImageVariantFormat = (typeof IMAGE_VARIANT_FORMATS)[number]
  * - `inside` — downscaled (never upscaled) to fit within `maxArea`;
  * - `exact` — transcode only: output pixels are exactly the source
  *   dimensions (needed when downstream code maps coordinates onto the
- *   texture, e.g. Live2D models).
+ *   texture, e.g. Live2D models) *and* every source pixel keeps its
+ *   meaning, including the RGB under transparent pixels (see
+ *   {@link ResolvedImageVariant.preserveTransparentRgb}).
  */
 export const IMAGE_VARIANT_FITS = ["inside", "exact"] as const
 export type ImageVariantFit = (typeof IMAGE_VARIANT_FITS)[number]
@@ -62,6 +64,15 @@ export type ResolvedImageVariant = {
 	readonly maxArea: number
 	readonly webpQuality: number
 	readonly avifQuality: number
+	/**
+	 * Encode WebP with libwebp's `exact` flag, i.e. keep the source RGB
+	 * under fully transparent pixels instead of cleaning it for
+	 * compressibility. `fit: "exact"` requests a pure format change, so it
+	 * implies this: model atlases (Live2D/Spine/DragonBones) store their
+	 * edge bleed in transparent pixels, and losing it turns the mesh-edge
+	 * samples into blocky seams.
+	 */
+	readonly preserveTransparentRgb: boolean
 }
 
 /** Query parameters accepted by the resource file route. */
@@ -184,12 +195,14 @@ export function normalizeImageVariantSpec(
 		readonly webpQuality: number
 	},
 ): ResolvedImageVariant {
+	const fit = spec.fit ?? "inside"
 	return {
 		format: spec.format ?? "avif",
-		fit: spec.fit ?? "inside",
+		fit,
 		maxArea: clampArea(spec.maxArea ?? RESOURCE_PREVIEW_MAX_AREA),
 		avifQuality: clampQuality(spec.quality ?? qualityDefaults.avifQuality),
 		webpQuality: clampQuality(spec.quality ?? qualityDefaults.webpQuality),
+		preserveTransparentRgb: fit === "exact",
 	}
 }
 
@@ -207,6 +220,8 @@ function clampQuality(value: number): number {
 /**
  * Stable string identity of a resolved variant — the cache key input.
  * Two requests produce the same identity iff they render identically.
+ * `preserveTransparentRgb` is part of it because it changes the encoded
+ * bytes without changing any request parameter.
  */
 export function imageVariantCanonical(variant: ResolvedImageVariant): string {
 	return [
@@ -215,6 +230,7 @@ export function imageVariantCanonical(variant: ResolvedImageVariant): string {
 		variant.maxArea,
 		variant.webpQuality,
 		variant.avifQuality,
+		variant.preserveTransparentRgb ? "rgba" : "clean",
 	].join(":")
 }
 

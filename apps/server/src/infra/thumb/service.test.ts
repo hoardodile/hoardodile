@@ -515,6 +515,41 @@ describe("thumb service — getFilePreview variants", () => {
 			.toBuffer()
 	}
 
+	/** The green ramp carried by the transparent half below. */
+	function bleedGreen(y: number): number {
+		return 20 + y * 3
+	}
+
+	/**
+	 * A 64×64 RGBA PNG whose right half is fully transparent yet carries a
+	 * varying green "bleed" ramp — the shape a Spine/Live2D atlas uses so
+	 * mesh edges never sample blank pixels. `bleedGreen(y)` is that ramp,
+	 * shared with the assertions below.
+	 */
+	async function transparentBleedPngBuffer(): Promise<Buffer> {
+		const width = 64
+		const height = 64
+		const rgba = Buffer.alloc(width * height * 4)
+		for (let y = 0; y < height; y += 1) {
+			for (let x = 0; x < width; x += 1) {
+				const index = (y * width + x) * 4
+				if (x < width / 2) {
+					rgba[index] = 200
+					rgba[index + 1] = 40
+					rgba[index + 2] = 40
+					rgba[index + 3] = 255
+				} else {
+					rgba[index] = 10 + x
+					rgba[index + 1] = bleedGreen(y)
+					rgba[index + 2] = 200 - x
+				}
+			}
+		}
+		return sharp(rgba, { raw: { width, height, channels: 4 } })
+			.png()
+			.toBuffer()
+	}
+
 	test("default spec renders an avif and answers from the cache on repeat", async () => {
 		const png = await bigPngBuffer()
 		const r = await prepareImageResource(resources, dbh, paths, "img", png)
@@ -576,6 +611,51 @@ describe("thumb service — getFilePreview variants", () => {
 		const meta = await sharp(result.path).metadata()
 		expect(meta.width).toBe(2400)
 		expect(meta.height).toBe(2400)
+	})
+
+	/**
+	 * A model atlas keeps its edge bleed in fully transparent pixels, and
+	 * libwebp cleans that RGB by default. The `exact` fit is the "pure
+	 * format change" request model textures make, so its WebP must keep the
+	 * bleed an `inside` preview is free to discard.
+	 */
+	test("exact webp keeps the RGB under transparent pixels", async () => {
+		const png = await transparentBleedPngBuffer()
+		const r = await prepareImageResource(resources, dbh, paths, "rgba", png)
+
+		const thumbs = createThumbService({ paths, resources })
+		const exact = await thumbs.getFilePreview(r.id, "a.png", {
+			format: "webp",
+			fit: "exact",
+		})
+		const inside = await thumbs.getFilePreview(r.id, "a.png", {
+			format: "webp",
+			fit: "inside",
+		})
+		expect(exact.kind).toBe("ready")
+		expect(inside.kind).toBe("ready")
+		if (exact.kind !== "ready" || inside.kind !== "ready") return
+
+		// Mean error of the transparent half's green against the source.
+		// Reading through a buffer keeps no libvips handle on the cache file.
+		const bleedError = async (path: string) => {
+			const { data, info } = await sharp(await readFile(path))
+				.ensureAlpha()
+				.raw()
+				.toBuffer({ resolveWithObject: true })
+			let sum = 0
+			let count = 0
+			for (let y = 0; y < info.height; y += 1) {
+				for (let x = Math.floor(info.width / 2); x < info.width; x += 1) {
+					const index = (y * info.width + x) * info.channels
+					sum += Math.abs((data[index + 1] ?? 0) - bleedGreen(y))
+					count += 1
+				}
+			}
+			return sum / count
+		}
+		expect(await bleedError(exact.path)).toBeLessThan(5)
+		expect(await bleedError(inside.path)).toBeGreaterThan(5)
 	})
 
 	test("distinct specs land on distinct cache files", async () => {
