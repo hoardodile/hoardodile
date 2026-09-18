@@ -1056,6 +1056,19 @@
 			"confirm": "Tienes cambios sin guardar en este documento. ¿Salir de todos modos?"
 		},
 		"moreActions": "Más acciones",
+		"find": {
+			"placeholder": "Buscar en el documento",
+			"replacePlaceholder": "Reemplazar por",
+			"matchCase": "Distinguir mayúsculas",
+			"toggleReplace": "Mostrar u ocultar reemplazo",
+			"previous": "Coincidencia anterior",
+			"next": "Coincidencia siguiente",
+			"counter": "{{current}} / {{total}}",
+			"noResults": "Sin coincidencias",
+			"replace": "Reemplazar",
+			"replaceAll": "Reemplazar todo",
+			"close": "Cerrar"
+		},
 		"zoom": {
 			"label": "Zoom del texto",
 			"smaller": "Alejar",

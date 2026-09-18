@@ -1056,6 +1056,19 @@
 			"confirm": "Du hast ungespeicherte Änderungen in diesem Dokument. Trotzdem verlassen?"
 		},
 		"moreActions": "Weitere Aktionen",
+		"find": {
+			"placeholder": "Im Dokument suchen",
+			"replacePlaceholder": "Ersetzen durch",
+			"matchCase": "Groß-/Kleinschreibung beachten",
+			"toggleReplace": "Ersetzen ein-/ausblenden",
+			"previous": "Vorheriger Treffer",
+			"next": "Nächster Treffer",
+			"counter": "{{current}} / {{total}}",
+			"noResults": "Keine Treffer",
+			"replace": "Ersetzen",
+			"replaceAll": "Alle ersetzen",
+			"close": "Schließen"
+		},
 		"zoom": {
 			"label": "Textzoom",
 			"smaller": "Verkleinern",

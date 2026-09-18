@@ -1,10 +1,11 @@
-import type { CSSProperties, Ref } from "react"
+import type { CSSProperties, ReactNode, Ref } from "react"
 import { memo } from "react"
 import { DocStatusBar } from "@/features/doc/components/DocStatusBar"
 import {
 	DocEditor,
 	type DocEditorHandle,
 } from "@/features/doc/editor/DocEditor"
+import type { DocEditorInstance } from "@/features/doc/editor/schema"
 import { DocEditorSkeleton } from "./DocEditorSkeleton"
 
 export type DocMainEditorProps = {
@@ -25,7 +26,7 @@ export type DocMainEditorProps = {
 	) => void
 	readonly onCharCountChange?: (count: number) => void
 	readonly handleRef?: Ref<DocEditorHandle>
-	readonly onReady?: () => (() => void) | undefined
+	readonly onReady?: (editor: DocEditorInstance) => (() => void) | undefined
 }
 
 export type DocDiffEditorProps = {
@@ -48,6 +49,11 @@ export type DocEditorColumnProps = {
 	readonly diffMode: boolean
 	readonly mainEditor: DocMainEditorProps
 	readonly diffEditor?: DocDiffEditorProps
+	/**
+	 * Floating widget for the main editor's sticky toolbar band (the find &
+	 * replace card); the diff twin never gets one.
+	 */
+	readonly findPanel?: ReactNode
 	/** Rendered below the editor body in the normal view only. */
 	readonly statusBar?: {
 		readonly charCount: number
@@ -76,6 +82,7 @@ export const DocEditorColumn = memo(function DocEditorColumn(
 		diffMode,
 		mainEditor,
 		diffEditor,
+		findPanel,
 		statusBar,
 	} = props
 
@@ -129,6 +136,7 @@ export const DocEditorColumn = memo(function DocEditorColumn(
 					onCharCountChange={mainEditor.onCharCountChange}
 					handleRef={mainEditor.handleRef}
 					onReady={mainEditor.onReady}
+					findPanel={findPanel}
 				/>
 			)}
 			{!diffMode && !readingView && statusBar !== undefined && (

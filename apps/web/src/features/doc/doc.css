@@ -381,6 +381,18 @@
 	text-decoration-color: oklch(0.7 0.12 25);
 }
 
+/* ── In-document find highlights ──────────────────────────────────── */
+
+.doc [data-doc-zoom-root] .ProseMirror .doc-search-match {
+	background: color-mix(in oklab, var(--primary) 20%, transparent);
+	border-radius: 0.2em;
+}
+
+.doc [data-doc-zoom-root] .ProseMirror .doc-search-match-active {
+	background: color-mix(in oklab, var(--primary) 45%, transparent);
+	box-shadow: 0 0 0 2px color-mix(in oklab, var(--primary) 25%, transparent);
+}
+
 /* ── Motion ──────────────────────────────────────────────────────── */
 
 .doc-reveal {

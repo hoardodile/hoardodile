@@ -1056,6 +1056,19 @@
 			"confirm": "このドキュメントには未保存の変更があります。それでも離れますか？"
 		},
 		"moreActions": "その他の操作",
+		"find": {
+			"placeholder": "ドキュメント内を検索",
+			"replacePlaceholder": "置換後の文字列",
+			"matchCase": "大文字と小文字を区別",
+			"toggleReplace": "置換の表示を切り替え",
+			"previous": "前の一致",
+			"next": "次の一致",
+			"counter": "{{current}} / {{total}}",
+			"noResults": "一致なし",
+			"replace": "置換",
+			"replaceAll": "すべて置換",
+			"close": "閉じる"
+		},
 		"zoom": {
 			"label": "文字の拡大率",
 			"smaller": "縮小",

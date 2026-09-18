@@ -1,5 +1,5 @@
 import { cn } from "@hoardodile/ui/lib/utils"
-import { memo, useEffect, useState } from "react"
+import { memo, type ReactNode, useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import type { DocEditorInstance } from "../schema.ts"
 import { ColorPickerToolbarButton } from "./ColorPickerToolbarButton.tsx"
@@ -28,6 +28,13 @@ import { applyTagChip, getActiveTagChipColor } from "./tagChipToolbar.ts"
 export type EditorStaticToolbarProps = {
 	readonly editor: DocEditorInstance
 	readonly editable: boolean
+	/**
+	 * Floating widget pinned to the bottom edge of this sticky band — the
+	 * in-document find & replace card. Rendered even when the toolbar's own
+	 * buttons are not (read-only views), which keeps the widget anchored in
+	 * the same place everywhere.
+	 */
+	readonly findPanel?: ReactNode
 }
 
 type ToolbarState = {
@@ -113,12 +120,46 @@ function toolbarStateEquals(a: ToolbarState, b: ToolbarState): boolean {
  * - The bar wraps onto multiple rows on narrow viewports so every
  *   tool stays reachable without horizontal scrolling, and remains
  *   sticky to the top of the scroll container at every breakpoint.
+ * - It owns the sticky band itself, so it is also the anchor for the
+ *   floating find widget (`findPanel`), which hangs off the band's bottom
+ *   edge — one compact overlay below the tools, never a second row.
  */
 export function EditorStaticToolbar(props: EditorStaticToolbarProps) {
-	const { editor, editable } = props
+	const { editor, editable, findPanel } = props
 	const toolbarState = useEditorToolbarState(editor)
-	if (!editable) return undefined
-	return <ToolbarCore editor={editor} toolbarState={toolbarState} />
+	// The row also hosts the floating find widget, so it exists in read-only
+	// views too — as a zero-height, chrome-less anchor.
+	if (!editable && findPanel === undefined) return undefined
+	return (
+		<div
+			className={cn(
+				// The track is the sticky band of the editor; the find widget
+				// hangs off it (it is a positioned element, so `absolute`
+				// children anchor here without any height constants).
+				"sticky z-21 -mx-5 flex flex-wrap items-center gap-x-0.5 gap-y-1 md:mx-0",
+				// Header is in the document only at `sidebar:` (≥ `--breakpoint-sidebar`);
+				// below that it portals into the shell topbar outside `<main>`.
+				"max-sidebar:-top-0.5 sidebar:top-17 desktop-shell:max-sidebar:-top-1 desktop-shell:sidebar:top-9",
+				editable
+					? "doc-toolbar rounded-none border-x-0 border-t-0 px-2 py-1.5"
+					: "p-0",
+			)}
+			data-testid="document-static-toolbar"
+		>
+			{editable && <ToolbarCore editor={editor} toolbarState={toolbarState} />}
+			{findPanel !== undefined && (
+				<div
+					// `-mx-5` above (`md:mx-0`) makes the row wider than the
+					// reading column below md; the inline offset cancels that
+					// so the widget stays flush with the column's right edge.
+					className="absolute top-full right-5 z-30 mt-1.5 md:right-0"
+					data-testid="document-find-anchor"
+				>
+					{findPanel}
+				</div>
+			)}
+		</div>
+	)
 }
 
 type ToolbarCoreProps = {
@@ -204,16 +245,7 @@ const ToolbarCore = memo(function ToolbarCore(props: ToolbarCoreProps) {
 		applyTagChip(editor, color)
 	}
 	return (
-		<div
-			className={cn(
-				"sticky z-21 -mx-5 flex flex-wrap items-center gap-x-0.5 gap-y-1 md:mx-0",
-				// Header is in the document only at `sidebar:` (≥ `--breakpoint-sidebar`);
-				// below that it portals into the shell topbar outside `<main>`.
-				"max-sidebar:-top-0.5 sidebar:top-17 desktop-shell:max-sidebar:-top-1 desktop-shell:sidebar:top-9",
-				"doc-toolbar rounded-none border-x-0 border-t-0 px-2 py-1.5",
-			)}
-			data-testid="document-static-toolbar"
-		>
+		<>
 			<ToolbarToggle
 				label={t("documents.toolbar.h1")}
 				pressed={headingLevel === 1}
@@ -331,7 +363,7 @@ const ToolbarCore = memo(function ToolbarCore(props: ToolbarCoreProps) {
 				disabled={selectionEmpty}
 				editor={editor}
 			/>
-		</div>
+		</>
 	)
 })
 

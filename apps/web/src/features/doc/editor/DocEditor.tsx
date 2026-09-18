@@ -19,6 +19,7 @@ import { Box, User } from "@hoardodile/ui/icons/registry"
 import { useQueryClient } from "@tanstack/react-query"
 import { redoDepth, undoDepth } from "prosemirror-history"
 import {
+	type ReactNode,
 	type Ref,
 	useCallback,
 	useEffect,
@@ -40,7 +41,8 @@ import {
 	extractHeadings,
 	normalizeInitialBlocks,
 } from "./handle.ts"
-import { type DocBlock, docSchema } from "./schema.ts"
+import { type DocBlock, type DocEditorInstance, docSchema } from "./schema.ts"
+import { docSearchExtension } from "./search/docSearchExtension.ts"
 
 import { EditorStaticToolbar } from "./toolbar/EditorStaticToolbar.tsx"
 
@@ -73,10 +75,15 @@ export type DocEditorProps = {
 	readonly onCharCountChange?: (count: number) => void
 	readonly handleRef?: Ref<DocEditorHandle>
 	/**
-	 * Fired once after the BlockNote editor instance is ready.
-	 * Return a cleanup function to run when the editor unmounts.
+	 * Floating widget pinned under the editor's sticky toolbar band (the
+	 * in-document find & replace card). Omitted by the read-only diff twin.
 	 */
-	readonly onReady?: () => (() => void) | undefined
+	readonly findPanel?: ReactNode
+	/**
+	 * Fired once after the BlockNote editor instance is ready, with that
+	 * instance. Return a cleanup function to run when the editor unmounts.
+	 */
+	readonly onReady?: (editor: DocEditorInstance) => (() => void) | undefined
 }
 
 /**
@@ -129,6 +136,9 @@ export function DocEditor(props: DocEditorProps) {
 		initialContent: initialBlocks,
 		animations: false,
 		dictionary,
+		// In-document find & replace highlights (see useDocFind): the
+		// extension only renders the ranges React hands it.
+		extensions: [docSearchExtension()],
 	})
 
 	const queryClient = useQueryClient()
@@ -157,7 +167,7 @@ export function DocEditor(props: DocEditorProps) {
 	)
 
 	useEffect(() => {
-		const cleanup = onReadyRef.current?.()
+		const cleanup = onReadyRef.current?.(editor)
 		return () => {
 			if (typeof cleanup === "function") cleanup()
 		}
@@ -297,7 +307,11 @@ export function DocEditor(props: DocEditorProps) {
 
 	return (
 		<>
-			<EditorStaticToolbar editor={editor} editable={editable} />
+			<EditorStaticToolbar
+				editor={editor}
+				editable={editable}
+				findPanel={props.findPanel}
+			/>
 			<BlockNoteView
 				editor={editor}
 				editable={editable}

@@ -16,6 +16,7 @@ import { docDetailPageQueryOptions } from "@/features/doc"
 import { DocDetailHeader } from "@/features/doc/components/DocDetailHeader"
 import { DocDetailMeta } from "@/features/doc/components/DocDetailMeta"
 import { DocEditorSkeleton } from "@/features/doc/components/DocEditorSkeleton"
+import { DocFindBar } from "@/features/doc/components/DocFindBar"
 import type { HeadingInfo } from "@/features/doc/components/DocHeadingNav"
 import { DocNotFound } from "@/features/doc/components/DocNotFound"
 import {
@@ -29,10 +30,12 @@ import {
 } from "@/features/doc/DocCommitDialogs"
 import { useDocLayout } from "@/features/doc/DocLayoutContext"
 import type { DocEditorHandle } from "@/features/doc/editor/DocEditor"
+import type { DocEditorInstance } from "@/features/doc/editor/schema"
 import { useDocCommitDialogs } from "@/features/doc/hooks/useDocCommitDialogs"
 import { useDocDeletedExit } from "@/features/doc/hooks/useDocDeletedExit"
 import { useDocDiff } from "@/features/doc/hooks/useDocDiff"
 import { useDocDraft } from "@/features/doc/hooks/useDocDraft"
+import { useDocFind } from "@/features/doc/hooks/useDocFind"
 import { useDocFontSlot } from "@/features/doc/hooks/useDocFontSlot"
 import { useDocLeaveGuard } from "@/features/doc/hooks/useDocLeaveGuard"
 import {
@@ -105,6 +108,11 @@ function DocDetailRoute() {
 	const editorHandleRef = useRef<DocEditorHandle | null>(null)
 	const [headings, setHeadings] = useState<HeadingInfo[]>([])
 	const [mobileNavOpen, setMobileNavOpen] = useState(false)
+	// The live main editor, published by `onReady`; `undefined` while the
+	// editor is unmounted (before its deferred mount, and in diff mode).
+	const [mainEditor, setMainEditor] = useState<DocEditorInstance | undefined>(
+		undefined,
+	)
 
 	// Mount the editor one frame after the route commits so the header and
 	// title paint first; re-defer when switching to another document.
@@ -177,6 +185,14 @@ function DocDetailRoute() {
 	const previewModeForUI = prefs.previewMode || isTrashed || diff.diffMode
 	const inReadingView = readingView && !isTrashed && !diff.diffMode
 
+	// In-document find & replace: search everywhere the body is readable,
+	// replace only where it is editable.
+	const find = useDocFind({
+		editor: mainEditor,
+		docId: id,
+		readOnly: previewModeForUI || inReadingView,
+	})
+
 	const handleNavigateToHeading = useCallback(function handleNavigateToHeading(
 		blockId: string,
 	) {
@@ -239,6 +255,19 @@ function DocDetailRoute() {
 			})
 			.catch(() => {})
 	})
+
+	// The browser's own find bar cannot search inside the editor's
+	// document, so the shortcut opens ours instead — everywhere the main
+	// editor exists (in diff mode the browser keeps its native find).
+	useKeybinding({ key: "f", ctrlOrMeta: true }, find.openFind, !diff.diffMode)
+
+	// Ctrl+H is the conventional "replace" companion: open and jump
+	// straight to the replacement field.
+	useKeybinding(
+		{ key: "h", ctrlOrMeta: true },
+		find.openReplace,
+		!diff.diffMode && !previewModeForUI && !inReadingView,
+	)
 
 	useKeybinding(
 		{ key: "escape" },
@@ -393,6 +422,7 @@ function DocDetailRoute() {
 					onOpenHeadingNav={
 						headings.length > 0 ? handleOpenHeadingNav : undefined
 					}
+					onOpenFind={diff.diffMode ? undefined : find.openFind}
 				/>
 			)}
 
@@ -448,6 +478,14 @@ function DocDetailRoute() {
 							editorMounted={editorReady}
 							readingView={inReadingView}
 							diffMode={diff.diffMode}
+							// The find widget is pinned under the editor's sticky
+							// toolbar band; in diff mode the main editor is gone,
+							// so it is dropped with it.
+							findPanel={
+								find.open && !diff.diffMode ? (
+									<DocFindBar {...find.bar} />
+								) : undefined
+							}
 							mainEditor={{
 								value: draft?.content,
 								editable: !prefs.previewMode && !isTrashed,
@@ -459,6 +497,13 @@ function DocDetailRoute() {
 								onHeadingsChange: setHeadings,
 								onCharCountChange: draftState.onCharCountChange,
 								handleRef: editorHandleRef,
+								onReady: (editor) => {
+									setMainEditor(editor)
+									// Diff mode unmounts the main editor; dropping
+									// the reference keeps the find bar from acting
+									// on a destroyed view.
+									return () => setMainEditor(undefined)
+								},
 							}}
 							diffEditor={
 								diff.diffMode

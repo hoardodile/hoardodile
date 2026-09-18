@@ -7,9 +7,10 @@ conflict resolution.
 
 ```
 apps/web/src/features/doc/
-├── components/         Page pieces (header, editor column, status bar, conflict banner)
+├── components/         Page pieces (header, editor column, status bar, find bar)
 ├── editor/             BlockNote editor wiring + imperative handle
-├── hooks/              Draft state machine, autosave, diff, commit dialogs
+│   └── search/         In-document find & replace (locale-agnostic match/replace)
+├── hooks/              Draft state machine, autosave, diff, commit dialogs, find
 ├── offline/            Online status signal + error classifiers
 ├── api.ts              tRPC query/mutation options
 ├── contentShape.ts     Stored-content format + legacy shape normalization
@@ -65,6 +66,41 @@ content buffer, dirty tracking with phantom-change suppression, debounced
 autosave, manual save, discard, and the commit gate. Server round-trips go
 through `hooks/useDocDraftMutations.ts` (unconditional `patchDraft`, plus
 commit/discard).
+
+## In-document find & replace
+
+`hooks/useDocFind.ts` owns the search state for one document body: the query,
+the match list and the active match. Matching (`editor/search/findMatches.ts`)
+is a pure scan of the ProseMirror document — literal, per text node, so a
+match never spans an inline chip and every range is replaceable in one step.
+React stays the single source of truth; the BlockNote extension in
+`editor/search/docSearchExtension.ts` only renders the ranges it is handed as
+`Decoration.inline` highlights (`.doc-search-match`, `-active` in `doc.css`).
+
+`components/DocFindBar.tsx` is the compact floating widget — VS Code's
+in-document find control, pinned to the bottom edge of the editor's sticky
+toolbar band (`EditorStaticToolbar`'s `findPanel` slot, so it never needs a
+height offset and never collides with the toolbar) — opened by the header
+button or `Ctrl/Cmd+F`. The replace row starts collapsed and is expanded by
+its chevron or by `Ctrl+H`, which also focuses the replacement field.
+Replacing (`editor/search/replaceMatches.ts`) dispatches an ordinary document
+transaction per action — one undo step, and the existing draft/autosave
+pipeline picks the edit up — with the replaced text keeping the marks of the
+text it replaced. Preview, reading and recycle-bin views search without
+replacing; diff mode leaves the browser's own find alone.
+
+## Leaving a deleted document
+
+A document that is deleted while it is open must not keep filling the canvas.
+`hooks/useDocDeletedExit.ts` reacts to the transition — never to the state — so
+an already-trashed document opened from the recycle bin still renders its
+read-only preview: a document observed live and then soft-deleted (or answered
+as missing) sends the route back to `/documents`. The unsaved-changes guard is
+disabled while that exit is in flight. Permanently deleting the open document
+from the recycle bin is handled at the source (`DocTrashList`), because the
+detail refetch cannot report a missing row as `NOT_FOUND` — the tRPC layer
+answers every domain error as `INTERNAL_SERVER_ERROR`, so React Query would
+otherwise keep the last payload on screen.
 
 ## Diff view
 

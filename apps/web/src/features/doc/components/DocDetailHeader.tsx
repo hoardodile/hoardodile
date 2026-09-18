@@ -24,6 +24,7 @@ import {
 	Eye,
 	MagnifierZoomIn as MagniferZoomIn,
 	MagnifierZoomOut as MagniferZoomOut,
+	Magnifier,
 	Pen,
 	PenNewRound,
 	SidebarMinimalistic,
@@ -81,6 +82,11 @@ export type DocDetailHeaderProps = {
 	 * button in the shell's top-bar actions slot when provided.
 	 */
 	readonly onOpenHeadingNav?: () => void
+	/**
+	 * Open the in-document find & replace bar. Omitted in diff mode, where
+	 * the main editor is unmounted.
+	 */
+	readonly onOpenFind?: () => void
 }
 
 /**
@@ -123,6 +129,9 @@ export const DocDetailHeader = memo(function DocDetailHeader(
 							{props.onOpenHeadingNav !== undefined && (
 								<HeadingNavButton onOpen={props.onOpenHeadingNav} />
 							)}
+							{props.onOpenFind !== undefined && (
+								<FindButton onOpen={props.onOpenFind} />
+							)}
 							{!props.previewModeLocked && <PreviewToggle {...props} />}
 							<MoreMenu {...props} />
 							{!props.previewMode && <SavePrimary {...props} />}
@@ -160,6 +169,9 @@ export const DocDetailHeader = memo(function DocDetailHeader(
 					    the shell's top bar. */}
 					<div className="flex min-w-0 items-center gap-2">
 						<MoreMenu {...props} />
+						{props.onOpenFind !== undefined && (
+							<FindButton onOpen={props.onOpenFind} />
+						)}
 						{props.onOpenHeadingNav !== undefined && (
 							<HeadingNavButton
 								onOpen={props.onOpenHeadingNav}
@@ -196,6 +208,29 @@ function HeadingNavButton(props: {
 			data-testid="document-open-heading-nav"
 		>
 			<SidebarMinimalistic className="size-4" strokeWidth={1.6} />
+		</Button>
+	)
+}
+
+function FindButton(props: {
+	readonly onOpen: () => void
+	readonly className?: string
+}) {
+	const { t } = useTranslation()
+	return (
+		<Button
+			variant="ghost"
+			size="icon"
+			className={cn(
+				"size-8 text-muted-foreground hover:text-foreground",
+				props.className,
+			)}
+			onClick={props.onOpen}
+			title={t("documents.find.placeholder")}
+			aria-label={t("documents.find.placeholder")}
+			data-testid="document-find-open"
+		>
+			<Magnifier className="size-4" strokeWidth={1.6} />
 		</Button>
 	)
 }
