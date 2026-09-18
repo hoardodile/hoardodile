@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.2.3](https://github.com/hoardodile/hoardodile/compare/v0.2.2...v0.2.3) (2026-09-18)
+
+### Features
+
+* **web:** add in-document find and replace to the document editor ([ed70551](https://github.com/hoardodile/hoardodile/commit/ed705512b7384016e6e373a25d142e7f88ef2cf9))
+* **web:** leave the page when the open document is deleted ([3df4569](https://github.com/hoardodile/hoardodile/commit/3df4569e9e49487f9e6a1e642d1d31dcec342187))
+
+### Bug Fixes
+
+* **web:** keep tree row menu clicks off the row and rename in a dialog ([194a2d2](https://github.com/hoardodile/hoardodile/commit/194a2d26f11af7acdf3b76887cc4bce66b602978))
+
 ## [0.2.2](https://github.com/hoardodile/hoardodile/compare/v0.2.1...v0.2.2) (2026-09-13)
 
 ### Features
