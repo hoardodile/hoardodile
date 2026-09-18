@@ -10,10 +10,7 @@ import { useCallback, useMemo, useState } from "react"
 import { createPortal } from "react-dom"
 import { z } from "zod"
 import { useClaimSidebarSlot } from "@/components/layout/sidebarSlot"
-import {
-	docDetailPageQueryOptions,
-	docWorkspaceQueryOptions,
-} from "@/features/doc"
+import { docTreeQueryOptions } from "@/features/doc"
 import { DocAppearanceSettingsDialog } from "@/features/doc/components/DocAppearanceSettingsDialog"
 import { DocFilterDialog } from "@/features/doc/components/DocFilterDialog"
 import { SidebarTopSection } from "@/features/doc/components/SidebarTopSection"
@@ -60,32 +57,22 @@ export const Route = createFileRoute("/documents")({
  * canvas. On mobile the shell renders the same slot inside its drawer, so
  * the tree module is mounted exactly once either way.
  *
- * The layout owns the single workspace query (tree + masked AI
- * config), so child routes never refetch the tree just to render a
- * detail panel.
+ * The layout owns the one live-tree query every tree surface shares, so a
+ * child route never refetches the tree just to render a detail panel and a
+ * tree mutation leaves no stale copy behind for the next navigation to paint.
  */
 function DocsLayout() {
 	const slot = useClaimSidebarSlot()
 	const activeId = useActiveDocId()
-	const detailPageQuery = useQuery({
-		...docDetailPageQueryOptions(activeId ?? ""),
-		enabled: activeId !== undefined,
-	})
-	const workspaceQuery = useQuery({
-		...docWorkspaceQueryOptions(),
-		enabled: activeId === undefined,
-	})
-	const nodes = detailPageQuery.data?.tree ?? workspaceQuery.data?.tree ?? []
+	const treeQuery = useQuery(docTreeQueryOptions())
+	const nodes = treeQuery.data ?? []
 	const documentCount = useMemo(
 		function countDocuments() {
 			return nodes.filter((node) => node.kind === "document").length
 		},
 		[nodes],
 	)
-	const workspaceLoading =
-		activeId !== undefined
-			? detailPageQuery.isPending
-			: workspaceQuery.isPending
+	const treeLoading = treeQuery.isPending
 	const search = Route.useSearch()
 	const charIds = search.charIds ?? []
 	const resIds = search.resIds ?? []
@@ -129,7 +116,7 @@ function DocsLayout() {
 		>
 			<SidebarTopSection
 				count={documentCount}
-				isLoading={workspaceLoading}
+				isLoading={treeLoading}
 				searchValue={sidebar.filter}
 				onSearchChange={sidebar.setFilter}
 				charIds={charIds}
@@ -164,7 +151,7 @@ function DocsLayout() {
 						activeId={activeId}
 						editMode={sidebar.editMode}
 						onSelect={handleCloseMobileTree}
-						isLoading={workspaceLoading}
+						isLoading={treeLoading}
 						expandedIds={expansion.expandedIds}
 						onToggleExpanded={expansion.toggleExpanded}
 						onExpandIds={expansion.expandIds}

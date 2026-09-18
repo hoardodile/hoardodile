@@ -2,7 +2,6 @@ import type {
 	DocAdoptVersionInput,
 	DocCommitInput,
 	DocCreateInput,
-	DocDetailPageOutput,
 	DocDraft,
 	DocDraftPatchInput,
 	DocMoveBatchInput,
@@ -222,11 +221,6 @@ export type DocService = {
 	 * empty), and the lightweight version history into one round-trip.
 	 */
 	nodeView(id: string): Promise<DocNodeView>
-	/**
-	 * Bootstrap payload for the document detail route: the full live tree
-	 * plus the active node's view in one call.
-	 */
-	detailPage(id: string): Promise<DocDetailPageOutput>
 
 	createNode(input: DocCreateInput): Promise<DocNode>
 	renameNode(input: DocRenameInput): Promise<DocNode>
@@ -589,19 +583,11 @@ export function createDocumentService(deps: DocServiceDeps): DocService {
 		return buildNodeView(repo.findById(id))
 	}
 
-	function detailPage(id: string): DocDetailPageOutput {
-		return {
-			tree: [...tree()],
-			nodeView: buildNodeView(repo.findById(id)),
-		}
-	}
-
 	return wrapAsync({
 		listChildren,
 		tree,
 		detail,
 		nodeView,
-		detailPage,
 		createNode,
 		renameNode,
 		softDelete,

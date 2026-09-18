@@ -114,17 +114,6 @@ export const docNodeView = z.object({
 })
 export type DocNodeView = z.infer<typeof docNodeView>
 
-/**
- * Merged detail-page bootstrap payload. Returns the full live tree and the
- * active document's node view in a single round-trip so the layout shell and
- * the detail route never fan out into two tRPC calls.
- */
-export const docDetailPageOutput = z.object({
-	tree: z.array(docNode),
-	nodeView: docNodeView,
-})
-export type DocDetailPageOutput = z.infer<typeof docDetailPageOutput>
-
 // ---- Inputs ----
 
 export const docCreateInput = z.object({

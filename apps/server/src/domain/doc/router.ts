@@ -2,7 +2,6 @@ import {
 	docAdoptVersionInput,
 	docCommitInput,
 	docCreateInput,
-	docDetailPageOutput,
 	docDraft,
 	docDraftPatchInput,
 	docMoveBatchInput,
@@ -32,31 +31,12 @@ export function buildDocumentRouter(deps: { readonly documents: DocService }) {
 			.input(parentIdInput)
 			.query(({ input }) => deps.documents.listChildren(input.parentId)),
 		tree: authedProcedure.query(() => deps.documents.tree()),
-		/**
-		 * Bootstrap payload for the unified documents page: tree of every
-		 * live node in one round-trip so the layout shell never fans out.
-		 */
-		workspace: authedProcedure.query(async () => ({
-			tree: await deps.documents.tree(),
-		})),
 		detail: authedProcedure
 			.input(idInput)
 			.query(({ input }) => deps.documents.detail(input.id)),
 		nodeView: authedProcedure
 			.input(idInput)
 			.query(({ input }) => deps.documents.nodeView(input.id)),
-		/**
-		 * Merged bootstrap for the document detail route. Returns the full
-		 * live tree plus the active node's view in one round-trip so the
-		 * layout and detail route share a single request.
-		 */
-		detailPage: authedProcedure
-			.input(idInput)
-			.output(docDetailPageOutput)
-			.query(async ({ input }) => {
-				const { tree, nodeView } = await deps.documents.detailPage(input.id)
-				return { tree, nodeView }
-			}),
 		create: writeProcedure
 			.input(docCreateInput)
 			.mutation(({ input }) => deps.documents.createNode(input)),

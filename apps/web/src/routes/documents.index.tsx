@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query"
 import { createFileRoute, Link } from "@tanstack/react-router"
 import { useMemo } from "react"
 import { useTranslation } from "react-i18next"
-import { docWorkspaceQueryOptions } from "@/features/doc"
+import { docTreeQueryOptions } from "@/features/doc"
 import { useDocsHomeLastOpened } from "@/features/doc/hooks/useDocsHomeLastOpened"
 import { useRelativeTime } from "@/features/overview/hooks/useRelativeTime"
 
@@ -31,9 +31,9 @@ function DocsIndex() {
 	const { t } = useTranslation()
 	const relativeTime = useRelativeTime()
 	useDocsHomeLastOpened()
-	const workspace = useQuery(docWorkspaceQueryOptions())
-	const nodes = workspace.data?.tree ?? []
-	const isLoading = workspace.isPending
+	const tree = useQuery(docTreeQueryOptions())
+	const nodes = tree.data ?? []
+	const isLoading = tree.isPending
 
 	const sections = useMemo(() => buildDocSections(nodes), [nodes])
 	const folderCount = useMemo(

@@ -11,6 +11,7 @@ import {
 	apiLogin,
 	createResource,
 	fetchServerLogs,
+	trpcPost,
 	uploadOrderedFile,
 } from "./serverApi"
 import { solidPng } from "./testArchive"
@@ -323,3 +324,159 @@ test.describe("client log → diagnostics → server log", () => {
 			.toContain(marker)
 	})
 })
+
+/**
+ * One sidebar state, recorded on a single animation frame. The stale-tree
+ * flash lived for a couple of frames between two paints, so a settled-DOM
+ * assertion could never see it — every distinct frame is kept instead.
+ */
+type TreeFrame = {
+	readonly t: number
+	readonly path: string
+	readonly canvasTitle: string
+	readonly tree: string
+}
+
+type SamplerWindow = {
+	__treeFrames: TreeFrame[]
+	__treeSampling: boolean
+}
+
+/** Record every distinct sidebar + canvas-title state on each frame. */
+async function startTreeSampling(page: Page): Promise<void> {
+	await page.evaluate(() => {
+		const sampler = window as unknown as SamplerWindow
+		sampler.__treeFrames = []
+		sampler.__treeSampling = true
+		let last = ""
+		function tick() {
+			if (!sampler.__treeSampling) return
+			const sidebar = document.querySelector(
+				'[data-testid="documents-sidebar"]',
+			)
+			const tree = (sidebar?.textContent ?? "(no sidebar)")
+				.replace(/\s+/g, " ")
+				.trim()
+			const input = document.querySelector<HTMLInputElement>(
+				'[data-testid="document-title"]',
+			)
+			const canvasTitle =
+				input?.value ??
+				document.querySelector('[data-testid="document-title-readonly"]')
+					?.textContent ??
+				"(none)"
+			const frame = `${window.location.pathname}|${canvasTitle}|${tree}`
+			if (frame !== last) {
+				last = frame
+				sampler.__treeFrames.push({
+					t: Math.round(performance.now()),
+					path: window.location.pathname,
+					canvasTitle,
+					tree,
+				})
+			}
+			requestAnimationFrame(tick)
+		}
+		requestAnimationFrame(tick)
+	})
+}
+
+async function stopTreeSampling(page: Page): Promise<TreeFrame[]> {
+	return page.evaluate(() => {
+		const sampler = window as unknown as SamplerWindow
+		sampler.__treeSampling = false
+		return sampler.__treeFrames
+	})
+}
+
+/**
+ * Document tree freshness. The sidebar used to read its nodes out of a
+ * per-document payload (`detailPage`), whose cached copy survives a rename:
+ * opening that document — a hover preload counts as "opened" for the router
+ * — repainted the pre-change tree until the refetch landed. The tree now has
+ * one cache of its own, so no navigation can resurrect an outdated snapshot.
+ */
+test.describe("document tree freshness", () => {
+	for (const target of ["hover-preloaded", "previously-opened"] as const) {
+		test(`a rename is not repainted away by the next ${target} document`, async ({
+			page,
+			request,
+		}) => {
+			const renamed = `Renamed-${Date.now()}-${target}`
+			await login(page)
+			const cookie = await apiLogin(request)
+			const alpha = await createTreeDocument(request, cookie, `Alpha ${target}`)
+			const beta = await createTreeDocument(request, cookie, `Beta ${target}`)
+
+			await page.goto("/documents")
+			await expect(page.getByTestId(`documents-open-${alpha}`)).toBeVisible()
+
+			if (target === "hover-preloaded") {
+				// Never opened: the router's intent preload is what has to
+				// cache (and later go stale on) this document.
+				await page.getByTestId(`documents-open-${beta}`).hover()
+				await page.waitForTimeout(300)
+			} else {
+				await page.getByTestId(`documents-open-${beta}`).click()
+				await expect(page.getByTestId("document-title")).toHaveValue(
+					`Beta ${target}`,
+				)
+			}
+
+			await page.getByTestId(`documents-open-${alpha}`).click()
+			await expect(page.getByTestId("document-title")).toHaveValue(
+				`Alpha ${target}`,
+			)
+			await page.getByTestId(`documents-more-${alpha}`).click()
+			await page.getByTestId(`documents-rename-${alpha}`).click()
+			await page.getByTestId(`documents-rename-input-${alpha}`).fill(renamed)
+			await page.getByTestId(`documents-rename-confirm-${alpha}`).click()
+			await expect(page.getByTestId(`documents-open-${alpha}`)).toHaveText(
+				renamed,
+			)
+
+			// Widen the window a stale tree would be visible in, so the
+			// assertion cannot depend on machine speed. tRPC batches its
+			// procedures into one URL, hence the loose glob.
+			let slowed = 0
+			await page.route("**/trpc/**document.*", async (route) => {
+				slowed += 1
+				await new Promise((resolve) => setTimeout(resolve, 400))
+				await route.continue()
+			})
+
+			await startTreeSampling(page)
+			await page.getByTestId(`documents-open-${beta}`).click()
+			await expect(page.getByTestId("document-title")).toHaveValue(
+				`Beta ${target}`,
+			)
+			await page.waitForTimeout(1_000)
+
+			const frames = await stopTreeSampling(page)
+			const landed = frames.findIndex((f) => f.path.endsWith(`/${beta}`))
+			expect(landed, "the click never reached the target document").not.toBe(-1)
+			expect(slowed, "the target document was never fetched").toBeGreaterThan(0)
+			const stale = frames
+				.slice(landed)
+				.filter((frame) => !frame.tree.includes(renamed))
+			expect(stale, "sidebar repainted the pre-rename tree").toEqual([])
+		})
+	}
+})
+
+/** Create a root document over the API; returns its id. */
+async function createTreeDocument(
+	request: APIRequestContext,
+	cookie: string,
+	title: string,
+): Promise<string> {
+	const body = (await trpcPost(request, cookie, "document.create", {
+		kind: "document",
+		title,
+	})) as { result?: { data?: { id?: string } } }
+	const id = body.result?.data?.id
+	if (typeof id !== "string") {
+		throw new Error(`document.create returned no id: ${JSON.stringify(body)}`)
+	}
+	return id
+}

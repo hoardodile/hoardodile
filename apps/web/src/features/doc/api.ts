@@ -6,18 +6,26 @@ import { isNotFoundError } from "./offline/errors"
 export const docKeys = {
 	all: ["document"] as const,
 	tree: () => [...docKeys.all, "tree"] as const,
-	workspace: () => [...docKeys.all, "workspace"] as const,
 	children: (parentId: string | undefined) =>
 		[...docKeys.all, "children", parentId ?? "root"] as const,
 	detail: (id: string) => [...docKeys.all, "detail", id] as const,
 	nodeView: (id: string) => [...docKeys.all, "nodeView", id] as const,
-	detailPage: (id: string) => [...docKeys.all, "detailPage", id] as const,
 	versions: (docId: string) => [...docKeys.all, "versions", docId] as const,
 	version: (versionId: string) =>
 		[...docKeys.all, "version", versionId] as const,
 	search: (input: object) => [...docKeys.all, "search", input] as const,
 } as const
 
+/**
+ * The one live-tree cache in the app. Every tree surface — the documents
+ * sidebar, the documents index and the shell's document count — reads this
+ * key, so a tree mutation has exactly one snapshot to refresh.
+ *
+ * Deriving the tree from a per-document payload instead lets a cached copy
+ * of the tree survive a rename / create: whoever opens that document next
+ * paints the pre-change tree until the refetch lands. One key, one source,
+ * no flash.
+ */
 export function docTreeQueryOptions() {
 	return queryOptions({
 		queryKey: docKeys.tree(),
@@ -26,26 +34,10 @@ export function docTreeQueryOptions() {
 	})
 }
 
-export function docWorkspaceQueryOptions() {
-	return queryOptions({
-		queryKey: docKeys.workspace(),
-		queryFn: () => trpcQuery("document", "workspace"),
-		staleTime: 2_000,
-	})
-}
-
 export function docNodeViewQueryOptions(id: string) {
 	return queryOptions({
 		queryKey: docKeys.nodeView(id),
 		queryFn: () => trpcQuery("document", "nodeView", { id }),
-		staleTime: 2_000,
-	})
-}
-
-export function docDetailPageQueryOptions(id: string) {
-	return queryOptions({
-		queryKey: docKeys.detailPage(id),
-		queryFn: () => trpcQuery("document", "detailPage", { id }),
 		staleTime: 2_000,
 		// A missing document is gone for good, not a transient blip: folding
 		// it into the app-wide `retry: 2` would keep a hard-deleted
@@ -79,7 +71,6 @@ export async function invalidateDocuments(
 	if (id !== undefined) {
 		await qc.invalidateQueries({ queryKey: docKeys.detail(id) })
 		await qc.invalidateQueries({ queryKey: docKeys.nodeView(id) })
-		await qc.invalidateQueries({ queryKey: docKeys.detailPage(id) })
 	}
 }
 
@@ -94,7 +85,6 @@ export function removeDocumentCaches(qc: QueryClient, id: string): void {
 	for (const queryKey of [
 		docKeys.detail(id),
 		docKeys.nodeView(id),
-		docKeys.detailPage(id),
 		docKeys.versions(id),
 	]) {
 		qc.removeQueries({ queryKey })

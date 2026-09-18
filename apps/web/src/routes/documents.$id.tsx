@@ -12,7 +12,7 @@ import { createFileRoute } from "@tanstack/react-router"
 import type { CSSProperties } from "react"
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { docDetailPageQueryOptions } from "@/features/doc"
+import { docNodeViewQueryOptions } from "@/features/doc"
 import { DocDetailHeader } from "@/features/doc/components/DocDetailHeader"
 import { DocDetailMeta } from "@/features/doc/components/DocDetailMeta"
 import { DocEditorSkeleton } from "@/features/doc/components/DocEditorSkeleton"
@@ -70,7 +70,7 @@ export const Route = createFileRoute("/documents/$id")({
 		// page: swallow the rejection so the component renders the
 		// friendly not-found state instead of the router's error boundary.
 		await context.queryClient
-			.ensureQueryData(docDetailPageQueryOptions(params.id))
+			.ensureQueryData(docNodeViewQueryOptions(params.id))
 			.catch(() => undefined)
 	},
 	component: DocDetailRoute,
@@ -82,15 +82,15 @@ function DocDetailRoute() {
 	const { t } = useTranslation()
 	const layout = useDocLayout()
 	const readingView = layout?.readingView ?? false
-	const detailPageQuery = useQuery(docDetailPageQueryOptions(id))
+	const nodeViewQuery = useQuery(docNodeViewQueryOptions(id))
 	const exposureQuery = useQuery({
 		...usageEntityExposureQueryOptions({
 			entityType: "document",
 			entityId: id,
 		}),
-		enabled: detailPageQuery.data?.nodeView?.node.kind === "document",
+		enabled: nodeViewQuery.data?.node.kind === "document",
 	})
-	const view = detailPageQuery.data?.nodeView
+	const view = nodeViewQuery.data
 	const node = view?.node
 	const isTrashed = node?.deletedAt != null
 	const draft = view?.draft
@@ -100,9 +100,9 @@ function DocDetailRoute() {
 	// leaving is the route's reaction to the deletion, wherever it came from.
 	const docExit = useDocDeletedExit({
 		docId: id,
-		isLoading: detailPageQuery.isLoading,
+		isLoading: nodeViewQuery.isLoading,
 		node,
-		error: detailPageQuery.error,
+		error: nodeViewQuery.error,
 	})
 
 	const editorHandleRef = useRef<DocEditorHandle | null>(null)
@@ -281,7 +281,7 @@ function DocDetailRoute() {
 		entityType: "document",
 		entityId: id,
 		enabled:
-			!detailPageQuery.isLoading &&
+			!nodeViewQuery.isLoading &&
 			!diff.diffMode &&
 			node?.kind === "document" &&
 			draft !== undefined,
@@ -293,7 +293,7 @@ function DocDetailRoute() {
 	// no business pointing at the recycle bin.
 	useEffect(() => {
 		if (
-			!detailPageQuery.isLoading &&
+			!nodeViewQuery.isLoading &&
 			node?.kind === "document" &&
 			node.deletedAt == null &&
 			!docExit.gone &&
@@ -308,7 +308,7 @@ function DocDetailRoute() {
 		node?.deletedAt,
 		docExit.gone,
 		draft,
-		detailPageQuery.isLoading,
+		nodeViewQuery.isLoading,
 		lastOpenedId,
 		setLastOpenedId,
 	])
@@ -319,18 +319,18 @@ function DocDetailRoute() {
 	// next click lands on the documents home. A document deleted while it
 	// is open counts as stale too.
 	useEffect(() => {
-		if (detailPageQuery.isLoading) return
+		if (nodeViewQuery.isLoading) return
 		if (node !== undefined && !docExit.gone) return
 		if (lastOpenedId !== "") setLastOpenedId("")
 	}, [
-		detailPageQuery.isLoading,
+		nodeViewQuery.isLoading,
 		node,
 		docExit.gone,
 		lastOpenedId,
 		setLastOpenedId,
 	])
 
-	if (detailPageQuery.isLoading) {
+	if (nodeViewQuery.isLoading) {
 		return (
 			<div className="flex h-full min-h-[50svh] flex-col items-center justify-center gap-4 text-muted-foreground">
 				<DocSpin className="size-10 text-primary/70" strokeWidth={6} />
