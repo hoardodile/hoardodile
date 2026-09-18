@@ -17,14 +17,15 @@ import {
 	UndoRightRound,
 } from "@hoardodile/ui/icons/registry"
 import { cn } from "@hoardodile/ui/lib/utils"
-import { useQuery } from "@tanstack/react-query"
-import { Link } from "@tanstack/react-router"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { Link, useNavigate } from "@tanstack/react-router"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import {
 	docSearchQueryOptions,
 	hardDeleteDocumentMutation,
 	invalidateDocuments,
+	removeDocumentCaches,
 	restoreDocumentMutation,
 } from "@/features/doc"
 import { useDocTheme } from "@/features/doc/hooks/useDocPrefs"
@@ -87,6 +88,8 @@ function TrashRow(props: TrashRowProps) {
 	const { node, isActive } = props
 	const { t } = useTranslation()
 	const { themeClass } = useDocTheme()
+	const navigate = useNavigate()
+	const qc = useQueryClient()
 	const [hardDeleteOpen, setHardDeleteOpen] = useState(false)
 	const [typed, setTyped] = useState("")
 	const isFolder = node.kind === "folder"
@@ -101,12 +104,21 @@ function TrashRow(props: TrashRowProps) {
 
 	const hardMut = useToastMutation({
 		...hardDeleteDocumentMutation(),
-		invalidate: (qc) => invalidateDocuments(qc, node.id),
 		successToastKey: "documents.toast.deletedForever",
 		errorToastKey: "documents.toast.deleteFailed",
 		onSuccess: () => {
 			setHardDeleteOpen(false)
 			setTyped("")
+			// Permanently deleting the document that is open behind the
+			// recycle bin must not leave its content on the canvas. Leave
+			// first (a hard delete is only reachable from here, so the local
+			// action is the reliable signal), then forget its cached views
+			// instead of refetching them: a missing document has nothing to
+			// answer with, and React Query keeps the stale payload alive on a
+			// failed refetch.
+			if (isActive) void navigate({ to: "/documents", replace: true })
+			removeDocumentCaches(qc, node.id)
+			void invalidateDocuments(qc)
 		},
 	})
 

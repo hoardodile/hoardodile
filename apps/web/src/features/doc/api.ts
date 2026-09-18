@@ -1,6 +1,7 @@
 import type { DocMoveBatchInput, DocSearchInput } from "@hoardodile/schemas"
 import { type QueryClient, queryOptions } from "@tanstack/react-query"
 import { trpcMutation, trpcQuery } from "@/trpc/factory"
+import { isNotFoundError } from "./offline/errors"
 
 export const docKeys = {
 	all: ["document"] as const,
@@ -46,6 +47,11 @@ export function docDetailPageQueryOptions(id: string) {
 		queryKey: docKeys.detailPage(id),
 		queryFn: () => trpcQuery("document", "detailPage", { id }),
 		staleTime: 2_000,
+		// A missing document is gone for good, not a transient blip: folding
+		// it into the app-wide `retry: 2` would keep a hard-deleted
+		// document on screen for seconds of backoff before the route can
+		// react to the NOT_FOUND.
+		retry: (failureCount, error) => !isNotFoundError(error) && failureCount < 2,
 	})
 }
 
@@ -74,6 +80,24 @@ export async function invalidateDocuments(
 		await qc.invalidateQueries({ queryKey: docKeys.detail(id) })
 		await qc.invalidateQueries({ queryKey: docKeys.nodeView(id) })
 		await qc.invalidateQueries({ queryKey: docKeys.detailPage(id) })
+	}
+}
+
+/**
+ * Drop every cached view of a node that no longer exists (a permanently
+ * deleted document). Refetching those views is futile — the server has no
+ * row to answer with — and React Query keeps the last successful payload
+ * on a failed refetch, so a deleted document would stay on screen until
+ * something else replaced it.
+ */
+export function removeDocumentCaches(qc: QueryClient, id: string): void {
+	for (const queryKey of [
+		docKeys.detail(id),
+		docKeys.nodeView(id),
+		docKeys.detailPage(id),
+		docKeys.versions(id),
+	]) {
+		qc.removeQueries({ queryKey })
 	}
 }
 

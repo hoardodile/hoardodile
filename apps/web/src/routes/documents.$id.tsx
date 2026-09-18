@@ -30,6 +30,7 @@ import {
 import { useDocLayout } from "@/features/doc/DocLayoutContext"
 import type { DocEditorHandle } from "@/features/doc/editor/DocEditor"
 import { useDocCommitDialogs } from "@/features/doc/hooks/useDocCommitDialogs"
+import { useDocDeletedExit } from "@/features/doc/hooks/useDocDeletedExit"
 import { useDocDiff } from "@/features/doc/hooks/useDocDiff"
 import { useDocDraft } from "@/features/doc/hooks/useDocDraft"
 import { useDocFontSlot } from "@/features/doc/hooks/useDocFontSlot"
@@ -92,6 +93,15 @@ function DocDetailRoute() {
 	const draft = view?.draft
 	const versions = view?.versions ?? []
 
+	// A document deleted while it is open must not keep filling the canvas:
+	// leaving is the route's reaction to the deletion, wherever it came from.
+	const docExit = useDocDeletedExit({
+		docId: id,
+		isLoading: detailPageQuery.isLoading,
+		node,
+		error: detailPageQuery.error,
+	})
+
 	const editorHandleRef = useRef<DocEditorHandle | null>(null)
 	const [headings, setHeadings] = useState<HeadingInfo[]>([])
 	const [mobileNavOpen, setMobileNavOpen] = useState(false)
@@ -140,7 +150,9 @@ function DocDetailRoute() {
 	})
 
 	useDocLeaveGuard({
-		dirty: draftState.dirty,
+		// A deleted document must not trip the unsaved-changes confirm: the
+		// redirect is the app's decision, not a user navigation to block.
+		dirty: draftState.dirty && !docExit.gone,
 		message: t("documents.leaveDialog.confirm"),
 	})
 
@@ -246,10 +258,16 @@ function DocDetailRoute() {
 			draft !== undefined,
 	})
 
+	// Record the document the reader is actually in. A deleted document is
+	// never recorded: it must not fight the cleanup below over the pref
+	// (that pair would ping-pong state forever) and "continue reading" has
+	// no business pointing at the recycle bin.
 	useEffect(() => {
 		if (
 			!detailPageQuery.isLoading &&
 			node?.kind === "document" &&
+			node.deletedAt == null &&
+			!docExit.gone &&
 			draft !== undefined &&
 			id !== lastOpenedId
 		) {
@@ -258,6 +276,8 @@ function DocDetailRoute() {
 	}, [
 		id,
 		node?.kind,
+		node?.deletedAt,
+		docExit.gone,
 		draft,
 		detailPageQuery.isLoading,
 		lastOpenedId,
@@ -267,12 +287,19 @@ function DocDetailRoute() {
 	// A stale "last opened" id (document hard-deleted, or the preference
 	// survived a storage reset) must not keep routing the nav entry back
 	// to a dead page: drop it, mirroring `useDocsHomeLastOpened` so the
-	// next click lands on the documents home.
+	// next click lands on the documents home. A document deleted while it
+	// is open counts as stale too.
 	useEffect(() => {
 		if (detailPageQuery.isLoading) return
-		if (node !== undefined) return
+		if (node !== undefined && !docExit.gone) return
 		if (lastOpenedId !== "") setLastOpenedId("")
-	}, [detailPageQuery.isLoading, node, lastOpenedId, setLastOpenedId])
+	}, [
+		detailPageQuery.isLoading,
+		node,
+		docExit.gone,
+		lastOpenedId,
+		setLastOpenedId,
+	])
 
 	if (detailPageQuery.isLoading) {
 		return (
