@@ -1177,6 +1177,11 @@
 			"hardDeleteConfirm": "Delete forever",
 			"hardDeleting": "Deleting…"
 		},
+		"renameDialog": {
+			"folderTitle": "Rename folder",
+			"documentTitle": "Rename document",
+			"nameLabel": "Name"
+		},
 		"softDeleteDialog": {
 			"title": "Move to recycle bin?",
 			"description": "The item will be hidden from the tree and can be restored later from the recycle bin.",

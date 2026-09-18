@@ -1177,6 +1177,11 @@
 			"hardDeleteConfirm": "Endgültig löschen",
 			"hardDeleting": "Löschen…"
 		},
+		"renameDialog": {
+			"folderTitle": "Ordner umbenennen",
+			"documentTitle": "Dokument umbenennen",
+			"nameLabel": "Name"
+		},
 		"softDeleteDialog": {
 			"title": "In den Papierkorb verschieben?",
 			"description": "Das Element wird im Baum ausgeblendet und kann später aus dem Papierkorb wiederhergestellt werden.",

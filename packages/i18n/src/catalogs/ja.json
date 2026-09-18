@@ -1177,6 +1177,11 @@
 			"hardDeleteConfirm": "完全に削除",
 			"hardDeleting": "削除中…"
 		},
+		"renameDialog": {
+			"folderTitle": "フォルダー名を変更",
+			"documentTitle": "ドキュメント名を変更",
+			"nameLabel": "名前"
+		},
 		"softDeleteDialog": {
 			"title": "ごみ箱に移動しますか？",
 			"description": "項目はツリーから非表示になり、後でごみ箱から復元できます。",

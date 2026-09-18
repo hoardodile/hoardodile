@@ -1177,6 +1177,11 @@
 			"hardDeleteConfirm": "永久删除",
 			"hardDeleting": "正在删除…"
 		},
+		"renameDialog": {
+			"folderTitle": "重命名文件夹",
+			"documentTitle": "重命名文档",
+			"nameLabel": "名称"
+		},
 		"softDeleteDialog": {
 			"title": "移入回收站？",
 			"description": "该项目将从文档树中移除，可在回收站中还原。",

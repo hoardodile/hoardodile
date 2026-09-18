@@ -4,7 +4,6 @@ import type {
 	DocNode,
 	DocRenameInput,
 } from "@hoardodile/schemas"
-import { MAX_NAME_LENGTH } from "@hoardodile/schemas"
 import { Button } from "@hoardodile/ui/components/button"
 import { ConfirmDialog } from "@hoardodile/ui/components/confirm-dialog"
 import {
@@ -14,7 +13,6 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@hoardodile/ui/components/dropdown-menu"
-import { Input } from "@hoardodile/ui/components/input"
 import { More } from "@hoardodile/ui/icons/actions"
 import {
 	AltArrowDown,
@@ -33,6 +31,7 @@ import {
 	createContext,
 	Fragment,
 	memo,
+	type MouseEvent as ReactMouseEvent,
 	useContext,
 	useEffect,
 	useMemo,
@@ -46,6 +45,7 @@ import {
 	renameDocumentNodeMutation,
 	softDeleteDocumentMutation,
 } from "@/features/doc"
+import { DocRenameDialog } from "@/features/doc/components/DocRenameDialog"
 import { useDocTheme } from "@/features/doc/hooks/useDocPrefs"
 import { useToastMutation } from "@/hooks/useToastMutation"
 import {
@@ -208,6 +208,7 @@ export const DocTree = memo(function DocTree(props: DocTreeProps) {
 									onSelect={props.onSelect}
 									expandedIds={expandedIds}
 									onToggleExpanded={onToggleExpanded}
+									onExpandIds={onExpandIds}
 									themeClass={themeClass}
 								/>
 							</Fragment>
@@ -226,6 +227,7 @@ type TreeBranchProps = {
 	readonly onSelect: (() => void) | undefined
 	readonly expandedIds: ReadonlySet<string>
 	readonly onToggleExpanded: (id: string) => void
+	readonly onExpandIds: (ids: Iterable<string>) => void
 	readonly themeClass: string | undefined
 }
 
@@ -237,6 +239,7 @@ const TreeBranch = memo(function TreeBranch(props: TreeBranchProps) {
 		onSelect,
 		expandedIds,
 		onToggleExpanded,
+		onExpandIds,
 		themeClass,
 	} = props
 	const expanded = expandedIds.has(branch.node.id)
@@ -247,7 +250,7 @@ const TreeBranch = memo(function TreeBranch(props: TreeBranchProps) {
 	const isFolder = branch.node.kind === "folder"
 	const hasChildren = branch.children.length > 0
 	const rowDnd = useTreeRowDnd(branch.node.id, isFolder)
-	const [renaming, setRenaming] = useState(false)
+	const [renameOpen, setRenameOpen] = useState(false)
 	const [renameTitle, setRenameTitle] = useState("")
 	const [softDeleteOpen, setSoftDeleteOpen] = useState(false)
 	const isActive = activeId === branch.node.id
@@ -261,6 +264,9 @@ const TreeBranch = memo(function TreeBranch(props: TreeBranchProps) {
 			{ kind, title, parentId: branch.node.id },
 			{
 				onSuccess: (created) => {
+					// A child created inside a collapsed folder would stay
+					// invisible — reveal the branch that just received it.
+					onExpandIds([branch.node.id])
 					if (created.kind === "document") {
 						onSelect?.()
 						navigate({ to: "/documents/$id", params: { id: created.id } })
@@ -271,22 +277,22 @@ const TreeBranch = memo(function TreeBranch(props: TreeBranchProps) {
 	}
 
 	function startRename() {
-		setRenaming(true)
 		setRenameTitle(branch.node.title)
+		setRenameOpen(true)
 	}
 
 	function submitRename() {
 		const title = renameTitle.trim()
 		if (title.length === 0) return
 		if (title === branch.node.title) {
-			setRenaming(false)
+			setRenameOpen(false)
 			return
 		}
 		actions.rename.mutate(
 			{ id: branch.node.id, title },
 			{
 				onSuccess: () => {
-					setRenaming(false)
+					setRenameOpen(false)
 					setRenameTitle("")
 				},
 			},
@@ -300,8 +306,14 @@ const TreeBranch = memo(function TreeBranch(props: TreeBranchProps) {
 		return <DocumentText className="size-4" strokeWidth={1.6} />
 	}
 
-	function handleRowClick() {
-		if (renaming) return
+	function handleRowClick(event: ReactMouseEvent<HTMLDivElement>) {
+		// The row's dropdown menu is portaled to the overlay layer but stays
+		// a React-tree child of this row, so React still bubbles its clicks
+		// here. Without this guard, picking "Folder" or "Rename" would also
+		// fire the row's own toggle/navigate action — collapsing the branch
+		// that just gained a child.
+		if (!(event.target instanceof Node)) return
+		if (!event.currentTarget.contains(event.target)) return
 		if (isFolder) {
 			onToggleExpanded(branch.node.id)
 			return
@@ -372,25 +384,7 @@ const TreeBranch = memo(function TreeBranch(props: TreeBranchProps) {
 				<span className="flex size-4 shrink-0 items-center justify-center text-secondary-foreground">
 					{renderIcon()}
 				</span>
-				{renaming ? (
-					<Input
-						autoFocus
-						maxLength={MAX_NAME_LENGTH}
-						value={renameTitle}
-						onChange={(e) => setRenameTitle(e.target.value)}
-						onClick={(e) => e.stopPropagation()}
-						onKeyDown={(e) => {
-							if (e.key === "Enter") submitRename()
-							if (e.key === "Escape") {
-								setRenaming(false)
-								setRenameTitle("")
-							}
-						}}
-						size="sm"
-						className="flex-1"
-						data-testid={`documents-rename-input-${branch.node.id}`}
-					/>
-				) : isFolder ? (
+				{isFolder ? (
 					<button
 						type="button"
 						className="flex-1 truncate text-left text-[13px] leading-none"
@@ -423,86 +417,58 @@ const TreeBranch = memo(function TreeBranch(props: TreeBranchProps) {
 						"opacity-100 md:opacity-0 md:group-hover:opacity-100 focus-within:opacity-100",
 					)}
 				>
-					{renaming ? (
-						<>
-							<Button
-								size="sm"
-								className="h-6 px-2"
-								onClick={submitRename}
-								disabled={
-									actions.rename.isPending || renameTitle.trim().length === 0
-								}
-								data-testid={`documents-rename-confirm-${branch.node.id}`}
+					<DropdownMenu>
+						<DropdownMenuTrigger
+							render={
+								<Button
+									variant="ghost"
+									size="icon"
+									className="size-5 rounded-full text-muted-foreground/50 hover:bg-transparent hover:text-foreground"
+									aria-label={t("documents.moreActions")}
+									onClick={(e) => e.stopPropagation()}
+									data-testid={`documents-more-${branch.node.id}`}
+								>
+									<More className="size-4" strokeWidth={1.6} />
+								</Button>
+							}
+						/>
+						<DropdownMenuContent
+							align="end"
+							className={cn("doc w-44", themeClass)}
+						>
+							<DropdownMenuItem
+								onClick={() => createDirectly("document")}
+								data-testid={`documents-create-doc-${branch.node.id}`}
 							>
-								{t("common.confirm")}
-							</Button>
-							<Button
-								size="sm"
-								variant="ghost"
-								className="h-6 px-2"
-								onClick={() => {
-									setRenaming(false)
-									setRenameTitle("")
-								}}
-								data-testid={`documents-rename-cancel-${branch.node.id}`}
+								<DocumentAdd className="mr-2 size-4" />
+								{t("documents.new")}
+							</DropdownMenuItem>
+							<DropdownMenuItem
+								onClick={() => createDirectly("folder")}
+								data-testid={`documents-create-folder-${branch.node.id}`}
 							>
-								{t("common.cancel")}
-							</Button>
-						</>
-					) : (
-						<DropdownMenu>
-							<DropdownMenuTrigger
-								render={
-									<Button
-										variant="ghost"
-										size="icon"
-										className="size-5 rounded-full text-muted-foreground/50 hover:bg-transparent hover:text-foreground"
-										aria-label={t("documents.moreActions")}
-										onClick={(e) => e.stopPropagation()}
-										data-testid={`documents-more-${branch.node.id}`}
-									>
-										<More className="size-4" strokeWidth={1.6} />
-									</Button>
-								}
-							/>
-							<DropdownMenuContent
-								align="end"
-								className={cn("doc w-44", themeClass)}
+								<FolderPathConnect className="mr-2 size-4" />
+								{t("documents.newFolder")}
+							</DropdownMenuItem>
+							<DropdownMenuSeparator />
+							<DropdownMenuItem
+								onClick={() => startRename()}
+								data-testid={`documents-rename-${branch.node.id}`}
 							>
-								<DropdownMenuItem
-									onClick={() => createDirectly("document")}
-									data-testid={`documents-create-doc-${branch.node.id}`}
-								>
-									<DocumentAdd className="mr-2 size-4" />
-									{t("documents.new")}
-								</DropdownMenuItem>
-								<DropdownMenuItem
-									onClick={() => createDirectly("folder")}
-									data-testid={`documents-create-folder-${branch.node.id}`}
-								>
-									<FolderPathConnect className="mr-2 size-4" />
-									{t("documents.newFolder")}
-								</DropdownMenuItem>
-								<DropdownMenuSeparator />
-								<DropdownMenuItem
-									onClick={() => startRename()}
-									data-testid={`documents-rename-${branch.node.id}`}
-								>
-									<Pen className="mr-2 size-4" />
-									{t("common.rename")}
-								</DropdownMenuItem>
-								<DropdownMenuSeparator />
-								<DropdownMenuItem
-									onClick={() => setSoftDeleteOpen(true)}
-									className="text-destructive focus:text-destructive"
-									data-testid={`documents-delete-${branch.node.id}`}
-								>
-									<TrashBinMinimalistic className="mr-2 size-4" />
-									{t("common.delete")}
-								</DropdownMenuItem>
-							</DropdownMenuContent>
-						</DropdownMenu>
-					)}
+								<Pen className="mr-2 size-4" />
+								{t("common.rename")}
+							</DropdownMenuItem>
+							<DropdownMenuSeparator />
+							<DropdownMenuItem
+								onClick={() => setSoftDeleteOpen(true)}
+								className="text-destructive focus:text-destructive"
+								data-testid={`documents-delete-${branch.node.id}`}
+							>
+								<TrashBinMinimalistic className="mr-2 size-4" />
+								{t("common.delete")}
+							</DropdownMenuItem>
+						</DropdownMenuContent>
+					</DropdownMenu>
 				</div>
 			</div>
 
@@ -521,12 +487,24 @@ const TreeBranch = memo(function TreeBranch(props: TreeBranchProps) {
 								onSelect={onSelect}
 								expandedIds={expandedIds}
 								onToggleExpanded={onToggleExpanded}
+								onExpandIds={onExpandIds}
 								themeClass={themeClass}
 							/>
 						))}
 					</ul>
 				</div>
 			)}
+
+			<DocRenameDialog
+				open={renameOpen}
+				onOpenChange={setRenameOpen}
+				nodeId={branch.node.id}
+				kind={branch.node.kind}
+				value={renameTitle}
+				onValueChange={setRenameTitle}
+				isPending={actions.rename.isPending}
+				onSubmit={submitRename}
+			/>
 
 			<ConfirmDialog
 				open={softDeleteOpen}

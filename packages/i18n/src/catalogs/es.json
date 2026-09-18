@@ -1177,6 +1177,11 @@
 			"hardDeleteConfirm": "Eliminar para siempre",
 			"hardDeleting": "Eliminando…"
 		},
+		"renameDialog": {
+			"folderTitle": "Renombrar carpeta",
+			"documentTitle": "Renombrar documento",
+			"nameLabel": "Nombre"
+		},
 		"softDeleteDialog": {
 			"title": "¿Mover a la papelera?",
 			"description": "El elemento se ocultará del árbol y se podrá restaurar más tarde desde la papelera.",

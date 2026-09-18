@@ -1,12 +1,15 @@
 import type { DocNode } from "@hoardodile/schemas"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { fireEvent, render, screen } from "@testing-library/react"
+import { fireEvent, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { type ReactNode, useState } from "react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { DocTree } from "./DocTree"
 
-const { navigateMock } = vi.hoisted(() => ({ navigateMock: vi.fn() }))
+const { navigateMock, mutationMocks } = vi.hoisted(() => ({
+	navigateMock: vi.fn(),
+	mutationMocks: new Map<string, ReturnType<typeof vi.fn>>(),
+}))
 
 vi.mock("@tanstack/react-router", () => ({
 	Link: ({ children, ...props }: { readonly children: ReactNode }) => (
@@ -30,7 +33,22 @@ vi.mock("@/features/doc/hooks/useDocPrefs", () => ({
 }))
 
 vi.mock("@/trpc/factory", () => ({
-	trpcMutation: vi.fn(() => ({ mutationFn: vi.fn() })),
+	// One stable mutationFn per procedure: the tree re-renders while a
+	// mutation is in flight, and a fresh fn per render would hide the call.
+	trpcMutation: vi.fn((_namespace: string, procedure: string) => {
+		let mutationFn = mutationMocks.get(procedure)
+		if (mutationFn === undefined) {
+			mutationFn = vi.fn((input: unknown) =>
+				Promise.resolve(
+					procedure === "create"
+						? { kind: "folder", id: "created-node", title: "Untitled" }
+						: input,
+				),
+			)
+			mutationMocks.set(procedure, mutationFn)
+		}
+		return { mutationFn }
+	}),
 	trpcQuery: vi.fn(),
 }))
 
@@ -116,6 +134,7 @@ describe("DocTree", () => {
 
 	beforeEach(() => {
 		vi.clearAllMocks()
+		mutationMocks.clear()
 	})
 
 	it("expands and collapses a nested folder independently of its parent", async () => {
@@ -198,6 +217,51 @@ describe("DocTree", () => {
 		expect(navigateMock).toHaveBeenCalledWith({
 			to: "/documents/$id",
 			params: { id: "grandchild-doc" },
+		})
+	})
+
+	it("keeps the folder expanded when one of its row menu actions runs", async () => {
+		const user = userEvent.setup()
+
+		render(<TreeHarness nodes={nodes} />, { wrapper: Wrapper })
+
+		await user.click(screen.getByRole("button", { name: "Root" }))
+		expect(screen.getByTestId("documents-row-child-folder")).toBeInTheDocument()
+
+		// The row menu is portaled to the overlay layer but stays a
+		// React-tree child of the row, so its clicks still bubble here as
+		// synthetic events. They must not fire the row's own toggle.
+		await user.click(screen.getByTestId("documents-more-root-folder"))
+		await user.click(
+			await screen.findByTestId("documents-create-folder-root-folder"),
+		)
+
+		expect(screen.getByTestId("documents-row-child-folder")).toBeInTheDocument()
+		expect(navigateMock).not.toHaveBeenCalled()
+	})
+
+	it("renames a node through the dialog instead of inline", async () => {
+		const user = userEvent.setup()
+
+		render(<TreeHarness nodes={nodes} />, { wrapper: Wrapper })
+
+		await user.click(screen.getByTestId("documents-more-root-folder"))
+		await user.click(await screen.findByTestId("documents-rename-root-folder"))
+
+		const input = await screen.findByTestId(
+			"documents-rename-input-root-folder",
+		)
+		expect(input).toHaveValue("Root")
+
+		await user.clear(input)
+		await user.type(input, "Archive")
+		await user.click(screen.getByTestId("documents-rename-confirm-root-folder"))
+
+		await waitFor(() => {
+			expect(mutationMocks.get("rename")?.mock.calls[0]?.[0]).toEqual({
+				id: "root-folder",
+				title: "Archive",
+			})
 		})
 	})
 })
