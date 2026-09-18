@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.2.4](https://github.com/hoardodile/hoardodile/compare/v0.2.3...v0.2.4) (2026-09-18)
+
+### Bug Fixes
+
+* **web:** keep the document tree on one cache so renames never flash back ([d40bcd6](https://github.com/hoardodile/hoardodile/commit/d40bcd615efd2621b74906cc2b3f41562303d8fb))
+
 ## [0.2.3](https://github.com/hoardodile/hoardodile/compare/v0.2.2...v0.2.3) (2026-09-18)
 
 ### Features

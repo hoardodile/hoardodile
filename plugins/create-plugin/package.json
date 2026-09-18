@@ -1,6 +1,6 @@
 {
 	"name": "@hoardodile/create-plugin",
-	"version": "0.2.3",
+	"version": "0.2.4",
 	"license": "MIT",
 	"description": "Scaffold a hoardodile content plugin.",
 	"keywords": [
