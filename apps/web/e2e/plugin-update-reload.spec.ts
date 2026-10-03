@@ -21,9 +21,9 @@ import {
  * running the old bundle.
  *
  * Navigation after the first install is SPA-only (route links, never
- * `page.goto`): the iframe pool must stay alive across the upload so the
- * fingerprint-driven reload — not a fresh page load — surfaces the new
- * bundle. A full page load would mask the regression even pre-fix.
+ * `page.goto`): the host's cached plugin inventory survives the upload.
+ * Reopening creates an independent iframe whose URL must use the updated
+ * fingerprint. A full page load would mask stale host inventory.
  */
 const FIX_ID = "44444444-4444-4444-8444-444444444444"
 const SAME_MTIME = new Date("2024-01-01T00:00:00Z")
@@ -165,7 +165,7 @@ test("upload update reloads the preview at a new fingerprint when zip mtimes mat
 		.locator(`[data-resource-card-id="${resId}"]`)
 		.waitFor({ timeout: 60_000 })
 
-	// From here on: SPA only — the pool must survive the update.
+	// From here on: SPA only — keep the host's cached state across the update.
 	await installMarkerListener(page)
 	await page.locator(`[data-testid="resource-open-${resId}"]`).click()
 	await page.waitForURL(new RegExp(`/resources/${resId}`))

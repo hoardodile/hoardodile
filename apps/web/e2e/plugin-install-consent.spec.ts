@@ -33,7 +33,10 @@ test.skip(
 const ALLOW_ID = "00000000-0000-4000-8000-000000000001"
 const DENY_ID = "00000000-0000-4000-8000-000000000002"
 
-const storageRoot = resolve(import.meta.dirname, "..", ".playwright", "storage")
+const testRoot = process.env.E2E_TEMP_ROOT
+if (testRoot === undefined)
+	throw new Error("E2E_TEMP_ROOT must be set by the Playwright config")
+const storageRoot = resolve(testRoot, "storage")
 const fixtureMainJs = resolve(
 	import.meta.dirname,
 	"fixtures",

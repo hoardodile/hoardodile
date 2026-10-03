@@ -1,5 +1,12 @@
-import { existsSync, mkdirSync, readFileSync, rmSync } from "node:fs"
-import { dirname, resolve } from "node:path"
+import {
+	existsSync,
+	mkdirSync,
+	mkdtempSync,
+	readFileSync,
+	rmSync,
+} from "node:fs"
+import { tmpdir } from "node:os"
+import { dirname, join, resolve } from "node:path"
 import { defineConfig, devices } from "@playwright/test"
 
 const devPorts: { spa: number } = JSON.parse(
@@ -31,10 +38,14 @@ if (externalBaseUrl !== undefined) {
 	// would point the API helpers at the dead local port (ECONNREFUSED).
 	process.env.E2E_SERVER_PORT = String(serverPort)
 }
-// Ephemeral file per test run; wiped before the server boots so the web
-// setup flow starts from an unconfigured server.
-const dbPath = resolve(import.meta.dirname, ".playwright", "app-e2e.sqlite3")
-const storageRoot = resolve(import.meta.dirname, ".playwright", "storage")
+// Keep runtime data outside Vite's source tree: plugin index.html writes
+// otherwise trigger reloads and its Windows watcher can lock directories
+// during installation. Workers inherit the same per-run directory.
+const testRoot =
+	process.env.E2E_TEMP_ROOT ?? mkdtempSync(join(tmpdir(), "hoardodile-e2e-"))
+process.env.E2E_TEMP_ROOT = testRoot
+const dbPath = resolve(testRoot, "app-e2e.sqlite3")
+const storageRoot = resolve(testRoot, "storage")
 const testPassword = "correct horse battery staple"
 const repoRoot = resolve(import.meta.dirname, "..", "..")
 

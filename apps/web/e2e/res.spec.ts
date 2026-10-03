@@ -1,5 +1,6 @@
 import { readdir, readFile } from "node:fs/promises"
 import { dirname, join } from "node:path"
+import type { SerializedFileEntry } from "@hoardodile/sdk-types"
 import { expect, test } from "@playwright/test"
 import { login } from "./helpers"
 import { solidPng } from "./testArchive"
@@ -68,7 +69,8 @@ test.describe("resources create flow", () => {
 		const listing = await files.json()
 		expect(
 			(listing.result.data.json ?? listing.result.data).map(
-				(entry: { filename: string }) => entry.filename,
+				(entry: SerializedFileEntry) =>
+					typeof entry === "string" ? entry : entry.filename,
 			),
 		).toEqual(expected)
 		if (process.env.E2E_EXTERNAL_BASE_URL === undefined) {
