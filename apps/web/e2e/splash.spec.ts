@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test"
+import { login } from "./helpers"
 
 const SPLASH = "#app-splash"
 
@@ -86,6 +87,82 @@ function installSplashProbe(): void {
 }
 
 test.describe("boot splash", () => {
+	test.use({ serviceWorkers: "block" })
+	test("covers settings and document sticky chrome during a slow hard refresh", async ({
+		page,
+	}) => {
+		test.setTimeout(120_000)
+		await page.setViewportSize({ width: 1600, height: 900 })
+		await login(page)
+		const response = await page.request.post("/trpc/document.create", {
+			data: { kind: "document", title: "Splash stacking regression" },
+		})
+		expect(response.ok()).toBe(true)
+		const body = await response.json()
+		const doc = body.result.data.json ?? body.result.data
+		await page.addInitScript(() => {
+			const frames: { classes: string; covered: boolean }[] = []
+			Object.assign(window, { __stickySplashFrames: frames })
+			let remaining = 180
+			function capture() {
+				const splash = document.getElementById("app-splash")
+				if (splash !== null) {
+					for (const sticky of document.querySelectorAll("#root .sticky")) {
+						const rect = sticky.getBoundingClientRect()
+						if (
+							rect.width === 0 ||
+							rect.height === 0 ||
+							rect.top >= innerHeight
+						)
+							continue
+						const front = document.elementFromPoint(
+							rect.left + 5,
+							Math.max(0, rect.top) + 5,
+						)
+						frames.push({
+							classes: sticky.className,
+							covered: front?.closest("#app-splash") === splash,
+						})
+					}
+				}
+				if (remaining-- > 0) requestAnimationFrame(capture)
+			}
+			requestAnimationFrame(capture)
+		})
+		for (const path of ["/settings", `/documents/${doc.id}`]) {
+			// Warm the editor chunk, then keep bootstrap queries outstanding
+			// long enough to inspect the real startup overlay on a full reload.
+			await page.goto(path)
+			if (path.startsWith("/documents/"))
+				await expect(page.locator(".doc-toolbar")).toBeVisible()
+			await page.route("**/trpc/**", async (route) => {
+				if (!route.request().url().includes("nodeView"))
+					await new Promise((resolve) => setTimeout(resolve, 900))
+				await route.continue().catch(() => {})
+			})
+			await page.reload()
+			await expect(page.locator(SPLASH)).toHaveCount(0)
+			const frames = await page.evaluate(
+				() =>
+					Reflect.get(window, "__stickySplashFrames") as {
+						classes: string
+						covered: boolean
+					}[],
+			)
+			expect(frames.length).toBeGreaterThan(0)
+			expect(frames.every((frame) => frame.covered)).toBe(true)
+			if (path.startsWith("/documents/")) {
+				expect(
+					frames.some((frame) => frame.classes.includes("doc-detail-header")),
+				).toBe(true)
+				expect(
+					frames.some((frame) => frame.classes.includes("doc-toolbar")),
+				).toBe(true)
+			}
+			await page.unroute("**/trpc/**")
+		}
+	})
+
 	test("index.html bakes the logo inline without async decode", async ({
 		request,
 	}) => {

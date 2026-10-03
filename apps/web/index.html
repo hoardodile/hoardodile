@@ -65,11 +65,13 @@
     #app-splash {
       position: fixed;
       inset: 0;
+      /* Above app chrome, dialogs, plugin previews and reload overlays. */
+      z-index: 110;
       display: flex;
       align-items: center;
       justify-content: center;
       background: #fbfbfb;
-      pointer-events: none;
+      pointer-events: auto;
     }
     /* Dark canvas: the page's dark `--background` token
        (oklch(0.12 0 0)) encoded as sRGB — the same value
