@@ -91,7 +91,9 @@ test.describe("boot splash", () => {
 	test("covers settings and document sticky chrome during a slow hard refresh", async ({
 		page,
 	}) => {
-		test.setTimeout(120_000)
+		// The probe samples each boot for up to 60s (dev-server cold start), and
+		// the test reloads two routes — keep the budget above both together.
+		test.setTimeout(240_000)
 		await page.setViewportSize({ width: 1600, height: 900 })
 		await login(page)
 		const response = await page.request.post("/trpc/document.create", {
@@ -103,8 +105,21 @@ test.describe("boot splash", () => {
 		await page.addInitScript(() => {
 			const frames: { classes: string; covered: boolean }[] = []
 			Object.assign(window, { __stickySplashFrames: frames })
-			let remaining = 180
+			// The dev server transforms the editor chunk on demand, so the
+			// document's sticky toolbar band can mount seconds after the splash
+			// is dismissed — well past a fixed frame budget. Sample while the
+			// overlay is up, then keep a grace window after it is gone and stop
+			// early once both document bands have been recorded, so the probe
+			// never outlives the boot it observes.
+			const start = performance.now()
+			const deadline = start + 60_000
+			const settleMs = 30_000
+			let lastSplash = start
+			function captured(className: string) {
+				return frames.some((frame) => frame.classes.includes(className))
+			}
 			function capture() {
+				const now = performance.now()
 				const splash = document.getElementById("app-splash")
 				if (splash !== null) {
 					for (const sticky of document.querySelectorAll("#root .sticky")) {
@@ -124,8 +139,12 @@ test.describe("boot splash", () => {
 							covered: front?.closest("#app-splash") === splash,
 						})
 					}
+					lastSplash = now
+				} else if (now - lastSplash > settleMs) {
+					return
 				}
-				if (remaining-- > 0) requestAnimationFrame(capture)
+				if (captured("doc-detail-header") && captured("doc-toolbar")) return
+				if (now < deadline) requestAnimationFrame(capture)
 			}
 			requestAnimationFrame(capture)
 		})
