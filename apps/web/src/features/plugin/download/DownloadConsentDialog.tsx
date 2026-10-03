@@ -25,7 +25,7 @@ export function DownloadConsentDialog() {
 	return (
 		<PluginDownloadConsentDialog
 			entry={entry}
-			// The plugin iframe pool sits at z-60 (see PluginIframePoolHost) —
+			// The plugin preview host sits at z-60 (see PluginIframeHost) —
 			// deliberately above every z-50 Radix dialog, so plugin previews
 			// float over app dialogs. This consent question must win that
 			// layer or the preview window covers it and swallows its clicks.

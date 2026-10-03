@@ -1,6 +1,9 @@
 export { BundledPluginsSection } from "./BundledPluginsSection"
-export { claim, setPoolContainer } from "./iframe/iframe-pool"
-export { PluginIframePoolHost } from "./iframe/PluginIframePoolHost"
+export {
+	createPluginIframe,
+	setIframeContainer,
+} from "./iframe/iframe-instance"
+export { PluginIframeHost } from "./iframe/PluginIframeHost"
 export {
 	type UsePluginIframeSlotOptions,
 	type UsePluginIframeSlotResult,

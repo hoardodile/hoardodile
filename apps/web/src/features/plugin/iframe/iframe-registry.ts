@@ -12,9 +12,9 @@ export type IframeRecord = {
 
 /**
  * What each iframe is bound to. A binding lives until the next
- * registration or the iframe's destruction — `release()` deliberately
- * leaves it in place so requests issued before the close (e.g. an
- * unmount cache flush) still resolve to the resource they belong to.
+ * registration or the iframe's destruction. Releasing an instance
+ * removes its binding after draining queued unload cache writes. A closed
+ * iframe is never rebound to another resource.
  */
 const iframeBySource = new Map<Window, IframeRecord>()
 const sourcesByResId = new Map<string, Set<Window>>()

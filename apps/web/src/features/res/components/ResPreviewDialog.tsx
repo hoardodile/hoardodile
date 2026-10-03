@@ -121,7 +121,7 @@ export type PreviewContentProps = PreviewTarget & {
 	 */
 	readonly previewPluginId?: string
 	/**
-	 * Caller-supplied ref kept in sync with the live pool iframe. Combine
+	 * Caller-supplied ref kept in sync with the live preview iframe. Combine
 	 * with {@link useContainerFullscreen} to fullscreen the actual iframe
 	 * element rather than the placeholder wrapper (which sits in a
 	 * different DOM subtree than the floated iframe).
@@ -219,7 +219,7 @@ export function PreviewContent(props: PreviewContentProps) {
 		props.onPresentedChange?.(presented)
 	}, [presented, props.onPresentedChange])
 
-	// Delay the loading indicator: switching to an idle pooled plugin only
+	// Delay the loading indicator: switching to a painted neighbor only
 	// needs one local bootstrap round-trip plus a couple of frames, so the
 	// "loading" copy would flash for a fraction of a second on every
 	// switch. Only surface it when the load is genuinely slow — and never
@@ -302,7 +302,7 @@ export type ResPreviewDialogProps = PreviewTarget & {
  *
  * Every media type is rendered by the content plugin's sandboxed iframe:
  * the dialog only renders a placeholder, and `usePluginIframeSlot` claims
- * a pooled iframe, pushes the plugin context (resId/resName, meta, theme,
+ * an independent iframe, pushes the plugin context (resId/resName, meta, theme,
  * prefs, file token) into it, and floats it over the placeholder. The
  * host never renders media directly — slideshows, readers,
  * and video playback all live inside the plugin.

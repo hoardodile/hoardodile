@@ -18,7 +18,7 @@ import {
 	useIconStyle,
 } from "@/components/common/IconStyleProvider"
 import { ThemeProvider, useTheme } from "@/components/common/ThemeProvider"
-import { PluginIframePoolHost } from "@/features/plugin/iframe/PluginIframePoolHost"
+import { PluginIframeHost } from "@/features/plugin/iframe/PluginIframeHost"
 import { ensureGlobalHandler } from "@/features/plugin/iframe/plugin-iframe-global-handler"
 import {
 	pushFontsChanged,
@@ -215,7 +215,7 @@ createRoot(rootElement).render(
 								<TooltipProvider>
 									<QueryClientProvider client={queryClient}>
 										<PluginListProvider>
-											<PluginIframePoolHost />
+											<PluginIframeHost />
 											<PrefsSync />
 											<RouterProvider router={router} />
 										</PluginListProvider>

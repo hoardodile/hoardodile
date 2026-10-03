@@ -21,7 +21,10 @@ import {
 	pluginListAllQueryOptions,
 	previewInitContextQueryOptions,
 } from "../pluginApi"
-import { claim, type PoolClaimedEntry } from "./iframe-pool"
+import {
+	createPluginIframe,
+	type PluginIframeInstance,
+} from "./iframe-instance"
 import {
 	createPreviewWindow,
 	type PreviewTarget,
@@ -42,7 +45,7 @@ export type SlotStatus = "loading" | "ready" | "error"
 
 // Exported for unit tests; only consumed internally by usePluginIframeSlot.
 export function useIframeLifecycle(opts: {
-	readonly slot: PoolClaimedEntry | null
+	readonly slot: PluginIframeInstance | null
 	readonly placeholder: HTMLElement | null
 	readonly pluginId: string
 	readonly resId: string
@@ -72,9 +75,7 @@ export function useIframeLifecycle(opts: {
 		setContentVisible(true)
 		// Visibility pushes for the focused slot funnel through here so the
 		// slotReady gate lives in exactly one place: until the plugin has
-		// painted the fresh context's first frame, a reused iframe may
-		// still hold the previous resource's tree — telling it "visible"
-		// now would briefly resume stale rendering/media. This effect
+		// painted its context's first frame, keep its media parked. This effect
 		// re-runs when slotReady flips and pushes the current IO state
 		// then. (The preview window additionally pushes visibility on
 		// every presentation flip — presented true, parked false — which
@@ -459,16 +460,16 @@ export async function loadNeighborContext(
 }
 
 /**
- * Apply the freshly-loaded context's asset fingerprint to a claim: if the
+ * Apply the freshly-loaded context's asset fingerprint to an instance: if the
  * plugin was replaced/rebuild since the entry was built, re-navigate the
  * iframe to the new `?v=` URL and await the reloaded document. Posting a
  * context into a pre-reload document is dropped, so the caller must await
- * this before {@link PoolClaimedEntry.postContext}. No-op for an unchanged
- * fingerprint (the hot reuse path) and for the cold-open baseline (the
+ * this before {@link PluginIframeInstance.postContext}. No-op for an unchanged
+ * fingerprint and for the cold-open baseline (the
  * first playout already is the current build — avoid a redundant reload).
  */
 async function applyAssetReload(
-	slot: PoolClaimedEntry,
+	slot: PluginIframeInstance,
 	assetVersion: string | undefined,
 ): Promise<void> {
 	if (assetVersion === undefined) return
@@ -565,7 +566,7 @@ export function usePluginIframeSlot(
 	}, [forceTheme])
 
 	// The preview window owns the claim lifetimes of the focused resource
-	// and its ±1 neighbors: claim, context push, paint-ack readiness, the
+	// and its ±1 neighbors: instance creation, context push, paint readiness, the
 	// held-presentation fallback, and the same-frame flip. Lazily
 	// initialized ref — the one ref write React Compiler allows during
 	// render. Created even in inline mode, where it simply never receives
@@ -647,63 +648,46 @@ export function usePluginIframeSlot(
 		window: previewWindow,
 	})
 
-	// ── Inline mode ────────────────────────────────────────────────────
-	// A minimal single-slot path: the detail page never switches
-	// resources in place, so the window (and its held semantics) buys
-	// nothing there. Claim → re-parent into the placeholder → context
-	// push (only after the post-re-parent load) → ready gate.
-	const [inlineSlot, setInlineSlot] = useState<PoolClaimedEntry | null>(null)
+	// Inline surfaces own the same fresh instances, mounted directly in
+	// their final parent so the document only loads once.
+	const [inlineSlot, setInlineSlot] = useState<PluginIframeInstance | null>(
+		null,
+	)
 	const [inlineReady, setInlineReady] = useState(false)
-	// Produced by the mount effect: the claimed slot plus a promise that
-	// resolves with the load event FOLLOWING the re-parent into the
-	// placeholder (re-parenting an iframe always reloads its document).
-	const [inlineFrame, setInlineFrame] = useState<{
-		readonly slot: PoolClaimedEntry
-		readonly whenReattached: Promise<void>
-	} | null>(null)
 
 	useEffect(() => {
-		if (!isInline) return
-		// No resId passed: inline mode re-parents the iframe, which
-		// reloads its document and invalidates any painted state —
-		// priming never applies here.
-		const slot = claim({
+		if (!isInline || placeholder === null) return
+		const slot = createPluginIframe({
 			pluginId,
+			resId,
 			assetVersion: readAssetVersion(qc, pluginId),
+			parent: placeholder,
 		})
+		slot.iframe.style.cssText =
+			"position:absolute;inset:0;width:100%;height:100%;border:0;display:block"
+		setFramePresentation(slot.iframe, false)
 		setInlineSlot(slot)
 		setInlineReady(false)
-		const unsubReady = slot.onReady(() => setInlineReady(true))
+		const unsubscribe = slot.onReady(() => setInlineReady(true))
 		return () => {
-			unsubReady()
+			unsubscribe()
 			slot.release()
 			setInlineSlot(null)
 		}
-	}, [isInline, pluginId, qc])
+	}, [isInline, placeholder, pluginId, resId, qc])
 
-	// Context push for the inline slot. The bootstrap request fires in
-	// parallel with the iframe load; a same-slot resId switch re-posts
-	// and swaps the plugin tree seamlessly. The push MUST wait for the
-	// load that follows the re-parent (whenReattached), not the pool's
-	// loaded flag: a warm pooled entry is already loaded, the re-parent
-	// reloads its document, and a context posted into the pre-reload
-	// document is silently dropped — the plugin's #root would never
-	// mount (the blank detail-page bug).
 	useEffect(() => {
-		if (!isInline || inlineFrame === null) return
-		const { slot, whenReattached } = inlineFrame
+		if (!isInline || inlineSlot === null) return
+		const slot = inlineSlot
 		let mounted = true
 		void (async function push() {
 			const [init] = await Promise.all([
 				qc
 					.fetchQuery(previewInitContextQueryOptions({ pluginId, resId }))
 					.catch(() => undefined),
-				whenReattached,
+				slot.whenLoaded(),
 			])
 			if (!mounted) return
-			// A replaced/rebuild plugin must load its new bundle before the
-			// context is posted (a context posted into a pre-reload document
-			// is dropped). Same fingerprint: the hot reuse path, no reload.
 			await applyAssetReload(slot, init?.assetVersion)
 			if (!mounted) return
 			slot.postContext(
@@ -726,7 +710,7 @@ export function usePluginIframeSlot(
 		}
 	}, [
 		isInline,
-		inlineFrame,
+		inlineSlot,
 		pluginId,
 		resId,
 		resName,
@@ -737,43 +721,6 @@ export function usePluginIframeSlot(
 		forceTheme,
 		qc,
 	])
-
-	// Inline presentation is split across two effects on purpose: the
-	// mount effect must NOT depend on readiness — its cleanup detaches
-	// the iframe, and detaching discards the document. Only the
-	// presentation effect may flip with readiness.
-	useEffect(() => {
-		if (!isInline || inlineSlot === null || placeholder === null) return
-
-		const iframe = inlineSlot.iframe
-		// The re-parent below reloads the iframe's document; arm the
-		// one-shot listener BEFORE moving so the context-push effect can
-		// await exactly the load that follows.
-		let resolveReattached: () => void = () => {}
-		const whenReattached = new Promise<void>((resolve) => {
-			resolveReattached = resolve
-		})
-		iframe.addEventListener("load", resolveReattached, { once: true })
-		placeholder.appendChild(iframe)
-		iframe.style.position = "absolute"
-		iframe.style.inset = "0"
-		iframe.style.width = "100%"
-		iframe.style.height = "100%"
-		iframe.style.zIndex = "auto"
-		iframe.style.display = "block"
-		setInlineFrame({ slot: inlineSlot, whenReattached })
-
-		return () => {
-			iframe.removeEventListener("load", resolveReattached)
-			setInlineFrame(null)
-			// Do NOT re-parent back into the pool container: the move
-			// would reload the document anyway (nothing is preserved),
-			// and the pool entry would keep a stale loaded/ack state over
-			// a blank, mid-reload document. Detach instead — the pool
-			// destroys disconnected entries on sight.
-			iframe.remove()
-		}
-	}, [isInline, inlineSlot, placeholder])
 
 	useEffect(() => {
 		if (!isInline || inlineSlot === null) return

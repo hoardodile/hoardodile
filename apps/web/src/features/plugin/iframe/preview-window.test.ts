@@ -1,6 +1,6 @@
 import type { PluginIframeContext } from "@hoardodile/sdk-web"
 import { afterEach, describe, expect, it, vi } from "vitest"
-import type { PoolClaimedEntry } from "./iframe-pool"
+import type { PluginIframeInstance } from "./iframe-instance"
 import {
 	createPreviewWindow,
 	type PreviewWindowItem,
@@ -12,16 +12,15 @@ import {
 // to late subscribers) â€” the same mock shape slot-transition.test.ts used.
 const claimMock = vi.fn()
 
-vi.mock("./iframe-pool", () => ({
-	claim: (...args: unknown[]) => claimMock(...args),
+vi.mock("./iframe-instance", () => ({
+	createPluginIframe: (...args: unknown[]) => claimMock(...args),
 }))
 
-function makeSlot(primedResId?: string) {
+function makeSlot() {
 	const readyCallbacks = new Set<() => void>()
-	let ready = primedResId !== undefined
-	const slot: PoolClaimedEntry = {
+	let ready = false
+	const slot: PluginIframeInstance = {
 		iframe: document.createElement("iframe"),
-		primedResId,
 		release: vi.fn(),
 		postContext: vi.fn(),
 		setVisibility: vi.fn(),
@@ -50,9 +49,9 @@ function makeSlot(primedResId?: string) {
 	return { slot, fireReady }
 }
 
-/** Queue the slot the next claim() call hands back, in claim order. */
-function queueClaim(primedResId?: string) {
-	const made = makeSlot(primedResId)
+/** Queue the slot the next createPluginIframe() call hands back, in claim order. */
+function queueClaim() {
+	const made = makeSlot()
 	claimMock.mockImplementationOnce(() => made.slot)
 	return made
 }
@@ -142,7 +141,7 @@ describe("createPreviewWindow", () => {
 		])
 
 		expect(claimMock).toHaveBeenCalledTimes(3)
-		// Focused claim: no ackTimeoutMs override â€” the pool's user-facing
+		// Focused createPluginIframe: no ackTimeoutMs override â€” the pool's user-facing
 		// 300ms default applies. Neighbors get the 5s background window.
 		expect(claimMock).toHaveBeenNthCalledWith(1, {
 			pluginId: "p-a",
@@ -172,22 +171,6 @@ describe("createPreviewWindow", () => {
 		expect(snapshot.slots.map((s) => s.resId)).toEqual(["r-a", "r-b", "r-c"])
 		expect(snapshot.focusedReady).toBe(false)
 		expect(snapshot.presentedResId).toBeNull()
-	})
-
-	it("a primed claim is instantly ready, presented, and skips the context post", () => {
-		const a = queueClaim("r-a")
-		const window = setup()
-
-		window.focus(makeItem("r-a"), [])
-
-		const snapshot = window.getSnapshot()
-		expect(snapshot.focusedReady).toBe(true)
-		expect(snapshot.presentedResId).toBe("r-a")
-		expect(a.slot.postContext).not.toHaveBeenCalled()
-		expect(loadContextMock).not.toHaveBeenCalled()
-		expect(a.slot.iframe.style.opacity).toBe("1")
-		expect(a.slot.iframe.style.pointerEvents).toBe("auto")
-		expect(a.slot.iframe.style.zIndex).toBe("1001")
 	})
 
 	it("presents the focused slot when its paint ack lands", () => {

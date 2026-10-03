@@ -167,7 +167,83 @@ async function measure(page: import("@playwright/test").Page, id: string) {
 }
 
 test.describe("resource card preview control (real browser)", () => {
+	test.use({ serviceWorkers: "block" })
 	test.setTimeout(90_000)
+
+	test("keeps neighbor frames independent and destroys every frame on close", async ({
+		page,
+		request,
+	}) => {
+		await login(page)
+		const cookie = await apiLogin(request)
+		const ids: string[] = []
+		try {
+			for (const name of ["isolation-A", "isolation-B", "isolation-C"]) {
+				ids.push(
+					await createImageResource(
+						request,
+						cookie,
+						name,
+						solidPng(100, 300, [100, 120, 140]),
+						GALLERY_PLUGIN_ID,
+					),
+				)
+			}
+			await waitForCoverMeta(request, cookie, ids[1]!)
+			await page.goto("/resources")
+			const open = async () => {
+				await page.locator(`[data-resource-card-id="${ids[1]}"]`).hover()
+				await page.getByTestId(`resource-preview-${ids[1]}`).click()
+			}
+			const active = page.locator(
+				'#plugin-iframe-host iframe[style*="opacity: 1"]',
+			)
+			const activeFrame = async () => {
+				await expect(active).toHaveCount(1)
+				const frame = await (await active.elementHandle())?.contentFrame()
+				if (frame === null || frame === undefined)
+					throw new Error("no preview frame")
+				await expect.poll(() => frame.url()).not.toBe("about:blank")
+				await frame.waitForLoadState("load")
+				return frame
+			}
+			await open()
+			const first = await activeFrame()
+			await first.evaluate(() =>
+				Reflect.set(window, "__previewSentinel", "resource-B"),
+			)
+			await page.getByTestId("res-search-preview-next").click()
+			await expect(page.getByRole("dialog")).toContainText("isolation-A")
+			await expect
+				.poll(async () =>
+					(await activeFrame()).evaluate(() =>
+						Reflect.get(window, "__previewSentinel"),
+					),
+				)
+				.toBeUndefined()
+			await page.getByTestId("res-search-preview-prev").click()
+			await expect(page.getByRole("dialog")).toContainText("isolation-B")
+			await expect
+				.poll(async () =>
+					(await activeFrame()).evaluate(() =>
+						Reflect.get(window, "__previewSentinel"),
+					),
+				)
+				.toBe("resource-B")
+			await page.getByRole("button", { name: /close preview/i }).click()
+			await expect(page.locator("#plugin-iframe-host iframe")).toHaveCount(0)
+			await open()
+			expect(
+				await (await activeFrame()).evaluate(() =>
+					Reflect.get(window, "__previewSentinel"),
+				),
+			).toBeUndefined()
+			await page.getByRole("button", { name: /close preview/i }).click()
+			await expect(page.locator("#plugin-iframe-host iframe")).toHaveCount(0)
+		} finally {
+			await deleteResources(request, cookie, ids)
+		}
+	})
 
 	test("anchors the preview button to the card's cover row, not a narrow cover", async ({
 		page,
@@ -181,7 +257,7 @@ test.describe("resource card preview control (real browser)", () => {
 		const narrowId = await createImageResource(
 			request,
 			cookie,
-			"e2e-preview-tall",
+			"e2e-preview-tall-with-a-name-that-must-not-expand-the-card-".repeat(2),
 			solidPng(100, 400, [200, 40, 40]),
 			GALLERY_PLUGIN_ID,
 		)
@@ -256,6 +332,7 @@ test.describe("resource card preview control (real browser)", () => {
 			// so the two candidate placements must differ by a measurable,
 			// regression-sized amount rather than overlapping.
 			const narrow = await measure(page, narrowId)
+			expect(narrow.card.width).toBeCloseTo(200, 0)
 			expect(narrow.cover).not.toBeNull()
 			const coverInset = narrow.card.right - narrow.cover!.right
 			expect(

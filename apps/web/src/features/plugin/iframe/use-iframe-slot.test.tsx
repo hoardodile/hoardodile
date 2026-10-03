@@ -4,8 +4,8 @@ import { act, renderHook } from "@testing-library/react"
 import type { ReactNode } from "react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { prefKeys } from "@/lib/keys"
-import type { PoolClaimedEntry } from "./iframe-pool"
-import { claim, setPoolContainer } from "./iframe-pool"
+import type { PluginIframeInstance } from "./iframe-instance"
+import { createPluginIframe, setIframeContainer } from "./iframe-instance"
 import type { PreviewWindowSnapshot } from "./preview-window"
 import {
 	buildPluginIframeContext,
@@ -104,7 +104,7 @@ function makeSlot() {
 			return true
 		},
 	})
-	const slot = { iframe: { style } } as unknown as PoolClaimedEntry
+	const slot = { iframe: { style } } as unknown as PluginIframeInstance
 	function writeCount(prop: string): number {
 		return writes.get(prop)?.length ?? 0
 	}
@@ -113,7 +113,7 @@ function makeSlot() {
 
 // A minimal fake preview window serving a fixed slot list, for driving
 // the geometry sync without the real pool.
-function fakeWindow(slots: PoolClaimedEntry[]) {
+function fakeWindow(slots: PluginIframeInstance[]) {
 	const listeners = new Set<() => void>()
 	return {
 		previewWindow: {
@@ -318,9 +318,8 @@ describe("useWindowGeometrySync", () => {
 describe("useIframeLifecycle", () => {
 	function makeLifecycleSlot() {
 		const setVisibility = vi.fn()
-		const slot: PoolClaimedEntry = {
+		const slot: PluginIframeInstance = {
 			iframe: document.createElement("iframe"),
-			primedResId: undefined,
 			release: () => {},
 			postContext: () => {},
 			setVisibility,
@@ -506,7 +505,7 @@ describe("usePluginIframeSlot", () => {
 	function setup() {
 		const container = document.createElement("div")
 		document.body.appendChild(container)
-		setPoolContainer(container)
+		setIframeContainer(container)
 		const queryClient = new QueryClient()
 		function wrapper({ children }: { children: ReactNode }) {
 			return (
@@ -519,7 +518,7 @@ describe("usePluginIframeSlot", () => {
 	}
 
 	afterEach(() => {
-		setPoolContainer(undefined)
+		setIframeContainer(undefined)
 	})
 
 	function slotOptions(pluginId: string, resId: string) {
@@ -533,7 +532,9 @@ describe("usePluginIframeSlot", () => {
 	}
 
 	function getIframe(container: HTMLElement, index = 0): HTMLIFrameElement {
-		const iframe = container.querySelectorAll("iframe")[index]
+		const iframe = container.querySelectorAll<HTMLIFrameElement>(
+			"iframe:not([data-retiring])",
+		)[index]
 		if (iframe === undefined) throw new Error("no iframe in pool container")
 		return iframe
 	}
@@ -657,6 +658,10 @@ describe("usePluginIframeSlot", () => {
 		})
 		expect(iframeB.style.opacity).toBe("1")
 		expect(iframeA.style.display).toBe("none")
+		await act(async () => {
+			await new Promise((resolve) => setTimeout(resolve, 110))
+		})
+		expect(iframeA.isConnected).toBe(false)
 		expect(result.current.presented).toBe(true)
 	})
 
@@ -706,6 +711,10 @@ describe("usePluginIframeSlot", () => {
 		expect(iframeB.style.display).toBe("block")
 		expect(iframeB.style.opacity).toBe("1")
 		expect(iframeA.style.display).toBe("none")
+		await act(async () => {
+			await new Promise((resolve) => setTimeout(resolve, 110))
+		})
+		expect(iframeA.isConnected).toBe(false)
 		expect(result.current.presented).toBe(true)
 	})
 
@@ -874,107 +883,83 @@ describe("usePluginIframeSlot", () => {
 		expect(iframe.style.opacity).toBe("1")
 	})
 
-	it("posts the inline context only after the post-re-parent load", async () => {
+	it("creates inline documents in their final parent and waits for their load", async () => {
 		const { container, wrapper } = setup()
-		// Warm the pool: the primary entry is already loaded before the
-		// inline slot claims it, so the pool-level whenLoaded() would
-		// resolve immediately — exactly the case that used to post the
-		// context into the document doomed by the re-parent reload.
-		const warm = claim({ pluginId: "p-inline-warm" })
-		act(() => {
-			warm.iframe.dispatchEvent(new Event("load"))
-		})
-		warm.release()
-
+		const previous = createPluginIframe({ pluginId: "p-inline", resId: "r-1" })
+		previous.iframe.dispatchEvent(new Event("load"))
+		previous.release()
 		const placeholder = makePlaceholder({
 			top: 0,
 			left: 0,
 			width: 100,
 			height: 100,
 		})
-		const { result, unmount } = renderHook(
-			() =>
+		const { result, rerender, unmount } = renderHook(
+			({ resId }) =>
 				usePluginIframeSlot({
-					...slotOptions("p-inline-warm", "r-1"),
+					...slotOptions("p-inline", resId),
 					inline: true,
 				}),
-			{ wrapper },
+			{ wrapper, initialProps: { resId: "r-1" } },
 		)
 		act(() => {
 			result.current.ref(placeholder)
 		})
-		// The warm iframe moved into the placeholder (a reload in real
-		// browsers). Until the post-re-parent load fires, no context may
-		// be posted. Note: jsdom hands out a NEW contentWindow across a
-		// re-parent, so the spy must attach after the move.
-		expect(placeholder.querySelector("iframe")).toBe(warm.iframe)
-		const win = warm.iframe.contentWindow
-		if (win === null) throw new Error("no contentWindow")
-		const postSpy = vi.spyOn(win, "postMessage")
+		const iframe = placeholder.querySelector("iframe")
+		if (iframe === null || iframe.contentWindow === null)
+			throw new Error("no inline iframe")
+		expect(iframe).not.toBe(previous.iframe)
+		const post = vi.spyOn(iframe.contentWindow, "postMessage")
 		await flushAll()
-		expect(
-			postSpy.mock.calls.filter(([msg]) => isContextPush(msg)),
-		).toHaveLength(0)
-
+		expect(post.mock.calls.filter(([msg]) => isContextPush(msg))).toHaveLength(
+			0,
+		)
 		act(() => {
-			warm.iframe.dispatchEvent(new Event("load"))
+			iframe.dispatchEvent(new Event("load"))
 		})
 		await flushAll()
-		expect(
-			postSpy.mock.calls.filter(([msg]) => isContextPush(msg)),
-		).toHaveLength(1)
-
-		// Cleanup detaches the iframe instead of re-parenting it back
-		// into the pool container.
+		expect(post.mock.calls.filter(([msg]) => isContextPush(msg))).toHaveLength(
+			1,
+		)
+		rerender({ resId: "r-2" })
+		await act(async () => {
+			await new Promise((resolve) => setTimeout(resolve, 110))
+		})
+		expect(iframe.isConnected).toBe(false)
+		const next = placeholder.querySelector("iframe")
+		expect(next).not.toBe(iframe)
 		unmount()
-		expect(warm.iframe.isConnected).toBe(false)
+		expect(next?.isConnected).toBe(false)
 		expect(container.querySelector("iframe")).toBeNull()
 	})
 
-	it("presents a primed slot immediately without re-posting the context", async () => {
+	it("reopening a resource creates a cold iframe with its own context", async () => {
 		const { container, wrapper } = setup()
-		// Simulate a previous window residency: claim, load, push the
-		// context, ack, release — the entry goes back into the pool primed
-		// for r-9.
-		const pre = claim({ pluginId: "p-primed", resId: "r-9" })
-		act(() => {
-			pre.iframe.dispatchEvent(new Event("load"))
-		})
-		const win = pre.iframe.contentWindow
-		if (win === null) throw new Error("no contentWindow")
-		const postSpy = vi.spyOn(win, "postMessage")
-		pre.postContext(
-			buildPluginIframeContext({
-				pluginId: "p-primed",
-				resId: "r-9",
-				resName: "nine",
-				sourceMeta: undefined,
-				contentPluginId: "p-primed",
-			}),
-		)
-		act(() => {
-			dispatchContextPainted(pre.iframe, "r-9")
-		})
+		const pre = createPluginIframe({ pluginId: "p-reopen", resId: "r-9" })
+		pre.iframe.dispatchEvent(new Event("load"))
+		dispatchContextPainted(pre.iframe, "r-9")
 		pre.release()
-		postSpy.mockClear()
-
 		const { result } = renderHook(
-			() => usePluginIframeSlot(slotOptions("p-primed", "r-9")),
+			() => usePluginIframeSlot(slotOptions("p-reopen", "r-9")),
 			{ wrapper },
 		)
 		attachPlaceholder(result)
 		const iframe = getIframe(container)
-		expect(iframe).toBe(pre.iframe)
-		// Primed: presented and opaque from the first effects — no ack wait.
-		expect(result.current.presented).toBe(true)
-		expect(iframe.style.opacity).toBe("1")
+		expect(iframe).not.toBe(pre.iframe)
+		expect(result.current.presented).toBe(false)
+		if (iframe.contentWindow === null) throw new Error("no contentWindow")
+		const post = vi.spyOn(iframe.contentWindow, "postMessage")
+		act(() => {
+			iframe.dispatchEvent(new Event("load"))
+		})
 		await flushAll()
-		// The primed entry already displays exactly this context: the
-		// window must not push it again (which would re-mount the plugin
-		// tree).
-		expect(
-			postSpy.mock.calls.filter(([msg]) => isContextPush(msg)),
-		).toHaveLength(0)
+		expect(post.mock.calls.filter(([msg]) => isContextPush(msg))).toHaveLength(
+			1,
+		)
+		act(() => {
+			dispatchContextPainted(iframe, "r-9")
+		})
+		expect(result.current.presented).toBe(true)
 	})
 
 	it("reloads the inline iframe before posting context when the plugin's fingerprint moved", async () => {

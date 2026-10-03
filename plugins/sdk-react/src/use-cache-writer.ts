@@ -1,3 +1,7 @@
+import {
+	getVisibilitySnapshot,
+	subscribeToVisibility,
+} from "@hoardodile/sdk-web"
 import { useEffect, useRef } from "react"
 import { usePluginAPI } from "./context.tsx"
 
@@ -51,7 +55,11 @@ export function useCacheWriter<T>(options: {
 		}
 		window.addEventListener("pagehide", flush)
 		window.addEventListener("beforeunload", flush)
+		const unsubscribe = subscribeToVisibility(() => {
+			if (!getVisibilitySnapshot()) flush()
+		})
 		return () => {
+			unsubscribe()
 			window.removeEventListener("pagehide", flush)
 			window.removeEventListener("beforeunload", flush)
 			flush()

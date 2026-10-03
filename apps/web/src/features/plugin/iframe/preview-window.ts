@@ -1,8 +1,11 @@
 import type { Resource } from "@hoardodile/schemas"
 import type { PluginIframeContext } from "@hoardodile/sdk-web"
-import { claim, type PoolClaimedEntry } from "./iframe-pool"
+import {
+	createPluginIframe,
+	type PluginIframeInstance,
+} from "./iframe-instance"
 
-// Preview window: owns the pool claims for the focused preview resource
+// Preview window: owns independent iframes for the focused preview resource
 // and its ±1 neighbors so that a left/right switch is a pure compositor
 // event. Every window resource gets its own iframe — claimed, context
 // pushed, painted (acked), transparent but continuously laid out
@@ -18,10 +21,8 @@ import { claim, type PoolClaimedEntry } from "./iframe-pool"
 //
 // Memory bound: the window holds 3 claims normally, 4 once the user
 // starts flipping in one direction (directional lookahead — the search
-// dialog adds the slot two steps ahead). Four same-plugin entries
-// exceed the pool's per-plugin bound (primary + 2 ephemerals), so the
-// fourth claim evicts the LRU idle ephemeral and that slot degrades to
-// the held behavior — acceptable, and rare outside uniform libraries.
+// dialog adds the slot two steps ahead). Slots leaving this window are
+// destroyed once they are no longer presented.
 // Non-presented slots receive setVisibility(false) so plugins pause
 // media; their painted bitmaps are retained on purpose (that is what
 // makes the flip free).
@@ -57,7 +58,7 @@ export type PreviewWindowSlot = {
 	readonly iframe: HTMLIFrameElement
 	/** The claim handle, exposed so the lifecycle hook can subscribe to
 	 * load/timeout on the focused slot. */
-	readonly claim: PoolClaimedEntry
+	readonly claim: PluginIframeInstance
 	/** The plugin painted (and acked) this slot's context. */
 	readonly ready: boolean
 	readonly presented: boolean
@@ -88,12 +89,12 @@ export type PreviewWindow = {
 
 /**
  * NEIGHBOR claims wait for the real paint ack far longer than the
- * user-facing 300ms pool fallback: a transparent iframe's rAF may be
+ * user-facing 300ms fallback: a transparent iframe's rAF may be
  * throttled by Chrome (~1fps observed, so a double-rAF ack needs ~2s),
  * and the whole point of the window is that every background slot
  * reaches the genuinely-painted state. 5s doubles as the cleanup for
  * legacy SDKs that never ack. Focused claims do NOT use this: they are
- * user-facing and keep the pool's 300ms default (see addSlot), and a
+ * user-facing and keep the instance host's 300ms default (see addSlot), and a
  * neighbor promoted to focused gets a 300ms window-level fallback
  * (armFocusFallback) so no user-visible path ever waits seconds.
  */
@@ -101,7 +102,7 @@ const WINDOW_ACK_TIMEOUT_MS = 5_000
 
 /**
  * User-facing readiness fallback for a focused-but-unpainted slot,
- * mirroring the pool's legacy-SDK fallback: present after this long
+ * mirroring the instance host's legacy-SDK fallback: present after this long
  * even without the ack. Presenting also un-throttles the iframe's rAF
  * (opacity 1 = visible), so the real paint accelerates rather than
  * being delayed further.
@@ -109,7 +110,7 @@ const WINDOW_ACK_TIMEOUT_MS = 5_000
 const FOCUSED_READY_FALLBACK_MS = 300
 
 type WindowSlotRecord = {
-	readonly claim: PoolClaimedEntry
+	readonly claim: PluginIframeInstance
 	readonly pluginId: string
 	ready: boolean
 	unsubReady: () => void
@@ -203,9 +204,9 @@ export function createPreviewWindow(deps: {
 
 	/**
 	 * Present a focused slot after FOCUSED_READY_FALLBACK_MS even without
-	 * the paint ack — the user-facing mirror of the pool's legacy-SDK
+	 * the paint ack — the user-facing mirror of the instance host's legacy-SDK
 	 * fallback. A neighbor slot promoted to focused keeps its 5s
-	 * background ack timer in the pool, but the user must never wait
+	 * background ack timer in the instance host, but the user must never wait
 	 * that long; the late ack is swallowed by the ready guard in
 	 * addSlot's onReady.
 	 */
@@ -243,7 +244,7 @@ export function createPreviewWindow(deps: {
 	function present(resId: string): void {
 		presentedResId = resId
 		// The flip released the hold on the previously presented slot: if
-		// it fell out of the window it can go back to the pool now — after
+		// it fell out of the window it can be destroyed now — after
 		// the new iframe's presentation writes, never before (an empty
 		// frame otherwise).
 		sweep()
@@ -255,12 +256,12 @@ export function createPreviewWindow(deps: {
 		item: PreviewWindowItem | PreviewWindowNeighbor,
 		isFocused: boolean,
 	): void {
-		const slotClaim = claim({
+		const slotClaim = createPluginIframe({
 			pluginId: item.pluginId,
 			assetVersion: getAssetVersion(item.pluginId),
 			resId: item.resId,
 			// Only background (neighbor) claims get the long ack window;
-			// focused claims keep the pool's user-facing 300ms default.
+			// focused claims keep the instance host's user-facing 300ms default.
 			ackTimeoutMs: isFocused ? undefined : WINDOW_ACK_TIMEOUT_MS,
 		})
 		const record: WindowSlotRecord = {
@@ -271,14 +272,6 @@ export function createPreviewWindow(deps: {
 			focusFallbackTimer: undefined,
 		}
 		slots.set(item.resId, record)
-
-		if (slotClaim.primedResId === item.resId) {
-			// Primed claim: the pooled entry already painted and acked
-			// exactly this resId, so the context on screen is already
-			// correct — no post, no ack wait.
-			record.ready = true
-			return
-		}
 
 		const contextRequest =
 			isFocused && "resName" in item
@@ -294,8 +287,7 @@ export function createPreviewWindow(deps: {
 					slotClaim.whenLoaded(),
 				])
 				// A replaced/rebuild plugin must load its new bundle before
-				// the context is posted. Same fingerprint: the hot reuse path,
-				// no reload.
+				// the context is posted. An unchanged fingerprint needs no reload.
 				if (assetVersion !== undefined && slotClaim.reloadAsset(assetVersion)) {
 					await slotClaim.whenLoaded()
 				}
@@ -350,7 +342,7 @@ export function createPreviewWindow(deps: {
 		// pluginId no longer matches (same resId re-focused under a
 		// different plugin) is stale and re-claimed. Slots that already
 		// match are kept untouched — focusing an already-claimed resId is
-		// cheap: no re-claim, no re-post.
+		// cheap: no re-create, no re-post.
 		let changed = false
 		for (const entry of entries.values()) {
 			const existing = slots.get(entry.resId)
@@ -369,8 +361,8 @@ export function createPreviewWindow(deps: {
 			changed = true
 		}
 
-		// If the focused slot is already painted (primed claim or an
-		// already-acked neighbor), present it right away; otherwise the
+		// If the focused slot is an already-painted neighbor, present it
+		// right away; otherwise the
 		// previous presented slot stays on screen until the ack lands —
 		// bounded by the user-facing fallback, so a neighbor promoted to
 		// focused never makes the user wait out its 5s background timer.

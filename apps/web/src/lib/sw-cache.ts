@@ -7,7 +7,7 @@
  * (`CacheFirst`). NOTE: a content plugin's preview lives in a sandboxed,
  * opaque-origin iframe (no `allow-same-origin` — see
  * `apps/server/src/infra/http/plugin-render.ts` and
- * `apps/web/src/features/plugin/iframe/iframe-pool.ts`), so it is NOT
+ * `apps/web/src/features/plugin/iframe/iframe-instance.ts`), so it is NOT
  * controlled by this service worker; its requests are never seen here.
  */
 

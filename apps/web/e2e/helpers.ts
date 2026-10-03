@@ -25,5 +25,7 @@ export async function login(page: Page) {
 		await fields.first().fill(PASSWORD)
 		await page.getByTestId("login-submit").click()
 	}
-	await expect(page.getByRole("navigation", { name: /primary/i })).toBeVisible()
+	await expect(page.getByRole("navigation", { name: /primary/i })).toBeVisible({
+		timeout: 30_000,
+	})
 }

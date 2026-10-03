@@ -46,9 +46,9 @@ export function pluginSeedsQueryOptions() {
  * Bootstrap payload for a plugin preview (prefs/cache/fileToken), cached
  * briefly so the search dialog's neighbor prefetch, the slot's own
  * bootstrap fetch, and back-and-forth switches all dedupe through
- * TanStack Query. 30s of staleness is safe: pref changes are pushed
- * live to iframes (`pushPrefsChanged`), and the file token is a
- * long-lived signature.
+ * TanStack Query. Preference/cache bridge writes also update these
+ * snapshots, so recreated iframes receive the latest saved values;
+ * the file token is a long-lived signature.
  */
 export function previewInitContextQueryOptions(opts: {
 	readonly pluginId: string

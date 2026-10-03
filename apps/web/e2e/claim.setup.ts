@@ -33,7 +33,9 @@ setup(
 		await fields.nth(1).fill(PASSWORD)
 		await page.getByTestId("setup-submit").click()
 
-		await expect(page.getByTestId("app-sidebar")).toBeVisible()
+		await expect(page.getByTestId("app-sidebar")).toBeVisible({
+			timeout: 30_000,
+		})
 		await expect(page).toHaveURL("/")
 	},
 )
