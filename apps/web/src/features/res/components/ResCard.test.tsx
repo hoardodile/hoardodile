@@ -129,6 +129,25 @@ function badgePluginRow(id: string) {
 }
 
 describe("ResCard sizing", () => {
+	it.each([
+		{ width: 100, height: 300, options: {} },
+		{ width: 200, height: 300, options: {} },
+		{ width: 400, height: 2400, options: {} },
+		{ width: 300, height: 900, options: { thumbFitHeight: 240 } },
+		{ width: 100, height: 300, options: { thumbFitWidth: 320 } },
+	])(
+		"locks a narrow fitted cover to the 200px floor ($width x $height, $options)",
+		async ({ width, height, options }) => {
+			const resource = stubResCard("res-1", "A very long name ".repeat(10), {
+				coverMeta: { kind: "image", width, height },
+			})
+			await renderCard(<ResCard resource={resource} {...options} />)
+			const card = cardContainer("res-1")
+			expect(card.style.minWidth).toBe("200px")
+			expect(card.style.maxWidth).toBe("200px")
+		},
+	)
+
 	it("keeps the default min/max width bounds and intrinsic thumb sizing", async () => {
 		const resource = stubResCard("res-1", "Some resource", {
 			coverMeta: { kind: "image", width: 800, height: 600 },
@@ -154,10 +173,9 @@ describe("ResCard sizing", () => {
 		await renderCard(<ResCard resource={resource} thumbFitHeight={240} />)
 
 		const card = cardContainer("res-1")
-		// The min-width floor stays so the name has room to read; the max
-		// width cap goes away so wide covers keep their aspect ratio.
+		// A narrow fitted cover pins both bounds to the readable floor.
 		expect(card.style.minWidth).toBe("200px")
-		expect(card.style.maxWidth).toBe("")
+		expect(card.style.maxWidth).toBe("200px")
 		// Height capped at 240, width follows the cover's aspect ratio.
 		const thumb = thumbBox(card)
 		expect(thumb.style.height).toBe("240px")

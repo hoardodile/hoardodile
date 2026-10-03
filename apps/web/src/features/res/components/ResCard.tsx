@@ -14,6 +14,7 @@ import { useDateFormatter } from "@/features/settings/datePrefs"
 import { TagChipHover } from "@/features/tags/TagChipHover"
 import { TagChipLink } from "@/features/tags/TagChipLink"
 import { formatBytes } from "@/lib/formatBytes"
+import { buildIntrinsicStyle } from "../utils/thumb-sizing"
 import { stopActiveMediaPreview } from "./mediaPlayback"
 import { ResCardActions } from "./ResCardActions"
 import { ResMediaThumb } from "./ResMediaThumb"
@@ -151,6 +152,16 @@ export const ResCard = memo(function ResCard(props: ResCardProps) {
 	const coverSize = populatedCover(resource.coverMeta)
 	const hasCoverDimensions =
 		coverSize?.width !== undefined && coverSize.height !== undefined
+	const fittedCoverWidth = hasCoverDimensions
+		? buildIntrinsicStyle(coverSize.width, coverSize.height, {
+				maxWidth: thumbFitWidth ?? MAX_WIDTH_PX,
+				maxHeight: thumbFitHeight ?? MAX_HEIGHT_PX,
+				fitHeight: fitHeightMode,
+				fitWidth: fitWidthMode,
+			}).width
+		: undefined
+	const compactCover =
+		typeof fittedCoverWidth === "number" && fittedCoverWidth <= MIN_WIDTH_PX
 
 	const [previewOpen, setPreviewOpen] = useState(false)
 	const usesExternalPreview = onPreviewRequest !== undefined
@@ -177,17 +188,19 @@ export const ResCard = memo(function ResCard(props: ResCardProps) {
 			ref={rootRef}
 			className={`relative flex flex-col gap-1 ${className ?? ""}`}
 			style={
-				fitWidthMode
-					? { minWidth: MIN_WIDTH_PX, maxWidth: thumbFitWidth }
-					: fitHeightMode
-						? // Fit-height mode: the thumbnail sets the width, but the card
-							// keeps the usual floor so the name has room to read.
-							{ minWidth: MIN_WIDTH_PX }
-						: hasCoverDimensions
-							? { minWidth: MIN_WIDTH_PX, maxWidth: MAX_WIDTH_PX }
-							: // No cover: the card itself stays at the compact floor
-								// (the empty tile already falls back to a square box there).
-								{ minWidth: MIN_WIDTH_PX, maxWidth: MIN_WIDTH_PX }
+				compactCover
+					? { minWidth: MIN_WIDTH_PX, maxWidth: MIN_WIDTH_PX }
+					: fitWidthMode
+						? { minWidth: MIN_WIDTH_PX, maxWidth: thumbFitWidth }
+						: fitHeightMode
+							? // Fit-height mode: the thumbnail sets the width, but the card
+								// keeps the usual floor so the name has room to read.
+								{ minWidth: MIN_WIDTH_PX }
+							: hasCoverDimensions
+								? { minWidth: MIN_WIDTH_PX, maxWidth: MAX_WIDTH_PX }
+								: // No cover: the card itself stays at the compact floor
+									// (the empty tile already falls back to a square box there).
+									{ minWidth: MIN_WIDTH_PX, maxWidth: MIN_WIDTH_PX }
 			}
 			data-resource-card-id={id}
 		>
