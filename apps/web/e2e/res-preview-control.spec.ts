@@ -170,6 +170,59 @@ test.describe("resource card preview control (real browser)", () => {
 	test.use({ serviceWorkers: "block" })
 	test.setTimeout(90_000)
 
+	for (const width of [1280, 480]) {
+		test(`crosses list pages without closing the preview at ${width}px`, async ({
+			page,
+			request,
+		}) => {
+			await login(page)
+			await page.setViewportSize({ width, height: 900 })
+			const cookie = await apiLogin(request)
+			const prefix = `preview-page-${width}-${Date.now()}`
+			const ids: string[] = []
+			try {
+				for (const suffix of ["A", "B", "C"]) {
+					ids.push(
+						await createImageResource(
+							request,
+							cookie,
+							`${prefix}-${suffix}`,
+							solidPng(100, 300, [100, 120, 140]),
+							GALLERY_PLUGIN_ID,
+						),
+					)
+				}
+				await page.goto(`/resources?query=${prefix}&size=1&view=grid`)
+				await page.locator(`[data-resource-card-id="${ids[2]}"]`).hover()
+				await page.getByTestId(`resource-preview-${ids[2]}`).click()
+				const dialog = page.getByRole("dialog")
+				await expect(dialog).toContainText(`${prefix}-C`)
+				await page.route("**/trpc/resource.listCards**", async (route) => {
+					await new Promise((resolve) => setTimeout(resolve, 300))
+					await route.continue()
+				})
+				for (const suffix of ["B", "A"]) {
+					await page.getByTestId("res-search-preview-next").click()
+					await expect(dialog).toBeVisible()
+					await expect(dialog).toContainText(`${prefix}-${suffix}`)
+				}
+				await page.getByTestId("res-search-preview-prev").click()
+				await expect(dialog).toContainText(`${prefix}-B`)
+				await expect(page).toHaveURL(/page=2/)
+				if (width === 480) {
+					await page.goBack()
+					await expect(page).toHaveURL(/page=2/)
+				} else {
+					await page.keyboard.press("Escape")
+				}
+				await expect(dialog).toBeHidden()
+				await expect(page.locator("#plugin-iframe-host iframe")).toHaveCount(0)
+			} finally {
+				await deleteResources(request, cookie, ids)
+			}
+		})
+	}
+
 	test("keeps neighbor frames independent and destroys every frame on close", async ({
 		page,
 		request,

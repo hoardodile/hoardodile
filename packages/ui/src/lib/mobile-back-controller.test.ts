@@ -36,6 +36,56 @@ function setup() {
 }
 
 describe("mobile back controller", () => {
+	it.each([false, true])(
+		"keeps overlays open when replacing query parameters (mobile=%s)",
+		async (enabled) => {
+			const { browser, controller, overlay } = setup()
+			controller.setEnabled(enabled)
+			const item = overlay("preview")
+			await browser.settle()
+			const location = {
+				href: "/page?x=2#part",
+				state: { key: "page-two" },
+			}
+			controller.navigate(location, true)
+			await browser.settle()
+			expect(item.open).toBe(true)
+			expect(item.close).not.toHaveBeenCalled()
+			expect(controller.location).toEqual(location)
+			expect(browser.driver.read().href).toBe(location.href)
+			if (enabled) {
+				controller.go(-1)
+				await browser.settle()
+				expect(item.close).toHaveBeenCalledTimes(1)
+				expect(controller.location).toEqual(location)
+			} else {
+				controller.navigate({ href: "/elsewhere", state: null }, true)
+				await browser.settle()
+				expect(item.close).toHaveBeenCalledTimes(1)
+			}
+		},
+	)
+
+	it("preserves nested back order across consecutive query replacements", async () => {
+		const { browser, controller, overlay } = setup()
+		const parent = overlay("preview")
+		const child = overlay("reader-settings", "preview")
+		await browser.settle()
+		controller.navigate({ href: "/page?x=2#part", state: null }, true)
+		controller.navigate({ href: "/page?x=3#part", state: null }, true)
+		await browser.settle()
+		expect(parent.close).not.toHaveBeenCalled()
+		expect(child.close).not.toHaveBeenCalled()
+		controller.go(-1)
+		await browser.settle()
+		expect(child.close).toHaveBeenCalledTimes(1)
+		expect(parent.open).toBe(true)
+		controller.go(-1)
+		await browser.settle()
+		expect(parent.close).toHaveBeenCalledTimes(1)
+		expect(browser.driver.read().href).toBe("/page?x=3#part")
+	})
+
 	it("drops a late blocker result after a newer explicit navigation", async () => {
 		const { browser, controller } = setup()
 		controller.navigate({ href: "/two", state: null }, false)

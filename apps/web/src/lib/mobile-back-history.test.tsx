@@ -96,6 +96,26 @@ async function setup() {
 }
 
 describe("mobile overlays with a real TanStack Router", () => {
+	it("keeps a preview open on query replacement and Back closes it on the updated page", async () => {
+		const { browser, controller, history, router, settle } = await setup()
+		vi.spyOn(window, "confirm").mockReturnValue(true)
+		fireEvent.click(screen.getByText("Open"))
+		await settle()
+		act(() => history.replace("/documents/one?page=2"))
+		await settle()
+		await waitFor(() =>
+			expect(router.state.location.href).toBe("/documents/one?page=2"),
+		)
+		expect(screen.getByTestId("open")).toHaveTextContent("true")
+		act(() => history.back())
+		await settle()
+		expect(screen.getByTestId("open")).toHaveTextContent("false")
+		expect(router.state.location.href).toBe("/documents/one?page=2")
+		expect(browser.driver.read().href).toBe("/documents/one?page=2")
+		history.destroy()
+		controller.dispose()
+	})
+
 	it("honors explicit ignoreBlocker without leaking it from an out-of-range traversal", async () => {
 		const { controller, history, router, settle } = await setup()
 		const confirm = vi.spyOn(window, "confirm").mockReturnValue(true)

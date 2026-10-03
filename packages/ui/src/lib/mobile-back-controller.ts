@@ -510,7 +510,11 @@ export function createMobileBackController(options: {
 			epoch++
 			deciding = false
 			failed = false
-			stack.close(stack.tokens(), true)
+			// Replacing search/hash state updates the current page in place.
+			// Preview pagination does this while its overlay is still open.
+			const samePath =
+				location.href.split(/[?#]/, 1)[0] === route.href.split(/[?#]/, 1)[0]
+			if (!replace || !samePath) stack.close(stack.tokens(), true)
 			writes.push({ location, replace, complete })
 			later()
 		},
