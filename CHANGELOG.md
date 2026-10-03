@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.2.5](https://github.com/hoardodile/hoardodile/compare/v0.2.4...v0.2.5) (2026-10-03)
+
+### Bug Fixes
+
+* **ui:** preserve overlays during same-page query replacements ([00f65ce](https://github.com/hoardodile/hoardodile/commit/00f65cea2fabe34badfa8d763648245e0713df05))
+* **web:** constrain resource cards with narrow covers ([f5b6c1d](https://github.com/hoardodile/hoardodile/commit/f5b6c1d42b031b72a1a8288838999e3c304fcacb))
+* **web:** cover sticky controls with the startup splash ([dd6e30e](https://github.com/hoardodile/hoardodile/commit/dd6e30e351001f179a87e9aba3b4b5528f44237b))
+* **web:** isolate preview iframe lifecycles and preserve cache writes ([02aeea5](https://github.com/hoardodile/hoardodile/commit/02aeea5d5729c847a3195d808ed801704ed18713))
+
 ## [0.2.4](https://github.com/hoardodile/hoardodile/compare/v0.2.3...v0.2.4) (2026-09-18)
 
 ### Bug Fixes
