@@ -83,8 +83,11 @@ jobs:
         run: pnpm licenses:check
       - name: Check version sync
         run: pnpm version:check
-      - name: Audit production dependencies
-        run: pnpm audit --prod --audit-level high
+      # Scoped to what this job actually publishes: the app workspaces
+      # (server/desktop/web) never reach npm, so their advisories must not
+      # block a release. Levels + ignores stay in pnpm-workspace.yaml.
+      - name: Audit the published dependency closure
+        run: pnpm audit:release-set
       - name: Publish SDK release set
         # Idempotent: skips versions already on the registry, so a manual
         # re-run of an already-released version only re-attaches artifacts
