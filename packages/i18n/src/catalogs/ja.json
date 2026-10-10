@@ -41,7 +41,7 @@
 		"auto": "自動",
 		"pinned": "無期限に保持",
 		"restoreTitle": "このライブラリを置き換える",
-		"restoreDescription": "全内容を選択した復元ポイントで置き換え、ローカルの変更を破棄します。処理中はメンテナンスモードになります。ログイン情報とデバイス接続は保持します。",
+		"restoreDescription": "全内容を選択した復元ポイントで置き換え、ローカルの変更を破棄します。処理中はメンテナンスモードになります。ログイン情報とホスト設定は保持します。",
 		"repair": "選択したファイルを修復",
 		"repairTitle": "バックアップからファイルを修復",
 		"repairDescription": "選択したファイルを保存済みの内容で置き換えます。確認後に変更されたファイルは上書きしません。",
@@ -78,7 +78,6 @@
 			"repair": "ファイル修復",
 			"restore": "復元",
 			"retention": "バックアップ整理",
-			"receive": "バックアップ受信",
 			"archive": "アーカイブ作成",
 			"file-write": "ファイル変更"
 		},
@@ -86,46 +85,9 @@
 		"processedFiles_other": "{{count}} ファイル",
 		"processedBytes": "処理済み: {{value}}",
 		"addedBytes": "新規保存: {{value}}",
-		"networkBytes": "受信量: {{value}}",
 		"manageQueue": "待機中の操作を管理",
-		"resubmitFile": "元のファイル操作をもう一度実行してください。"
-	},
-	"replication": {
-		"healthReceived": "バックアップ受信済み",
-		"healthRecorded": "記録は最新です",
-		"healthAttention": "同期の確認が必要です",
-		"healthUnconfigured": "同期未設定",
-		"addressHelp": "HTTPS の LAN 共有を有効にするか、リバースプロキシの HTTPS アドレスを入力してください。",
-		"title": "オフサイトコピー",
-		"description": "1 台の送信元から複数の受信先へ共有できます。受信してもこのライブラリは変更されません。",
-		"name": "サービス名",
-		"role": "役割",
-		"unconfigured": "未設定",
-		"send": "送信",
-		"receive": "受信",
-		"connect": "送信元に接続",
-		"disconnect": "接続を解除",
-		"invite": "ペアリング招待を作成",
-		"inviteHelp": "このコードと HTTPS アドレスを受信先に伝えてください。有効期限は 10 分で、1 回だけ使用できます。",
-		"url": "送信元の HTTPS アドレス",
-		"code": "ペアリングコード",
-		"fingerprint": "証明書の SHA-256 フィンガープリント（自己署名証明書の場合）",
-		"receiveNow": "今すぐ受信",
-		"paused": "バックアップ同期を一時停止",
-		"paired": "接続済みサービス",
-		"revoke": "接続を取り消す",
-		"received": "最後に確認した受信",
-		"never": "未受信",
-		"connectHelp": "送信元のアドレスとペアリングコードを入力してください。自己署名証明書の場合は確認済みのフィンガープリントも入力してください。",
-		"source": "送信元",
-		"devices": "同期デバイス",
-		"manualRecords": "手動記録",
-		"addRecord": "手動デバイスを追加",
-		"details": "詳細",
-		"copy": "コピー",
-		"remove": "削除",
-		"unknown": "不明",
-		"noDevices": "デバイスは未設定です。"
+		"resubmitFile": "元のファイル操作をもう一度実行してください。",
+		"remove": "削除"
 	},
 	"common": {
 		"back": "戻る",
@@ -264,16 +226,6 @@
 			"feedbackAbout": "フィードバックと情報",
 			"updateAvailableBadge": "利用可能な更新があります",
 			"help": "ヘルプ"
-		},
-		"syncDueBadge": "同期リマインダー期限が来ています",
-		"syncStatus": {
-			"synced": "同期済み",
-			"due": "同期期限",
-			"syncedTitle_one": "最新 — {{count}}台のデバイス",
-			"syncedTitle_other": "最新 — {{count}}台のデバイス",
-			"dueTitle_one": "同期予定のデバイス {{count}}台",
-			"dueTitle_other": "同期予定のデバイス {{count}}台",
-			"noDevicesTitle": "同期デバイスがまだ設定されていません。"
 		}
 	},
 	"search": {
@@ -2296,18 +2248,6 @@
 			"latest": "最新"
 		}
 	},
-	"sync": {
-		"config": {
-			"remindLabel": "リマインド間隔",
-			"remindDays_one": "{{count}}日",
-			"remindDays_other": "{{count}}日"
-		},
-		"banner": {
-			"noDevicesTitle": "同期デバイスがまだ設定されていません。",
-			"noDevicesDescription": "同期を追跡するために少なくとも1台のデバイスを追加してください。",
-			"configureLink": "設定"
-		}
-	},
 	"desktopShell": {
 		"tray": {
 			"open": "開く",
@@ -2353,7 +2293,6 @@
 	},
 	"protectionUx": {
 		"protectionTitle": "バックアップ",
-		"sendRequiresBackup": "このデバイスのバックアップを共有するには、最初にローカルバックアップを作成してください。",
 		"setup": "バックアップを設定",
 		"noBackup": "この端末のバックアップはまだありません",
 		"setupHelp": "ライブラリ、ファイル、各バージョンのプラグインをまとめて保存します。",
@@ -2387,7 +2326,7 @@
 		"policyHelp": "最新の自動バックアップのみを保持します。手動および長期保存の復元ポイントは自動削除されません。",
 		"preparingRestore": "バックアップを確認中…",
 		"restoreSource": "バックアップ元：{{source}}",
-		"restoreKeepsHost": "ライブラリを置き換え、ローカルの変更を破棄します。ログイン情報と端末接続は保持されます。",
+		"restoreKeepsHost": "ライブラリを置き換え、ローカルの変更を破棄します。ログインとホスト設定は保持されます。",
 		"activity": "現在の処理",
 		"keepReading": "引き続き閲覧できます。ファイルの変更は処理の完了を待つ場合があります。",
 		"restoreWorking": "復元後にライブラリを再表示します。サービスを終了しないでください。",
@@ -2395,40 +2334,14 @@
 		"errorDetails": "技術的な詳細",
 		"chooseAnotherBackup": "別のバックアップを選んで復元",
 		"errorSpace": "空き容量が不足しています。保存先の空き容量を増やして再試行してください。",
-		"errorCertificate": "送信元の証明書を確認できません。送信元とフィンガープリントを確認してから再接続してください。",
-		"errorPairing": "接続の認証が無効です。送信元で新しいペアリングの招待を作成してください。",
-		"errorNetwork": "接続を完了できません。送信元の起動とネットワークを確認して再試行してください。",
 		"errorIncomplete": "一部のファイルを保存できませんでした。読み取り権限を確認し、完全なバックアップを作成し直してください。",
-		"jobsHelp": "最近行ったバックアップ、復元、同期の処理。失敗した処理の確認や再試行に便利です。",
+		"jobsHelp": "最近実行したバックアップと復元。失敗したタスクを確認して再試行できます。",
 		"recentOperationsCount_one": "{{count}} 件の処理",
 		"recentOperationsCount_other": "{{count}} 件の処理",
 		"pointsCount_one": "{{count}} 件のバックアップ",
 		"pointsCount_other": "{{count}} 件のバックアップ"
 	},
-	"replicationUx": {
-		"unconfigured": "この端末の用途を選択",
-		"send": "この端末のバックアップを共有",
-		"receive": "別の端末のバックアップを保持",
-		"sendHelp": "この端末が送信元です。コピーを保持する各端末にペアリングの招待を共有します。",
-		"receiveHelp": "この端末はコピーを保持します。1つの送信元に接続し、そのバックアップを受信します。",
-		"useBackup": "この端末でこのバックアップを使う",
-		"receivedBackup": "受信したバックアップ",
-		"receivedFrom": "{{source}} から · 作成日時 {{time}}",
-		"libraryUnchanged": "受信しても使用中のライブラリは変わりません。データを使うには復元が必要です。",
-		"waitingFirst": "送信元から最初の完全なバックアップを受信するのを待っています。",
-		"pasteInvitation": "ペアリングの招待を貼り付け",
-		"invalidInvitation": "招待が無効か期限切れです。送信元から新しい招待をコピーしてください。",
-		"manualConnection": "接続情報を手動入力",
-		"invitation": "ペアリングの招待",
-		"copyInvitation": "ペアリングの招待をコピー",
-		"copied": "招待をコピーしました",
-		"copyFailed": "クリップボードにアクセスできません。招待テキストを選択してコピーしてください。"
-	},
 	"backupHealth": {
-		"ok": "バックアップと同期はすべて正常です。",
-		"okSub": "最終バックアップ：{{time}} · {{devices}}",
-		"syncedDevices_one": "{{count}} 台の端末",
-		"syncedDevices_other": "{{count}} 台の端末",
 		"noBackupsTitle": "ライブラリはまだバックアップされていません。",
 		"noBackupsSub": "復元可能なライブラリとファイルのコピーを保存し、問題が起きたときに復元できるようにします。",
 		"noBackupsAction": "バックアップを設定",
@@ -2437,17 +2350,8 @@
 		"neverBackedUpSub": "完了したバックアップはまだありません。最初の1回を作成して保護を始めてください。",
 		"backupNow": "今すぐバックアップ",
 		"turnOnAutomatic": "自動バックアップをオン",
-		"syncUnconfiguredTitle": "現時点でコピーを保持しているのはこの端末だけです。",
-		"syncUnconfiguredSub": "バックアップ同期で別の端末やドライブをペアリングすると、別の場所にもコピーを残せます。",
-		"syncUnconfiguredAction": "バックアップ同期を設定",
-		"syncDueTitle": "同期端末が更新されていません。",
-		"syncDueSub": "同期端末のいずれかがしばらくバックアップを受信していません。",
-		"syncDueAction": "バックアップを開く",
-		"receiveNow": "今すぐ受信",
-		"receiverTitle": "別の端末のバックアップのコピーをここに保持しています。",
-		"receiverSub": "この端末は同期元の最新バックアップを保持しています。この端末に自分のライブラリも保存する場合のみ、ローカルバックアップが必要です。",
-		"protectedTitle": "ライブラリはこの端末と別の場所の両方で保護されています。",
-		"protectedSub": "ローカル最新バックアップ：{{local}} · オフサイトコピー最終受信：{{remote}}"
+		"protectedTitle": "ライブラリはこのデバイスにバックアップされています。",
+		"protectedSub": "前回のバックアップ：{{local}}"
 	},
 	"backupSetup": {
 		"title": "バックアップを設定",

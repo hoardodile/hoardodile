@@ -10,7 +10,6 @@ import {
 } from "@tanstack/react-router"
 import { useTranslation } from "react-i18next"
 import { useMarketplaceUpdateCount } from "@/features/marketplace/useMarketplaceUpdateCount"
-import { useSyncHealth } from "@/features/protection/syncHealth"
 import {
 	SETTINGS_TABS,
 	type SettingsTabKey,
@@ -26,8 +25,7 @@ export const Route = createFileRoute("/settings")({
 
 /**
  * Settings layout — the in-page settings shell: a 208px icon nav column
- * (the backups row shows a red dot when a sync device is due) beside the
- * content column. The tab bar renders once and each tab owns its route,
+ * beside the content column. The tab bar renders once and each tab owns its route,
  * so back/forward navigation and deep links work across sections. The
  * desktop-only tab drops out of a normal browser tab.
  */
@@ -46,8 +44,6 @@ function SettingsLayout() {
 		? (suffix as SettingsTabKey)
 		: "preferences"
 
-	const syncHealth = useSyncHealth()
-	const syncDue = syncHealth.count === 0 || syncHealth.dueCount > 0
 	const marketplaceUpdates = useMarketplaceUpdateCount()
 	const tabs = visibleSettingsTabs(isHoardodileDesktop())
 
@@ -92,7 +88,7 @@ function SettingsLayout() {
 					}))}
 				/>
 				{/* Desktop: the settings nav — icon + label rows, the
-				    selected row lifts to a muted fill; sync shows a red dot.
+				    selected row lifts to a muted fill.
 				    Sticky so it stays in view while the content column
 				    scrolls (self-start keeps the column from stretching). */}
 				<nav className="sticky top-4.5 z-20 hidden w-52 shrink-0 flex-col gap-1 self-start sidebar:flex">
@@ -113,10 +109,8 @@ function SettingsLayout() {
 							>
 								<Icon icon={tab.icon} selected={active} className="shrink-0" />
 								{t(`me.tabs.${tab.key}`)}
-								{tab.key === "archive" && syncDue ? (
-									<span className="ml-auto size-2 shrink-0 rounded-full bg-destructive" />
-								) : hasUpdates &&
-									(tab.key === "marketplace" || tab.key === "plugins") ? (
+								{hasUpdates &&
+								(tab.key === "marketplace" || tab.key === "plugins") ? (
 									<span
 										className="ml-auto size-2 shrink-0 rounded-full bg-destructive"
 										role="img"

@@ -41,7 +41,7 @@
 		"auto": "Automatisch",
 		"pinned": "Dauerhaft aufbewahren",
 		"restoreTitle": "Diese Bibliothek ersetzen",
-		"restoreDescription": "Alle Inhalte werden durch den gewählten Wiederherstellungspunkt ersetzt. Lokale Änderungen gehen verloren. Die Bibliothek wechselt in den Wartungsmodus. Zugangsdaten und Geräteverbindungen bleiben erhalten.",
+		"restoreDescription": "Alle Inhalte werden durch den gewählten Wiederherstellungspunkt ersetzt. Lokale Änderungen gehen verloren. Die Bibliothek wechselt in den Wartungsmodus. Zugangsdaten und Host-Einstellungen bleiben erhalten.",
 		"repair": "Ausgewählte Dateien reparieren",
 		"repairTitle": "Dateien aus dem Backup reparieren",
 		"repairDescription": "Ausgewählte Dateien werden durch gesicherte Inhalte ersetzt. Seit der Vorschau geänderte Dateien werden nicht überschrieben.",
@@ -78,7 +78,6 @@
 			"repair": "Dateireparatur",
 			"restore": "Wiederherstellung",
 			"retention": "Backup-Bereinigung",
-			"receive": "Backups empfangen",
 			"archive": "Archiv erstellen",
 			"file-write": "Dateiänderung"
 		},
@@ -86,46 +85,9 @@
 		"processedFiles_other": "{{count}} Dateien",
 		"processedBytes": "Verarbeitet: {{value}}",
 		"addedBytes": "Neu gespeichert: {{value}}",
-		"networkBytes": "Empfangen: {{value}}",
 		"manageQueue": "Warteschlange verwalten",
-		"resubmitFile": "Starten Sie den ursprünglichen Dateivorgang erneut."
-	},
-	"replication": {
-		"healthReceived": "Backups empfangen",
-		"healthRecorded": "Einträge aktuell",
-		"healthAttention": "Synchronisierung prüfen",
-		"healthUnconfigured": "Synchronisierung nicht eingerichtet",
-		"addressHelp": "HTTPS-LAN-Freigabe aktivieren oder die HTTPS-Adresse des Reverse-Proxys eingeben.",
-		"title": "Offsite-Kopie",
-		"description": "Ein Sender kann Backups mit mehreren Empfängern teilen. Der Empfang ändert diese Bibliothek niemals.",
-		"name": "Dienstname",
-		"role": "Rolle",
-		"unconfigured": "Nicht eingerichtet",
-		"send": "Senden",
-		"receive": "Empfangen",
-		"connect": "Mit Sender verbinden",
-		"disconnect": "Verbindung trennen",
-		"invite": "Kopplungseinladung erstellen",
-		"inviteHelp": "Übermitteln Sie diesen Code und die HTTPS-Adresse an den Empfänger. Der Code ist zehn Minuten gültig und einmal verwendbar.",
-		"url": "HTTPS-Adresse des Senders",
-		"code": "Kopplungscode",
-		"fingerprint": "SHA-256-Zertifikatsfingerabdruck (für selbstsignierte Zertifikate)",
-		"receiveNow": "Jetzt empfangen",
-		"paused": "Backup-Synchronisierung pausieren",
-		"paired": "Verbundener Dienst",
-		"revoke": "Verbindung widerrufen",
-		"received": "Letzter bestätigter Empfang",
-		"never": "Noch nicht empfangen",
-		"connectHelp": "HTTPS-Adresse und Kopplungscode des Senders eingeben. Bei einem selbstsignierten Zertifikat zusätzlich den geprüften Fingerabdruck eingeben.",
-		"source": "Sender",
-		"devices": "Synchronisierte Geräte",
-		"manualRecords": "Manuelle Einträge",
-		"addRecord": "Manuelles Gerät hinzufügen",
-		"details": "Details",
-		"copy": "Kopieren",
-		"remove": "Entfernen",
-		"unknown": "Unbekannt",
-		"noDevices": "Keine Geräte eingerichtet."
+		"resubmitFile": "Starten Sie den ursprünglichen Dateivorgang erneut.",
+		"remove": "Entfernen"
 	},
 	"common": {
 		"back": "Zurück",
@@ -264,16 +226,6 @@
 			"feedbackAbout": "Feedback & Über",
 			"updateAvailableBadge": "Update verfügbar",
 			"help": "Hilfe"
-		},
-		"syncDueBadge": "Eine Sync-Erinnerung ist fällig",
-		"syncStatus": {
-			"synced": "Synchronisiert",
-			"due": "Sync fällig",
-			"syncedTitle_one": "Auf dem neuesten Stand — {{count}} Gerät",
-			"syncedTitle_other": "Auf dem neuesten Stand — {{count}} Geräte",
-			"dueTitle_one": "{{count}} Gerät für Sync fällig",
-			"dueTitle_other": "{{count}} Geräte für Sync fällig",
-			"noDevicesTitle": "Noch keine Sync-Geräte eingerichtet."
 		}
 	},
 	"search": {
@@ -2296,18 +2248,6 @@
 			"latest": "Neueste"
 		}
 	},
-	"sync": {
-		"config": {
-			"remindLabel": "Erinnere mich nach",
-			"remindDays_one": "{{count}} Tag",
-			"remindDays_other": "{{count}} Tage"
-		},
-		"banner": {
-			"noDevicesTitle": "Noch keine Sync-Geräte eingerichtet.",
-			"noDevicesDescription": "Füge mindestens ein Gerät hinzu, um Syncs zu verfolgen.",
-			"configureLink": "Einrichten"
-		}
-	},
 	"desktopShell": {
 		"tray": {
 			"open": "Öffnen",
@@ -2353,7 +2293,6 @@
 	},
 	"protectionUx": {
 		"protectionTitle": "Backups",
-		"sendRequiresBackup": "Erstelle zuerst ein lokales Backup, um die Backups dieses Geräts freizugeben.",
 		"setup": "Sicherungen einrichten",
 		"noBackup": "Noch keine lokale Sicherung",
 		"setupHelp": "Bibliothek, Dateien und versionierte Plugins gemeinsam sichern.",
@@ -2387,7 +2326,7 @@
 		"policyHelp": "Nur die neuesten automatischen Sicherungen bleiben erhalten. Manuelle und dauerhaft aufbewahrte Punkte werden nie automatisch entfernt.",
 		"preparingRestore": "Sicherung wird geprüft…",
 		"restoreSource": "Sicherungsquelle: {{source}}",
-		"restoreKeepsHost": "Die Bibliothek wird ersetzt und lokale Änderungen gehen verloren. Anmeldung und Geräteverbindungen bleiben erhalten.",
+		"restoreKeepsHost": "Dies ersetzt die Bibliothek und verwirft lokale Änderungen. Deine Anmeldung und Host-Einstellungen bleiben erhalten.",
 		"activity": "Aktuelle Vorgänge",
 		"keepReading": "Sie können weiterlesen. Dateiänderungen warten gegebenenfalls auf den Abschluss.",
 		"restoreWorking": "Die Bibliothek öffnet sich nach der Wiederherstellung. Lassen Sie den Dienst laufen.",
@@ -2395,40 +2334,14 @@
 		"errorDetails": "Technische Details",
 		"chooseAnotherBackup": "Andere Sicherung wiederherstellen",
 		"errorSpace": "Nicht genug Speicherplatz. Geben Sie Speicher auf dem Laufwerk frei und versuchen Sie es erneut.",
-		"errorCertificate": "Das Zertifikat des Senders konnte nicht geprüft werden. Prüfen Sie Sender und Fingerabdruck vor dem erneuten Verbinden.",
-		"errorPairing": "Die Verbindung ist nicht mehr autorisiert. Erstellen Sie beim Sender eine neue Einladung.",
-		"errorNetwork": "Die Verbindung konnte nicht abgeschlossen werden. Prüfen Sie, ob der Sender läuft und erreichbar ist, und versuchen Sie es erneut.",
 		"errorIncomplete": "Einige Dateien konnten nicht gesichert werden. Prüfen Sie den Dateizugriff und wiederholen Sie die Sicherung.",
-		"jobsHelp": "Zuletzt ausgeführte Sicherungen, Wiederherstellungen und Synchronisierungen – praktisch, um fehlgeschlagene Vorgänge zu erkennen und zu wiederholen.",
+		"jobsHelp": "Zuletzt ausgeführte Backups und Wiederherstellungen — um fehlgeschlagene Aufgaben zu erkennen und erneut zu versuchen.",
 		"recentOperationsCount_one": "{{count}} Vorgang",
 		"recentOperationsCount_other": "{{count}} Vorgänge",
 		"pointsCount_one": "{{count}} Sicherung",
 		"pointsCount_other": "{{count}} Sicherungen"
 	},
-	"replicationUx": {
-		"unconfigured": "Verwendung dieses Geräts wählen",
-		"send": "Sicherungen dieses Geräts teilen",
-		"receive": "Sicherungen eines anderen Geräts aufbewahren",
-		"sendHelp": "Dieses Gerät ist die Quelle — teilen Sie eine Einladung mit jedem Gerät, das eine Kopie halten soll.",
-		"receiveHelp": "Dieses Gerät hält eine Kopie — verbinden Sie es mit einer Quelle und ziehen Sie deren Sicherungen.",
-		"useBackup": "Diese Sicherung auf diesem Gerät verwenden",
-		"receivedBackup": "Empfangene Sicherung",
-		"receivedFrom": "Von {{source}} · Erstellt {{time}}",
-		"libraryUnchanged": "Der Empfang ändert die aktuelle Bibliothek nicht. Stellen Sie die Sicherung wieder her, um ihre Daten zu verwenden.",
-		"waitingFirst": "Warten auf die erste vollständige Sicherung des Senders.",
-		"pasteInvitation": "Kopplungseinladung einfügen",
-		"invalidInvitation": "Die Einladung ist ungültig oder abgelaufen. Kopieren Sie eine neue direkt vom Sender.",
-		"manualConnection": "Verbindungsdaten manuell eingeben",
-		"invitation": "Kopplungseinladung",
-		"copyInvitation": "Kopplungseinladung kopieren",
-		"copied": "Einladung kopiert",
-		"copyFailed": "Zugriff auf die Zwischenablage fehlgeschlagen. Kopieren Sie den Einladungstext manuell."
-	},
 	"backupHealth": {
-		"ok": "Ihre Backups und die Synchronisierung sind auf dem neuesten Stand.",
-		"okSub": "Letztes Backup: {{time}} · {{devices}}",
-		"syncedDevices_one": "{{count}} Gerät",
-		"syncedDevices_other": "{{count}} Geräte",
 		"noBackupsTitle": "Ihre Bibliothek ist noch nicht gesichert.",
 		"noBackupsSub": "Speichern Sie eine wiederherstellbare Kopie Ihrer Bibliothek und Dateien, um sie bei Problemen wiederherstellen zu können.",
 		"noBackupsAction": "Backups einrichten",
@@ -2437,17 +2350,8 @@
 		"neverBackedUpSub": "Noch kein abgeschlossenes Backup. Erstellen Sie das erste, um Ihre Bibliothek zu schützen.",
 		"backupNow": "Jetzt sichern",
 		"turnOnAutomatic": "Automatische Sicherung aktivieren",
-		"syncUnconfiguredTitle": "Bisher hält nur dieses Gerät eine Kopie.",
-		"syncUnconfiguredSub": "Paaren Sie in der Backup-Synchronisierung ein weiteres Gerät oder Laufwerk, um eine Kopie an einem anderen Ort zu behalten.",
-		"syncUnconfiguredAction": "Backup-Synchronisierung einrichten",
-		"syncDueTitle": "Ein synchronisiertes Gerät wurde nicht aktualisiert.",
-		"syncDueSub": "Eines Ihrer synchronisierten Geräte hat schon länger kein Backup erhalten.",
-		"syncDueAction": "Backups öffnen",
-		"receiveNow": "Jetzt empfangen",
-		"receiverTitle": "Hier wird eine Kopie der Backups eines anderen Geräts aufbewahrt.",
-		"receiverSub": "Dieses Gerät hält das neueste Backup von seiner Synchronisierungsquelle. Ein lokales Backup ist nur nötig, wenn Sie hier auch die eigene Bibliothek aufbewahren.",
-		"protectedTitle": "Ihre Bibliothek ist lokal und offsite geschützt.",
-		"protectedSub": "Letztes lokales Backup: {{local}} · Offsite-Kopie zuletzt empfangen: {{remote}}"
+		"protectedTitle": "Deine Bibliothek ist auf diesem Gerät gesichert.",
+		"protectedSub": "Letztes Backup: {{local}}"
 	},
 	"backupSetup": {
 		"title": "Backups einrichten",

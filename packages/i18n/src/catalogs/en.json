@@ -41,7 +41,7 @@
 		"auto": "Automatic",
 		"pinned": "Keep indefinitely",
 		"restoreTitle": "Replace this library",
-		"restoreDescription": "This replaces all library content with the selected recovery point and discards local changes. The library enters maintenance mode. Your sign-in credentials and device connections are retained.",
+		"restoreDescription": "This replaces all library content with the selected recovery point and discards local changes. The library enters maintenance mode. Your sign-in credentials and host settings are retained.",
 		"repair": "Repair selected files",
 		"repairTitle": "Repair files from backup",
 		"repairDescription": "Selected files will be replaced with their backed-up contents. Files changed since the preview will not be overwritten.",
@@ -78,7 +78,6 @@
 			"repair": "File repair",
 			"restore": "Restore",
 			"retention": "Backup cleanup",
-			"receive": "Receive backups",
 			"archive": "Create archive",
 			"file-write": "File change"
 		},
@@ -86,46 +85,9 @@
 		"processedFiles_other": "{{count}} files",
 		"processedBytes": "Processed: {{value}}",
 		"addedBytes": "New data: {{value}}",
-		"networkBytes": "Received: {{value}}",
 		"manageQueue": "Manage waiting operations",
-		"resubmitFile": "Submit the original file operation again."
-	},
-	"replication": {
-		"healthReceived": "Backups received",
-		"healthRecorded": "Records up to date",
-		"healthAttention": "Sync needs attention",
-		"healthUnconfigured": "Sync not configured",
-		"addressHelp": "Enable HTTPS LAN sharing or enter the HTTPS address of your reverse proxy.",
-		"title": "Offsite copy",
-		"description": "One sender can share backups with several receivers. Receiving a backup never changes this library.",
-		"name": "Service name",
-		"role": "Role",
-		"unconfigured": "Not configured",
-		"send": "Send",
-		"receive": "Receive",
-		"connect": "Connect to sender",
-		"disconnect": "Disconnect",
-		"invite": "Create pairing invitation",
-		"inviteHelp": "Send this code and this service's HTTPS address to your receiver. The code expires in ten minutes and can be used once.",
-		"url": "Sender HTTPS address",
-		"code": "Pairing code",
-		"fingerprint": "SHA-256 certificate fingerprint (for self-signed certificates)",
-		"receiveNow": "Receive now",
-		"paused": "Pause backup sync",
-		"paired": "Connected service",
-		"revoke": "Revoke connection",
-		"received": "Last confirmed receipt",
-		"never": "Not received yet",
-		"connectHelp": "Enter the sender's address and pairing code. For a self-signed certificate, also enter its verified fingerprint.",
-		"source": "Sender",
-		"devices": "Synced devices",
-		"manualRecords": "Manual records",
-		"addRecord": "Add manual device",
-		"details": "Details",
-		"copy": "Copy",
-		"remove": "Remove",
-		"unknown": "Unknown",
-		"noDevices": "No devices configured."
+		"resubmitFile": "Submit the original file operation again.",
+		"remove": "Remove"
 	},
 	"common": {
 		"back": "Back",
@@ -264,16 +226,6 @@
 			"feedbackAbout": "Feedback & About",
 			"updateAvailableBadge": "Update available",
 			"help": "Help"
-		},
-		"syncDueBadge": "A sync reminder is due",
-		"syncStatus": {
-			"synced": "Synced",
-			"due": "Sync due",
-			"syncedTitle_one": "Up to date — {{count}} device",
-			"syncedTitle_other": "Up to date — {{count}} devices",
-			"dueTitle_one": "{{count}} device due for sync",
-			"dueTitle_other": "{{count}} devices due for sync",
-			"noDevicesTitle": "No sync devices configured yet."
 		}
 	},
 	"search": {
@@ -2296,18 +2248,6 @@
 			"latest": "Latest"
 		}
 	},
-	"sync": {
-		"config": {
-			"remindLabel": "Remind me after",
-			"remindDays_one": "{{count}} day",
-			"remindDays_other": "{{count}} days"
-		},
-		"banner": {
-			"noDevicesTitle": "No sync devices configured yet.",
-			"noDevicesDescription": "Add at least one device to track syncs.",
-			"configureLink": "Set up"
-		}
-	},
 	"desktopShell": {
 		"tray": {
 			"open": "Open",
@@ -2353,7 +2293,6 @@
 	},
 	"protectionUx": {
 		"protectionTitle": "Backups",
-		"sendRequiresBackup": "Create a local backup first to share this device's backups.",
 		"setup": "Set up backups",
 		"noBackup": "No local backup yet",
 		"setupHelp": "Save your library, files, and versioned plugins together.",
@@ -2387,7 +2326,7 @@
 		"policyHelp": "Only the newest automatic backups are kept. Manual and pinned recovery points are never removed automatically.",
 		"preparingRestore": "Checking backup…",
 		"restoreSource": "Backup source: {{source}}",
-		"restoreKeepsHost": "This replaces the library and discards local changes. Your login and device connections stay in place.",
+		"restoreKeepsHost": "This replaces the library and discards local changes. Your login and host settings stay in place.",
 		"activity": "Current activity",
 		"keepReading": "You can keep reading. File changes may wait until this storage task finishes.",
 		"restoreWorking": "The library will reopen when restoration finishes. Keep the service running.",
@@ -2395,40 +2334,14 @@
 		"errorDetails": "Technical details",
 		"chooseAnotherBackup": "Choose another backup to restore",
 		"errorSpace": "Not enough free space. Free space on the storage volume, then retry.",
-		"errorCertificate": "The sender's certificate could not be verified. Check the sender and its fingerprint before reconnecting.",
-		"errorPairing": "The connection is no longer authorized. Create a new pairing invitation on the sender.",
-		"errorNetwork": "Could not complete the connection. Check that the sender is running and reachable, then retry.",
 		"errorIncomplete": "Some files could not be backed up. Check file access and retry before relying on this backup.",
-		"jobsHelp": "Backups, restores and syncs you've run recently — handy for spotting and retrying a failed job.",
+		"jobsHelp": "Backups and restores you've run recently — handy for spotting and retrying a failed job.",
 		"recentOperationsCount_one": "{{count}} operation",
 		"recentOperationsCount_other": "{{count}} operations",
 		"pointsCount_one": "{{count}} backup",
 		"pointsCount_other": "{{count}} backups"
 	},
-	"replicationUx": {
-		"unconfigured": "Choose how to use this device",
-		"send": "Share this device's backups",
-		"receive": "Hold another device's backups",
-		"sendHelp": "This device is the source — share a pairing invitation with each device that should hold a copy.",
-		"receiveHelp": "This device holds a copy — connect to one source device and pull its backups.",
-		"useBackup": "Use this backup on this device",
-		"receivedBackup": "Received backup",
-		"receivedFrom": "From {{source}} · Backup created {{time}}",
-		"libraryUnchanged": "Receiving this backup does not change the library you are using. Restore it to use its data here.",
-		"waitingFirst": "Waiting for the first completed backup from the sender.",
-		"pasteInvitation": "Paste pairing invitation",
-		"invalidInvitation": "This invitation is invalid or expired. Copy a new invitation directly from the sender.",
-		"manualConnection": "Enter connection details manually",
-		"invitation": "Pairing invitation",
-		"copyInvitation": "Copy pairing invitation",
-		"copied": "Invitation copied",
-		"copyFailed": "Clipboard access failed. Select and copy the invitation text manually."
-	},
 	"backupHealth": {
-		"ok": "Your backups and sync are up to date.",
-		"okSub": "Last backup: {{time}} · {{devices}}",
-		"syncedDevices_one": "{{count}} device",
-		"syncedDevices_other": "{{count}} devices",
 		"noBackupsTitle": "Your library isn't backed up yet.",
 		"noBackupsSub": "Save a recoverable copy of your library and files, so you can restore them if something goes wrong.",
 		"noBackupsAction": "Set up backups",
@@ -2437,17 +2350,8 @@
 		"neverBackedUpSub": "No completed backup yet. Create the first one to start protecting your library.",
 		"backupNow": "Back up now",
 		"turnOnAutomatic": "Turn on automatic backups",
-		"syncUnconfiguredTitle": "Only this device holds a copy so far.",
-		"syncUnconfiguredSub": "Pair another device or drive in backup sync to keep an offsite copy.",
-		"syncUnconfiguredAction": "Set up backup sync",
-		"syncDueTitle": "A synced device hasn't been updated.",
-		"syncDueSub": "One of your synced devices hasn't received a backup in a while.",
-		"syncDueAction": "Open backups",
-		"receiveNow": "Receive now",
-		"receiverTitle": "A copy of another device's backups is kept here.",
-		"receiverSub": "This device holds the latest backup from its sync source. You only need a local backup here if you also keep your own library on this device.",
-		"protectedTitle": "Your library is protected locally and offsite.",
-		"protectedSub": "Last local backup: {{local}} · Offsite copy received: {{remote}}"
+		"protectedTitle": "Your library is backed up on this device.",
+		"protectedSub": "Last backup: {{local}}"
 	},
 	"backupSetup": {
 		"title": "Set up backups",

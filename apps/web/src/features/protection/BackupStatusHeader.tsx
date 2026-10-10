@@ -5,26 +5,10 @@ import { useTranslation } from "react-i18next"
 import { useToastMutation } from "@/hooks/useToastMutation"
 import { trpcMutation } from "@/trpc/factory"
 import { protectionJobsOptions, protectionStatusOptions } from "./api"
-import { useSyncHealth } from "./syncHealth"
 
-type HeaderMode =
-	| "maintenance"
-	| "noBackups"
-	| "backupOff"
-	| "backupNow"
-	| "receiver"
-	| "syncUnconfigured"
-	| "syncDue"
-	| "ok"
+type HeaderMode = "maintenance" | "noBackups" | "backupOff" | "backupNow" | "ok"
 
-/**
- * Backup-sync health verdict: the single "is my data safe?" answer that
- * leads the "Backups" section. It derives one state from the existing
- * protection / replication / sync queries (no new backend), shows a title
- * and description on the left with at most one primary action on the right.
- * The persistent shell indicator (`AppShell.BrandSyncStatus`) stays the
- * global echo; this is the expanded, in-page form.
- */
+/** The backup verdict depends only on this device's backup state. */
 export function BackupStatusHeader({
 	onSetUpBackups,
 }: {
@@ -34,15 +18,10 @@ export function BackupStatusHeader({
 	const qc = useQueryClient()
 	const statusQuery = useQuery(protectionStatusOptions())
 	const jobsQuery = useQuery(protectionJobsOptions())
-	const health = useSyncHealth()
 	const status = statusQuery.data
 
 	const invalidate = async () => {
-		await Promise.all([
-			qc.invalidateQueries({ queryKey: ["protection"] }),
-			qc.invalidateQueries({ queryKey: ["replication"] }),
-			qc.invalidateQueries({ queryKey: ["sync"] }),
-		])
+		await qc.invalidateQueries({ queryKey: ["protection"] })
 	}
 	const enable = useToastMutation({
 		...trpcMutation("protection", "enabled"),
@@ -68,43 +47,17 @@ export function BackupStatusHeader({
 			["queued", "running", "cancelling"].includes(job.state),
 	)
 
-	// State priority: a library restore overrides everything; an unsafe backup
-	// beats any sync need; only a healthy backup reaches the sync checks. A
-	// receive-role device that already holds a backup from its source needs no
-	// separate local backup, so the local-backup nudges fold into `receiver`.
 	let mode: HeaderMode
 	if (maintenance) mode = "maintenance"
 	else if (!localConfigured) mode = "noBackups"
 	else if (!enabled) mode = "backupOff"
 	else if (!lastBackupAt) mode = "backupNow"
-	else if (health.count === 0) mode = "syncUnconfigured"
-	else if (health.dueCount > 0 || health.paused) mode = "syncDue"
 	else mode = "ok"
-	if (
-		health.hasReceivedBackup &&
-		(mode === "noBackups" || mode === "backupOff" || mode === "backupNow")
-	)
-		mode = "receiver"
-
-	function scrollToSync() {
-		document
-			.querySelector('[data-testid="backup-sync"]')
-			?.scrollIntoView({ behavior: "smooth", block: "start" })
-	}
-
-	const remoteAt = health.connected.reduce(
-		(max, entry) => Math.max(max, entry.receivedAt ?? 0),
-		0,
-	)
-
 	const title = {
 		maintenance: t("protection.maintenance"),
 		noBackups: t("backupHealth.noBackupsTitle"),
 		backupOff: t("backupHealth.backupNeedsTitle"),
 		backupNow: t("backupHealth.backupNeedsTitle"),
-		receiver: t("backupHealth.receiverTitle"),
-		syncUnconfigured: t("backupHealth.syncUnconfiguredTitle"),
-		syncDue: t("backupHealth.syncDueTitle"),
 		ok: t("backupHealth.protectedTitle"),
 	}[mode]
 
@@ -115,14 +68,8 @@ export function BackupStatusHeader({
 		noBackups: t("backupHealth.noBackupsSub"),
 		backupOff: t("backupHealth.backupOffSub"),
 		backupNow: t("backupHealth.neverBackedUpSub"),
-		receiver: t("backupHealth.receiverSub"),
-		syncUnconfigured: t("backupHealth.syncUnconfiguredSub"),
-		syncDue: t("backupHealth.syncDueSub"),
 		ok: t("backupHealth.protectedSub", {
 			local: new Date(lastBackupAt ?? Date.now()).toLocaleString(),
-			remote: remoteAt
-				? new Date(remoteAt).toLocaleString()
-				: t("protection.never"),
 		}),
 	}
 
@@ -151,18 +98,6 @@ export function BackupStatusHeader({
 			>
 				{t("backupHealth.backupNow")}
 			</Button>
-		),
-		receiver: null,
-		// Not paired yet is a normal state, not something to fix: the copy is
-		// informational and its control stays quiet (a ghost button), unlike
-		// the actionable states above. See `backupHealth.syncUnconfigured*`.
-		syncUnconfigured: (
-			<Button variant="ghost" onClick={scrollToSync}>
-				{t("backupHealth.syncUnconfiguredAction")}
-			</Button>
-		),
-		syncDue: (
-			<Button onClick={scrollToSync}>{t("backupHealth.syncDueAction")}</Button>
 		),
 		ok: null,
 	}

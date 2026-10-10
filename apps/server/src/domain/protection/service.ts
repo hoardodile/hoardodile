@@ -105,7 +105,6 @@ export type ProtectionDependencies = {
 	isMaintenance?: () => boolean
 	contextBusy?: () => boolean
 	hasOrphans?: () => boolean
-	repositoryServing?: (id: string) => boolean
 	onError?: (error: unknown) => void
 }
 
@@ -488,11 +487,6 @@ export async function createProtectionService(deps: ProtectionDependencies) {
 			.object({ repositoryId, prune: z.boolean().default(false) })
 			.parse(raw)
 		return locks.run(input.repositoryId, async () => {
-			if (deps.repositoryServing?.(input.repositoryId))
-				throw new BackupError(
-					"repository_busy",
-					"Wait for active transfers before cleaning this repository",
-				)
 			const removed = await engine.applyRetention(
 				repository(input.repositoryId),
 				{
@@ -711,43 +705,6 @@ export async function createProtectionService(deps: ProtectionDependencies) {
 					})
 				: null
 		},
-		async registerSource(input: {
-			id: string
-			name: string
-			recoveryKey: string
-			source?: Repository
-		}) {
-			z.uuid().parse(input.id)
-			return locks.run(input.id, async () => {
-				const repo: Repository = {
-					id: input.id,
-					path: join(backupRoot, "sources", input.id),
-					passwordFile: join(local, "keys", input.id),
-				}
-				let exists = false
-				try {
-					await stat(join(repo.path, "config"))
-					exists = true
-				} catch (error) {
-					if (!isMissing(error)) throw error
-				}
-				if (!exists) {
-					await atomicWrite(
-						repo.passwordFile,
-						randomBytes(32).toString("base64url"),
-					)
-					await engine.initializeRepository(repo, { source: input.source })
-				}
-				if (!state.repositories.some((entry) => entry.id === input.id))
-					state.repositories.push({
-						id: input.id,
-						name: input.name,
-						sourceInstanceId: input.id,
-					})
-				await persist()
-				return repo
-			})
-		},
 		listRecoveryPoints: listPoints,
 		createBackup: (input: z.input<typeof recoveryMetadata>) =>
 			jobs.start("backup", recoveryMetadata.parse(input)),
@@ -885,7 +842,7 @@ export async function createProtectionService(deps: ProtectionDependencies) {
 				instructions: [
 					"Keep this file separately from the repository. The key decrypts every recovery point in that repository.",
 					"On a fresh Hoardodile installation, set BACKUP_ROOT to the parent backup directory, start the service, and paste this JSON in the existing-repository recovery field. Received source repositories can be copied into a new BACKUP_ROOT/local directory first.",
-					"Select a complete recovery point and confirm RESTORE. This replaces the library; local authentication and device connections remain on the new service.",
+					"Select a complete recovery point and confirm RESTORE. This replaces the library; local authentication and host settings remain on the new service.",
 					"For offline inspection, save the key value to a protected password file and run the bundled restic binary with -r <repositoryPath> --password-file <password-file> snapshots --tag hoardodile-published.",
 					"Offline extraction: restic -r <repositoryPath> --password-file <password-file> restore <snapshot-id> --target <new-empty-directory> --verify. Use recovery.json inside the restored checkpoint to identify its database. Keep the original repository intact.",
 				],
@@ -897,11 +854,6 @@ export async function createProtectionService(deps: ProtectionDependencies) {
 			metadata: z.input<typeof recoveryMetadata>,
 		) {
 			return locks.run(id, async () => {
-				if (deps.repositoryServing?.(id))
-					throw new BackupError(
-						"repository_busy",
-						"Wait for active transfers before editing recovery point details",
-					)
 				const point = await engine.updateMetadata(
 					repository(id),
 					pointId,
@@ -935,11 +887,6 @@ export async function createProtectionService(deps: ProtectionDependencies) {
 		) => jobs.start("drill", { repositoryId: id, pointId, full, targetId }),
 		async deletePoint(id: string, pointId: string) {
 			return locks.run(id, async () => {
-				if (deps.repositoryServing?.(id))
-					throw new BackupError(
-						"repository_busy",
-						"Wait for active transfers before removing a recovery point",
-					)
 				await engine.deleteRecoveryPoint(
 					repository(id),
 					pointId,
@@ -952,15 +899,6 @@ export async function createProtectionService(deps: ProtectionDependencies) {
 			state.enabled = enabled
 			await persist()
 		},
-		async recordReceipt(id: string) {
-			const entry = state.repositories.find((repo) => repo.id === id)
-			if (entry) {
-				entry.lastAddedAt = Date.now()
-				entry.lastPruneAt ??= Date.now()
-				catalogs.delete(id)
-				await persist()
-			}
-		},
 		async scheduleMaintenance() {
 			if (maintenance || maintenanceError || deps.isMaintenance?.()) return
 			const now = new Date()
@@ -969,12 +907,7 @@ export async function createProtectionService(deps: ProtectionDependencies) {
 			weekly.setHours(3, 0, 0, 0)
 			if (weekly > now) weekly.setDate(weekly.getDate() - 7)
 			for (const entry of state.repositories) {
-				if (
-					!entry.lastAddedAt ||
-					locks.busy(entry.id) ||
-					deps.repositoryServing?.(entry.id)
-				)
-					continue
+				if (!entry.lastAddedAt || locks.busy(entry.id)) continue
 				const active = jobs
 					.list()
 					.some(

@@ -46,6 +46,7 @@ type Row = Record<string, unknown>
 
 const BUILTIN_ID = "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
 const HOST_TABLES = ["auth", "auth_sign_ins"]
+// Preserve the old reminder preference when separating legacy host state.
 const HOST_PREFS = ["sync.remindDays", "auth.sessionIdleTimeoutSeconds"]
 const OLD_FOLDERS = ["db-backups", "snapshots"]
 const WORK_NAME = "backup-layout-migration"

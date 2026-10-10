@@ -1,4 +1,4 @@
-import { mkdtemp, rm, stat } from "node:fs/promises"
+import { mkdir, mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { loadEnv } from "src/config/env.ts"
@@ -76,6 +76,32 @@ it("keeps host credentials independent and exposes only complete-backup and arch
 		.map((entry) => `${entry.name}=${entry.value}`)
 		.join("; ")
 	for (const request of [
+		{ method: "GET" as const, url: "/trpc/sync.summary" },
+		{
+			method: "POST" as const,
+			url: "/trpc/sync.remindDays",
+			payload: { days: 7 },
+		},
+		{ method: "GET" as const, url: "/trpc/replication.status" },
+		...[
+			"configure",
+			"invitation",
+			"connect",
+			"disconnect",
+			"revoke",
+			"receive",
+		].map((procedure) => ({
+			method: "POST" as const,
+			url: `/trpc/replication.${procedure}`,
+			payload: {},
+		})),
+		{ method: "GET" as const, url: "/api/sync/points" },
+		...["pair", "begin", "end", "acknowledge"].map((procedure) => ({
+			method: "POST" as const,
+			url: `/api/sync/${procedure}`,
+			payload: {},
+		})),
+		{ method: "GET" as const, url: "/api/sync/repository/config" },
 		{ method: "GET" as const, url: "/trpc/backup.list" },
 		{ method: "POST" as const, url: "/trpc/backup.create", payload: {} },
 		{
@@ -89,6 +115,11 @@ it("keeps host credentials independent and exposes only complete-backup and arch
 		expect(
 			(await app.inject({ ...request, headers: { cookie } })).statusCode,
 		).toBe(404)
+	expect(app.hasDecorator("syncService")).toBe(false)
+	expect(app.hasDecorator("replicationService")).toBe(false)
+	await expect(stat(join(root, "local", "replication"))).rejects.toMatchObject({
+		code: "ENOENT",
+	})
 	expect(app.db.select().from(schema.auth).all()).toEqual([])
 	const created = await app.inject({
 		method: "POST",
@@ -142,3 +173,59 @@ it("keeps host credentials independent and exposes only complete-backup and arch
 		host.close()
 	}
 }, 30000)
+
+it("preserves old sync files while hiding and refusing to retry receive jobs", async () => {
+	const root = await fixture()
+	built = await buildServer({ env: envFor(root) })
+	await built.close()
+	built = undefined
+	const id = "4f9a2bc6-3e8d-4a77-8d5d-06873fa171a0"
+	const jobsDirectory = join(root, "local", "protection", "jobs")
+	const oldSyncDirectory = join(root, "local", "replication")
+	await mkdir(jobsDirectory, { recursive: true })
+	await mkdir(oldSyncDirectory, { recursive: true })
+	const oldSyncPath = join(oldSyncDirectory, "state.json")
+	const oldSyncState = JSON.stringify({ role: "receive", paused: false })
+	await writeFile(oldSyncPath, oldSyncState)
+	const jobPath = join(jobsDirectory, `${id}.json`)
+	const oldJob = JSON.stringify({
+		id,
+		kind: "receive",
+		input: {},
+		state: "failed",
+		createdAt: 1,
+		updatedAt: 1,
+	})
+	await writeFile(jobPath, oldJob)
+	built = await buildServer({ env: envFor(root) })
+	const app = built.app
+	await app.inject({
+		method: "POST",
+		url: "/auth/setup",
+		payload: { password: "contract-password" },
+	})
+	const login = await app.inject({
+		method: "POST",
+		url: "/auth/login",
+		payload: { password: "contract-password" },
+	})
+	const cookie = login.cookies
+		.map((entry) => `${entry.name}=${entry.value}`)
+		.join("; ")
+	const jobs = await app.inject({
+		method: "GET",
+		url: "/trpc/protection.jobs",
+		headers: { cookie },
+	})
+	expect(jobs.json().result.data).toEqual([])
+	const retry = await app.inject({
+		method: "POST",
+		url: "/trpc/protection.retry",
+		headers: { cookie },
+		payload: { id },
+	})
+	expect(retry.statusCode).toBe(400)
+	expect(app.protectionService.jobs.list()).toHaveLength(1)
+	expect(await readFile(jobPath, "utf8")).toBe(oldJob)
+	expect(await readFile(oldSyncPath, "utf8")).toBe(oldSyncState)
+})

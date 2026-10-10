@@ -45,14 +45,6 @@ function mount() {
 				manifest: { libraryId: pointId },
 			},
 		],
-		"replication.status": () => ({
-			role: "receive",
-			name: "Laptop",
-			paused: false,
-			source: null,
-			peers: [],
-		}),
-		"sync.summary": () => ({ remindDays: 7 }),
 	}
 	setTrpcClient(
 		new Proxy(

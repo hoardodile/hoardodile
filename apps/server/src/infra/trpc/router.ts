@@ -22,12 +22,10 @@ import {
 	buildSystemPreferenceRouter,
 } from "src/domain/prefs/router.ts"
 import { buildProtectionRouter } from "src/domain/protection/router.ts"
-import { buildReplicationRouter } from "src/domain/replication/router.ts"
 import { buildImportRouter } from "src/domain/res/import-router.ts"
 import { buildResourceRouter } from "src/domain/res/router.ts"
 import { buildSearchRouter } from "src/domain/search/router.ts"
 import { buildStorageRouter } from "src/domain/storage/router.ts"
-import { buildSyncRouter } from "src/domain/sync/router.ts"
 import { buildTagRouter } from "src/domain/tag/router.ts"
 import { buildTraceRouter } from "src/domain/trace/router.ts"
 import { buildTraitRouter } from "src/domain/trait/router.ts"
@@ -84,7 +82,6 @@ export function buildDomainRouter(services: RouterServices) {
 			danmaku: buildDanmakuRouter(services.danmakuService),
 			usage: buildUsageRouter(services.usageService),
 			storage: buildStorageRouter({ service: services.storageService }),
-			sync: buildSyncRouter(services.syncService),
 			trace: buildTraceRouter(services.traceService),
 			search: buildSearchRouter(services.searchService),
 			plugin: buildPluginRouter({
@@ -197,12 +194,6 @@ export function buildDomainRouter(services: RouterServices) {
 export function buildAppRouter(services: AppRouterServices) {
 	return mergeRouters(
 		router({ protection: buildProtectionRouter(services.protectionService) }),
-		router({
-			replication: buildReplicationRouter(
-				services.replicationService,
-				services.protectionService,
-			),
-		}),
 		buildDomainRouter(services),
 		router({
 			version: buildVersionRouter({

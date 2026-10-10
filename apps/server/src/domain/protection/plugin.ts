@@ -55,9 +55,6 @@ export async function registerProtection(
 		isMaintenance: () => app.libraryMaintenance,
 		contextBusy: () => app.pendingStorageReloads > 0,
 		hasOrphans: () => app.nativeProcessesBusy,
-		repositoryServing: (id) =>
-			id === "local" &&
-			(app.replicationService?.getStatus().activeTransfers ?? 0) > 0,
 		assertArchivable: () => assertArchivablePlugins(app),
 		validateDatabase,
 		validateRecovery: (input) =>

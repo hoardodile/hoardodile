@@ -32,15 +32,6 @@ export const recoveryPointsOptions = (repositoryId: string) => ({
 	}),
 	refetchInterval: 10_000,
 })
-export const replicationStatusOptions = () => ({
-	...trpcQueryOptions({
-		namespace: "replication",
-		procedure: "status",
-		input: undefined,
-		queryKey: ["replication", "status"],
-	}),
-	refetchInterval: 3000,
-})
 export const maintenanceOptions = () =>
 	queryOptions({
 		queryKey: ["library-maintenance"],

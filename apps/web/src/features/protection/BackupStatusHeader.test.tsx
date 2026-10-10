@@ -35,14 +35,6 @@ function mount(
 	const routes: Record<string, (input: unknown) => unknown> = {
 		"protection.status": () => localStatus,
 		"protection.jobs": () => [],
-		"replication.status": () => ({
-			role: "receive",
-			name: "Laptop",
-			paused: false,
-			source: null,
-			peers: [],
-		}),
-		"sync.summary": () => ({ remindDays: 7 }),
 		...handlers,
 	}
 	setTrpcClient(
@@ -75,23 +67,11 @@ function mount(
 	)
 }
 
-it("reports the healthy state with the last backup and device count", async () => {
-	mount({
-		"replication.status": () => ({
-			role: "receive",
-			name: "Laptop",
-			paused: false,
-			source: {
-				id: "source-1",
-				name: "Office PC",
-				receivedAt: Date.now(),
-			},
-			peers: [],
-		}),
-	})
+it("reports a healthy local backup without paired devices", async () => {
+	mount()
 	expect(await screen.findByTestId("backup-health-ok")).toBeInTheDocument()
 	expect(
-		screen.getByText(/Your library is protected locally and offsite/),
+		screen.getByText("Your library is backed up on this device."),
 	).toBeInTheDocument()
 })
 
@@ -125,74 +105,4 @@ it("prompts to turn on automatic backups when backups are off", async () => {
 		screen.getByRole("button", { name: "Turn on automatic backups" }),
 	)
 	await waitFor(() => expect(enable).toHaveBeenCalledWith({ enabled: true }))
-})
-
-it("stays quiet for a receive-role device already holding a source backup", async () => {
-	mount({
-		"protection.status": () => ({ ...localStatus, repositories: [] }),
-		"replication.status": () => ({
-			role: "receive",
-			name: "Laptop",
-			paused: false,
-			source: { id: "sender", name: "Sender PC", receivedAt: Date.now() },
-			peers: [],
-		}),
-	})
-	expect(
-		await screen.findByTestId("backup-health-receiver"),
-	).toBeInTheDocument()
-	expect(
-		screen.queryByRole("button", { name: "Set up backups" }),
-	).not.toBeInTheDocument()
-	expect(
-		screen.queryByRole("button", { name: "Turn on automatic backups" }),
-	).not.toBeInTheDocument()
-	expect(screen.queryByTestId("complete-backup-now")).not.toBeInTheDocument()
-})
-
-it("reports a not-yet-paired device as information, not as something to fix", async () => {
-	mount({
-		"replication.status": () => ({
-			role: "unconfigured",
-			name: "Laptop",
-			paused: false,
-			source: null,
-			peers: [],
-		}),
-	})
-	expect(
-		await screen.findByTestId("backup-health-syncUnconfigured"),
-	).toBeInTheDocument()
-	// Neutral statement of fact, not a call to action.
-	expect(
-		screen.getByText("Only this device holds a copy so far."),
-	).toBeInTheDocument()
-	expect(screen.queryByText(/Add a synced device/)).not.toBeInTheDocument()
-	// The control is a quiet one (ghost, not the primary fill the actionable
-	// states use), so the state does not read as an alert…
-	const action = screen.getByRole("button", { name: "Set up backup sync" })
-	expect(action).toHaveClass("hover:bg-muted")
-	expect(action).not.toHaveClass("bg-primary")
-})
-
-it("offers to open backups when a synced device is overdue", async () => {
-	mount({
-		"replication.status": () => ({
-			role: "send",
-			name: "Laptop",
-			paused: false,
-			source: null,
-			peers: [
-				{
-					id: "peer-1",
-					name: "Backup drive",
-					receivedAt: Date.now() - 10 * 86400_000,
-				},
-			],
-		}),
-	})
-	expect(await screen.findByTestId("backup-health-syncDue")).toBeInTheDocument()
-	expect(
-		screen.getByRole("button", { name: "Open backups" }),
-	).toBeInTheDocument()
 })

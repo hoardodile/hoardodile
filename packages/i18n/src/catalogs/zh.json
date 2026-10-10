@@ -41,7 +41,7 @@
 		"auto": "自动",
 		"pinned": "长期保留",
 		"restoreTitle": "覆盖还原存储库",
-		"restoreDescription": "将用选定恢复点替换全部存储库内容，丢弃本地修改，并进入维护模式。登录凭据和设备连接会保留。",
+		"restoreDescription": "将用选定恢复点替换全部存储库内容，丢弃本地修改，并进入维护模式。登录凭据和宿主设置会保留。",
 		"repair": "修复所选文件",
 		"repairTitle": "从备份修复文件",
 		"repairDescription": "所选文件将被备份中的内容替换。预览后发生变化的文件不会被覆盖。",
@@ -78,7 +78,6 @@
 			"repair": "文件修复",
 			"restore": "还原",
 			"retention": "备份清理",
-			"receive": "接收备份",
 			"archive": "创建归档",
 			"file-write": "文件变更"
 		},
@@ -86,46 +85,9 @@
 		"processedFiles_other": "{{count}} 个文件",
 		"processedBytes": "已处理：{{value}}",
 		"addedBytes": "新增备份数据：{{value}}",
-		"networkBytes": "接收流量：{{value}}",
 		"manageQueue": "管理等待中的操作",
-		"resubmitFile": "请重新提交原来的文件操作。"
-	},
-	"replication": {
-		"healthReceived": "备份已接收",
-		"healthRecorded": "记录已更新",
-		"healthAttention": "同步需要关注",
-		"healthUnconfigured": "同步未配置",
-		"addressHelp": "请启用 HTTPS 局域网共享，或填写你的 HTTPS 反向代理地址。",
-		"title": "异地副本",
-		"description": "一个发送端可向多个接收端提供备份。收到备份不会改变本机存储库。",
-		"name": "服务名称",
-		"role": "角色",
-		"unconfigured": "未配置",
-		"send": "发送",
-		"receive": "接收",
-		"connect": "连接发送端",
-		"disconnect": "断开连接",
-		"invite": "创建配对邀请",
-		"inviteHelp": "将此配对码和本服务的 HTTPS 地址交给接收端。配对码十分钟后过期，仅可使用一次。",
-		"url": "发送端 HTTPS 地址",
-		"code": "配对码",
-		"fingerprint": "SHA-256 证书指纹（自签名证书需要）",
-		"receiveNow": "立即接收",
-		"paused": "暂停备份同步",
-		"paired": "已连接服务",
-		"revoke": "撤销连接",
-		"received": "最近确认接收",
-		"never": "尚未接收",
-		"connectHelp": "输入发送端地址和配对码。使用自签名证书时，还需输入已核实的证书指纹。",
-		"source": "发送端",
-		"devices": "同步设备",
-		"manualRecords": "手动记录",
-		"addRecord": "添加手动设备",
-		"details": "详情",
-		"copy": "复制",
-		"remove": "移除",
-		"unknown": "未知",
-		"noDevices": "尚未配置设备。"
+		"resubmitFile": "请重新提交原来的文件操作。",
+		"remove": "移除"
 	},
 	"common": {
 		"back": "返回",
@@ -264,16 +226,6 @@
 			"feedbackAbout": "反馈与关于",
 			"updateAvailableBadge": "有可用更新",
 			"help": "帮助"
-		},
-		"syncDueBadge": "有同步提醒待处理",
-		"syncStatus": {
-			"synced": "已同步",
-			"due": "同步到期",
-			"syncedTitle_one": "已是最新——{{count}} 台设备",
-			"syncedTitle_other": "已是最新——{{count}} 台设备",
-			"dueTitle_one": "{{count}} 台设备有同步提醒待处理",
-			"dueTitle_other": "{{count}} 台设备有同步提醒待处理",
-			"noDevicesTitle": "暂无同步设备。"
 		}
 	},
 	"search": {
@@ -2296,18 +2248,6 @@
 			"latest": "最新"
 		}
 	},
-	"sync": {
-		"config": {
-			"remindLabel": "超过多久提醒同步",
-			"remindDays_one": "{{count}} 天",
-			"remindDays_other": "{{count}} 天"
-		},
-		"banner": {
-			"noDevicesTitle": "暂无同步设备。",
-			"noDevicesDescription": "至少添加一个设备才能追踪同步。",
-			"configureLink": "去配置"
-		}
-	},
 	"desktopShell": {
 		"tray": {
 			"open": "打开",
@@ -2353,7 +2293,6 @@
 	},
 	"protectionUx": {
 		"protectionTitle": "备份",
-		"sendRequiresBackup": "请先创建本地备份，才能共享此设备的备份。",
 		"setup": "设置备份",
 		"noBackup": "还没有本机备份",
 		"setupHelp": "一起保存存储库、文件和各版本的插件。",
@@ -2387,7 +2326,7 @@
 		"policyHelp": "只保留最近的自动备份；手动备份和长期保留的恢复点不会被自动删除。",
 		"preparingRestore": "正在检查备份…",
 		"restoreSource": "备份来源：{{source}}",
-		"restoreKeepsHost": "这会覆盖存储库并丢弃本地修改，登录凭据和设备连接会保留。",
+		"restoreKeepsHost": "这会替换存储库并丢弃本地改动。登录与宿主设置保持不变。",
 		"activity": "当前任务",
 		"keepReading": "你可以继续阅读；文件变更可能需要等待当前存储任务结束。",
 		"restoreWorking": "还原完成后会重新打开存储库，请保持服务运行。",
@@ -2395,40 +2334,14 @@
 		"errorDetails": "技术详情",
 		"chooseAnotherBackup": "选择其他备份还原",
 		"errorSpace": "存储空间不足，请释放存储盘空间后重试。",
-		"errorCertificate": "无法验证发送端证书。请核实发送端及其证书指纹后重新连接。",
-		"errorPairing": "连接授权已失效，请在发送端创建新的配对邀请。",
-		"errorNetwork": "连接未完成。请确认发送端正在运行且网络可达，然后重试。",
 		"errorIncomplete": "部分文件未能备份，请检查文件读取权限并重试；本次备份尚未完整完成。",
-		"jobsHelp": "最近做过的备份、还原与同步——便于发现失败的任务并重试。",
+		"jobsHelp": "最近做过的备份与还原——便于发现失败的任务并重试。",
 		"recentOperationsCount_one": "{{count}} 个操作",
 		"recentOperationsCount_other": "{{count}} 个操作",
 		"pointsCount_one": "{{count}} 个备份",
 		"pointsCount_other": "{{count}} 个备份"
 	},
-	"replicationUx": {
-		"unconfigured": "选择本机用途",
-		"send": "分享本机存储库",
-		"receive": "在本机保存另一台设备的副本",
-		"sendHelp": "本机是来源端，把配对邀请发给每个要保存副本的设备。",
-		"receiveHelp": "本机保存副本，连接一个来源端并拉取其备份。",
-		"useBackup": "在本机使用这份备份",
-		"receivedBackup": "收到的备份",
-		"receivedFrom": "来自 {{source}} · 备份时间 {{time}}",
-		"libraryUnchanged": "收到备份不会改变正在使用的存储库。还原后才能在本机使用其中的数据。",
-		"waitingFirst": "等待从发送端接收第一份完整备份。",
-		"pasteInvitation": "粘贴配对邀请",
-		"invalidInvitation": "邀请无效或已过期，请从发送端重新复制邀请。",
-		"manualConnection": "手动填写连接信息",
-		"invitation": "配对邀请",
-		"copyInvitation": "复制配对邀请",
-		"copied": "邀请已复制",
-		"copyFailed": "无法访问剪贴板，请选中邀请文本手动复制。"
-	},
 	"backupHealth": {
-		"ok": "备份与同步均已就绪。",
-		"okSub": "最近备份：{{time}} · {{devices}}",
-		"syncedDevices_one": "{{count}} 台设备",
-		"syncedDevices_other": "{{count}} 台设备",
 		"noBackupsTitle": "你的存储库还没有备份。",
 		"noBackupsSub": "保存一份可还原的存储库与文件副本，遇到问题时可以恢复。",
 		"noBackupsAction": "设置备份",
@@ -2437,17 +2350,8 @@
 		"neverBackedUpSub": "还没有完成备份。先创建第一份以开始保护存储库。",
 		"backupNow": "立即备份",
 		"turnOnAutomatic": "开启自动备份",
-		"syncUnconfiguredTitle": "目前只有这台设备保存着副本。",
-		"syncUnconfiguredSub": "在备份同步中配对另一台设备或驱动器，即可保留一份异地副本。",
-		"syncUnconfiguredAction": "设置备份同步",
-		"syncDueTitle": "有一台同步设备未更新。",
-		"syncDueSub": "其中一台同步设备已有段时间未收到备份。",
-		"syncDueAction": "查看备份",
-		"receiveNow": "立即接收",
-		"receiverTitle": "这里保存着另一台设备备份的副本。",
-		"receiverSub": "本机持有同步来源的最新备份。只有当你也要在本机保存自己的存储库时，才需要本地备份。",
-		"protectedTitle": "本机与异地都已受保护。",
-		"protectedSub": "本机最近备份：{{local}} · 异地副本最近收到：{{remote}}"
+		"protectedTitle": "你的存储库已在本机备份。",
+		"protectedSub": "最近备份：{{local}}"
 	},
 	"backupSetup": {
 		"title": "设置备份",

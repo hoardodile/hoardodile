@@ -145,7 +145,6 @@ const envSchema = z
 		BACKUP_ROOT: z.string().min(1).optional(),
 		RECOVERY_DRILL_ROOT: z.string().min(1).optional(),
 		RESTIC_BIN_PATH: z.string().min(1).optional(),
-		RCLONE_BIN_PATH: z.string().min(1).optional(),
 		/**
 		 * Root directory for shared-folder browsing during folder import.
 		 * This is the "Shared Folder" shown in the upload UI; it is unrelated to

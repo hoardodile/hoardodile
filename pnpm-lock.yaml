@@ -312,9 +312,6 @@ importers:
       '@hoardodile/shared':
         specifier: workspace:*
         version: link:../../packages/shared
-      '@hoardodile/sync':
-        specifier: workspace:*
-        version: link:../../packages/sync
       '@hoardodile/ui':
         specifier: workspace:*
         version: link:../../packages/ui

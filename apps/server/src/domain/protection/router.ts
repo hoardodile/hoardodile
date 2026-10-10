@@ -130,10 +130,15 @@ export function buildProtectionRouter(service?: ProtectionService) {
 		enabled: procedure
 			.input(z.object({ enabled: z.boolean() }))
 			.mutation(({ input }) => get().setEnabled(input.enabled)),
-		jobs: procedure.query(() => get().jobs.list()),
-		job: procedure
-			.input(z.object({ id: z.uuid() }))
-			.query(({ input }) => get().jobs.get(input.id)),
+		jobs: procedure.query(() =>
+			get()
+				.jobs.list()
+				.filter((job) => job.kind !== "receive"),
+		),
+		job: procedure.input(z.object({ id: z.uuid() })).query(({ input }) => {
+			const job = get().jobs.get(input.id)
+			return job?.kind === "receive" ? undefined : job
+		}),
 		cancel: procedure
 			.input(z.object({ id: z.uuid() }))
 			.mutation(async ({ input }) => {
@@ -144,6 +149,11 @@ export function buildProtectionRouter(service?: ProtectionService) {
 			.input(z.object({ id: z.uuid() }))
 			.mutation(({ input, ctx }) => {
 				const service = get()
+				if (service.jobs.get(input.id)?.kind === "receive")
+					throw new TRPCError({
+						code: "BAD_REQUEST",
+						message: "This operation is no longer supported",
+					})
 				if (service.jobs.get(input.id)?.kind === "file-write")
 					throw new TRPCError({
 						code: "BAD_REQUEST",

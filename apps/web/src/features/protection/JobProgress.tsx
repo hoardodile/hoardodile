@@ -10,7 +10,6 @@ const metrics = z.object({
 	files_restored: z.number().optional(),
 	total_files_processed: z.number().optional(),
 	data_added_packed: z.number().optional(),
-	networkBytes: z.number().optional(),
 })
 
 export function JobProgress({ value }: { value: unknown }) {
@@ -32,10 +31,6 @@ export function JobProgress({ value }: { value: unknown }) {
 			t("protection.addedBytes", {
 				value: formatBytes(data.data_added_packed),
 			}),
-		)
-	if (data.networkBytes !== undefined)
-		parts.push(
-			t("protection.networkBytes", { value: formatBytes(data.networkBytes) }),
 		)
 	return parts.length ? (
 		<p className="mt-1 text-xs text-muted-foreground">{parts.join(" · ")}</p>

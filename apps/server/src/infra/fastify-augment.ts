@@ -1,5 +1,4 @@
 import type { PluginHooks, PluginLoader } from "@hoardodile/host"
-import type { SyncEngine } from "@hoardodile/sync"
 import type { Env } from "src/config/env.ts"
 import type { SessionStore } from "src/domain/auth/session.ts"
 import type { CatService } from "src/domain/cat/service.ts"
@@ -26,7 +25,6 @@ import type { ResService } from "src/domain/res/service.ts"
 import type { ResUploads } from "src/domain/res/upload.ts"
 import type { SearchService } from "src/domain/search/service.ts"
 import type { StorageService } from "src/domain/storage/service.ts"
-import type { SyncService } from "src/domain/sync/service.ts"
 import type { TagService } from "src/domain/tag/service.ts"
 import type { TraceService } from "src/domain/trace/service.ts"
 import type { TraitService } from "src/domain/trait/service.ts"
@@ -79,7 +77,6 @@ declare module "fastify" {
 		readonly db: SqliteDb
 		readonly hostDb: SqliteDb
 		readonly protectionService: ProtectionService
-		readonly replicationService: SyncEngine
 		libraryMaintenance: boolean
 		nativeProcessesBusy: boolean
 		readonly paths: StoragePaths
@@ -121,7 +118,6 @@ declare module "fastify" {
 		readonly danmakuService: DanmakuService
 		readonly usageService: UsageService
 		readonly storageService: StorageService
-		readonly syncService: SyncService
 		readonly traceService: TraceService
 		readonly systemPrefService: SystemPrefService
 		readonly asyncPrefService: AsyncPrefService

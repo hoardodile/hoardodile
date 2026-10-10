@@ -26,6 +26,7 @@ import {
 import { eq } from "drizzle-orm"
 import { loadEnv } from "src/config/env.ts"
 import { getAuthRow } from "src/domain/auth/repo.ts"
+import { buildAsyncPrefRepository } from "src/domain/prefs/repo.ts"
 import { schema } from "src/infra/db/connection.ts"
 import { type BuiltServer, buildServer } from "src/server.ts"
 import { afterEach, describe, expect, it, vi } from "vitest"
@@ -188,7 +189,8 @@ describe("complete library recovery", () => {
 			})
 			await writeFile(media, bytes)
 		})
-		await app.syncService.setRemindDays(3)
+		const hostPrefs = buildAsyncPrefRepository(app.hostDb)
+		hostPrefs.upsert("auth.sessionIdleTimeoutSeconds", "180", Date.now())
 		const initial = await app.protectionService.initialize()
 		expect(initial).not.toBeNull()
 		const backup = await finish(app.protectionService, initial!.id)
@@ -209,7 +211,7 @@ describe("complete library recovery", () => {
 		)
 		await app.resService.update({ id: original.id, name: "Local edits" })
 		await app.resService.create({ name: "Discard this resource" })
-		await app.syncService.setRemindDays(9)
+		hostPrefs.upsert("auth.sessionIdleTimeoutSeconds", "360", Date.now())
 		const extra = join(app.paths.latest.root, "extra.bin")
 		await writeVersioned(app.paths, false, async () => {
 			await writeFile(media, "changed")
@@ -233,7 +235,7 @@ describe("complete library recovery", () => {
 				.map((row) => row.name),
 		).toEqual(["Original"])
 		expect(getAuthRow(app.hostDb)?.hash).toBe(password)
-		expect((await app.syncService.summary()).remindDays).toBe(9)
+		expect(hostPrefs.get("auth.sessionIdleTimeoutSeconds")?.value).toBe("360")
 		const secondPlan = await app.protectionService.prepareRestore(
 			"local",
 			point.id,

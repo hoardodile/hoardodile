@@ -13,7 +13,6 @@ export const OPTIONAL_BIN_PACKAGES = [
 	"@hoardodile/ffprobe-bin",
 	"@hoardodile/7z-bin",
 	"@hoardodile/restic-bin",
-	"@hoardodile/rclone-bin",
 ]
 
 /**

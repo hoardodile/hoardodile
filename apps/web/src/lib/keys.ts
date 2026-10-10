@@ -55,11 +55,6 @@ export const prefKeys = {
 	 * in the browser.
 	 */
 	lastRoute: "app.lastRoute",
-	/**
-	 * Async-scope prefs (server-side, `asyncPreference` namespace) for the
-	 * sync-device feature. `index.html` does not read these.
-	 */
-	syncRemindDays: "sync.remindDays",
 } as const
 
 export const signalPrefixes = {

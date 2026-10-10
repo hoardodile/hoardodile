@@ -87,7 +87,7 @@ function PointActionsMenu(props: {
 					onClick={props.onDelete}
 				>
 					<Icon icon={TrashBinMinimalistic} />
-					{t("replication.remove")}
+					{t("protection.remove")}
 				</DropdownMenuItem>
 			</DropdownMenuContent>
 		</DropdownMenu>
@@ -355,12 +355,12 @@ export function RecoveryPointCard({
 				onOpenChange={(open) => {
 					if (!open) setDeletePoint(null)
 				}}
-				title={t("replication.remove")}
+				title={t("protection.remove")}
 				description={
 					deletePoint?.name ||
 					(deletePoint ? new Date(deletePoint.createdAt).toLocaleString() : "")
 				}
-				confirmLabel={t("replication.remove")}
+				confirmLabel={t("protection.remove")}
 				isPending={remove.isPending}
 				onConfirm={() => {
 					if (deletePoint)

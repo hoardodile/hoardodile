@@ -1,23 +1,23 @@
 import { expect, test } from "@playwright/test"
 import { login } from "./helpers"
 
-test("complete backup, confirmed restore, and merged backup-sync page", async ({
+test("complete local backup and confirmed restore", async ({
 	page,
 }, testInfo) => {
 	test.setTimeout(240_000)
+	const syncRequests: string[] = []
+	page.on("request", (request) => {
+		if (/\/(?:api\/sync\/|trpc\/(?:sync|replication)\.)/.test(request.url()))
+			syncRequests.push(request.url())
+	})
 	await page.setViewportSize({ width: 1600, height: 900 })
 	await login(page)
 	await page.goto("/settings/backups")
 	await expect(page.getByTestId("complete-backups")).toBeVisible()
 	await expect(page.getByTestId("complete-backups-section")).toBeVisible()
-	// The merged Protection section hosts both the local-backup block and the
-	// offsite-copy block — they are no longer two separate sections. With no
-	// local backup yet only the three setup options are offered; the sync
-	// service and the "share" (sender) option stay hidden until a backup
-	// exists.
 	await expect(page.getByTestId("setup-new-backup")).toBeVisible()
 	await expect(page.getByTestId("setup-existing-backup")).toBeVisible()
-	await expect(page.getByTestId("setup-sync-receive")).toBeVisible()
+	await expect(page.getByTestId("setup-sync-receive")).not.toBeVisible()
 	await expect(page.getByTestId("setup-sync-send")).not.toBeVisible()
 	await expect(page.getByTestId("backup-sync")).not.toBeVisible()
 	await expect(page.getByText("On this device")).toBeVisible()
@@ -60,10 +60,9 @@ test("complete backup, confirmed restore, and merged backup-sync page", async ({
 	await expect(point).toBeVisible({ timeout: 30_000 })
 	// Available backups only exists once a repository is configured.
 	await expect(page.getByTestId("available-backups-section")).toBeVisible()
-	// The first backup exists now: the sync service and the "share" (sender)
-	// option become available.
-	await expect(page.getByTestId("backup-sync")).toBeVisible()
-	await expect(page.getByTestId("setup-sync-send")).toBeVisible()
+	// Creating or restoring a backup never enables device sync.
+	await expect(page.getByTestId("backup-sync")).not.toBeVisible()
+	await expect(page.getByTestId("setup-sync-send")).not.toBeVisible()
 	const download = page.waitForEvent("download")
 	await page.getByTestId("recovery-key-notice").getByRole("button").click()
 	expect((await download).suggestedFilename()).toBe(
@@ -88,10 +87,11 @@ test("complete backup, confirmed restore, and merged backup-sync page", async ({
 		timeout: 90_000,
 	})
 	await expect(page.getByTestId("app-sidebar")).toBeVisible({ timeout: 30_000 })
-	await expect(page.getByTestId("backup-sync")).toBeVisible()
+	await expect(page.getByTestId("backup-sync")).not.toBeVisible()
 	await page.screenshot({
-		path: testInfo.outputPath("backup-sync.png"),
+		path: testInfo.outputPath("restored-backups.png"),
 		fullPage: true,
 		animations: "disabled",
 	})
+	expect(syncRequests).toEqual([])
 })

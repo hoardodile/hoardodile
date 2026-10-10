@@ -6,7 +6,6 @@
  *   - the automatic-backup frequency picker persists a new cadence
  *   - retention policy, repository checks and cleanup each open ONE dialog
  *   - the card More menu drives edit/compare/drill/remove
- *   - the pairing invitation's Details button expands inline
  *   - the maintenance screen reveals the restore list behind a button
  *   - STORM WATCH: after a real restore, a real 5-minute scheduler tick must
  *     NOT create another automatic recovery point (the interval is daily)
@@ -512,29 +511,7 @@ async function main() {
 	await shot(page, "backups-13-delete-confirm.png", false)
 	await page.keyboard.press("Escape")
 
-	step("8. pairing invitation details")
-	// A fresh install has no sync role yet: choosing "share this device's
-	// backups" confirms through its own dialog before the invite button shows.
-	const chooseSend = page.getByTestId("setup-sync-send")
-	if (await chooseSend.count()) {
-		await chooseSend.click()
-		await page
-			.getByRole("dialog")
-			.getByRole("button", { name: "Confirm" })
-			.click()
-	}
-	const invite = page.getByRole("button", {
-		name: "Create pairing invitation",
-	})
-	await invite.waitFor({ timeout: 30_000 })
-	await invite.click()
-	await page.getByRole("dialog").waitFor()
-	await page.getByTestId("replication-details").click()
-	await page.getByLabel("Pairing code").waitFor()
-	await shot(page, "backups-14-pairing-details.png", false)
-	await page.keyboard.press("Escape")
-
-	step("9. restore → maintenance screen button")
+	step("8. restore → maintenance screen button")
 	await page
 		.locator(CARDS)
 		.first()

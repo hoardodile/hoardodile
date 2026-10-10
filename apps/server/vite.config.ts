@@ -164,12 +164,7 @@ function copyNativePackagesPlugin(): Plugin {
  */
 function copyOptionalBinPackages(destRoot: string): void {
 	for (const name of OPTIONAL_BIN_PACKAGES) {
-		const owner =
-			name === "@hoardodile/restic-bin"
-				? "backup"
-				: name === "@hoardodile/rclone-bin"
-					? "sync"
-					: undefined
+		const owner = name === "@hoardodile/restic-bin" ? "backup" : undefined
 		const resolver =
 			owner === undefined
 				? hostRequire
@@ -435,7 +430,7 @@ export default defineConfig(({ command }) => ({
 		maxWorkers: 2,
 		// Insight tool, not a CI gate: `pnpm -F @hoardodile/server test:coverage`
 		// runs the suite under v8 instrumentation so hot spots like the tag
-		// rule graphs, merge and sync snapshots can show their real coverage.
+		// rule graphs, merge and recovery can show their real coverage.
 		coverage: {
 			provider: "v8",
 			include: ["src/domain/**", "src/infra/storage/**"],

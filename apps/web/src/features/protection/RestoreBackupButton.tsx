@@ -14,13 +14,11 @@ export function RestoreBackupButton({
 	repositoryId,
 	pointId,
 	source,
-	received = false,
 	size = "default",
 }: {
 	repositoryId: string
 	pointId: string
 	source: string
-	received?: boolean
 	/** Card footers use the compact `sm` tier. */
 	size?: "sm" | "default"
 }) {
@@ -55,9 +53,7 @@ export function RestoreBackupButton({
 			>
 				{prepare.isPending
 					? t("protectionUx.preparingRestore")
-					: received
-						? t("replicationUx.useBackup")
-						: t("protection.restore")}
+					: t("protection.restore")}
 			</Button>
 			<ConfirmByTypingDialog
 				open={plan !== null}

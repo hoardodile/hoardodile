@@ -82,16 +82,6 @@ const baseHandlers: Record<string, (input: unknown) => unknown> = {
 			unattributedCount: 5,
 		},
 	}),
-	"sync.summary": () => ({ remindDays: 7 }),
-	"replication.status": () => ({
-		role: "unconfigured",
-		name: "Test",
-		paused: false,
-		source: null,
-		peers: [],
-		receiving: false,
-		activeTransfers: 0,
-	}),
 	// The marketplace update badge queries these; the defaults keep the
 	// badge silent (no registry → snapshot disabled, no installed plugins).
 	"marketplace.getConfig": () => ({ registryRepo: null }),
@@ -364,69 +354,6 @@ describe("AppShell module menu", () => {
 		expect(
 			sidebar.querySelector('[data-testid="sidebar-show-module"]'),
 		).toBeNull()
-	})
-})
-
-describe("AppShell sync status", () => {
-	it("shows the due state when no device is configured", async () => {
-		const { findByText } = renderAppShell()
-		await findByText("Sync not configured")
-	})
-
-	it("shows the synced state when every device is up to date", async () => {
-		setTrpcClient(
-			createMockTrpcClient({
-				...baseHandlers,
-				"replication.status": () => ({
-					role: "send",
-					name: "Test",
-					paused: false,
-					source: null,
-					peers: [
-						{
-							id: "peer-1",
-							name: "Backup drive",
-							lastSeenAt: 1,
-							receivedPointId: "99999999-9999-4999-8999-999999999999",
-							receivedAt: Date.now(),
-							receivedDataAt: 0,
-						},
-					],
-					receiving: false,
-					activeTransfers: 0,
-				}),
-			}),
-		)
-		const { findByText } = renderAppShell()
-		await findByText("Backups received")
-	})
-
-	it("shows the due state when a device reminder is pending", async () => {
-		setTrpcClient(
-			createMockTrpcClient({
-				...baseHandlers,
-				"replication.status": () => ({
-					role: "send",
-					name: "Test",
-					paused: false,
-					source: null,
-					peers: [
-						{
-							id: "peer-1",
-							name: "Backup drive",
-							lastSeenAt: 1,
-							receivedPointId: "99999999-9999-4999-8999-999999999999",
-							receivedAt: Date.now() - 10 * 86400_000,
-							receivedDataAt: 0,
-						},
-					],
-					receiving: false,
-					activeTransfers: 0,
-				}),
-			}),
-		)
-		const { findByText } = renderAppShell()
-		await findByText("Sync needs attention")
 	})
 })
 

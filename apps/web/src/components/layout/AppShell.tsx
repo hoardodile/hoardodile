@@ -38,7 +38,6 @@ import { commentListQueryOptions } from "@/features/comments/api"
 import { docTreeQueryOptions } from "@/features/doc/api"
 import { useDocTheme } from "@/features/doc/hooks/useDocPrefs"
 import { useMarketplaceUpdateCount } from "@/features/marketplace/useMarketplaceUpdateCount"
-import { useSyncHealth } from "@/features/protection/syncHealth"
 import { resListCardsQueryOptions } from "@/features/res/api"
 import { ImageSearchButton } from "@/features/search/components/ImageSearchButton"
 import { useStringPrefSync } from "@/hooks/usePrefSync"
@@ -337,7 +336,6 @@ function SidebarContent(props: SidebarContentProps) {
 	const { t } = useTranslation()
 	const navigate = useNavigate()
 	const slotClaimed = useSidebarSlotClaimed()
-	const syncAlert = useSyncAlert()
 	const marketplaceUpdates = useMarketplaceUpdateCount()
 	// Claimed slot (e.g. the documents tree): toggle between the module and
 	// the main menu. Unclaimed: the main menu, as before.
@@ -357,7 +355,6 @@ function SidebarContent(props: SidebarContentProps) {
 				<span className="text-sm font-semibold text-foreground">
 					Hoardodile
 				</span>
-				<BrandSyncStatus />
 			</div>
 			{/* The module owns its own search and its own way back to the main
 			    menu (e.g. the documents tree's footer), so the shell's search
@@ -458,7 +455,6 @@ function SidebarContent(props: SidebarContentProps) {
 								!props.pathname.startsWith("/settings/about") &&
 								!props.pathname.startsWith("/settings/marketplace")
 							}
-							alert={syncAlert}
 							onNavigate={props.onNavigate}
 						/>
 						<NavRow
@@ -491,53 +487,6 @@ function SidebarContent(props: SidebarContentProps) {
 			)}
 		</div>
 	)
-}
-
-/**
- * Brand-row sync health: a status dot (green when healthy, red when a
- * device is due or none is configured) and a quiet label, opening
- * Settings → Backups (DESIGN — Brand).
- */
-function BrandSyncStatus() {
-	const { t } = useTranslation()
-	const health = useSyncHealth()
-	if (!health.loaded) {
-		return null
-	}
-	const due = health.count === 0 || health.dueCount > 0 || health.paused
-	const label = t(health.labelKey)
-	const title = label
-	return (
-		<Link
-			to="/settings/backups"
-			title={title}
-			className="ml-auto flex items-center gap-1.5"
-		>
-			<span
-				className={cn(
-					"size-1.5 rounded-full",
-					due ? "bg-destructive" : "bg-emerald-500",
-				)}
-				aria-hidden="true"
-			/>
-			<span
-				className={cn(
-					"text-tiny",
-					due
-						? "text-destructive"
-						: "text-muted-foreground hover:text-secondary-foreground",
-				)}
-			>
-				{label}
-			</span>
-		</Link>
-	)
-}
-
-/** Settings-row warning dot: shown while a sync reminder is due. */
-function useSyncAlert(): boolean {
-	const health = useSyncHealth()
-	return health.loaded && (health.count === 0 || health.dueCount > 0)
 }
 
 type NavAreaProps = {
@@ -662,11 +611,10 @@ type NavRowProps = {
 	readonly count?: number
 	/**
 	 * When true, renders a small warning dot at the row's end (used by the
-	 * settings row while a sync reminder is due, and the marketplace row
-	 * while plugin updates are available).
+	 * marketplace row while plugin updates are available).
 	 */
 	readonly alert?: boolean
-	/** Screen-reader name for the warning dot; defaults to the sync badge. */
+	/** Screen-reader name for the warning dot; defaults to the marketplace badge. */
 	readonly alertLabel?: string
 	readonly onNavigate?: () => void
 }
@@ -687,7 +635,9 @@ function NavRow(props: NavRowProps) {
 				<span
 					className="ml-auto size-1.5 shrink-0 rounded-full bg-destructive"
 					role="img"
-					aria-label={props.alertLabel ?? t("appShell.syncDueBadge")}
+					aria-label={
+						props.alertLabel ?? t("appShell.nav.marketplaceUpdatesBadge")
+					}
 				/>
 			) : null}
 			{props.count !== undefined && (

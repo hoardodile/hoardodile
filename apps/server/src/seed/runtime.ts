@@ -61,7 +61,6 @@ import {
 	createStorageService,
 	type StorageService,
 } from "src/domain/storage/service.ts"
-import { createSyncService, type SyncService } from "src/domain/sync/service.ts"
 import { createTagService, type TagService } from "src/domain/tag/service.ts"
 import {
 	createTraitService,
@@ -92,7 +91,6 @@ export type SeedRuntime = {
 	readonly comments: CommentService
 	readonly danmaku: DanmakuService
 	readonly storage: StorageService
-	readonly sync: SyncService
 	readonly close: () => Promise<void>
 }
 
@@ -283,10 +281,6 @@ async function assembleRuntime({
 			getRegistry: liveRegistry,
 		}),
 		storage,
-		sync: createSyncService({
-			db: db.db,
-			hostDb: hostDb.db,
-		}),
 		close,
 	}
 }

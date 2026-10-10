@@ -91,7 +91,6 @@ function installHandlers(updates: boolean) {
 		: []
 	return {
 		"auth.status": () => ({ authenticated: true, configured: true }),
-		"sync.summary": () => ({ remindDays: 7 }),
 		"marketplace.getConfig": () => ({ registryRepo: "me/registry" }),
 		"marketplace.snapshot": () => ({
 			registryRepo: "me/registry",

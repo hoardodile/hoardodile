@@ -1,4 +1,3 @@
-import { SyncReminderBanner } from "@/features/sync/SyncReminderBanner"
 import { OverviewActivityPanel } from "./components/OverviewActivityPanel"
 import { OverviewHero } from "./components/OverviewHero"
 import { OverviewPinnedRow } from "./components/OverviewPinnedRow"
@@ -14,7 +13,6 @@ import { MemoriesBlock } from "./sections/MemoriesBlock"
 export function OverviewDashboard() {
 	return (
 		<div className="flex w-full flex-col gap-8">
-			<SyncReminderBanner />
 			<OverviewHero />
 			<OverviewPinnedRow />
 			<MemoriesBlock />

@@ -25,7 +25,6 @@ import { domainPlugins } from "src/domain/index.ts"
 import { registerProtection } from "src/domain/protection/plugin.ts"
 import type { ProtectionService } from "src/domain/protection/service.ts"
 import { protectionDirectory } from "src/domain/protection/service.ts"
-import { registerReplication } from "src/domain/replication/plugin.ts"
 import { cleanupOrphanResourceFolders } from "src/domain/res/files.ts"
 import { cleanupTmpDir } from "src/domain/res/folder-import.ts"
 import {
@@ -288,7 +287,6 @@ async function buildServerWithStorageLock(
 	await registerInfrastructure(app, opts, runtimeRefs, ownsDbHandles)
 	await registerDomainAndInfraServices(app)
 	await registerProtection(app, () => reloadStorageContext(app))
-	await registerReplication(app)
 	// Fire-and-forget: clear local/cache/tmp and local/.tmp (which contains the
 	// global upload staging pool) on startup. Any active uploads /
 	// extractions were interrupted by the restart anyway; orphaned staged
@@ -555,7 +553,6 @@ async function registerTrpcSurface(app: FastifyInstance): Promise<void> {
 		danmakuService: app.danmakuService,
 		usageService: app.usageService,
 		storageService: app.storageService,
-		syncService: app.syncService,
 		traceService: app.traceService,
 		systemPrefService: app.systemPrefService,
 		asyncPrefService: app.asyncPrefService,
@@ -569,7 +566,6 @@ async function registerTrpcSurface(app: FastifyInstance): Promise<void> {
 		marketplaceService: app.marketplaceService,
 		outboundNetwork: app.outboundNetwork,
 		protectionService: app.protectionService,
-		replicationService: app.replicationService,
 		versionService: app.versionService,
 		thumbService: app.thumbService,
 		signals: app.signals,
@@ -793,7 +789,6 @@ function installDrainingMiddleware(app: FastifyInstance): void {
 		const control =
 			url.startsWith("/auth/") ||
 			url.startsWith("/api/internal/") ||
-			url.startsWith("/api/sync/") ||
 			url === "/api/health" ||
 			url === "/api/protection/state" ||
 			(!url.startsWith("/api/") && !url.startsWith("/trpc/")) ||

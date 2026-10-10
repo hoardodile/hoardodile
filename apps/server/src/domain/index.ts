@@ -16,7 +16,6 @@ import { prefPlugin } from "./prefs/plugin.ts"
 import { resPlugin } from "./res/plugin.ts"
 import { searchPlugin } from "./search/plugin.ts"
 import { storagePlugin } from "./storage/plugin.ts"
-import { syncPlugin } from "./sync/plugin.ts"
 import { tagPlugin } from "./tag/plugin.ts"
 import { tracePlugin } from "./trace/plugin.ts"
 import { traitPlugin } from "./trait/plugin.ts"
@@ -44,7 +43,6 @@ async function domainPluginsImpl(app: Parameters<FastifyPluginAsync>[0]) {
 	await app.register(searchPlugin)
 	await app.register(usagePlugin)
 	await app.register(storagePlugin)
-	await app.register(syncPlugin)
 }
 
 export const domainPlugins = fp(
