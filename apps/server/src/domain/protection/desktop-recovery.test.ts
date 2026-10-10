@@ -1,4 +1,12 @@
-import { cp, mkdir, mkdtemp, readFile, rename, rm } from "node:fs/promises"
+import {
+	cp,
+	mkdir,
+	mkdtemp,
+	readFile,
+	realpath,
+	rename,
+	rm,
+} from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { setTimeout as delay } from "node:timers/promises"
@@ -178,6 +186,7 @@ it("restricts folder registration to token-authorized loopback requests", async 
 			})
 		).statusCode,
 	).toBe(403)
+	// Windows temp paths may use 8.3 names; registration returns the real path.
 	expect(
 		(
 			await built.app.inject({
@@ -185,7 +194,11 @@ it("restricts folder registration to token-authorized loopback requests", async 
 				headers: { "x-shutdown-token": "desktop-test-token" },
 			})
 		).json(),
-	).toMatchObject({ path, exists: false, purpose: "backup" })
+	).toMatchObject({
+		path: await realpath(path),
+		exists: false,
+		purpose: "backup",
+	})
 	expect(
 		(
 			await built.app.inject({
