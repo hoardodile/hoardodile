@@ -1,3 +1,4 @@
+import type { DesktopBackupSelection } from "@hoardodile/shared/desktop"
 import { Button } from "@hoardodile/ui/components/button"
 import { DropdownSelect } from "@hoardodile/ui/components/dropdown-select"
 import { Icon } from "@hoardodile/ui/components/icon"
@@ -7,7 +8,14 @@ import { Switch } from "@hoardodile/ui/components/switch"
 import { Database, History, Server } from "@hoardodile/ui/icons/registry"
 import { pageCountOf } from "@hoardodile/ui/lib/pagination"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { type ReactNode, useEffect, useMemo, useState } from "react"
+import {
+	Fragment,
+	type ReactNode,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from "react"
 import { useTranslation } from "react-i18next"
 import { SettingsSection } from "@/features/settings/SettingsSection"
 import { SectionDivider } from "@/features/settings/SettingsSheet"
@@ -27,10 +35,7 @@ import { BackupStatusHeader } from "./BackupStatusHeader"
 import { RecentOperationsDialog } from "./RecentOperationsDialog"
 import { RecoveryPointCard } from "./RecoveryPointCard"
 
-/** Recovery points per page (client-side: the query returns them all). */
 const RECOVERY_POINTS_PAGE_SIZE = 20
-
-/** Automatic backup interval presets, in hours — daily unless changed. */
 const FREQUENCIES = [
 	{ hours: 1, label: "protectionUx.frequencyHourly" },
 	{ hours: 6, label: "protectionUx.frequency6Hours" },
@@ -47,32 +52,27 @@ function wasKeyDownloaded(key: string | undefined) {
 	}
 }
 
-/** Skeleton shown while the protection status loads — mirrors the
-    "Complete backups" section anatomy instead of a bare "Loading…". */
 function BackupsSkeleton() {
 	return (
 		<div className="space-y-6" data-testid="backups-skeleton" aria-hidden>
 			<div className="flex items-center gap-3">
 				<Skeleton className="size-8 rounded-lg" />
-				<div className="min-w-0 space-y-1.5">
-					<Skeleton className="h-4 w-52" />
-					<Skeleton className="h-3 w-72" />
+				<div className="min-w-0 space-y-2">
+					<Skeleton className="h-4 w-40" />
+					<Skeleton className="h-3 w-48 max-w-full" />
 				</div>
 			</div>
-			<div className="space-y-4">
-				<div className="flex items-center gap-2">
-					<Skeleton className="h-4 w-56" />
-					<Skeleton className="h-4 w-24" />
+			{[0, 1, 2, 3].map((row) => (
+				<div key={row} className="flex items-center justify-between gap-4">
+					<Skeleton className="h-10 w-1/2" />
+					<Skeleton className="h-8 w-20" />
 				</div>
-				<Skeleton className="h-5 w-48" />
-				<Skeleton className="h-10 w-full" />
-				<Skeleton className="h-10 w-full" />
-				<Skeleton className="h-24 w-full" />
-			</div>
+			))}
 		</div>
 	)
 }
 
+/** Backup preferences, recovery sources and upkeep share the settings sheet. */
 export function RecoveryPanel({
 	restoreOnly = false,
 }: {
@@ -82,16 +82,17 @@ export function RecoveryPanel({
 	const qc = useQueryClient()
 	const status = useQuery(protectionStatusOptions())
 	const [selectedRepository, setSelectedRepository] = useState("local")
-	const [folderPurpose, setFolderPurpose] = useState<
-		"restore" | "backup" | null
-	>(null)
+	const [folderSelection, setFolderSelection] =
+		useState<DesktopBackupSelection>()
+	const [picking, setPicking] = useState(false)
+	const pickingRef = useRef(false)
+	const [folderError, setFolderError] = useState<"restore" | "backup" | null>(
+		null,
+	)
 	const desktop =
 		isHoardodileDesktop() && Boolean(getDesktopBridge()?.pickBackupFolder)
 	const [savedKey, setSavedKey] = useState<string>()
 	const [wizardMode, setWizardMode] = useState<"new" | "existing" | null>(null)
-	// The job list moved behind its own dialog (the page keeps one control
-	// instead of a standing section), and the recovery-point list pages
-	// client-side: the query returns every point for the repository.
 	const [operationsOpen, setOperationsOpen] = useState(false)
 	const [pointsPage, setPointsPage] = useState(1)
 	const repositories = status.data?.repositories ?? []
@@ -100,18 +101,10 @@ export function RecoveryPanel({
 		repositories[0]
 	const repositoryId = repository?.id ?? "local"
 	const localConfigured = repositories.some((repo) => repo.id === "local")
-	const needsSetup = !localConfigured
 	const points = useQuery({
 		...recoveryPointsOptions(repositoryId),
 		enabled: Boolean(repository),
 	})
-	// Hide the whole "Available backups" section when the selected repository
-	// has no recovery points; keep it (with loading/error states) while the
-	// points query is still pending or has failed.
-	const showAvailableBackups =
-		!points.isSuccess || (points.data?.length ?? 0) > 0
-	// Newest first, then sliced: deleting the last card of the last page (or
-	// switching repository) must never strand the pager on an empty page.
 	const sortedPoints = useMemo(
 		() => points.data?.toSorted((a, b) => b.createdAt - a.createdAt) ?? [],
 		[points.data],
@@ -126,16 +119,24 @@ export function RecoveryPanel({
 		currentPointsPage * RECOVERY_POINTS_PAGE_SIZE,
 	)
 	useEffect(() => {
-		// A different repository starts on its own first page.
 		setPointsPage(1)
 	}, [repositoryId])
 	const jobs = useQuery(protectionJobsOptions())
-	const hasJobs = Boolean(jobs.data && jobs.data.length > 0)
+	const hasJobs = Boolean(jobs.data?.length)
 	const maintenance = Boolean(
 		status.data?.maintenance ||
 			status.data?.maintenanceActive ||
 			status.data?.maintenanceError,
 	)
+	const storageBusy =
+		maintenance ||
+		Boolean(status.data?.nativeProcessesBusy || status.data?.storage.frozen) ||
+		Boolean(
+			jobs.data?.some((job) =>
+				["queued", "running", "cancelling"].includes(job.state),
+			),
+		)
+	const offline = status.data?.backupAvailable === false
 	const keyStorage = status.data
 		? `hoardodile.recovery-key.${status.data.instanceId}`
 		: undefined
@@ -151,6 +152,21 @@ export function RecoveryPanel({
 		if (repository?.restoreOnly && repository.id !== id)
 			releaseSource.mutate({ repositoryId: repository.id })
 		setSelectedRepository(id)
+	}
+	async function chooseFolder(purpose: "restore" | "backup") {
+		if (pickingRef.current) return
+		pickingRef.current = true
+		setPicking(true)
+		setFolderError(null)
+		try {
+			const selection = await getDesktopBridge()?.pickBackupFolder?.(purpose)
+			if (selection) setFolderSelection(selection)
+		} catch {
+			setFolderError(purpose)
+		} finally {
+			pickingRef.current = false
+			setPicking(false)
+		}
 	}
 	const enabled = useToastMutation({
 		...trpcMutation("protection", "enabled"),
@@ -176,200 +192,187 @@ export function RecoveryPanel({
 		repositoryId === "local"
 			? t("protectionUx.localBackups")
 			: (repository?.name ?? repositoryId)
-
-	const sections: ReactNode[] = []
 	const sourceOnly = Boolean(repository?.restoreOnly)
-	if (desktop && !restoreOnly)
-		sections.push(
-			<SettingsSection
-				key="backup-location"
-				icon={Database}
-				title={t("protection.folder")}
-				description={
-					status.data?.localRepositoryPath ?? status.data?.backupRoot
-				}
-				layout="compact"
-			>
-				<Button
-					variant="secondary"
-					disabled={maintenance}
-					onClick={() => setFolderPurpose("backup")}
-					data-testid="change-backup-location"
-				>
-					{t("backupFolders.changeLocation")}
-				</Button>
-			</SettingsSection>,
-		)
-	if (desktop)
-		sections.push(
-			<SettingsSection
-				key="restore-folder"
-				icon={Server}
-				title={t("backupFolders.restoreFromFolder")}
-				description={t("backupFolders.restoreHelp")}
-				layout="compact"
-			>
-				<Button
-					variant="secondary"
-					onClick={() => setFolderPurpose("restore")}
-					data-testid="restore-from-folder"
-				>
-					{t("backupFolders.chooseFolder")}
-				</Button>
-			</SettingsSection>,
-		)
+	const sections: { key: string; content: ReactNode }[] = []
 	if (!restoreOnly)
-		sections.push(
-			<SettingsSection
-				key="complete-backups"
-				icon={Database}
-				title={t("protectionUx.protectionTitle")}
-				description={t("protectionUx.description")}
-				layout="stack"
-				data-testid="complete-backups-section"
-			>
-				<div className="space-y-6">
-					<BackupStatusHeader />
-					<div className="space-y-4">
-						<div className="text-base font-semibold text-foreground">
-							{t("protection.title")}
-						</div>
-						{needsSetup && (
-							<div className="grid gap-3">
-								<button
-									type="button"
-									data-testid="setup-new-backup"
-									className="flex w-full flex-col items-start gap-1 rounded-lg bg-secondary px-4 py-4 text-left text-foreground transition-colors hover:bg-[color-mix(in_oklch,var(--secondary),var(--foreground)_5%)] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-									onClick={() => setWizardMode("new")}
+		sections.push({
+			key: "settings",
+			content: (
+				<SettingsSection
+					icon={Database}
+					title={t("protectionUx.settingsTitle")}
+					description={t("protectionUx.settingsHelp")}
+					layout="stack"
+					data-testid="complete-backups-section"
+				>
+					<div className="space-y-5">
+						<BackupStatusHeader onSetUpBackups={() => setWizardMode("new")} />
+						<div className="h-px bg-border" />
+						<BackupSettingRow
+							title={t("protectionUx.saveLocation")}
+							description={
+								<>
+									<span
+										className="block break-all text-ui text-foreground"
+										data-testid="backup-location-path"
+									>
+										{status.data?.localRepositoryPath ??
+											status.data?.backupRoot}
+									</span>
+									<span className="mt-1 block">
+										{t(
+											desktop
+												? "protectionUx.locationHelp"
+												: "protectionUx.serverLocationHelp",
+										)}
+									</span>
+									{storageBusy && desktop && (
+										<span className="mt-1 block">
+											{t("protectionUx.locationBusy")}
+										</span>
+									)}
+									{folderError === "backup" && (
+										<span className="mt-1 block" role="alert">
+											{t("backupFolders.folderError")}
+										</span>
+									)}
+								</>
+							}
+						>
+							{desktop && (
+								<Button
+									variant="secondary"
+									disabled={storageBusy || picking}
+									onClick={() => void chooseFolder("backup")}
+									data-testid="change-backup-location"
 								>
-									<span className="text-ui font-medium">
-										{t("backupSetup.startNew")}
-									</span>
-									<span className="text-xs text-secondary-foreground">
-										{t("backupSetup.startNewHint")}
-									</span>
-								</button>
-								{!desktop && (
-									<button
-										type="button"
-										data-testid="setup-existing-backup"
-										className="flex w-full flex-col items-start gap-1 rounded-lg bg-secondary px-4 py-4 text-left text-foreground transition-colors hover:bg-[color-mix(in_oklch,var(--secondary),var(--foreground)_5%)] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-										onClick={() => setWizardMode("existing")}
-									>
-										<span className="text-ui font-medium">
-											{t("backupSetup.startExisting")}
-										</span>
-										<span className="text-xs text-secondary-foreground">
-											{t("backupSetup.startExistingHint")}
-										</span>
-									</button>
-								)}
-							</div>
-						)}
+									{t("backupFolders.changeLocation")}
+								</Button>
+							)}
+						</BackupSettingRow>
 						{localConfigured && (
-							<section
-								className="space-y-3"
-								aria-label={t("protectionUx.status")}
-							>
-								<p className="break-all text-xs">
-									{t("protection.folder")}:{" "}
-									{status.data?.localRepositoryPath ?? status.data?.backupRoot}
-								</p>
-								<p className="text-xs text-secondary-foreground">
-									{t("protectionUx.locationHelp")}
-								</p>
-								<div className="flex flex-wrap items-center justify-between gap-4">
-									<div className="flex items-center gap-2 text-xs">
-										<Switch
-											checked={status.data?.enabled ?? false}
-											disabled={enabled.isPending}
-											onCheckedChange={(checked) =>
-												enabled.mutate({ enabled: checked })
-											}
-											aria-label={t("protection.automatic")}
-										/>
-										<span>{t("protection.automatic")}</span>
-									</div>
-									<div className="flex items-center gap-2">
-										<span className="text-xs text-muted-foreground">
-											{t("protectionUx.frequency")}
-										</span>
-										<DropdownSelect
-											value={String(status.data?.autoBackupIntervalHours ?? 24)}
-											disabled={interval.isPending}
-											onValueChange={(value) =>
-												interval.mutate({ hours: Number(value) })
-											}
-											options={FREQUENCIES.map((frequency) => ({
-												value: String(frequency.hours),
-												label: t(frequency.label),
-											}))}
-											aria-label={t("protectionUx.frequency")}
-											data-testid="backup-frequency"
-										/>
-									</div>
-								</div>
-								<p className="text-xs text-muted-foreground">
-									{t("protectionUx.frequencyHelp")}
-								</p>
-								{desktop && (
-									<div className="flex flex-wrap gap-3">
-										<Button
-											variant="ghost"
-											disabled={key.isPending}
-											onClick={() => key.mutate({ repositoryId: "local" })}
-										>
-											{t("protection.key")}
-										</Button>
-										<p className="w-full text-xs text-secondary-foreground">
-											{t("backupFolders.keyHelp")}
-										</p>
-									</div>
-								)}
-								{!keySaved && !desktop && (
-									<div
-										className="flex flex-wrap items-center gap-3 rounded-lg bg-muted p-4"
-										data-testid="recovery-key-notice"
+							<>
+								<BackupSettingRow
+									title={t("protection.automatic")}
+									description={t("protectionUx.automaticHelp")}
+								>
+									<Switch
+										checked={status.data?.enabled ?? false}
+										disabled={enabled.isPending || maintenance || offline}
+										onCheckedChange={(checked) =>
+											enabled.mutate({ enabled: checked })
+										}
+										aria-label={t("protection.automatic")}
+									/>
+								</BackupSettingRow>
+								<BackupSettingRow
+									title={t("protectionUx.frequency")}
+									description={t("protectionUx.frequencyHelp")}
+								>
+									<DropdownSelect
+										value={String(status.data?.autoBackupIntervalHours ?? 24)}
+										disabled={
+											interval.isPending ||
+											maintenance ||
+											offline ||
+											!status.data?.enabled
+										}
+										onValueChange={(value) =>
+											interval.mutate({ hours: Number(value) })
+										}
+										options={FREQUENCIES.map((frequency) => ({
+											value: String(frequency.hours),
+											label: t(frequency.label),
+										}))}
+										aria-label={t("protectionUx.frequency")}
+										data-testid="backup-frequency"
+									/>
+								</BackupSettingRow>
+								<BackupSettingRow
+									title={t("protectionUx.recoveryKey")}
+									description={
+										<>
+											{t(
+												desktop
+													? "backupFolders.keyHelp"
+													: "protection.keyHelp",
+											)}
+											{keySaved && (
+												<span className="mt-1 block text-muted-foreground">
+													{t("protection.recoveryKeySaved")}
+												</span>
+											)}
+										</>
+									}
+									data-testid={
+										!desktop && !keySaved ? "recovery-key-notice" : undefined
+									}
+								>
+									<Button
+										variant="secondary"
+										disabled={key.isPending || maintenance || offline}
+										onClick={() => key.mutate({ repositoryId: "local" })}
 									>
-										<div className="min-w-0 flex-1">
-											<p className="text-ui font-medium">
-												{t("protectionUx.saveKey")}
-											</p>
-											<p className="mt-1 text-xs text-secondary-foreground">
-												{t("protection.keyHelp")}
-											</p>
-										</div>
-										<Button
-											variant="secondary"
-											disabled={key.isPending}
-											onClick={() => key.mutate({ repositoryId: "local" })}
-										>
-											{t("protection.key")}
-										</Button>
-									</div>
-								)}
-							</section>
+										{t("protection.key")}
+									</Button>
+								</BackupSettingRow>
+							</>
 						)}
 					</div>
-				</div>
-			</SettingsSection>,
-		)
-	if (repository && showAvailableBackups) {
-		if (sections.length > 0) sections.push(<SectionDivider key="divider-1" />)
-		sections.push(
+				</SettingsSection>
+			),
+		})
+	sections.push({
+		key: "available",
+		content: (
 			<SettingsSection
-				key="available-backups"
 				icon={Server}
 				title={t("protectionUx.availableBackups")}
+				description={t("protectionUx.availableHelp")}
 				layout="stack"
 				data-testid="available-backups-section"
 			>
 				<div className="space-y-4">
+					{desktop ? (
+						<BackupSettingRow
+							title={t("backupFolders.restoreFromFolder")}
+							description={
+								<>
+									{t("backupFolders.restoreHelp")}
+									{folderError === "restore" && (
+										<span className="mt-1 block" role="alert">
+											{t("backupFolders.folderError")}
+										</span>
+									)}
+								</>
+							}
+						>
+							<Button
+								variant="secondary"
+								disabled={picking}
+								onClick={() => void chooseFolder("restore")}
+								data-testid="restore-from-folder"
+							>
+								{t("backupFolders.chooseFolder")}
+							</Button>
+						</BackupSettingRow>
+					) : !localConfigured && !restoreOnly ? (
+						<BackupSettingRow
+							title={t("backupSetup.startExisting")}
+							description={t("backupSetup.startExistingHint")}
+						>
+							<Button
+								variant="secondary"
+								disabled={maintenance}
+								onClick={() => setWizardMode("existing")}
+								data-testid="setup-existing-backup"
+							>
+								{t("protectionUx.open")}
+							</Button>
+						</BackupSettingRow>
+					) : null}
 					{repositories.length > 1 && (
-						<div className="flex items-center justify-between gap-3">
-							<span className="text-xs text-muted-foreground">
-								{t("protection.repository")}
-							</span>
+						<BackupSettingRow title={t("protection.repository")}>
 							<DropdownSelect
 								value={repositoryId}
 								onValueChange={selectRepository}
@@ -382,13 +385,28 @@ export function RecoveryPanel({
 								}))}
 								aria-label={t("protection.repository")}
 							/>
+						</BackupSettingRow>
+					)}
+					{sourceOnly && repository?.path && (
+						<p className="break-all text-ui">
+							{t("protectionUx.restoreSource", { source: repository.path })}
+						</p>
+					)}
+					{repository && points.isError ? (
+						<div
+							className="flex flex-wrap items-center justify-between gap-3"
+							role="alert"
+						>
+							<p className="text-ui">{t("protectionUx.pointsError")}</p>
+							<Button
+								variant="secondary"
+								disabled={points.isFetching}
+								onClick={() => void points.refetch()}
+							>
+								{t("protection.retry")}
+							</Button>
 						</div>
-					)}
-					{points.error && <p role="alert">{points.error.message}</p>}
-					{repository?.path && (
-						<p className="break-all text-xs">{repository.path}</p>
-					)}
-					{points.isPending && (
+					) : repository && points.isPending ? (
 						<div
 							className="space-y-3"
 							data-testid="available-backups-skeleton"
@@ -398,88 +416,124 @@ export function RecoveryPanel({
 							<Skeleton className="h-10 w-full" />
 							<Skeleton className="h-10 w-full" />
 						</div>
-					)}
-					{/* Pagers bracket the list, like the resources search page: the
-					    top one sits where the list starts, the bottom one where it
-					    ends. Both disappear for a single page. */}
-					{pointsPageCount > 1 && sortedPoints.length > 0 ? (
-						<PaginationBar
-							page={currentPointsPage}
-							pageCount={pointsPageCount}
-							onChangePage={setPointsPage}
-							totalLabel={t("protectionUx.pointsCount", {
-								count: sortedPoints.length,
-							})}
-						/>
-					) : null}
-					{visiblePoints.length > 0 && (
-						<div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-							{visiblePoints.map((point) => (
-								<RecoveryPointCard
-									key={point.id}
-									point={point}
-									repositoryId={repositoryId}
-									source={sourceName}
-									canDelete={sortedPoints.length > 1}
-									restoreOnly={restoreOnly || maintenance || sourceOnly}
+					) : sortedPoints.length === 0 ? (
+						<p
+							className="py-4 text-ui text-secondary-foreground"
+							data-testid="available-backups-empty"
+						>
+							{t(
+								restoreOnly || sourceOnly
+									? "protectionUx.sourceEmpty"
+									: "protectionUx.emptyHelp",
+							)}
+						</p>
+					) : (
+						<>
+							{pointsPageCount > 1 && (
+								<PaginationBar
+									page={currentPointsPage}
+									pageCount={pointsPageCount}
+									onChangePage={setPointsPage}
+									totalLabel={t("protectionUx.pointsCount", {
+										count: sortedPoints.length,
+									})}
 								/>
-							))}
-						</div>
-					)}
-					{pointsPageCount > 1 && sortedPoints.length > 0 ? (
-						<PaginationBar
-							page={currentPointsPage}
-							pageCount={pointsPageCount}
-							onChangePage={setPointsPage}
-							totalLabel={t("protectionUx.pointsCount", {
-								count: sortedPoints.length,
-							})}
-						/>
-					) : null}
-					{!restoreOnly && !maintenance && !sourceOnly && (
-						<BackupManagement key={repositoryId} repositoryId={repositoryId} />
+							)}
+							<div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+								{visiblePoints.map((point) => (
+									<RecoveryPointCard
+										key={point.id}
+										point={point}
+										repositoryId={repositoryId}
+										source={sourceName}
+										canDelete={sortedPoints.length > 1}
+										restoreOnly={restoreOnly || maintenance || sourceOnly}
+									/>
+								))}
+							</div>
+							{pointsPageCount > 1 && (
+								<PaginationBar
+									page={currentPointsPage}
+									pageCount={pointsPageCount}
+									onChangePage={setPointsPage}
+									totalLabel={t("protectionUx.pointsCount", {
+										count: sortedPoints.length,
+									})}
+								/>
+							)}
+						</>
 					)}
 				</div>
-			</SettingsSection>,
-		)
-	}
-	if (!restoreOnly && hasJobs) {
-		if (sections.length > 0) sections.push(<SectionDivider key="divider-2" />)
-		sections.push(
-			// Left column: title + help. Right column: the one control — the
-			// job list itself lives in the dialog (compact layout), matching
-			// the licenses row.
-			<SettingsSection
-				key="recent-operations"
-				icon={History}
-				title={t("protection.jobs")}
-				description={t("protectionUx.jobsHelp")}
-				layout="compact"
-				data-testid="recent-operations-section"
-			>
-				<Button
-					variant="secondary"
-					onClick={() => setOperationsOpen(true)}
-					data-testid="recent-operations-open"
+			</SettingsSection>
+		),
+	})
+	const canManage = Boolean(repository) && !maintenance && !sourceOnly
+	if (!restoreOnly && (canManage || hasJobs))
+		sections.push({
+			key: "management",
+			content: (
+				<SettingsSection
+					icon={History}
+					title={t("protectionUx.managementTitle")}
+					description={t("protectionUx.managementHelp")}
+					layout="stack"
+					data-testid="backup-management-section"
 				>
-					<Icon icon={History} />
-					{t("common.view")}
-				</Button>
-			</SettingsSection>,
-		)
-	}
-
+					<div className="space-y-4">
+						{canManage && (
+							<BackupManagement
+								key={repositoryId}
+								repositoryId={repositoryId}
+							/>
+						)}
+						{hasJobs && (
+							<BackupSettingRow
+								title={t("protection.jobs")}
+								description={t("protectionUx.jobsHelp")}
+								data-testid="recent-operations-section"
+							>
+								<Button
+									variant="secondary"
+									onClick={() => setOperationsOpen(true)}
+									data-testid="recent-operations-open"
+								>
+									<Icon icon={History} />
+									{t("common.view")}
+								</Button>
+							</BackupSettingRow>
+						)}
+					</div>
+				</SettingsSection>
+			),
+		})
 	return (
 		<div data-testid="complete-backups">
 			{status.isPending ? (
 				<BackupsSkeleton />
+			) : status.isError ? (
+				<div
+					className="flex flex-wrap items-center justify-between gap-3"
+					role="alert"
+				>
+					<p className="text-ui">{status.error.message}</p>
+					<Button
+						variant="secondary"
+						disabled={status.isFetching}
+						onClick={() => void status.refetch()}
+					>
+						{t("protection.retry")}
+					</Button>
+				</div>
 			) : (
-				<>
-					{status.error && <p role="alert">{status.error.message}</p>}
-					{sections}
-				</>
+				sections.map((section, index) => (
+					<Fragment key={section.key}>
+						{index > 0 && <SectionDivider />}
+						{section.content}
+					</Fragment>
+				))
 			)}
 			<BackupSetupWizard
+				key={wizardMode}
 				open={wizardMode !== null}
 				onOpenChange={(open) => {
 					if (!open) setWizardMode(null)
@@ -487,13 +541,13 @@ export function RecoveryPanel({
 				onStarted={() => setWizardMode(null)}
 				mode={wizardMode ?? "new"}
 			/>
-			{desktop && folderPurpose && (
+			{desktop && folderSelection && (
 				<BackupFolderDialog
-					key={folderPurpose}
-					purpose={folderPurpose}
+					key={folderSelection.id}
+					selection={folderSelection}
 					open
 					onOpenChange={(open) => {
-						if (!open) setFolderPurpose(null)
+						if (!open) setFolderSelection(undefined)
 					}}
 					onSourceOpened={selectRepository}
 				/>
@@ -502,6 +556,32 @@ export function RecoveryPanel({
 				open={operationsOpen}
 				onOpenChange={setOperationsOpen}
 			/>
+		</div>
+	)
+}
+
+function BackupSettingRow(props: {
+	readonly title: ReactNode
+	readonly description?: ReactNode
+	readonly children?: ReactNode
+	readonly "data-testid"?: string
+}) {
+	return (
+		<div
+			className="flex flex-wrap items-center justify-between gap-4"
+			data-testid={props["data-testid"]}
+		>
+			<div className="min-w-0 flex-1 basis-48">
+				<div className="text-ui font-semibold text-foreground">
+					{props.title}
+				</div>
+				{props.description && (
+					<div className="mt-0.5 text-xs leading-5 text-muted-foreground">
+						{props.description}
+					</div>
+				)}
+			</div>
+			{props.children && <div className="shrink-0">{props.children}</div>}
 		</div>
 	)
 }

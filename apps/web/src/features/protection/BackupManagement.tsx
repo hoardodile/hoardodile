@@ -76,10 +76,7 @@ export function BackupManagement({ repositoryId }: { repositoryId: string }) {
 		(repo) => repo.id === repositoryId,
 	)?.lastContentCheckAt
 	return (
-		<section
-			className="space-y-4 border-t border-border pt-4"
-			data-testid="backup-management"
-		>
+		<section className="space-y-4" data-testid="backup-management">
 			{local && activePolicy && (
 				<ActionRow
 					title={t("protection.retention")}
@@ -232,7 +229,7 @@ function ActionRow(props: {
 }) {
 	return (
 		<div className="flex flex-wrap items-center justify-between gap-3">
-			<div className="min-w-0">
+			<div className="min-w-0 flex-1 basis-48">
 				<div className="text-ui font-semibold text-foreground">
 					{props.title}
 				</div>

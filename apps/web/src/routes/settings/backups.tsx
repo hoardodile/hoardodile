@@ -9,10 +9,8 @@ export const Route = createFileRoute("/settings/backups")({
 })
 
 /**
- * Backups settings tab: one merged "Protection" section inside RecoveryPanel
- * (health verdict + local backup block + offsite-copy block), followed by the
- * "Available backups" and "Recent operations" sections. Backups and backup
- * sync live on one page, under one protection framing.
+ * Backup settings, available recovery points and backup management share
+ * the same sheet anatomy as the other settings tabs.
  */
 function BackupsSettingsRoute() {
 	return (

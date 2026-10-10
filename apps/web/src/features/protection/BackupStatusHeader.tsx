@@ -1,6 +1,5 @@
 import { Button } from "@hoardodile/ui/components/button"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
-import type { ReactNode } from "react"
 import { useTranslation } from "react-i18next"
 import { useToastMutation } from "@/hooks/useToastMutation"
 import { trpcMutation } from "@/trpc/factory"
@@ -13,6 +12,7 @@ type HeaderMode =
 	| "backupNow"
 	| "ok"
 	| "offline"
+	| "running"
 
 /** The backup verdict depends only on this device's backup state. */
 export function BackupStatusHeader({
@@ -29,10 +29,6 @@ export function BackupStatusHeader({
 	const invalidate = async () => {
 		await qc.invalidateQueries({ queryKey: ["protection"] })
 	}
-	const enable = useToastMutation({
-		...trpcMutation("protection", "enabled"),
-		onSuccess: invalidate,
-	})
 	const backup = useToastMutation({
 		...trpcMutation("protection", "backup"),
 		onSuccess: invalidate,
@@ -56,6 +52,7 @@ export function BackupStatusHeader({
 	let mode: HeaderMode
 	if (maintenance) mode = "maintenance"
 	else if (localConfigured && status.backupAvailable === false) mode = "offline"
+	else if (activeBackup) mode = "running"
 	else if (!localConfigured) mode = "noBackups"
 	else if (!enabled) mode = "backupOff"
 	else if (!lastBackupAt) mode = "backupNow"
@@ -64,9 +61,14 @@ export function BackupStatusHeader({
 		offline: t("backupFolders.offlineTitle"),
 		maintenance: t("protection.maintenance"),
 		noBackups: t("backupHealth.noBackupsTitle"),
-		backupOff: t("backupHealth.backupNeedsTitle"),
-		backupNow: t("backupHealth.backupNeedsTitle"),
+		backupOff: t("backupHealth.automaticOffTitle"),
+		backupNow: t("protectionUx.firstBackupMissing"),
 		ok: t("backupHealth.protectedTitle"),
+		running: t(
+			lastBackupAt
+				? "protectionUx.backupRunning"
+				: "protectionUx.firstBackupRunning",
+		),
 	}[mode]
 
 	const sub: Record<HeaderMode, string> = {
@@ -80,36 +82,7 @@ export function BackupStatusHeader({
 		ok: t("backupHealth.protectedSub", {
 			local: new Date(lastBackupAt ?? Date.now()).toLocaleString(),
 		}),
-	}
-
-	const action: Record<HeaderMode, ReactNode> = {
-		offline: null,
-		maintenance: null,
-		noBackups: onSetUpBackups ? (
-			<Button onClick={onSetUpBackups}>
-				{t("backupHealth.noBackupsAction")}
-			</Button>
-		) : null,
-		backupOff: (
-			<Button
-				disabled={enable.isPending || maintenance}
-				onClick={() => enable.mutate({ enabled: true })}
-			>
-				{t("backupHealth.turnOnAutomatic")}
-			</Button>
-		),
-		backupNow: (
-			<Button
-				data-testid="complete-backup-now"
-				disabled={Boolean(activeBackup) || backup.isPending || maintenance}
-				onClick={() =>
-					backup.mutate({ name: "", note: "", kind: "manual", pinned: true })
-				}
-			>
-				{t("backupHealth.backupNow")}
-			</Button>
-		),
-		ok: null,
+		running: t("protectionUx.keepReading"),
 	}
 
 	return (
@@ -117,18 +90,36 @@ export function BackupStatusHeader({
 			className="flex flex-wrap items-center justify-between gap-4"
 			data-testid={`backup-health-${mode}`}
 		>
-			<div className="min-w-0 flex-1">
+			<div className="min-w-0 flex-1 basis-48">
 				<div className="text-ui font-medium text-foreground">{title}</div>
 				<p className="mt-1 text-xs leading-5 text-muted-foreground">
 					{sub[mode]}
 				</p>
-				{activeBackup && mode === "ok" && (
-					<p className="mt-1 text-xs leading-5 text-secondary-foreground">
-						{t("protectionUx.keepReading")}
-					</p>
-				)}
 			</div>
-			{action[mode]}
+			{localConfigured ? (
+				<Button
+					data-testid="complete-backup-now"
+					disabled={
+						Boolean(activeBackup) ||
+						backup.isPending ||
+						maintenance ||
+						status.backupAvailable === false
+					}
+					onClick={() =>
+						backup.mutate({ name: "", note: "", kind: "manual", pinned: true })
+					}
+				>
+					{t("backupHealth.backupNow")}
+				</Button>
+			) : onSetUpBackups ? (
+				<Button
+					data-testid="setup-new-backup"
+					disabled={maintenance || Boolean(activeBackup)}
+					onClick={onSetUpBackups}
+				>
+					{t("backupSetup.createFirst")}
+				</Button>
+			) : null}
 		</div>
 	)
 }

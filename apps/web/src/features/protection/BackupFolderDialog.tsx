@@ -6,7 +6,6 @@ import { useQueryClient } from "@tanstack/react-query"
 import { useId, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useToastMutation } from "@/hooks/useToastMutation"
-import { getDesktopBridge } from "@/lib/desktop"
 import { trpcMutation } from "@/trpc/factory"
 import {
 	BackupPasswordFields,
@@ -15,7 +14,7 @@ import {
 
 /** Folder selection grants access to one path; opening it never changes the backup destination. */
 export function BackupFolderDialog(props: {
-	purpose: "restore" | "backup"
+	selection: DesktopBackupSelection
 	open: boolean
 	onOpenChange: (open: boolean) => void
 	onSourceOpened: (id: string) => void
@@ -23,18 +22,17 @@ export function BackupFolderDialog(props: {
 	const { t } = useTranslation()
 	const qc = useQueryClient()
 	const passwordId = useId()
-	const [selection, setSelection] = useState<DesktopBackupSelection>()
+	const { selection } = props
+	const { purpose } = selection
 	const [credential, setCredential] = useState("")
 	const [password, setPassword] = useState("")
 	const [confirmation, setConfirmation] = useState("")
 	const [useFile, setUseFile] = useState(false)
 	const [fileName, setFileName] = useState("")
 	const [error, setError] = useState("")
-	const [picking, setPicking] = useState(false)
 	const fileInput = useRef<HTMLInputElement>(null)
 	function close(open: boolean) {
 		if (!open) {
-			setSelection(undefined)
 			setCredential("")
 			setPassword("")
 			setConfirmation("")
@@ -61,26 +59,8 @@ export function BackupFolderDialog(props: {
 			await qc.invalidateQueries({ queryKey: ["protection"] })
 		},
 	})
-	const pending = picking || openSource.isPending || changeLocation.isPending
-	const creating = selection && !selection.exists
-	async function choose() {
-		setPicking(true)
-		setError("")
-		try {
-			const value = await getDesktopBridge()?.pickBackupFolder?.(props.purpose)
-			if (value) {
-				setSelection(value)
-				setCredential("")
-				setPassword("")
-				setConfirmation("")
-				setFileName("")
-			}
-		} catch {
-			setError(t("backupFolders.folderError"))
-		} finally {
-			setPicking(false)
-		}
-	}
+	const pending = openSource.isPending || changeLocation.isPending
+	const creating = !selection.exists
 	return (
 		<AppDialog
 			open={props.open}
@@ -88,7 +68,7 @@ export function BackupFolderDialog(props: {
 				if (!pending) close(open)
 			}}
 			title={t(
-				props.purpose === "restore"
+				purpose === "restore"
 					? "backupFolders.restoreFromFolder"
 					: "backupFolders.changeLocation",
 			)}
@@ -105,14 +85,12 @@ export function BackupFolderDialog(props: {
 						data-testid="backup-folder-submit"
 						disabled={
 							pending ||
-							!selection ||
 							(creating
 								? !validBackupPassword(password, confirmation)
 								: !credential)
 						}
 						onClick={() => {
-							if (!selection) return
-							if (props.purpose === "restore")
+							if (purpose === "restore")
 								openSource.mutate({
 									selectionId: selection.id,
 									credential,
@@ -130,7 +108,7 @@ export function BackupFolderDialog(props: {
 						{pending
 							? t("common.working")
 							: t(
-									props.purpose === "restore"
+									purpose === "restore"
 										? "backupFolders.openSource"
 										: creating
 											? "backupFolders.createAndUse"
@@ -143,23 +121,14 @@ export function BackupFolderDialog(props: {
 			<div className="space-y-4">
 				<p className="text-xs text-secondary-foreground">
 					{t(
-						props.purpose === "restore"
+						purpose === "restore"
 							? "backupFolders.restoreHelp"
 							: "backupFolders.locationHelp",
 					)}
 				</p>
-				<Button
-					variant="secondary"
-					disabled={pending}
-					onClick={() => void choose()}
-				>
-					{t("backupFolders.chooseFolder")}
-				</Button>
-				{selection && (
-					<p className="break-all text-xs" data-testid="selected-backup-folder">
-						{selection.path}
-					</p>
-				)}
+				<p className="break-all text-ui" data-testid="selected-backup-folder">
+					{selection.path}
+				</p>
 				{creating && (
 					<BackupPasswordFields
 						password={password}
@@ -168,7 +137,7 @@ export function BackupFolderDialog(props: {
 						onConfirmationChange={setConfirmation}
 					/>
 				)}
-				{selection?.exists && (
+				{selection.exists && (
 					<div className="space-y-3">
 						<Button
 							variant="ghost"

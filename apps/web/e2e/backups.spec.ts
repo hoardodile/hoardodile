@@ -20,7 +20,8 @@ test("complete local backup and confirmed restore", async ({
 	await expect(page.getByTestId("setup-sync-receive")).not.toBeVisible()
 	await expect(page.getByTestId("setup-sync-send")).not.toBeVisible()
 	await expect(page.getByTestId("backup-sync")).not.toBeVisible()
-	await expect(page.getByText("On this device")).toBeVisible()
+	await expect(page.getByText("Backup settings", { exact: true })).toBeVisible()
+	await expect(page.getByTestId("available-backups-empty")).toBeVisible()
 	await expect(page.getByText("Offsite copy")).not.toBeVisible()
 	// No jobs yet, so Recent operations stays hidden (empty-state hides it).
 	await expect(page.getByTestId("recent-operations-section")).not.toBeVisible()

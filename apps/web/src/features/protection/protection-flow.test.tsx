@@ -1,11 +1,10 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { render, screen, waitFor, within } from "@testing-library/react"
+import { act, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import type { ReactNode } from "react"
 import { afterEach, beforeAll, expect, it, vi } from "vitest"
 import { i18n } from "@/i18n"
 import { setTrpcClient, type TRPCClient } from "@/trpc/client"
-import { BackupFolderDialog } from "./BackupFolderDialog"
 import { BackupManagement } from "./BackupManagement"
 import { ProtectionJobs } from "./ProtectionJobs"
 import { RecoveryPanel } from "./RecoveryPanel"
@@ -103,6 +102,12 @@ it("requires a matching backup password for a new desktop backup", async () => {
 	})
 	const user = userEvent.setup()
 	await user.click(await screen.findByTestId("setup-new-backup"))
+	expect(desktop.pickFolder).not.toHaveBeenCalled()
+	expect(
+		within(screen.getByRole("dialog")).getByText(
+			"Backup folder: Configured folder",
+		),
+	).toBeInTheDocument()
 	const submit = screen.getByTestId("initialize-backups")
 	expect(submit).toBeDisabled()
 	await user.type(screen.getByLabelText("Backup password"), "backup-password")
@@ -157,8 +162,11 @@ it("keeps external restore available during maintenance and opens its points wit
 	})
 	const user = userEvent.setup()
 	await user.click(await screen.findByTestId("restore-from-folder"))
-	const dialog = within(screen.getByRole("dialog"))
-	await user.click(dialog.getByRole("button", { name: "Choose backup folder" }))
+	const dialog = within(await screen.findByRole("dialog"))
+	expect(desktop.pickFolder).toHaveBeenCalledWith("restore")
+	expect(
+		dialog.queryByRole("button", { name: "Choose backup folder" }),
+	).not.toBeInTheDocument()
 	await user.type(
 		await dialog.findByLabelText("Backup password"),
 		"my-password",
@@ -191,20 +199,12 @@ it("creates a password-protected destination only after explicit confirmation", 
 	})
 	const change = vi.fn(async () => null)
 	const open = vi.fn()
-	mount(
-		<BackupFolderDialog
-			open
-			purpose="backup"
-			onOpenChange={() => {}}
-			onSourceOpened={() => {}}
-		/>,
-		{
-			"protection.setBackupLocation": change,
-			"protection.openRestoreSource": open,
-		},
-	)
+	mount(<Page />, {
+		"protection.setBackupLocation": change,
+		"protection.openRestoreSource": open,
+	})
 	const user = userEvent.setup()
-	await user.click(screen.getByRole("button", { name: "Choose backup folder" }))
+	await user.click(await screen.findByTestId("change-backup-location"))
 	await user.type(
 		await screen.findByLabelText("Backup password"),
 		"new-password",
@@ -224,6 +224,206 @@ it("creates a password-protected destination only after explicit confirmation", 
 		}),
 	)
 	expect(open).not.toHaveBeenCalled()
+})
+
+it.each(["backup", "restore"] as const)(
+	"opens the native %s picker first and silently ignores cancellation",
+	async (purpose) => {
+		desktop.enabled = true
+		let finishPicking: (value: undefined) => void = () => {}
+		desktop.pickFolder.mockImplementation(
+			() =>
+				new Promise<undefined>((resolve) => {
+					finishPicking = resolve
+				}),
+		)
+		const change = vi.fn()
+		const open = vi.fn()
+		mount(<Page />, {
+			"protection.setBackupLocation": change,
+			"protection.openRestoreSource": open,
+		})
+		const user = userEvent.setup()
+		const trigger = await screen.findByTestId(
+			purpose === "backup" ? "change-backup-location" : "restore-from-folder",
+		)
+		await user.click(trigger)
+		expect(desktop.pickFolder).toHaveBeenCalledWith(purpose)
+		expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+		expect(trigger).toBeDisabled()
+		expect(screen.getByTestId("change-backup-location")).toBeDisabled()
+		expect(screen.getByTestId("restore-from-folder")).toBeDisabled()
+		await user.click(trigger)
+		expect(desktop.pickFolder).toHaveBeenCalledOnce()
+		await act(async () => finishPicking(undefined))
+		expect(trigger).toBeEnabled()
+		expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+		expect(screen.queryByRole("alert")).not.toBeInTheDocument()
+		expect(change).not.toHaveBeenCalled()
+		expect(open).not.toHaveBeenCalled()
+	},
+)
+
+it.each(["backup", "restore"] as const)(
+	"recovers from a failed native %s selection",
+	async (purpose) => {
+		desktop.enabled = true
+		desktop.pickFolder
+			.mockRejectedValueOnce(new Error("Invalid folder"))
+			.mockResolvedValueOnce({
+				id: sourceId,
+				path: "Selected backup",
+				exists: true,
+				purpose,
+			})
+		mount(<Page />)
+		const user = userEvent.setup()
+		const trigger = await screen.findByTestId(
+			purpose === "backup" ? "change-backup-location" : "restore-from-folder",
+		)
+		await user.click(trigger)
+		expect(await screen.findByRole("alert")).toHaveTextContent(
+			"Choose a valid backup folder",
+		)
+		expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+		await user.click(trigger)
+		const dialog = within(await screen.findByRole("dialog"))
+		expect(dialog.getByTestId("selected-backup-folder")).toHaveTextContent(
+			"Selected backup",
+		)
+		expect(dialog.getByLabelText("Backup password")).toBeInTheDocument()
+		expect(screen.queryByRole("alert")).not.toBeInTheDocument()
+		await user.click(dialog.getByRole("button", { name: "Cancel" }))
+		expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+	},
+)
+
+it("switches to an existing backup location only after confirming its password", async () => {
+	desktop.enabled = true
+	desktop.pickFolder.mockResolvedValue({
+		id: sourceId,
+		path: "Existing destination",
+		exists: true,
+		purpose: "backup",
+	})
+	const change = vi.fn(async () => null)
+	mount(<Page />, { "protection.setBackupLocation": change })
+	const user = userEvent.setup()
+	await user.click(await screen.findByTestId("change-backup-location"))
+	const dialog = within(await screen.findByRole("dialog"))
+	expect(dialog.getByTestId("backup-folder-submit")).toBeDisabled()
+	await user.type(dialog.getByLabelText("Backup password"), "existing-password")
+	expect(change).not.toHaveBeenCalled()
+	await user.click(dialog.getByTestId("backup-folder-submit"))
+	await waitFor(() =>
+		expect(change).toHaveBeenCalledWith({
+			selectionId: sourceId,
+			credential: "existing-password",
+			credentialType: "password",
+			password: undefined,
+		}),
+	)
+})
+
+it("validates a recovery key file before opening a selected backup", async () => {
+	desktop.enabled = true
+	desktop.pickFolder.mockResolvedValue({
+		id: sourceId,
+		path: "External backup",
+		exists: true,
+		purpose: "restore",
+	})
+	const open = vi.fn(async () => ({ repositoryId: sourceId }))
+	mount(<Page />, { "protection.openRestoreSource": open })
+	const user = userEvent.setup()
+	await user.click(await screen.findByTestId("restore-from-folder"))
+	const dialog = within(await screen.findByRole("dialog"))
+	await user.click(
+		dialog.getByRole("button", { name: "Use recovery key file" }),
+	)
+	const input = dialog.getByLabelText("Choose recovery passphrase file")
+	await user.upload(
+		input,
+		new File(["invalid json"], "invalid.json", { type: "application/json" }),
+	)
+	expect(await dialog.findByRole("alert")).toHaveTextContent(
+		"Could not read this key file",
+	)
+	expect(dialog.getByTestId("backup-folder-submit")).toBeDisabled()
+	const credential = JSON.stringify({
+		format: "hoardodile-restic-v1",
+		key: "saved-key",
+	})
+	await user.upload(
+		input,
+		new File([credential], "recovery.json", { type: "application/json" }),
+	)
+	await waitFor(() =>
+		expect(dialog.getByTestId("backup-folder-submit")).toBeEnabled(),
+	)
+	expect(open).not.toHaveBeenCalled()
+	await user.click(dialog.getByTestId("backup-folder-submit"))
+	await waitFor(() =>
+		expect(open).toHaveBeenCalledWith({
+			selectionId: sourceId,
+			credential,
+			credentialType: "key",
+		}),
+	)
+})
+
+it("releases an external source and resets pagination when switching back to local backups", async () => {
+	const release = vi.fn(async () => null)
+	mount(<Page />, {
+		"protection.status": () => ({
+			...status,
+			repositories: [
+				{ id: "local", name: "Local backups" },
+				{
+					id: sourceId,
+					name: "External",
+					path: "External backup",
+					restoreOnly: true,
+				},
+			],
+		}),
+		"protection.points": (input) =>
+			input &&
+			typeof input === "object" &&
+			"repositoryId" in input &&
+			input.repositoryId === sourceId
+				? Array.from({ length: 21 }, (_, index) => ({
+						...point,
+						id: `external-${index}`,
+						createdAt: point.createdAt + index,
+					}))
+				: [point],
+		"protection.closeRestoreSource": release,
+	})
+	const user = userEvent.setup()
+	await user.click(await screen.findByRole("button", { name: "Backup source" }))
+	await user.click(
+		await screen.findByRole("menuitemradio", { name: "External" }),
+	)
+	await screen.findByTestId("recovery-point-external-20")
+	await user.click(
+		within(screen.getAllByTestId("pagination-bar")[0] as HTMLElement).getByRole(
+			"button",
+			{ name: "Next" },
+		),
+	)
+	await screen.findByTestId("recovery-point-external-0")
+	await user.click(screen.getByRole("button", { name: "Backup source" }))
+	await user.click(
+		await screen.findByRole("menuitemradio", { name: "This device's backups" }),
+	)
+	await waitFor(() =>
+		expect(release).toHaveBeenCalledWith({ repositoryId: sourceId }),
+	)
+	expect(
+		await screen.findByTestId(`recovery-point-${pointId}`),
+	).toBeInTheDocument()
+	expect(screen.queryByTestId("pagination-bar")).not.toBeInTheDocument()
 })
 
 it("confirms desktop restores using the phrase returned for the selected language", async () => {
@@ -340,9 +540,7 @@ it("surfaces first-backup progress in the health header", async () => {
 			},
 		],
 	})
-	expect(
-		await screen.findByTestId("backup-health-backupNow"),
-	).toBeInTheDocument()
+	expect(await screen.findByTestId("backup-health-running")).toBeInTheDocument()
 	expect(screen.getByTestId("complete-backup-now")).toBeDisabled()
 	expect(screen.getByTestId("recovery-key-notice")).toBeVisible()
 })
@@ -436,12 +634,13 @@ it("renders the unified settings sections without a page-level heading", async (
 	expect(screen.getByTestId("complete-backups")).toBeInTheDocument()
 })
 
-it("hides the available-backups section when there are no recovery points", async () => {
+it("shows an empty backup list and keeps management available before the first point", async () => {
 	mount(<RecoveryPanel />)
-	await screen.findByTestId("complete-backups-section")
 	expect(
-		screen.queryByTestId("available-backups-section"),
-	).not.toBeInTheDocument()
+		await screen.findByTestId("available-backups-empty"),
+	).toHaveTextContent("Your first completed backup will appear here")
+	expect(screen.getByTestId("backup-management-section")).toBeInTheDocument()
+	expect(screen.getByTestId("backup-retention")).toBeInTheDocument()
 })
 
 it("keeps recent operations behind a button that opens the job dialog", async () => {
@@ -674,7 +873,7 @@ it("previews the cleanup, then applies it with storage reclaim from the confirma
 	await user.click(await screen.findByTestId("backup-cleanup"))
 	const dialog = within(await screen.findByRole("dialog"))
 	expect(await dialog.findByText("Oldest automatic")).toBeInTheDocument()
-	const confirm = dialog.getByRole("button", { name: "Remove expired points" })
+	const confirm = dialog.getByRole("button", { name: "Clean up old backups" })
 	expect(confirm).toBeEnabled()
 	await user.click(
 		dialog.getByRole("checkbox", { name: "Also reclaim unused storage" }),
@@ -695,7 +894,7 @@ it("keeps cleanup disabled while nothing has expired", async () => {
 	const dialog = within(await screen.findByRole("dialog"))
 	await waitFor(() =>
 		expect(
-			dialog.getByRole("button", { name: "Remove expired points" }),
+			dialog.getByRole("button", { name: "Clean up old backups" }),
 		).toBeDisabled(),
 	)
 })

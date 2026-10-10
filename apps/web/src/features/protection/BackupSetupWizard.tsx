@@ -18,11 +18,8 @@ import {
 type SetupMode = "new" | "existing"
 
 /**
- * Single-layer backup-setup dialog. The choice ("start protecting this
- * device" vs "open an existing backup") lives inline in the Backups section
- * as two big buttons; clicking one opens this dialog for that mode directly —
- * no nested chooser layer and no back button. Desktop backups require a
- * reusable password; fixed-folder recovery remains available to browsers.
+ * Creates a backup at the configured default location. Desktop backups
+ * require a reusable password; fixed-folder recovery remains available to browsers.
  */
 export function BackupSetupWizard({
 	open,
@@ -72,7 +69,9 @@ export function BackupSetupWizard({
 	return (
 		<AppDialog
 			open={open}
-			onOpenChange={close}
+			onOpenChange={(open) => {
+				if (!initialize.isPending) close(open)
+			}}
 			title={t("backupSetup.title")}
 			footer={
 				<>

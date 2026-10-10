@@ -87,22 +87,61 @@ it("prompts to set up backups when nothing is configured", async () => {
 		await screen.findByTestId("backup-health-noBackups"),
 	).toBeInTheDocument()
 	const user = userEvent.setup()
-	await user.click(screen.getByRole("button", { name: "Set up backups" }))
+	await user.click(screen.getByRole("button", { name: "Create first backup" }))
 	expect(onSetUpBackups).toHaveBeenCalledOnce()
 })
 
-it("prompts to turn on automatic backups when backups are off", async () => {
-	const enable = vi.fn(async () => ({}))
+it("allows a manual backup while automatic backups are off", async () => {
+	const backup = vi.fn(async () => ({}))
 	mount({
 		"protection.status": () => ({ ...localStatus, enabled: false }),
-		"protection.enabled": enable,
+		"protection.backup": backup,
 	})
 	expect(
 		await screen.findByTestId("backup-health-backupOff"),
 	).toBeInTheDocument()
 	const user = userEvent.setup()
-	await user.click(
-		screen.getByRole("button", { name: "Turn on automatic backups" }),
+	await user.click(screen.getByRole("button", { name: "Back up now" }))
+	await waitFor(() =>
+		expect(backup).toHaveBeenCalledWith({
+			name: "",
+			note: "",
+			kind: "manual",
+			pinned: true,
+		}),
 	)
-	await waitFor(() => expect(enable).toHaveBeenCalledWith({ enabled: true }))
 })
+
+it("keeps manual backup available after a successful backup", async () => {
+	const backup = vi.fn(async () => ({}))
+	mount({ "protection.backup": backup })
+	const user = userEvent.setup()
+	await user.click(await screen.findByTestId("complete-backup-now"))
+	await waitFor(() => expect(backup).toHaveBeenCalledOnce())
+})
+
+it.each([
+	{ mode: "offline", status: { backupAvailable: false }, jobs: [] },
+	{ mode: "maintenance", status: { maintenanceActive: true }, jobs: [] },
+	{
+		mode: "running",
+		status: {},
+		jobs: [{ id: "active", kind: "backup", state: "running" }],
+	},
+])(
+	"explains the $mode state and prevents another backup",
+	async ({ mode, status, jobs }) => {
+		const backup = vi.fn()
+		mount({
+			"protection.status": () => ({ ...localStatus, ...status }),
+			"protection.jobs": () => jobs,
+			"protection.backup": backup,
+		})
+		const header = await screen.findByTestId(`backup-health-${mode}`)
+		expect(header.textContent).not.toBe("")
+		expect(screen.getByTestId("complete-backup-now")).toBeDisabled()
+		const user = userEvent.setup()
+		await user.click(screen.getByTestId("complete-backup-now"))
+		expect(backup).not.toHaveBeenCalled()
+	},
+)
