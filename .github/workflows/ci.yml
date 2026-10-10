@@ -34,6 +34,8 @@ jobs:
       - name: Lint workflow files
         uses: raven-actions/actionlint@v2
       - uses: ./.github/actions/setup-pnpm
+      - name: Test release preflight
+        run: pnpm test:release
       # BlockNote + the diff-machinery pins must never drift silently.
       - name: Guard protected dependencies
         run: node scripts/guard-protected-deps.mjs

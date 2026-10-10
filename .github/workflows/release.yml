@@ -75,19 +75,10 @@ jobs:
       - name: Verify tag matches the unified version
         if: github.event_name == 'push'
         run: node scripts/check-tag-version.mjs
-      - name: Build
-        run: pnpm build
-      - name: Verify SDK closure packs
-        run: pnpm sdks:pack
-      - name: Check third-party notices
-        run: pnpm licenses:check
-      - name: Check version sync
-        run: pnpm version:check
-      # Scoped to what this job actually publishes: the app workspaces
-      # (server/desktop/web) never reach npm, so their advisories must not
-      # block a release. Levels + ignores stay in pnpm-workspace.yaml.
-      - name: Audit the published dependency closure
-        run: pnpm audit:release-set
+      # Same gate as the local release command: version sync, the published
+      # dependency audit, build, SDK closure packs and license policy.
+      - name: Check npm release readiness
+        run: pnpm release:check
       - name: Publish SDK release set
         # Idempotent: skips versions already on the registry, so a manual
         # re-run of an already-released version only re-attaches artifacts

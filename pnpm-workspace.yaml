@@ -45,7 +45,7 @@ catalog:
   react-use: ^17.6.1
   '@solar-icons/react': ^2.1.0
   release-it: ^21.0.2
-  sharp: ^0.35.4
+  sharp: ^0.35.5
   semver: ^7.8.5
   tailwindcss: ^4.3.3
   tar: ^7.4.3
@@ -84,8 +84,12 @@ overrides:
   # `pnpm audit --prod --audit-level high` gate fails on advisories whose
   # patched releases the parent ranges already allow, so pin the first fixed
   # version of each. Both were caught by the gate for v0.2.1.
-  sharp@^0.35: 0.35.4
+  # 0.35.5 also patches librsvg's GHSA-wq5f-xc86-pv6w.
+  sharp@^0.35: 0.35.5
   js-yaml@^4: 4.3.2
+  # Vite/PostCSS and Tailwind keep source-map-js 1.2.1 in the lockfile;
+  # 1.2.2 fixes the indexed source-map DoS (GHSA-68fv-2mgg-jv7q).
+  source-map-js@^1: 1.2.2
   # apps/server serves static files through @fastify/static → glob →
   # minimatch, which resolves brace-expansion 5.0.9: GHSA-qhr7-859c-m2p7
   # and GHSA-6j4f-fj2g-mc7p are both fixed in 5.0.11. Not release-gated

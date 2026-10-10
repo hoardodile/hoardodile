@@ -52,9 +52,11 @@ Common commands:
 Releases are driven from a local release-it run plus a tag-triggered Actions workflow. The release must run from `main` and be clean.
 
 ```bash
-pnpm release 0.1.1     # bump + changelog + commit + tag + push, then a draft Release
+pnpm release:check     # optional: run the npm release checks without releasing
+pnpm release 0.1.1     # checks, then bump + changelog + commit + tag + push + draft Release
 ```
 
+- `pnpm release` automatically runs `pnpm release:check` before starting release-it: version sync, the published dependency audit (`audit:release-set`), build, SDK closure packing and license policy. Any failure stops the release before versions, commits or tags change. `--dry-run` also runs these checks; `--help` and `--version` skip them. The npm job uses the same gate again before publishing. Local checks cannot validate the GitHub Actions OIDC identity or npm Trusted Publishing permissions; those are verified when CI publishes.
 - `pnpm release` (scripts/release.mjs) provisions `GITHUB_TOKEN` from `gh auth token` when unset — without a token release-it falls back to web mode and the draft is later auto-created by CI (empty body; the `release-draft` job fixes that).
 - The tag push triggers `.github/workflows/release.yml`: the `release-draft` job creates/fills the draft from the newest `CHANGELOG.md` section, the `npm` job publishes the SDK set, and the desktop matrix builds and attaches the installers + update feeds to the same draft. Tag-push checkouts are detached HEADs, so the SDK publish intentionally disables pnpm's git checks (the CI tree is a fresh tag checkout — see `scripts/publish-release-set.mjs`).
 - **A human publishes the draft** on GitHub — electron-updater only sees published releases, so the draft is the review gate.

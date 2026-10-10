@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
- * `pnpm release <version>` — release-it with a GitHub token.
+ * `pnpm release <version>` — npm release checks, then release-it with a GitHub token.
+ * Checks must pass before release-it can change versions, commit or tag.
  *
  * release-it can only create the GitHub Release draft with a GITHUB_TOKEN;
  * without one it falls back to web mode and the draft is later auto-created
@@ -18,10 +19,33 @@ import { execFileSync, spawnSync } from "node:child_process"
 import { existsSync } from "node:fs"
 import { dirname, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
+import { needsShell } from "./lib/process.mjs"
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..")
+const args = process.argv.slice(2)
+const informational = args.some((arg) =>
+	["--help", "-h", "--version", "-v"].includes(arg),
+)
 
-if (!process.env.GITHUB_TOKEN) {
+if (!informational) {
+	console.log("Checking npm release readiness before changing versions...")
+	const check = spawnSync("pnpm", ["release:check"], {
+		cwd: ROOT,
+		stdio: "inherit",
+		env: process.env,
+		shell: needsShell,
+	})
+	if (check.error || check.status !== 0) {
+		if (check.error)
+			console.error(`failed to launch release checks: ${check.error}`)
+		console.error(
+			"Release stopped before release-it. Fix the errors above and rerun `pnpm release:check`.",
+		)
+		process.exit(check.status ?? 1)
+	}
+}
+
+if (!informational && !process.env.GITHUB_TOKEN) {
 	try {
 		process.env.GITHUB_TOKEN = execFileSync("gh", ["auth", "token"], {
 			encoding: "utf8",
@@ -48,14 +72,11 @@ if (!existsSync(releaseItBin)) {
 	process.exit(1)
 }
 
-const result = spawnSync(
-	process.execPath,
-	[releaseItBin, ...process.argv.slice(2)],
-	{
-		stdio: "inherit",
-		env: process.env,
-	},
-)
+const result = spawnSync(process.execPath, [releaseItBin, ...args], {
+	cwd: ROOT,
+	stdio: "inherit",
+	env: process.env,
+})
 if (result.error) {
 	console.error(`failed to launch release-it: ${result.error}`)
 	process.exit(1)
