@@ -60,22 +60,26 @@ function rect(left: number): DOMRect {
 
 /** Mocks the layout of every rendered copy: copy `i` spans
     `[i·PERIOD, i·PERIOD + COPY_WIDTH)`. */
-function mockGeometry() {
+function mockGeometry({
+	cardCount = CARDS,
+	containerWidth = CONTAINER_WIDTH,
+} = {}) {
 	const row = document.querySelector(".w-max") as HTMLElement
 	const container = document.querySelector(".overflow-x-auto") as HTMLElement
 	const copies = Array.from(row.querySelectorAll(":scope > div"))
+	const copyWidth = cardCount * CARD + (cardCount - 1) * GAP
 	Object.defineProperty(container, "clientWidth", {
-		value: CONTAINER_WIDTH,
+		value: containerWidth,
 		configurable: true,
 	})
 	copies.forEach((copy, i) => {
 		Object.defineProperty(copy, "offsetWidth", {
-			value: COPY_WIDTH,
+			value: copyWidth,
 			configurable: true,
 		})
 		Object.defineProperty(copy, "getBoundingClientRect", {
 			configurable: true,
-			value: () => rect(PERIOD * i),
+			value: () => rect((copyWidth + GAP) * i),
 		})
 	})
 	return { container, copies }
@@ -128,17 +132,15 @@ async function emitOverflow() {
 	return document.querySelector(".overflow-x-auto") as HTMLElement
 }
 
-function renderWithChevrons(intervalMs?: number) {
+function renderWithChevrons(intervalMs?: number, cardCount = CARDS) {
 	const handleRef = createRef<MarqueeHandle>()
 	const element = (
 		<>
 			<MarqueeChevrons stripRef={handleRef} />
 			<Marquee ref={handleRef} intervalMs={intervalMs}>
-				<div>card-a</div>
-				<div>card-b</div>
-				<div>card-c</div>
-				<div>card-d</div>
-				<div>card-e</div>
+				{Array.from({ length: cardCount }, (_, i) => (
+					<div key={i}>card-{String.fromCharCode(97 + i)}</div>
+				))}
 			</Marquee>
 		</>
 	)
@@ -177,6 +179,59 @@ describe("Marquee", () => {
 		expect(row?.children).toHaveLength(1)
 		expect(screen.getByText("card-a")).toBeInTheDocument()
 		expect(screen.getByText("card-e")).toBeInTheDocument()
+	})
+
+	it.each([
+		{ cardCount: 1, containerWidth: CONTAINER_WIDTH },
+		{ cardCount: 2, containerWidth: CONTAINER_WIDTH },
+		{ cardCount: CARDS, containerWidth: COPY_WIDTH },
+	])(
+		"keeps $cardCount fitting cards static in a $containerWidth px container after chevron clicks",
+		async ({ cardCount, containerWidth }) => {
+			vi.useFakeTimers()
+			render(renderWithChevrons(undefined, cardCount).element)
+			const { container } = mockGeometry({ cardCount, containerWidth })
+			await act(async () => {
+				ControlledResizeObserver.instances.at(-1)?.emit()
+			})
+
+			for (let i = 0; i < 3; i += 1) {
+				fireEvent.click(screen.getByLabelText("Next"))
+				fireEvent.click(screen.getByLabelText("Previous"))
+			}
+			await act(async () => {
+				vi.advanceTimersByTime(24_000)
+			})
+
+			expect(document.querySelectorAll(".w-max > div")).toHaveLength(1)
+			expect(screen.getAllByText(/^card-/)).toHaveLength(cardCount)
+			expect(container.scrollLeft).toBe(0)
+			expect(scrollToMock).not.toHaveBeenCalled()
+		},
+	)
+
+	it("stops stepping and removes copies when a wider container fits the cards", async () => {
+		vi.useFakeTimers()
+		render(renderWithChevrons().element)
+		const container = await emitOverflow()
+		mockScrollLeft(PERIOD)
+		fireEvent.click(screen.getByLabelText("Next"))
+		expect(scrollToMock).toHaveBeenCalled()
+		scrollToMock.mockClear()
+
+		mockGeometry({ containerWidth: COPY_WIDTH + 100 })
+		await act(async () => {
+			ControlledResizeObserver.instances.at(-1)?.emit()
+		})
+		fireEvent.click(screen.getByLabelText("Next"))
+		fireEvent.click(screen.getByLabelText("Previous"))
+		await act(async () => {
+			vi.advanceTimersByTime(24_000)
+		})
+
+		expect(document.querySelectorAll(".w-max > div")).toHaveLength(1)
+		expect(container.scrollLeft).toBe(0)
+		expect(scrollToMock).not.toHaveBeenCalled()
 	})
 
 	it("renders a sliding window of copies and auto-steps when overflowing", async () => {

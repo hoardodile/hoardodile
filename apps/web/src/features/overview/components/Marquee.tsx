@@ -255,7 +255,7 @@ export const Marquee = forwardRef<MarqueeHandle, MarqueeProps>(function Marquee(
 	    step never wraps — it keeps moving in the same direction. */
 	function step(direction: 1 | -1) {
 		const container = containerRef.current
-		if (!container) return
+		if (!container || !overflows) return
 		enforceWindow()
 		const at = container.scrollLeft
 		const bounds = boundaries()
