@@ -124,6 +124,13 @@ export type DesktopWizardResult = {
 	readonly startInTray: boolean
 }
 
+export type DesktopBackupSelection = {
+	readonly id: string
+	readonly path: string
+	readonly exists: boolean
+	readonly purpose: "restore" | "backup"
+}
+
 export type HoardodileDesktopBridge = {
 	readonly isDesktop: true
 	readonly platform: "desktop"
@@ -155,6 +162,9 @@ export type HoardodileDesktopBridge = {
 		quitAndInstall: () => Promise<void>
 	}
 	pickLibraryFolder: () => Promise<string | undefined>
+	pickBackupFolder?: (
+		purpose: "restore" | "backup",
+	) => Promise<DesktopBackupSelection | undefined>
 	relaunch: () => Promise<void>
 	/**
 	 * Open the bundled server's log directory (`<library>/local/logs`) in

@@ -300,6 +300,9 @@ importers:
       '@hoardodile/host':
         specifier: workspace:*
         version: link:../../plugins/host
+      '@hoardodile/i18n':
+        specifier: workspace:*
+        version: link:../../packages/i18n
       '@hoardodile/schemas':
         specifier: workspace:*
         version: link:../../packages/schemas

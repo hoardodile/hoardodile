@@ -22,6 +22,7 @@ import {
 } from "electron"
 import getPort from "get-port"
 import { HIDDEN_SWITCH, IPC } from "../shared/ipc.ts"
+import { pickBackupFolder } from "./backup-folder.ts"
 import {
 	configFilePath,
 	type DesktopConfig,
@@ -997,6 +998,9 @@ async function boot(): Promise<void> {
 		getConfig: () => runtime.config,
 		portable: () => runtime.portable,
 		pickLibraryFolder: (parent) => pickDirectory(parent),
+		async pickBackupFolder(purpose, parent) {
+			return pickBackupFolder({ sidecar: runtime.sidecar, parent, purpose })
+		},
 		relaunch: () => relaunchApp(runtime),
 		async openLogsFolder() {
 			// The sidecar's STORAGE_ROOT is the library folder, so the

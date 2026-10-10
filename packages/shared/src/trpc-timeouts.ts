@@ -33,6 +33,8 @@ export const STORAGE_COMMIT_TRPC_PROCEDURES: readonly string[] = [
 	"plugin.uninstall",
 	"plugin.restoreSeedPlugin",
 	"protection.initialize",
+	"protection.openRestoreSource",
+	"protection.setBackupLocation",
 	"protection.prepareRestore",
 	"protection.prepareRepair",
 	"protection.metadata",

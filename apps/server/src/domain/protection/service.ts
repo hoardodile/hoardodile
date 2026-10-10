@@ -37,8 +37,15 @@ import {
 	retentionPolicy,
 } from "@hoardodile/backup"
 import { type StoragePaths, storageCoordinator } from "@hoardodile/host/hoard"
+import { catalogFor } from "@hoardodile/i18n/catalogs"
+import type { SupportedLanguage } from "@hoardodile/i18n/core"
 import { prepareCheckpoint } from "src/infra/storage/checkpoint.ts"
 import { z } from "zod"
+import {
+	backupPassword,
+	createDesktopRepositories,
+	physicalPath as repositoryPhysicalPath,
+} from "./desktop-repositories.ts"
 import { autoBackupIntervalHours } from "./schedule.ts"
 
 const repositoryId = z.union([z.literal("local"), z.uuid()])
@@ -62,6 +69,7 @@ const stateSchema = z.object({
 	lastBackupAt: z.number().nullable(),
 	lastAutoBackupAt: z.number().nullable().default(null),
 	lastContentCheckAt: z.number().nullable(),
+	activeBackupId: z.uuid().optional(),
 })
 const restorePlanSchema = z.object({
 	id: z.uuid(),
@@ -71,6 +79,14 @@ const restorePlanSchema = z.object({
 	snapshotId: z.string().regex(/^[a-f0-9]{64}$/),
 	root: z.string(),
 	createdAt: z.number(),
+	confirmationPhrase: z.string().default("RESTORE"),
+	source: z
+		.object({
+			path: z.string(),
+			passwordFile: z.string(),
+			identity: z.string(),
+		})
+		.optional(),
 })
 export const maintenanceRecord = restorePlanSchema.extend({
 	phase: z.enum(["restoring", "installing", "reloading"]),
@@ -87,6 +103,7 @@ export type ProtectionService = Awaited<
 export type ProtectionDependencies = {
 	paths: () => StoragePaths
 	backupRoot: string
+	desktop?: boolean
 	drillRoot?: string
 	appVersion: string
 	minFreeBytes: number
@@ -190,19 +207,51 @@ export async function createProtectionService(deps: ProtectionDependencies) {
 	}
 	const engine =
 		deps.engine ?? createBackupEngine({ cacheDir: join(local, "cache") })
-	const locks = createRepositoryLocks()
+	const locations = await createDesktopRepositories({
+		directory: local,
+		storageRoot: root,
+		protectedPaths: [
+			versionsRoot,
+			join(root, "local"),
+			...drillTargets.map((target) => target.path),
+		],
+		engine,
+	})
+	const repositoryLocks = createRepositoryLocks()
+	const lockPath = (path: string) =>
+		process.platform === "win32" ? path.toLowerCase() : path
+	const lockKey = (id: string) => {
+		const path =
+			id === "local"
+				? (locations.active()?.path ?? join(backupRoot, "local"))
+				: (locations.get(id)?.path ?? join(backupRoot, "sources", id))
+		return lockPath(path)
+	}
+	const locks = {
+		run<T>(id: string, operation: () => Promise<T>) {
+			return repositoryLocks.run(lockKey(id), operation)
+		},
+		busy: (id: string) => repositoryLocks.busy(lockKey(id)),
+	}
+	let destinationChanging = false
+	let backupAvailable: boolean | null = null
 	const catalogs = new Map<string, { at: number; points: RecoveryPoint[] }>()
 	const catalogLoads = new Map<string, Promise<RecoveryPoint[]>>()
 	async function listPoints(id: string): Promise<RecoveryPoint[]> {
+		if (destinationChanging)
+			throw new BackupError("storage_busy", "The backup location is changing")
 		const cached = catalogs.get(id)
 		if (cached && (Date.now() - cached.at < 5000 || locks.busy(id)))
 			return cached.points
 		const existing = catalogLoads.get(id)
 		if (existing) return existing
-		const request = engine.listRecoveryPoints(repository(id)).then((points) => {
-			catalogs.set(id, { at: Date.now(), points })
-			return points
-		})
+		const request = checkedRepository(id)
+			.then((repo) => engine.listRecoveryPoints(repo))
+			.then((points) => {
+				if (id === "local") backupAvailable = true
+				catalogs.set(id, { at: Date.now(), points })
+				return points
+			})
 		catalogLoads.set(id, request)
 		try {
 			return await request
@@ -265,6 +314,8 @@ export async function createProtectionService(deps: ProtectionDependencies) {
 	const sourceInput = z.object({ repositoryId, pointId: z.uuid() })
 	function repository(id: string): Repository {
 		repositoryId.parse(id)
+		const registered = id === "local" ? locations.active() : locations.get(id)
+		if (registered) return { ...registered, id }
 		if (!state.repositories.some((entry) => entry.id === id))
 			throw new BackupError(
 				"repository_not_found",
@@ -279,11 +330,39 @@ export async function createProtectionService(deps: ProtectionDependencies) {
 			passwordFile: join(local, "keys", id),
 		}
 	}
+	async function checkedRepository(id: string): Promise<Repository> {
+		const repo = repository(id)
+		try {
+			await locations.identity(
+				repo,
+				id === "local"
+					? locations.activeIdentity()
+					: locations.expectedIdentity(id),
+			)
+			if (id === "local") backupAvailable = true
+			return repo
+		} catch (error) {
+			if (id === "local") backupAvailable = false
+			throw error
+		}
+	}
+	function mutableRepository(id: string): Repository {
+		if (destinationChanging)
+			throw new BackupError("storage_busy", "The backup location is changing")
+		if (locations.sources().some((entry) => entry.id === id))
+			throw new BackupError(
+				"restore_only",
+				"This folder is only available as a restore source",
+			)
+		return repository(id)
+	}
 	const commandContext = (context: JobContext) => ({
 		signal: context.signal,
 		onProgress: context.progress,
 	})
 	const writable = () => {
+		if (destinationChanging)
+			throw new BackupError("storage_busy", "The backup location is changing")
 		if (maintenance || maintenanceError || deps.isMaintenance?.())
 			throw new BackupError("maintenance", "The library is in maintenance mode")
 	}
@@ -319,12 +398,15 @@ export async function createProtectionService(deps: ProtectionDependencies) {
 						signal: context.signal,
 					})
 					context.progress({ phase: "backup" })
-					const point = await engine.createBackup(repository("local"), {
-						storageRoot: root,
-						manifest,
-						metadata: input,
-						...commandContext(context),
-					})
+					const point = await engine.createBackup(
+						await checkedRepository("local"),
+						{
+							storageRoot: root,
+							manifest,
+							metadata: input,
+							...commandContext(context),
+						},
+					)
 					state.lastBackupAt = manifest.createdAt
 					if (input.kind === "auto") state.lastAutoBackupAt = manifest.createdAt
 					const localRepository = state.repositories.find(
@@ -346,7 +428,7 @@ export async function createProtectionService(deps: ProtectionDependencies) {
 			.object({ repositoryId, readData: z.boolean().default(false) })
 			.parse(raw)
 		return locks.run(input.repositoryId, async () => {
-			await engine.checkRepository(repository(input.repositoryId), {
+			await engine.checkRepository(mutableRepository(input.repositoryId), {
 				readData: input.readData,
 				...commandContext(context),
 			})
@@ -368,7 +450,7 @@ export async function createProtectionService(deps: ProtectionDependencies) {
 			coordinator.freeze({
 				signal: context.signal,
 				operation: () =>
-					engine.compareSource(repository(input.repositoryId), {
+					engine.compareSource(mutableRepository(input.repositoryId), {
 						pointId: input.pointId,
 						root: versionsRoot,
 						...commandContext(context),
@@ -379,6 +461,7 @@ export async function createProtectionService(deps: ProtectionDependencies) {
 	handlers.repair = async (raw, context) => {
 		writable()
 		const input = z.object({ repositoryId, planId: z.uuid() }).parse(raw)
+		mutableRepository(input.repositoryId)
 		const saved = await readFile(
 			join(local, "repairs", `${input.planId}.json`),
 			"utf8",
@@ -437,55 +520,66 @@ export async function createProtectionService(deps: ProtectionDependencies) {
 			throw new BackupError("restore_plan_expired", "Prepare the restore again")
 		if (maintenance && maintenance.id !== plan.id)
 			throw new BackupError("maintenance", "Another restore is in progress")
-		return locks.run(plan.repositoryId, () =>
-			coordinator.freeze({
-				signal: context.signal,
-				operation: async () => {
-					const repo = repository(plan.repositoryId)
-					const point = (await engine.listRecoveryPoints(repo)).find(
-						(entry) => entry.id === plan.pointId,
-					)
-					if (!point || point.snapshotId !== plan.snapshotId)
-						throw new BackupError(
-							"restore_source_changed",
-							"Prepare the restore again because its source changed",
+		return repositoryLocks.run(
+			plan.source ? lockPath(plan.source.path) : lockKey(plan.repositoryId),
+			() =>
+				coordinator.freeze({
+					signal: context.signal,
+					operation: async () => {
+						const repo = plan.source
+							? { id: plan.repositoryId, ...plan.source }
+							: await checkedRepository(plan.repositoryId)
+						if (plan.source)
+							await locations.identity(repo, plan.source.identity)
+						const point = (await engine.listRecoveryPoints(repo)).find(
+							(entry) => entry.id === plan.pointId,
 						)
-					await checkSpace()
-					await writeMaintenance({ ...plan, phase: "restoring" })
-					await deps.enterMaintenance()
-					const manifest = await engine.restore(repo, {
-						pointId: plan.pointId,
-						target: versionsRoot,
-						deleteExtra: true,
-						...commandContext(context),
-					})
-					await writeMaintenance({ ...plan, phase: "installing" })
-					await deps.installDatabase(manifest)
-					state.libraryId = manifest.libraryId
-					await persist()
-					await writeMaintenance({ ...plan, phase: "reloading" })
-					await deps.reloadLibrary()
-					lastRestore = {
-						pointId: plan.pointId,
-						repositoryId: plan.repositoryId,
-						restoredAt: Date.now(),
-					}
-					await atomicWrite(
-						join(local, "last-restore.json"),
-						JSON.stringify(lastRestore),
-					)
-					await rm(join(local, "maintenance.json"), { force: true })
-					maintenance = null
-					deps.leaveMaintenance()
-					return { pointId: plan.pointId }
-				},
-			}),
+						if (!point || point.snapshotId !== plan.snapshotId)
+							throw new BackupError(
+								"restore_source_changed",
+								"Prepare the restore again because its source changed",
+							)
+						await checkSpace()
+						await writeMaintenance({ ...plan, phase: "restoring" })
+						await deps.enterMaintenance()
+						const manifest = await engine.restore(repo, {
+							pointId: plan.pointId,
+							target: versionsRoot,
+							deleteExtra: true,
+							...commandContext(context),
+						})
+						await writeMaintenance({ ...plan, phase: "installing" })
+						await deps.installDatabase(manifest)
+						state.libraryId = manifest.libraryId
+						await persist()
+						await writeMaintenance({ ...plan, phase: "reloading" })
+						await deps.reloadLibrary()
+						lastRestore = {
+							pointId: plan.pointId,
+							repositoryId: plan.repositoryId,
+							restoredAt: Date.now(),
+						}
+						await atomicWrite(
+							join(local, "last-restore.json"),
+							JSON.stringify(lastRestore),
+						)
+						await rm(join(local, "maintenance.json"), { force: true })
+						maintenance = null
+						deps.leaveMaintenance()
+						await locations
+							.release(plan.repositoryId)
+							.catch((error) => deps.onError?.(error))
+						catalogs.delete(plan.repositoryId)
+						return { pointId: plan.pointId }
+					},
+				}),
 		)
 	}
 	handlers.retention = async (raw, context) => {
 		const input = z
 			.object({ repositoryId, prune: z.boolean().default(false) })
 			.parse(raw)
+		mutableRepository(input.repositoryId)
 		return locks.run(input.repositoryId, async () => {
 			const removed = await engine.applyRetention(
 				repository(input.repositoryId),
@@ -524,7 +618,7 @@ export async function createProtectionService(deps: ProtectionDependencies) {
 			})
 			.parse(raw)
 		return locks.run(input.repositoryId, async () => {
-			const repo = repository(input.repositoryId)
+			const repo = mutableRepository(input.repositoryId)
 			const point = (await engine.listRecoveryPoints(repo)).find(
 				(entry) => entry.id === input.pointId,
 			)
@@ -592,6 +686,7 @@ export async function createProtectionService(deps: ProtectionDependencies) {
 	})
 	async function cleanupInterruptedDrills() {
 		if (deps.hasOrphans?.()) return
+		await locations.cleanupCandidates()
 		for (const location of drillTargets) {
 			const directory = location.path
 			const entries = await readdir(directory).catch((error: unknown) => {
@@ -608,6 +703,100 @@ export async function createProtectionService(deps: ProtectionDependencies) {
 		}
 	}
 	await cleanupInterruptedDrills()
+	for (const source of locations.sources())
+		if (maintenance?.repositoryId !== source.id)
+			await locations.release(source.id)
+	function applyDestinationStats(points: RecoveryPoint[], activeId: string) {
+		const libraryPoints = points
+			.filter((point) => point.manifest.libraryId === state.libraryId)
+			.sort((a, b) => b.createdAt - a.createdAt)
+		const wasConfigured = state.repositories.some(
+			(entry) => entry.id === "local",
+		)
+		state.repositories = [
+			...state.repositories.filter((entry) => entry.id !== "local"),
+			{
+				id: "local",
+				name: "Local backups",
+				lastAddedAt: libraryPoints[0]?.createdAt,
+			},
+		]
+		state.lastBackupAt = libraryPoints[0]?.createdAt ?? null
+		state.lastAutoBackupAt =
+			libraryPoints.find((point) => point.kind === "auto")?.createdAt ?? null
+		state.lastContentCheckAt = null
+		state.activeBackupId = activeId
+		if (!wasConfigured) state.enabled = true
+	}
+	const activeDestination = locations.active()
+	if (activeDestination && state.activeBackupId !== activeDestination.id) {
+		const points = await engine
+			.listRecoveryPoints(activeDestination)
+			.catch((error) => {
+				deps.onError?.(error)
+				backupAvailable = false
+				return []
+			})
+		applyDestinationStats(points, activeDestination.id)
+		await persist()
+	}
+	async function setBackupLocation(input: {
+		selectionId: string
+		credential?: string
+		credentialType?: "password" | "key"
+		password?: string
+	}) {
+		writable()
+		if (!deps.desktop)
+			throw new BackupError(
+				"desktop_only",
+				"Choose backup folders in the desktop application",
+			)
+		if (
+			deps.contextBusy?.() ||
+			deps.hasOrphans?.() ||
+			coordinator.state().frozen ||
+			locks.busy("local") ||
+			catalogLoads.size ||
+			jobs
+				.list()
+				.some((job) => ["queued", "running", "cancelling"].includes(job.state))
+		)
+			throw new BackupError(
+				"storage_busy",
+				"Finish or cancel current storage operations before changing the backup location",
+			)
+		destinationChanging = true
+		const previousActive = locations.active()?.id ?? null
+		const previousState = structuredClone(state)
+		try {
+			const connected = await locations.connect({ ...input, purpose: "backup" })
+			const points = await engine.listRecoveryPoints(
+				locations.descriptor(connected.entry),
+			)
+			applyDestinationStats(points, connected.entry.id)
+			await locations.activate(connected.entry.id)
+			await persist()
+			catalogs.clear()
+			backupAvailable = true
+			destinationChanging = false
+			return connected.created
+				? jobs.start("backup", {
+						name: "",
+						note: "",
+						kind: "manual",
+						pinned: true,
+					})
+				: null
+		} catch (error) {
+			Object.assign(state, previousState)
+			await locations.activate(previousActive)
+			await persist()
+			throw error
+		} finally {
+			destinationChanging = false
+		}
+	}
 	return {
 		jobs,
 		cleanupInterruptedDrills,
@@ -630,17 +819,87 @@ export async function createProtectionService(deps: ProtectionDependencies) {
 		repository,
 		getStatus: () => ({
 			...state,
-			repositories: state.repositories.map((entry) => ({ ...entry })),
+			repositories: [
+				...state.repositories.map((entry) => ({
+					...entry,
+					path: repository(entry.id).path,
+					restoreOnly: false,
+				})),
+				...locations.sources(),
+			],
 			maintenance,
 			maintenanceError,
 			lastRestore,
 			drillTargets,
 			storage: coordinator.state(),
-			backupRoot,
-			localRepositoryPath: join(backupRoot, "local"),
+			backupRoot: locations.active()?.path ?? backupRoot,
+			backupAvailable,
+			localRepositoryPath:
+				locations.active()?.path ?? join(backupRoot, "local"),
+			storageRoot: root,
 		}),
-		async initialize(recoveryKey?: string) {
+		registerFolder: (path: string, purpose: "restore" | "backup") =>
+			locations.select(path, purpose),
+		setBackupLocation,
+		async openRestoreSource(input: {
+			selectionId: string
+			credential: string
+			credentialType?: "password" | "key"
+		}) {
+			if (!deps.desktop)
+				throw new BackupError(
+					"desktop_only",
+					"Choose backup folders in the desktop application",
+				)
+			const connected = await locations.connect({
+				...input,
+				purpose: "restore",
+			})
+			try {
+				const points = await engine.listRecoveryPoints(
+					locations.descriptor(connected.entry),
+				)
+				if (!points.length)
+					throw new BackupError(
+						"no_recovery_points",
+						"This folder has no complete recovery points",
+					)
+				catalogs.set(connected.entry.id, { at: Date.now(), points })
+			} catch (error) {
+				await locations.release(connected.entry.id)
+				throw error
+			}
+			return { repositoryId: connected.entry.id }
+		},
+		async closeRestoreSource(id: string) {
+			if (
+				maintenance?.repositoryId === id ||
+				jobs
+					.list()
+					.some(
+						(job) =>
+							job.kind === "restore" &&
+							["queued", "running", "cancelling"].includes(job.state),
+					)
+			)
+				return
+			await locations.release(id)
+			catalogs.delete(id)
+		},
+		async initialize(recoveryKey?: string, password?: string) {
 			writable()
+			if (deps.desktop && !recoveryKey) {
+				backupPassword.parse(password)
+				const selection = await locations.selectDefault(
+					locations.active()?.path ?? join(backupRoot, "local"),
+				)
+				if (selection.exists)
+					throw new BackupError(
+						"recovery_key_required",
+						"Open the existing backup with its password or recovery key",
+					)
+				return setBackupLocation({ selectionId: selection.id, password })
+			}
 			if (recoveryKey?.trim().startsWith("{")) {
 				recoveryKey = z
 					.object({
@@ -715,7 +974,7 @@ export async function createProtectionService(deps: ProtectionDependencies) {
 		async prepareRepair(id: string, pointId: string, paths: string[]) {
 			writable()
 			const plan = await locks.run(id, () =>
-				engine.prepareRepair(repository(id), {
+				engine.prepareRepair(mutableRepository(id), {
 					pointId,
 					paths,
 					root: versionsRoot,
@@ -733,9 +992,15 @@ export async function createProtectionService(deps: ProtectionDependencies) {
 		},
 		repair: (id: string, planId: string) =>
 			jobs.start("repair", { repositoryId: id, planId }),
-		async prepareRestore(id: string, pointId: string) {
+		async prepareRestore(
+			id: string,
+			pointId: string,
+			language?: SupportedLanguage,
+		) {
+			if (destinationChanging)
+				throw new BackupError("storage_busy", "The backup location is changing")
 			return locks.run(id, async () => {
-				const repo = repository(id)
+				const repo = await checkedRepository(id)
 				const point = (await engine.listRecoveryPoints(repo)).find(
 					(entry) => entry.id === pointId,
 				)
@@ -769,24 +1034,35 @@ export async function createProtectionService(deps: ProtectionDependencies) {
 					snapshotId: point.snapshotId,
 					root,
 					createdAt: Date.now(),
+					confirmationPhrase: language
+						? catalogFor(language).protection.restoreConfirmation
+						: "RESTORE",
+					source: {
+						path: await repositoryPhysicalPath(repo.path),
+						passwordFile: repo.passwordFile,
+						identity: await locations.identity(repo),
+					},
 				})
 				await atomicWrite(
 					join(local, "restores", `${plan.id}.json`),
 					JSON.stringify(plan),
 				)
-				return { id: plan.id, point }
+				return {
+					id: plan.id,
+					point,
+					confirmationPhrase: plan.confirmationPhrase,
+					sourcePath: repo.path,
+					targetPath: root,
+				}
 			})
 		},
 		async restore(planId: string, confirmation: string) {
+			if (destinationChanging)
+				throw new BackupError("storage_busy", "The backup location is changing")
 			if (deps.hasOrphans?.())
 				throw new BackupError(
 					"native_process_busy",
 					"Wait for the previous native operation to stop before restoring",
-				)
-			if (confirmation !== "RESTORE")
-				throw new BackupError(
-					"confirmation_required",
-					"Type RESTORE to confirm replacing the library",
 				)
 			z.uuid().parse(planId)
 			const plan = restorePlanSchema.parse(
@@ -794,6 +1070,11 @@ export async function createProtectionService(deps: ProtectionDependencies) {
 					await readFile(join(local, "restores", `${planId}.json`), "utf8"),
 				),
 			)
+			if (confirmation !== plan.confirmationPhrase)
+				throw new BackupError(
+					"confirmation_required",
+					`Type ${plan.confirmationPhrase} to confirm replacing the library`,
+				)
 			if (!maintenance && Date.now() - plan.createdAt > 15 * 60_000)
 				throw new BackupError(
 					"restore_plan_expired",
@@ -829,6 +1110,19 @@ export async function createProtectionService(deps: ProtectionDependencies) {
 					"Finish or cancel the current storage operation before restoring",
 				)
 			}
+			if (plan.source)
+				await locations.identity(
+					{ id: plan.repositoryId, ...plan.source },
+					plan.source.identity,
+				)
+			if (
+				plan.source &&
+				!(await stat(plan.source.passwordFile).catch(() => null))?.isFile()
+			)
+				throw new BackupError(
+					"selection_expired",
+					"Open the restore source again",
+				)
 			await writeMaintenance({ ...plan, phase: "restoring" })
 			return jobs.start("restore", { planId })
 		},
@@ -841,8 +1135,8 @@ export async function createProtectionService(deps: ProtectionDependencies) {
 				repositoryPath: repo.path,
 				instructions: [
 					"Keep this file separately from the repository. The key decrypts every recovery point in that repository.",
-					"On a fresh Hoardodile installation, set BACKUP_ROOT to the parent backup directory, start the service, and paste this JSON in the existing-repository recovery field. Received source repositories can be copied into a new BACKUP_ROOT/local directory first.",
-					"Select a complete recovery point and confirm RESTORE. This replaces the library; local authentication and host settings remain on the new service.",
+					"In the desktop application, choose Restore from another folder, select the backup repository and import this file instead of entering a password. On self-hosted installations, set BACKUP_ROOT to the parent backup directory and open the existing repository with this JSON.",
+					"Select a complete recovery point and type the displayed confirmation phrase. This replaces the library; authentication, host settings and the backup location remain unchanged.",
 					"For offline inspection, save the key value to a protected password file and run the bundled restic binary with -r <repositoryPath> --password-file <password-file> snapshots --tag hoardodile-published.",
 					"Offline extraction: restic -r <repositoryPath> --password-file <password-file> restore <snapshot-id> --target <new-empty-directory> --verify. Use recovery.json inside the restored checkpoint to identify its database. Keep the original repository intact.",
 				],
@@ -855,7 +1149,7 @@ export async function createProtectionService(deps: ProtectionDependencies) {
 		) {
 			return locks.run(id, async () => {
 				const point = await engine.updateMetadata(
-					repository(id),
+					mutableRepository(id),
 					pointId,
 					recoveryMetadata.parse(metadata),
 				)
@@ -886,6 +1180,7 @@ export async function createProtectionService(deps: ProtectionDependencies) {
 			targetId: "local" | "external" = "local",
 		) => jobs.start("drill", { repositoryId: id, pointId, full, targetId }),
 		async deletePoint(id: string, pointId: string) {
+			mutableRepository(id)
 			return locks.run(id, async () => {
 				await engine.deleteRecoveryPoint(
 					repository(id),

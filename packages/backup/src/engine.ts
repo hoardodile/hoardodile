@@ -489,6 +489,9 @@ export function createBackupEngine(options: {
 			})
 		},
 		listRecoveryPoints,
+		async addPassword(repo: Repository, passwordFile: string) {
+			await command(repo, ["key", "add", "--new-password-file", passwordFile])
+		},
 		checkRepository,
 		compareSource,
 		restore,

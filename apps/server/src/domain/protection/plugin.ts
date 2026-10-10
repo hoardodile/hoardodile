@@ -15,8 +15,13 @@ import type { FastifyInstance } from "fastify"
 import { assertArchivablePlugins } from "src/domain/plugin/archivable.ts"
 import { openDb } from "src/infra/db/connection.ts"
 import { verifySqliteIntegrity } from "src/infra/db/snapshot.ts"
+import {
+	authorizeSidecarToken,
+	isLoopbackRequest,
+} from "src/infra/http/internal-token.ts"
 import { recoverCheckpointPublication } from "src/infra/storage/checkpoint.ts"
 import { validateRecoveryMetadata } from "src/infra/storage/recovery-metadata.ts"
+import { z } from "zod"
 import workspaceManifest from "../../../../../package.json" with {
 	type: "json",
 }
@@ -49,6 +54,7 @@ export async function registerProtection(
 	const service = await createProtectionService({
 		paths: () => app.paths,
 		backupRoot: app.env.BACKUP_ROOT ?? join(app.env.STORAGE_ROOT, "backups"),
+		desktop: Boolean(app.env.HOARDODILE_SHUTDOWN_TOKEN),
 		drillRoot: app.env.RECOVERY_DRILL_ROOT,
 		appVersion: workspaceManifest.version,
 		minFreeBytes: app.env.MIN_FREE_DISK_BYTES,
@@ -111,6 +117,23 @@ export async function registerProtection(
 			app.log.error({ err: error }, "protection.operation_failed"),
 	})
 	app.decorate("protectionService", service)
+	app.post("/api/internal/protection/folder", async (request, reply) => {
+		if (!isLoopbackRequest(request)) return reply.code(403).send({ ok: false })
+		if (!authorizeSidecarToken(app, request))
+			return reply.code(401).send({ ok: false })
+		const input = z
+			.object({
+				path: z.string().min(1),
+				purpose: z.enum(["restore", "backup"]),
+			})
+			.safeParse(request.body)
+		if (!input.success) return reply.code(400).send({ ok: false })
+		try {
+			return await service.registerFolder(input.data.path, input.data.purpose)
+		} catch {
+			return reply.code(400).send({ ok: false })
+		}
+	})
 	service.registerJobHandler("archive", async (input, context) => {
 		if (app.libraryMaintenance)
 			throw new Error("The library is in maintenance mode")

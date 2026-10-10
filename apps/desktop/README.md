@@ -138,6 +138,16 @@ DevTools is not auto-opened; dev runs show a toggle button on the caption bar (l
 
 `apps/desktop/scripts/dev.mjs` never starts or owns the SPA and does not wait for one. It resolves the SPA URL (ports live in `scripts/lib/dev-ports.json` — change them there, never in consumers) from `HOARDODILE_WEB_URL` or the default, starts the wizard on the first free port at or above its default (bound to `127.0.0.1`), one-shot builds main + preload, and spawns Electron with `HOARDODILE_WEB_URL` / `ELECTRON_WIZARD_URL` / `HOARDODILE_WORKSPACE`; the sidecar is spawned by the shell (vite-node on `apps/server` source), so no backend or plugin watchers from `pnpm dev` are needed, and the SPA's `VITE_SERVER_URL` proxy target is never touched. Ctrl+C closes the wizard server and tree-kills Electron so the sidecar does not linger.
 
+## Backup and restore
+
+The Backups page has separate controls for the backup destination and restore sources. New desktop repositories require a reusable backup password; exporting a separate recovery key file remains optional. Existing repositories keep their original recovery keys.
+
+Use **Restore from another folder** to select a repository on a local or external drive, unlock it with its password or recovery key file, and select a recovery point. The confirmation shows the source and current library path, with a localized phrase to type. Restoring preserves the backup destination, schedule, retention policy and local authentication. Interrupted restores retain their source credential for retry; successful restores remove the temporary source credential.
+
+Use **Change backup location** only when future backups should be appended at another location. Choose an empty folder to create a repository or unlock an existing repository to continue using it. This does not move or restore the library, or delete the previous backups. The selection is stored per library under `local/protection/`; unavailable drives keep their configuration and do not prevent opening the library.
+
+Arbitrary paths are registered by the native picker through the token-gated loopback sidecar route. The SPA uses the returned selection ID, never a caller-supplied path. Older shells without the picker bridge retain the existing fixed-path recovery UI.
+
 ## E2E (Playwright launch smoke)
 
 `pnpm -F @hoardodile/desktop package:dir` (stage + electron-builder `--dir` + `verify-package`) builds the unpacked app, then `pnpm -F @hoardodile/desktop test:e2e` drives it like a real user on the current OS (Linux CI under `xvfb-run -a`; Windows/Linux/macOS in CI). The harness (`e2e/launch.ts`) launches the packaged binary with a throwaway `--user-data-dir` and `HOARDODILE_E2E=1` (shell skips tray + updater), pins `Documents` via `HOARDODILE_E2E_DOCUMENTS` so the wizard default is deterministic, and passes `--no-sandbox` on Linux; `DESKTOP_E2E_EXECUTABLE` overrides the binary path. Both env hooks and the `--user-data-dir` argument are test-only (see `src/main/index.ts`).

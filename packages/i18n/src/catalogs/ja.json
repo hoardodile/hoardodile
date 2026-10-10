@@ -1,5 +1,6 @@
 {
 	"protection": {
+		"restoreConfirmation": "復元",
 		"drillDestination": "一時復元フォルダー",
 		"lastRestore": "前回の復元",
 		"restoredEditable": "復元後のローカル編集はこの状態に反映されません。",
@@ -2352,6 +2353,29 @@
 		"turnOnAutomatic": "自動バックアップをオン",
 		"protectedTitle": "ライブラリはこのデバイスにバックアップされています。",
 		"protectedSub": "前回のバックアップ：{{local}}"
+	},
+	"backupFolders": {
+		"password": "バックアップのパスワード",
+		"confirmPassword": "バックアップのパスワードを確認",
+		"passwordHelp": "{{min}} 文字以上、改行なしで設定してください。同じパスワードを繰り返し復元に使用できます。",
+		"restoreFromFolder": "別の場所から復元",
+		"changeLocation": "バックアップ先を変更",
+		"restoreHelp": "この端末や外付けドライブのバックアップフォルダーを選択します。現在のライブラリに復元し、今後のバックアップ先は変更しません。",
+		"locationHelp": "切り替えを確認すると、今後のバックアップは選択した場所に追記されます。現在のライブラリの復元や移動は行いません。",
+		"chooseFolder": "バックアップフォルダーを選択",
+		"openSource": "バックアップを開く",
+		"createAndUse": "最初のバックアップを作成して使用",
+		"useLocation": "このバックアップ先を使用",
+		"usePassword": "バックアップのパスワードを使用",
+		"useKeyFile": "復元キーのファイルを使用",
+		"restoreTarget": "復元先：{{path}}",
+		"confirmRestore": "確認するには「{{phrase}}」と入力してください。",
+		"keyHelp": "任意：パスワードを忘れた場合に備え、復元キーのファイルを別の場所に保存できます。",
+		"offlineTitle": "バックアップ先を利用できません",
+		"offlineHelp": "バックアップドライブの接続とフォルダーの権限を確認してください。設定は保持され、ライブラリは引き続き利用できます。",
+		"folderError": "有効なバックアップフォルダー、またはライブラリのファイルと重ならない空のフォルダーを選択してください。",
+		"openError": "バックアップを開けません。パスワード、キーファイル、ドライブの接続を確認してください。",
+		"changeError": "バックアップ先を変更できません。パスワード、フォルダーの権限、実行中の処理を確認してください。"
 	},
 	"backupSetup": {
 		"title": "バックアップを設定",

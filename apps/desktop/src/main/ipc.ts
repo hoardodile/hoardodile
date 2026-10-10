@@ -1,6 +1,7 @@
 import type { SupportedLanguage } from "@hoardodile/i18n"
 import { resolveSystemLanguage } from "@hoardodile/i18n"
 import type {
+	DesktopBackupSelection,
 	DesktopShellConfig,
 	DesktopUpdateState,
 	DesktopWizardResult,
@@ -24,6 +25,10 @@ export type IpcHost = {
 	getConfig: () => DesktopConfig
 	portable: () => boolean
 	pickLibraryFolder: (parent?: BrowserWindow) => Promise<string | undefined>
+	pickBackupFolder: (
+		purpose: "restore" | "backup",
+		parent: BrowserWindow,
+	) => Promise<DesktopBackupSelection | undefined>
 	relaunch: () => Promise<void>
 	openLogsFolder: () => Promise<boolean>
 	retryLoad: () => void
@@ -102,6 +107,16 @@ export function registerIpc(host: IpcHost): void {
 	ipcMain.handle(IPC.pickLibraryFolder, (event) =>
 		host.pickLibraryFolder(windowFrom(event)),
 	)
+	ipcMain.handle(IPC.pickBackupFolder, (event, purpose: unknown) => {
+		const parent = windowFrom(event)
+		if (
+			!parent ||
+			event.senderFrame !== event.sender.mainFrame ||
+			(purpose !== "restore" && purpose !== "backup")
+		)
+			return undefined
+		return host.pickBackupFolder(purpose, parent)
+	})
 	ipcMain.handle(IPC.relaunch, () => host.relaunch())
 	ipcMain.handle(IPC.logsOpen, () => host.openLogsFolder())
 	ipcMain.on(IPC.windowRetryLoad, () => {

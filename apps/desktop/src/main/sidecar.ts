@@ -1,6 +1,7 @@
 import { type ChildProcess, spawn } from "node:child_process"
 import { createServer } from "node:net"
 import { setTimeout as delay } from "node:timers/promises"
+import type { DesktopBackupSelection } from "@hoardodile/shared/desktop"
 import getPort from "get-port"
 import type { DesktopConfig } from "./config.ts"
 import type { SidecarLayout } from "./paths.ts"
@@ -232,6 +233,38 @@ export async function patchSidecarSharedFolder(
 			`sidecar shared-folder update failed (${String(res.status)})`,
 		)
 	}
+}
+
+export async function registerSidecarBackupFolder(
+	sidecar: SidecarHandle,
+	path: string,
+	purpose: "restore" | "backup",
+): Promise<DesktopBackupSelection> {
+	const response = await fetch(`${sidecar.url}api/internal/protection/folder`, {
+		method: "POST",
+		headers: {
+			"content-type": "application/json",
+			"x-shutdown-token": sidecar.shutdownToken,
+		},
+		body: JSON.stringify({ path, purpose }),
+	})
+	if (!response.ok)
+		throw new Error(
+			"Choose an empty folder or a valid backup folder, separate from the library files",
+		)
+	const value: unknown = await response.json()
+	if (
+		!value ||
+		typeof value !== "object" ||
+		!("id" in value) ||
+		typeof value.id !== "string" ||
+		!("path" in value) ||
+		typeof value.path !== "string" ||
+		!("exists" in value) ||
+		typeof value.exists !== "boolean"
+	)
+		throw new Error("Backup folder selection unavailable")
+	return { id: value.id, path: value.path, exists: value.exists, purpose }
 }
 
 export type SidecarAuthState = {

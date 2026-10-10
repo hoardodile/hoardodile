@@ -59,6 +59,7 @@
 		"@fastify/sse": "^0.6.0",
 		"@fastify/static": "^10.1.3",
 		"@hoardodile/host": "workspace:*",
+		"@hoardodile/i18n": "workspace:*",
 		"@hoardodile/schemas": "workspace:*",
 		"@hoardodile/sdk-server": "workspace:*",
 		"@hoardodile/sdk-types": "workspace:*",

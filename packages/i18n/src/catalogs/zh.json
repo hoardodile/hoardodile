@@ -1,5 +1,6 @@
 {
 	"protection": {
+		"restoreConfirmation": "还原",
 		"drillDestination": "临时恢复目录",
 		"lastRestore": "最后还原",
 		"restoredEditable": "此记录不表示还原后没有本地编辑。",
@@ -2352,6 +2353,29 @@
 		"turnOnAutomatic": "开启自动备份",
 		"protectedTitle": "你的存储库已在本机备份。",
 		"protectedSub": "最近备份：{{local}}"
+	},
+	"backupFolders": {
+		"password": "备份密码",
+		"confirmPassword": "确认备份密码",
+		"passwordHelp": "至少 {{min}} 个字符。设置一次，以后可用此密码还原备份；请勿输入换行。",
+		"restoreFromFolder": "从其他位置还原",
+		"changeLocation": "修改备份位置",
+		"restoreHelp": "选择本机或移动硬盘上的备份文件夹。还原到当前存储路径，不改变后续备份的位置。",
+		"locationHelp": "明确切换后，今后的备份会写入所选位置。已有备份会继续追加，不会还原或移动当前资料库。",
+		"chooseFolder": "选择备份文件夹",
+		"openSource": "打开备份",
+		"createAndUse": "创建首次备份并使用此位置",
+		"useLocation": "使用此备份位置",
+		"usePassword": "使用备份密码",
+		"useKeyFile": "使用恢复密钥文件",
+		"restoreTarget": "还原目标：{{path}}",
+		"confirmRestore": "输入“{{phrase}}”确认。",
+		"keyHelp": "可选：单独保存恢复密钥文件，忘记备份密码时可用它还原。",
+		"offlineTitle": "备份位置不可用",
+		"offlineHelp": "请连接备份硬盘或检查目录权限。当前配置会保留，资料库仍可正常使用。",
+		"folderError": "无法使用此目录。请选择有效的备份目录，或与资料库文件分开的空目录。",
+		"openError": "无法打开备份。请检查密码或密钥文件，并确认备份硬盘可访问。",
+		"changeError": "无法切换备份位置。请检查密码、目录权限和正在进行的存储任务。"
 	},
 	"backupSetup": {
 		"title": "设置备份",

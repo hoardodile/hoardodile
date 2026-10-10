@@ -1,9 +1,11 @@
+import { resolveSystemLanguage } from "@hoardodile/i18n/core"
 import { Button } from "@hoardodile/ui/components/button"
 import { ConfirmByTypingDialog } from "@hoardodile/ui/components/confirm-by-typing-dialog"
 import { useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useToastMutation } from "@/hooks/useToastMutation"
+import { isHoardodileDesktop } from "@/lib/desktop"
 import type { RouterOutputs } from "@/trpc/client"
 import { trpcMutation } from "@/trpc/factory"
 
@@ -22,7 +24,7 @@ export function RestoreBackupButton({
 	/** Card footers use the compact `sm` tier. */
 	size?: "sm" | "default"
 }) {
-	const { t } = useTranslation()
+	const { t, i18n } = useTranslation()
 	const qc = useQueryClient()
 	const [plan, setPlan] = useState<RestorePlan | null>(null)
 	const [typed, setTyped] = useState("")
@@ -49,7 +51,15 @@ export function RestoreBackupButton({
 				variant="secondary"
 				size={size}
 				disabled={prepare.isPending}
-				onClick={() => prepare.mutate({ repositoryId, pointId })}
+				onClick={() =>
+					prepare.mutate({
+						repositoryId,
+						pointId,
+						...(isHoardodileDesktop()
+							? { language: resolveSystemLanguage(i18n.resolvedLanguage) }
+							: {}),
+					})
+				}
 			>
 				{prepare.isPending
 					? t("protectionUx.preparingRestore")
@@ -66,12 +76,21 @@ export function RestoreBackupButton({
 					plan?.point.name ||
 					(plan ? new Date(plan.point.createdAt).toLocaleString() : "")
 				}
-				expectedInput="RESTORE"
+				expectedInput={plan?.confirmationPhrase ?? "RESTORE"}
 				typed={typed}
 				onTypedChange={setTyped}
 				prompt={
 					<div className="space-y-2">
-						<p>{t("protectionUx.restoreSource", { source })}</p>
+						<p className="break-all">
+							{t("protectionUx.restoreSource", {
+								source: plan?.sourcePath ?? source,
+							})}
+						</p>
+						{plan?.targetPath && (
+							<p className="break-all">
+								{t("backupFolders.restoreTarget", { path: plan.targetPath })}
+							</p>
+						)}
 						{plan && (
 							<p>
 								{plan.point.name ||
@@ -80,7 +99,11 @@ export function RestoreBackupButton({
 							</p>
 						)}
 						<p>{t("protectionUx.restoreKeepsHost")}</p>
-						<strong>{t("protection.restorePrompt")}</strong>
+						<strong>
+							{t("backupFolders.confirmRestore", {
+								phrase: plan?.confirmationPhrase ?? "RESTORE",
+							})}
+						</strong>
 					</div>
 				}
 				confirmLabel={t("protection.restore")}
@@ -89,8 +112,8 @@ export function RestoreBackupButton({
 				inputTestId="full-restore-confirm"
 				confirmTestId="full-restore-submit"
 				onConfirm={() => {
-					if (plan && typed === "RESTORE")
-						restore.mutate({ planId: plan.id, confirmation: "RESTORE" })
+					if (plan && typed === (plan.confirmationPhrase ?? "RESTORE"))
+						restore.mutate({ planId: plan.id, confirmation: typed })
 				}}
 			/>
 		</>

@@ -5,10 +5,18 @@ import type { ReactNode } from "react"
 import { afterEach, beforeAll, expect, it, vi } from "vitest"
 import { i18n } from "@/i18n"
 import { setTrpcClient, type TRPCClient } from "@/trpc/client"
+import { BackupFolderDialog } from "./BackupFolderDialog"
 import { BackupManagement } from "./BackupManagement"
 import { ProtectionJobs } from "./ProtectionJobs"
 import { RecoveryPanel } from "./RecoveryPanel"
 import { RestoreBackupButton } from "./RestoreBackupButton"
+
+const desktop = vi.hoisted(() => ({ enabled: false, pickFolder: vi.fn() }))
+vi.mock("@/lib/desktop", () => ({
+	isHoardodileDesktop: () => desktop.enabled,
+	getDesktopBridge: () =>
+		desktop.enabled ? { pickBackupFolder: desktop.pickFolder } : undefined,
+}))
 
 const clients: QueryClient[] = []
 const instanceId = "97ca94be-5c84-411e-b67d-d80e20f0077b"
@@ -37,6 +45,8 @@ beforeAll(async () => {
 	await i18n.changeLanguage("en")
 })
 afterEach(() => {
+	desktop.enabled = false
+	desktop.pickFolder.mockReset()
 	for (const client of clients.splice(0)) client.clear()
 	localStorage.clear()
 })
@@ -83,6 +93,184 @@ function mount(
 function Page() {
 	return <RecoveryPanel />
 }
+
+it("requires a matching backup password for a new desktop backup", async () => {
+	desktop.enabled = true
+	const initialize = vi.fn(async () => ({ id: "backup-job" }))
+	mount(<Page />, {
+		"protection.status": () => ({ ...status, repositories: [] }),
+		"protection.initialize": initialize,
+	})
+	const user = userEvent.setup()
+	await user.click(await screen.findByTestId("setup-new-backup"))
+	const submit = screen.getByTestId("initialize-backups")
+	expect(submit).toBeDisabled()
+	await user.type(screen.getByLabelText("Backup password"), "backup-password")
+	await user.type(screen.getByLabelText("Confirm backup password"), "wrong")
+	expect(submit).toBeDisabled()
+	await user.clear(screen.getByLabelText("Confirm backup password"))
+	await user.type(
+		screen.getByLabelText("Confirm backup password"),
+		"backup-password",
+	)
+	await user.click(submit)
+	await waitFor(() =>
+		expect(initialize).toHaveBeenCalledWith({
+			recoveryKey: undefined,
+			password: "backup-password",
+		}),
+	)
+})
+
+it("keeps external restore available during maintenance and opens its points without changing backup configuration", async () => {
+	desktop.enabled = true
+	desktop.pickFolder.mockResolvedValue({
+		id: sourceId,
+		path: "External backup",
+		exists: true,
+		purpose: "restore",
+	})
+	let opened = false
+	const open = vi.fn(async () => {
+		opened = true
+		return { repositoryId: sourceId }
+	})
+	const change = vi.fn()
+	mount(<RecoveryPanel restoreOnly />, {
+		"protection.status": () => ({
+			...status,
+			repositories: opened
+				? [
+						{
+							id: sourceId,
+							name: "External",
+							path: "External backup",
+							restoreOnly: true,
+						},
+					]
+				: [],
+			maintenanceActive: true,
+		}),
+		"protection.points": () => [point],
+		"protection.openRestoreSource": open,
+		"protection.setBackupLocation": change,
+	})
+	const user = userEvent.setup()
+	await user.click(await screen.findByTestId("restore-from-folder"))
+	const dialog = within(screen.getByRole("dialog"))
+	await user.click(dialog.getByRole("button", { name: "Choose backup folder" }))
+	await user.type(
+		await dialog.findByLabelText("Backup password"),
+		"my-password",
+	)
+	await user.click(dialog.getByTestId("backup-folder-submit"))
+	await waitFor(() =>
+		expect(open).toHaveBeenCalledWith({
+			selectionId: sourceId,
+			credential: "my-password",
+			credentialType: "password",
+		}),
+	)
+	expect(
+		await screen.findByTestId(`recovery-point-${pointId}`),
+	).toBeInTheDocument()
+	expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+	expect(
+		screen.queryByTestId(`recovery-point-menu-${pointId}`),
+	).not.toBeInTheDocument()
+	expect(change).not.toHaveBeenCalled()
+})
+
+it("creates a password-protected destination only after explicit confirmation", async () => {
+	desktop.enabled = true
+	desktop.pickFolder.mockResolvedValue({
+		id: sourceId,
+		path: "New backup",
+		exists: false,
+		purpose: "backup",
+	})
+	const change = vi.fn(async () => null)
+	const open = vi.fn()
+	mount(
+		<BackupFolderDialog
+			open
+			purpose="backup"
+			onOpenChange={() => {}}
+			onSourceOpened={() => {}}
+		/>,
+		{
+			"protection.setBackupLocation": change,
+			"protection.openRestoreSource": open,
+		},
+	)
+	const user = userEvent.setup()
+	await user.click(screen.getByRole("button", { name: "Choose backup folder" }))
+	await user.type(
+		await screen.findByLabelText("Backup password"),
+		"new-password",
+	)
+	await user.type(
+		screen.getByLabelText("Confirm backup password"),
+		"new-password",
+	)
+	expect(change).not.toHaveBeenCalled()
+	await user.click(screen.getByTestId("backup-folder-submit"))
+	await waitFor(() =>
+		expect(change).toHaveBeenCalledWith({
+			selectionId: sourceId,
+			credential: undefined,
+			credentialType: "password",
+			password: "new-password",
+		}),
+	)
+	expect(open).not.toHaveBeenCalled()
+})
+
+it("confirms desktop restores using the phrase returned for the selected language", async () => {
+	desktop.enabled = true
+	await i18n.changeLanguage("zh")
+	try {
+		const prepare = vi.fn(async () => ({
+			id: "plan",
+			point,
+			confirmationPhrase: "还原",
+			sourcePath: "External backup",
+			targetPath: "Current library",
+		}))
+		const restore = vi.fn(async () => ({}))
+		mount(
+			<RestoreBackupButton
+				repositoryId={sourceId}
+				pointId={pointId}
+				source="External"
+			/>,
+			{ "protection.prepareRestore": prepare, "protection.restore": restore },
+		)
+		const user = userEvent.setup()
+		await user.click(screen.getByRole("button", { name: "还原" }))
+		await waitFor(() =>
+			expect(prepare).toHaveBeenCalledWith({
+				repositoryId: sourceId,
+				pointId,
+				language: "zh",
+			}),
+		)
+		expect(screen.getByText("还原目标：Current library")).toBeInTheDocument()
+		await user.type(screen.getByTestId("full-restore-confirm"), "restore")
+		expect(screen.getByTestId("full-restore-submit")).toBeDisabled()
+		await user.clear(screen.getByTestId("full-restore-confirm"))
+		await user.type(screen.getByTestId("full-restore-confirm"), "还原")
+		await user.click(screen.getByTestId("full-restore-submit"))
+		await waitFor(() =>
+			expect(restore).toHaveBeenCalledWith({
+				planId: "plan",
+				confirmation: "还原",
+			}),
+		)
+	} finally {
+		await i18n.changeLanguage("en")
+	}
+})
 
 it("guides a new backup without asking for a recovery key first", async () => {
 	const initialize = vi.fn(async () => ({ id: "backup-job" }))

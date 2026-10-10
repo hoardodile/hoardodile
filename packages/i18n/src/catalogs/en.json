@@ -1,5 +1,6 @@
 {
 	"protection": {
+		"restoreConfirmation": "restore",
 		"drillDestination": "Temporary recovery folder",
 		"lastRestore": "Last restored",
 		"restoredEditable": "Local edits after restoration are not included in this status.",
@@ -2352,6 +2353,29 @@
 		"turnOnAutomatic": "Turn on automatic backups",
 		"protectedTitle": "Your library is backed up on this device.",
 		"protectedSub": "Last backup: {{local}}"
+	},
+	"backupFolders": {
+		"password": "Backup password",
+		"confirmPassword": "Confirm backup password",
+		"passwordHelp": "At least {{min}} characters, on one line. Set it once and use it again to restore your backups.",
+		"restoreFromFolder": "Restore from another folder",
+		"changeLocation": "Change backup location",
+		"restoreHelp": "Choose a backup folder on this computer or an external drive. Restore to the current library without changing where future backups are saved.",
+		"locationHelp": "After you confirm the switch, future backups will be written here. Existing backups will be appended to; the current library will not be restored or moved.",
+		"chooseFolder": "Choose backup folder",
+		"openSource": "Open backup",
+		"createAndUse": "Create first backup and use this location",
+		"useLocation": "Use this backup location",
+		"usePassword": "Use backup password",
+		"useKeyFile": "Use recovery key file",
+		"restoreTarget": "Restore target: {{path}}",
+		"confirmRestore": "Type “{{phrase}}” to confirm.",
+		"keyHelp": "Optional: save the recovery key file separately so you can restore if you forget the backup password.",
+		"offlineTitle": "Backup location unavailable",
+		"offlineHelp": "Connect the backup drive or check folder permissions. Your configuration is retained and the library remains available.",
+		"folderError": "Choose a valid backup folder or an empty folder separate from the library files.",
+		"openError": "Could not open the backup. Check the password or key file and make sure the backup drive is available.",
+		"changeError": "Could not change the backup location. Check the password, folder permissions and active storage operations."
 	},
 	"backupSetup": {
 		"title": "Set up backups",

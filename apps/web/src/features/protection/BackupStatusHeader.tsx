@@ -6,7 +6,13 @@ import { useToastMutation } from "@/hooks/useToastMutation"
 import { trpcMutation } from "@/trpc/factory"
 import { protectionJobsOptions, protectionStatusOptions } from "./api"
 
-type HeaderMode = "maintenance" | "noBackups" | "backupOff" | "backupNow" | "ok"
+type HeaderMode =
+	| "maintenance"
+	| "noBackups"
+	| "backupOff"
+	| "backupNow"
+	| "ok"
+	| "offline"
 
 /** The backup verdict depends only on this device's backup state. */
 export function BackupStatusHeader({
@@ -49,11 +55,13 @@ export function BackupStatusHeader({
 
 	let mode: HeaderMode
 	if (maintenance) mode = "maintenance"
+	else if (localConfigured && status.backupAvailable === false) mode = "offline"
 	else if (!localConfigured) mode = "noBackups"
 	else if (!enabled) mode = "backupOff"
 	else if (!lastBackupAt) mode = "backupNow"
 	else mode = "ok"
 	const title = {
+		offline: t("backupFolders.offlineTitle"),
 		maintenance: t("protection.maintenance"),
 		noBackups: t("backupHealth.noBackupsTitle"),
 		backupOff: t("backupHealth.backupNeedsTitle"),
@@ -62,6 +70,7 @@ export function BackupStatusHeader({
 	}[mode]
 
 	const sub: Record<HeaderMode, string> = {
+		offline: t("backupFolders.offlineHelp"),
 		maintenance: status.maintenanceError
 			? t("protectionUx.taskFailed")
 			: t("protection.maintenanceHelp"),
@@ -74,6 +83,7 @@ export function BackupStatusHeader({
 	}
 
 	const action: Record<HeaderMode, ReactNode> = {
+		offline: null,
 		maintenance: null,
 		noBackups: onSetUpBackups ? (
 			<Button onClick={onSetUpBackups}>

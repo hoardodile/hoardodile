@@ -3,9 +3,11 @@ import {
 	recoveryMetadata,
 	retentionPolicy,
 } from "@hoardodile/backup"
+import { SUPPORTED_LANGUAGES } from "@hoardodile/i18n/core"
 import { TRPCError } from "@trpc/server"
 import { authedProcedure, router } from "src/infra/trpc/core.ts"
 import { z } from "zod"
+import { backupPassword, repositoryCredential } from "./desktop-repositories.ts"
 import { autoBackupIntervalHours } from "./schedule.ts"
 import type { ProtectionService } from "./service.ts"
 
@@ -41,8 +43,37 @@ export function buildProtectionRouter(service?: ProtectionService) {
 			nativeProcessesBusy: ctx.req.server.nativeProcessesBusy,
 		})),
 		initialize: procedure
-			.input(z.object({ recoveryKey: z.string().min(1).max(4096).optional() }))
-			.mutation(({ input }) => get().initialize(input.recoveryKey)),
+			.input(
+				z.object({
+					recoveryKey: repositoryCredential.optional(),
+					password: backupPassword.optional(),
+				}),
+			)
+			.mutation(({ input }) =>
+				get().initialize(input.recoveryKey, input.password),
+			),
+		openRestoreSource: procedure
+			.input(
+				z.object({
+					selectionId: z.uuid(),
+					credential: repositoryCredential,
+					credentialType: z.enum(["password", "key"]).optional(),
+				}),
+			)
+			.mutation(({ input }) => get().openRestoreSource(input)),
+		closeRestoreSource: procedure
+			.input(z.object({ repositoryId: z.uuid() }))
+			.mutation(({ input }) => get().closeRestoreSource(input.repositoryId)),
+		setBackupLocation: procedure
+			.input(
+				z.object({
+					selectionId: z.uuid(),
+					credential: repositoryCredential.optional(),
+					credentialType: z.enum(["password", "key"]).optional(),
+					password: backupPassword.optional(),
+				}),
+			)
+			.mutation(({ input }) => get().setBackupLocation(input)),
 		points: procedure
 			.input(z.object({ repositoryId: id }))
 			.query(({ input }) => get().listRecoveryPoints(input.repositoryId)),
@@ -98,12 +129,19 @@ export function buildProtectionRouter(service?: ProtectionService) {
 			.input(z.object({ repositoryId: id, planId: z.uuid() }))
 			.mutation(({ input }) => get().repair(input.repositoryId, input.planId)),
 		prepareRestore: procedure
-			.input(pointInput)
+			.input(
+				pointInput.extend({ language: z.enum(SUPPORTED_LANGUAGES).optional() }),
+			)
 			.mutation(({ input }) =>
-				get().prepareRestore(input.repositoryId, input.pointId),
+				get().prepareRestore(input.repositoryId, input.pointId, input.language),
 			),
 		restore: procedure
-			.input(z.object({ planId: z.uuid(), confirmation: z.literal("RESTORE") }))
+			.input(
+				z.object({
+					planId: z.uuid(),
+					confirmation: z.string().min(1).max(100),
+				}),
+			)
 			.mutation(({ input }) => get().restore(input.planId, input.confirmation)),
 		metadata: procedure
 			.input(pointInput.extend({ metadata: recoveryMetadata }))

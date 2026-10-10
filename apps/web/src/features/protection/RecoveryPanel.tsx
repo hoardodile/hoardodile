@@ -12,6 +12,7 @@ import { useTranslation } from "react-i18next"
 import { SettingsSection } from "@/features/settings/SettingsSection"
 import { SectionDivider } from "@/features/settings/SettingsSheet"
 import { useToastMutation } from "@/hooks/useToastMutation"
+import { getDesktopBridge, isHoardodileDesktop } from "@/lib/desktop"
 import { trpcMutation } from "@/trpc/factory"
 import {
 	downloadRecoveryKey,
@@ -19,6 +20,7 @@ import {
 	protectionStatusOptions,
 	recoveryPointsOptions,
 } from "./api"
+import { BackupFolderDialog } from "./BackupFolderDialog"
 import { BackupManagement } from "./BackupManagement"
 import { BackupSetupWizard } from "./BackupSetupWizard"
 import { BackupStatusHeader } from "./BackupStatusHeader"
@@ -80,6 +82,11 @@ export function RecoveryPanel({
 	const qc = useQueryClient()
 	const status = useQuery(protectionStatusOptions())
 	const [selectedRepository, setSelectedRepository] = useState("local")
+	const [folderPurpose, setFolderPurpose] = useState<
+		"restore" | "backup" | null
+	>(null)
+	const desktop =
+		isHoardodileDesktop() && Boolean(getDesktopBridge()?.pickBackupFolder)
 	const [savedKey, setSavedKey] = useState<string>()
 	const [wizardMode, setWizardMode] = useState<"new" | "existing" | null>(null)
 	// The job list moved behind its own dialog (the page keeps one control
@@ -136,6 +143,15 @@ export function RecoveryPanel({
 	const invalidate = async () => {
 		await qc.invalidateQueries({ queryKey: ["protection"] })
 	}
+	const releaseSource = useToastMutation({
+		...trpcMutation("protection", "closeRestoreSource"),
+		onSuccess: invalidate,
+	})
+	function selectRepository(id: string) {
+		if (repository?.restoreOnly && repository.id !== id)
+			releaseSource.mutate({ repositoryId: repository.id })
+		setSelectedRepository(id)
+	}
 	const enabled = useToastMutation({
 		...trpcMutation("protection", "enabled"),
 		onSuccess: invalidate,
@@ -162,6 +178,46 @@ export function RecoveryPanel({
 			: (repository?.name ?? repositoryId)
 
 	const sections: ReactNode[] = []
+	const sourceOnly = Boolean(repository?.restoreOnly)
+	if (desktop && !restoreOnly)
+		sections.push(
+			<SettingsSection
+				key="backup-location"
+				icon={Database}
+				title={t("protection.folder")}
+				description={
+					status.data?.localRepositoryPath ?? status.data?.backupRoot
+				}
+				layout="compact"
+			>
+				<Button
+					variant="secondary"
+					disabled={maintenance}
+					onClick={() => setFolderPurpose("backup")}
+					data-testid="change-backup-location"
+				>
+					{t("backupFolders.changeLocation")}
+				</Button>
+			</SettingsSection>,
+		)
+	if (desktop)
+		sections.push(
+			<SettingsSection
+				key="restore-folder"
+				icon={Server}
+				title={t("backupFolders.restoreFromFolder")}
+				description={t("backupFolders.restoreHelp")}
+				layout="compact"
+			>
+				<Button
+					variant="secondary"
+					onClick={() => setFolderPurpose("restore")}
+					data-testid="restore-from-folder"
+				>
+					{t("backupFolders.chooseFolder")}
+				</Button>
+			</SettingsSection>,
+		)
 	if (!restoreOnly)
 		sections.push(
 			<SettingsSection
@@ -193,19 +249,21 @@ export function RecoveryPanel({
 										{t("backupSetup.startNewHint")}
 									</span>
 								</button>
-								<button
-									type="button"
-									data-testid="setup-existing-backup"
-									className="flex w-full flex-col items-start gap-1 rounded-lg bg-secondary px-4 py-4 text-left text-foreground transition-colors hover:bg-[color-mix(in_oklch,var(--secondary),var(--foreground)_5%)] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-									onClick={() => setWizardMode("existing")}
-								>
-									<span className="text-ui font-medium">
-										{t("backupSetup.startExisting")}
-									</span>
-									<span className="text-xs text-secondary-foreground">
-										{t("backupSetup.startExistingHint")}
-									</span>
-								</button>
+								{!desktop && (
+									<button
+										type="button"
+										data-testid="setup-existing-backup"
+										className="flex w-full flex-col items-start gap-1 rounded-lg bg-secondary px-4 py-4 text-left text-foreground transition-colors hover:bg-[color-mix(in_oklch,var(--secondary),var(--foreground)_5%)] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+										onClick={() => setWizardMode("existing")}
+									>
+										<span className="text-ui font-medium">
+											{t("backupSetup.startExisting")}
+										</span>
+										<span className="text-xs text-secondary-foreground">
+											{t("backupSetup.startExistingHint")}
+										</span>
+									</button>
+								)}
 							</div>
 						)}
 						{localConfigured && (
@@ -214,7 +272,8 @@ export function RecoveryPanel({
 								aria-label={t("protectionUx.status")}
 							>
 								<p className="break-all text-xs">
-									{t("protection.folder")}: {status.data?.backupRoot}
+									{t("protection.folder")}:{" "}
+									{status.data?.localRepositoryPath ?? status.data?.backupRoot}
 								</p>
 								<p className="text-xs text-secondary-foreground">
 									{t("protectionUx.locationHelp")}
@@ -253,7 +312,21 @@ export function RecoveryPanel({
 								<p className="text-xs text-muted-foreground">
 									{t("protectionUx.frequencyHelp")}
 								</p>
-								{!keySaved && (
+								{desktop && (
+									<div className="flex flex-wrap gap-3">
+										<Button
+											variant="ghost"
+											disabled={key.isPending}
+											onClick={() => key.mutate({ repositoryId: "local" })}
+										>
+											{t("protection.key")}
+										</Button>
+										<p className="w-full text-xs text-secondary-foreground">
+											{t("backupFolders.keyHelp")}
+										</p>
+									</div>
+								)}
+								{!keySaved && !desktop && (
 									<div
 										className="flex flex-wrap items-center gap-3 rounded-lg bg-muted p-4"
 										data-testid="recovery-key-notice"
@@ -299,7 +372,7 @@ export function RecoveryPanel({
 							</span>
 							<DropdownSelect
 								value={repositoryId}
-								onValueChange={setSelectedRepository}
+								onValueChange={selectRepository}
 								options={repositories.map((repo) => ({
 									value: repo.id,
 									label:
@@ -312,6 +385,9 @@ export function RecoveryPanel({
 						</div>
 					)}
 					{points.error && <p role="alert">{points.error.message}</p>}
+					{repository?.path && (
+						<p className="break-all text-xs">{repository.path}</p>
+					)}
 					{points.isPending && (
 						<div
 							className="space-y-3"
@@ -345,7 +421,7 @@ export function RecoveryPanel({
 									repositoryId={repositoryId}
 									source={sourceName}
 									canDelete={sortedPoints.length > 1}
-									restoreOnly={restoreOnly || maintenance}
+									restoreOnly={restoreOnly || maintenance || sourceOnly}
 								/>
 							))}
 						</div>
@@ -360,7 +436,7 @@ export function RecoveryPanel({
 							})}
 						/>
 					) : null}
-					{!restoreOnly && !maintenance && (
+					{!restoreOnly && !maintenance && !sourceOnly && (
 						<BackupManagement key={repositoryId} repositoryId={repositoryId} />
 					)}
 				</div>
@@ -411,6 +487,17 @@ export function RecoveryPanel({
 				onStarted={() => setWizardMode(null)}
 				mode={wizardMode ?? "new"}
 			/>
+			{desktop && folderPurpose && (
+				<BackupFolderDialog
+					key={folderPurpose}
+					purpose={folderPurpose}
+					open
+					onOpenChange={(open) => {
+						if (!open) setFolderPurpose(null)
+					}}
+					onSourceOpened={selectRepository}
+				/>
+			)}
 			<RecentOperationsDialog
 				open={operationsOpen}
 				onOpenChange={setOperationsOpen}

@@ -7,8 +7,13 @@ import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useToastMutation } from "@/hooks/useToastMutation"
+import { isHoardodileDesktop } from "@/lib/desktop"
 import { trpcMutation } from "@/trpc/factory"
 import { protectionStatusOptions } from "./api"
+import {
+	BackupPasswordFields,
+	validBackupPassword,
+} from "./BackupPasswordFields"
 
 type SetupMode = "new" | "existing"
 
@@ -16,8 +21,8 @@ type SetupMode = "new" | "existing"
  * Single-layer backup-setup dialog. The choice ("start protecting this
  * device" vs "open an existing backup") lives inline in the Backups section
  * as two big buttons; clicking one opens this dialog for that mode directly —
- * no nested chooser layer and no back button. Drives the same
- * `protection.initialize` mutation as before; the backend is untouched.
+ * no nested chooser layer and no back button. Desktop backups require a
+ * reusable password; fixed-folder recovery remains available to browsers.
  */
 export function BackupSetupWizard({
 	open,
@@ -34,6 +39,9 @@ export function BackupSetupWizard({
 	const qc = useQueryClient()
 	const status = useQuery(protectionStatusOptions())
 	const [key, setKey] = useState("")
+	const [password, setPassword] = useState("")
+	const [confirmation, setConfirmation] = useState("")
+	const desktop = isHoardodileDesktop()
 	const [fileName, setFileName] = useState("")
 	const [fileError, setFileError] = useState(false)
 	const fileInputRef = useRef<HTMLInputElement>(null)
@@ -48,6 +56,8 @@ export function BackupSetupWizard({
 	function close(open: boolean) {
 		if (!open) {
 			setKey("")
+			setPassword("")
+			setConfirmation("")
 			setFileName("")
 			setFileError(false)
 		}
@@ -57,7 +67,7 @@ export function BackupSetupWizard({
 	const folder =
 		mode === "existing"
 			? (status.data?.localRepositoryPath ?? "")
-			: (status.data?.backupRoot ?? "")
+			: (status.data?.localRepositoryPath ?? status.data?.backupRoot ?? "")
 
 	return (
 		<AppDialog
@@ -76,11 +86,16 @@ export function BackupSetupWizard({
 					<Button
 						data-testid="initialize-backups"
 						disabled={
-							initialize.isPending || (mode === "existing" && !key.trim())
+							initialize.isPending ||
+							(mode === "existing" && !key.trim()) ||
+							(desktop &&
+								mode === "new" &&
+								!validBackupPassword(password, confirmation))
 						}
 						onClick={() =>
 							initialize.mutate({
 								recoveryKey: mode === "existing" ? key.trim() : undefined,
+								...(desktop && mode === "new" ? { password } : {}),
 							})
 						}
 					>
@@ -98,9 +113,19 @@ export function BackupSetupWizard({
 					{t("protection.folder")}: {folder}
 				</p>
 				{mode === "new" ? (
-					<p className="text-xs text-secondary-foreground">
-						{t("backupSetup.createFirstHelp")}
-					</p>
+					<>
+						<p className="text-xs text-secondary-foreground">
+							{t("backupSetup.createFirstHelp")}
+						</p>
+						{desktop && (
+							<BackupPasswordFields
+								password={password}
+								confirmation={confirmation}
+								onPasswordChange={setPassword}
+								onConfirmationChange={setConfirmation}
+							/>
+						)}
+					</>
 				) : (
 					<>
 						<p className="text-xs text-secondary-foreground">

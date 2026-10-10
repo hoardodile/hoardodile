@@ -1,5 +1,6 @@
 {
 	"protection": {
+		"restoreConfirmation": "wiederherstellen",
 		"drillDestination": "Temporärer Wiederherstellungsordner",
 		"lastRestore": "Zuletzt wiederhergestellt",
 		"restoredEditable": "Lokale Änderungen nach der Wiederherstellung sind hier nicht erfasst.",
@@ -2352,6 +2353,29 @@
 		"turnOnAutomatic": "Automatische Sicherung aktivieren",
 		"protectedTitle": "Deine Bibliothek ist auf diesem Gerät gesichert.",
 		"protectedSub": "Letztes Backup: {{local}}"
+	},
+	"backupFolders": {
+		"password": "Backup-Passwort",
+		"confirmPassword": "Backup-Passwort bestätigen",
+		"passwordHelp": "Mindestens {{min}} Zeichen ohne Zeilenumbruch. Einmal festlegen und für spätere Wiederherstellungen verwenden.",
+		"restoreFromFolder": "Aus anderem Ordner wiederherstellen",
+		"changeLocation": "Backup-Speicherort ändern",
+		"restoreHelp": "Wähle einen Backup-Ordner auf diesem Computer oder einem externen Laufwerk. Die Wiederherstellung ändert den Speicherort künftiger Backups nicht.",
+		"locationHelp": "Nach der Bestätigung werden künftige Backups hier ergänzt. Die aktuelle Bibliothek wird weder wiederhergestellt noch verschoben.",
+		"chooseFolder": "Backup-Ordner auswählen",
+		"openSource": "Backup öffnen",
+		"createAndUse": "Erstes Backup erstellen und Speicherort verwenden",
+		"useLocation": "Diesen Backup-Speicherort verwenden",
+		"usePassword": "Backup-Passwort verwenden",
+		"useKeyFile": "Wiederherstellungsschlüssel-Datei verwenden",
+		"restoreTarget": "Wiederherstellungsziel: {{path}}",
+		"confirmRestore": "Zur Bestätigung „{{phrase}}“ eingeben.",
+		"keyHelp": "Optional: Bewahre die Schlüsseldatei separat auf, um Backups auch bei vergessenem Passwort wiederherzustellen.",
+		"offlineTitle": "Backup-Speicherort nicht verfügbar",
+		"offlineHelp": "Verbinde das Laufwerk oder prüfe die Ordnerrechte. Die Konfiguration bleibt erhalten und die Bibliothek ist weiterhin verfügbar.",
+		"folderError": "Wähle einen gültigen Backup-Ordner oder einen leeren Ordner außerhalb der Bibliotheksdateien.",
+		"openError": "Backup konnte nicht geöffnet werden. Prüfe Passwort, Schlüsseldatei und die Verfügbarkeit des Laufwerks.",
+		"changeError": "Backup-Speicherort konnte nicht geändert werden. Prüfe Passwort, Ordnerrechte und laufende Speichervorgänge."
 	},
 	"backupSetup": {
 		"title": "Backups einrichten",

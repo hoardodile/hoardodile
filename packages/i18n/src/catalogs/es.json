@@ -1,5 +1,6 @@
 {
 	"protection": {
+		"restoreConfirmation": "restaurar",
 		"drillDestination": "Carpeta temporal de recuperación",
 		"lastRestore": "Última restauración",
 		"restoredEditable": "Este estado no refleja las ediciones locales posteriores.",
@@ -2352,6 +2353,29 @@
 		"turnOnAutomatic": "Activar copias automáticas",
 		"protectedTitle": "Tu biblioteca tiene una copia de seguridad en este dispositivo.",
 		"protectedSub": "Última copia de seguridad: {{local}}"
+	},
+	"backupFolders": {
+		"password": "Contraseña de la copia de seguridad",
+		"confirmPassword": "Confirmar contraseña de la copia",
+		"passwordHelp": "Al menos {{min}} caracteres, sin saltos de línea. Configúrala una vez y vuelve a usarla para restaurar.",
+		"restoreFromFolder": "Restaurar desde otra carpeta",
+		"changeLocation": "Cambiar ubicación de las copias",
+		"restoreHelp": "Elige una carpeta de copias en este equipo o una unidad externa. Restaura en la biblioteca actual sin cambiar dónde se guardarán las próximas copias.",
+		"locationHelp": "Tras confirmar el cambio, las próximas copias se añadirán aquí. La biblioteca actual no se restaurará ni se moverá.",
+		"chooseFolder": "Elegir carpeta de copias",
+		"openSource": "Abrir copia de seguridad",
+		"createAndUse": "Crear primera copia y usar esta ubicación",
+		"useLocation": "Usar esta ubicación de copias",
+		"usePassword": "Usar contraseña de la copia",
+		"useKeyFile": "Usar archivo de clave de recuperación",
+		"restoreTarget": "Destino de restauración: {{path}}",
+		"confirmRestore": "Escribe «{{phrase}}» para confirmar.",
+		"keyHelp": "Opcional: guarda el archivo de clave por separado para restaurar si olvidas la contraseña.",
+		"offlineTitle": "Ubicación de copias no disponible",
+		"offlineHelp": "Conecta la unidad o comprueba los permisos. Se conserva la configuración y la biblioteca sigue disponible.",
+		"folderError": "Elige una carpeta de copias válida o una carpeta vacía separada de los archivos de la biblioteca.",
+		"openError": "No se pudo abrir la copia. Comprueba la contraseña, el archivo de clave y la disponibilidad de la unidad.",
+		"changeError": "No se pudo cambiar la ubicación. Comprueba la contraseña, los permisos y las operaciones en curso."
 	},
 	"backupSetup": {
 		"title": "Configurar copias",

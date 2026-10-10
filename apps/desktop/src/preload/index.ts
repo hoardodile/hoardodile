@@ -214,6 +214,19 @@ const bridge: HoardodileDesktopBridge = {
 		const raw = await invokeUnknown(IPC.pickLibraryFolder)
 		return typeof raw === "string" ? raw : undefined
 	},
+	async pickBackupFolder(purpose) {
+		const raw = await invokeUnknown(IPC.pickBackupFolder, purpose)
+		if (raw === undefined) return undefined
+		if (
+			!isRecord(raw) ||
+			typeof raw.id !== "string" ||
+			typeof raw.path !== "string" ||
+			typeof raw.exists !== "boolean" ||
+			raw.purpose !== purpose
+		)
+			throw new Error("Backup folder selection unavailable")
+		return { id: raw.id, path: raw.path, exists: raw.exists, purpose }
+	},
 	async relaunch() {
 		await invokeUnknown(IPC.relaunch)
 	},
