@@ -417,14 +417,6 @@
 			"restartToUpdate": "Volver a abrir la aplicación",
 			"portableHint": "Las versiones portátiles se actualizan descargando un nuevo zip de GitHub."
 		},
-		"connections": {
-			"title": "Conexiones recientes",
-			"description": "Cada inicio de sesión con dispositivo, IP y hora. Se guarda solo en este dispositivo; las filas de más de 90 días se eliminan.",
-			"empty": "Aún no hay inicios de sesión.",
-			"totalLabel_one": "{{count}} inicio de sesión",
-			"totalLabel_other": "{{count}} inicios de sesión",
-			"loopback": "este dispositivo"
-		},
 		"network": {
 			"title": "Red saliente",
 			"description": "El proxy usado para las descargas de plugins y el mercado de plugins. Se detecta desde las variables de entorno o el proxy del sistema; HOARDODILE_PROXY lo sobrescribe.",

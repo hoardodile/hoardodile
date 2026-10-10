@@ -417,14 +417,6 @@
 			"restartToUpdate": "App erneut öffnen",
 			"portableHint": "Portable Versionen werden aktualisiert, indem du ein neues ZIP von GitHub herunterlädst."
 		},
-		"connections": {
-			"title": "Letzte Verbindungen",
-			"description": "Jede Anmeldung mit Gerät, IP und Zeitpunkt. Nur auf diesem Gerät gespeichert; Einträge älter als 90 Tage werden entfernt.",
-			"empty": "Noch keine Anmeldungen.",
-			"totalLabel_one": "{{count}} Anmeldung",
-			"totalLabel_other": "{{count}} Anmeldungen",
-			"loopback": "dieses Gerät"
-		},
 		"network": {
 			"title": "Ausgehendes Netzwerk",
 			"description": "Der Proxy für Plugin-Downloads und den Plugin-Marktplatz. Wird aus Proxy-Umgebungsvariablen oder dem System-Proxy erkannt; HOARDODILE_PROXY übersteuert.",

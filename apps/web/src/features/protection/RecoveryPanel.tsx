@@ -448,7 +448,7 @@ export function RecoveryPanel({
 		sections.push(
 			// Left column: title + help. Right column: the one control — the
 			// job list itself lives in the dialog (compact layout), matching
-			// the licenses/connections rows.
+			// the licenses row.
 			<SettingsSection
 				key="recent-operations"
 				icon={History}

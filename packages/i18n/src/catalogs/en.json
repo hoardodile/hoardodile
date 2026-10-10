@@ -417,14 +417,6 @@
 			"restartToUpdate": "Reopen the app",
 			"portableHint": "Portable builds update by downloading a new zip from GitHub."
 		},
-		"connections": {
-			"title": "Recent connections",
-			"description": "Every sign-in with device, IP and time. Stored only on this device; rows older than 90 days are pruned.",
-			"empty": "No sign-ins yet.",
-			"totalLabel_one": "{{count}} sign-in",
-			"totalLabel_other": "{{count}} sign-ins",
-			"loopback": "this device"
-		},
 		"network": {
 			"title": "Outbound network",
 			"description": "The proxy used for plugin downloads and the plugin marketplace. Detected from your proxy env vars or the system proxy; HOARDODILE_PROXY overrides.",

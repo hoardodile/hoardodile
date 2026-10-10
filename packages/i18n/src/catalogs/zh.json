@@ -417,14 +417,6 @@
 			"restartToUpdate": "重新打开应用",
 			"portableHint": "便携版请从 GitHub 下载新的压缩包来更新。"
 		},
-		"connections": {
-			"title": "最近连接",
-			"description": "每次登录的设备、IP 与时间。数据只保存在本机，超过 90 天自动清除。",
-			"empty": "暂无登录记录。",
-			"totalLabel_one": "共 {{count}} 条登录记录",
-			"totalLabel_other": "共 {{count}} 条登录记录",
-			"loopback": "本机"
-		},
 		"network": {
 			"title": "出站网络",
 			"description": "插件下载与插件市场使用的出站代理。自动识别代理环境变量或系统代理，HOARDODILE_PROXY 可覆盖。",

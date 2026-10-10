@@ -6,7 +6,6 @@ import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { NetworkSection } from "@/features/network/NetworkSection"
 import { AboutSection } from "@/features/settings/AboutSection"
-import { ConnectionsSection } from "@/features/settings/ConnectionsSection"
 import {
 	BugReportSection,
 	FeatureRequestSection,
@@ -25,8 +24,7 @@ export const Route = createFileRoute("/settings/about")({
 })
 
 /**
- * About settings tab: app identity, update check, licenses and recent
- * connections — what you are running and who has been here.
+ * About settings tab: app identity, updates, feedback, licenses and network.
  */
 function AboutSettingsRoute() {
 	const { t } = useTranslation()
@@ -58,8 +56,6 @@ function AboutSettingsRoute() {
 			</SettingsSection>
 			<SectionDivider />
 			<NetworkSection />
-			<SectionDivider />
-			<ConnectionsSection />
 		</SettingsSheet>
 	)
 }
