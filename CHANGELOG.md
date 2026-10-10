@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.3.0](https://github.com/hoardodile/hoardodile/compare/v0.2.5...v0.3.0) (2026-10-10)
+
+### ⚠ BREAKING CHANGES
+
+* **server:** Device sync and backup replication are no longer available; their HTTP and tRPC endpoints have been removed.
+
+### Features
+
+* **desktop:** add password backups and folder restore ([3e6b1a0](https://github.com/hoardodile/hoardodile/commit/3e6b1a065369410b62edf957b91e9a9172d9b58e))
+* **server:** remove device sync and backup replication ([4147ab0](https://github.com/hoardodile/hoardodile/commit/4147ab0225a501ae31901646f7918237a6cdc23c))
+* **web:** simplify backup settings and folder selection ([575c5d1](https://github.com/hoardodile/hoardodile/commit/575c5d1413129c8f00eacaaceba198b7d4675a82))
+
+### Bug Fixes
+
+* **hoardodile:** validate npm packages before releasing ([290e2a0](https://github.com/hoardodile/hoardodile/commit/290e2a0ac52af2af4e78673406cc329552302bb6))
+* **web:** keep fitting marquee rows static ([4749b58](https://github.com/hoardodile/hoardodile/commit/4749b5825c56115ee27b20f361f855979e89b6c2))
+* **web:** remove recent connections from about settings ([cefcea5](https://github.com/hoardodile/hoardodile/commit/cefcea583f61889127a237e6d8c0f63df8469fd9))
+
 ## [0.2.5](https://github.com/hoardodile/hoardodile/compare/v0.2.4...v0.2.5) (2026-10-03)
 
 ### Bug Fixes
