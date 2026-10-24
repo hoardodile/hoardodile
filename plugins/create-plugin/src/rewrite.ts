@@ -8,20 +8,20 @@ import { SDK_DEP_NAMES } from "./sdk-deps.gen.ts"
 
 /** Concrete versions for the catalog: specs the template uses. */
 export const THIRD_PARTY_VERSIONS: Readonly<Record<string, string>> = {
-	"@biomejs/biome": "2.5.10",
-	"@release-it/conventional-changelog": "^12.0.0",
-	"@types/node": "^26.2.0",
-	"@types/react": "^19.2.18",
-	"@types/react-dom": "^19.2.4",
-	jsdom: "^30.0.1",
-	lefthook: "^2.1.10",
-	"lint-staged": "^17.3.0",
-	react: "^19.2.8",
-	"react-dom": "^19.2.8",
-	"release-it": "^21.0.2",
+	"@biomejs/biome": "2.6.2",
+	"@release-it/conventional-changelog": "^12.0.2",
+	"@types/node": "^26.6.5",
+	"@types/react": "^19.3.0",
+	"@types/react-dom": "^19.3.0",
+	jsdom: "^30.1.3",
+	lefthook: "^2.2.2",
+	"lint-staged": "^17.6.0",
+	react: "^19.3.1",
+	"react-dom": "^19.3.1",
+	"release-it": "^21.1.1",
 	typescript: "^7.0.2",
-	vite: "^8.2.2",
-	vitest: "^4.1.11",
+	vite: "^8.3.5",
+	vitest: "^5.0.5",
 }
 
 export type ManifestShape = {

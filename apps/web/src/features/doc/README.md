@@ -107,21 +107,25 @@ otherwise keep the last payload on screen.
 `hooks/useDocDiff.ts` + `diff.ts` compare the current editor content against
 a historical version. The diff is computed with a Myers line-diff followed by
 `prosemirror-changeset` and rendered in a read-only twin editor with
-BlockNote's `insertion`/`deletion` suggestion marks. Legacy empty versions
+the app's `insertion`/`deletion` suggestion marks. Legacy empty versions
 stored as `{type:"doc",content:[]}` are normalized to empty block lists via
 `contentShape.ts`.
 
-### Why `@blocknote/*` is pinned to 0.51.4
+### Dependency compatibility
 
-The diff engine is built on BlockNote internals that changed after 0.51.x:
-
+BlockNote upgrades normally; its packages must stay on the same version.
+`editor/docDiffExtension.ts` registers the `insertion`, `deletion` and
+`modification` marks from `@handlewithcare/prosemirror-suggest-changes`
+through BlockNote's extension API. These marks belong to the
+`blockLevelSuggestion` group so whole-block changes are also supported.
+The diff no longer depends on marks supplied by BlockNote's AI or Yjs
+extensions. Existing `.ProseMirror ins/del` styling in `doc.css` still applies.
 - `diffCompute.ts` calls `blockToNode` and reads `editor._tiptapEditor`
-  (private API) to get at the ProseMirror schema.
-- `@handlewithcare/prosemirror-suggest-changes` (also pinned, 0.1.8) turns
-  the computed changes into the same `insertion`/`deletion`/`modification`
-  marks that BlockNote's default schema registers — this is what the
-  read-only diff editor renders (`doc.css` styles `.ProseMirror ins/del`).
-- `prosemirror-changeset` (also pinned, 2.4.1) is the diff engine: the
+  (private API) to get at the ProseMirror schema. Verify these integration
+  points when upgrading BlockNote.
+- `@handlewithcare/prosemirror-suggest-changes` stays pinned to 0.1.8;
+  it supplies both the diff transform and the mark specifications.
+- `prosemirror-changeset` stays pinned to 2.4.1: the
   whole document is fed to it as one replacement and it splits the changed
   region into individually replaceable steps. **2.4.2 added a 2500-token
   guard in `computeDiff` that returns a large changed range as ONE change**;
@@ -130,33 +134,11 @@ The diff engine is built on BlockNote internals that changed after 0.51.x:
   degrades to unmarked (or fallback) content. Upgrade only with the
   large-edit regression test in `diff.test.ts` green.
 
-BlockNote **0.52.0 removed the suggestion marks from core's default
-extension set** (verified by inspecting the 0.52.0/0.53.0/0.54.0 tarballs):
-the marks now only exist when the extension that provides them is loaded
-(the Yjs/AI layer), their attributes and DOM changed, and the schema of a
-plain (non-collaborative, non-AI) editor no longer knows them. The diff
-transaction would produce marks the schema rejects, so the feature breaks.
-0.51.4 is the last 0.51.x release, so the pin cannot move within the minor.
-
-`scripts/guard-protected-deps.mjs` enforces every protected pin from
-`pnpm-lock.yaml` at pre-commit and CI time, and `scripts/update-deps.mjs`
-(the `deps:update` entry point) never touches protected packages. There is
-no `--allow` bypass: an intentional upgrade is a code change.
-
-#### Upgrade checklist (when you actually want to bump)
-
-1. Adapt the diff machinery first: `blockToNode` signature, `_tiptapEditor`
-   shape, and the suggestion marks (names, attributes, DOM hookup in
-   `doc.css`) against the target release; register custom marks yourself if
-   the new API permits, or port the diff to BlockNote's own
-   suggestion/AI-diff pipeline (the eventual migration path).
-2. Update the exact pins in `apps/web/package.json` and the `PINNED` /
-   allowed-version tables in `scripts/guard-protected-deps.mjs` in the same
-   change.
-3. Run `pnpm -F @hoardodile/web exec vitest run src/features/doc` (diff +
-   draft + hooks tests) and build; then manually open a document diff view.
-4. Mention the BlockNote bump in the commit message; the protected-deps
-   guard now permits the new versions.
+`scripts/guard-protected-deps.mjs` still enforces the diff-transform pins
+and BlockNote version alignment from `pnpm-lock.yaml`. The `deps:update`
+script includes BlockNote. After upgrading, run
+`pnpm -F @hoardodile/web exec vitest run src/features/doc`, build and check
+the editor's inline chips, find/replace, undo/redo and read-only diff view.
 
 ## Tests
 

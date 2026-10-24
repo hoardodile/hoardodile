@@ -200,13 +200,13 @@
 
 /* Optional first-line indent for paragraph blocks. */
 [data-doc-zoom-root][data-doc-indent="true"]
-.bn-block-content[data-content-type="paragraph"] {
+	.bn-block-content[data-content-type="paragraph"] {
 	text-indent: 2em;
 }
 
 /* Per-paragraph opt-out (paragraph block prop `indent === false`). */
 [data-doc-zoom-root][data-doc-indent="true"]
-.bn-block-content[data-content-type="paragraph"][data-indent="false"] {
+	.bn-block-content[data-content-type="paragraph"][data-indent="false"] {
 	text-indent: 0;
 }
 

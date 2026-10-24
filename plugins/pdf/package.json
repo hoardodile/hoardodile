@@ -20,7 +20,7 @@
 		"@hoardodile/sdk-types": "workspace:*",
 		"@hoardodile/sdk-web": "workspace:*",
 		"@hoardodile/ui": "workspace:*",
-		"pdfjs-dist": "^6.2.108",
+		"pdfjs-dist": "^6.4.299",
 		"react": "catalog:",
 		"react-dom": "catalog:"
 	},

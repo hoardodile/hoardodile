@@ -82,6 +82,7 @@ describe("TagEditDialog", () => {
 		render(<TagEditDialog tag={tag} open onOpenChange={onOpenChange} />, {
 			wrapper: createWrapper(),
 		})
+		await waitFor(() => expect(screen.getByRole("dialog")).toHaveFocus())
 
 		const link = screen.getByTestId("tag-link-tag-1") as HTMLInputElement
 		expect(link.value).toBe("www.example.com/harbor")
@@ -100,10 +101,12 @@ describe("TagEditDialog", () => {
 		render(<TagEditDialog tag={tag} open onOpenChange={onOpenChange} />, {
 			wrapper: createWrapper(),
 		})
+		await waitFor(() => expect(screen.getByRole("dialog")).toHaveFocus())
 
 		const link = screen.getByTestId("tag-link-tag-1") as HTMLInputElement
 		await user.clear(link)
 		await user.type(link, "  https://new.example.com/art  ")
+		expect(link).toHaveValue("  https://new.example.com/art  ")
 
 		const save = screen.getByTestId("tag-save-tag-1")
 		await waitFor(() => expect(save).toBeEnabled())
@@ -126,6 +129,7 @@ describe("TagEditDialog", () => {
 		render(<TagEditDialog tag={tag} open onOpenChange={onOpenChange} />, {
 			wrapper: createWrapper(),
 		})
+		await waitFor(() => expect(screen.getByRole("dialog")).toHaveFocus())
 
 		const save = screen.getByTestId("tag-save-tag-1")
 		expect(save).toBeDisabled()

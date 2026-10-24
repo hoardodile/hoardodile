@@ -33,7 +33,7 @@
 		"dayjs": "^1.11.23",
 		"http-proxy-agent": "catalog:",
 		"https-proxy-agent": "catalog:",
-		"immer": "^11.1.18",
+		"immer": "^11.2.9",
 		"zod": "catalog:"
 	}
 }

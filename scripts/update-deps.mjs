@@ -6,9 +6,9 @@
  * `pnpm up -L` this script enumerates every direct external dependency of
  * the root project, each workspace package and the pnpm workspace catalog,
  * then upgrades them explicitly — skipping the protected set declared in
- * `scripts/guard-protected-deps.mjs` (BlockNote + suggest-changes, the
- * document-diff machinery) and `typescript` (5.9.3 tsup pin / catalog
- * 7.0.2). The guard runs afterwards as confirmation.
+ * `scripts/guard-protected-deps.mjs` (the document-diff transforms and
+ * video player) and `typescript` (5.9.3 tsup pin / catalog 7.0.2).
+ * BlockNote upgrades normally. The guard runs afterwards as confirmation.
  *
  * Usage:
  *   node scripts/update-deps.mjs [-- <pnpm flags>]

@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react"
+import { fireEvent, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { describe, expect, test, vi } from "vitest"
 import { SearchField } from "./search-field"
@@ -25,6 +25,20 @@ describe("SearchField", () => {
 		expect(input.value).toBe("foo")
 		rerender(<SearchField value="" onCommit={() => {}} testId="search" />)
 		expect(input.value).toBe("")
+	})
+
+	test("keeps newer input when the parent acknowledges an earlier commit", () => {
+		const onCommit = vi.fn()
+		const { rerender } = render(
+			<SearchField value="" onCommit={onCommit} testId="search" />,
+		)
+		const input = screen.getByTestId("search")
+		fireEvent.change(input, { target: { value: "cat" } })
+		fireEvent.keyDown(input, { key: "Enter" })
+		expect(onCommit).toHaveBeenCalledWith("cat")
+		fireEvent.change(input, { target: { value: "catfish" } })
+		rerender(<SearchField value="cat" onCommit={onCommit} testId="search" />)
+		expect(input).toHaveValue("catfish")
 	})
 
 	test("commits only on Enter in commitOnEnterOnly mode", async () => {

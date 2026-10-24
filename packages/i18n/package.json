@@ -75,7 +75,7 @@
 		"test": "vitest run"
 	},
 	"dependencies": {
-		"i18next": "^26.4.0",
+		"i18next": "catalog:",
 		"react-i18next": "catalog:"
 	},
 	"devDependencies": {

@@ -8,7 +8,7 @@
  * rule offs, Tailwind directive parsing) minus monorepo-only excludes.
  */
 export const STANDALONE_BIOME_JSON = `{
-	"$schema": "https://biomejs.dev/schemas/2.5.10/schema.json",
+	"$schema": "https://biomejs.dev/schemas/2.6.2/schema.json",
 	"vcs": {
 		"enabled": true,
 		"clientKind": "git",
@@ -23,6 +23,8 @@ export const STANDALONE_BIOME_JSON = `{
 		"ignoreUnknown": true,
 		"includes": [
 			"**",
+			"!**/*.md",
+			"!**/pnpm-lock.yaml",
 			"!**/vendor",
 			"!**/coverage",
 			"!**/dist",

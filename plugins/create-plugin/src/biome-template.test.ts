@@ -25,8 +25,6 @@ describe("STANDALONE_BIOME_JSON", () => {
 		// committed under plugins/template: biome 2.x rejects a nested root
 		// config when the monorepo's own biome.json exists.
 		const config = JSON.parse(STANDALONE_BIOME_JSON)
-		expect(config.$schema).toBe(
-			"https://biomejs.dev/schemas/2.5.10/schema.json",
-		)
+		expect(config.$schema).toBe("https://biomejs.dev/schemas/2.6.2/schema.json")
 	})
 })

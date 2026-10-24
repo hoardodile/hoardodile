@@ -5,18 +5,8 @@
  *
  * Why these versions are pinned:
  *
- * - The diff view (`apps/web/src/features/doc/diffCompute.ts`) is built on
- *   BlockNote internals: `blockToNode` and `editor._tiptapEditor` from
- *   `@blocknote/*`, plus the `insertion`/`deletion` suggestion marks that
- *   BlockNote's default schema registers. Bumping `@blocknote/*` past
- *   0.51.x breaks it: 0.52.0 removed those marks from core's default
- *   extension set (verified by inspecting the 0.52.0/0.53.0/0.54.0
- *   tarballs — the marks now only exist when the Yjs/AI extension that
- *   provides them is loaded, with different attrs/DOM), so the diff
- *   transaction marks no longer match the schema.
  * - `@handlewithcare/prosemirror-suggest-changes` is the transform that
- *   turns the computed changes into those marks; it must stay compatible
- *   with the schema above.
+ *   turns computed changes into the app's diff marks.
  * - `prosemirror-changeset` 2.4.1 is the version the document diff was
  *   developed and verified against. 2.4.2 added a 2500-token guard in
  *   `computeDiff` that returns a whole large changed range as ONE change;
@@ -48,10 +38,6 @@ import { fileURLToPath } from "node:url"
 
 /** Single source of truth for protected direct dependencies (exact pins). */
 export const PINNED = {
-	"@blocknote/core": "0.51.4",
-	"@blocknote/react": "0.51.4",
-	"@blocknote/mantine": "0.51.4",
-	"@blocknote/shadcn": "0.51.4",
 	"@handlewithcare/prosemirror-suggest-changes": "0.1.8",
 	"prosemirror-changeset": "2.4.1",
 	"@videojs/react": "10.0.0-beta.25",
@@ -74,7 +60,7 @@ function readLockfileEntries(path) {
 	for (let i = 0; i < lines.length; i++) {
 		const match = lines[i]?.match(/^ {6}(.*?):\s*$/)
 		if (!match) continue
-		const name = match[1].trim().replace(/^'|'$/g, "")
+		const name = unquote(match[1])
 		if (name === "" || (!name.includes("/") && !/^[a-z0-9-]+$/i.test(name))) {
 			// Only plausible package names; every other 6-space indent is not
 			// an importer entry (snapshots use `name: version` on one line).
@@ -85,16 +71,20 @@ function readLockfileEntries(path) {
 		if (specifier === undefined || version === undefined) continue
 		entries.push({
 			name,
-			specifier: specifier.trim().replace(/^'|'$/g, ""),
+			specifier: unquote(specifier),
 			version: version.trim(),
 		})
 	}
 	return entries
 }
 
-/** Strip the peer-dependency suffix pnpm appends: `0.51.4(@types/hast@…)`. */
+function unquote(value) {
+	return value.trim().replace(/^(['"])(.*)\1$/, "$2")
+}
+
+/** Strip the peer-dependency suffix pnpm appends: `0.56.0(@types/hast@…)`. */
 function normalizeVersion(version) {
-	return version.split("(")[0].trim()
+	return unquote(version).split("(")[0].trim()
 }
 
 function findViolations(entries) {
@@ -104,10 +94,10 @@ function findViolations(entries) {
 	for (const entry of entries) {
 		const pinned = PINNED[entry.name]
 		const resolved = normalizeVersion(entry.version)
+		if (entry.name.startsWith("@blocknote/")) {
+			blocknoteVersions.add(resolved)
+		}
 		if (pinned !== undefined) {
-			if (entry.name.startsWith("@blocknote/")) {
-				blocknoteVersions.add(resolved)
-			}
 			if (entry.specifier !== pinned) {
 				findings.push(
 					`${entry.name}: expected exact specifier \`${pinned}\`, got \`${entry.specifier}\``,
@@ -133,14 +123,8 @@ function findViolations(entries) {
 		}
 	}
 
-	// The four BlockNote packages must move as one unit.
-	const blocknotePackages = Object.keys(PINNED).filter((name) =>
-		name.startsWith("@blocknote/"),
-	)
-	const presentBlocknote = blocknotePackages.filter((name) =>
-		entries.some((entry) => entry.name === name),
-	)
-	if (presentBlocknote.length > 1 && blocknoteVersions.size > 1) {
+	// BlockNote upgrades are unrestricted, but its packages must stay aligned.
+	if (blocknoteVersions.size > 1) {
 		findings.push(
 			`@blocknote/* resolved to mixed versions (${[...blocknoteVersions].join(
 				", ",
@@ -171,10 +155,7 @@ function main() {
 		console.error(
 			`\nThese versions are load-bearing for the document diff feature and
 must not be bumped on a whim:
-  - @blocknote/* stays at 0.51.4 — 0.52.0+ removed the insertion/deletion
-    suggestion marks from the default schema, breaking the diff view
-    (apps/web/src/features/doc/diffCompute.ts uses blockToNode,
-    editor._tiptapEditor and those marks).
+  - @blocknote/* can upgrade freely; keep all packages on the same version.
   - @handlewithcare/prosemirror-suggest-changes stays at 0.1.8 — it is the
     transform that emits those marks.
   - prosemirror-changeset stays at 2.4.1 — 2.4.2's 2500-token diff guard

@@ -1,4 +1,6 @@
 import { BlockNoteEditor } from "@blocknote/core"
+import { BlockNoteView } from "@blocknote/shadcn"
+import { render, waitFor } from "@testing-library/react"
 import { NodeSelection, TextSelection } from "prosemirror-state"
 import { act } from "react"
 import { describe, expect, it } from "vitest"
@@ -114,7 +116,7 @@ describe("tagChipToolbar", () => {
 		])
 	})
 
-	it("selects the chip node on mousedown", () => {
+	it("selects the chip node on mousedown", async () => {
 		const editor = createEditor([
 			{
 				type: "paragraph",
@@ -129,26 +131,28 @@ describe("tagChipToolbar", () => {
 			},
 		])
 
-		const container = document.createElement("div")
-		document.body.appendChild(container)
-		act(() => {
-			editor.mount(container)
-		})
+		const { unmount } = render(<BlockNoteView editor={editor} />)
 
-		const chipEl = editor._tiptapEditor.view.dom.querySelector(
-			'[data-inline-content-type="tagChip"]',
-		) as HTMLElement | null
-		expect(chipEl).not.toBeNull()
+		const chipEl = await waitFor(() => {
+			const chip = editor._tiptapEditor.view.dom.querySelector<HTMLElement>(
+				'[data-inline-content-type="tagChip"]',
+			)
+			expect(chip).not.toBeNull()
+			return chip!
+		})
+		expect(chipEl?.textContent).toBe("tagged")
 
 		let prevented = false
-		handleChipMouseDown(
-			{
-				currentTarget: chipEl!,
-				preventDefault: () => {
-					prevented = true
+		act(() =>
+			handleChipMouseDown(
+				{
+					currentTarget: chipEl!,
+					preventDefault: () => {
+						prevented = true
+					},
 				},
-			},
-			editor,
+				editor,
+			),
 		)
 
 		expect(prevented).toBe(true)
@@ -158,6 +162,7 @@ describe("tagChipToolbar", () => {
 		expect(node?.type.name).toBe("tagChip")
 		expect(node?.attrs.text).toBe("tagged")
 
-		container.remove()
+		unmount()
+		editor._tiptapEditor.destroy()
 	})
 })

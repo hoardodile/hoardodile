@@ -36,7 +36,7 @@ jobs:
       - uses: ./.github/actions/setup-pnpm
       - name: Test release preflight
         run: pnpm test:release
-      # BlockNote + the diff-machinery pins must never drift silently.
+      # Guard diff-transform pins and keep BlockNote packages aligned.
       - name: Guard protected dependencies
         run: node scripts/guard-protected-deps.mjs
       # Tests must not hardcode Windows path literals — expectations are

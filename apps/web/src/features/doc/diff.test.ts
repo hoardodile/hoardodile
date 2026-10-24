@@ -5,6 +5,7 @@
 import { BlockNoteEditor } from "@blocknote/core"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 import { blocksToDoc, computeInlineDiffDoc } from "./diffCompute.ts"
+import { docDiffExtension } from "./editor/docDiffExtension.ts"
 import { docSchema } from "./editor/schema.ts"
 
 type MarkedText = {
@@ -18,7 +19,10 @@ describe("computeInlineDiffDoc", () => {
 	>
 
 	beforeAll(() => {
-		editor = BlockNoteEditor.create({ schema: docSchema })
+		editor = BlockNoteEditor.create({
+			schema: docSchema,
+			extensions: [docDiffExtension()],
+		})
 	})
 
 	afterAll(() => {

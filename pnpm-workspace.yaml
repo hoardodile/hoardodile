@@ -3,11 +3,11 @@ packages:
   - packages/*
   - plugins/*
 allowBuilds:
-  '@hoardodile/7z-bin': true
-  '@hoardodile/ffmpeg-bin': true
-  '@hoardodile/ffprobe-bin': true
-  '@hoardodile/restic-bin': true
-  '@hoardodile/rclone-bin': true
+  "@hoardodile/7z-bin": true
+  "@hoardodile/ffmpeg-bin": true
+  "@hoardodile/ffprobe-bin": true
+  "@hoardodile/restic-bin": true
+  "@hoardodile/rclone-bin": true
   # 13.x bundles per-platform prebuilds loaded at runtime; its implicit
   # node-gyp build (binding.gyp) is unnecessary and needs a Python toolchain.
   better-sqlite3: false
@@ -16,115 +16,45 @@ allowBuilds:
   esbuild: true
   lefthook: true
 catalog:
-  '@biomejs/biome': 2.5.10
-  '@playwright/test': ^1.62.1
+  "@biomejs/biome": 2.6.2
+  "@playwright/test": ^1.64.1
   # Electron e2e driving (`_electron`); keep in lockstep with
   # @playwright/test above.
-  playwright: 1.62.1
-  '@release-it/conventional-changelog': ^12.0.0
-  '@rolldown/plugin-babel': ^0.2.3
-  '@tailwindcss/vite': ^4.3.3
-  '@testing-library/jest-dom': ^7.0.1
-  '@testing-library/react': ^16.3.2
-  '@types/node': ^26.2.0
-  '@types/react': ^19.2.18
-  '@types/react-dom': ^19.2.4
-  '@types/semver': ^7.8.0
-  '@vitejs/plugin-react': ^6.1.0
+  playwright: 1.64.1
+  "@release-it/conventional-changelog": ^12.0.2
+  "@rolldown/plugin-babel": ^0.2.4
+  "@tailwindcss/vite": ^4.3.3
+  "@testing-library/jest-dom": ^7.0.1
+  "@testing-library/react": ^16.3.3
+  "@types/node": ^26.6.5
+  "@types/react": ^19.3.0
+  "@types/react-dom": ^19.3.0
+  "@types/semver": ^7.8.0
+  "@vitejs/plugin-react": ^6.1.2
   babel-plugin-react-compiler: ^1.0.0
-  es-toolkit: ^1.51.0
-  http-proxy-agent: ^7.0.2
-  https-proxy-agent: ^7.0.6
-  i18next: ^26.4.0
-  jsdom: ^30.0.1
-  lefthook: ^2.1.10
-  lint-staged: ^17.3.0
-  react: ^19.2.8
-  react-dom: ^19.2.8
-  react-i18next: ^17.0.12
+  es-toolkit: ^1.52.0
+  http-proxy-agent: ^9.1.0
+  https-proxy-agent: ^9.1.0
+  i18next: ^26.5.6
+  jsdom: ^30.1.3
+  lefthook: ^2.2.2
+  lint-staged: ^17.6.0
+  react: ^19.3.1
+  react-dom: ^19.3.1
+  react-i18next: ^17.1.4
   react-use: ^17.6.1
-  '@solar-icons/react': ^2.1.0
-  release-it: ^21.0.2
+  "@solar-icons/react": ^2.3.3
+  release-it: ^21.1.1
   sharp: ^0.35.5
   semver: ^7.8.5
   tailwindcss: ^4.3.3
-  tar: ^7.4.3
-  tsup: ^8.5.1
+  tar: ^7.5.22
+  tsup: ^9.0.0
   typescript: ^7.0.2
-  vite: ^8.2.2
+  vite: ^8.3.5
   vite-node: ^6.0.0
-  vitest: ^4.1.11
-  zod: ^4.4.3
-  zustand: ^5.0.15
-# New @hoardodile/*-bin releases are excluded from minimumReleaseAge so
-# the workspace can consume them immediately. Bump flow: temporarily list
-# BOTH the old and the new version here, run `pnpm install` (only the one
-# dependency edge re-resolves; the old version drops out of the lockfile),
-# then remove the old version from this list. Never run `pnpm clean
-# --lockfile` for this: it re-resolves the whole tree and drags in
-# unrelated dependency upgrades that would pollute the commit.
-minimumReleaseAgeExclude:
-  - '@hoardodile/7z-bin@1.1.3'
-  - '@hoardodile/ffmpeg-bin@1.0.0'
-  - '@hoardodile/ffprobe-bin@1.0.0'
-  - '@hoardodile/restic-bin@1.0.0'
-  - '@hoardodile/rclone-bin@1.0.0'
-  - fast-uri@3.1.7 || 4.1.4
-# fast-uri carries high-severity advisories (host confusion / SSRF via IDN,
-# IPv6 and percent-decoding normalization): GHSA-5jgf-p345-68v8,
-# GHSA-f65p-4m7j-42xc, GHSA-fph4-wmhf-6fwf, GHSA-jqff-g426-hqxp. The parent
-# ranges (ajv ^3, @fastify/ajv-compiler & fast-json-stringify ^4) already
-# allow the patched releases, but pnpm keeps an existing transitive
-# resolution, so pin each line to the first fixed version — otherwise the
-# release workflow's `pnpm audit --prod --audit-level high` gate fails.
-overrides:
-  fast-uri@^3: 3.1.7
-  fast-uri@^4: 4.1.4
-  # Same reason as fast-uri above: the release workflow's
-  # `pnpm audit --prod --audit-level high` gate fails on advisories whose
-  # patched releases the parent ranges already allow, so pin the first fixed
-  # version of each. Both were caught by the gate for v0.2.1.
-  # 0.35.5 also patches librsvg's GHSA-wq5f-xc86-pv6w.
-  sharp@^0.35: 0.35.5
-  js-yaml@^4: 4.3.2
-  # Vite/PostCSS and Tailwind keep source-map-js 1.2.1 in the lockfile;
-  # 1.2.2 fixes the indexed source-map DoS (GHSA-68fv-2mgg-jv7q).
-  source-map-js@^1: 1.2.2
-  # apps/server serves static files through @fastify/static → glob →
-  # minimatch, which resolves brace-expansion 5.0.9: GHSA-qhr7-859c-m2p7
-  # and GHSA-6j4f-fj2g-mc7p are both fixed in 5.0.11. Not release-gated
-  # (apps/server never reaches npm), but it ships inside the container.
-  brace-expansion@^5: 5.0.11
-  # Compatibility, not security: BlockNote 0.51.4 declares `@tiptap/*`
-  # ^3.13.0, but tiptap 3.30+ stops rendering the inline content nodes
-  # BlockNote builds — the `data-inline-content-type` attribute disappears
-  # (tag/char chips render as empty spans) and the editor mount throws in
-  # prosemirror-view's decoration walk. BlockNote is pinned to 0.51.4 for the
-  # document diff (scripts/guard-protected-deps.mjs), so the family below is
-  # frozen at the last release that works with it. Drop these together with
-  # the `audit.ignore` entries at the bottom when that pin moves.
-  '@tiptap/core': 3.29.2
-  '@tiptap/pm': 3.29.2
-  '@tiptap/react': 3.29.2
-  '@tiptap/extensions': 3.29.2
-  '@tiptap/extension-bold': 3.29.2
-  '@tiptap/extension-bubble-menu': 3.29.2
-  '@tiptap/extension-code': 3.29.2
-  '@tiptap/extension-floating-menu': 3.29.2
-  '@tiptap/extension-horizontal-rule': 3.29.2
-  '@tiptap/extension-italic': 3.29.2
-  '@tiptap/extension-paragraph': 3.29.2
-  '@tiptap/extension-strike': 3.29.2
-  '@tiptap/extension-text': 3.29.2
-  '@tiptap/extension-underline': 3.29.2
-
-# The one advisory that cannot be fixed yet is tolerated deliberately here:
-# `@tiptap/core` <3.30.5 carries GHSA-j95f-988m-3j2f, but 3.30+ broke
-# BlockNote 0.51.4's inline content rendering (see the tiptap overrides
-# above), and that pin cannot move without the document-diff machinery.
-# Neither advisory is reachable from the packages this repo publishes.
+  vitest: ^5.0.5
+  zod: ^4.6.7
+  zustand: ^5.0.16
 audit:
   level: high
-  ignore:
-    - GHSA-j95f-988m-3j2f
-    - GHSA-cp6q-959q-f8rh

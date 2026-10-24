@@ -26,7 +26,7 @@ export function blocksToDoc(
 /**
  * Compute a ProseMirror document that renders the difference between
  * `baseBlocks` and `currentBlocks` using the same `insertion`/`deletion`
- * suggestion marks that BlockNote's AI extension uses.
+ * suggestion marks registered by docDiffExtension.
  *
  * Returns `undefined` when the two documents are structurally identical,
  * otherwise a ProseMirror Node that can be applied to a read-only DocEditor.

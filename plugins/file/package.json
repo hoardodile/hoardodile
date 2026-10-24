@@ -15,13 +15,13 @@
 		"test": "vitest run"
 	},
 	"dependencies": {
+		"@headless-tree/core": "^1.8.0",
+		"@headless-tree/react": "^1.8.0",
 		"@hoardodile/sdk-react": "workspace:*",
 		"@hoardodile/sdk-server": "workspace:*",
 		"@hoardodile/sdk-types": "workspace:*",
 		"@hoardodile/sdk-web": "workspace:*",
 		"@hoardodile/ui": "workspace:*",
-		"@headless-tree/core": "^1.7.0",
-		"@headless-tree/react": "^1.7.0",
 		"@solar-icons/react": "catalog:",
 		"react": "catalog:"
 	},

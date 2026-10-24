@@ -6,6 +6,7 @@ import {
 	type ReactNode,
 	type Ref,
 	useEffect,
+	useRef,
 	useState,
 } from "react"
 import { useDebounce } from "react-use"
@@ -69,15 +70,25 @@ export function SearchField(props: SearchFieldProps) {
 		testId,
 	} = props
 	const [draft, setDraft] = useState(value)
+	const lastCommittedValue = useRef(value)
 
 	useEffect(() => {
+		// A parent echo of our own commit must not overwrite newer keystrokes.
+		if (value === lastCommittedValue.current) return
+		lastCommittedValue.current = value
 		setDraft(value)
 	}, [value])
+
+	function commitDraft() {
+		if (draft === value || onCommit === undefined) return
+		lastCommittedValue.current = draft
+		onCommit(draft)
+	}
 
 	useDebounce(
 		() => {
 			if (commitOnEnterOnly) return
-			if (draft !== value) onCommit?.(draft)
+			commitDraft()
 		},
 		delayMs ?? 300,
 		[draft],
@@ -90,7 +101,7 @@ export function SearchField(props: SearchFieldProps) {
 			onSubmit?.(draft)
 			return
 		}
-		if (draft !== value) onCommit?.(draft)
+		commitDraft()
 		onSubmit?.(draft)
 	}
 

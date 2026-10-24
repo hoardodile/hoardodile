@@ -34,6 +34,7 @@ import { charListCardsQueryOptions } from "@/features/char/api"
 import { CharSelectorDialog } from "@/features/char/components/CharSelectorDialog"
 import { CharThumb } from "@/features/char/components/CharThumb"
 import { ResSelectorDialog } from "@/features/res/components/ResSelectorDialog"
+import { docDiffExtension } from "./docDiffExtension.ts"
 import {
 	buildEditorHandle,
 	CURRENT_DOC_STORAGE_VERSION,
@@ -101,7 +102,7 @@ export type DocEditorProps = {
  *   replace-selection, append, and a tiny "stream into selection" buffer.
  */
 /** BlockNote's built-in UI dictionary per app language — English fallback
- *  for anything not listed (BlockNote 0.51.x ships these five). */
+ *  for anything not listed. */
 const BLOCKNOTE_DICTIONARY: Record<string, typeof blocknoteEn> = {
 	en: blocknoteEn,
 	zh: blocknoteZh,
@@ -135,10 +136,11 @@ export function DocEditor(props: DocEditorProps) {
 		schema: docSchema,
 		initialContent: initialBlocks,
 		animations: false,
+		selectAllBehavior: "document",
 		dictionary,
 		// In-document find & replace highlights (see useDocFind): the
 		// extension only renders the ranges React hands it.
-		extensions: [docSearchExtension()],
+		extensions: [docDiffExtension(), docSearchExtension()],
 	})
 
 	const queryClient = useQueryClient()

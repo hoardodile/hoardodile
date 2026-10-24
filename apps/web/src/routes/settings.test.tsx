@@ -1,4 +1,4 @@
-import { screen } from "@testing-library/react"
+import { act, screen, waitFor } from "@testing-library/react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { renderRouter } from "@/test/render-router"
 import { setTrpcClient, type TRPCClient } from "@/trpc/client"
@@ -125,18 +125,26 @@ beforeEach(() => {
 describe("settings tab update dots", () => {
 	it("dots the marketplace and plugins tabs when a compatible update exists", async () => {
 		setTrpcClient(createMockTrpcClient(installHandlers(true)))
-		renderRouter({ initialEntries: ["/settings/marketplace"] })
+		const { router } = renderRouter({
+			initialEntries: ["/settings/marketplace"],
+		})
+		await act(() => router.load())
 
 		// Wait for the catalog (the shared snapshot query the tab dots
 		// derive from) to resolve, then both tab bars — mobile strip +
 		// desktop nav — dot the marketplace and the plugins tabs.
 		await screen.findByTestId(`marketplace-plugin-${PLUGIN_ID}`)
-		expect(await screen.findAllByTestId("me-tab-update-dot")).toHaveLength(4)
+		await waitFor(() =>
+			expect(screen.getAllByTestId("me-tab-update-dot")).toHaveLength(4),
+		)
 	})
 
 	it("keeps the tabs undotted when no update is available", async () => {
 		setTrpcClient(createMockTrpcClient(installHandlers(false)))
-		renderRouter({ initialEntries: ["/settings/marketplace"] })
+		const { router } = renderRouter({
+			initialEntries: ["/settings/marketplace"],
+		})
+		await act(() => router.load())
 
 		// Both tab bars render the tab (mobile strip + desktop nav).
 		expect(await screen.findAllByTestId("me-tab-marketplace")).toHaveLength(2)
