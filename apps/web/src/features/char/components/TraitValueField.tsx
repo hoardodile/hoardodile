@@ -44,17 +44,6 @@ function weightKgDisplay(raw: string): string {
 	return ""
 }
 
-function numberDisplay(raw: string): string {
-	const t = raw.trim()
-	if (t.length === 0) return ""
-	try {
-		parseTraitValue("number", t)
-		return t
-	} catch {
-		return ""
-	}
-}
-
 type DateParts = {
 	prefix: string
 	sign: "+" | "-"
@@ -182,25 +171,16 @@ export function TraitValueField(props: TraitValueFieldProps) {
 	}
 
 	if (kind === "number") {
-		const shown = numberDisplay(value)
-		const num =
-			shown.length > 0
-				? Number.parseFloat(shown.endsWith("+") ? shown.slice(0, -1) : shown)
-				: NaN
 		return (
 			<Input
-				type="number"
-				step="any"
-				value={Number.isFinite(num) ? num : ""}
+				type="text"
+				value={value}
 				onChange={(e) => {
-					const v = e.target.value
-					if (v === "") {
-						onChange("")
-						return
+					const next = e.target.value
+					// Keep partial numbers editable and preserve a trailing "+".
+					if (/^[+-]?\d*\.?\d*(?:[eE][+-]?\d*)?\+?$/.test(next)) {
+						onChange(next)
 					}
-					const parsed = Number.parseFloat(v)
-					if (!Number.isFinite(parsed)) return
-					onChange(String(parsed))
 				}}
 				size="sm"
 				className="flex-1 min-w-40"
