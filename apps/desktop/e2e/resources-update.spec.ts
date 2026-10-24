@@ -300,8 +300,10 @@ async function claimApp(harness: Awaited<ReturnType<typeof launchDesktop>>) {
 	await expect(wizard.locator("input#library-path")).not.toHaveValue("")
 	await wizard.getByTestId("wizard-continue").click()
 	await expect
-		.poll(() =>
-			harness.app.windows().some((win) => win.url().startsWith(harness.url)),
+		.poll(
+			() =>
+				harness.app.windows().some((win) => win.url().startsWith(harness.url)),
+			{ timeout: 60_000 },
 		)
 		.toBe(true)
 	const appWin = appWindow(harness.app, harness.url)

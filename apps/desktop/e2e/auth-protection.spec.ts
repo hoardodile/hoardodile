@@ -99,7 +99,17 @@ test("window reopen and full restart unlock the original page; explicit sign-out
 		await page.getByLabel("Password", { exact: true }).fill(E2E_PASSWORD)
 		await page.getByTestId("unlock-submit").click()
 		await expect(page).toHaveURL(new RegExp(`${target}$`))
-		await page.getByRole("link", { name: "Preferences", exact: true }).click()
+		// Reproduce the narrow Windows CI display even on wider local screens.
+		await second.app.evaluate(({ BrowserWindow }) => {
+			BrowserWindow.getAllWindows()[0]?.setSize(1024, 720)
+		})
+		await expect(
+			page.getByRole("tab", { name: "Preferences", exact: true }),
+		).toBeVisible()
+		await page
+			.getByTestId("me-tab-preferences")
+			.filter({ visible: true })
+			.click()
 		await page.getByTestId("sign-out").click()
 		await expect(page.getByTestId("login-submit")).toBeVisible()
 	} finally {
