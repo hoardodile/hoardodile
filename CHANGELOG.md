@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.3.1](https://github.com/hoardodile/hoardodile/compare/v0.3.0...v0.3.1) (2026-10-24)
+
+### Features
+
+* **web:** separate session locking from sign-in ([b6131fe](https://github.com/hoardodile/hoardodile/commit/b6131fe42f7afc1341879354e215d7cf67ebfe71))
+
+### Bug Fixes
+
+* **web:** grow resource cards around corner badges ([8a0fbb0](https://github.com/hoardodile/hoardodile/commit/8a0fbb02f89c081f73509be0eff09cc942a4f029))
+* **web:** refresh import counts and preserve card actions ([92dd7bb](https://github.com/hoardodile/hoardodile/commit/92dd7bb65b245300fc6533cc07b4270cf194668a))
+
 ## [0.3.0](https://github.com/hoardodile/hoardodile/compare/v0.2.5...v0.3.0) (2026-10-10)
 
 ### ⚠ BREAKING CHANGES
