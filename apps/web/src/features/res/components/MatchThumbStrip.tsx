@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next"
+import { AuthImage } from "@/features/auth/media"
 import { resFileUrl } from "../api"
 
 /** One matched file in a similarity strip (name + optional strength). */
@@ -51,7 +52,7 @@ export function MatchThumbStrip(props: {
 	return (
 		<div className="flex flex-wrap gap-1.5" data-testid="match-thumb-strip">
 			{shown.map((file) => (
-				<img
+				<AuthImage
 					key={file.scope}
 					src={`${resFileUrl(resId, file.scope)}?size=preview`}
 					alt={file.scope}

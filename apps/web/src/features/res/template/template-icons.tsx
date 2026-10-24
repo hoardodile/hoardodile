@@ -22,6 +22,7 @@ import {
 } from "@hoardodile/ui/res-card-template"
 import type { ComponentType } from "react"
 import { createElement } from "react"
+import { AuthImage } from "@/features/auth/media"
 import { resolveSolarIconComponent } from "@/features/plugin/icons/solar-icon"
 import { normalizeSolarGlyphName } from "@/features/plugin/icons/solar-name"
 import { apiPaths } from "@/lib/paths"
@@ -104,7 +105,7 @@ export function Icon(props: IconProps) {
 		return createElement(LazyComponent, { className })
 	}
 	return (
-		<img
+		<AuthImage
 			src={icon.url}
 			alt=""
 			className={`${className ?? ""} object-contain`}

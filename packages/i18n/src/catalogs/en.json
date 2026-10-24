@@ -266,7 +266,7 @@
 			"about": "About",
 			"desktop": "Desktop",
 			"custom": "Custom",
-			"privacy": "Privacy",
+			"web": "Web",
 			"archives": "Archives",
 			"archive": "Backups",
 			"plugins": "Plugins",
@@ -327,28 +327,16 @@
 			"title": "Account",
 			"description": "Single-user — the account guards the door."
 		},
-		"privacy": {
-			"signOutSection": {
-				"title": "Automatic sign-out",
-				"description": "If this tab stays hidden past the delay, the session is signed out and the login page is shown — the only complete protection against preview thumbnails."
+		"web": {
+			"title": "Browser session",
+			"description": "These settings apply only to this browser.",
+			"requireUnlock": {
+				"title": "Require unlock whenever this page opens",
+				"description": "Unlock after a refresh, reopening a tab, or restarting the browser. Your page returns after unlocking. Applies on the next page load."
 			},
-			"autoLogout": {
-				"title": "Sign out when left unattended",
-				"description": "The tab watches visibility; coming back past the delay lands on the login page."
-			},
-			"delayLabel": "Sign out after",
-			"delay": {
-				"immediately": "Immediately",
-				"minutes_one": "{{count}} minute",
-				"minutes_other": "{{count}} minutes"
-			},
-			"idleTimeout": {
-				"label": "Session idle timeout",
-				"description": "Applies server-side, so it also covers closed tabs and other browsers.",
-				"hours_one": "{{count}} hour",
-				"hours_other": "{{count}} hours",
-				"days_one": "{{count}} day",
-				"days_other": "{{count}} days"
+			"autoLock": {
+				"title": "Lock when leaving this page",
+				"description": "Immediately lock this tab when you switch tabs or minimize the browser. Other tabs stay independent."
 			}
 		},
 		"password": {
@@ -488,12 +476,12 @@
 				"description": "No window until you choose Open from the tray."
 			},
 			"signInOnLaunch": {
-				"title": "Require sign-in on launch",
-				"description": "Sign in again every time you open the app."
+				"title": "Require unlock on launch",
+				"description": "Unlock to return to your last page whenever the app starts."
 			},
 			"signInOnWindowOpen": {
-				"title": "Require sign-in when reopening from the tray",
-				"description": "Sign in again whenever the window was closed (tray, second launch)."
+				"title": "Require unlock when reopening from the tray",
+				"description": "Lock when the window closes; unlock to return to the page you left."
 			},
 			"autoUpdate": {
 				"title": "Automatic updates",
@@ -878,6 +866,13 @@
 		"toastPrecacheSuccess_one": "Precached {{count}} item",
 		"toastPrecacheSuccess_other": "Precached {{count}} items",
 		"toastPrecachePartial": "Precache completed with {{failed}} failures"
+	},
+	"unlock": {
+		"title": "Library locked",
+		"description": "Enter your password to return to the page you left.",
+		"submit": "Unlock",
+		"submitting": "Unlocking…",
+		"formAria": "Unlock library"
 	},
 	"login": {
 		"brand": "Hoardodile",

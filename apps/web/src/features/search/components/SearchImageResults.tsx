@@ -3,6 +3,7 @@ import { SectionHeader } from "@hoardodile/ui/components/section-header"
 import { useQuery } from "@tanstack/react-query"
 import type { ReactNode } from "react"
 import { useTranslation } from "react-i18next"
+import { AuthImage } from "@/features/auth/media"
 import { bestMatchSimilarity } from "@/features/res/components/MatchThumbStrip"
 import { ResCard as ResourceCard } from "@/features/res/components/ResCard"
 import { imageSearchQueryOptions } from "@/features/search"
@@ -60,7 +61,7 @@ export function SearchImageResults(props: {
 					}
 				/>
 				<div className="flex items-center gap-3">
-					<img
+					<AuthImage
 						src={apiPaths.imageSearch.queryImage(sessionId)}
 						alt={t("search.imageSearch.queryAlt")}
 						className="size-16 shrink-0 rounded-lg object-cover"

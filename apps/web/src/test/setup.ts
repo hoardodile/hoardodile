@@ -19,6 +19,7 @@ if (typeof window !== "undefined") {
 	installFakeIndexedDb(window, await import("fake-indexeddb"))
 	const { cleanup } = await import("@testing-library/react")
 	const { prefSyncStore } = await import("@/lib/prefSyncStore")
+	const { resetAuthSessionForTests } = await import("@/features/auth/session")
 
 	// jsdom does not implement matchMedia; stub it deterministically so theme
 	// and media-query code paths have something to consult during tests.
@@ -167,6 +168,8 @@ if (typeof window !== "undefined") {
 		cleanup()
 		prefSyncStore.clear()
 		localStorage.clear()
+		sessionStorage.clear()
+		resetAuthSessionForTests()
 	})
 }
 

@@ -1,8 +1,8 @@
 import type {} from "@fastify/cookie"
 import type { FastifyReply, FastifyRequest } from "fastify"
 import type { Env } from "src/config/env.ts"
+import { touchRequestSession } from "src/domain/auth/request-session.ts"
 import type { SessionStore } from "src/domain/auth/session.ts"
-import { resolveSessionTtl } from "src/domain/auth/ttl.ts"
 import type { SqliteDb } from "src/infra/db/connection.ts"
 
 export type AppContext = {
@@ -37,14 +37,12 @@ export function makeCreateContext(
 		req,
 		res,
 	}: CreateContextArgs): Promise<AppContext> {
-		const cookie = req.cookies[deps.env.SESSION_COOKIE_NAME]
-		const touched = await deps.sessions.touch(
-			cookie,
-			resolveSessionTtl(
-				req.server?.libraryMaintenance ? req.server.hostDb : deps.db,
-				deps.env,
-			),
-		)
+		const touched = await touchRequestSession({
+			req,
+			reply: res,
+			env: deps.env,
+			sessions: deps.sessions,
+		})
 		return {
 			env: deps.env,
 			req,

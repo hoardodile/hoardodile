@@ -1,6 +1,7 @@
 import type { AuthStatus } from "@hoardodile/schemas"
 import type { QueryClient } from "@tanstack/react-query"
 import { authStatusQueryKey, logout } from "@/features/auth"
+import { clearSession, sessionMode } from "@/features/auth/session"
 import { channelNames } from "@/lib/keys"
 import { clearLastRoute } from "@/lib/last-route"
 
@@ -50,6 +51,7 @@ export function subscribeAuthLogout(listener: () => void): () => void {
  * must not keep the UI "logged in".
  */
 export async function performSignOut(queryClient: QueryClient): Promise<void> {
+	const pageSession = sessionMode() === "page"
 	try {
 		await logout()
 	} catch {
@@ -58,6 +60,8 @@ export async function performSignOut(queryClient: QueryClient): Promise<void> {
 	// Drop all sensitive cached data (resource lists, documents, search)
 	// before anything else so nothing survives the sign-out.
 	const previous = queryClient.getQueryData<AuthStatus>(authStatusQueryKey)
+	clearSession()
+	await queryClient.cancelQueries()
 	queryClient.clear()
 	queryClient.setQueryData(authStatusQueryKey, {
 		authenticated: false,
@@ -66,5 +70,5 @@ export async function performSignOut(queryClient: QueryClient): Promise<void> {
 	// An explicit sign-out must never restore the last page on the next
 	// open — the desktop reopen continuity starts clean.
 	clearLastRoute()
-	broadcastAuthLogout()
+	if (!pageSession) broadcastAuthLogout()
 }

@@ -70,7 +70,8 @@ export function AppShell(props: AppShellProps) {
 			loading: state.isLoading || state.status === "pending",
 		}),
 	})
-	const isLoginRoute = routerState.pathname === "/login"
+	const isLoginRoute =
+		routerState.pathname === "/login" || routerState.pathname === "/unlock"
 	const isDocumentsRoute = routerState.pathname.startsWith("/documents")
 	const { themeClass } = useDocTheme()
 	const isMobile = useBelowSidebar()

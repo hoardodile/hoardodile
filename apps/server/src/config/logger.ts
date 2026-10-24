@@ -8,6 +8,7 @@ import {
 	multistream,
 	pino,
 	type StreamEntry,
+	stdSerializers,
 	type TransportTargetOptions,
 } from "pino"
 
@@ -23,6 +24,10 @@ export const redactPaths = [
 	"req.headers.authorization",
 	'req.headers["x-password"]',
 	"res.headers['set-cookie']",
+	"res.headers['x-hoardodile-session']",
+	"headers['x-hoardodile-session']",
+	"sessionToken",
+	"body.sessionToken",
 	"headers.cookie",
 	"headers.authorization",
 	'headers["x-password"]',
@@ -49,6 +54,15 @@ export function loggerOptions(level?: string): LoggerOptions {
 		},
 		timestamp: pino.stdTimeFunctions.isoTime,
 		base: undefined,
+		serializers: {
+			req(value) {
+				const request = stdSerializers.req(value)
+				return {
+					...request,
+					url: request.url?.replace(/([?&]readToken=)[^&]*/g, `$1${REDACTED}`),
+				}
+			},
+		},
 	}
 }
 

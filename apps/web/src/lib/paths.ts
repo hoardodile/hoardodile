@@ -14,6 +14,8 @@ export const apiPaths = {
 		status: () => "/auth/status",
 		setup: () => "/auth/setup",
 		login: () => "/auth/login",
+		unlock: () => "/auth/unlock",
+		readTokens: () => "/auth/read-tokens",
 		password: () => "/auth/password",
 		logout: () => "/auth/logout",
 	},

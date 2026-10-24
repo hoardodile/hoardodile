@@ -1,6 +1,7 @@
 import type { SupportedLanguage } from "@hoardodile/i18n"
 import { resolveSystemLanguage } from "@hoardodile/i18n"
 import type {
+	DesktopAuthenticationContext,
 	DesktopBackupSelection,
 	DesktopShellConfig,
 	DesktopUpdateState,
@@ -23,6 +24,7 @@ import { setWindowAppRoutes } from "./window.ts"
 
 export type IpcHost = {
 	getConfig: () => DesktopConfig
+	updateAuthContext?: (context: DesktopAuthenticationContext) => void
 	portable: () => boolean
 	pickLibraryFolder: (parent?: BrowserWindow) => Promise<string | undefined>
 	pickBackupFolder: (
@@ -160,10 +162,34 @@ export function registerIpc(host: IpcHost): void {
 		}
 	})
 	ipcMain.on(IPC.configSync, (event) => {
+		const config = host.getConfig()
 		event.returnValue = {
 			portable: host.portable(),
 			devtools: !app.isPackaged,
+			authentication: config.authContexts
+				? (config.authContexts[config.libraryPath] ?? {
+						signedIn: false,
+						href: "/",
+					})
+				: undefined,
 		}
+	})
+	ipcMain.on(IPC.authContext, (event, value: unknown) => {
+		if (
+			!windowFrom(event) ||
+			!isRecord(value) ||
+			typeof value.signedIn !== "boolean" ||
+			typeof value.href !== "string"
+		)
+			return
+		if (
+			!value.href.startsWith("/") ||
+			value.href.startsWith("//") ||
+			value.href.includes("\\") ||
+			value.href.length > 4096
+		)
+			return
+		host.updateAuthContext?.({ signedIn: value.signedIn, href: value.href })
 	})
 	ipcMain.handle(IPC.setConfig, (_event, patch: unknown) => {
 		if (!isConfigPatch(patch)) return
@@ -347,6 +373,8 @@ export async function pickDirectory(
 }
 
 export function applyLoginItem(config: DesktopConfig): void {
+	// Throwaway e2e profiles must never change the user's OS login item.
+	if (process.env.HOARDODILE_E2E === "1") return
 	app.setLoginItemSettings({
 		openAtLogin: config.autoStart,
 		args: config.startInTray ? ["--hidden"] : [],

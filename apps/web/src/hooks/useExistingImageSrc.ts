@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react"
+import { credentialedFetch } from "@/lib/http"
 
 /**
  * Fetch an existing image (e.g. a resource cover or a character avatar /
@@ -40,7 +41,7 @@ export function useExistingImageSrc(
 		async function run() {
 			try {
 				abortCtrl = new AbortController()
-				const res = await fetch(target, {
+				const res = await credentialedFetch(target, {
 					credentials: "include",
 					signal: abortCtrl.signal,
 					cache: "no-store",

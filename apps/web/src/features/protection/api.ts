@@ -1,4 +1,5 @@
 import { queryOptions } from "@tanstack/react-query"
+import { credentialedFetch } from "@/lib/http"
 import type { RouterOutputs } from "@/trpc/client"
 import { trpcQueryOptions } from "@/trpc/factory"
 
@@ -36,7 +37,7 @@ export const maintenanceOptions = () =>
 	queryOptions({
 		queryKey: ["library-maintenance"],
 		queryFn: async () => {
-			const response = await fetch("/api/protection/state", {
+			const response = await credentialedFetch("/api/protection/state", {
 				credentials: "same-origin",
 				cache: "no-store",
 			})

@@ -5,6 +5,7 @@ import type {
 } from "react"
 import { useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
+import { AuthVideo } from "@/features/auth/media"
 import { apiPaths } from "@/lib/paths"
 import {
 	activatePlayback,
@@ -29,7 +30,7 @@ export type ResVideoHoverProps = {
  * {@link ResCard} thumbnail.
  *
  * Responsibilities:
- * - Mounts a muted `<video>` and toggles its visibility on hover/tap.
+ * - Mounts a muted `<AuthVideo>` and toggles its visibility on hover/tap.
  * - Renders the centered play button (idle) / stop affordance (playing).
  * - Renders a thin progress bar at the bottom of the thumbnail while playing.
  * - Handles the play()/pause() race that can otherwise raise AbortError.
@@ -147,7 +148,7 @@ export function ResVideoHover(props: ResVideoHoverProps) {
 
 	return (
 		<>
-			<video
+			<AuthVideo
 				ref={videoRef}
 				src={`${apiPaths.resources.cover(resId)}?size=original&format=video`}
 				muted

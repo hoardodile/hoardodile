@@ -42,6 +42,12 @@ export type DesktopUpdateState =
 
 export type DesktopCloseAction = "ask" | "tray" | "quit"
 
+/** Non-secret continuity information; it never authenticates a request. */
+export type DesktopAuthenticationContext = {
+	readonly signedIn: boolean
+	readonly href: string
+}
+
 export type DesktopShellConfig = {
 	readonly libraryPath: string
 	readonly sharedFolderRoot: string
@@ -53,7 +59,8 @@ export type DesktopShellConfig = {
 	readonly closeAction: DesktopCloseAction
 	/**
 	 * Drop the session cookie at every app start so the app always boots
-	 * to the sign-in screen. Off keeps the 7-day sliding session as-is.
+	 * to password verification. Known libraries unlock back to their last
+	 * page; signed-out libraries sign in. Off keeps the session as-is.
 	 */
 	readonly requireSignInOnLaunch: boolean
 	/**
@@ -134,6 +141,10 @@ export type DesktopBackupSelection = {
 export type HoardodileDesktopBridge = {
 	readonly isDesktop: true
 	readonly platform: "desktop"
+	readonly authentication?: {
+		readonly initial?: DesktopAuthenticationContext
+		update: (context: DesktopAuthenticationContext) => void
+	}
 	minimize: () => void
 	toggleMaximize: () => void
 	close: () => void

@@ -119,10 +119,7 @@ export function buildPluginRouter(deps: PluginRouterDeps) {
 			.query(async ({ input, ctx }) => {
 				// Same guard as `resource.pluginSessionToken`: a valid session
 				// cookie must be present before a file token is issued.
-				const session = await sessions.read(
-					ctx.req.cookies[ctx.env.SESSION_COOKIE_NAME],
-				)
-				if (session === undefined) {
+				if (!ctx.authenticated) {
 					throw new TRPCError({ code: "UNAUTHORIZED" })
 				}
 				const token = await sessions.createToken(FILE_TOKEN_TTL_SECONDS, {

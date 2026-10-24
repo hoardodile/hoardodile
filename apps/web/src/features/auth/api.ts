@@ -6,6 +6,7 @@ import type {
 	SetupRequest,
 } from "@hoardodile/schemas"
 import {
+	authSessionResponse,
 	authStatus,
 	logoutResponse,
 	passwordOpResponse,
@@ -14,6 +15,13 @@ import { queryOptions } from "@tanstack/react-query"
 import { z } from "zod"
 import { HttpError, jsonFetch } from "@/lib/http"
 import { apiPaths } from "@/lib/paths"
+import {
+	acceptSession,
+	isExplicitlySignedOut,
+	isSessionLocked,
+	observeAuthStatus,
+	sessionMode,
+} from "./session"
 
 const authStatusResponse = authStatus.extend({
 	demoPassword: z.boolean().optional(),
@@ -26,7 +34,10 @@ export async function fetchAuthStatus() {
 		// hung connection leave the app on skeletons forever.
 		signal: AbortSignal.timeout(AUTH_STATUS_TIMEOUT_MS),
 	})
-	return authStatusResponse.parse(body)
+	const status = authStatusResponse.parse(body)
+	if (isSessionLocked() || isExplicitlySignedOut()) status.authenticated = false
+	observeAuthStatus(status)
+	return status
 }
 
 /**
@@ -45,11 +56,28 @@ export async function setup(
 }
 
 export async function login(payload: LoginRequest) {
-	const body = await jsonFetch(apiPaths.auth.login(), {
-		method: "POST",
-		body: JSON.stringify(payload),
-	})
-	return authStatus.parse(body)
+	return verifyPassword(payload, false)
+}
+
+export async function unlock(payload: LoginRequest) {
+	return verifyPassword(payload, true)
+}
+
+async function verifyPassword(payload: LoginRequest, unlocking: boolean) {
+	const requestedMode = sessionMode()
+	const body = await jsonFetch(
+		unlocking ? apiPaths.auth.unlock() : apiPaths.auth.login(),
+		{
+			method: "POST",
+			signal: AbortSignal.timeout(AUTH_STATUS_TIMEOUT_MS),
+			body: JSON.stringify({ ...payload, sessionMode: requestedMode }),
+		},
+	)
+	const status = authSessionResponse.parse(body)
+	if (requestedMode === "page" && status.sessionToken === undefined)
+		throw new Error("Missing page session credential")
+	acceptSession(status.sessionToken)
+	return authStatus.parse(status)
 }
 
 /**

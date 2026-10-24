@@ -1,5 +1,6 @@
 import { cn } from "@hoardodile/ui"
 import { useEffect, useRef, useState } from "react"
+import { AuthImage } from "@/features/auth/media"
 import { apiPaths } from "@/lib/paths"
 
 export type CharThumbProps = {
@@ -33,7 +34,7 @@ export type CharThumbProps = {
 /**
  * Thumbnail tile for a character avatar or fullbody image. Hits the
  * auth-guarded HTTP endpoint (`/api/characters/:id/thumb/:variant`), which
- * answers 404 when the character has no image — the `<img>` is then removed
+ * answers 404 when the character has no image — the `<AuthImage>` is then removed
  * and the tile renders the character name (or its initial, for chips).
  *
  * Rounded thumbnail with cover-fit image and a white hover overlay that
@@ -60,13 +61,13 @@ export function CharThumb(props: CharThumbProps) {
 		setBroken(false)
 	}, [cacheKey])
 
-	// Browsers fire the `load` event synchronously when an <img> is mounted
+	// Browsers fire the `load` event synchronously when an <AuthImage> is mounted
 	// with a fully cached `src` (e.g. fast back-navigation). React attaches
 	// `onLoad` after that, so the handler never runs and `loaded` stays
 	// false forever. Detect the already-complete case here and recover.
 	useEffect(() => {
 		const el = imgRef.current
-		if (el === null) return
+		if (el === null || !el.getAttribute("src")) return
 		if (el.complete && el.naturalWidth > 0) {
 			setLoaded(true)
 		} else if (el.complete && el.naturalWidth === 0) {
@@ -86,7 +87,7 @@ export function CharThumb(props: CharThumbProps) {
 			data-state={loaded ? "loaded" : broken ? "empty" : "pending"}
 		>
 			{broken ? null : (
-				<img
+				<AuthImage
 					ref={imgRef}
 					src={src}
 					alt={alt ?? ""}

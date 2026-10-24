@@ -62,6 +62,7 @@ export type FileToken = {
 export type TokenScope =
 	| { readonly kind: "res"; readonly id: string }
 	| { readonly kind: "plugin"; readonly id: string }
+	| { readonly kind: "http"; readonly id: string }
 
 export type SessionStore = {
 	/** Issue a brand-new sealed session. */
@@ -158,7 +159,7 @@ export function verifyToken(
 		expiryStr === undefined ||
 		id === undefined ||
 		sig === undefined ||
-		(kind !== "res" && kind !== "plugin")
+		(kind !== "res" && kind !== "plugin" && kind !== "http")
 	) {
 		return undefined
 	}

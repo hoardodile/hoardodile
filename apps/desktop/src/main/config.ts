@@ -40,7 +40,7 @@ export type DesktopConfig = {
 	startInTray: boolean
 	/** What closing the app window does: ask, hide to tray, or quit the app. */
 	closeAction: CloseAction
-	/** Drop the session cookie on boot so every app launch starts at sign-in. */
+	/** Drop the credential on boot; known libraries unlock back to their last page. */
 	requireSignInOnLaunch: boolean
 	/**
 	 * Drop the session cookie whenever a fresh app window is created
@@ -57,6 +57,8 @@ export type DesktopConfig = {
 	windowBounds: WindowBounds | null
 	/** Whether the app window was maximized when it was last captured. */
 	windowMaximized: boolean
+	/** Per-library continuity metadata; never contains passwords or credentials. */
+	authContexts?: Record<string, { signedIn: boolean; href: string }>
 }
 
 const windowBoundsSchema = z.object({
@@ -88,6 +90,12 @@ const storedConfigSchema = z.object({
 	resourceVersion: z.string().nullable(),
 	windowBounds: windowBoundsSchema.nullable().optional(),
 	windowMaximized: z.boolean().optional(),
+	authContexts: z
+		.record(
+			z.string(),
+			z.object({ signedIn: z.boolean(), href: z.string().max(4096) }),
+		)
+		.optional(),
 })
 
 export function defaultDesktopConfig(
@@ -170,6 +178,9 @@ export function parseDesktopConfig(
 		resourceVersion: parsed.data.resourceVersion ?? defaults.resourceVersion,
 		windowBounds: normalizeWindowBounds(parsed.data.windowBounds),
 		windowMaximized: parsed.data.windowMaximized ?? defaults.windowMaximized,
+		...(parsed.data.authContexts
+			? { authContexts: parsed.data.authContexts }
+			: {}),
 	}
 }
 

@@ -266,7 +266,7 @@
 			"about": "Acerca de",
 			"desktop": "Escritorio",
 			"custom": "Personalizado",
-			"privacy": "Privacidad",
+			"web": "Web",
 			"archives": "Archivos",
 			"archive": "Copias",
 			"plugins": "Complementos",
@@ -327,28 +327,16 @@
 			"title": "Cuenta",
 			"description": "De un solo usuario: la cuenta protege la puerta."
 		},
-		"privacy": {
-			"signOutSection": {
-				"title": "Cierre de sesión automático",
-				"description": "Si esta pestaña permanece oculta más del tiempo establecido, la sesión se cierra y se muestra la página de inicio de sesión — la única protección completa contra las miniaturas de vista previa."
+		"web": {
+			"title": "Sesión del navegador",
+			"description": "Estos ajustes solo se aplican a este navegador.",
+			"requireUnlock": {
+				"title": "Desbloquear cada vez que se abra la página",
+				"description": "Desbloquea tras recargar, reabrir una pestaña o reiniciar el navegador para volver a la página anterior. Se aplica en la próxima carga."
 			},
-			"autoLogout": {
-				"title": "Cerrar sesión al dejar sin atención",
-				"description": "La pestaña vigila la visibilidad; al volver después del tiempo establecido aterrizas en la página de inicio de sesión."
-			},
-			"delayLabel": "Cerrar sesión después de",
-			"delay": {
-				"immediately": "Inmediatamente",
-				"minutes_one": "{{count}} minuto",
-				"minutes_other": "{{count}} minutos"
-			},
-			"idleTimeout": {
-				"label": "Tiempo de inactividad de sesión",
-				"description": "Se aplica en el servidor, por lo que también cubre pestañas cerradas y otros navegadores.",
-				"hours_one": "{{count}} hora",
-				"hours_other": "{{count}} horas",
-				"days_one": "{{count}} día",
-				"days_other": "{{count}} días"
+			"autoLock": {
+				"title": "Bloquear al salir de la página",
+				"description": "Bloquea esta pestaña inmediatamente al cambiar de pestaña o minimizar el navegador. Las demás pestañas son independientes."
 			}
 		},
 		"password": {
@@ -488,12 +476,12 @@
 				"description": "No se abre ninguna ventana hasta que elijas Abrir desde la bandeja."
 			},
 			"signInOnLaunch": {
-				"title": "Iniciar sesión en cada inicio",
-				"description": "Inicia sesión de nuevo cada vez que abras la app."
+				"title": "Desbloquear al iniciar",
+				"description": "Desbloquea al iniciar la aplicación para volver a la última página."
 			},
 			"signInOnWindowOpen": {
-				"title": "Iniciar sesión al reabrir desde la bandeja",
-				"description": "Inicia sesión de nuevo tras cerrar la ventana (bandeja, segundo inicio)."
+				"title": "Desbloquear al abrir desde la bandeja",
+				"description": "Bloquea al cerrar la ventana y vuelve a la página anterior después de desbloquear."
 			},
 			"autoUpdate": {
 				"title": "Actualizaciones automáticas",
@@ -878,6 +866,13 @@
 		"toastPrecacheSuccess_one": "Se precalentó {{count}} elemento",
 		"toastPrecacheSuccess_other": "Se precalentaron {{count}} elementos",
 		"toastPrecachePartial": "El precalentamiento terminó con {{failed}} fallos"
+	},
+	"unlock": {
+		"title": "Biblioteca bloqueada",
+		"description": "Introduce tu contraseña para volver a la página anterior.",
+		"submit": "Desbloquear",
+		"submitting": "Desbloqueando…",
+		"formAria": "Desbloquear biblioteca"
 	},
 	"login": {
 		"brand": "Hoardodile",

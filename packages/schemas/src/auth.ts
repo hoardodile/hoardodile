@@ -7,9 +7,10 @@ import { z } from "zod"
  */
 export const MIN_PASSWORD_LENGTH = 4
 
-/** Body of `POST /auth/login`: a single non-empty password. */
+/** Password verification for login/unlock; page mode issues an in-memory credential. */
 export const loginRequest = z.object({
 	password: z.string().min(1),
+	sessionMode: z.enum(["cookie", "page"]).optional(),
 })
 
 /**
@@ -31,7 +32,7 @@ export const changePasswordRequest = z.object({
 
 /**
  * Response of `GET /auth/status` and `POST /auth/login`: whether the current
- * request is authenticated by a valid session cookie, and whether the
+ * request is authenticated by a valid cookie or page credential, and whether the
  * server has an admin password configured at all. `configured: false`
  * means the server is still unclaimed and the web UI must offer the
  * first-run setup form instead of the login form.
@@ -39,6 +40,11 @@ export const changePasswordRequest = z.object({
 export const authStatus = z.object({
 	authenticated: z.boolean(),
 	configured: z.boolean(),
+})
+
+/** Only password verification may return a page credential. */
+export const authSessionResponse = authStatus.extend({
+	sessionToken: z.string().optional(),
 })
 
 /** Response of `POST /auth/logout`: sentinel acknowledgement. */

@@ -9,16 +9,17 @@ import {
 	Outlet,
 	useRouterState,
 } from "@tanstack/react-router"
-import { useEffect } from "react"
+import { useEffect, useLayoutEffect } from "react"
 import { useTranslation } from "react-i18next"
 import { AppShell } from "@/components/layout/AppShell"
+import { useAuthSession } from "@/features/auth/session"
 import {
 	closeDownloadConsent,
 	enqueueDownloadConsent,
 	rehydrateDownloadConsent,
 } from "@/features/plugin/download/consent-store"
 import { DownloadConsentDialog } from "@/features/plugin/download/DownloadConsentDialog"
-import { useAutoLogout } from "@/features/privacy/useAutoLogout"
+import { useSessionProtection } from "@/features/privacy/useSessionProtection"
 import { maintenanceOptions } from "@/features/protection/api"
 import { FileWriteNotice } from "@/features/protection/FileWriteNotice"
 import { MaintenanceScreen } from "@/features/protection/MaintenanceScreen"
@@ -72,14 +73,26 @@ export async function handleSseEvent(
 function RootComponent() {
 	const { t } = useTranslation()
 	const queryClient = useQueryClient()
-	const maintenance = useQuery(maintenanceOptions())
+	const authenticated = useAuthSession()
+	const maintenance = useQuery({
+		...maintenanceOptions(),
+		enabled: authenticated,
+	})
 	const pathname = useRouterState({
 		select: (state) => state.location.pathname,
 	})
-	const authenticationPage = pathname === "/login" || pathname === "/setup"
-	useAutoLogout()
+	const authenticationPage =
+		pathname === "/login" || pathname === "/unlock" || pathname === "/setup"
+	useSessionProtection()
+	useLayoutEffect(() => {
+		if (authenticationPage || authenticated) {
+			const root = document.getElementById("root")
+			if (root) root.style.visibility = ""
+		}
+	}, [authenticationPage, authenticated])
 	useEffect(
 		function startSse() {
+			if (!authenticated) return
 			function rehydrateConsent() {
 				void trpcQuery("pluginAsset", "listPending")
 					.then((pending) => rehydrateDownloadConsent(pending))
@@ -104,7 +117,7 @@ function RootComponent() {
 				stop()
 			}
 		},
-		[queryClient, t],
+		[queryClient, t, authenticated],
 	)
 	return (
 		<div
@@ -118,7 +131,7 @@ function RootComponent() {
 					<Outlet />
 				</AppShell>
 			)}
-			<DownloadConsentDialog />
+			{authenticated && <DownloadConsentDialog />}
 			<Toaster />
 		</div>
 	)

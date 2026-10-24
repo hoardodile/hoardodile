@@ -266,7 +266,7 @@
 			"about": "关于",
 			"desktop": "桌面",
 			"custom": "自制",
-			"privacy": "隐私",
+			"web": "Web",
 			"archives": "归档",
 			"archive": "备份",
 			"plugins": "插件",
@@ -327,28 +327,16 @@
 			"title": "账户",
 			"description": "单用户实例——账户守护大门。"
 		},
-		"privacy": {
-			"signOutSection": {
-				"title": "自动登出",
-				"description": "标签页隐藏超过设定时长后自动登出并回到登录页——这是防止预览缩略图的唯一彻底办法。"
+		"web": {
+			"title": "浏览器会话",
+			"description": "这些设置仅对当前浏览器有效。",
+			"requireUnlock": {
+				"title": "每次打开时要求解锁",
+				"description": "刷新、重新打开标签页或重启浏览器后需要解锁，解锁后返回原页面。下次打开或刷新时生效。"
 			},
-			"autoLogout": {
-				"title": "离开时自动登出",
-				"description": "标签页会监听可见性；超过时长后回到页面即落在登录页。"
-			},
-			"delayLabel": "离开多久后登出",
-			"delay": {
-				"immediately": "立即",
-				"minutes_one": "{{count}} 分钟",
-				"minutes_other": "{{count}} 分钟"
-			},
-			"idleTimeout": {
-				"label": "会话闲置超时",
-				"description": "在服务端生效，因此同样覆盖关闭的标签页与其他浏览器。",
-				"hours_one": "{{count}} 小时",
-				"hours_other": "{{count}} 小时",
-				"days_one": "{{count}} 天",
-				"days_other": "{{count}} 天"
+			"autoLock": {
+				"title": "离开页面时自动锁屏",
+				"description": "切换标签页或最小化浏览器时立即锁定当前标签页，其他标签页独立运行。"
 			}
 		},
 		"password": {
@@ -488,12 +476,12 @@
 				"description": "在托盘中选择打开之前不显示窗口。"
 			},
 			"signInOnLaunch": {
-				"title": "每次启动需要登录",
-				"description": "每次打开应用都需要重新登录。"
+				"title": "启动时要求解锁",
+				"description": "每次启动应用时解锁，返回上次打开的页面。"
 			},
 			"signInOnWindowOpen": {
-				"title": "从托盘再次打开需要登录",
-				"description": "关闭窗口后再次打开（托盘、再次启动）需要重新登录。"
+				"title": "从托盘重新打开时要求解锁",
+				"description": "关闭窗口时锁屏，重新打开并解锁后返回原页面。"
 			},
 			"autoUpdate": {
 				"title": "自动更新",
@@ -878,6 +866,13 @@
 		"toastPrecacheSuccess_one": "已预缓存 {{count}} 项",
 		"toastPrecacheSuccess_other": "已预缓存 {{count}} 项",
 		"toastPrecachePartial": "预缓存完成，{{failed}} 项失败"
+	},
+	"unlock": {
+		"title": "资料库已锁定",
+		"description": "输入密码，返回离开前的页面。",
+		"submit": "解锁",
+		"submitting": "正在解锁…",
+		"formAria": "解锁资料库"
 	},
 	"login": {
 		"brand": "Hoardodile",

@@ -9,6 +9,7 @@ import {
 import { type ReactElement, useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { ExternalLink } from "@/components/common/ExternalLink"
+import { AuthImage } from "@/features/auth/media"
 import { apiPaths } from "@/lib/paths"
 import { hostnameOf, withScheme } from "@/lib/url"
 import { useTagList } from "./store"
@@ -96,7 +97,7 @@ export function TagChipHover(props: TagChipHoverProps) {
 					>
 						<div className="flex w-fit flex-col gap-2 p-3">
 							{thumbSrc !== undefined && !imgFailed ? (
-								<img
+								<AuthImage
 									src={thumbSrc}
 									alt=""
 									loading="lazy"

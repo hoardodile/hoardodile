@@ -1,6 +1,7 @@
 import { requestSchemas } from "@hoardodile/host-web"
 import { pluginMethods } from "@hoardodile/sdk-web"
 import type { QueryClient } from "@tanstack/react-query"
+import { authenticatedReadUrl } from "@/features/auth/media"
 import { invalidateResources } from "@/features/res/api"
 import { apiPutBlob } from "@/lib/http"
 import { apiPaths } from "@/lib/paths"
@@ -37,7 +38,9 @@ export function createHandlers(qc: QueryClient): HostHandlerEntry[] {
 					throw new Error(text || `cover upload failed (${res.status})`)
 				}
 				await invalidateResources(qc, ctx.resId)
-				return { path: apiPaths.resources.cover(ctx.resId) }
+				return {
+					path: await authenticatedReadUrl(apiPaths.resources.cover(ctx.resId)),
+				}
 			},
 		),
 	]

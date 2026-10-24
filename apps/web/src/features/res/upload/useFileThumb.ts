@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react"
+import { credentialedFetch } from "@/lib/http"
 import { apiPaths } from "@/lib/paths"
 import { isThumbnailable } from "./clientThumbnail"
 
@@ -72,10 +73,13 @@ export function useFileThumb(
 
 			try {
 				abortCtrl = new AbortController()
-				const res = await fetch(apiPaths.uploads.stagedPreview(stagedFileId!), {
-					credentials: "include",
-					signal: abortCtrl.signal,
-				})
+				const res = await credentialedFetch(
+					apiPaths.uploads.stagedPreview(stagedFileId!),
+					{
+						credentials: "include",
+						signal: abortCtrl.signal,
+					},
+				)
 				if (!res.ok) {
 					const text = await res.text().catch(() => "")
 					throw new Error(text || `preview fetch failed (${res.status})`)

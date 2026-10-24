@@ -1,7 +1,8 @@
 import multipart from "@fastify/multipart"
 import fastifySSE from "@fastify/sse"
 import type { FastifyInstance, FastifyPluginAsync } from "fastify"
-import { cookieOptions } from "src/domain/auth/cookie.ts"
+import { isReadTokenPath, readTokenScope } from "src/domain/auth/read-token.ts"
+import { touchRequestSession } from "src/domain/auth/request-session.ts"
 import { cacheAdminPlugin } from "./cache-admin.ts"
 import { charFilesPlugin } from "./char-files.ts"
 import { charThumbsPlugin } from "./char-thumbs.ts"
@@ -31,6 +32,13 @@ import { uploadPreviewsPlugin } from "./upload-previews.ts"
  * (when stale enough) refreshed via `app.sessions.touch`.
  */
 async function protectedHttpPluginImpl(app: FastifyInstance): Promise<void> {
+	app.addHook("onSend", async (req, reply, payload) => {
+		if (new URL(req.url, "http://local").searchParams.has("readToken"))
+			reply
+				.header("cache-control", "no-store")
+				.header("referrer-policy", "no-referrer")
+		return payload
+	})
 	app.addHook("preHandler", async (req, reply) => {
 		// Sandboxed plugin iframes have an opaque origin ("null") and cannot
 		// send SameSite=strict cookies. Accept session tokens embedded
@@ -53,6 +61,23 @@ async function protectedHttpPluginImpl(app: FastifyInstance): Promise<void> {
 		// file previews, a cookie-authenticated app feature) are not
 		// token-authenticated at all.
 		const pathname = req.url.split("?", 1)[0] ?? ""
+		const readToken = new URL(req.url, "http://local").searchParams.get(
+			"readToken",
+		)
+		if (readToken !== null) {
+			reply
+				.header("cache-control", "no-store")
+				.header("referrer-policy", "no-referrer")
+			const verified = await app.sessions.verifyToken(readToken)
+			if (
+				(req.method === "GET" || req.method === "HEAD") &&
+				isReadTokenPath(pathname) &&
+				verified?.scope.kind === "http" &&
+				verified.scope.id === readTokenScope(pathname)
+			)
+				return
+			return reply.code(401).send({ error: "unauthorized" })
+		}
 		const pathMatch =
 			req.method === "GET" || req.method === "HEAD"
 				? pathname.match(
@@ -101,24 +126,18 @@ async function protectedHttpPluginImpl(app: FastifyInstance): Promise<void> {
 			}
 		}
 
-		const cookie = req.cookies[app.env.SESSION_COOKIE_NAME]
-		const touched = await app.sessions.touch(
-			cookie,
-			app.env.SESSION_TTL_SECONDS,
-		)
+		const touched = await touchRequestSession({
+			req,
+			reply,
+			env: app.env,
+			sessions: app.sessions,
+		})
 		if (touched === undefined) {
 			await reply
 				.code(401)
 				.type("application/json")
 				.send({ error: "unauthorized" })
 			return
-		}
-		if (touched.sealed !== undefined) {
-			reply.setCookie(
-				app.env.SESSION_COOKIE_NAME,
-				touched.sealed,
-				cookieOptions(app.env, app.env.SESSION_TTL_SECONDS),
-			)
 		}
 
 		// While viewing a past archive, block every route that has not been

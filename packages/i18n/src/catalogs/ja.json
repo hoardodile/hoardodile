@@ -266,7 +266,7 @@
 			"about": "このアプリについて",
 			"desktop": "デスクトップ",
 			"custom": "カスタム",
-			"privacy": "プライバシー",
+			"web": "Web",
 			"archives": "アーカイブ",
 			"archive": "バックアップ",
 			"plugins": "プラグイン",
@@ -327,28 +327,16 @@
 			"title": "アカウント",
 			"description": "シングルユーザー — アカウントが扉を守ります。"
 		},
-		"privacy": {
-			"signOutSection": {
-				"title": "自動サインアウト",
-				"description": "このタブが設定時間を超えて非表示のままだと、セッションがサインアウトされてログインページが表示されます。プレビューサムネイルに対する唯一の完全な保護です。"
+		"web": {
+			"title": "ブラウザーのセッション",
+			"description": "これらの設定は現在のブラウザーにのみ適用されます。",
+			"requireUnlock": {
+				"title": "ページを開くたびにロック解除を要求",
+				"description": "再読み込み、タブの再表示、ブラウザーの再起動後にロックを解除すると元のページに戻ります。次回の読み込みから適用されます。"
 			},
-			"autoLogout": {
-				"title": "放置時にサインアウト",
-				"description": "タブが表示状態を監視します。設定時間を超えて戻るとログインページが表示されます。"
-			},
-			"delayLabel": "サインアウトまでの時間",
-			"delay": {
-				"immediately": "すぐに",
-				"minutes_one": "{{count}}分",
-				"minutes_other": "{{count}}分"
-			},
-			"idleTimeout": {
-				"label": "セッションのアイドルタイムアウト",
-				"description": "サーバー側で適用されるため、閉じたタブや他のブラウザにも適用されます。",
-				"hours_one": "{{count}}時間",
-				"hours_other": "{{count}}時間",
-				"days_one": "{{count}}日",
-				"days_other": "{{count}}日"
+			"autoLock": {
+				"title": "ページを離れたらロック",
+				"description": "タブの切り替えやブラウザーの最小化時に、このタブを直ちにロックします。他のタブは独立して動作します。"
 			}
 		},
 		"password": {
@@ -488,12 +476,12 @@
 				"description": "トレイから「開く」を選択するまでウィンドウは表示されません。"
 			},
 			"signInOnLaunch": {
-				"title": "起動のたびにサインイン",
-				"description": "アプリを開くたびに再度サインインします。"
+				"title": "起動時にロック解除を要求",
+				"description": "アプリの起動時にロックを解除して前回のページに戻ります。"
 			},
 			"signInOnWindowOpen": {
-				"title": "トレイから再度開くときもサインイン",
-				"description": "ウィンドウを閉じた後に再度開くとき（トレイ、再起動）はサインインします。"
+				"title": "トレイから再表示するときにロック解除を要求",
+				"description": "ウィンドウを閉じるとロックされ、解除すると元のページに戻ります。"
 			},
 			"autoUpdate": {
 				"title": "自動更新",
@@ -878,6 +866,13 @@
 		"toastPrecacheSuccess_one": "{{count}}件 プリキャッシュしました",
 		"toastPrecacheSuccess_other": "{{count}}件 プリキャッシュしました",
 		"toastPrecachePartial": "{{failed}}件の失敗を伴ってプリキャッシュが完了しました"
+	},
+	"unlock": {
+		"title": "ライブラリーはロックされています",
+		"description": "パスワードを入力して元のページに戻ります。",
+		"submit": "ロック解除",
+		"submitting": "ロック解除中…",
+		"formAria": "ライブラリーのロック解除"
 	},
 	"login": {
 		"brand": "Hoardodile",

@@ -206,6 +206,29 @@ describe("parseDesktopConfig", () => {
 })
 
 describe("writeDesktopConfig", () => {
+	it("round-trips non-secret continuity separately for each library", () => {
+		const dir = mkdtempSync(join(tmpdir(), "hd-auth-context-"))
+		scratch.push(dir)
+		const firstLibrary = join(dir, "first")
+		const secondLibrary = join(dir, "second")
+		const config = defaultDesktopConfig(firstLibrary, dir)
+		config.authContexts = {
+			[firstLibrary]: {
+				signedIn: true,
+				href: "/documents/one?mode=read#section",
+			},
+			[secondLibrary]: { signedIn: false, href: "/" },
+		}
+		const file = join(dir, "desktop.json")
+		writeDesktopConfig(file, config)
+		const restored = parseDesktopConfig(
+			JSON.parse(readFileSync(file, "utf8")),
+			firstLibrary,
+			dir,
+		)
+		expect(restored.authContexts).toEqual(config.authContexts)
+	})
+
 	it("round-trips JSON to disk", () => {
 		const dir = mkdtempSync(join(tmpdir(), "hd-desktop-"))
 		scratch.push(dir)

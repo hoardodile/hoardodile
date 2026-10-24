@@ -60,6 +60,23 @@ test("logger redacts password fields in payloads", () => {
 	expect(out).toContain(REDACTED)
 })
 
+test("logger redacts page refresh credentials and native read capabilities", () => {
+	const { stream, chunks } = capture()
+	const log = createLogger({ level: "info", destination: stream })
+	log.info({
+		req: {
+			method: "GET",
+			url: "/api/resources/id/cover?readToken=READ-SECRET&size=thumb",
+			headers: {},
+		},
+		res: { headers: { "x-hoardodile-session": "SESSION-SECRET" } },
+	})
+	const out = chunks.join("")
+	expect(out).not.toContain("READ-SECRET")
+	expect(out).not.toContain("SESSION-SECRET")
+	expect(out).toContain("size=thumb")
+})
+
 test("source logger uses pino-roll transports for file output", () => {
 	const opts = buildLoggerOptions({
 		fromBundle: false,

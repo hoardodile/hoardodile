@@ -7,6 +7,7 @@ import {
 import { cn } from "@hoardodile/ui/lib/utils"
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
+import { AuthDownload } from "@/features/auth/media"
 import { ResPreviewDialog } from "@/features/res/components/ResPreviewDialog"
 import { useDateFormatter } from "@/features/settings/datePrefs"
 import { type TrashItem, trashDownloadUrl } from "./api"
@@ -94,14 +95,14 @@ export function TrashPreviewDialog(props: TrashPreviewDialogProps) {
 					{index + 1} / {items.length}
 				</span>
 			</div>
-			<a
+			<AuthDownload
 				href={trashDownloadUrl(current.name)}
 				download
 				className="flex h-8 items-center gap-1 rounded-full bg-black/60 px-3 text-xs text-white transition-colors hover:bg-black/80"
 			>
 				<Download className="size-4" />
 				{t("me.trash.download")}
-			</a>
+			</AuthDownload>
 		</div>
 	)
 

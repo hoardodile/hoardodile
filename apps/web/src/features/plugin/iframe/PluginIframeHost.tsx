@@ -1,4 +1,5 @@
 import { useEffect } from "react"
+import { useAuthSession } from "@/features/auth/session"
 import { setIframeContainer } from "./iframe-instance"
 
 /**
@@ -7,7 +8,9 @@ import { setIframeContainer } from "./iframe-instance"
  * attach-point for resource preview instances. Mount once at the app root.
  */
 export function PluginIframeHost() {
+	const authenticated = useAuthSession()
 	useEffect(() => {
+		if (!authenticated) return
 		const el = document.createElement("div")
 		el.id = "plugin-iframe-host"
 		// z-index:60 keeps plugin previews above the dialog content (z-50).
@@ -19,7 +22,7 @@ export function PluginIframeHost() {
 			setIframeContainer(undefined)
 			document.body.removeChild(el)
 		}
-	}, [])
+	}, [authenticated])
 
 	return null
 }

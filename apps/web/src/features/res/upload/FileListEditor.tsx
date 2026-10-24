@@ -22,6 +22,7 @@ import { Cross } from "@hoardodile/ui/icons/marks"
 import { GalleryAdd } from "@hoardodile/ui/icons/registry"
 import { useCallback, useMemo, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
+import { AuthImage } from "@/features/auth/media"
 import { useWheelHorizontalScroll } from "@/hooks/useWheelHorizontalScroll"
 import { formatBytes } from "@/lib/formatBytes"
 import { randomUUID } from "@/lib/randomUUID"
@@ -399,7 +400,7 @@ function ThumbBackground(props: ThumbBackgroundProps) {
 	const { thumb, fileName } = props
 	if (thumb.kind === "ready") {
 		return (
-			<img
+			<AuthImage
 				src={thumb.url}
 				alt={fileName}
 				className="absolute inset-0 h-full w-full object-contain"

@@ -5,6 +5,7 @@ import type {
 } from "react"
 import { useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
+import { AuthAudio } from "@/features/auth/media"
 import { formatClockDuration } from "@/lib/formatDuration"
 import { apiPaths } from "@/lib/paths"
 import {
@@ -165,8 +166,7 @@ export function ResAudioPlayer(props: ResAudioPlayerProps) {
 			: 0
 
 	const media = (
-		// biome-ignore lint/a11y/useMediaCaption: archived audio files carry no caption tracks
-		<audio
+		<AuthAudio
 			ref={audioRef}
 			src={`${apiPaths.resources.cover(resId)}?size=original&format=audio`}
 			// Metadata only: the tile shows a real duration the moment it

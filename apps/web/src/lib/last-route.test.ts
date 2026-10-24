@@ -88,6 +88,8 @@ describe("isRestorablePath", () => {
 
 	it("never restores the login page or junk", () => {
 		expect(isRestorablePath("/login", PATTERNS)).toBe(false)
+		expect(isRestorablePath("/\n/example.com", PATTERNS)).toBe(false)
+		expect(isRestorablePath("/\t/example.com", PATTERNS)).toBe(false)
 		expect(isRestorablePath("not a url", PATTERNS)).toBe(false)
 		expect(isRestorablePath(`/${"x".repeat(2000)}`, PATTERNS)).toBe(false)
 	})

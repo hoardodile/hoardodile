@@ -86,6 +86,7 @@ import {
 	preloadPath,
 	type ShellPageTarget,
 } from "./window.ts"
+import { closeWindowWithProtection } from "./window-close.ts"
 import { captureBounds } from "./window-state.ts"
 
 const HEALTH_LOG_LIMIT = 200_000
@@ -811,21 +812,15 @@ async function handleWindowCloseRequest(
 	win: BrowserWindow,
 	finishClose: () => void,
 ): Promise<void> {
-	// Closing the window drops the session: reopening (tray, second
-	// launch) always lands on the sign-in screen. Quit is re-covered at
-	// boot by requireSignInOnLaunch; internal destroys (sidecar crash,
-	// LAN failure) never pass through here and keep the session.
-	if (runtime.config.requireSignInOnWindowOpen) {
-		await clearSessionCookies(session.defaultSession)
-	}
-	switch (runtime.config.closeAction) {
-		case "tray":
-			finishClose()
-			return
-		case "quit":
-			await quitApp(runtime)
-			return
-		case "ask": {
+	await closeWindowWithProtection({
+		action: runtime.config.closeAction,
+		lock: async () => {
+			if (runtime.config.requireSignInOnWindowOpen)
+				await clearSessionCookies(session.defaultSession)
+		},
+		hide: finishClose,
+		quit: () => quitApp(runtime),
+		confirm: async () => {
 			const strings = closeDialogStrings(runtime.language)
 			const { response, checkboxChecked } = await dialog.showMessageBox(win, {
 				type: "question",
@@ -837,21 +832,15 @@ async function handleWindowCloseRequest(
 				cancelId: 2,
 				checkboxLabel: strings.remember,
 			})
-			if (response === 2) return
+			if (response === 2) return "cancel"
+			const action = response === 1 ? "quit" : "tray"
 			if (checkboxChecked) {
-				runtime.config = {
-					...runtime.config,
-					closeAction: response === 1 ? "quit" : "tray",
-				}
+				runtime.config = { ...runtime.config, closeAction: action }
 				persist(runtime)
 			}
-			if (response === 1) {
-				await quitApp(runtime)
-			} else {
-				finishClose()
-			}
-		}
-	}
+			return action
+		},
+	})
 }
 
 /**
@@ -996,6 +985,16 @@ async function boot(): Promise<void> {
 
 	registerIpc({
 		getConfig: () => runtime.config,
+		updateAuthContext(context) {
+			runtime.config = {
+				...runtime.config,
+				authContexts: {
+					...runtime.config.authContexts,
+					[runtime.config.libraryPath]: context,
+				},
+			}
+			persist(runtime)
+		},
 		portable: () => runtime.portable,
 		pickLibraryFolder: (parent) => pickDirectory(parent),
 		async pickBackupFolder(purpose, parent) {

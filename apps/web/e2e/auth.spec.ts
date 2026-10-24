@@ -38,7 +38,7 @@ test.describe("auth flow", () => {
 		await expect(page).toHaveURL("/")
 	})
 
-	test("changes the password from the settings page and signs back in", async ({
+	test("changes the password from settings and unlocks with the new password", async ({
 		page,
 	}) => {
 		await page.goto("/")
@@ -65,14 +65,15 @@ test.describe("auth flow", () => {
 
 		// The old password no longer works; the new one does.
 		await page.context().clearCookies()
-		await page.goto("/login")
+		await page.goto("/settings")
+		await expect(page).toHaveURL(/\/unlock$/)
 		await page.getByLabel(/password/i).fill(PASSWORD)
-		await page.getByTestId("login-submit").click()
+		await page.getByTestId("unlock-submit").click()
 		await expect(page.getByRole("alert")).toBeVisible()
-		await expect(page).toHaveURL(/\/login$/)
+		await expect(page).toHaveURL(/\/unlock$/)
 
 		await page.getByLabel(/password/i).fill(ROTATED_PASSWORD)
-		await page.getByTestId("login-submit").click()
+		await page.getByTestId("unlock-submit").click()
 		await expect(page.getByTestId("app-sidebar")).toBeVisible()
 
 		// Rotate back so the shared E2E_TEST_PASSWORD stays valid for the

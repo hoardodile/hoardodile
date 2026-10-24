@@ -45,6 +45,7 @@ const cacheOnlySuccess = {
 const normalizeCacheKey = {
 	cacheKeyWillBeUsed: async ({ request }) => {
 		const url = new URL(request.url)
+		url.searchParams.delete("readToken")
 		url.pathname = normalizeResourceCacheKey(url.pathname)
 		return url.toString()
 	},

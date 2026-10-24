@@ -9,7 +9,7 @@ import type {
 } from "@hoardodile/shared"
 import { queryOptions } from "@tanstack/react-query"
 import { DEFAULT_TIME_ZONE } from "@/features/settings/datePrefs"
-import { apiPutBlob } from "@/lib/http"
+import { apiPutBlob, credentialedFetch } from "@/lib/http"
 import { prefKeys } from "@/lib/keys"
 import {
 	nonEmptyArray,
@@ -448,7 +448,7 @@ export async function bulkDownloadResources(
 	ids: readonly string[],
 	options: { readonly dateStamp: string },
 ): Promise<Response> {
-	return fetch(apiPaths.resources.bulkSourceZip(), {
+	return credentialedFetch(apiPaths.resources.bulkSourceZip(), {
 		method: "POST",
 		credentials: "include",
 		headers: { "Content-Type": "application/json" },

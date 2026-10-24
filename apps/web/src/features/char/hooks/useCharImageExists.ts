@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import { credentialedFetch } from "@/lib/http"
 import { apiPaths } from "@/lib/paths"
 
 /**
@@ -16,7 +17,9 @@ export function useCharImageExists(
 	useEffect(() => {
 		let cancelled = false
 		setExists(undefined)
-		fetch(apiPaths.characters.image(charId, variant), { method: "HEAD" })
+		credentialedFetch(apiPaths.characters.image(charId, variant), {
+			method: "HEAD",
+		})
 			.then((res) => {
 				if (!cancelled) setExists(res.ok)
 			})

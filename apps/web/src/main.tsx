@@ -18,6 +18,10 @@ import {
 	useIconStyle,
 } from "@/components/common/IconStyleProvider"
 import { ThemeProvider, useTheme } from "@/components/common/ThemeProvider"
+import {
+	configureSessionRoutes,
+	rememberAuthenticatedRoute,
+} from "@/features/auth/session"
 import { PluginIframeHost } from "@/features/plugin/iframe/PluginIframeHost"
 import { ensureGlobalHandler } from "@/features/plugin/iframe/plugin-iframe-global-handler"
 import {
@@ -38,7 +42,7 @@ import {
 } from "@/lib/clientLog"
 import { getDesktopBridge, isHoardodileDesktop } from "@/lib/desktop"
 import { collectFontCssPaths } from "@/lib/fonts"
-import { armLastRouteRestore, writeLastRoute } from "@/lib/last-route"
+import { armLastRouteRestore } from "@/lib/last-route"
 import { createMobileBackHistory } from "@/lib/mobile-back-history"
 import { dismissSplash } from "@/lib/splash-handoff"
 import {
@@ -119,6 +123,7 @@ const router = createRouter({
 	defaultPendingComponent: RoutePendingFallback,
 	defaultErrorComponent: AppErrorPage,
 })
+configureSessionRoutes(collectRoutePaths(routeTree))
 
 // Desktop shell navigation policy: register the SPA's real routes so the
 // main process only ever keeps same-origin navigations that target one of
@@ -129,14 +134,14 @@ if (isHoardodileDesktop()) {
 
 // Desktop reopen continuity: remember the resolved route so a recreated
 // window (tray reopen, relaunch) returns to the page the user left after
-// signing in; arm the one-shot restore for this boot. Browser tabs are
-// untouched — the key is written and read on desktop only.
+// unlocking; arm the one-shot restore for a session that needs no password.
+// Both platforms remember content routes; authentication pages never replace them.
 if (isHoardodileDesktop()) {
 	armLastRouteRestore(collectRoutePaths(routeTree))
-	router.subscribe("onResolved", () => {
-		if (isHoardodileDesktop()) writeLastRoute(router.state.location.href)
-	})
 }
+router.subscribe("onResolved", () =>
+	rememberAuthenticatedRoute(router.state.location.href),
+)
 
 declare module "@tanstack/react-router" {
 	interface Register {

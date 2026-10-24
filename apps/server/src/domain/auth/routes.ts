@@ -8,6 +8,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify"
 import type { Env } from "src/config/env.ts"
 import type { SqliteDb } from "src/infra/db/connection.ts"
 import { readSeedManifestFromRoot } from "src/seed/manifest.ts"
+import { z } from "zod"
 import {
 	clearSessionCookie,
 	cookieOptions,
@@ -15,11 +16,12 @@ import {
 } from "./cookie.ts"
 import { classifyOrigin, describeDevice } from "./device.ts"
 import { hashPassword, verifyPassword } from "./password.ts"
+import { isReadTokenPath, readTokenScope } from "./read-token.ts"
 import { getAuthRow, setAuthRow, setPasswordWeakness } from "./repo.ts"
+import { touchRequestSession } from "./request-session.ts"
 import type { SessionStore } from "./session.ts"
 import { recordSignIn } from "./signins.ts"
 import { assessPasswordStrength } from "./strength.ts"
-import { resolveSessionTtl } from "./ttl.ts"
 
 /**
  * Decide whether the incoming request is considered HTTPS. Honors the
@@ -80,13 +82,7 @@ export async function registerAuthRoutes(
 	deps: AuthDeps,
 ): Promise<void> {
 	const { env, db, sessions } = deps
-	const getSessionTtl = () => {
-		try {
-			return resolveSessionTtl(deps.preferencesDb ?? db, env)
-		} catch {
-			return resolveSessionTtl(db, env)
-		}
-	}
+	const getSessionTtl = () => env.SESSION_TTL_SECONDS
 
 	await app.register(rateLimit, { global: false })
 
@@ -101,6 +97,7 @@ export async function registerAuthRoutes(
 	// promise (or calls `done`); a plain function returning `undefined`
 	// would stall every request.
 	app.addHook("preHandler", async (req, reply) => {
+		reply.header("cache-control", "no-store")
 		if (env.FORCE_HTTPS && !isHttpsRequest(req)) {
 			return httpsRequiredReply(reply)
 		}
@@ -111,12 +108,7 @@ export async function registerAuthRoutes(
 		if (!configured) {
 			return { authenticated: false, configured: false }
 		}
-		const cookie = req.cookies[env.SESSION_COOKIE_NAME]
-		const sessionTtl = getSessionTtl()
-		const refreshed = await sessions.touch(cookie, sessionTtl)
-		if (refreshed !== undefined && refreshed.sealed !== undefined) {
-			writeSessionCookie(reply, refreshed.sealed, env, sessionTtl)
-		}
+		const refreshed = await touchRequestSession({ req, reply, env, sessions })
 		if (readSeedManifestFromRoot(env.STORAGE_ROOT) !== undefined) {
 			return {
 				authenticated: refreshed !== undefined,
@@ -154,55 +146,97 @@ export async function registerAuthRoutes(
 		},
 	)
 
-	app.post(
-		"/auth/login",
-		{
-			config: { rateLimit: passwordRateLimit },
-		},
-		async (req, reply) => {
-			const parsed = loginRequest.safeParse(req.body)
-			if (!parsed.success) {
-				reply.code(400)
-				return { error: "invalid body" }
-			}
-			const auth = getAuthRow(db)
-			if (auth === undefined) {
-				reply.code(401)
-				return { error: "not configured" }
-			}
-			const ok = await verifyPassword(auth.hash, parsed.data.password, req.log)
-			if (!ok) {
-				reply.code(401)
-				return { error: "unauthorized" }
-			}
-			const sessionTtl = getSessionTtl()
-			const issued = await sessions.rotate(sessionTtl)
-			writeSessionCookie(reply, issued.sealed, env, sessionTtl)
-			// The cleartext password is in hand: refresh the strength
-			// assessment (the hash need not be rewritten) and log the
-			// sign-in so the owner can see where the library was accessed
-			// from without ever persisting the raw user agent. Both writes
-			// are skipped while viewing a past version (read-only clone).
-			if (!req.server.readOnly) {
-				setPasswordWeakness(
-					db,
-					assessPasswordStrength(parsed.data.password) === "weak",
+	for (const endpoint of ["/auth/login", "/auth/unlock"]) {
+		app.post(
+			endpoint,
+			{
+				config: { rateLimit: passwordRateLimit },
+			},
+			async (req, reply) => {
+				const parsed = loginRequest.safeParse(req.body)
+				if (!parsed.success) {
+					reply.code(400)
+					return { error: "invalid body" }
+				}
+				const auth = getAuthRow(db)
+				if (auth === undefined) {
+					reply.code(401)
+					return { error: "not configured" }
+				}
+				const ok = await verifyPassword(
+					auth.hash,
+					parsed.data.password,
+					req.log,
 				)
-				recordSignIn(db, {
-					id: issued.session.id,
-					ip: req.ip,
-					origin: classifyOrigin(req.ip),
-					deviceLabel: describeDevice(
-						typeof req.headers["user-agent"] === "string"
-							? req.headers["user-agent"]
-							: undefined,
-					),
-					recordedAt: Date.now(),
-				})
-			}
-			return { authenticated: true, configured: true }
-		},
-	)
+				if (!ok) {
+					reply.code(401)
+					return { error: "unauthorized" }
+				}
+				const sessionTtl = getSessionTtl()
+				const issued = await sessions.rotate(sessionTtl)
+				const pageSession = parsed.data.sessionMode === "page"
+				if (!pageSession)
+					writeSessionCookie(reply, issued.sealed, env, sessionTtl)
+				// The cleartext password is in hand: refresh the strength
+				// assessment (the hash need not be rewritten) and log the
+				// sign-in so the owner can see where the library was accessed
+				// from without ever persisting the raw user agent. Both writes
+				// are skipped while viewing a past version (read-only clone).
+				if (!req.server.readOnly) {
+					setPasswordWeakness(
+						db,
+						assessPasswordStrength(parsed.data.password) === "weak",
+					)
+					if (endpoint === "/auth/login")
+						recordSignIn(db, {
+							id: issued.session.id,
+							ip: req.ip,
+							origin: classifyOrigin(req.ip),
+							deviceLabel: describeDevice(
+								typeof req.headers["user-agent"] === "string"
+									? req.headers["user-agent"]
+									: undefined,
+							),
+							recordedAt: Date.now(),
+						})
+				}
+				return {
+					authenticated: true,
+					configured: true,
+					...(pageSession ? { sessionToken: issued.sealed } : {}),
+				}
+			},
+		)
+	}
+
+	app.post("/auth/read-tokens", async (req, reply) => {
+		const touched = await touchRequestSession({ req, reply, env, sessions })
+		if (touched === undefined)
+			return reply.code(401).send({ error: "unauthorized" })
+		const parsed = z
+			.object({ paths: z.array(z.string().max(4096)).min(1).max(100) })
+			.safeParse(req.body)
+		if (
+			!parsed.success ||
+			parsed.data.paths.some(
+				(path) =>
+					!isReadTokenPath(path) ||
+					new URL(path, "http://local").pathname !== path,
+			)
+		) {
+			return reply.code(400).send({ error: "invalid paths" })
+		}
+		const ttl = Math.min(env.SESSION_TTL_SECONDS, 86400)
+		return Promise.all(
+			parsed.data.paths.map(async (path) => ({
+				path,
+				...(await sessions.createToken(ttl, {
+					kind: "http",
+					id: readTokenScope(path),
+				})),
+			})),
+		)
+	})
 
 	app.post(
 		"/auth/password",
@@ -210,8 +244,7 @@ export async function registerAuthRoutes(
 			config: { rateLimit: passwordRateLimit },
 		},
 		async (req, reply) => {
-			const cookie = req.cookies[env.SESSION_COOKIE_NAME]
-			const session = await sessions.touch(cookie, getSessionTtl())
+			const session = await touchRequestSession({ req, reply, env, sessions })
 			if (session === undefined) {
 				reply.code(401)
 				return { error: "unauthorized" }
@@ -241,11 +274,15 @@ export async function registerAuthRoutes(
 		},
 	)
 
-	app.post("/auth/logout", async (_req, reply) => {
+	app.post("/auth/logout", async (req, reply) => {
 		// Sessions are stateless cookies -- clearing the cookie is the only
 		// step needed. (A revoked-id deny-list would go here if we ever
 		// needed pre-expiry revocation.)
-		clearSessionCookie(reply, env)
+		if (
+			req.headers["x-hoardodile-session-mode"] !== "page" &&
+			req.headers.authorization === undefined
+		)
+			clearSessionCookie(reply, env)
 		return { ok: true as const }
 	})
 }

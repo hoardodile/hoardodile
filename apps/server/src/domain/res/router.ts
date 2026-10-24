@@ -204,10 +204,7 @@ export function buildResourceRouter(deps: ResourceRouterDeps) {
 		pluginSessionToken: authedProcedure
 			.input(z.object({ resId: z.string().min(1) }))
 			.query(async ({ ctx, input }) => {
-				const session = await sessions.read(
-					ctx.req.cookies[ctx.env.SESSION_COOKIE_NAME],
-				)
-				if (session === undefined) {
+				if (!ctx.authenticated) {
 					throw new TRPCError({ code: "UNAUTHORIZED" })
 				}
 				const token = await sessions.createToken(86400, {

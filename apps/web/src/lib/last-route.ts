@@ -1,9 +1,9 @@
 import { prefKeys } from "./keys"
 
 /**
- * Desktop-only "last route" restore.
+ * Per-tab unlock continuity, plus the desktop's one-shot boot restore.
  *
- * The SPA writes the resolved route as the user navigates; when the shell
+ * The SPA writes content routes as the user navigates; when the shell
  * creates a fresh window (tray reopen, relaunch), the boot arms a one-shot
  * restore so the first authenticated match on `/` redirects to the last
  * page instead of the overview. The flag is consumed at that match, so
@@ -23,7 +23,11 @@ export function isRestoreArmed(): boolean {
 
 export function writeLastRoute(href: string): void {
 	if (href.length === 0 || href.length > MAX_LAST_ROUTE_LENGTH) return
+	if (!href.startsWith("/") || href.startsWith("//") || href.includes("\\"))
+		return
+	if (["/login", "/unlock", "/setup"].includes(pathnameOf(href))) return
 	try {
+		sessionStorage.setItem(prefKeys.lastRoute, href)
 		localStorage.setItem(prefKeys.lastRoute, href)
 	} catch {
 		// best-effort (private mode / full storage)
@@ -32,7 +36,9 @@ export function writeLastRoute(href: string): void {
 
 export function readLastRoute(): string | undefined {
 	try {
-		const value = localStorage.getItem(prefKeys.lastRoute)
+		const value =
+			sessionStorage.getItem(prefKeys.lastRoute) ??
+			localStorage.getItem(prefKeys.lastRoute)
 		return value === null || value.length === 0 ? undefined : value
 	} catch {
 		return undefined
@@ -42,6 +48,7 @@ export function readLastRoute(): string | undefined {
 export function clearLastRoute(): void {
 	armedRestore = undefined
 	try {
+		sessionStorage.removeItem(prefKeys.lastRoute)
 		localStorage.removeItem(prefKeys.lastRoute)
 	} catch {
 		// best-effort
@@ -81,15 +88,18 @@ export function isRestorablePath(
 	patterns: readonly string[],
 ): boolean {
 	if (href.length > MAX_LAST_ROUTE_LENGTH) return false
-	if (!href.startsWith("/")) return false
+	if (!href.startsWith("/") || href.startsWith("//") || href.includes("\\"))
+		return false
 	const pathname = pathnameOf(href)
-	if (pathname === "/login") return false
+	if (pathname === "") return false
+	if (["/login", "/unlock", "/setup"].includes(pathname)) return false
 	return patterns.some((pattern) => matchesRoutePath(pathname, pattern))
 }
 
 function pathnameOf(href: string): string {
 	try {
-		return new URL(href, "http://hoardodile.local").pathname
+		const url = new URL(href, "http://hoardodile.local")
+		return url.origin === "http://hoardodile.local" ? url.pathname : ""
 	} catch {
 		return href.split("?")[0] ?? ""
 	}

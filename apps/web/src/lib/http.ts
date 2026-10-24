@@ -3,6 +3,17 @@
  * Callers inspect `.status` to branch on specific cases (e.g. 401 → route
  * guards, 409 → toast conflict) without parsing the generic message.
  */
+import {
+	isExplicitlySignedOut,
+	isSessionLocked,
+	lockSession,
+	needsUnlock,
+	renewSession,
+	sessionGeneration,
+	sessionMode,
+	sessionToken,
+} from "@/features/auth/session"
+
 export class HttpError extends Error {
 	readonly status: number
 
@@ -14,14 +25,70 @@ export class HttpError extends Error {
 }
 
 /**
- * Every request is sent with cookies so the httpOnly session travels through the
- * Vite dev proxy and, in production, hits the co-located Fastify server.
+ * Same-origin transport for cookie sessions and page-only bearer credentials.
+ * Locked pages cannot use either transport to fetch private content.
  */
-export function credentialedFetch(
+export async function credentialedFetch(
 	input: Parameters<typeof fetch>[0],
 	init?: Parameters<typeof fetch>[1],
 ): Promise<Response> {
-	return fetch(input, { ...init, credentials: "include" })
+	const href =
+		typeof input === "string"
+			? input
+			: input instanceof URL
+				? input.href
+				: input.url
+	const requestUrl = new URL(
+		href,
+		typeof window === "undefined" ? "http://localhost" : window.location.origin,
+	)
+	const origin =
+		typeof window === "undefined" ? "http://localhost" : window.location.origin
+	if (requestUrl.origin !== origin)
+		throw new HttpError(400, "Cross-origin authenticated request refused")
+	const pathname = requestUrl.pathname
+	const authEndpoint = /^\/auth\/(?:status|login|unlock|setup|logout)$/.test(
+		pathname,
+	)
+	if (
+		!authEndpoint &&
+		(isSessionLocked() || (sessionMode() === "page" && !sessionToken()))
+	)
+		throw new HttpError(401, "locked")
+	const headers = new Headers(
+		init?.headers ?? (input instanceof Request ? input.headers : undefined),
+	)
+	const credentialEndpoint = /^\/auth\/(?:login|unlock|setup|logout)$/.test(
+		pathname,
+	)
+	const page =
+		sessionMode() === "page" ||
+		(!credentialEndpoint && (isSessionLocked() || isExplicitlySignedOut()))
+	const credential = sessionToken()
+	if (page) {
+		headers.set("x-hoardodile-session-mode", "page")
+		if (credential) headers.set("authorization", `Bearer ${credential}`)
+	}
+	const requestGeneration = sessionGeneration()
+	const response = await fetch(input, {
+		...init,
+		headers,
+		credentials: page ? "omit" : "include",
+	})
+	const renewed = response.headers.get("x-hoardodile-session")
+	if (renewed) renewSession(renewed, requestGeneration)
+	if (
+		!authEndpoint &&
+		response.status === 401 &&
+		needsUnlock() &&
+		typeof window !== "undefined"
+	)
+		lockSession(
+			window.location.pathname + window.location.search + window.location.hash,
+		)
+	if (!authEndpoint && requestGeneration !== sessionGeneration())
+		throw new HttpError(401, "locked")
+	return response
 }
 
 /**

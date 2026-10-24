@@ -1,5 +1,6 @@
 import { cn } from "@hoardodile/ui"
 import { type ReactNode, useEffect, useRef, useState } from "react"
+import { AuthImage } from "@/features/auth/media"
 import { apiPaths } from "@/lib/paths"
 
 export type ResThumbUrlOptions = {
@@ -66,7 +67,7 @@ export type ResThumbProps = {
 /**
  * Thumbnail tile for a resource. Hits the auth-guarded HTTP endpoint
  * (`/api/resources/:id/cover?size=thumb`), which answers 404 when the
- * resource has no preview source — the `<img>` is then removed and the
+ * resource has no preview source — the `<AuthImage>` is then removed and the
  * tile renders {@link ResThumbProps.emptyContent} (or the resource name)
  * instead.
  *
@@ -100,7 +101,7 @@ export function ResThumb(props: ResThumbProps) {
 
 	useEffect(() => {
 		const el = imgRef.current
-		if (el === null) return
+		if (el === null || !el.getAttribute("src")) return
 		if (el.complete && el.naturalWidth > 0) {
 			setLoaded(true)
 		} else if (el.complete && el.naturalWidth === 0) {
@@ -135,7 +136,7 @@ export function ResThumb(props: ResThumbProps) {
 					)}
 				</div>
 			) : (
-				<img
+				<AuthImage
 					ref={imgRef}
 					src={src}
 					alt={alt ?? ""}

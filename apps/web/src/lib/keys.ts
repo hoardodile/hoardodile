@@ -33,9 +33,6 @@ export const prefKeys = {
 	overviewPinnedSeeds: "overview.pinned.seeds",
 	dateFormat: "date.format",
 	timeZone: "date.timeZone",
-	privacyAutoLogoutEnabled: "privacy.autoLogoutEnabled",
-	privacyAutoLogoutDelayMs: "privacy.autoLogoutDelayMs",
-	authSessionIdleTimeoutSeconds: "auth.sessionIdleTimeoutSeconds",
 	searchLive: "search.live",
 	/**
 	 * Global watch-only toggle (server system preference, scope `sync`).
@@ -50,9 +47,8 @@ export const prefKeys = {
 	 */
 	updateLastSeenVersion: "update.lastSeenVersion",
 	/**
-	 * Desktop-only: the last resolved route, so a reopened window (tray /
-	 * relaunch) returns to the page the user left. Never written or read
-	 * in the browser.
+	 * Last content route for unlock/reopen continuity. A tab-local copy
+	 * takes precedence over the browser-local fallback.
 	 */
 	lastRoute: "app.lastRoute",
 } as const

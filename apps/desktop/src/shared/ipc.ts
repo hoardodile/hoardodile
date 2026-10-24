@@ -20,6 +20,7 @@ export const IPC = {
 	getConfig: "desktop:config:get",
 	setConfig: "desktop:config:set",
 	configSync: "desktop:config:sync",
+	authContext: "desktop:auth:context",
 	setCloseAction: "desktop:close-action:set",
 	closeWithAction: "desktop:close-action:with",
 	setLanguage: "desktop:config:set-language",

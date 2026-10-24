@@ -6,6 +6,7 @@ import type {
 } from "@hoardodile/schemas"
 import { fetchEventSource } from "@microsoft/fetch-event-source"
 import type { QueryClient } from "@tanstack/react-query"
+import { credentialedFetch } from "@/lib/http"
 import { channelNames, lockNames } from "@/lib/keys"
 import { apiPaths } from "@/lib/paths"
 
@@ -197,7 +198,7 @@ export function connectEventSource(
 
 		try {
 			await fetchEventSource(apiPaths.events(), {
-				credentials: "include",
+				fetch: credentialedFetch,
 				signal: controller.signal,
 				openWhenHidden: true,
 				onopen: async (response) => {

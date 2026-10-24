@@ -5,7 +5,6 @@ import {
 	History,
 	InfoCircle,
 	PlugCircle,
-	ShieldCheck,
 	Shop2,
 	SliderHorizontal,
 	Star,
@@ -18,7 +17,7 @@ export type SettingsTabKey =
 	| "about"
 	| "desktop"
 	| "custom"
-	| "privacy"
+	| "web"
 	| "archive"
 	| "archives"
 	| "plugins"
@@ -33,6 +32,7 @@ export type SettingsTab = {
 		| "/settings/desktop"
 		| "/settings/custom"
 		| "/settings/privacy"
+		| "/settings/web"
 		| "/settings/backups"
 		| "/settings/archives"
 		| "/settings/plugins"
@@ -41,6 +41,7 @@ export type SettingsTab = {
 	readonly testId: string
 	/** Desktop-shell-only tab; hidden in a normal browser tab. */
 	readonly desktopOnly?: boolean
+	readonly webOnly?: boolean
 }
 
 export const SETTINGS_TABS: readonly SettingsTab[] = [
@@ -51,10 +52,11 @@ export const SETTINGS_TABS: readonly SettingsTab[] = [
 		testId: "me-tab-preferences",
 	},
 	{
-		key: "privacy",
-		path: "/settings/privacy",
-		icon: ShieldCheck,
-		testId: "me-tab-privacy",
+		key: "web",
+		path: "/settings/web",
+		icon: WindowFrame,
+		testId: "me-tab-web",
+		webOnly: true,
 	},
 	{
 		key: "custom",
@@ -111,5 +113,7 @@ export const SETTINGS_TABS: readonly SettingsTab[] = [
 export function visibleSettingsTabs(
 	isDesktop: boolean,
 ): readonly SettingsTab[] {
-	return SETTINGS_TABS.filter((tab) => !tab.desktopOnly || isDesktop)
+	return SETTINGS_TABS.filter(
+		(tab) => (!tab.desktopOnly || isDesktop) && (!tab.webOnly || !isDesktop),
+	)
 }

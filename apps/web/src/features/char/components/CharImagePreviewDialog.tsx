@@ -5,6 +5,7 @@ import {
 	DialogTitle,
 } from "@hoardodile/ui/components/dialog"
 import { useTranslation } from "react-i18next"
+import { AuthImage } from "@/features/auth/media"
 import { apiPaths } from "@/lib/paths"
 
 export type CharImagePreviewDialogProps = {
@@ -38,7 +39,7 @@ export function CharImagePreviewDialog(props: CharImagePreviewDialogProps) {
 				</DialogTitle>
 				<DialogBody className="p-0 rounded-none">
 					<div className="flex h-full w-full items-center justify-center">
-						<img
+						<AuthImage
 							src={src}
 							alt={charName}
 							className="max-h-full max-w-full object-contain"

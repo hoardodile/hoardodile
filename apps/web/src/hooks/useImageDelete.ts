@@ -1,6 +1,7 @@
 import { toast } from "@hoardodile/ui/components/toast"
 import { useCallback, useState } from "react"
 import { useTranslation } from "react-i18next"
+import { credentialedFetch } from "@/lib/http"
 
 export type UseImageDeleteArgs = {
 	readonly url: string
@@ -30,7 +31,7 @@ export function useImageDelete(args: UseImageDeleteArgs): UseImageDeleteResult {
 	const deleteImage = useCallback(async () => {
 		setIsDeleting(true)
 		try {
-			const response = await fetch(url, {
+			const response = await credentialedFetch(url, {
 				method: "DELETE",
 				credentials: "include",
 			})

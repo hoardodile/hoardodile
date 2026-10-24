@@ -123,13 +123,13 @@ describe("plugin router previewInitContext", () => {
 		expect(result.assetVersion).toBeUndefined()
 	})
 
-	test("rejects when the session cookie is missing or invalid", async () => {
+	test("accepts a session already validated by the shared context without re-reading cookies", async () => {
 		const deps = createMocks()
 		const caller = createCaller(deps, { cookie: "bogus" })
 		await expect(
 			caller.previewInitContext({ pluginId: PLUGIN_ID, resId: RES_ID }),
-		).rejects.toThrow("UNAUTHORIZED")
-		expect(deps.sessions.createToken).not.toHaveBeenCalled()
+		).resolves.toMatchObject({ fileToken: `token:86400:res:${RES_ID}` })
+		expect(deps.sessions.read).not.toHaveBeenCalled()
 	})
 
 	test("unauthenticated caller is rejected", async () => {

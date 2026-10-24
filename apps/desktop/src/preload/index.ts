@@ -1,6 +1,7 @@
 // Pure helper module (no catalogs) — keeps the sandboxed preload bundle free of the JSON catalogs.
 import { isSupportedLanguage } from "@hoardodile/i18n/core"
 import type {
+	DesktopAuthenticationContext,
 	DesktopCloseAction,
 	DesktopShellConfig,
 	DesktopUpdateState,
@@ -21,11 +22,23 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 function readSyncState(): {
 	readonly portable: boolean
 	readonly devtools: boolean
+	readonly authentication?: DesktopAuthenticationContext
 } {
 	const raw: unknown = ipcRenderer.sendSync(IPC.configSync)
 	return {
 		portable: isRecord(raw) && raw.portable === true,
 		devtools: isRecord(raw) && raw.devtools === true,
+		...(isRecord(raw) &&
+		isRecord(raw.authentication) &&
+		typeof raw.authentication.signedIn === "boolean" &&
+		typeof raw.authentication.href === "string"
+			? {
+					authentication: {
+						signedIn: raw.authentication.signedIn,
+						href: raw.authentication.href,
+					},
+				}
+			: {}),
 	}
 }
 
@@ -157,6 +170,12 @@ const syncState = readSyncState()
 const bridge: HoardodileDesktopBridge = {
 	isDesktop: true,
 	platform: "desktop",
+	authentication: {
+		initial: syncState.authentication,
+		update(context) {
+			ipcRenderer.send(IPC.authContext, context)
+		},
+	},
 	minimize() {
 		ipcRenderer.send(IPC.windowMinimize)
 	},

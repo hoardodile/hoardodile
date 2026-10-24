@@ -266,7 +266,7 @@
 			"about": "Über",
 			"desktop": "Desktop",
 			"custom": "Benutzerdefiniert",
-			"privacy": "Datenschutz",
+			"web": "Web",
 			"archives": "Archive",
 			"archive": "Backups",
 			"plugins": "Plugins",
@@ -327,28 +327,16 @@
 			"title": "Konto",
 			"description": "Einzelnutzer — das Konto bewacht die Tür."
 		},
-		"privacy": {
-			"signOutSection": {
-				"title": "Automatisches Abmelden",
-				"description": "Wenn dieser Tab länger als die Verzögerung verborgen bleibt, wird die Sitzung abgemeldet und die Anmeldeseite angezeigt — der einzige vollständige Schutz vor Vorschaubildern."
+		"web": {
+			"title": "Browsersitzung",
+			"description": "Diese Einstellungen gelten nur für diesen Browser.",
+			"requireUnlock": {
+				"title": "Beim Öffnen der Seite entsperren",
+				"description": "Nach Neuladen, erneutem Öffnen oder Browserneustart entsperren und zur letzten Seite zurückkehren. Gilt ab dem nächsten Laden."
 			},
-			"autoLogout": {
-				"title": "Abmelden, wenn unbeaufsichtigt",
-				"description": "Der Tab beobachtet die Sichtbarkeit; wenn du nach der Verzögerung zurückkommst, landest du auf der Anmeldeseite."
-			},
-			"delayLabel": "Abmelden nach",
-			"delay": {
-				"immediately": "Sofort",
-				"minutes_one": "{{count}} Minute",
-				"minutes_other": "{{count}} Minuten"
-			},
-			"idleTimeout": {
-				"label": "Sitzungs-Timeout bei Inaktivität",
-				"description": "Gilt serverseitig und deckt daher auch geschlossene Tabs und andere Browser ab.",
-				"hours_one": "{{count}} Stunde",
-				"hours_other": "{{count}} Stunden",
-				"days_one": "{{count}} Tag",
-				"days_other": "{{count}} Tage"
+			"autoLock": {
+				"title": "Beim Verlassen der Seite sperren",
+				"description": "Diesen Tab beim Tabwechsel oder Minimieren sofort sperren. Andere Tabs bleiben unabhängig."
 			}
 		},
 		"password": {
@@ -488,12 +476,12 @@
 				"description": "Kein Fenster, bis du im Infobereich „Öffnen“ wählst."
 			},
 			"signInOnLaunch": {
-				"title": "Bei jedem Start anmelden",
-				"description": "Bei jedem Öffnen der App erneut anmelden."
+				"title": "Beim Start entsperren",
+				"description": "Beim App-Start entsperren und zur letzten Seite zurückkehren."
 			},
 			"signInOnWindowOpen": {
-				"title": "Beim erneuten Öffnen aus dem Infobereich anmelden",
-				"description": "Bei jedem erneuten Öffnen nach dem Schließen (Infobereich, zweiter Start) anmelden."
+				"title": "Beim Öffnen aus dem Infobereich entsperren",
+				"description": "Beim Schließen des Fensters sperren und nach dem Entsperren zur letzten Seite zurückkehren."
 			},
 			"autoUpdate": {
 				"title": "Automatische Updates",
@@ -878,6 +866,13 @@
 		"toastPrecacheSuccess_one": "{{count}} Element vorab aufgebaut",
 		"toastPrecacheSuccess_other": "{{count}} Elemente vorab aufgebaut",
 		"toastPrecachePartial": "Vorab-Aufbau mit {{failed}} Fehlern abgeschlossen"
+	},
+	"unlock": {
+		"title": "Bibliothek gesperrt",
+		"description": "Passwort eingeben, um zur letzten Seite zurückzukehren.",
+		"submit": "Entsperren",
+		"submitting": "Wird entsperrt…",
+		"formAria": "Bibliothek entsperren"
 	},
 	"login": {
 		"brand": "Hoardodile",

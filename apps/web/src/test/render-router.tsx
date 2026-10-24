@@ -7,6 +7,8 @@ import {
 import { render } from "@testing-library/react"
 
 import { ThemeProvider } from "@/components/common/ThemeProvider"
+import { configureSessionRoutes } from "@/features/auth/session"
+import { collectRoutePaths } from "@/lib/appRoutes"
 import { routeTree } from "@/routeTree.gen"
 import { createTrpc, createTrpcClient } from "@/trpc/client"
 
@@ -37,6 +39,7 @@ export function renderRouter({
 		history: createMemoryHistory({ initialEntries }),
 		defaultPendingMs: 0,
 	})
+	configureSessionRoutes(collectRoutePaths(routeTree))
 
 	const utils = render(
 		<ThemeProvider>

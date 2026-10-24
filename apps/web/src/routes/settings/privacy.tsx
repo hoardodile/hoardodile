@@ -1,32 +1,14 @@
-import { Login2 } from "@hoardodile/ui/icons/registry"
-import { createFileRoute } from "@tanstack/react-router"
-import { useTranslation } from "react-i18next"
-import { AutoSignOutControls } from "@/features/privacy/PrivacySettingsPanel"
-import { SettingsSection } from "@/features/settings/SettingsSection"
-import { SettingsSheet } from "@/features/settings/SettingsSheet"
+import { createFileRoute, redirect } from "@tanstack/react-router"
 import { requireAuth } from "@/lib/auth-guard"
+import { isHoardodileDesktop } from "@/lib/desktop"
 
+/** Compatibility for bookmarks made before the Web settings tab. */
 export const Route = createFileRoute("/settings/privacy")({
-	beforeLoad: requireAuth,
-	component: PrivacySettingsRoute,
+	async beforeLoad(ctx) {
+		await requireAuth(ctx)
+		throw redirect({
+			to: isHoardodileDesktop() ? "/settings/desktop" : "/settings/web",
+			replace: true,
+		})
+	},
 })
-
-/**
- * Privacy & security settings tab: automatic sign-out.
- */
-function PrivacySettingsRoute() {
-	const { t } = useTranslation()
-	return (
-		<SettingsSheet>
-			<SettingsSection
-				icon={Login2}
-				title={t("me.privacy.signOutSection.title")}
-				description={t("me.privacy.signOutSection.description")}
-				layout="stack"
-				data-testid="privacy-signout-section"
-			>
-				<AutoSignOutControls />
-			</SettingsSection>
-		</SettingsSheet>
-	)
-}

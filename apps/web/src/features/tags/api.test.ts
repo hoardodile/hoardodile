@@ -22,10 +22,9 @@ describe("uploadTagImage", () => {
 		expect(input).toBe("/api/tags/tag_1/images/image")
 		expect(init.method).toBe("PUT")
 		expect(init.credentials).toBe("include")
-		expect(init.headers).toMatchObject({
-			"content-type": "application/octet-stream",
-			"x-filename": "image.png",
-		})
+		const headers = new Headers(init.headers)
+		expect(headers.get("content-type")).toBe("application/octet-stream")
+		expect(headers.get("x-filename")).toBe("image.png")
 		expect(init.body).toBe(blob)
 	})
 

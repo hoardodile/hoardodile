@@ -6,7 +6,7 @@ describe("settingsTabs", () => {
 	it("holds every settings tab", () => {
 		expect(SETTINGS_TABS.map((tab) => tab.key)).toEqual([
 			"preferences",
-			"privacy",
+			"web",
 			"custom",
 			"data",
 			"desktop",
@@ -19,7 +19,8 @@ describe("settingsTabs", () => {
 	})
 
 	it("shows every tab including the desktop one in the shell", () => {
-		expect(visibleSettingsTabs(true)).toHaveLength(SETTINGS_TABS.length)
+		expect(visibleSettingsTabs(true)).toHaveLength(SETTINGS_TABS.length - 1)
+		expect(visibleSettingsTabs(true).map((tab) => tab.key)).not.toContain("web")
 	})
 
 	it("hides the desktop-only tab in a normal browser tab", () => {

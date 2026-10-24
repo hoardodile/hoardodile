@@ -10,6 +10,7 @@ import {
 	DetailPanel,
 	DetailPanelTrigger,
 } from "@/components/layout/DetailPanel"
+import { AuthImage } from "@/features/auth/media"
 import { useCategoryList } from "@/features/cat"
 import { charDetailCardQueryOptions, charKeys } from "@/features/char"
 import { CharCard, CharCardActions } from "@/features/char/components/CharCard"
@@ -229,7 +230,7 @@ function FullbodySection(props: FullbodySectionProps) {
 				className="block w-full cursor-pointer"
 				disabled={onClick === undefined}
 			>
-				<img
+				<AuthImage
 					src={`${apiPaths.characters.image(charId, "fullbody")}?v=${updatedAt}`}
 					alt={name}
 					className="mx-auto max-h-130 w-auto max-w-full rounded-xl"
