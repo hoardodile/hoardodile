@@ -55,8 +55,11 @@ export type ResMediaThumbProps = {
 	readonly sizing?: "intrinsic" | "fill" | "fit-height" | "fit-width"
 	readonly maxWidth?: number
 	readonly maxHeight?: number
+	/** Minimum height of the badge area; shorter artwork stays centered. */
 	readonly minHeight?: number
 	readonly minWidth?: number
+	/** Space occupied by controls anchored outside this tile's top-right corner. */
+	readonly topRightClearance?: number
 	/**
 	 * When provided and the resource is a video, enable the inline video
 	 * preview-on-hover. Receives the user's intent to open a full preview
@@ -97,6 +100,7 @@ export function ResMediaThumb(props: ResMediaThumbProps) {
 		maxHeight,
 		minHeight,
 		minWidth,
+		topRightClearance,
 		onVideoZoomRequest,
 		blTrailingBadge,
 	} = props
@@ -134,6 +138,21 @@ export function ResMediaThumb(props: ResMediaThumbProps) {
 					fitHeight: sizing === "fit-height",
 					fitWidth: sizing === "fit-width",
 				})
+	const hasFittedArtwork =
+		!audioTileOnly &&
+		typeof style?.width === "number" &&
+		typeof style.height === "number" &&
+		style.width > 0 &&
+		style.height > 0
+	// The card can shrink below its preferred width on a narrow viewport.
+	// Let CSS derive the height from that width, keeping the artwork's ratio.
+	const coverStyle: CSSProperties | undefined = hasFittedArtwork
+		? {
+				width: style.width,
+				maxWidth: "100%",
+				aspectRatio: `${style.width} / ${style.height}`,
+			}
+		: style
 
 	const cardUi = usePluginCardUi(contentPluginId, coverKind)
 	const { i18n } = useTranslation()
@@ -170,7 +189,7 @@ export function ResMediaThumb(props: ResMediaThumbProps) {
 
 	/**
 	 * One corner slot's overlay: the badges stack in the layer's flow, the
-	 * layer's own offsets put the stack in its corner. The layer resolves
+	 * column's flow puts the stack in its corner. The layer resolves
 	 * against the tile (see {@link ResMediaThumb}), so the corners are the
 	 * tile's — the card's cover row — not the cover's. `trailing` renders as
 	 * the stack's last (lowest) item, so a plugin's own badge always sits at
@@ -200,19 +219,13 @@ export function ResMediaThumb(props: ResMediaThumbProps) {
 		)
 	}
 
-	const tlLayer = badgeLayer(
-		"absolute top-2 left-2 z-10 flex flex-col items-start gap-1",
-		tlBadges,
-	)
+	const tlLayer = badgeLayer("flex flex-col items-start gap-1", tlBadges)
 	const blLayer = badgeLayer(
-		"absolute bottom-2 left-2 z-10 flex flex-col items-start gap-1",
+		"mt-auto flex flex-col items-start gap-1",
 		blBadges,
 		blTrailingBadge,
 	)
-	const brLayer = badgeLayer(
-		"absolute right-2 bottom-2 z-10 flex flex-col items-end gap-1",
-		brBadges,
-	)
+	const brLayer = badgeLayer("mt-auto flex flex-col items-end gap-1", brBadges)
 
 	/** The cover and its own overlays and controls, without the cover box. */
 	const coverContent = (
@@ -227,7 +240,7 @@ export function ResMediaThumb(props: ResMediaThumbProps) {
 					alt={name}
 					maxWidth={maxWidth}
 					maxHeight={maxHeight}
-					fill={sizing === "fit-height"}
+					fill={hasFittedArtwork || sizing === "fill"}
 					className="absolute inset-0 h-full w-full rounded-xl"
 				/>
 			)}
@@ -250,35 +263,36 @@ export function ResMediaThumb(props: ResMediaThumbProps) {
 		</>
 	)
 
-	/** The corner badge layers, laid out across the tile. */
-	const slotLayers = (
-		<>
-			{tlLayer}
-			{blLayer}
-			{brLayer}
-		</>
-	)
-
-	// The tile stretches to whatever width the caller gives it and the cover
-	// re-centers itself inside that width (`m-auto`), so the cover keeps the
-	// geometry it had before the badge layers moved out of it. The badges live
-	// in a separate, full-size layer over the same tile: `ResCard` hands the
-	// tile its cover row, so they span the card while their top/bottom edges
-	// stay on the cover row — a narrow cover can never squeeze them.
+	// Artwork and badges share a grid cell. Both contribute to its height:
+	// each corner column can grow in normal flow while the artwork centers
+	// inside the resulting box. No measurement or fixed badge-count limit.
 	return (
 		<div
-			className="relative max-w-full"
+			className="relative grid max-w-full grid-cols-[minmax(0,1fr)]"
+			style={{ minHeight }}
 			data-testid={`resource-thumb-tile-${id}`}
 		>
 			<div
-				className={`group relative m-auto overflow-hidden rounded-xl ${className ?? ""}`}
-				style={style}
+				className={`group relative col-start-1 row-start-1 m-auto overflow-hidden rounded-xl ${className ?? ""}`}
+				style={coverStyle}
 			>
 				{coverContent}
 			</div>
-			{/* The three slot layers position themselves in their own corners. */}
-			<div className="pointer-events-none absolute inset-0 z-10" aria-hidden>
-				{slotLayers}
+			<div
+				className="pointer-events-none col-start-1 row-start-1 z-10 flex justify-between gap-2 p-2"
+				data-testid={`resource-thumb-badges-${id}`}
+				aria-hidden
+			>
+				<div className="flex min-w-0 flex-col justify-between gap-2">
+					{tlLayer}
+					{blLayer}
+				</div>
+				<div className="ml-auto flex min-w-0 flex-col items-end gap-2">
+					{topRightClearance !== undefined ? (
+						<div className="shrink-0" style={{ height: topRightClearance }} />
+					) : null}
+					{brLayer}
+				</div>
 			</div>
 		</div>
 	)

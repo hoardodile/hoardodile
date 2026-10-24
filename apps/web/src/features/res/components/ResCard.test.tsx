@@ -160,7 +160,7 @@ describe("ResCard sizing", () => {
 		// Intrinsic: scaled down to fit 400x600, never upscaled.
 		const thumb = thumbBox(card)
 		expect(thumb.style.width).toBe("400px")
-		expect(thumb.style.height).toBe("300px")
+		expect(thumb.style.aspectRatio).toBe("400 / 300")
 		// The name wrapper keeps its regular intrinsic-width behavior.
 		const name = screen.getByTestId("resource-item-res-1")
 		expect(name.parentElement?.className.split(/\s+/)).not.toContain("w-0")
@@ -178,7 +178,7 @@ describe("ResCard sizing", () => {
 		expect(card.style.maxWidth).toBe("200px")
 		// Height capped at 240, width follows the cover's aspect ratio.
 		const thumb = thumbBox(card)
-		expect(thumb.style.height).toBe("240px")
+		expect(thumb.style.aspectRatio).toBe("80 / 240")
 		expect(thumb.style.width).toBe("80px")
 		// The name must not stretch the card beyond the thumbnail: its
 		// intrinsic-width contribution is zeroed so truncate applies.
@@ -195,7 +195,7 @@ describe("ResCard sizing", () => {
 		await renderCard(<ResCard resource={resource} thumbFitHeight={240} />)
 
 		const thumb = thumbBox(cardContainer("res-1"))
-		expect(thumb.style.height).toBe("150px")
+		expect(thumb.style.aspectRatio).toBe("400 / 150")
 		expect(thumb.style.width).toBe("400px")
 	})
 
@@ -207,7 +207,7 @@ describe("ResCard sizing", () => {
 
 		// The tile box keeps the cover's aspect ratio…
 		const thumb = thumbBox(cardContainer("res-1"))
-		expect(thumb.style.height).toBe("240px")
+		expect(thumb.style.aspectRatio).toBe("384 / 240")
 		expect(thumb.style.width).toBe("384px")
 		// …and the image fills it instead of rendering at its clamped
 		// natural size (which would leave blank space on the right).
@@ -224,7 +224,7 @@ describe("ResCard sizing", () => {
 
 		const thumb = thumbBox(cardContainer("res-1"))
 		expect(thumb.style.width).toBe("400px")
-		expect(thumb.style.height).toBe("100px")
+		expect(thumb.style.aspectRatio).toBe("400 / 100")
 	})
 
 	it("caps the whole card at the compact floor when there is no cover", async () => {
@@ -261,7 +261,7 @@ describe("ResCard sizing", () => {
 		})
 		const thumb = thumbBox(card)
 		expect(thumb.style.width).toBe("400px")
-		expect(thumb.style.height).toBe("300px")
+		expect(thumb.style.aspectRatio).toBe("400 / 300")
 	})
 
 	it("fit-height mode falls back to the configured height without cover metadata", async () => {
@@ -269,7 +269,7 @@ describe("ResCard sizing", () => {
 		await renderCard(<ResCard resource={resource} thumbFitHeight={240} />)
 
 		const thumb = thumbBox(cardContainer("res-1"))
-		expect(thumb.style.height).toBe("240px")
+		expect(thumb.style.aspectRatio).toBe("240 / 240")
 		expect(thumb.style.width).toBe("240px")
 	})
 })
@@ -279,8 +279,9 @@ describe("ResCard sizing", () => {
  * that spans the card's cover row. It is the badge slot's parent.
  */
 function badgeOverlayOf(card: HTMLElement): HTMLElement {
-	const badge = screen.getByText("TAGB-100")
-	const overlay = badge.parentElement?.parentElement ?? null
+	const overlay = card.querySelector<HTMLElement>(
+		'[data-testid^="resource-thumb-badges-"]',
+	)
 	if (overlay === null || !card.contains(overlay))
 		throw new Error("badge overlay not found")
 	return overlay
@@ -313,8 +314,8 @@ describe("ResCard corner badges", () => {
 		)
 		expect(overlay).toHaveClass(
 			"pointer-events-none",
-			"absolute",
-			"inset-0",
+			"col-start-1",
+			"row-start-1",
 			"z-10",
 		)
 		expect(overlay).toHaveTextContent("TAGB-100")
@@ -348,10 +349,8 @@ describe("ResCard corner badges", () => {
 		})
 		await renderCard(<ResCard resource={resource} />)
 
-		const row = thumbBox(cardContainer("res-1")).parentElement
-		const overlay = row?.querySelector(".pointer-events-none.inset-0")
-		expect(overlay).not.toBeNull()
-		expect(overlay).toBeEmptyDOMElement()
+		const overlay = screen.getByTestId("resource-thumb-badges-res-1")
+		expect(overlay.textContent).toBe("")
 	})
 })
 

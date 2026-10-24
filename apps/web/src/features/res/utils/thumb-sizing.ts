@@ -1,5 +1,9 @@
 import type { CSSProperties } from "react"
 
+export const CARD_MIN_HEIGHT_PX = 100
+export const CARD_MAX_HEIGHT_PX = 600
+export const AUDIO_TILE_HEIGHT = 120
+
 export type IntrinsicBounds = {
 	readonly maxWidth?: number
 	readonly maxHeight?: number
@@ -27,11 +31,11 @@ export function buildIntrinsicStyle(
 				// `maxWidth` the width clamp wins and the height rescales
 				// proportionally, so ultra-wide covers stay bounded.
 				const scale = Math.min(1, maxH / height)
-				let fittedWidth = Math.round(width * scale)
-				let fittedHeight = Math.round(height * scale)
+				let fittedWidth = width * scale
+				let fittedHeight = height * scale
 				if (fittedWidth > maxW) {
 					fittedWidth = maxW
-					fittedHeight = Math.round((height / width) * maxW)
+					fittedHeight = (height / width) * maxW
 				}
 				return { width: fittedWidth, height: fittedHeight }
 			}
@@ -47,11 +51,11 @@ export function buildIntrinsicStyle(
 				// the height clamp wins and the width rescales, so
 				// ultra-tall covers stay bounded.
 				const scale = Math.min(1, maxW / width)
-				let fittedWidth = Math.round(width * scale)
-				let fittedHeight = Math.round(height * scale)
+				let fittedWidth = width * scale
+				let fittedHeight = height * scale
 				if (fittedHeight > maxH) {
 					fittedHeight = maxH
-					fittedWidth = Math.round((width / height) * maxH)
+					fittedWidth = (width / height) * maxH
 				}
 				return { width: fittedWidth, height: fittedHeight }
 			}

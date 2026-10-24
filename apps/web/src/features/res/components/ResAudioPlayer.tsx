@@ -8,6 +8,7 @@ import { useTranslation } from "react-i18next"
 import { AuthAudio } from "@/features/auth/media"
 import { formatClockDuration } from "@/lib/formatDuration"
 import { apiPaths } from "@/lib/paths"
+import { AUDIO_TILE_HEIGHT } from "../utils/thumb-sizing"
 import {
 	activatePlayback,
 	ensureVisibilityListener,
@@ -20,7 +21,7 @@ import {
  * it reads as a player, not as a cropped cover, and keeps audio cards
  * visually distinct from the square-ish image cards around them.
  */
-export const AUDIO_TILE_HEIGHT = 120
+export { AUDIO_TILE_HEIGHT }
 
 /** Keyboard seek step on the scrub track. */
 const SEEK_STEP_MS = 5_000

@@ -1,5 +1,11 @@
 import type { ResCard } from "@hoardodile/schemas"
-import { populatedCover } from "@hoardodile/schemas"
+import { pickCoverKind, populatedCover } from "@hoardodile/schemas"
+import {
+	AUDIO_TILE_HEIGHT,
+	buildIntrinsicStyle,
+	CARD_MAX_HEIGHT_PX,
+	CARD_MIN_HEIGHT_PX,
+} from "./thumb-sizing"
 
 /** Column width in px; card covers are capped at this (mirror of the list's
     `thumbFitWidth`). */
@@ -20,18 +26,31 @@ export function masonryColumnCount(width: number): number {
 
 /**
  * Estimated rendered height of one card at the masonry column width. Derived
- * from the cover's aspect ratio (scaled to the column width); a cover-less
- * card falls back to a square tile. The small chrome allowance is constant,
- * so the estimate is deterministic for a given resource.
+ * from the same bounds as the rendered cover, including its base height floor.
+ * Plugin badges can grow the tile beyond this estimate.
+ * A cover-less card falls back to a square tile. The small chrome allowance
+ * is constant, so the estimate is deterministic for a given resource.
  */
 export function estimateCardHeight(resource: ResCard): number {
 	const cover = populatedCover(resource.coverMeta)
 	const coverWidth = cover?.width
 	const coverHeight = cover?.height
-	const thumbHeight =
-		coverWidth !== undefined && coverHeight !== undefined && coverWidth > 0
-			? (coverHeight / coverWidth) * MASONRY_COLUMN_PX
-			: MASONRY_COLUMN_PX
+	const audioWithoutArtwork =
+		pickCoverKind(resource.coverMeta) === "audio" &&
+		(coverWidth === undefined || coverHeight === undefined)
+	const fitted = buildIntrinsicStyle(coverWidth, coverHeight, {
+		maxWidth: MASONRY_COLUMN_PX,
+		maxHeight: CARD_MAX_HEIGHT_PX,
+		fitWidth: true,
+	})
+	const thumbHeight = Math.max(
+		CARD_MIN_HEIGHT_PX,
+		audioWithoutArtwork
+			? AUDIO_TILE_HEIGHT
+			: typeof fitted.height === "number"
+				? fitted.height
+				: MASONRY_COLUMN_PX,
+	)
 	return thumbHeight + MASONRY_CARD_CHROME_PX + MASONRY_COLUMN_GAP_PX
 }
 

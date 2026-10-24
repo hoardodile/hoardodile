@@ -41,6 +41,22 @@ describe("masonryColumnCount", () => {
 })
 
 describe("estimateCardHeight", () => {
+	it.each([
+		{ coverMeta: { kind: "image", width: 800, height: 100 }, height: 100 },
+		{ coverMeta: { kind: "image", width: 80, height: 40 }, height: 100 },
+		{ coverMeta: { kind: "image", width: 8, height: 8000 }, height: 600 },
+		{ coverMeta: { kind: "video", width: 1920, height: 1080 }, height: 157.5 },
+		{ coverMeta: { kind: "audio" }, height: 120 },
+		{ coverMeta: { kind: "audio", width: 300, height: 300 }, height: 280 },
+	] satisfies { coverMeta: ResCard["coverMeta"]; height: number }[])(
+		"matches the rendered cover bounds for $coverMeta",
+		({ coverMeta, height }) => {
+			expect(estimateCardHeight(card("bounded", { coverMeta }))).toBe(
+				height + MASONRY_CARD_CHROME_PX + MASONRY_COLUMN_GAP_PX,
+			)
+		},
+	)
+
 	it("derives the thumb height from the cover aspect ratio", () => {
 		// 800x600 at 280px wide → 210px thumb.
 		const h = estimateCardHeight(

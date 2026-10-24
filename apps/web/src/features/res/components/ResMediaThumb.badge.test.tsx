@@ -86,11 +86,9 @@ function tileBox(): HTMLElement {
 	return screen.getByTestId("resource-thumb-tile-res-1")
 }
 
-/** The badge overlay — the tile box's full-size layer, `inset-0`. */
-function slotOverlay(): HTMLElement | null {
-	return tileBox().querySelector<HTMLElement>(
-		":scope > .pointer-events-none.inset-0",
-	)
+/** The badge overlay shares the artwork's grid cell and contributes height. */
+function slotOverlay(): HTMLElement {
+	return screen.getByTestId("resource-thumb-badges-res-1")
 }
 
 function slotLayer(text: string): HTMLElement {
@@ -100,9 +98,9 @@ function slotLayer(text: string): HTMLElement {
 	return layer
 }
 
-const TL_LAYER = "absolute top-2 left-2 z-10 flex flex-col items-start gap-1"
-const BL_LAYER = "absolute bottom-2 left-2 z-10 flex flex-col items-start gap-1"
-const BR_LAYER = "absolute right-2 bottom-2 z-10 flex flex-col items-end gap-1"
+const TL_LAYER = "flex flex-col items-start gap-1"
+const BL_LAYER = "mt-auto flex flex-col items-start gap-1"
+const BR_LAYER = "mt-auto flex flex-col items-end gap-1"
 
 describe("ResMediaThumb corner badges", () => {
 	it("lifts the slot layers onto the tile box, out of the cover", () => {
@@ -117,14 +115,21 @@ describe("ResMediaThumb corner badges", () => {
 		expect(coverBox().parentElement).toBe(tileBox())
 		expect(overlay).toHaveClass(
 			"pointer-events-none",
-			"absolute",
-			"inset-0",
+			"col-start-1",
+			"row-start-1",
 			"z-10",
 		)
-		// Each slot keeps its own corner offsets.
+		expect(overlay).not.toHaveClass("absolute")
+		// The left and right stacks grow independently in normal flow.
 		expect(slotLayer("TLCORNER")).toHaveClass(...TL_LAYER.split(" "))
 		expect(slotLayer("BLCORNER")).toHaveClass(...BL_LAYER.split(" "))
 		expect(slotLayer("BRCORNER")).toHaveClass(...BR_LAYER.split(" "))
+		expect(slotLayer("TLCORNER").parentElement).toBe(
+			slotLayer("BLCORNER").parentElement,
+		)
+		expect(slotLayer("BRCORNER").parentElement).not.toBe(
+			slotLayer("TLCORNER").parentElement,
+		)
 		expect(overlay?.contains(slotLayer("TLCORNER"))).toBe(true)
 	})
 
@@ -132,14 +137,14 @@ describe("ResMediaThumb corner badges", () => {
 		renderThumb({ maxWidth: 400, maxHeight: 600 })
 
 		// The tile box stretches to the caller; the cover box owns the fitted
-		// pixel size and centers itself, so a narrow cover stays centered
+		// aspect ratio and centers itself, so a narrow cover stays centered
 		// instead of sticking to the tile box's left edge.
 		const box = tileBox()
 		expect(box.className.split(/\s+/)).not.toContain("w-fit")
 		expect(box.contains(coverBox())).toBe(true)
 		expect(coverBox().className.split(/\s+/)).toContain("m-auto")
 		expect(coverBox().style.width).toBe("100px")
-		expect(coverBox().style.height).toBe("400px")
+		expect(coverBox().style.aspectRatio).toBe("100 / 400")
 	})
 
 	it("puts the caller's trailing badge last in the bottom-left stack", () => {
@@ -175,6 +180,6 @@ describe("ResMediaThumb corner badges", () => {
 	it("renders an empty overlay when no badge is configured", () => {
 		renderThumb(undefined, pluginRows({}))
 
-		expect(slotOverlay()).toBeEmptyDOMElement()
+		expect(slotOverlay().textContent).toBe("")
 	})
 })

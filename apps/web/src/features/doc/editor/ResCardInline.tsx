@@ -97,6 +97,7 @@ export function ResCardView(props: ResCardViewProps) {
 					maxWidth={MAX_WIDTH_PX}
 					maxHeight={MAX_HEIGHT_PX}
 					minHeight={MIN_HEIGHT_PX}
+					topRightClearance={28}
 					// No-cover embeds fall back to a square tile; without the
 					// width floor the box would collapse (the thumb's only
 					// in-flow content is the cover image).

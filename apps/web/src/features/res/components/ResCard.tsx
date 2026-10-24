@@ -14,7 +14,11 @@ import { useDateFormatter } from "@/features/settings/datePrefs"
 import { TagChipHover } from "@/features/tags/TagChipHover"
 import { TagChipLink } from "@/features/tags/TagChipLink"
 import { formatBytes } from "@/lib/formatBytes"
-import { buildIntrinsicStyle } from "../utils/thumb-sizing"
+import {
+	buildIntrinsicStyle,
+	CARD_MAX_HEIGHT_PX,
+	CARD_MIN_HEIGHT_PX,
+} from "../utils/thumb-sizing"
 import { stopActiveMediaPreview } from "./mediaPlayback"
 import { ResCardActions } from "./ResCardActions"
 import { ResMediaThumb } from "./ResMediaThumb"
@@ -44,8 +48,6 @@ export type ResCardSelection = {
 	readonly onToggle: () => void
 }
 
-const MIN_HEIGHT_PX = 200
-const MAX_HEIGHT_PX = 600
 const MIN_WIDTH_PX = 200
 const MAX_WIDTH_PX = 400
 
@@ -155,7 +157,7 @@ export const ResCard = memo(function ResCard(props: ResCardProps) {
 	const fittedCoverWidth = hasCoverDimensions
 		? buildIntrinsicStyle(coverSize.width, coverSize.height, {
 				maxWidth: thumbFitWidth ?? MAX_WIDTH_PX,
-				maxHeight: thumbFitHeight ?? MAX_HEIGHT_PX,
+				maxHeight: thumbFitHeight ?? CARD_MAX_HEIGHT_PX,
 				fitHeight: fitHeightMode,
 				fitWidth: fitWidthMode,
 			}).width
@@ -223,10 +225,10 @@ export const ResCard = memo(function ResCard(props: ResCardProps) {
 								: "intrinsic"
 					}
 					maxWidth={thumbFitWidth ?? MAX_WIDTH_PX}
-					maxHeight={thumbFitHeight ?? MAX_HEIGHT_PX}
-					minHeight={
-						!fitWidthMode && !fitHeightMode ? MIN_HEIGHT_PX : undefined
-					}
+					maxHeight={thumbFitHeight ?? CARD_MAX_HEIGHT_PX}
+					minHeight={CARD_MIN_HEIGHT_PX}
+					// Two 28px buttons separated by 8px; badges must clear both.
+					topRightClearance={isSelectMode ? undefined : 64}
 					minWidth={!fitWidthMode && !fitHeightMode ? MIN_WIDTH_PX : undefined}
 					onVideoZoomRequest={isSelectMode ? undefined : openPreview}
 					blTrailingBadge={

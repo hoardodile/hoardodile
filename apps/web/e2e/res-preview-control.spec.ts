@@ -170,6 +170,136 @@ test.describe("resource card preview control (real browser)", () => {
 	test.use({ serviceWorkers: "block" })
 	test.setTimeout(90_000)
 
+	test("keeps short artwork centered in a minimum-height cover row", async ({
+		page,
+		request,
+	}) => {
+		await login(page)
+		const cookie = await apiLogin(request)
+		const prefix = `cover-floor-${Date.now()}`
+		const ids: string[] = []
+		try {
+			for (const [width, height] of [
+				[64, 24],
+				[8000, 8],
+			] as const) {
+				const id = await createImageResource(
+					request,
+					cookie,
+					`${prefix}-${width}x${height}`,
+					solidPng(width, height, [90, 140, 110]),
+					GALLERY_PLUGIN_ID,
+				)
+				ids.push(id)
+				await waitForCoverMeta(request, cookie, id)
+			}
+			for (const width of [480, 1280]) {
+				await page.setViewportSize({ width, height: 900 })
+				for (const path of [
+					`/resources?query=${prefix}&view=grid`,
+					`/resources?query=${prefix}&view=masonry`,
+					"/",
+				]) {
+					await page.goto(path)
+					for (const id of ids) {
+						const m = await measure(page, id)
+						expect(m.row.height).toBeGreaterThanOrEqual(100)
+						expect(m.cover?.height).toBeGreaterThan(0)
+						expect(
+							Math.abs(
+								m.cover!.top +
+									m.cover!.height / 2 -
+									(m.row.top + m.row.height / 2),
+							),
+						).toBeLessThanOrEqual(TOLERANCE_PX)
+						expect(m.actions?.bottom).toBeLessThanOrEqual(m.row.bottom)
+						expect(m.preview.bottom).toBeLessThanOrEqual(m.row.bottom)
+					}
+				}
+			}
+		} finally {
+			await deleteResources(request, cookie, ids)
+		}
+	})
+
+	test("grows with corner badges and shrinks back to the 100px floor", async ({
+		page,
+		request,
+	}) => {
+		await login(page)
+		const cookie = await apiLogin(request)
+		const name = `badge-height-${Date.now()}`
+		const id = await createImageResource(
+			request,
+			cookie,
+			name,
+			solidPng(64, 24, [90, 140, 110]),
+			GALLERY_PLUGIN_ID,
+		)
+		let badgeCount = 0
+		await page.route(
+			(url) =>
+				url.pathname.startsWith("/trpc/") &&
+				url.pathname.includes("plugin.listAll"),
+			async (route) => {
+				const response = await route.fetch()
+				const body = await response.json()
+				for (const entry of Array.isArray(body) ? body : [body]) {
+					const plugins = entry.result?.data
+					if (!Array.isArray(plugins)) continue
+					for (const plugin of plugins) {
+						if (plugin.id !== GALLERY_PLUGIN_ID) continue
+						plugin.pinned = false
+						plugin.manifest.ui = {
+							...plugin.manifest.ui,
+							card: {
+								image: {
+									tl: Array.from(
+										{ length: badgeCount },
+										(_, i) => `TL${i + 1}`,
+									),
+									bl: Array.from(
+										{ length: badgeCount },
+										(_, i) => `BL${i + 1}`,
+									),
+									br: Array.from(
+										{ length: badgeCount },
+										(_, i) => `BR${i + 1}`,
+									),
+								},
+							},
+						}
+					}
+				}
+				await route.fulfill({ response, json: body })
+			},
+		)
+		try {
+			await waitForCoverMeta(request, cookie, id)
+			for (const [count, expectedHeight] of [
+				[0, 100],
+				[1, 108],
+				[4, 208],
+				[12, 592],
+				[24, 1168],
+				[0, 100],
+			] as const) {
+				badgeCount = count
+				await page.goto(`/resources?query=${name}&view=grid`)
+				await expect
+					.poll(async () => (await measure(page, id)).row.height)
+					.toBe(expectedHeight)
+				const m = await measure(page, id)
+				expect(m.cover?.height).toBe(24)
+				expect(
+					Math.abs(m.cover!.top + 12 - (m.row.top + m.row.height / 2)),
+				).toBeLessThanOrEqual(TOLERANCE_PX)
+			}
+		} finally {
+			await deleteResources(request, cookie, [id])
+		}
+	})
+
 	for (const width of [1280, 480]) {
 		test(`crosses list pages without closing the preview at ${width}px`, async ({
 			page,
