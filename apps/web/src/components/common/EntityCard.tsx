@@ -95,7 +95,7 @@ export const EntityCard = forwardRef<HTMLDivElement, EntityCardProps>(
 						"cursor-grab active:cursor-grabbing",
 				)}
 				data-testid={`${props.testIdPrefix}-row-${props.item.id}`}
-				{...attributes}
+				{...(!props.dragDisabled ? attributes : {})}
 				{...listeners}
 			>
 				<div className="flex items-center gap-2">

@@ -1,4 +1,8 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import {
+	QueryClient,
+	QueryClientProvider,
+	useQuery,
+} from "@tanstack/react-query"
 import {
 	createMemoryHistory,
 	createRootRouteWithContext,
@@ -10,6 +14,7 @@ import {
 import { act, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { beforeAll, beforeEach, describe, expect, it } from "vitest"
+import { resListCardsQueryOptions } from "@/features/res/api"
 import type { RouterContext } from "@/routes/__root"
 import type { TRPCClient } from "@/trpc/client"
 import { setTrpcClient } from "@/trpc/client"
@@ -124,8 +129,8 @@ function createRouterWith(element: React.ReactElement) {
 	return { router, queryClient }
 }
 
-async function renderImporter() {
-	const { router, queryClient } = createRouterWith(<FolderImporter />)
+async function renderImporter(element = <FolderImporter />) {
+	const { router, queryClient } = createRouterWith(element)
 
 	await act(async () => {
 		await router.load()
@@ -140,6 +145,21 @@ async function renderImporter() {
 		)
 	})
 	return utils
+}
+
+function ResourceCount() {
+	const { data } = useQuery(
+		resListCardsQueryOptions({
+			query: "",
+			page: 1,
+			size: 1,
+			sortBy: "updated",
+			order: "desc",
+		}),
+	)
+	return (
+		<output data-testid="resource-count">{data?.total ?? "Loading"}</output>
+	)
 }
 
 describe("FolderImporter", () => {
@@ -287,9 +307,28 @@ describe("FolderImporter", () => {
 		expect(screen.getByText("Gallery")).toBeInTheDocument()
 	})
 
-	it("runs import and renders result badges", async () => {
+	it("runs import and refreshes the shared resource count", async () => {
 		const user = userEvent.setup()
-		await renderImporter()
+		let resourceCount = 0
+		setTrpcClient(
+			createMockTrpcClient({
+				...defaultHandlers,
+				"resource.listCards": () => ({ items: [], total: resourceCount }),
+				"resource.folderImport": (input) => {
+					resourceCount = 2
+					return defaultHandlers["resource.folderImport"]!(input)
+				},
+			}),
+		)
+		await renderImporter(
+			<>
+				<ResourceCount />
+				<FolderImporter />
+			</>,
+		)
+		await waitFor(() =>
+			expect(screen.getByTestId("resource-count")).toHaveTextContent("0"),
+		)
 
 		await waitFor(() => {
 			expect(screen.getByTestId("folder-source-shared")).toBeInTheDocument()
@@ -319,6 +358,9 @@ describe("FolderImporter", () => {
 
 		expect(screen.getByText("Scanned: 2")).toBeInTheDocument()
 		expect(screen.getByText("Imported: 2")).toBeInTheDocument()
+		await waitFor(() =>
+			expect(screen.getByTestId("resource-count")).toHaveTextContent("2"),
+		)
 	})
 
 	it("returns to source step when clicking back from browse", async () => {

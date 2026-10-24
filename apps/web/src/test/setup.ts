@@ -5,6 +5,22 @@ import { afterEach } from "vitest"
 // `@vitest-environment node` directives) and should not pay for i18n,
 // IndexedDB, or RTL cleanup.
 if (typeof window !== "undefined") {
+	// Node's BroadcastChannel reaches other Vitest worker threads. Give each
+	// jsdom environment its own scope so unrelated test files cannot trigger
+	// each other's auth or SSE listeners, while peers within a test still work.
+	const NativeBroadcastChannel = BroadcastChannel
+	const broadcastScope = crypto.randomUUID()
+	class ScopedBroadcastChannel extends NativeBroadcastChannel {
+		constructor(name: string) {
+			super(`${broadcastScope}:${name}`)
+		}
+	}
+	Object.defineProperty(globalThis, "BroadcastChannel", {
+		writable: true,
+		configurable: true,
+		value: ScopedBroadcastChannel,
+	})
+
 	await import("@testing-library/jest-dom/vitest")
 	const { setI18n: setUiI18n } = await import("@hoardodile/i18n/react")
 	// @/i18n binds the SPA's own react-i18next copy; bind the same instance

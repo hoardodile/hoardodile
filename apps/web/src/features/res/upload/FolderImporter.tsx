@@ -36,11 +36,11 @@ import {
 	MagnifierZoomIn,
 	UndoRightRound,
 } from "@hoardodile/ui/icons/registry"
-import { useMutation, useQuery } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import type { ReactNode } from "react"
 import { Fragment, useCallback, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { importKeys } from "@/features/res/api"
+import { importKeys, invalidateResources } from "@/features/res/api"
 import { formatBytes } from "@/lib/formatBytes"
 import { trpcMutate, trpcQuery } from "@/trpc/factory"
 import { UploadSection } from "./UploadSection"
@@ -84,6 +84,7 @@ const PHASES: ImportPhase[] = [
  */
 export function FolderImporter(): ReactNode {
 	const { t } = useTranslation()
+	const queryClient = useQueryClient()
 	const [browseRoot, setBrowseRoot] = useState<string | undefined>(undefined)
 	const [currentSubPath, setCurrentSubPath] = useState("")
 	const [phase, setPhase] = useState<ImportPhase>("source")
@@ -132,7 +133,8 @@ export function FolderImporter(): ReactNode {
 				subPath: opts.subPath || undefined,
 				cleanupExtract: isExtracted,
 			}),
-		onSuccess: (report) => {
+		onSuccess: async (report) => {
+			await invalidateResources(queryClient)
 			setImportResult(report)
 			setPhase("done")
 		},

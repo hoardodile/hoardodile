@@ -379,7 +379,7 @@ function SortableRailRow(props: {
 				reorderMode && !dragDisabled && "cursor-grab active:cursor-grabbing",
 			)}
 			data-testid={`category-row-${category.id}`}
-			{...attributes}
+			{...(!dragDisabled ? attributes : {})}
 			{...listeners}
 		>
 			{reorderMode ? (
