@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.2](https://github.com/hoardodile/hoardodile/compare/v0.3.1...v0.3.2) (2026-10-26)
+
+### Bug Fixes
+
+* **server:** rebuild missing local state without rerunning legacy migration ([40e10fe](https://github.com/hoardodile/hoardodile/commit/40e10feec2aa8fee130273e0df6a0c57955dfbf7))
+* **web:** keep unlock screen visible after repeated locking ([3e1f7f7](https://github.com/hoardodile/hoardodile/commit/3e1f7f7b47618aa36707560f3cb9b62f5f940ffb))
+* **web:** preserve trailing plus in numeric traits ([bd19fbd](https://github.com/hoardodile/hoardodile/commit/bd19fbdd28132b634c0e792055e3eea035df6d95))
+
 ## [0.3.1](https://github.com/hoardodile/hoardodile/compare/v0.3.0...v0.3.1) (2026-10-24)
 
 ### Features
