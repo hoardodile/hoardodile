@@ -11,6 +11,7 @@ import {
 	lockSession,
 	needsUnlock,
 	resetAuthSessionForTests,
+	sessionGeneration,
 	sessionToken,
 	unlockDestination,
 	webAuthKeys,
@@ -99,6 +100,36 @@ it("unlock verifies the password and accepts a new cookie even while the old pag
 	)
 	expect(canAccessContent()).toBe(true)
 	expect(readLastRoute()).toBe("/settings/web")
+})
+
+it("hides sensitive surfaces once and preserves the visible unlock screen on repeated locks", () => {
+	const root = document.createElement("div")
+	root.id = "root"
+	const plugins = document.createElement("div")
+	plugins.id = "plugin-iframe-host"
+	document.body.append(root, plugins)
+	const notified = vi.fn()
+	window.addEventListener("hoardodile-session-locked", notified)
+	try {
+		acceptSession("secret")
+		const generation = sessionGeneration()
+		lockSession("/documents/12?mode=read#chapter")
+		expect(root).not.toBeVisible()
+		expect(plugins).not.toBeVisible()
+		expect(sessionToken()).toBeUndefined()
+		expect(sessionGeneration()).toBe(generation + 1)
+		root.style.visibility = ""
+		lockSession("/documents/other")
+		expect(root).toBeVisible()
+		expect(plugins).not.toBeVisible()
+		expect(sessionGeneration()).toBe(generation + 1)
+		expect(notified).toHaveBeenCalledTimes(1)
+		expect(readLastRoute()).toBe("/documents/12?mode=read#chapter")
+	} finally {
+		window.removeEventListener("hoardodile-session-locked", notified)
+		root.remove()
+		plugins.remove()
+	}
 })
 
 it("failed unlock keeps the page locked and requests cannot revive a locked credential", async () => {

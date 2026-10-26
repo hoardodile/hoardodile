@@ -9,6 +9,7 @@ import {
 	isSessionLocked,
 	lockSession,
 	needsUnlock,
+	sessionGeneration,
 	sessionMode,
 	useWebAuthPreference,
 	webAuthKeys,
@@ -23,6 +24,7 @@ export function useSessionProtection(): void {
 	const navigate = useNavigate()
 	const [autoLock] = useWebAuthPreference(webAuthKeys.autoLock)
 	const busy = useRef(false)
+	const protectedGeneration = useRef<number | undefined>(undefined)
 	useEffect(() => {
 		async function lock(): Promise<void> {
 			if (busy.current || !needsUnlock()) return
@@ -32,14 +34,19 @@ export function useSessionProtection(): void {
 					window.location.search +
 					window.location.hash,
 			)
-			stopActiveMediaPreview()
 			try {
-				await queryClient.cancelQueries()
-				queryClient.clear()
-				queryClient.setQueryData(authStatusQueryKey, {
-					authenticated: false,
-					configured: true,
-				} satisfies AuthStatus)
+				const generation = sessionGeneration()
+				if (protectedGeneration.current !== generation) {
+					stopActiveMediaPreview()
+					await queryClient.cancelQueries()
+					if (!isSessionLocked() || sessionGeneration() !== generation) return
+					queryClient.clear()
+					queryClient.setQueryData(authStatusQueryKey, {
+						authenticated: false,
+						configured: true,
+					} satisfies AuthStatus)
+					protectedGeneration.current = generation
+				}
 				await navigate({ to: "/unlock", replace: true })
 			} finally {
 				busy.current = false

@@ -239,7 +239,7 @@ export function renewSession(value: string, requestGeneration: number): void {
 
 export function lockSession(href: string): void {
 	initialize()
-	if (!known) return
+	if (!known || locked) return
 	if (
 		isContentHref(href) &&
 		(href !== "/" || canAccessContent() || readLastRoute() === undefined)

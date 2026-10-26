@@ -32,11 +32,12 @@ function mount() {
 		authenticated: true,
 		configured: true,
 	})
-	return renderHook(() => useSessionProtection(), {
+	const hook = renderHook(() => useSessionProtection(), {
 		wrapper: ({ children }) => (
 			<QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
 		),
 	})
+	return { ...hook, queryClient }
 }
 
 beforeEach(() => navigate.mockClear())
@@ -74,6 +75,23 @@ it("ignores automatic browser locking on desktop", async () => {
 	await act(async () => visibility("hidden"))
 	expect(isSessionLocked()).toBe(false)
 	expect(navigate).not.toHaveBeenCalled()
+})
+
+it("does not clear unlock-page queries again when a locked tab becomes visible", async () => {
+	acceptSession("secret")
+	setWebAuthPreference(webAuthKeys.autoLock, true)
+	const { queryClient } = mount()
+	await act(async () => visibility("hidden"))
+	queryClient.setQueryData(["unlock-progress"], "keep")
+	await act(async () => visibility("visible"))
+	await act(async () => {
+		window.dispatchEvent(new Event("hoardodile-session-locked"))
+		window.dispatchEvent(
+			new PageTransitionEvent("pageshow", { persisted: true }),
+		)
+	})
+	expect(queryClient.getQueryData(["unlock-progress"])).toBe("keep")
+	expect(navigate).toHaveBeenLastCalledWith({ to: "/unlock", replace: true })
 })
 
 it("a frozen page is locked before a bfcache restore can expose it", async () => {
