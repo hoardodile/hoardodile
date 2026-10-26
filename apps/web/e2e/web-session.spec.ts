@@ -19,34 +19,45 @@ async function enablePageSession(page: Page) {
 	await expect(page.getByTestId("web-requireUnlock-switch")).toBeChecked()
 }
 
-test("refresh and independent tabs unlock back to their page; explicit sign-out returns to login", async ({
+test("unlocking returns to the remembered page in every tab; explicit sign-out returns to login", async ({
 	page,
 	context,
 }) => {
 	await page.goto("/")
 	await enterPassword(page, "login")
 	await enablePageSession(page)
+	// Locking is idempotent: a page opened while already locked is not
+	// adopted as the return destination, so unlocking lands on the page the
+	// session was last remembered at.
 	await page.goto("/documents")
 	await expect(page).toHaveURL(/\/unlock$/)
 	await enterPassword(page, "unlock")
-	await expect(page).toHaveURL(/\/documents$/)
+	await expect(page).toHaveURL(/\/settings\/web$/)
 	await page.reload()
 	await expect(page).toHaveURL(/\/unlock$/)
 	await page.getByLabel("Password", { exact: true }).fill("wrong")
 	await page.getByTestId("unlock-submit").click()
 	await expect(page.getByRole("alert")).toBeVisible()
 	await enterPassword(page, "unlock")
-	await expect(page).toHaveURL(/\/documents$/)
+	await expect(page).toHaveURL(/\/settings\/web$/)
+
+	// An in-app navigation into content replaces the remembered page.
+	await page.getByRole("link", { name: "Resources" }).click()
+	await expect(page).toHaveURL(/\/resources$/)
 
 	const other = await context.newPage()
 	await other.goto("/settings")
 	await expect(other).toHaveURL(/\/unlock$/)
-	await expect(page).toHaveURL(/\/documents$/)
+	await expect(page).toHaveURL(/\/resources$/)
 	await enterPassword(other, "unlock")
-	await expect(other).toHaveURL(/\/settings$/)
+	// Tabs share the remembered page, so this locked deep link unlocks there
+	// too and leaves the unlocked tab where it already is.
+	await expect(other).toHaveURL(/\/resources$/)
+	await expect(page).toHaveURL(/\/resources$/)
+	await other.getByRole("link", { name: "Settings" }).first().click()
 	await other.getByTestId("sign-out").click()
 	await expect(other).toHaveURL(/\/login$/)
-	await expect(page).toHaveURL(/\/documents$/)
+	await expect(page).toHaveURL(/\/resources$/)
 	await page.reload()
 	await expect(page).toHaveURL(/\/unlock$/)
 	await enterPassword(other, "login")
