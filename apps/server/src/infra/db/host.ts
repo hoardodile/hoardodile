@@ -1,11 +1,11 @@
-import { existsSync } from "node:fs"
 import { join } from "node:path"
+import { isOldLayoutLibrary } from "src/infra/storage/library-layout.ts"
 import { type DbHandles, openDb } from "./connection.ts"
 
 /** Host-owned records are never replaced by a library restore. */
 export function openHostDatabase(root: string): DbHandles {
 	const path = join(root, "local", "host.sqlite")
-	if (!existsSync(path) && existsSync(join(root, "app.sqlite"))) {
+	if (isOldLayoutLibrary(root)) {
 		// The server boot path migrates an old-layout library before opening the
 		// host DB (runStorageMigrations). Reaching this means a caller opened the
 		// host DB without that migration — refuse rather than operate on a mixed

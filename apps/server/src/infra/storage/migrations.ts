@@ -21,18 +21,19 @@
  *    stamp). Each migration is responsible for its own resumability.
  */
 
-import { existsSync } from "node:fs"
-import { join } from "node:path"
 import type { Env } from "src/config/env.ts"
 import type { DbHandles, OpenDbOptions } from "src/infra/db/connection.ts"
 import type { StoragePaths } from "src/infra/storage/paths.ts"
 import { applyBackupLayout } from "./backup-layout.ts"
 import { acquireStorageInstance } from "./instance-lock.ts"
+import { isOldLayoutLibrary } from "./library-layout.ts"
 import {
 	CURRENT_FORMAT,
 	readStorageFormat,
 	writeStorageFormat,
 } from "./storage-format.ts"
+
+export { isOldLayoutLibrary } from "./library-layout.ts"
 
 /** Everything a structural migration may need to do its work. */
 export type MigrationContext = {
@@ -55,19 +56,6 @@ export type StorageMigration = {
 	readonly targetFormat: number
 	readonly applies: (ctx: MigrationContext, current: number) => boolean
 	readonly run: (ctx: MigrationContext) => void
-}
-
-/**
- * True when the library is on the pre-versioning ("old") layout: a live
- * `app.sqlite` at the root with no separate host database. This is the
- * structural signal the backup-layout retrofit uses because those libraries
- * predate the storage-format marker.
- */
-export function isOldLayoutLibrary(root: string): boolean {
-	return (
-		existsSync(join(root, "app.sqlite")) &&
-		!existsSync(join(root, "local", "host.sqlite"))
-	)
 }
 
 export type MigrationRunResult = {
@@ -111,9 +99,9 @@ export function runStorageMigrations(
 		changed = true
 	}
 
-	if (changed || readStorageFormat(root) === 0) {
-		writeStorageFormat(root, current)
-	}
+	// Also promote a legacy local marker; the writer leaves a current root
+	// marker untouched and repairs a missing or malformed one atomically.
+	writeStorageFormat(root, current)
 	return { ran, format: current, changed }
 }
 

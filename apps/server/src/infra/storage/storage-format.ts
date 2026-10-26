@@ -4,8 +4,9 @@
  * The storage layout has a generation number independent of the Drizzle
  * schema journal. A structural migration (see {@link StorageMigration} in
  * `migrations.ts`) bumps this number when it changes the on-disk layout.
- * The marker is host-only state: it lives under `<root>/local/` (never
- * synced, never cleared by "clear cache") and is authoritative.
+ * The authoritative marker lives at `<root>/storage-format.json`, outside
+ * the rebuildable `local/` directory. Older local markers are read only
+ * for compatibility and promoted by the migration runner on success.
  *
  * Libraries created before this version have no marker; {@link readStorageFormat}
  * reports `0` (the "pre-versioning" format). The first structural migration
@@ -28,9 +29,9 @@ export const CURRENT_FORMAT = 1
 
 const FORMAT_FILENAME = "storage-format.json"
 
-/** Marker path: `<root>/local/storage-format.json`. */
+/** Durable marker path: `<root>/storage-format.json`. */
 export function storageFormatPath(root: string): string {
-	return join(root, "local", FORMAT_FILENAME)
+	return join(root, FORMAT_FILENAME)
 }
 
 /**
@@ -39,25 +40,34 @@ export function storageFormatPath(root: string): string {
  * unknown, so a migration may re-establish it).
  */
 export function readStorageFormat(root: string): number {
-	const path = storageFormatPath(root)
-	if (!existsSync(path)) return 0
+	return (
+		readFormat(storageFormatPath(root)) ??
+		readFormat(join(root, "local", FORMAT_FILENAME)) ??
+		0
+	)
+}
+
+function readFormat(path: string): number | undefined {
+	if (!existsSync(path)) return undefined
 	try {
-		const parsed = JSON.parse(readFileSync(path, "utf8")) as {
-			format?: unknown
-		}
-		return typeof parsed.format === "number" &&
+		const parsed: unknown = JSON.parse(readFileSync(path, "utf8"))
+		return parsed !== null &&
+			typeof parsed === "object" &&
+			"format" in parsed &&
+			typeof parsed.format === "number" &&
 			Number.isSafeInteger(parsed.format) &&
 			parsed.format >= 0
 			? parsed.format
-			: 0
+			: undefined
 	} catch {
-		return 0
+		return undefined
 	}
 }
 
 /** Persist the storage-format number atomically (write-then-rename). */
 export function writeStorageFormat(root: string, format: number): void {
 	const path = storageFormatPath(root)
+	if (readFormat(path) === format) return
 	mkdirSync(dirname(path), { recursive: true })
 	const temp = `${path}.next`
 	writeFileSync(temp, JSON.stringify({ format }), "utf8")

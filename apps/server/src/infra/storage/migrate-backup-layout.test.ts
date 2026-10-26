@@ -281,13 +281,13 @@ it("boots the next version against an old-layout library without a manual step",
 	})
 	expect(response.statusCode).toBe(200)
 	// Boot established the marker.
-	expect(await readFile(join(root, "local/storage-format.json"), "utf8")).toBe(
+	expect(await readFile(join(root, "storage-format.json"), "utf8")).toBe(
 		JSON.stringify({ format: 1 }),
 	)
 	// A second boot is a no-op (no re-migration, marker unchanged).
 	await built.close()
 	built = await buildServer({ env: envFor(root) })
-	expect(await readFile(join(root, "local/storage-format.json"), "utf8")).toBe(
+	expect(await readFile(join(root, "storage-format.json"), "utf8")).toBe(
 		JSON.stringify({ format: 1 }),
 	)
 })
@@ -332,7 +332,8 @@ it("resumes after host rows were removed but host publication was interrupted", 
 		join(work, "state.json"),
 		JSON.stringify({ format: 1, phase: "prepared" }),
 	)
-	applyBackupLayout({ root, builtinDir: builtin })
+	built = await buildServer({ env: envFor(root) })
+	await built.app.ready()
 	const host = openDb(join(root, "local/host.sqlite"))
 	try {
 		expect(getAuthRow(host.db)?.hash).toBeTruthy()

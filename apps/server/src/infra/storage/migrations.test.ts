@@ -1,8 +1,19 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
+import {
+	existsSync,
+	mkdirSync,
+	mkdtempSync,
+	readFileSync,
+	rmSync,
+	writeFileSync,
+} from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { loadEnv } from "src/config/env.ts"
-import { openDb, resolveMigrationsFolder } from "src/infra/db/connection.ts"
+import {
+	openDb,
+	resolveMigrationsFolder,
+	schema,
+} from "src/infra/db/connection.ts"
 import {
 	isOldLayoutLibrary,
 	type MigrationContext,
@@ -29,11 +40,17 @@ function emptyRoot(): string {
 	return root
 }
 
-/** An old-layout root: `app.sqlite` present, no separate host database. */
+/** An old-layout root still stores its host credentials in the live DB. */
 function oldLayoutRoot(): string {
 	const root = emptyRoot()
 	mkdirSync(join(root, "versions", "1"), { recursive: true })
-	writeFileSync(join(root, "app.sqlite"), "")
+	const handles = openDb(join(root, "app.sqlite"))
+	handles.runMigrations()
+	handles.db
+		.insert(schema.auth)
+		.values({ passwordHash: "legacy-hash", updatedAt: 1 })
+		.run()
+	handles.close()
 	return root
 }
 
@@ -129,6 +146,47 @@ describe("runStorageMigrations", () => {
 		expect(readStorageFormat(root)).toBe(CURRENT_FORMAT)
 	})
 
+	it("promotes the legacy local marker and keeps it after local is deleted", () => {
+		const root = emptyRoot()
+		mkdirSync(join(root, "local"))
+		writeFileSync(
+			join(root, "local", "storage-format.json"),
+			JSON.stringify({ format: 1 }),
+		)
+		expect(readStorageFormat(root)).toBe(1)
+		runStorageMigrations(root, contextFor(root))
+		expect(
+			JSON.parse(readFileSync(join(root, "storage-format.json"), "utf8")),
+		).toEqual({ format: 1 })
+		rmSync(join(root, "local"), { recursive: true })
+		expect(readStorageFormat(root)).toBe(1)
+	})
+
+	it("prefers the durable marker over a stale local marker", () => {
+		const root = emptyRoot()
+		writeStorageFormat(root, 2)
+		mkdirSync(join(root, "local"), { recursive: true })
+		writeFileSync(
+			join(root, "local", "storage-format.json"),
+			JSON.stringify({ format: 1 }),
+		)
+		expect(readStorageFormat(root)).toBe(2)
+	})
+
+	it("repairs a corrupt root marker using a valid legacy local marker", () => {
+		const root = emptyRoot()
+		mkdirSync(join(root, "local"))
+		writeFileSync(
+			join(root, "local", "storage-format.json"),
+			JSON.stringify({ format: 1 }),
+		)
+		writeFileSync(join(root, "storage-format.json"), "not json")
+		runStorageMigrations(root, contextFor(root))
+		expect(
+			JSON.parse(readFileSync(join(root, "storage-format.json"), "utf8")),
+		).toEqual({ format: 1 })
+	})
+
 	it("re-establishes a corrupt storage-format marker on a current root", () => {
 		const root = emptyRoot()
 		mkdirSync(join(root, "local"), { recursive: true })
@@ -143,7 +201,7 @@ describe("runStorageMigrations", () => {
 })
 
 describe("isOldLayoutLibrary", () => {
-	it("is true when app.sqlite is present and host.sqlite is absent", () => {
+	it("is true when host credentials remain in app.sqlite", () => {
 		expect(isOldLayoutLibrary(oldLayoutRoot())).toBe(true)
 	})
 
@@ -156,5 +214,60 @@ describe("isOldLayoutLibrary", () => {
 
 	it("is false when app.sqlite is absent", () => {
 		expect(isOldLayoutLibrary(emptyRoot())).toBe(false)
+	})
+
+	it("recognizes an unmarked current DB without local as rebuildable", () => {
+		const root = emptyRoot()
+		const handles = openDb(join(root, "app.sqlite"))
+		handles.runMigrations()
+		handles.close()
+		expect(isOldLayoutLibrary(root)).toBe(false)
+		runStorageMigrations(root, contextFor(root))
+		expect(readStorageFormat(root)).toBe(CURRENT_FORMAT)
+	})
+
+	it.each(["db-backups", "snapshots"])(
+		"recognizes legacy %s even without credentials",
+		(folder) => {
+			const root = emptyRoot()
+			const handles = openDb(join(root, "app.sqlite"))
+			handles.runMigrations()
+			handles.close()
+			mkdirSync(join(root, "versions", "1", folder), { recursive: true })
+			expect(isOldLayoutLibrary(root)).toBe(true)
+		},
+	)
+
+	it("recognizes host-only preferences as legacy data", () => {
+		const root = emptyRoot()
+		const handles = openDb(join(root, "app.sqlite"))
+		handles.runMigrations()
+		handles.db
+			.insert(schema.systemPreferences)
+			.values({ key: "sync.remindDays", value: "14", updatedAt: 1 })
+			.run()
+		handles.close()
+		expect(isOldLayoutLibrary(root)).toBe(true)
+	})
+
+	it("recognizes an interrupted migration after host rows have been removed", () => {
+		const root = emptyRoot()
+		const handles = openDb(join(root, "app.sqlite"))
+		handles.runMigrations()
+		handles.close()
+		const work = join(root, "local", "backup-layout-migration")
+		mkdirSync(work, { recursive: true })
+		writeFileSync(
+			join(work, "state.json"),
+			JSON.stringify({ format: 1, phase: "prepared" }),
+		)
+		expect(isOldLayoutLibrary(root)).toBe(true)
+	})
+
+	it("propagates database read failures without stamping the library", () => {
+		const root = emptyRoot()
+		writeFileSync(join(root, "app.sqlite"), "corrupt sqlite")
+		expect(() => runStorageMigrations(root, contextFor(root))).toThrow()
+		expect(existsSync(join(root, "storage-format.json"))).toBe(false)
 	})
 })

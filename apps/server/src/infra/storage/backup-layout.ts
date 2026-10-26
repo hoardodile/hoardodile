@@ -41,14 +41,15 @@ import {
 	runPreMigrationTagDedupe,
 } from "src/domain/tag/dedupe.ts"
 import { openDb, resolveMigrationsFolder } from "src/infra/db/connection.ts"
+import {
+	HOST_PREFS,
+	HOST_TABLES,
+	LEGACY_BACKUP_FOLDERS,
+} from "./library-layout.ts"
 
 type Row = Record<string, unknown>
 
 const BUILTIN_ID = "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
-const HOST_TABLES = ["auth", "auth_sign_ins"]
-// Preserve the old reminder preference when separating legacy host state.
-const HOST_PREFS = ["sync.remindDays", "auth.sessionIdleTimeoutSeconds"]
-const OLD_FOLDERS = ["db-backups", "snapshots"]
 const WORK_NAME = "backup-layout-migration"
 const MIGRATIONS = resolveMigrationsFolder()
 
@@ -286,7 +287,7 @@ export function inspectBackupLayout(
 	const pluginsDir = join(root, "versions/1/plugins")
 	let pluginBytes = existsSync(pluginsDir) ? treeBytes(pluginsDir) : 0
 	if (addBuiltin) pluginBytes += treeBytes(builtinDir)
-	for (const name of OLD_FOLDERS) {
+	for (const name of LEGACY_BACKUP_FOLDERS) {
 		const source = join(root, "versions/1", name)
 		const saved = join(work, name)
 		if (existsSync(source)) plain(source, "directory")
@@ -477,7 +478,7 @@ export function applyBackupLayout(
 			treeBytes(plugin)
 			renameSync(plugin, plan.builtinTarget)
 		}
-		for (const name of OLD_FOLDERS) {
+		for (const name of LEGACY_BACKUP_FOLDERS) {
 			const source = join(plan.root, "versions/1", name)
 			if (existsSync(source)) renameSync(source, join(plan.work, name))
 		}
